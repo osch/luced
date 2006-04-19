@@ -1,0 +1,112 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2006 Oliver Schmidt, osch@luced.de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef SCROLLBAR_H
+#define SCROLLBAR_H
+
+#include "GuiWidget.h"
+#include "Callback.h"
+#include "Slot.h"
+
+namespace LucED {
+
+class ScrollBar : public GuiWidget
+{
+public:
+
+    typedef HeapObjectPtr<ScrollBar> Ptr;
+
+    static ScrollBar::Ptr create(GuiWidget* parent,
+            int x, int y, unsigned int width, unsigned int height)
+    {
+        return ScrollBar::Ptr(new ScrollBar(parent, x, y, width, height));
+    }
+
+    void setChangedValueCallback(const Callback1<long>& callback) {
+        this->changedValueCallback = callback;
+    }
+    
+    void setScrollStepCallback(const Callback1<ScrollStep::Type>& callback) {
+        this->scrollStepCallback = callback;
+    }
+
+    virtual bool processEvent(const XEvent *event);
+    virtual void setPosition(Position newPosition);
+
+    void setValue(long value);
+    void setValueRange(long totalValue, long heightValue, long value);
+
+    Slot1<long> slotForSetValue;
+    Slot3<long,long,long> slotForSetValueRange;
+
+    
+private:
+
+    ScrollBar(GuiWidget* parent,
+            int x, int y, unsigned int width, unsigned int height);
+
+    void calculateValuesFromPosition();
+    long calcScrollHeight();
+    long calcScrollY();
+    long calcHighestScrollY();
+    long calcValue();
+    void initStatically();
+    
+    void drawUpButton();
+    void drawPressedUpButton();
+    void drawDownButton();
+    void drawPressedDownButton();
+    void drawArea();
+    void drawArrows();
+
+    
+    Callback1<long> changedValueCallback;
+    Callback1<ScrollStep::Type> scrollStepCallback;
+        
+    Position position;
+
+    bool isV;
+    
+    int scrollHeight;
+    int scrollY;
+    
+    int scrollAreaLength;
+    int scrollAreaWidth;
+    
+    long totalValue;
+    long heightValue;
+    long originalTotalValue;
+    long value;
+    bool movingBar;
+    int  movingYOffset;
+    int  arrowLength;
+    
+    bool isButtonPressedForScrollStep;
+    ScrollStep::Type scrollStep;
+    Slot0 slotForScrollStepRepeating;
+    void handleScrollStepRepeating();
+};
+
+
+} // namespace LucED
+
+
+#endif // SCROLLBAR_H
