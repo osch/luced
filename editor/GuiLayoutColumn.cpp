@@ -113,8 +113,6 @@ static void ensureBetween(int *a, int min, int max)
 
 void GuiLayoutColumn::setPosition(Position p)
 {
-printf("GuiLayoutColumn::setPosition %d %d %d %d\n", p.x, p.y, p.w, p.h);
-
     int bestHeight = 0;
     int minHeight = 0;
     int maxHeight = 0;
@@ -128,13 +126,10 @@ printf("GuiLayoutColumn::setPosition %d %d %d %d\n", p.x, p.y, p.w, p.h);
         addimize(&bestHeight, m.bestHeight);
         addimize(&maxHeight,  m.maxHeight);
 
-printf("GuiLayoutColumn::setPosition: bestHeight(%d)=%d\n", i, m.bestHeight);
-        
         if (m.maxHeight == -1) {
             ++numberFlex;
         }
     }
-printf("GuiLayoutColumn::setPosition: numberFlexA %d, bestHeight %d\n", numberFlex, bestHeight);
     if (bestHeight != -1 && bestHeight <= p.h) {
         minHeight = bestHeight;
     } else {
@@ -149,7 +144,6 @@ printf("GuiLayoutColumn::setPosition: numberFlexA %d, bestHeight %d\n", numberFl
             addNonFlexHeight = p.h - minHeight;
         }
     }
-printf("GuiLayoutColumn::setPosition: numberFlexB %d, flexHeight %d\n", numberFlex, flexHeight);
 
     int y = p.y;
     for (int i = 0; i < elements.getLength(); ++i)
@@ -173,7 +167,6 @@ printf("GuiLayoutColumn::setPosition: numberFlexB %d, flexHeight %d\n", numberFl
                 h = m.bestHeight;
             }
         }
-printf("GuiLayoutColumn::setPosition for Row %d ---> %d %d %d %d\n", i, p.x, y, p.w, h);
         elements[i]->setPosition(Position(p.x, y, p.w, h));
         y += h;
     }

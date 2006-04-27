@@ -84,14 +84,11 @@ GuiElement::Measures GuiLayoutRow::getDesiredMeasures()
         addimize(&maxWidth,  m.maxWidth);
         
     }
-printf("GuiLayoutRow::getDesiredMeasures %d %d %d %d %d %d\n", minWidth, minHeight, bestWidth, bestHeight, bestWidth, bestHeight);
     return Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight);
 }
 
 void GuiLayoutRow::setPosition(Position p)
 {
-printf("GuiLayoutRow::setPosition %d %d %d %d\n", p.x, p.y, p.w, p.h);
-
     int minWidth = 0;
     int bestWidth = 0;
     int maxWidth = 0;
@@ -105,13 +102,10 @@ printf("GuiLayoutRow::setPosition %d %d %d %d\n", p.x, p.y, p.w, p.h);
         addimize(&bestWidth, m.bestWidth);
         addimize(&maxWidth,  m.maxWidth);
 
-printf("GuiLayoutRow::setPosition: bestWidth(%d)=%d\n", i, m.bestWidth);
-
         if (m.maxWidth == -1) {
             ++numberFlex;
         }
     }
-printf("GuiLayoutRow::setPosition: numberFlexA %d, bestWidth %d\n", numberFlex, bestWidth);
     if (bestWidth != -1 && bestWidth <= p.w) {
         minWidth = bestWidth;
     } else {
@@ -126,8 +120,6 @@ printf("GuiLayoutRow::setPosition: numberFlexA %d, bestWidth %d\n", numberFlex, 
             addNonFlexWidth = p.w - minWidth;
         }
     }
-printf("GuiLayoutRow::setPosition: numberFlexB %d, flexWidth %d\n", numberFlex, flexWidth);
-
     int x = p.x;
     for (int i = 0; i < elements.getLength(); ++i)
     {
@@ -150,7 +142,6 @@ printf("GuiLayoutRow::setPosition: numberFlexB %d, flexWidth %d\n", numberFlex, 
                 w = m.bestWidth;
             }
         }
-printf("GuiLayoutRow::setPosition for Row %d ---> %d %d %d %d\n", i, x, p.y, w, p.h);
         elements[i]->setPosition(Position(x, p.y, w, p.h));
         x += w;
     }

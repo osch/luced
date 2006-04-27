@@ -131,8 +131,6 @@ GuiElement::Measures GuiLayoutTable::getDesiredMeasures()
 
 void GuiLayoutTable::setPosition(Position p)
 {
-printf("GuiLayoutTable::setPosition %d %d %d %d\n", p.x, p.y, p.w, p.h);
-
     int minWidth = 0;
     int bestWidth = 0;
     int maxWidth = 0;
@@ -266,8 +264,6 @@ printf("GuiLayoutTable::setPosition %d %d %d %d\n", p.x, p.y, p.w, p.h);
         numberFlexRows = 0;
     }
 
-printf("GuiLayoutTable:   numberFlexRows = %d\n", numberFlexRows);
-  
     int addNonFlexHeight = 0;
     int flexHeight = 0;
     int remainingFlexHeight = 0;
