@@ -30,6 +30,7 @@
 #include "TextStyle.h"
 #include "HilitingBuffer.h"
 #include "StatusLine.h"
+#include "GuiLayoutColumn.h"
 
 namespace LucED {
 
@@ -64,6 +65,7 @@ private:
     ScrollBar::Ptr scrollBarH;
     ScrollBar::Ptr scrollBarV;    
     StatusLine::Ptr statusLine;
+    GuiLayoutColumn::Ptr layout;
 };
 
 } // namespace LucED

@@ -25,7 +25,7 @@ globalConfig = {
           keyPressRepeatFirstMilliSecs = 300,
           keyPressRepeatNextMilliSecs  =  16.67,
 
-          scrollBarWidth = 12+2+1,
+          scrollBarWidth = 12+2,
           scrollBarRepeatFirstMilliSecs = 300,
           scrollBarRepeatNextMilliSecs  =  10,
           

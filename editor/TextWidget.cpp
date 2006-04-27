@@ -40,12 +40,11 @@ static inline unsigned int calculateWidthOrHeightWithoutBorder(unsigned int tota
 }
 
 TextWidget::TextWidget(GuiWidget *parent, 
-        TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer, 
-        int x, int y, unsigned int width, unsigned int height)
+        TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer)
 
-    : GuiWidget(parent, x, y, calculateWidthOrHeightWithoutBorder(width), calculateWidthOrHeightWithoutBorder(height), BORDER_WIDTH),
+    : GuiWidget(parent, 0, 0, 1, 1, BORDER_WIDTH),
 
-      position(x, y, calculateWidthOrHeightWithoutBorder(width), calculateWidthOrHeightWithoutBorder(height)),
+      position(0, 0, 1, 1),
       textData(textData),
       slotForCursorBlinking(this, &TextWidget::blinkCursor),
       slotForVerticalScrollBarChangedValue(this, &TextWidget::setTopLineNumber),
@@ -81,7 +80,7 @@ TextWidget::TextWidget(GuiWidget *parent,
     lineHeight  = textStyles->get(0)->getLineHeight();
     lineAscent  = textStyles->get(0)->getLineAscent();
 
-    visibleLines = height / lineHeight; // not rounded;
+    visibleLines = 1 / lineHeight; // not rounded;
 
     lineInfos.setLength(ROUNDED_UP_DIV(position.h, lineHeight));
 
@@ -1155,6 +1154,13 @@ void TextWidget::setPosition(Position newPosition)
         updateHorizontalScrollBar= true;
     }
 }
+
+GuiElement::Measures TextWidget::getDesiredMeasures()
+{
+    return Measures(1, 1, 1, 1, -1, -1);
+}
+
+
 
 void TextWidget::unclip()
 {

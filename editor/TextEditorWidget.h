@@ -37,10 +37,9 @@ public:
     typedef Callback1<long> ChangedValueCallback;
 
     static TextEditorWidget::Ptr create(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
-            int x, int y, unsigned int width, unsigned int height) {
+            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer) {
         return TextEditorWidget::Ptr(new TextEditorWidget(parent, 
-                textData, textStyles, hilitingBuffer, x, y, width, height));
+                textData, textStyles, hilitingBuffer));
     }
 
     virtual ~TextEditorWidget() {}
@@ -99,8 +98,7 @@ public:
 
 private:
     TextEditorWidget(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
-            int x, int y, unsigned int width, unsigned int height);
+            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer);
 
     virtual long  initSelectionDataRequest();
     virtual const byte* getSelectionDataChunk(long pos, long length);

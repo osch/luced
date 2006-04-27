@@ -34,19 +34,7 @@ TopWin::TopWin(int x, int y, unsigned int width, unsigned int height, unsigned b
     {
 #define W_INC 10
 #define H_INC 10
-
-        // Set Size Hints
-        
-        XSizeHints *hints = XAllocSizeHints();
-        hints->flags = USPosition|PMinSize|PResizeInc;
-        hints->x = x;
-        hints->y = y;
-        hints->min_width  = 5*W_INC;
-        hints->max_height = 5*H_INC;
-        hints->width_inc  = W_INC;
-        hints->height_inc = H_INC;
-        XSetWMNormalHints(getDisplay(), getWid(), hints);
-        XFree(hints);
+        setSizeHints(x, y, 5*W_INC, 5*W_INC, W_INC, H_INC);
     }
     x11InternAtomForDeleteWindow = XInternAtom(getDisplay(), 
             "WM_DELETE_WINDOW", True);
@@ -54,6 +42,29 @@ TopWin::TopWin(int x, int y, unsigned int width, unsigned int height, unsigned b
             &(x11InternAtomForDeleteWindow), 1);
     
     addToXEventMask(StructureNotifyMask|KeyPressMask|KeyReleaseMask|FocusChangeMask);
+}
+
+static TopWin* expectedFocusTopWin = NULL;
+
+TopWin::~TopWin()
+{
+    if (this == expectedFocusTopWin) {
+        expectedFocusTopWin = NULL;
+    }
+}
+
+void TopWin::setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy)
+{
+    XSizeHints *hints = XAllocSizeHints();
+    hints->flags = USPosition|PMinSize|PResizeInc;
+    hints->x = x;
+    hints->y = y;
+    hints->min_width  = minWidth;
+    hints->min_height = minHeight;
+    hints->width_inc  = dx;
+    hints->height_inc = dy;
+    XSetWMNormalHints(getDisplay(), getWid(), hints);
+    XFree(hints);
 }
 
 bool TopWin::processEvent(const XEvent *event)
@@ -148,6 +159,12 @@ bool TopWin::processEvent(const XEvent *event)
                     GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
                 }
                 treatFocusOut();
+                if (expectedFocusTopWin == this) {
+                    expectedFocusTopWin = NULL;
+                } else if (expectedFocusTopWin != NULL) {
+                    expectedFocusTopWin->treatFocusOut();
+                    expectedFocusTopWin = NULL;
+                }
                 return true;
             }
 
@@ -157,6 +174,10 @@ bool TopWin::processEvent(const XEvent *event)
                     KeyPressRepeater::getInstance()->reset();
                     GuiRoot::getInstance()->setKeyboardAutoRepeatOff();
                 }
+                if (expectedFocusTopWin != NULL && expectedFocusTopWin != this) {
+                    expectedFocusTopWin->treatFocusOut();
+                }
+                expectedFocusTopWin = this;
                 treatFocusIn();
                 return true;
             }

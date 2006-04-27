@@ -53,7 +53,8 @@ MODULES = EditorTopWin    EventDispatcher   GuiRoot            GuiWidget \
           HilitingBuffer  LuaException      File               Regex \
           LuaObject       LuaInterpreter    ConfigException    GlobalConfig \
           LanguageModes   RegexException    BackliteBuffer     Clipboard \
-          SelectionOwner  PasteDataReceiver StatusLine
+          SelectionOwner  PasteDataReceiver StatusLine         GuiLayoutRow \
+          Button          GuiLayoutColumn   GuiLayoutTable     GuiLayoutWidget
 
 OBJS   = $(patsubst %, $(BUILD_DIR)/%.o, $(MODULES))
 

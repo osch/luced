@@ -25,6 +25,7 @@
 #include "GuiWidget.h"
 #include "Callback.h"
 #include "Slot.h"
+#include "types.h"
 
 namespace LucED {
 
@@ -34,10 +35,9 @@ public:
 
     typedef HeapObjectPtr<ScrollBar> Ptr;
 
-    static ScrollBar::Ptr create(GuiWidget* parent,
-            int x, int y, unsigned int width, unsigned int height)
+    static ScrollBar::Ptr create(GuiWidget* parent, Orientation::Type orientation)
     {
-        return ScrollBar::Ptr(new ScrollBar(parent, x, y, width, height));
+        return ScrollBar::Ptr(new ScrollBar(parent, orientation));
     }
 
     void setChangedValueCallback(const Callback1<long>& callback) {
@@ -50,6 +50,7 @@ public:
 
     virtual bool processEvent(const XEvent *event);
     virtual void setPosition(Position newPosition);
+    virtual Measures getDesiredMeasures();
 
     void setValue(long value);
     void setValueRange(long totalValue, long heightValue, long value);
@@ -60,8 +61,7 @@ public:
     
 private:
 
-    ScrollBar(GuiWidget* parent,
-            int x, int y, unsigned int width, unsigned int height);
+    ScrollBar(GuiWidget* parent, Orientation::Type orientation);
 
     void calculateValuesFromPosition();
     long calcScrollHeight();
@@ -83,7 +83,7 @@ private:
         
     Position position;
 
-    bool isV;
+    const bool isV;
     
     int scrollHeight;
     int scrollY;

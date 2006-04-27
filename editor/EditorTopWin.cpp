@@ -21,26 +21,45 @@
 
 #include "EditorTopWin.h"
 #include "GlobalConfig.h"
+#include "GuiLayoutTable.h"
+#include "GuiLayoutWidget.h"
+#include "GuiLayoutColumn.h"
+#include "GuiLayoutRow.h"
 
 using namespace LucED;
 
 EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
         int x, int y, unsigned int width, unsigned int height)
-    : TopWin(x, y, width, height, 0)
+    : TopWin(x, y, width, height, 0),
+      layout(GuiLayoutColumn::create())
 {
-    int scrollBarWidth = GlobalConfig::getInstance()->getScrollBarWidth();
-    int statusHeight = getGuiTextHeight() + 4;
-    
     addToXEventMask(ButtonPressMask);
     
+    statusLine = StatusLine::create(this);
+    layout->addElement(statusLine);
     
-    statusLine = StatusLine::create(this, 0, 0, width, statusHeight);
+    GuiLayoutTable::Ptr tableLayout = GuiLayoutTable::create(2, 2);
+    layout->addElement(tableLayout);
+    
+    textEditor = TextEditorWidget::create(this, textData, textStyles, hilitingBuffer);
 
-    textEditor = TextEditorWidget::create(this, textData, textStyles, hilitingBuffer,
-            0, statusHeight, width - scrollBarWidth, height - scrollBarWidth - statusHeight);
+    GuiLayoutColumn::Ptr c2 = GuiLayoutColumn::create();
+    GuiLayoutRow::Ptr    r2 = GuiLayoutRow::create();
+    
+    tableLayout->setElement(0, 0, c2);
+    c2->addElement(r2);
+    c2->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, -1, 1));
 
-    scrollBarV = ScrollBar::create(this, width - scrollBarWidth, statusHeight, scrollBarWidth, height - scrollBarWidth - statusHeight + 1);
-    scrollBarH = ScrollBar::create(this, 0, height - scrollBarWidth, width - scrollBarWidth + 1, scrollBarWidth);
+    r2->addElement(textEditor);
+    r2->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, 1, -1));
+
+    scrollBarV = ScrollBar::create(this, Orientation::VERTICAL);
+    tableLayout->setElement(0, 1, scrollBarV);
+    
+    scrollBarH = ScrollBar::create(this, Orientation::HORIZONTAL);
+    tableLayout->setElement(1, 0, scrollBarH);
+    
+    layout->setPosition(Position(0, 0, width, height));
     
     textData->registerFileNameListener(statusLine->slotForSetFileName);
     textData->registerLengthListener(statusLine->slotForSetFileLength);
@@ -63,21 +82,7 @@ EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, H
 
 void EditorTopWin::treatNewWindowPosition(Position newPosition)
 {
-    int scrollBarWidth = GlobalConfig::getInstance()->getScrollBarWidth();
-    int statusHeight = getGuiTextHeight() + 4;
-    
-    statusLine->setPosition(Position(
-            0, 0, newPosition.w, statusHeight));
-
-    textEditor->setPosition(Position(
-            0, statusHeight, newPosition.w - scrollBarWidth, newPosition.h - scrollBarWidth - statusHeight));
-
-    scrollBarV->setPosition(Position(
-            newPosition.w - scrollBarWidth, statusHeight, scrollBarWidth, newPosition.h - scrollBarWidth - statusHeight + 1));
-            
-    scrollBarH->setPosition(Position(
-            0, newPosition.h - scrollBarWidth, newPosition.w - scrollBarWidth + 1, scrollBarWidth));
-    
+    layout->setPosition(Position(0, 0, newPosition.w, newPosition.h));
 }
 
 bool EditorTopWin::processKeyboardEvent(const XEvent *event)

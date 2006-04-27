@@ -45,7 +45,7 @@ public:
 protected:
     TextWidget(GuiWidget *parent, 
             TextData::Ptr textData, TextStyles::Ptr textStyles, 
-            HilitingBuffer::Ptr hilitingBuffer, int x, int y, unsigned int width, unsigned int height);
+            HilitingBuffer::Ptr hilitingBuffer);
 
     BackliteBuffer* getBackliteBuffer() {
         return backliteBuffer.getRawPtr();
@@ -53,6 +53,7 @@ protected:
 
 public:
     virtual void setPosition(Position newPosition);
+    virtual Measures getDesiredMeasures();
     
     TextData* getTextData() {
         return textData.getRawPtr();

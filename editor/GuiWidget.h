@@ -27,36 +27,22 @@
 #include <X11/Xutil.h>
 
 #include "types.h"
-#include "HeapObject.h"
+#include "GuiElement.h"
 #include "GuiColor.h"
 #include "GuiRoot.h"
 #include "TextStyle.h"
+
 
 namespace LucED {
 
 class EventDispatcher;
 class GuiRoot;
 
-class GuiWidget : public HeapObject
+class GuiWidget : public GuiElement
 {
 public:
     typedef HeapObjectPtr<GuiWidget> Ptr;
     typedef HeapObjectPtr<const GuiWidget> ConstPtr;
-    
-    class Position
-    {
-    public:
-        Position(int x, int y, unsigned int width, unsigned int height)
-            : x(x), y(y), w(width), h(height) {}
-        bool operator==(const Position& p) const {
-            return x == p.x && y ==p.y && w == p.w && h == p.h;
-        }
-        bool operator!=(const Position& p) const {
-            return !operator==(p);
-        }
-        int x, y;
-        unsigned int w, h;
-    };
     
     class EventRegistration
     {
@@ -128,6 +114,9 @@ protected:
     void drawPressedBox(int x, int y, int w, int h);
     void drawArrow(int x, int y, int w, int h, const Direction::Type direct);
     void drawGuiText(int x, int y, const char* ptr, long length);
+    void drawGuiText(int x, int y, const string& ptr) {
+        drawGuiText(x, y, ptr.c_str(), ptr.length());
+    }
     int getGuiTextHeight();
     
 private:

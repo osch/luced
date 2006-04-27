@@ -36,6 +36,11 @@ namespace Direction
     enum Type {UP, RIGHT, DOWN, LEFT};
 }
 
+namespace Orientation
+{
+    enum Type {HORIZONTAL, VERTICAL};
+}
+
 } // namespace LucED
 
 

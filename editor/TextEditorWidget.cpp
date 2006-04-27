@@ -37,9 +37,8 @@ static inline bool isWordCharacter(unsigned char c) {
 
 
 TextEditorWidget::TextEditorWidget(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
-            int x, int y, unsigned int width, unsigned int height)
-      : TextWidget(parent, textData, textStyles, hilitingBuffer, x, y, width, height),
+            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer)
+      : TextWidget(parent, textData, textStyles, hilitingBuffer),
         SelectionOwner(this),
         PasteDataReceiver(this),
         keyMapping(this),

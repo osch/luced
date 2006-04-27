@@ -33,6 +33,8 @@ class TopWin : public GuiWidget
 public:
     typedef HeapObjectPtr<TopWin> Ptr;
     typedef HeapObjectPtr<const TopWin> ConstPtr;
+    
+    virtual ~TopWin();
 
     virtual bool processEvent(const XEvent *event);
 
@@ -48,6 +50,8 @@ public:
         
 protected:
     TopWin(int x, int y, unsigned int width, unsigned int height, unsigned border_width);
+    
+    void setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy);
     
 private:
     void setWindowIcon();

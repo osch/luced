@@ -73,6 +73,9 @@ public:
         }
         return rslt;
     }
+    int getTextWidth(const string& str) const {
+        return getTextWidth(str.c_str(), str.length());
+    }
 private:
     XFontStruct *font;
     GuiColor color;

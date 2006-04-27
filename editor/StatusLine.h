@@ -38,14 +38,14 @@ public:
 
     typedef HeapObjectPtr<StatusLine> Ptr;
 
-    static StatusLine::Ptr create(GuiWidget* parent,
-            int x, int y, unsigned int width, unsigned int height)
+    static StatusLine::Ptr create(GuiWidget* parent)
     {
-        return StatusLine::Ptr(new StatusLine(parent, x, y, width, height));
+        return StatusLine::Ptr(new StatusLine(parent));
     }
 
     virtual bool processEvent(const XEvent *event);
     virtual void setPosition(Position newPosition);
+    virtual Measures getDesiredMeasures();
 
     void setLineAndColumn(long line, long column);
     void setFileName(const string& fileName);
@@ -58,8 +58,7 @@ public:
     
 private:
 
-    StatusLine(GuiWidget* parent,
-            int x, int y, unsigned int width, unsigned int height);
+    StatusLine(GuiWidget* parent);
 
     void drawArea();
     void drawFileName();

@@ -27,10 +27,9 @@
 
 using namespace LucED;
 
-StatusLine::StatusLine(GuiWidget* parent,
-            int x, int y, unsigned int width, unsigned int height)
-    : GuiWidget(parent, x, y, width, height, 0),
-      position(x, y, width, height),
+StatusLine::StatusLine(GuiWidget* parent)
+    : GuiWidget(parent, 0, 0, 1, 1, 0),
+      position(0, 0, 1, 1),
       slotForSetLineAndColumn(this, &StatusLine::setLineAndColumn),
       slotForSetFileName(     this, &StatusLine::setFileName),
       slotForSetFileLength(   this, &StatusLine::setFileLength),
@@ -48,6 +47,12 @@ void StatusLine::setPosition(Position newPosition)
     }
 }
 
+GuiElement::Measures StatusLine::getDesiredMeasures()
+{
+    int statusHeight = getGuiTextHeight() + 4;
+    return Measures(0, statusHeight, 0, statusHeight, -1, statusHeight);
+}
+
 bool StatusLine::processEvent(const XEvent *event)
 {
     if (GuiWidget::processEvent(event)) {
@@ -57,7 +62,13 @@ bool StatusLine::processEvent(const XEvent *event)
         switch (event->type) {
             
             case GraphicsExpose:
+                if (event->xgraphicsexpose.count > 0) {
+                    break;
+                }
             case Expose: {
+                if (event->xexpose.count > 0) {
+                    break;
+                }
                 this->drawArea();
                 return true;
             }

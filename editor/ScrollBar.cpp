@@ -49,11 +49,10 @@ void ScrollBar::initStatically()
 }
 
 
-ScrollBar::ScrollBar(GuiWidget* parent,
-            int x, int y, unsigned int width, unsigned int height)
-    : GuiWidget(parent, x, y, width, height, 0),
-      position(x, y, width, height),
-      
+ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
+    : GuiWidget(parent, 0, 0, 1, 1, 0),
+      position(0, 0, 1, 1),
+      isV(orientation == Orientation::VERTICAL),
       slotForSetValue(this, &ScrollBar::setValue),
       slotForSetValueRange(this, &ScrollBar::setValueRange),
       slotForScrollStepRepeating(this, &ScrollBar::handleScrollStepRepeating)
@@ -217,6 +216,17 @@ void ScrollBar::setPosition(Position newPosition)
     }
 }
 
+GuiElement::Measures ScrollBar::getDesiredMeasures()
+{
+    int scrollBarWidth = GlobalConfig::getInstance()->getScrollBarWidth();
+
+    if (this->isV) {
+        return Measures(scrollBarWidth, 1, scrollBarWidth, 1, scrollBarWidth, -1);
+    } else {
+        return Measures(1, scrollBarWidth, 1, scrollBarWidth, -1, scrollBarWidth);
+    }
+}
+
 void ScrollBar::drawUpButton()
 {
     Display* display = getDisplay();
@@ -227,16 +237,16 @@ void ScrollBar::drawUpButton()
         int w = position.w; //scrollAreaWidth;
         int h = position.h; //scrollAreaLength;
 
-        drawRaisedBox(1, 0, arrowLength, arrowLength);
-        drawArrow(    1, 0, arrowLength, arrowLength, Direction::UP);
+        drawRaisedBox(0, 0, arrowLength, arrowLength);
+        drawArrow(    0, 0, arrowLength, arrowLength, Direction::UP);
     }
     else
     {
         int w = position.w; // scrollAreaLength;
         int h = position.h; // scrollAreaWidth;
 
-        drawRaisedBox(0, 1, arrowLength, arrowLength);
-        drawArrow(    0, 1, arrowLength, arrowLength, Direction::LEFT);
+        drawRaisedBox(0, 0, arrowLength, arrowLength);
+        drawArrow(    0, 0, arrowLength, arrowLength, Direction::LEFT);
     }
 }
 
@@ -250,16 +260,16 @@ void ScrollBar::drawDownButton()
         int w = position.w; //scrollAreaWidth;
         int h = position.h; //scrollAreaLength;
         
-        drawRaisedBox(1, h - arrowLength, arrowLength, arrowLength);
-        drawArrow(    1, h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
+        drawRaisedBox(0, h - arrowLength, arrowLength, arrowLength);
+        drawArrow(    0, h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
     }
     else
     {
         int w = position.w; // scrollAreaLength;
         int h = position.h; // scrollAreaWidth;
 
-        drawRaisedBox(w - arrowLength, 1, arrowLength, arrowLength);
-        drawArrow(    w - arrowLength, 1, arrowLength, arrowLength, Direction::RIGHT);
+        drawRaisedBox(w - arrowLength, 0, arrowLength, arrowLength);
+        drawArrow(    w - arrowLength, 0, arrowLength, arrowLength, Direction::RIGHT);
     }
 }
 
@@ -273,16 +283,16 @@ void ScrollBar::drawPressedUpButton()
         int w = position.w; //scrollAreaWidth;
         int h = position.h; //scrollAreaLength;
 
-        drawPressedBox(1, 0, arrowLength, arrowLength);
-        drawArrow(     1 + 1, 1 + 0, arrowLength, arrowLength, Direction::UP);
+        drawPressedBox(0, 0, arrowLength, arrowLength);
+        drawArrow(     1 + 0, 1 + 0, arrowLength, arrowLength, Direction::UP);
     }
     else
     {
         int w = position.w; // scrollAreaLength;
         int h = position.h; // scrollAreaWidth;
 
-        drawPressedBox(0, 1, arrowLength, arrowLength);
-        drawArrow(     1 + 0, 1 + 1, arrowLength, arrowLength, Direction::LEFT);
+        drawPressedBox(0, 0, arrowLength, arrowLength);
+        drawArrow(     1 + 0, 1 + 0, arrowLength, arrowLength, Direction::LEFT);
     }
 }
 
@@ -296,16 +306,16 @@ void ScrollBar::drawPressedDownButton()
         int w = position.w; //scrollAreaWidth;
         int h = position.h; //scrollAreaLength;
         
-        drawPressedBox(1, h - arrowLength, arrowLength, arrowLength);
-        drawArrow(     1 + 1, 1 + h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
+        drawPressedBox(0, h - arrowLength, arrowLength, arrowLength);
+        drawArrow(     1 + 0, 1 + h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
     }
     else
     {
         int w = position.w; // scrollAreaLength;
         int h = position.h; // scrollAreaWidth;
 
-        drawPressedBox(w - arrowLength, 1, arrowLength, arrowLength);
-        drawArrow(     1 + w - arrowLength, 1 + 1, arrowLength, arrowLength, Direction::RIGHT);
+        drawPressedBox(w - arrowLength, 0, arrowLength, arrowLength);
+        drawArrow(     1 + w - arrowLength, 1 + 0, arrowLength, arrowLength, Direction::RIGHT);
     }
 }
 
@@ -325,9 +335,9 @@ void ScrollBar::drawArea()
         int w = position.w; //scrollAreaWidth;
         int h = position.h; //scrollAreaLength;
 
-        XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor01());
-        XDrawLine(display, getWid(), scrollBar_gcid, 
-                0, 0, 0, h - 1);
+//        XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor01());
+//        XDrawLine(display, getWid(), scrollBar_gcid, 
+//                0, 0, 0, h - 1);
 
         XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02()); // orig war 03
         XDrawLine(display, getWid(), scrollBar_gcid, 
@@ -340,15 +350,15 @@ void ScrollBar::drawArea()
         if (this->scrollY > 0) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());
             XFillRectangle(display, getWid(), scrollBar_gcid,
-                    1, arrowLength, w - 2, this->scrollY);
+                    0, arrowLength, w - 1, this->scrollY);
         }
 
-        drawRaisedBox(1, scrollY, arrowLength, this->scrollHeight);
+        drawRaisedBox(0, scrollY, arrowLength, this->scrollHeight);
 
         if (this->scrollY < calcHighestScrollY()) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());
             XFillRectangle(display, getWid(), scrollBar_gcid,
-                    1, scrollY + this->scrollHeight, w - 2, h - scrollY - this->scrollHeight - arrowLength);
+                    0, scrollY + this->scrollHeight, w - 1, h - scrollY - this->scrollHeight - arrowLength);
         }
 
     } else {
@@ -356,9 +366,9 @@ void ScrollBar::drawArea()
         int w = position.w; // scrollAreaLength;
         int h = position.h; // scrollAreaWidth;
 
-        XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor01());
-        XDrawLine(display, getWid(), scrollBar_gcid, 
-                0, 0, w - 1, 0);
+//        XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor01());
+//        XDrawLine(display, getWid(), scrollBar_gcid, 
+//                0, 0, w - 1, 0);
 
         XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02()); // orig war 03
         XDrawLine(display, getWid(), scrollBar_gcid, 
@@ -371,15 +381,15 @@ void ScrollBar::drawArea()
         if (this->scrollY > 0) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());
             XFillRectangle(display, getWid(), scrollBar_gcid,
-                    arrowLength, 1, this->scrollY, h - 2);
+                    arrowLength, 0, this->scrollY, h - 1);
         }
 
-        drawRaisedBox(scrollY, 1, this->scrollHeight, arrowLength);
+        drawRaisedBox(scrollY, 0, this->scrollHeight, arrowLength);
 
         if (this->scrollY < calcHighestScrollY()) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());
             XFillRectangle(display, getWid(), scrollBar_gcid,
-                    scrollY + this->scrollHeight, 1, w - scrollY - this->scrollHeight - arrowLength, h - 2);
+                    scrollY + this->scrollHeight, 0, w - scrollY - this->scrollHeight - arrowLength, h - 1);
         }
     }                
 }
@@ -475,15 +485,13 @@ inline long ScrollBar::calcValue()
 
 void ScrollBar::calculateValuesFromPosition()
 {
-    if (position.w < position.h) {
-        isV = true;
+    if (isV) {
         scrollAreaWidth  = position.w;
-        arrowLength = scrollAreaWidth - 1;
+        arrowLength = scrollAreaWidth;
         scrollAreaLength = position.h - 2 * arrowLength;
     } else {
-        isV = false;
         scrollAreaWidth  = position.h;
-        arrowLength = scrollAreaWidth - 1;
+        arrowLength = scrollAreaWidth;
         scrollAreaLength = position.w - 2 * arrowLength;
     }
 
