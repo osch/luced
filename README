@@ -1,0 +1,44 @@
+###################################################################################
+#
+#   LucED - The Lucid Editor
+#
+#   Copyright (C) 2005-2006 Oliver Schmidt, osch@luced.de
+#
+#   This program is free software; you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License Version 2 as published
+#   by the Free Software Foundation in June 1991.
+#
+#   This program is distributed in the hope that it will be useful, but WITHOUT
+#   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#   more details.
+#
+#   You should have received a copy of the GNU General Public License in the
+#   file LICENSE along with this program; if not, write to the Free Software
+#   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+#   USA.
+#
+###################################################################################
+
+ 
+Build instructions
+==================
+
+WARNING: This pre-release version of LucED is experimental and might not
+work as expected.
+
+Requirements: The external libs libpcre und liblua are needed, see
+   
+   * http://www.pcre.org/
+   * http://lua.org/
+   
+Try the following commands for building LucED:
+
+   cd editor
+   touch sandbox.mk
+   touch sandbox_options.h
+   make
+   
+See the file "Makefile" for possible adjustments for the "sandbox.mk" file and the
+file "options.h" for possible defines for the "sandbox_options.h" file.
+
