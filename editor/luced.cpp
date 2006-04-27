@@ -26,7 +26,6 @@
 #include "LuaException.h"
 #include "GlobalConfig.h"
 #include "ConfigException.h"
-#include "FindTopWin.h"
 
 using namespace LucED;
 
@@ -65,9 +64,6 @@ int main(int argc, char **argv)
         win2->setTitle("Title - Test2");
         win2->show();
         
-        //FindTopWin::Ptr win3 = FindTopWin::create(300, 300, 100, 50);
-        //win3->show();
-
         EventDispatcher::getInstance()->doEventLoop();
     }
     catch (LuaException& ex)
