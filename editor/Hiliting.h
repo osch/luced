@@ -30,6 +30,7 @@
 #include "ProcessHandler.h"
 #include "MemArray.h"
 #include "LanguageModes.h"
+#include "OwningPtr.h"
 
 // TODO: Konstanten
 //
@@ -40,7 +41,7 @@ namespace LucED {
 class Hiliting : public HilitingBase
 {
 public:
-    typedef HeapObjectPtr<Hiliting> Ptr;
+    typedef OwningPtr<Hiliting> Ptr;
     
     struct UpdateInfo {
         long beginPos;

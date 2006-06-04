@@ -31,13 +31,14 @@
 #include "HilitingBuffer.h"
 #include "BackliteBuffer.h"
 #include "CallbackContainer.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
 class TextWidget : public GuiWidget
 {
 public:
-    typedef HeapObjectPtr<TextWidget> Ptr;
+    typedef OwningPtr<TextWidget> Ptr;
     typedef Callback1<long> ChangedValueCallback;
     
     virtual ~TextWidget();

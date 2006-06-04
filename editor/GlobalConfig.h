@@ -30,6 +30,7 @@
 #include "HeapHashMap.h"
 #include "SyntaxPatterns.h"
 #include "LanguageModes.h"
+#include "SingletonInstance.h"
 
 namespace LucED {
 
@@ -38,12 +39,9 @@ using std::string;
 class GlobalConfig : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<GlobalConfig> Ptr;
     typedef HeapHashMap<string,int> NameToIndexMap;
     
-    static GlobalConfig* getInstance() {
-        return instance.getRawPtr();
-    }
+    static GlobalConfig* getInstance();
     
     void readConfig(const string& configPath);
     
@@ -79,6 +77,9 @@ public:
     }
     string getGuiColor04() {
         return guiColor04;
+    }
+    string getGuiColor05() {
+        return guiColor05;
     }
     string getGuiFont() {
         return guiFont;
@@ -117,13 +118,10 @@ public:
     LanguageMode::Ptr   getLanguageModeForFileName(const string& fileName);
 
 private:
-    static Ptr create() {
-        return Ptr(new GlobalConfig());
-    }
+    friend class SingletonInstance<GlobalConfig>;
+    
     GlobalConfig();
     
-    static Ptr instance;
-
     bool useKeyPressRepeater;
     long keyPressRepeatFirstMicroSecs;
     long keyPressRepeatNextMicroSecs;
@@ -137,6 +135,7 @@ private:
     string guiColor02;
     string guiColor03;
     string guiColor04;
+    string guiColor05;
     string guiFont;
     string guiFontColor;
     

@@ -30,6 +30,7 @@
 
 #include "HeapObject.h"
 #include "GuiColor.h"
+#include "SingletonInstance.h"
 
 namespace LucED {
 
@@ -38,8 +39,6 @@ using std::string;
 class GuiRoot : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<GuiRoot> Ptr;
-    typedef HeapObjectPtr<const GuiRoot> ConstPtr;
 
     static GuiRoot* getInstance();
     ~GuiRoot();
@@ -68,14 +67,14 @@ public:
     GuiColor getGuiColor02() const {return guiColor02;}
     GuiColor getGuiColor03() const {return guiColor03;}
     GuiColor getGuiColor04() const {return guiColor04;}
+    GuiColor getGuiColor05() const {return guiColor05;}
     
     GuiColor getGuiColor(const string& colorName);
 
 private:
+    friend class SingletonInstance<GuiRoot>;
+    
     GuiRoot();
-    
-    
-private:
     
     Display *display;
     XWindowAttributes  rootWinAttr;
@@ -92,6 +91,7 @@ private:
     GuiColor guiColor02;
     GuiColor guiColor03;
     GuiColor guiColor04;
+    GuiColor guiColor05;
 
     static void onexitFunc();
 };

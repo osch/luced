@@ -3,13 +3,14 @@
 
 #include "HeapObject.h"
 #include "Position.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
 class GuiElement : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<GuiElement> Ptr;
+    typedef OwningPtr<GuiElement> Ptr;
 
     class Measures
     {

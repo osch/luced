@@ -27,6 +27,7 @@
 #include "GuiWidget.h"
 #include "Callback.h"
 #include "Slot.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -36,7 +37,7 @@ class StatusLine : public GuiWidget
 {
 public:
 
-    typedef HeapObjectPtr<StatusLine> Ptr;
+    typedef OwningPtr<StatusLine> Ptr;
 
     static StatusLine::Ptr create(GuiWidget* parent)
     {

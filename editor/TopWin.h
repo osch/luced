@@ -25,14 +25,15 @@
 #include <iostream>
 
 #include "GuiWidget.h"
+#include "WeakPtr.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
 class TopWin : public GuiWidget
 {
 public:
-    typedef HeapObjectPtr<TopWin> Ptr;
-    typedef HeapObjectPtr<const TopWin> ConstPtr;
+    typedef WeakPtr<TopWin> Ptr;
     
     virtual ~TopWin();
 
@@ -53,11 +54,25 @@ protected:
     
     void setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy);
     
+    template<class T> static WeakPtr<T> transferOwnershipToTopWinList(T *topWin);
+    
 private:
     void setWindowIcon();
     
     Atom x11InternAtomForDeleteWindow;
 };
+
+} // namespace LucED
+
+#include "TopWinList.h"
+
+namespace LucED {
+
+template<class T> WeakPtr<T> TopWin::transferOwnershipToTopWinList(T *topWin) {
+    OwningPtr<T>  rslt(topWin);
+    TopWinList::getInstance()->add(rslt);
+    return rslt;
+}
 
 } // namespace LucED
 

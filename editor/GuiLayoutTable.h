@@ -4,13 +4,14 @@
 #include "GuiElement.h"
 #include "ObjectArray.h"
 #include "debug.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
 class GuiLayoutTable : public GuiElement
 {
 public:
-    typedef HeapObjectPtr<GuiLayoutTable> Ptr;
+    typedef OwningPtr<GuiLayoutTable> Ptr;
 
     static Ptr create(int numberRows, int numberColumns) {
         return Ptr(new GuiLayoutTable(numberRows, numberColumns));

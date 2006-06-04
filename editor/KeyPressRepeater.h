@@ -26,6 +26,7 @@
 #include "Slot.h"
 #include "EventDispatcher.h"
 #include "TimeVal.h"
+#include "SingletonInstance.h"
 
 namespace LucED {
 
@@ -44,7 +45,8 @@ public:
     bool removeKeyModifier(const XEvent *event);
     
 private:
-
+    friend class SingletonInstance<KeyPressRepeater>;
+    
     KeyPressRepeater();
     void processRepeatingEvent();
 

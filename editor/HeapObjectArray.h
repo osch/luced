@@ -29,6 +29,7 @@
 #include "MemArray.h"
 #include "HeapObject.h"
 #include "ObjectArray.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -42,7 +43,7 @@ using std::max;
 template<class T> class HeapObjectArray : public HeapObject, public ObjectArray<T>
 {
 public:
-    typedef HeapObjectPtr< HeapObjectArray<T> > Ptr;
+    typedef OwningPtr< HeapObjectArray<T> > Ptr;
     
     static Ptr create() {
         return Ptr(new HeapObjectArray());

@@ -31,18 +31,22 @@
 #include "HilitingBuffer.h"
 #include "StatusLine.h"
 #include "GuiLayoutColumn.h"
+#include "OwningPtr.h"
+#include "TopWinList.h"
 
 namespace LucED {
 
 class EditorTopWin : public TopWin
 {
 public:
-    typedef HeapObjectPtr<EditorTopWin> Ptr;
+    typedef WeakPtr<EditorTopWin> Ptr;
     
     static EditorTopWin::Ptr create(
             TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
-            int x, int y, unsigned int width, unsigned int height) {
-        return EditorTopWin::Ptr(new EditorTopWin(textData, textStyles, hilitingBuffer, x, y, width, height));
+            int x, int y, unsigned int width, unsigned int height)
+    {
+        return transferOwnershipToTopWinList(
+                new EditorTopWin(textData, textStyles, hilitingBuffer, x, y, width, height));
     }
     
     virtual void requestCloseWindow() {

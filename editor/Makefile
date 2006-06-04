@@ -54,7 +54,8 @@ MODULES = EditorTopWin    EventDispatcher   GuiRoot            GuiWidget \
           LuaObject       LuaInterpreter    ConfigException    GlobalConfig \
           LanguageModes   RegexException    BackliteBuffer     Clipboard \
           SelectionOwner  PasteDataReceiver StatusLine         GuiLayoutRow \
-          Button          GuiLayoutColumn   GuiLayoutTable     GuiLayoutWidget
+          Button          GuiLayoutColumn   GuiLayoutTable     GuiLayoutWidget \
+          SingletonKeeper   TopWinList
 
 OBJS   = $(patsubst %, $(BUILD_DIR)/%.o, $(MODULES))
 

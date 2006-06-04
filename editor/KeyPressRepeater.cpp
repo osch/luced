@@ -26,14 +26,12 @@
 
 using namespace LucED;
 
-static KeyPressRepeater* instance = NULL;
+static SingletonInstance<KeyPressRepeater> instance;
+
 
 KeyPressRepeater* KeyPressRepeater::getInstance()
 {
-    if (instance == NULL) {
-        instance = new KeyPressRepeater();
-    }
-    return instance;
+    return instance.getPtr();
 }
 
 KeyPressRepeater::KeyPressRepeater()

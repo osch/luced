@@ -28,15 +28,12 @@
 using namespace LucED;
 
 
-Clipboard::Ptr Clipboard::instance;
+static SingletonInstance<Clipboard> instance;
 
 
 Clipboard* Clipboard::getInstance()
 {
-    if (!instance.isValid()) {
-        instance = Ptr(new Clipboard());
-    }
-    return instance.getRawPtr();
+    return instance.getPtr();
 }
 
 

@@ -28,6 +28,7 @@
 #include "ObjectArray.h"
 #include "Slot.h"
 #include "CallbackContainer.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -36,7 +37,7 @@ class TextData : public HeapObject
 {
 public:
 
-    typedef HeapObjectPtr<TextData> Ptr;
+    typedef OwningPtr<TextData> Ptr;
 
     struct UpdateInfo
     {

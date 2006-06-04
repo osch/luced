@@ -26,6 +26,7 @@
 #include "Hiliting.h"
 #include "CallbackContainer.h"
 #include "MemArray.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -33,7 +34,7 @@ class HilitingBuffer : public HeapObject
 {
 public:
 
-    typedef HeapObjectPtr<HilitingBuffer> Ptr;
+    typedef OwningPtr<HilitingBuffer> Ptr;
     
     struct UpdateInfo {
         long beginPos;

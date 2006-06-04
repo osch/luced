@@ -4,6 +4,7 @@
 #include <string>
 
 #include "GuiWidget.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -12,7 +13,7 @@ using std::string;
 class GuiLayoutWidget : public GuiWidget
 {
 public:
-    typedef HeapObjectPtr<GuiLayoutWidget> Ptr;
+    typedef OwningPtr<GuiLayoutWidget> Ptr;
     
     static Ptr create(GuiWidget* parent, int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight) {
         return Ptr(new GuiLayoutWidget(parent, Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight)));

@@ -24,6 +24,7 @@
 
 #include "HeapObject.h"
 #include "HashMap.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -31,8 +32,8 @@ template<class K, class V, class H = HashFunction<K> > class HeapHashMap
         : public HeapObject, public HashMap<K,V,H>
 {
 public:
-    typedef HeapObjectPtr<HeapHashMap> Ptr;
-    typedef HeapObjectPtr<const HeapHashMap> ConstPtr;
+    typedef OwningPtr<HeapHashMap> Ptr;
+    typedef OwningPtr<const HeapHashMap> ConstPtr;
     
     static Ptr create() {
         return Ptr(new HeapHashMap());

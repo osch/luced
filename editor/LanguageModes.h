@@ -31,6 +31,7 @@
 #include "LuaObject.h"
 #include "HashMap.h"
 #include "SyntaxPatterns.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -39,7 +40,7 @@ using std::string;
 class LanguageMode : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<LanguageMode> Ptr;
+    typedef OwningPtr<LanguageMode> Ptr;
 
     static Ptr create(const string& name, Regex regex = Regex()) {
         return Ptr(new LanguageMode(name, regex));
@@ -80,7 +81,7 @@ private:
 class LanguageModes : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<LanguageModes> Ptr;
+    typedef OwningPtr<LanguageModes> Ptr;
     static Ptr create() {
         return Ptr(new LanguageModes());
     }

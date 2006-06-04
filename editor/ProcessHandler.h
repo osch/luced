@@ -24,6 +24,7 @@
 
 #include "HeapObject.h"
 #include "TimeVal.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -32,7 +33,7 @@ class AbstractProcessHandler : public HeapObject
 {
 public:
 
-    typedef HeapObjectPtr<AbstractProcessHandler> Ptr;
+    typedef OwningPtr<AbstractProcessHandler> Ptr;
     
     virtual ~AbstractProcessHandler() {}
     

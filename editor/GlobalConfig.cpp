@@ -28,8 +28,12 @@
 
 using namespace LucED;
 
-GlobalConfig::Ptr GlobalConfig::instance = GlobalConfig::create();
+static SingletonInstance<GlobalConfig> instance;;
 
+GlobalConfig* GlobalConfig::getInstance()
+{
+    return instance.getPtr();
+}
 
 GlobalConfig::GlobalConfig()
         : useKeyPressRepeater(true),
@@ -42,7 +46,8 @@ GlobalConfig::GlobalConfig()
           guiColor01("grey30"),
           guiColor02("grey70"),
           guiColor03("grey80"),
-          guiColor04("grey90"),
+          guiColor04("grey85"),
+          guiColor05("grey90"),
           guiFont("-*-helvetica-medium-r-*-*-*-120-75-75-*-*-*-*"),
           guiFontColor("black"),
           initialWindowWidth(600),
@@ -170,6 +175,13 @@ void GlobalConfig::readConfig(const string& configPath)
                 throw ConfigException("invalid guiColor04");
             }
             this->guiColor04 = o.toString();
+        }
+        o = globalConfig["guiColor05"];
+        if (o.isValid()) {
+            if (!o.isString()) {
+                throw ConfigException("invalid guiColor05");
+            }
+            this->guiColor05 = o.toString();
         }
         o = globalConfig["guiFont"];
         if (o.isValid()) {

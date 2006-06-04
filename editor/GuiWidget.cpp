@@ -141,6 +141,12 @@ void GuiWidget::addToXEventMask(long eventMask)
     XSelectInput(getDisplay(), getWid(), this->eventMask);    
 }
 
+void GuiWidget::removeFromXEventMask(long eventMask)
+{
+    this->eventMask &= ~eventMask;
+    XSelectInput(getDisplay(), getWid(), this->eventMask);    
+}
+
 
 static inline void drawLine(Display *display, Window wid, GC gc, int x, int y, int dx, int dy)
 {
@@ -164,7 +170,7 @@ int GuiWidget::getRaisedBoxBorderWidth()
     return 1;
 }
 
-void GuiWidget::drawRaisedBox(int x, int y, int w, int h)
+void GuiWidget::drawRaisedBox(int x, int y, int w, int h, GuiColor color)
 {
     Display* display = getDisplay();
     Window wid = getWid();
@@ -177,13 +183,13 @@ void GuiWidget::drawRaisedBox(int x, int y, int w, int h)
         drawLine(display, wid, gcid, 
                 x + dx, y + 1, 0, dy - 1);
 */
-        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor04());
+        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor05());
         drawLine(display, wid, gcid,
                 x, y, dx - 1, 0);
         drawLine(display, wid, gcid,
                 x, y, 0, dy - 1);
 
-        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
+        XSetForeground(display, gcid, color);
         XFillRectangle(display, wid, gcid,
                 x + 1, y + 1, dx - 1, dy - 1);
 
@@ -196,7 +202,13 @@ void GuiWidget::drawRaisedBox(int x, int y, int w, int h)
 
 }
 
-void GuiWidget::drawPressedBox(int x, int y, int w, int h)
+void GuiWidget::drawRaisedBox(int x, int y, int w, int h)
+{
+    drawRaisedBox(x, y, w, h, GuiRoot::getInstance()->getGuiColor03());
+}
+
+
+void GuiWidget::drawPressedBox(int x, int y, int w, int h, GuiColor color)
 {
     Display* display = getDisplay();
     Window wid = getWid();
@@ -215,17 +227,22 @@ void GuiWidget::drawPressedBox(int x, int y, int w, int h)
         drawLine(display, wid, gcid,
                 x, y, 0, dy - 1);
 
-        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
+        XSetForeground(display, gcid, color);
         XFillRectangle(display, wid, gcid,
                 x + 1, y + 1, dx - 1, dy - 1);
 
-        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor04());
+        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor05());
         drawLine(display, wid, gcid,
                 x + dx, y, 0, dy);
         drawLine(display, wid, gcid,
                 x, y + dy, dx, 0);
 
 
+}
+
+void GuiWidget::drawPressedBox(int x, int y, int w, int h)
+{
+    drawPressedBox(x, y, w, h, GuiRoot::getInstance()->getGuiColor03());
 }
 
 void GuiWidget::drawArrow(int x, int y, int w, int h, const Direction::Type direct)

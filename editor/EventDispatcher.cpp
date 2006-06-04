@@ -31,14 +31,11 @@
 
 using namespace LucED;
 
-static EventDispatcher* eventDispatcher = NULL;
+static SingletonInstance<EventDispatcher> instance;
 
 EventDispatcher* EventDispatcher::getInstance()
 {
-    if (eventDispatcher == NULL) {
-        eventDispatcher = new EventDispatcher();
-    }
-    return eventDispatcher;
+    return instance.getPtr();
 }
 
 EventDispatcher::EventDispatcher()

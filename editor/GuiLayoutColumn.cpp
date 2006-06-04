@@ -1,12 +1,14 @@
 #include "util.h"
 #include "GuiLayoutColumn.h"
+#include "GuiLayoutSpacer.h"
+#include "OwningPtr.h"
 
 using namespace LucED;
 
 class SpacerV : public GuiElement
 {
 public:
-    typedef HeapObjectPtr<SpacerV> Ptr;
+    typedef OwningPtr<SpacerV> Ptr;
     static Ptr create(int minHeight, int maxHeight) {
         return Ptr(new SpacerV(minHeight, maxHeight));
     }
@@ -32,6 +34,11 @@ void GuiLayoutColumn::addElement(GuiElement::Ptr element)
 void GuiLayoutColumn::addSpacer(int height)
 {
     elements.append(SpacerV::create(height, height));
+}
+
+void GuiLayoutColumn::addSpacer()
+{
+    elements.append(GuiLayoutSpacer::create(0, 0, 0, 0, 0, -1));
 }
 
 void GuiLayoutColumn::addSpacer(int minHeight, int maxHeight)

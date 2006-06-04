@@ -28,6 +28,7 @@
 #include "GuiRoot.h"
 #include "HeapObject.h"
 #include "ObjectArray.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -93,7 +94,7 @@ private:
 class TextStyles : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<TextStyles> Ptr;
+    typedef OwningPtr<TextStyles> Ptr;
     
     static TextStyles::Ptr create() {
         return TextStyles::Ptr(new TextStyles());

@@ -27,13 +27,14 @@
 #include "ByteArray.h"
 #include "CallbackContainer.h"
 #include "HilitingBuffer.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
 class BackliteBuffer : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<BackliteBuffer> Ptr;
+    typedef OwningPtr<BackliteBuffer> Ptr;
     
     static Ptr create(TextData::Ptr textData) {
         return Ptr(new BackliteBuffer(textData));

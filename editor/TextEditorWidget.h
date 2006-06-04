@@ -27,13 +27,14 @@
 #include "KeyMapping.h"
 #include "SelectionOwner.h"
 #include "PasteDataReceiver.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
 class TextEditorWidget : public TextWidget, SelectionOwner, PasteDataReceiver
 {
 public:
-    typedef HeapObjectPtr<TextEditorWidget> Ptr;
+    typedef OwningPtr<TextEditorWidget> Ptr;
     typedef Callback1<long> ChangedValueCallback;
 
     static TextEditorWidget::Ptr create(GuiWidget *parent, 

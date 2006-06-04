@@ -34,7 +34,8 @@ globalConfig = {
           guiColor01 = "grey30",
           guiColor02 = "grey70",
           guiColor03 = "grey80",
-          guiColor04 = "grey90",
+          guiColor04 = "grey85",
+          guiColor05 = "grey90",
           guiFont      = "-*-helvetica-medium-r-*-*-*-120-75-75-*-*-*-*",
           guiFontColor = "black",
           

@@ -30,7 +30,7 @@ using namespace LucED;
 
 EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
         int x, int y, unsigned int width, unsigned int height)
-    : TopWin(x, y, width, height, 0),
+    : TopWin(x, y, width, height, 50),
       layout(GuiLayoutColumn::create())
 {
     addToXEventMask(ButtonPressMask);

@@ -26,6 +26,7 @@
 #include "GuiWidget.h"
 #include "ByteArray.h"
 #include "SelectionOwner.h"
+#include "SingletonInstance.h"
 
 namespace LucED {
 
@@ -53,8 +54,8 @@ public:
     }
 
 private:
-    typedef HeapObjectPtr<Clipboard> Ptr;
-    static Ptr instance;
+    friend class SingletonInstance<Clipboard>;
+    
     Clipboard();
     
     virtual long  initSelectionDataRequest();

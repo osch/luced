@@ -24,6 +24,7 @@
 
 #include "HeapObject.h"
 #include "ObjectArray.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -37,7 +38,7 @@ namespace CallbackInternal {
 class GeneralCallbackBase : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<GeneralCallbackBase> Ptr;
+    typedef OwningPtr<GeneralCallbackBase> Ptr;
 
     GeneralCallbackBase() {}
     virtual ~GeneralCallbackBase() {}
@@ -48,7 +49,7 @@ public:
 class CallbackBase0 : public GeneralCallbackBase
 {
 public:
-    typedef HeapObjectPtr<CallbackBase0> Ptr;
+    typedef OwningPtr<CallbackBase0> Ptr;
 
     virtual ~CallbackBase0() {}
     virtual void call() const = 0;
@@ -89,7 +90,7 @@ private:
 template<class A1> class CallbackBase1 : public GeneralCallbackBase
 {
 public:
-    typedef HeapObjectPtr< CallbackBase1<A1> > Ptr;
+    typedef OwningPtr< CallbackBase1<A1> > Ptr;
 
     virtual ~CallbackBase1() {}
     virtual void call(A1) const = 0;
@@ -98,7 +99,7 @@ public:
 template<class T, class A1> class CallbackImpl1 : public CallbackBase1<A1> 
 {
 public:
-    typedef HeapObjectPtr< CallbackBase1<A1> > Ptr;
+    typedef OwningPtr< CallbackBase1<A1> > Ptr;
 
     static Ptr create(T* objectPtr, void (T::*methodPtr)(A1)) {
         return Ptr(new CallbackImpl1(objectPtr, methodPtr));
@@ -132,7 +133,7 @@ private:
 template<class A1, class A2> class CallbackBase2 : public GeneralCallbackBase
 {
 public:
-    typedef HeapObjectPtr< CallbackBase2<A1,A2> > Ptr;
+    typedef OwningPtr< CallbackBase2<A1,A2> > Ptr;
 
     virtual ~CallbackBase2() {}
     virtual void call(A1, A2) const = 0;
@@ -141,7 +142,7 @@ public:
 template<class T, class A1, class A2> class CallbackImpl2 : public CallbackBase2<A1,A2> 
 {
 public:
-    typedef HeapObjectPtr< CallbackBase2<A1,A2> > Ptr;
+    typedef OwningPtr< CallbackBase2<A1,A2> > Ptr;
 
     static Ptr create(T* objectPtr, void (T::*methodPtr)(A1,A2)) {
         return Ptr(new CallbackImpl2(objectPtr, methodPtr));
@@ -174,7 +175,7 @@ private:
 template<class A1, class A2, class A3> class CallbackBase3 : public GeneralCallbackBase
 {
 public:
-    typedef HeapObjectPtr< CallbackBase3<A1,A2,A3> > Ptr;
+    typedef OwningPtr< CallbackBase3<A1,A2,A3> > Ptr;
 
     virtual ~CallbackBase3() {}
     virtual void call(A1, A2, A3) const = 0;
@@ -183,7 +184,7 @@ public:
 template<class T, class A1, class A2, class A3> class CallbackImpl3 : public CallbackBase3<A1,A2,A3> 
 {
 public:
-    typedef HeapObjectPtr< CallbackBase3<A1,A2,A3> > Ptr;
+    typedef OwningPtr< CallbackBase3<A1,A2,A3> > Ptr;
 
     static Ptr create(T* objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
         return Ptr(new CallbackImpl3(objectPtr, methodPtr));
@@ -226,7 +227,7 @@ protected:
     template<class T> Callback0(T* objectPtr, void (T::*methodPtr)()) {
         this->callback = CallbackInternal::CallbackImpl0<T>::create(objectPtr, methodPtr);
     }
-    template<class T> Callback0(HeapObjectPtr<T> objectPtr, void (T::*methodPtr)()) {
+    template<class T> Callback0(OwningPtr<T> objectPtr, void (T::*methodPtr)()) {
         this->callback = CallbackInternal::CallbackImpl0<T>::create(objectPtr.getRawPtr(), methodPtr);
     }
 public:
@@ -260,7 +261,7 @@ protected:
     template<class T> Callback1(T* objectPtr, void (T::*methodPtr)(A1)) {
         this->callback = CallbackInternal::CallbackImpl1<T, A1>::create(objectPtr, methodPtr);
     }
-    template<class T> Callback1(HeapObjectPtr<T> objectPtr, void (T::*methodPtr)(A1)) {
+    template<class T> Callback1(OwningPtr<T> objectPtr, void (T::*methodPtr)(A1)) {
         this->callback = CallbackInternal::CallbackImpl1<T, A1>::create(objectPtr.getRawPtr(), methodPtr);
     }
 public:
@@ -294,7 +295,7 @@ protected:
     template<class T> Callback2(T* objectPtr, void (T::*methodPtr)(A1,A2)) {
         this->callback = CallbackInternal::CallbackImpl2<T, A1, A2>::create(objectPtr, methodPtr);
     }
-    template<class T> Callback2(HeapObjectPtr<T> objectPtr, void (T::*methodPtr)(A1,A2)) {
+    template<class T> Callback2(OwningPtr<T> objectPtr, void (T::*methodPtr)(A1,A2)) {
         this->callback = CallbackInternal::CallbackImpl2<T, A1, A2>::create(objectPtr.getRawPtr(), methodPtr);
     }
 public:
@@ -327,7 +328,7 @@ protected:
     template<class T> Callback3(T* objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
         this->callback = CallbackInternal::CallbackImpl3<T, A1, A2, A3>::create(objectPtr, methodPtr);
     }
-    template<class T> Callback3(HeapObjectPtr<T> objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
+    template<class T> Callback3(OwningPtr<T> objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
         this->callback = CallbackInternal::CallbackImpl3<T, A1, A2, A3>::create(objectPtr.getRawPtr(), methodPtr);
     }
 public:

@@ -32,6 +32,7 @@
 #include "CallbackContainer.h"
 #include "ProcessHandler.h"
 #include "HashMap.h"
+#include "SingletonInstance.h"
 
 namespace LucED {
 
@@ -40,8 +41,6 @@ using std::priority_queue;
 class EventDispatcher : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<EventDispatcher> Ptr;
-    typedef HeapObjectPtr<const EventDispatcher> ConstPtr;
     typedef Callback0 TimerCallback;
     typedef Callback0 UpdateCallback;
     
@@ -73,6 +72,8 @@ public:
     void registerProcess(ProcessHandler process);
     
 private:
+    friend class SingletonInstance<EventDispatcher>;
+    
     class TimerRegistration
     {
     public:

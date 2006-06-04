@@ -1,12 +1,13 @@
 #include "util.h"
 #include "GuiLayoutRow.h"
+#include "OwningPtr.h"
 
 using namespace LucED;
 
 class SpacerH : public GuiElement
 {
 public:
-    typedef HeapObjectPtr<SpacerH> Ptr;
+    typedef OwningPtr<SpacerH> Ptr;
     static Ptr create(int minWidth, int maxWidth) {
         return Ptr(new SpacerH(minWidth, maxWidth));
     }

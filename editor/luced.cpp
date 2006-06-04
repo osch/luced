@@ -26,6 +26,7 @@
 #include "LuaException.h"
 #include "GlobalConfig.h"
 #include "ConfigException.h"
+#include "SingletonKeeper.h"
 
 using namespace LucED;
 
@@ -33,6 +34,8 @@ int main(int argc, char **argv)
 {
     try
     {
+        SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
+        
         string fileName;
         if (argc >= 2) {
             fileName = argv[1];

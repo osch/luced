@@ -24,123 +24,121 @@
 
 #include <stdio.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <new>
+#include <typeinfo>
 
+#include "debug.h"
 #include "NonCopyable.h"
 
 namespace LucED {
 
+
+class HeapObjectCounters : NonCopyable
+{
+private:
+    friend class HeapObject;
+    friend class HeapObjectRefManipulator;
+    HeapObjectCounters() : weakCounter(0), strongCounter(0) 
+#ifdef DEBUG
+        , magic(MAGIC)
+#endif
+    {}
+#ifdef DEBUG
+    enum {MAGIC = 12345678};
+    int magic;
+#endif
+    int weakCounter;
+    int strongCounter;
+};
+
 class HeapObject : NonCopyable
 {
-public:
-    
+protected:
+
     HeapObject() {
-        refCounter = 0;
     }
     
+public:
+
     /**
      * Virtual Destructor.
      */
     virtual ~HeapObject() {}
-    
-private:
 
+protected:
+    
+    void* operator new(size_t size) {
+        HeapObjectCounters *allocated = static_cast<HeapObjectCounters *>(
+                malloc(sizeof(HeapObjectCounters) + size));
+        new(allocated) HeapObjectCounters();
+        return allocated + 1;
+    }
+
+    // should be private, but gcc doesn't allow this    
+    void operator delete(void* ptr, size_t size) {
+        ASSERT(true == false);
+    }
+
+private:
     friend class HeapObjectRefManipulator;
 
-    mutable int refCounter;
-    
 };
 
 class HeapObjectRefManipulator
 {
 protected:
+    static bool hasOwningReferences(const HeapObject *obj) {
+        return (getCounters(obj)->strongCounter >= 1);
+    }
     static void incRefCounter(const HeapObject *obj) {
-        if (obj != NULL)
-            obj->refCounter += 1;
+        if (obj != NULL) {
+            getCounters(obj)->strongCounter += 1;
+        }
     }
     static void decRefCounter(const HeapObject *obj) {
         if (obj != NULL) {
-            obj->refCounter -= 1;
-            if (obj->refCounter == 0) {
-                delete obj;
+            ASSERT(hasOwningReferences(obj));
+            getCounters(obj)->strongCounter -= 1;
+            if (!hasOwningReferences(obj)) {
+                obj->~HeapObject();  // object destructor
+                if (!hasWeakReferences(obj)) {
+                    free(getCounters(obj));
+                }
             }
         }
     }
+    
+    static bool hasWeakReferences(const HeapObject *obj) {
+        return (getCounters(obj)->weakCounter >= 1);
+    }
+    static void incWeakCounter(const HeapObject *obj) {
+        if (obj != NULL) {
+            getCounters(obj)->weakCounter += 1;
+        }
+    }
+    static void decWeakCounter(const HeapObject *obj) {
+        if (obj != NULL) {
+            ASSERT(hasWeakReferences(obj));
+            getCounters(obj)->weakCounter -= 1;
+            if (!hasWeakReferences(obj) && !hasOwningReferences(obj)) {
+                free(getCounters(obj));
+            }
+        }
+    }
+
+private:
+    static HeapObjectCounters* getCounters(const void* heapObject) {
+        HeapObjectCounters* rslt = const_cast<HeapObjectCounters*>(
+            static_cast<const HeapObjectCounters*>(heapObject) - 1
+        );
+#ifdef DEBUG
+        ASSERT(rslt->magic == HeapObjectCounters::MAGIC);
+#endif        
+        return rslt;
+    }
 };
 
-template<class T> class HeapObjectPtr : private HeapObjectRefManipulator
-{
-public:
-    
-    HeapObjectPtr(T *ptr = NULL) {
-        this->ptr = ptr;
-        incRefCounter(ptr);
-    }
-    
-    ~HeapObjectPtr() {
-        decRefCounter(ptr);
-    }
-    
-    HeapObjectPtr(const HeapObjectPtr& src) {
-        ptr = src.ptr;
-        incRefCounter(ptr);
-    }
-    
-    template<class S> HeapObjectPtr(const HeapObjectPtr<S>& src) {
-        ptr = src.getRawPtr();
-        incRefCounter(ptr);
-    }
-    
-    HeapObjectPtr& operator=(const HeapObjectPtr& src) {
-        if (this != &src) {
-            decRefCounter(ptr);
-            ptr = src.ptr;
-            incRefCounter(ptr);
-        }
-        return *this;
-    }
-    
-    template<class S> HeapObjectPtr& operator=(const HeapObjectPtr<S>& src) {
-        if (this != &src) {
-            decRefCounter(ptr);
-            ptr = src.ptr;
-            incRefCounter(ptr);
-        }
-    }
-    
-    void invalidate() {
-        decRefCounter(ptr);
-        ptr = NULL;
-    }
-    
-    bool isValid() const {
-        return ptr != NULL;
-    }
-    
-    bool isInvalid() const {
-        return ptr == NULL;
-    }
-    
-    T* operator->() const {
-        return ptr;
-    }
-    
-    T* getRawPtr() const {
-        return ptr;
-    }
-    
-    bool operator==(const HeapObjectPtr& rhs) const {
-        return ptr == rhs.ptr;
-    }
-    
-    template<class S> bool operator==(const HeapObjectPtr<S>& rhs) const {
-        return ptr == rhs.ptr;
-    }
-    
-private:
-    
-    T *ptr;
-    
-};
 
 } // namespace LucED
 

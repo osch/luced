@@ -4,13 +4,14 @@
 #include "GuiElement.h"
 #include "ObjectArray.h"
 #include "debug.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
 class GuiLayoutSpacer : public GuiElement
 {
 public:
-    typedef HeapObjectPtr<GuiLayoutSpacer> Ptr;
+    typedef OwningPtr<GuiLayoutSpacer> Ptr;
 
     static Ptr create(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight) {
         return Ptr(new GuiLayoutSpacer(Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight)));
@@ -36,7 +37,7 @@ protected:
 class GuiLayoutSpacerH : public GuiLayoutSpacer
 {
 public:
-    typedef HeapObjectPtr<GuiLayoutSpacerH> Ptr;
+    typedef OwningPtr<GuiLayoutSpacerH> Ptr;
 
     static Ptr create(int minWidth, int bestWidth, int maxWidth) {
         return Ptr(new GuiLayoutSpacerH(Measures(minWidth, 0, bestWidth, 0, maxWidth, 0)));
@@ -58,7 +59,7 @@ private:
 class GuiLayoutSpacerV : public GuiLayoutSpacer
 {
 public:
-    typedef HeapObjectPtr<GuiLayoutSpacerV> Ptr;
+    typedef OwningPtr<GuiLayoutSpacerV> Ptr;
 
     static Ptr create(int minHeight, int bestHeight, int maxHeight) {
         return Ptr(new GuiLayoutSpacerV(Measures(0, minHeight, 0, bestHeight, 0, maxHeight)));
@@ -80,7 +81,7 @@ private:
 class GuiLayoutSpacerFrame : public GuiElement
 {
 public:
-    typedef HeapObjectPtr<GuiLayoutSpacerFrame> Ptr;
+    typedef OwningPtr<GuiLayoutSpacerFrame> Ptr;
 
     static Ptr create(GuiElement::Ptr member) {
         return Ptr(new GuiLayoutSpacerFrame(member));

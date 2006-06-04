@@ -28,6 +28,7 @@
 #include "HeapObject.h"
 #include "ObjectArray.h"
 #include "LuaObject.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -36,7 +37,7 @@ using std::string;
 class LuaInterpreter : public HeapObject, private LuaInterpreterAccessToLuaObject
 {
 public:
-    typedef HeapObjectPtr<LuaInterpreter> Ptr;
+    typedef OwningPtr<LuaInterpreter> Ptr;
     
     static Ptr create() {
         return Ptr(new LuaInterpreter());

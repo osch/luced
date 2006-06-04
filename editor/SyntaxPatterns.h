@@ -28,6 +28,7 @@
 #include "HeapHashMap.h"
 #include "Regex.h"
 #include "MemArray.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -86,7 +87,7 @@ struct SyntaxPattern
 class SyntaxPatterns : public HeapObject
 {
 public:
-    typedef HeapObjectPtr<SyntaxPatterns> Ptr;
+    typedef OwningPtr<SyntaxPatterns> Ptr;
     typedef HeapHashMap<string,int> NameToIndexMap;
     
     static SyntaxPatterns::Ptr create(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap) {

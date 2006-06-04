@@ -26,6 +26,7 @@
 #include "Callback.h"
 #include "Slot.h"
 #include "types.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
@@ -33,7 +34,7 @@ class ScrollBar : public GuiWidget
 {
 public:
 
-    typedef HeapObjectPtr<ScrollBar> Ptr;
+    typedef OwningPtr<ScrollBar> Ptr;
 
     static ScrollBar::Ptr create(GuiWidget* parent, Orientation::Type orientation)
     {

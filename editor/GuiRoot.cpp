@@ -27,14 +27,11 @@
 
 using namespace LucED;
 
-static GuiRoot::Ptr guiRoot;
+static SingletonInstance<GuiRoot> instance;
 
 GuiRoot* GuiRoot::getInstance()
 {
-    if (guiRoot == NULL) {
-        guiRoot = GuiRoot::Ptr(new GuiRoot());
-    }
-    return guiRoot.getRawPtr();
+    return instance.getPtr();
 }
 
 static char buffer[4000];
@@ -95,16 +92,18 @@ GuiRoot::GuiRoot()
             &xcolor1_st, &xcolor2_st);
     guiColor04 = GuiColor(xcolor1_st.pixel);
 
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor05().c_str(),
+            &xcolor1_st, &xcolor2_st);
+    guiColor05 = GuiColor(xcolor1_st.pixel);
+
     //atexit(onexitFunc);
 }
 
-GuiRoot::~GuiRoot() {
-    if (GlobalConfig::getInstance()->getUseKeyPressRepeater())
-    {
-        if (originalKeyboardModeWasAutoRepeat) {
-            XAutoRepeatOn(display);
-            XFlush(display);
-        }
+GuiRoot::~GuiRoot()
+{
+    if (originalKeyboardModeWasAutoRepeat) {
+        XAutoRepeatOn(display);
+        XFlush(display);
     }
 }
 

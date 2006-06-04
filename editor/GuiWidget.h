@@ -31,6 +31,7 @@
 #include "GuiColor.h"
 #include "GuiRoot.h"
 #include "TextStyle.h"
+#include "OwningPtr.h"
 
 
 namespace LucED {
@@ -41,8 +42,8 @@ class GuiRoot;
 class GuiWidget : public GuiElement
 {
 public:
-    typedef HeapObjectPtr<GuiWidget> Ptr;
-    typedef HeapObjectPtr<const GuiWidget> ConstPtr;
+    typedef OwningPtr<GuiWidget> Ptr;
+    typedef OwningPtr<const GuiWidget> ConstPtr;
     
     class EventRegistration
     {
@@ -89,15 +90,17 @@ protected:
     
     GuiClipping obtainGuiClipping(int x, int y, int w, int h);
 
-
+public:
     Window getWid() const {
         return wid;
     }
+protected:
     
     void setBackgroundColor(GuiColor color);
     void setBorderColor(GuiColor color);
     
     void addToXEventMask(long eventMask);
+    void removeFromXEventMask(long eventMask);
     
     bool propagateEventToParentWidget(const XEvent *event) {
         if (parent != NULL) {
@@ -109,8 +112,10 @@ protected:
     
     TextStyle* getGuiTextStyle();
     void drawRaisedSurface(int x, int y, int w, int h);
+    void drawRaisedBox(int x, int y, int w, int h, GuiColor color);
     void drawRaisedBox(int x, int y, int w, int h);
     int getRaisedBoxBorderWidth();
+    void drawPressedBox(int x, int y, int w, int h, GuiColor color);
     void drawPressedBox(int x, int y, int w, int h);
     void drawArrow(int x, int y, int w, int h, const Direction::Type direct);
     void drawGuiText(int x, int y, const char* ptr, long length);

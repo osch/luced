@@ -3,20 +3,22 @@
 
 #include "GuiElement.h"
 #include "ObjectArray.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
 class GuiLayoutColumn : public GuiElement
 {
 public:
-    typedef HeapObjectPtr<GuiLayoutColumn> Ptr;
+    typedef OwningPtr<GuiLayoutColumn> Ptr;
     
     static Ptr create() {
         return Ptr(new GuiLayoutColumn());
     }
     
     void addElement(GuiElement::Ptr element);
-    void addSpacer(int height = -1);
+    void addSpacer();
+    void addSpacer(int height);
     void addSpacer(int minHeight, int maxHeight);
     virtual Measures getDesiredMeasures();
     virtual void setPosition(Position p);
