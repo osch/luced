@@ -41,7 +41,7 @@ TopWin::TopWin(int x, int y, unsigned int width, unsigned int height, unsigned b
     XSetWMProtocols(getDisplay(), getWid(), 
             &(x11InternAtomForDeleteWindow), 1);
     
-    addToXEventMask(StructureNotifyMask|KeyPressMask|KeyReleaseMask|FocusChangeMask);
+    addToXEventMask(KeyPressMask|KeyReleaseMask|FocusChangeMask);
 }
 
 static TopWin* expectedFocusTopWin = NULL;
@@ -74,16 +74,6 @@ bool TopWin::processEvent(const XEvent *event)
     } else {
         
         switch (event->type) {
-
-            case ConfigureNotify: {
-                int x = event->xconfigure.x;
-                int y = event->xconfigure.y;
-                int w = event->xconfigure.width;
-                int h = event->xconfigure.height;
-                Position newPosition(x,y,w,h);
-                this->treatNewWindowPosition(newPosition);
-                return true;
-            }
 
             case ClientMessage: {
                 if (event->xclient.data.l[0] == this->x11InternAtomForDeleteWindow) {
@@ -231,4 +221,10 @@ void TopWin::setWindowIcon()
         XFree(hints);
     }
 }
+
+void TopWin::requestCloseWindow()
+{
+    owner->requestCloseChildWindow(this);
+}
+
 

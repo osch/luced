@@ -72,7 +72,8 @@ EventDispatcher* GuiWidget::getEventDispatcher()
 GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width)
     : isTopWindow(true),
       parent(NULL),
-      eventMask(0)
+      eventMask(0),
+      position(x, y, width, height)
 {
     wid = XCreateSimpleWindow(getDisplay(), getRootWid(), 
             x, y, width, height, border_width, 
@@ -83,13 +84,15 @@ GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsi
         staticallyInitialized = true;
     }
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
+    addToXEventMask(StructureNotifyMask);
 }
     
 GuiWidget::GuiWidget(GuiWidget* parent,
             int x, int y, unsigned int width, unsigned int height, unsigned border_width)
     : isTopWindow(false),
       parent(parent),
-      eventMask(0)
+      eventMask(0),
+      position(x, y, width, height)
 {
     wid = XCreateSimpleWindow(getDisplay(), parent->getWid(), 
             x, y, width, height, border_width, 
@@ -100,6 +103,7 @@ GuiWidget::GuiWidget(GuiWidget* parent,
         staticallyInitialized = true;
     }
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
+    addToXEventMask(StructureNotifyMask);
 }
 
 GuiWidget::~GuiWidget()
@@ -110,9 +114,32 @@ GuiWidget::~GuiWidget()
     }
 }
 
+bool GuiWidget::processEvent(const XEvent *event)
+{
+    switch (event->type) {
+
+        case ConfigureNotify: {
+            int x = event->xconfigure.x;
+            int y = event->xconfigure.y;
+            int w = event->xconfigure.width;
+            int h = event->xconfigure.height;
+            Position newPosition(x,y,w,h);
+            if (position != newPosition) {
+                this->treatNewWindowPosition(newPosition);
+                position = newPosition;
+            }
+            return true;
+        }
+        default: {
+            return false;
+        }
+    }
+}
+
 void GuiWidget::setPosition(Position p)
 {
     XMoveResizeWindow(getDisplay(), wid, p.x, p.y, p.w, p.h);
+    // this->position is set via ConfigureNotify event
 }
 
 void GuiWidget::show()

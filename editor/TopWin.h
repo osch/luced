@@ -27,10 +27,13 @@
 #include "GuiWidget.h"
 #include "WeakPtr.h"
 #include "OwningPtr.h"
+#include "ObjectArray.h"
+#include "TopWinOwner.h"
 
 namespace LucED {
 
-class TopWin : public GuiWidget
+
+class TopWin : public GuiWidget, public TopWinOwner
 {
 public:
     typedef WeakPtr<TopWin> Ptr;
@@ -41,7 +44,7 @@ public:
 
     virtual bool processKeyboardEvent(const XEvent *event) {return false;}
     
-    virtual void requestCloseWindow() {}
+    virtual void requestCloseWindow();
     virtual void treatNewWindowPosition(Position newPosition) {}
     virtual void treatFocusIn() {}
     virtual void treatFocusOut() {}
@@ -53,26 +56,31 @@ protected:
     TopWin(int x, int y, unsigned int width, unsigned int height, unsigned border_width);
     
     void setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy);
-    
-    template<class T> static WeakPtr<T> transferOwnershipToTopWinList(T *topWin);
+    template<class T> static WeakPtr<T> transferOwnershipTo(T *topWin, TopWinOwner* owner);
+    template<class T> static WeakPtr<T> transferOwnershipTo(T *topWin, TopWin::Ptr owner);
     
 private:
     void setWindowIcon();
     
     Atom x11InternAtomForDeleteWindow;
+    TopWinOwner* owner;
 };
 
-} // namespace LucED
 
-#include "TopWinList.h"
 
-namespace LucED {
-
-template<class T> WeakPtr<T> TopWin::transferOwnershipToTopWinList(T *topWin) {
+template<class T> WeakPtr<T> TopWin::transferOwnershipTo(T *topWin, TopWinOwner* owner)
+{
     OwningPtr<T>  rslt(topWin);
-    TopWinList::getInstance()->add(rslt);
+    owner->ownedTopWins.append(rslt);
+    topWin->owner = owner;
     return rslt;
 }
+
+template<class T> WeakPtr<T> TopWin::transferOwnershipTo(T *topWin, TopWin::Ptr owner)
+{
+    return transferOwnershipTo(topWin, owner.getRawPtr());
+}
+
 
 } // namespace LucED
 

@@ -55,7 +55,8 @@ MODULES = EditorTopWin    EventDispatcher   GuiRoot            GuiWidget \
           LanguageModes   RegexException    BackliteBuffer     Clipboard \
           SelectionOwner  PasteDataReceiver StatusLine         GuiLayoutRow \
           Button          GuiLayoutColumn   GuiLayoutTable     GuiLayoutWidget \
-          SingletonKeeper   TopWinList
+          FindDialog      SingletonKeeper   TopWinList         TopWinOwner \
+          DialogWin
 
 OBJS   = $(patsubst %, $(BUILD_DIR)/%.o, $(MODULES))
 

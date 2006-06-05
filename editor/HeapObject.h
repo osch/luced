@@ -57,6 +57,7 @@ class HeapObject : NonCopyable
 protected:
 
     HeapObject() {
+        printf("%s\n", typeid(this).name());
     }
     
 public:
@@ -72,6 +73,7 @@ protected:
         HeapObjectCounters *allocated = static_cast<HeapObjectCounters *>(
                 malloc(sizeof(HeapObjectCounters) + size));
         new(allocated) HeapObjectCounters();
+        printf("----> HeapObject %p : allocating %8.d bytes : ", allocated + 1, size);
         return allocated + 1;
     }
 
@@ -103,6 +105,7 @@ protected:
             if (!hasOwningReferences(obj)) {
                 obj->~HeapObject();  // object destructor
                 if (!hasWeakReferences(obj)) {
+                    printf("----> HeapObject %p : deleting\n", obj);
                     free(getCounters(obj));
                 }
             }
@@ -122,6 +125,7 @@ protected:
             ASSERT(hasWeakReferences(obj));
             getCounters(obj)->weakCounter -= 1;
             if (!hasWeakReferences(obj) && !hasOwningReferences(obj)) {
+                printf("----> HeapObject %p : deleting\n", obj);
                 free(getCounters(obj));
             }
         }

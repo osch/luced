@@ -19,37 +19,31 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLETONKEEPER_H
-#define SINGLETONKEEPER_H
+#ifndef TOPWINOWNER_H
+#define TOPWINOWNER_H
 
-#include "debug.h"
-#include "HeapObject.h"
+#include "NonCopyable.h"
 #include "ObjectArray.h"
 #include "OwningPtr.h"
 
 namespace LucED {
 
-class SingletonKeeper : public HeapObject
+class TopWin;
+
+
+class TopWinOwner : NonCopyable
 {
 public:
-    typedef OwningPtr<SingletonKeeper>     Ptr;
-    
-    static Ptr create();
-    
-    static SingletonKeeper* getInstance();
-    
-    template<class T> WeakPtr<T> add(OwningPtr<T> singletonPtr) {
-        singletons.append(singletonPtr);
-        return singletonPtr;
-    }
-    
+    virtual void requestCloseChildWindow(TopWin *topWin);
+protected:
+    int getNumberOfChildWindows() { return ownedTopWins.getLength(); }
 private:
-    SingletonKeeper() {}
-
-    ObjectArray< OwningPtr<HeapObject> > singletons;
+    friend class TopWin;
+    ObjectArray< OwningPtr<TopWin> > ownedTopWins;
 };
+
 
 
 } // namespace LucED
 
-#endif // SINGLETONKEEPER_H
+#endif // TOPWINOWNER_H

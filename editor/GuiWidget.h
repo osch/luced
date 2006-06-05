@@ -56,8 +56,10 @@ public:
         Window wid;
     };
     
-    virtual bool processEvent(const XEvent *event) {return false;}
+    virtual bool processEvent(const XEvent *event);
     virtual void setPosition(Position newPosition);
+    virtual void treatNewWindowPosition(Position newPosition) {}
+    const Position& getPosition() { return position; }
     
     virtual void show();
     virtual void hide();
@@ -131,6 +133,7 @@ private:
     Window wid;
     long eventMask;
     GuiWidget *parent;
+    Position position;
 };
 
 class GuiWidgetAccessForEventProcessors

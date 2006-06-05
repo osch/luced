@@ -19,37 +19,35 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLETONKEEPER_H
-#define SINGLETONKEEPER_H
+#ifndef DIALOGWIN_H
+#define DIALOGWIN_H
 
-#include "debug.h"
-#include "HeapObject.h"
-#include "ObjectArray.h"
-#include "OwningPtr.h"
+#include "TopWin.h"
 
 namespace LucED {
 
-class SingletonKeeper : public HeapObject
+class DialogWin : public TopWin
 {
 public:
-    typedef OwningPtr<SingletonKeeper>     Ptr;
+    typedef WeakPtr<DialogWin> Ptr;
+
+
+    virtual void treatNewWindowPosition(Position newPosition);
+    virtual bool processEvent(const XEvent *event);
+    virtual bool processKeyboardEvent(const XEvent *event);
+
+    virtual void treatFocusIn();
+    virtual void treatFocusOut();
     
-    static Ptr create();
+protected:
+    DialogWin(TopWin* referingWindow, int x, int y, unsigned int width, unsigned int height);
     
-    static SingletonKeeper* getInstance();
-    
-    template<class T> WeakPtr<T> add(OwningPtr<T> singletonPtr) {
-        singletons.append(singletonPtr);
-        return singletonPtr;
-    }
-    
+    void setRootElement(OwningPtr<GuiElement> rootElement);
+    GuiElement* getRootElement() {return rootElement.getRawPtr();}
 private:
-    SingletonKeeper() {}
-
-    ObjectArray< OwningPtr<HeapObject> > singletons;
+    OwningPtr<GuiElement> rootElement;
 };
-
 
 } // namespace LucED
 
-#endif // SINGLETONKEEPER_H
+#endif // DIALOGWIN_H

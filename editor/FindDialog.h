@@ -19,37 +19,37 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLETONKEEPER_H
-#define SINGLETONKEEPER_H
+#ifndef FINDTOPWIN_H
+#define FINDTOPWIN_H
 
-#include "debug.h"
-#include "HeapObject.h"
-#include "ObjectArray.h"
-#include "OwningPtr.h"
+#include "TopWin.h"
+#include "EventDispatcher.h"
+#include "Button.h"
+#include "GuiLayoutColumn.h"
+#include "DialogWin.h"
 
 namespace LucED {
 
-class SingletonKeeper : public HeapObject
+class FindDialog : public DialogWin
 {
 public:
-    typedef OwningPtr<SingletonKeeper>     Ptr;
+    typedef WeakPtr<FindDialog> Ptr;
     
-    static Ptr create();
-    
-    static SingletonKeeper* getInstance();
-    
-    template<class T> WeakPtr<T> add(OwningPtr<T> singletonPtr) {
-        singletons.append(singletonPtr);
-        return singletonPtr;
+    static FindDialog::Ptr create(TopWin* referingWindow, 
+            int x, int y, unsigned int width, unsigned int height) {
+        return transferOwnershipTo(
+                new FindDialog(referingWindow, x, y, width, height),
+                referingWindow);
     }
     
+    
 private:
-    SingletonKeeper() {}
+    FindDialog(TopWin* referingWindow, int x, int y, unsigned int width, unsigned int height);
 
-    ObjectArray< OwningPtr<HeapObject> > singletons;
+    GuiLayoutColumn::Ptr layout;
+    Button::Ptr button1, button2;
 };
-
 
 } // namespace LucED
 
-#endif // SINGLETONKEEPER_H
+#endif // FINDTOPWIN_H

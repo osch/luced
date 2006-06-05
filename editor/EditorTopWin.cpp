@@ -19,6 +19,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <X11/keysym.h>
+#include <X11/Xatom.h>
+
 #include "EditorTopWin.h"
 #include "GlobalConfig.h"
 #include "GuiLayoutTable.h"
@@ -31,9 +34,11 @@ using namespace LucED;
 EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
         int x, int y, unsigned int width, unsigned int height)
     : TopWin(x, y, width, height, 50),
-      layout(GuiLayoutColumn::create())
+      layout(GuiLayoutColumn::create()),
+      keyMapping(this)
 {
     addToXEventMask(ButtonPressMask);
+    keyMapping.add(            ControlMask, XK_f,      &EditorTopWin::invokeFindDialog);
     
     statusLine = StatusLine::create(this);
     layout->addElement(statusLine);
@@ -82,12 +87,24 @@ EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, H
 
 void EditorTopWin::treatNewWindowPosition(Position newPosition)
 {
+    TopWin::treatNewWindowPosition(newPosition);
     layout->setPosition(Position(0, 0, newPosition.w, newPosition.h));
 }
 
 bool EditorTopWin::processKeyboardEvent(const XEvent *event)
 {
-    return textEditor->processKeyboardEvent(event);
+    KeyMapping<EditorTopWin>::MethodPtr m = 
+            keyMapping.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+
+    if (m != NULL)
+    {
+        (this->*m)();
+        return true;
+    } 
+    else
+    {
+        return textEditor->processKeyboardEvent(event);
+    }
 }
 
 
@@ -123,6 +140,21 @@ void EditorTopWin::treatFocusOut()
     textEditor->treatFocusOut();
 }
 
+void EditorTopWin::requestCloseChildWindow(TopWin *topWin)
+{
+    if (findDialog.getRawPtr() == topWin) {
+        findDialog->hide();
+    } else {
+        TopWinOwner::requestCloseChildWindow(topWin);
+    }
+}
 
+void EditorTopWin::invokeFindDialog()
+{
+    if (!findDialog.isValid()) {
+        findDialog = FindDialog::create(this, 250, 250, 100, 100);
+    }
+    findDialog->show();
+}
 
 

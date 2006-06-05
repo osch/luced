@@ -33,6 +33,8 @@
 #include "GuiLayoutColumn.h"
 #include "OwningPtr.h"
 #include "TopWinList.h"
+#include "KeyMapping.h"
+#include "FindDialog.h"
 
 namespace LucED {
 
@@ -45,20 +47,20 @@ public:
             TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
             int x, int y, unsigned int width, unsigned int height)
     {
-        return transferOwnershipToTopWinList(
-                new EditorTopWin(textData, textStyles, hilitingBuffer, x, y, width, height));
+        return transferOwnershipTo(
+                new EditorTopWin(textData, textStyles, hilitingBuffer, x, y, width, height),
+                TopWinList::getInstance());
     }
     
-    virtual void requestCloseWindow() {
-        getEventDispatcher()->requestProgramTermination();
-    }
-
     virtual bool processEvent(const XEvent *event);
     virtual bool processKeyboardEvent(const XEvent *event);
 
     virtual void treatNewWindowPosition(Position newPosition);
     virtual void treatFocusIn();
     virtual void treatFocusOut();
+    
+    virtual void requestCloseChildWindow(TopWin *topWin);
+    void invokeFindDialog();
     
 private:
     EditorTopWin(
@@ -70,6 +72,8 @@ private:
     ScrollBar::Ptr scrollBarV;    
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr layout;
+    KeyMapping<EditorTopWin> keyMapping;
+    FindDialog::Ptr findDialog;
 };
 
 } // namespace LucED

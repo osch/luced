@@ -47,8 +47,11 @@ public:
             new(this->getPtr(i)) T();
         }
     }
+    /**
+     * Desctruct elements in reverse order
+     */
     ~ObjectArray() {
-        for (long i = 0; i < getLength(); ++i) {
+        for (long i = getLength() - 1; i >= 0; --i) {
             this->getPtr(i)->~T();
         }
     }
