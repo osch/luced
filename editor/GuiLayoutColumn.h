@@ -27,6 +27,7 @@ private:
     GuiLayoutColumn() {}
     
     ObjectArray<GuiElement::Ptr> elements;
+    ObjectArray<Measures> rowMeasures;
 };
 
 } // namespace LucED

@@ -119,16 +119,21 @@ bool GuiWidget::processEvent(const XEvent *event)
     switch (event->type) {
 
         case ConfigureNotify: {
-            int x = event->xconfigure.x;
-            int y = event->xconfigure.y;
-            int w = event->xconfigure.width;
-            int h = event->xconfigure.height;
-            Position newPosition(x,y,w,h);
-            if (position != newPosition) {
-                this->treatNewWindowPosition(newPosition);
-                position = newPosition;
+            if (event->xconfigure.window == getWid()
+             && event->xconfigure.event  == getWid()) {
+                int x = event->xconfigure.x;
+                int y = event->xconfigure.y;
+                int w = event->xconfigure.width;
+                int h = event->xconfigure.height;
+                Position newPosition(x,y,w,h);
+                if (position != newPosition) {
+                    this->treatNewWindowPosition(newPosition);
+                    position = newPosition;
+                }
+                return true;
+            } else {
+                return false;
             }
-            return true;
         }
         default: {
             return false;
@@ -139,6 +144,12 @@ bool GuiWidget::processEvent(const XEvent *event)
 void GuiWidget::setPosition(Position p)
 {
     XMoveResizeWindow(getDisplay(), wid, p.x, p.y, p.w, p.h);
+    // this->position is set via ConfigureNotify event
+}
+
+void GuiWidget::setSize(int width, int height)
+{
+    XResizeWindow(getDisplay(), wid, width, height);
     // this->position is set via ConfigureNotify event
 }
 
@@ -320,6 +331,26 @@ void GuiWidget::drawArrow(int x, int y, int w, int h, const Direction::Type dire
     XDrawLines(display, wid, gcid,
             points, n, CoordModePrevious);
 }
+
+
+void GuiWidget::drawFrame(int x, int y, int w, int h)
+{
+    Display* display = getDisplay();
+    Window wid = getWid();
+    GC gc = guiWidget_gcid;
+    
+    w -= 1; 
+    h -= 1;
+    
+    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor01());
+    XDrawLine(display, wid,  gc,    x + 0, y + 0,    x + w, y + 0);
+    XDrawLine(display, wid,  gc,    x + 0, y + h,    x + 0, y + 0);
+
+//    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor05());
+    XDrawLine(display, wid,  gc,    x + w, y + h,    x + 0, y + h);
+    XDrawLine(display, wid,  gc,    x + w, y + 0,    x + w, y + h);
+}
+
 
 TextStyle* GuiWidget::getGuiTextStyle()
 {

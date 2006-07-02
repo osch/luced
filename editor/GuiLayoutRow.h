@@ -17,7 +17,8 @@ public:
     }
     
     void addElement(GuiElement::Ptr element);
-    void addSpacer(int width = -1);
+    void addSpacer(int width);
+    void addSpacer();
     void addSpacer(int minWidth, int maxWidth);
     virtual Measures getDesiredMeasures();
     virtual void setPosition(Position p);
@@ -26,6 +27,7 @@ private:
     GuiLayoutRow() {}
     
     ObjectArray<GuiElement::Ptr> elements;
+    ObjectArray<Measures> columnMeasures;
 };
 
 } // namespace LucED

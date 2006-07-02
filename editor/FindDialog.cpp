@@ -22,50 +22,81 @@
 #include "FindDialog.h"
 #include "GlobalConfig.h"
 #include "GuiLayoutRow.h"
-#include "GuiLayoutTable.h"
 #include "GuiLayoutSpacer.h"
+#include "TextData.h"
+#include "GlobalConfig.h"
 
 using namespace LucED;
 
 FindDialog::FindDialog(TopWin* referingWindow, int x, int y, unsigned int width, unsigned int height)
-    : DialogWin(referingWindow, x, y, width, height)
+    : DialogWin(referingWindow),
+      slotForButtonPressed(this, &FindDialog::handleButtonPressed)
 {
-    button1 = Button::create(this, "Das ist ein Test");
-    button2 = Button::create(this, "Abbruch");
-    
-    layout = GuiLayoutColumn::create();
-    layout->addSpacer();
-    
-//    GuiLayoutRow::Ptr layoutR = GuiLayoutRow::create();
-//    layoutR->addSpacer();
-//    layoutR->addSpacer();
-//    layoutR->addSpacer();
-//    layoutR->addElement(button1);
-//    layoutR->addSpacer(3, 10);
-//    layoutR->addElement(button2);
-//    layoutR->addSpacer();
+    findButton = Button::create(this, "Find");
+    findButton->setAsDefault();
+    cancelButton = Button::create(this, "Cancel");
 
-    GuiLayoutTable::Ptr layoutR = GuiLayoutTable::create(1, 7);
-    layoutR->setElement(0, 0, GuiLayoutSpacer::create(0, 0, 0, 0, -1, 0));
-    layoutR->setElement(0, 1, GuiLayoutSpacer::create(0, 0, 0, 0, -1, 0));
-    layoutR->setElement(0, 2, GuiLayoutSpacer::create(0, 0, 0, 0, -1, 0));
-    layoutR->setElement(0, 3, button1);
-    layoutR->setElement(0, 4, GuiLayoutSpacer::create(3, 0, 10, 0, 10, 0));
-    layoutR->setElement(0, 5, button2);
-    layoutR->setElement(0, 6, GuiLayoutSpacer::create(0, 0, 0, 0, -1, 0));
+    TextData::Ptr          editData  = TextData::create();
+    LanguageMode::Ptr      languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName("");
+    Hiliting::Ptr          hiliting = Hiliting::create(editData, languageMode);
+    HilitingBuffer::Ptr    hilitingBuffer = HilitingBuffer::create(hiliting);
     
-    layout->addElement(layoutR);
-    layout->addSpacer(0, 10);
+    this->editField = TextEditorWidget::create(this, editData, 
+            GlobalConfig::getInstance()->getTextStyles(), 
+            hilitingBuffer);
+    editField->setDesiredMeasuresInChars(
+            20, 1, 40, 1, -1 , 1);
 
-/*    layout->setPosition(Position(2, 2, width - 2, height - 2));
-    Measures m = layout->getDesiredMeasures();
-    setPosition(Position(x, y, m.bestWidth + 4, m.bestHeight + 4));
-    setSizeHints(x, y, m.minWidth + 4, m.minHeight + 4, 1, 1);
-*/
-    setRootElement(layout);
-        
-    button1->show();    
-    button2->show();    
+    GuiLayoutColumn::Ptr column0 = GuiLayoutColumn::create();
+    GuiLayoutRow::Ptr row0 = GuiLayoutRow::create();
+    GuiLayoutSpacerFrame::Ptr frame0 = GuiLayoutSpacerFrame::create(column0, 10);
+    setRootElement(frame0);
+
+    column0->addSpacer();
+    column0->addElement(editField);
+    column0->addSpacer();
+    column0->addElement(row0);
+    column0->addSpacer();
+
+    row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, -1, 0));
+    row0->addElement(findButton);
+    row0->addElement(GuiLayoutSpacer::create(3, 0, 10, 0, 10, 0));
+    row0->addElement(cancelButton);
+    row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, -1, 0));
+    
+    findButton->setButtonPressedCallback(slotForButtonPressed);
+    cancelButton->setButtonPressedCallback(slotForButtonPressed);
+
+    editField->show();
+    findButton->show();
+    cancelButton->show();    
+}
+
+
+void FindDialog::handleButtonPressed(Button* button)
+{
+    if (button == findButton) {
+        printf("findButton\n");
+    }
+    else if (button == cancelButton) {
+        this->requestCloseWindow();
+    }
+}
+
+void FindDialog::treatFocusIn()
+{
+    editField->treatFocusIn();
+}
+
+
+void FindDialog::treatFocusOut()
+{
+    editField->treatFocusOut();
+}
+
+bool FindDialog::processKeyboardEvent(const XEvent *event)
+{
+    return editField->processKeyboardEvent(event);
 }
 
 

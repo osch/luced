@@ -65,6 +65,10 @@ SelectionOwner::~SelectionOwner()
         XSelectInput(getDisplay(), multiPartTargetWid, 0);
         EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
     }
+    XSetSelectionOwner(getDisplay(), x11AtomForSelection, None, CurrentTime);
+    if (primarySelectionOwner == this) {
+        primarySelectionOwner = NULL;
+    }
 }
 
 
@@ -76,14 +80,14 @@ bool SelectionOwner::requestSelectionOwnership()
         EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
     }
     if (!hasRequestedSelectionOwnership) {
-        if (x11AtomForSelection == XA_PRIMARY && primarySelectionOwner != NULL) {
-            primarySelectionOwner->notifyAboutLostSelectionOwnership();
-            hasRequestedSelectionOwnership = true;
-        } else {       
-            XSetSelectionOwner(getDisplay(), x11AtomForSelection, getGuiWidgetWid(baseWidget), CurrentTime);
-            hasRequestedSelectionOwnership = (XGetSelectionOwner(getDisplay(), x11AtomForSelection) == getGuiWidgetWid(baseWidget));
-        }
+        XSetSelectionOwner(getDisplay(), x11AtomForSelection, getGuiWidgetWid(baseWidget), CurrentTime);
+        hasRequestedSelectionOwnership = (XGetSelectionOwner(getDisplay(), x11AtomForSelection) == getGuiWidgetWid(baseWidget));
         if (x11AtomForSelection == XA_PRIMARY && hasRequestedSelectionOwnership) {
+            if (primarySelectionOwner != NULL && primarySelectionOwner != this) {
+                // No SelectionClear event if selection owner changes within LucED (why!?!?!)
+                primarySelectionOwner->notifyAboutLostSelectionOwnership();
+                primarySelectionOwner->hasRequestedSelectionOwnership = false;
+            }
             primarySelectionOwner = this;
         }
     }
@@ -92,13 +96,17 @@ bool SelectionOwner::requestSelectionOwnership()
 
 void SelectionOwner::releaseSelectionOwnership()
 {
-    if (x11AtomForSelection == XA_PRIMARY && primarySelectionOwner == this) {
-        primarySelectionOwner = NULL;
+    if (hasRequestedSelectionOwnership)
+    {
+        if (x11AtomForSelection == XA_PRIMARY && primarySelectionOwner == this) {
+            primarySelectionOwner = NULL;
+        }
+        if (hasRequestedSelectionOwnership) {
+            notifyAboutLostSelectionOwnership();
+        }
+        XSetSelectionOwner(getDisplay(), x11AtomForSelection, None, CurrentTime);
+        hasRequestedSelectionOwnership = false;
     }
-    if (hasRequestedSelectionOwnership) {
-        notifyAboutLostSelectionOwnership();
-    }
-    hasRequestedSelectionOwnership = false;
 }
 
 bool SelectionOwner::hasSelectionOwnership()

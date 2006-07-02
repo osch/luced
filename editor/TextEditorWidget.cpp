@@ -846,50 +846,56 @@ bool TextEditorWidget::processEvent(const XEvent *event)
                             } else {
                                 getBackliteBuffer()->setAnchorToBeginOfSelection();
                             }
-                        } else {
+                        } else if (hasSelectionOwnership()) {
                             releaseSelectionOwnership();
                         }
 
-                        if (wasDoubleClick) {
+                        if (wasDoubleClick)
+                        {
                             long doubleClickPos = getTextPosFromPixXY(x, y, false);
                             long p1 = doubleClickPos;
                             long p2 = p1;
                             TextData *textData = getTextData();
-
-                            if (isWordCharacter(textData->getChar(p1))) {
-                                while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
-                                    --p1;
+                            if (doubleClickPos < textData->getLength())
+                            {
+                                if (isWordCharacter(textData->getChar(p1))) {
+                                    while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
+                                        --p1;
+                                    }
+                                    while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
+                                        ++p2;
+                                    }
+                                } else if (ispunct(textData->getChar(p1))) {
+                                    while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
+                                        --p1;
+                                    }
+                                    while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
+                                        ++p2;
+                                    }
                                 }
-                                while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
-                                    ++p2;
-                                }
-                            } else if (ispunct(textData->getChar(p1))) {
-                                while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
-                                    --p1;
-                                }
-                                while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
-                                    ++p2;
-                                }
-                            }
-                            if (extendingSelection) {
-                                if (getBackliteBuffer()->isAnchorAtBegin()) {
-                                    getBackliteBuffer()->extendSelectionTo(p2);
-                                    moveCursorToTextPosition(p2);
+                                if (extendingSelection) {
+                                    if (getBackliteBuffer()->isAnchorAtBegin()) {
+                                        getBackliteBuffer()->extendSelectionTo(p2);
+                                        moveCursorToTextPosition(p2);
+                                    } else {
+                                        getBackliteBuffer()->extendSelectionTo(p1);
+                                        moveCursorToTextPosition(p1);
+                                    }
                                 } else {
-                                    getBackliteBuffer()->extendSelectionTo(p1);
-                                    moveCursorToTextPosition(p1);
+                                    if (p1 != p2) {
+                                        requestSelectionOwnership();
+                                        getBackliteBuffer()->activateSelection(p1);
+                                        getBackliteBuffer()->extendSelectionTo(p2);
+                                    }
+                                    moveCursorToTextPosition(p2);
                                 }
-                            } else {
-                                requestSelectionOwnership();
-                                getBackliteBuffer()->activateSelection(p1);
-                                getBackliteBuffer()->extendSelectionTo(p2);
-                                moveCursorToTextPosition(p2);
                             }
                         } else {
                             if (extendingSelection) {
                                 getBackliteBuffer()->extendSelectionTo(newCursorPos);
                             } else {
-                                getBackliteBuffer()->activateSelection(newCursorPos);
+                                // not here, activate Selection if mouse cursor move
+                                // getBackliteBuffer()->activateSelection(newCursorPos);
                             }
                             moveCursorToTextPosition(newCursorPos);
                         }
@@ -962,68 +968,81 @@ bool TextEditorWidget::processEvent(const XEvent *event)
                     this->movingSelectionX = x;
                     long newCursorPos = getTextPosFromPixXY(x, y);
 
-                    if (!hasSelectionOwnership() && newCursorPos != getCursorTextPosition()) {
-                        requestSelectionOwnership();
-                    }
-
                     if (wasDoubleClick) {
                         long doubleClickPos = getTextPosFromPixXY(x, y, false);
                         long p1 = doubleClickPos;
                         long p2 = p1;
                         TextData *textData = getTextData();
-                        
-                        if (isWordCharacter(textData->getChar(p1))) {
-                            while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
-                                --p1;
-                            }
-                            while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
-                                ++p2;
-                            }
-                        } else if (ispunct(textData->getChar(p1))) {
-                            while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
-                                --p1;
-                            }
-                            while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
-                                ++p2;
-                            }
-                        }
-                        if (p1 < getBackliteBuffer()->getSelectionAnchorPos()) {
-                            if (getBackliteBuffer()->isAnchorAtBegin()) {
-                                long p = getBackliteBuffer()->getSelectionAnchorPos();
-                                if (isWordCharacter(textData->getChar(p))) {
-                                    while (p < textData->getLength() && isWordCharacter(textData->getChar(p))) {
-                                        ++p;
-                                    }
-                                } else if (ispunct(textData->getChar(p))) {
-                                    while (p < textData->getLength() && ispunct(textData->getChar(p))) {
-                                        ++p;
-                                    }
+
+                        if (doubleClickPos < textData->getLength())
+                        {
+                            if (isWordCharacter(textData->getChar(p1))) {
+                                while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
+                                    --p1;
                                 }
-                                getBackliteBuffer()->extendSelectionTo(p);
-                                getBackliteBuffer()->setAnchorToEndOfSelection();
-                            }
-                            getBackliteBuffer()->extendSelectionTo(p1);
-                            newCursorPos = p1;
-                        } else {
-                            if (!getBackliteBuffer()->isAnchorAtBegin()) {
-                                long p = getBackliteBuffer()->getSelectionAnchorPos();
-                                if (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
-                                    while (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
-                                        --p;
-                                    }
-                                } else if (p > 0 && ispunct(textData->getChar(p - 1))) {
-                                    while (p > 0 && ispunct(textData->getChar(p - 1))) {
-                                       --p;
-                                    }
+                                while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
+                                    ++p2;
                                 }
-                                getBackliteBuffer()->extendSelectionTo(p);
-                                getBackliteBuffer()->setAnchorToBeginOfSelection();
+                            } else if (ispunct(textData->getChar(p1))) {
+                                while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
+                                    --p1;
+                                }
+                                while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
+                                    ++p2;
+                                }
                             }
-                            getBackliteBuffer()->extendSelectionTo(p2);
-                            newCursorPos = p2;
+                            if (p1 != getCursorTextPosition() || p2 != getCursorTextPosition())
+                            {
+                                if (!hasSelectionOwnership()) {
+                                    requestSelectionOwnership();
+                                    getBackliteBuffer()->activateSelection(getCursorTextPosition());
+                                }
+                                if (p1 < getBackliteBuffer()->getSelectionAnchorPos()) {
+                                    if (getBackliteBuffer()->isAnchorAtBegin()) {
+                                        long p = getBackliteBuffer()->getSelectionAnchorPos();
+                                        if (isWordCharacter(textData->getChar(p))) {
+                                            while (p < textData->getLength() && isWordCharacter(textData->getChar(p))) {
+                                                ++p;
+                                            }
+                                        } else if (ispunct(textData->getChar(p))) {
+                                            while (p < textData->getLength() && ispunct(textData->getChar(p))) {
+                                                ++p;
+                                            }
+                                        }
+                                        getBackliteBuffer()->extendSelectionTo(p);
+                                        getBackliteBuffer()->setAnchorToEndOfSelection();
+                                    }
+                                    getBackliteBuffer()->extendSelectionTo(p1);
+                                    newCursorPos = p1;
+                                } else {
+                                    if (!getBackliteBuffer()->isAnchorAtBegin()) {
+                                        long p = getBackliteBuffer()->getSelectionAnchorPos();
+                                        if (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
+                                            while (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
+                                                --p;
+                                            }
+                                        } else if (p > 0 && ispunct(textData->getChar(p - 1))) {
+                                            while (p > 0 && ispunct(textData->getChar(p - 1))) {
+                                               --p;
+                                            }
+                                        }
+                                        getBackliteBuffer()->extendSelectionTo(p);
+                                        getBackliteBuffer()->setAnchorToBeginOfSelection();
+                                    }
+                                    getBackliteBuffer()->extendSelectionTo(p2);
+                                    newCursorPos = p2;
+                                }
+                            }
                         }
                     } else {
-                        getBackliteBuffer()->extendSelectionTo(newCursorPos);
+                        if (newCursorPos != getCursorTextPosition())
+                        {
+                            if (!hasSelectionOwnership()) {
+                                requestSelectionOwnership();
+                                getBackliteBuffer()->activateSelection(getCursorTextPosition());
+                            }
+                            getBackliteBuffer()->extendSelectionTo(newCursorPos);
+                        }
                     }
                     moveCursorToTextPosition(newCursorPos);
                     assureCursorVisible();
@@ -1081,20 +1100,27 @@ void TextEditorWidget::handleScrollRepeating()
 {
     if (isMovingSelectionScrolling) {
         long newCursorPos = getTextPosFromPixXY(movingSelectionX, movingSelectionY);
-        moveCursorToTextPosition(newCursorPos);
-        assureCursorVisible();
-        rememberedCursorPixX = getCursorPixX();
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-        if (movingSelectionY < 0 ) {
-            scrollUp();
-            EventDispatcher::getInstance()->registerTimerCallback(0, 
-                    calculateScrollTime(-movingSelectionY, getLineHeight()),
-                    slotForScrollRepeating);
-        } else if (movingSelectionY > getHeightPix()) {
-            scrollDown();
-            EventDispatcher::getInstance()->registerTimerCallback(0, 
-                    calculateScrollTime(movingSelectionY - getHeightPix(), getLineHeight()),
-                    slotForScrollRepeating);
+        if (newCursorPos != getCursorTextPosition())
+        {
+            if (!hasSelectionOwnership()) {
+                requestSelectionOwnership();
+                getBackliteBuffer()->activateSelection(getCursorTextPosition());
+            }
+            moveCursorToTextPosition(newCursorPos);
+            assureCursorVisible();
+            rememberedCursorPixX = getCursorPixX();
+            getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
+            if (movingSelectionY < 0 ) {
+                scrollUp();
+                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                        calculateScrollTime(-movingSelectionY, getLineHeight()),
+                        slotForScrollRepeating);
+            } else if (movingSelectionY > getHeightPix()) {
+                scrollDown();
+                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                        calculateScrollTime(movingSelectionY - getHeightPix(), getLineHeight()),
+                        slotForScrollRepeating);
+            }
         }
     }    
 }

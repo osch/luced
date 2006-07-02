@@ -57,7 +57,13 @@ TextWidget::TextWidget(GuiWidget *parent,
       cursorMarkId(textData->createNewMark()),
       slotForTextDataUpdateTreatment(this, &TextWidget::treatTextDataUpdate),
       slotForFlushPendingUpdates(this, &TextWidget::flushPendingUpdates),
-      slotForHilitingUpdateTreatment(this, &TextWidget::treatHilitingUpdate)
+      slotForHilitingUpdateTreatment(this, &TextWidget::treatHilitingUpdate),
+      minWidthChars(10),
+      minHeightChars(1),
+      bestWidthChars(80),
+      bestHeightChars(25),
+      maxWidthChars(-1),
+      maxHeightChars(-1)
 {
     totalPixWidth = 0;
     leftPix = 0;
@@ -88,7 +94,7 @@ TextWidget::TextWidget(GuiWidget *parent,
 
     XSetWindowAttributes at;
     at.backing_store = Always;
-    at.bit_gravity = StaticGravity;
+    at.bit_gravity = NorthWestGravity; //StaticGravity;
     XChangeWindowAttributes(getDisplay(), getWid(), 
             //CWBackingStore|
             CWBitGravity, &at);
@@ -1124,7 +1130,6 @@ void TextWidget::setLeftPix(long newLeftPix)
 void TextWidget::setPosition(Position newPosition)
 {
     if (position != newPosition) {
-    
         long topLineNumber = getTopLineNumber();
         
         newPosition.w = calculateWidthOrHeightWithoutBorder(newPosition.w);
@@ -1157,7 +1162,23 @@ void TextWidget::setPosition(Position newPosition)
 
 GuiElement::Measures TextWidget::getDesiredMeasures()
 {
-    return Measures(1, 1, 1, 1, -1, -1);
+    
+    return Measures(  minWidthChars * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH, 
+                     minHeightChars * lineHeight + 2*BORDER_WIDTH, 
+                    
+                     bestWidthChars * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH, 
+                    bestHeightChars * lineHeight + 2*BORDER_WIDTH,
+
+                     maxWidthChars == -1 ? -1 :  maxWidthChars * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH,
+                    maxHeightChars == -1 ? -1 : maxHeightChars * lineHeight + 2*BORDER_WIDTH,
+
+                    textStyles->get(0)->getSpaceWidth(), lineHeight);
+//                    1, 1);
+    
+//    return Measures( 2 * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH, lineHeight + 2*BORDER_WIDTH, 
+//                    35 * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH, lineHeight + 2*BORDER_WIDTH,
+//                    -1, -1,
+//                    textStyles->get(0)->getSpaceWidth(), lineHeight);
 }
 
 
@@ -1496,3 +1517,19 @@ void TextWidget::flushPendingUpdates()
     lineAndColumnListeners.invokeAllCallbacks(getCursorLineNumber(), getCursorColumn());
 }
 
+void TextWidget::setDesiredMeasuresInChars(int minWidth, int minHeight, 
+        int bestWidth, int bestHeight, int maxWidth, int maxHeight)
+{
+    this->minWidthChars   = minWidth;
+    this->minHeightChars  = minHeight;
+    this->bestWidthChars  = bestWidth;
+    this->bestHeightChars = bestHeight;
+    this->maxWidthChars   = maxWidth;
+    this->maxHeightChars  = maxHeight;
+}
+
+void TextWidget::setDesiredMeasuresInChars(int bestWidth, int bestHeight)
+{
+    this->bestWidthChars  = bestWidth;
+    this->bestHeightChars = bestHeight;
+}

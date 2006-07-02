@@ -51,9 +51,7 @@ int main(int argc, char **argv)
         HilitingBuffer::Ptr hilitingBuffer1 = HilitingBuffer::create(hiliting);
         HilitingBuffer::Ptr hilitingBuffer2 = HilitingBuffer::create(hiliting);
 
-        EditorTopWin::Ptr win = EditorTopWin::create(textData, textStyles, hilitingBuffer1, 100, 100, 
-            GlobalConfig::getInstance()->getInitialWindowWidth(),
-            GlobalConfig::getInstance()->getInitialWindowHeight());
+        EditorTopWin::Ptr win = EditorTopWin::create(textData, textStyles, hilitingBuffer1);
         win->setTitle("Title - Test");
         win->show();
 
@@ -61,9 +59,7 @@ int main(int argc, char **argv)
             textData->loadFile(argv[1]);  // TODO: this is all experimental!
         }
 
-        EditorTopWin::Ptr win2 = EditorTopWin::create(textData, textStyles, hilitingBuffer2, 200, 200,
-            GlobalConfig::getInstance()->getInitialWindowWidth(),
-            GlobalConfig::getInstance()->getInitialWindowHeight());
+        EditorTopWin::Ptr win2 = EditorTopWin::create(textData, textStyles, hilitingBuffer2);
         win2->setTitle("Title - Test2");
         win2->show();
         

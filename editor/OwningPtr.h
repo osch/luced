@@ -52,18 +52,17 @@ public:
     OwningPtr& operator=(const OwningPtr& src) {
         if (this != &src) {
             decRefCounter(ptr);
-            ptr = src.ptr;
+            ptr = src.getRawPtr();
             incRefCounter(ptr);
         }
         return *this;
     }
     
     template<class S> OwningPtr& operator=(const OwningPtr<S>& src) {
-        if (this != &src) {
-            decRefCounter(ptr);
-            ptr = src.ptr;
-            incRefCounter(ptr);
-        }
+        T *ptr1 = ptr;
+        ptr = src.getRawPtr();
+        incRefCounter(ptr);
+        decRefCounter(ptr1);
     }
     
     void invalidate() {
@@ -91,8 +90,16 @@ public:
         return ptr == rhs.ptr;
     }
     
+    bool operator==(const T* ptr) const {
+        return this->ptr == ptr;
+    }
+    
     template<class S> bool operator==(const OwningPtr<S>& rhs) const {
         return ptr == rhs.ptr;
+    }
+    
+    template<class S> bool operator==(const S* ptr) const {
+        return this->ptr == ptr;
     }
     
 private:
@@ -101,6 +108,10 @@ private:
     
 };
 
+template<class S, class T> bool operator==(const S* lhs, const OwningPtr<T>& rhs)
+{
+    return rhs.operator==(lhs);
+}
 
 } // namespace LucED
 

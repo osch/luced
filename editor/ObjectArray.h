@@ -73,7 +73,11 @@ public:
     T* getPtr(long i) {
         return MemArray<T>::getPtr(i);
     }
-    T get(long i) {
+    T get(long i) const {
+        ASSERT(i < getLength());
+        return *this->getPtr(i);
+    }
+    T& get(long i) {
         ASSERT(i < getLength());
         return *this->getPtr(i);
     }

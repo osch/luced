@@ -36,16 +36,19 @@ public:
     virtual bool processEvent(const XEvent *event);
     virtual bool processKeyboardEvent(const XEvent *event);
 
+    virtual void show();
     virtual void treatFocusIn();
     virtual void treatFocusOut();
     
 protected:
-    DialogWin(TopWin* referingWindow, int x, int y, unsigned int width, unsigned int height);
+    DialogWin(TopWin* referingWindow);
     
     void setRootElement(OwningPtr<GuiElement> rootElement);
     GuiElement* getRootElement() {return rootElement.getRawPtr();}
 private:
     OwningPtr<GuiElement> rootElement;
+    bool wasNeverShown;
+    TopWin *referingWindow;
 };
 
 } // namespace LucED

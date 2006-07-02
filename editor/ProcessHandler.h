@@ -92,7 +92,11 @@ public:
         return objectPtr != NULL;
     }
     virtual bool needsProcessing() {
-        return (objectPtr->*methodNeedsProcess)();
+        if (objectPtr != NULL) {
+            return (objectPtr->*methodNeedsProcess)();
+        } else {
+            return false;
+        }
     }
 protected:
     virtual int process(int requestedProcessingAmount) {

@@ -33,7 +33,7 @@
 namespace LucED {
 
 
-class TopWin : public GuiWidget, public TopWinOwner
+class TopWin : public GuiWidget, public TopWinOwner, private TopWinOwnerAccessForTopWin
 {
 public:
     typedef WeakPtr<TopWin> Ptr;
@@ -44,26 +44,31 @@ public:
 
     virtual bool processKeyboardEvent(const XEvent *event) {return false;}
     
+    virtual void requestFocus();
     virtual void requestCloseWindow();
     virtual void treatNewWindowPosition(Position newPosition) {}
     virtual void treatFocusIn() {}
     virtual void treatFocusOut() {}
 
     void setTitle(const char* title);
-    
         
 protected:
-    TopWin(int x, int y, unsigned int width, unsigned int height, unsigned border_width);
+    TopWin();
     
+    void setSizeHints(int minWidth, int minHeight, int dx, int dy);
     void setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy);
+    
     template<class T> static WeakPtr<T> transferOwnershipTo(T *topWin, TopWinOwner* owner);
     template<class T> static WeakPtr<T> transferOwnershipTo(T *topWin, TopWin::Ptr owner);
     
 private:
-    void setWindowIcon();
+    void setWindowManagerHints();
     
     Atom x11InternAtomForDeleteWindow;
+//  Atom x11InternAtomForTakeFocus;
     TopWinOwner* owner;
+    bool mapped;
+    bool requestFocusAfterMapped;
 };
 
 
@@ -71,7 +76,7 @@ private:
 template<class T> WeakPtr<T> TopWin::transferOwnershipTo(T *topWin, TopWinOwner* owner)
 {
     OwningPtr<T>  rslt(topWin);
-    owner->ownedTopWins.append(rslt);
+    appendTopWinToTopWinOwner(rslt, owner);
     topWin->owner = owner;
     return rslt;
 }

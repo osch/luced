@@ -216,14 +216,20 @@ void ScrollBar::setPosition(Position newPosition)
     }
 }
 
+#define MIN_SCROLLER_HEIGHT 10
+
 GuiElement::Measures ScrollBar::getDesiredMeasures()
 {
     int scrollBarWidth = GlobalConfig::getInstance()->getScrollBarWidth();
 
     if (this->isV) {
-        return Measures(scrollBarWidth, 1, scrollBarWidth, 1, scrollBarWidth, -1);
+        return Measures(scrollBarWidth, 2*scrollBarWidth + MIN_SCROLLER_HEIGHT, scrollBarWidth, 
+                        2*scrollBarWidth + 2*MIN_SCROLLER_HEIGHT , 
+                        scrollBarWidth, -1);
     } else {
-        return Measures(1, scrollBarWidth, 1, scrollBarWidth, -1, scrollBarWidth);
+        return Measures(2*scrollBarWidth + MIN_SCROLLER_HEIGHT, scrollBarWidth, 
+                        2*scrollBarWidth + 2*MIN_SCROLLER_HEIGHT, scrollBarWidth, 
+                        -1, scrollBarWidth);
     }
 }
 
@@ -449,8 +455,8 @@ inline long ScrollBar::calcScrollHeight()
         long rslt;
         rslt = ROUNDED_DIV(heightValue * (scrollAreaLength - SCROLLY_TOP_OFFSET), 
                 totalValue);
-        if (rslt < 10)
-            rslt = 10;
+        if (rslt < MIN_SCROLLER_HEIGHT)
+            rslt = MIN_SCROLLER_HEIGHT;
         return rslt;
     } else {
         return scrollAreaLength - SCROLLY_TOP_OFFSET;

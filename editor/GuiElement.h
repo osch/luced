@@ -44,7 +44,15 @@ public:
         Measures(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight) 
                 : minWidth(minWidth),   minHeight(minHeight),
                   bestWidth(bestWidth), bestHeight(bestHeight),
-                  maxWidth(maxWidth),   maxHeight(maxHeight)
+                  maxWidth(maxWidth),   maxHeight(maxHeight),
+                  incrWidth(1),         incrHeight(1)
+        {}
+        Measures(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight,
+                 int incrWidth,int incrHeight) 
+                : minWidth(minWidth),   minHeight(minHeight),
+                  bestWidth(bestWidth), bestHeight(bestHeight),
+                  maxWidth(maxWidth),   maxHeight(maxHeight),
+                  incrWidth(incrWidth), incrHeight(incrHeight)
         {}
         int bestWidth;
         int bestHeight;
@@ -52,6 +60,8 @@ public:
         int minHeight;
         int maxWidth;
         int maxHeight;
+        int incrWidth;
+        int incrHeight;
     };
     
     virtual Measures getDesiredMeasures() { return Measures(0, 0, 0, 0, 0, 0); };

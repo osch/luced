@@ -27,21 +27,26 @@
 
 using namespace LucED;
 
-TopWin::TopWin(int x, int y, unsigned int width, unsigned int height, unsigned border_width)
-    : GuiWidget(x, y, width, height, border_width)
+TopWin::TopWin()
+    : GuiWidget(0, 0, 1, 1, 0),
+      mapped(false),
+      requestFocusAfterMapped(false)
 {
-    setWindowIcon();
-    {
-#define W_INC 10
-#define H_INC 10
-        setSizeHints(x, y, 5*W_INC, 5*W_INC, W_INC, H_INC);
-    }
+    setWindowManagerHints();
+
     x11InternAtomForDeleteWindow = XInternAtom(getDisplay(), 
-            "WM_DELETE_WINDOW", True);
+            "WM_DELETE_WINDOW", False);
+//    x11InternAtomForTakeFocus = XInternAtom(getDisplay(), 
+//            "WM_TAKE_FOCUS", False);
+
+    Atom atoms[] = { x11InternAtomForDeleteWindow, 
+                     //x11InternAtomForTakeFocus 
+                   };
     XSetWMProtocols(getDisplay(), getWid(), 
-            &(x11InternAtomForDeleteWindow), 1);
+                    atoms, sizeof(atoms) / sizeof(Atom));
     
-    addToXEventMask(KeyPressMask|KeyReleaseMask|FocusChangeMask);
+    addToXEventMask(KeyPressMask|KeyReleaseMask|FocusChangeMask|StructureNotifyMask);
+
 }
 
 static TopWin* expectedFocusTopWin = NULL;
@@ -51,6 +56,18 @@ TopWin::~TopWin()
     if (this == expectedFocusTopWin) {
         expectedFocusTopWin = NULL;
     }
+}
+
+void TopWin::setSizeHints(int minWidth, int minHeight, int dx, int dy)
+{
+    XSizeHints *hints = XAllocSizeHints();
+    hints->flags = PMinSize|PResizeInc;
+    hints->min_width  = minWidth;
+    hints->min_height = minHeight;
+    hints->width_inc  = dx;
+    hints->height_inc = dy;
+    XSetWMNormalHints(getDisplay(), getWid(), hints);
+    XFree(hints);
 }
 
 void TopWin::setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy)
@@ -67,6 +84,16 @@ void TopWin::setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int
     XFree(hints);
 }
 
+void TopWin::requestFocus()
+{
+    if (!mapped) {
+        this->show();
+        this->requestFocusAfterMapped = true;
+    } else {
+        XSetInputFocus(getDisplay(), getWid(), RevertToNone, CurrentTime);
+    }
+}
+
 bool TopWin::processEvent(const XEvent *event)
 {
     if (GuiWidget::processEvent(event)) {
@@ -75,10 +102,39 @@ bool TopWin::processEvent(const XEvent *event)
         
         switch (event->type) {
 
+            case MapNotify: {
+                if (event->xmap.window == getWid()) {
+                    mapped = true;
+                    if (requestFocusAfterMapped) {
+                        XSetInputFocus(getDisplay(), getWid(), RevertToNone, CurrentTime);
+                        requestFocusAfterMapped = false;
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            case UnmapNotify: {
+                if (event->xunmap.window == getWid()) {
+                    mapped = false;
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
             case ClientMessage: {
                 if (event->xclient.data.l[0] == this->x11InternAtomForDeleteWindow) {
                     this->requestCloseWindow();
                     return true;
+/*                } else if (event->xclient.data.l[0] == this->x11InternAtomForTakeFocus) {
+printf("TakeFocus\n");
+                    long timestamp = event->xclient.data.l[1];
+                    bool focusInFromExternal = (expectedFocusTopWin == NULL);
+                    XSetInputFocus(getDisplay(), getWid(), RevertToNone, timestamp);
+                    return true;
+*/
                 } else {
                     return false;
                 }   
@@ -149,9 +205,18 @@ bool TopWin::processEvent(const XEvent *event)
                     GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
                 }
                 treatFocusOut();
-                if (expectedFocusTopWin == this) {
+                if (expectedFocusTopWin == this)
+                {
                     expectedFocusTopWin = NULL;
-                } else if (expectedFocusTopWin != NULL) {
+                }
+                else if (expectedFocusTopWin != NULL)
+                {
+                    // I don't understand, why this can happen: 
+                    // but without this workaround sometimes a window
+                    // in the background still has a blinking cursor
+                    // this also happens with NEdit, perhaps a bug in
+                    // some window manager
+                    
                     expectedFocusTopWin->treatFocusOut();
                     expectedFocusTopWin = NULL;
                 }
@@ -164,11 +229,18 @@ bool TopWin::processEvent(const XEvent *event)
                     KeyPressRepeater::getInstance()->reset();
                     GuiRoot::getInstance()->setKeyboardAutoRepeatOff();
                 }
-                if (expectedFocusTopWin != NULL && expectedFocusTopWin != this) {
+                if (expectedFocusTopWin != NULL && expectedFocusTopWin != this)
+                {
+                    // There was no FocusOut for the focus top win
+                    // this sometimes happens, perhaps a bug in
+                    // the window manager, but I'm not sure.
+                    
                     expectedFocusTopWin->treatFocusOut();
                 }
                 expectedFocusTopWin = this;
                 treatFocusIn();
+                reportFocusOwnershipToTopWinOwner(this, owner);
+                reportFocusOwnershipToTopWinOwner(this, this);
                 return true;
             }
 
@@ -203,7 +275,7 @@ static void initPixMap()
 
 }
 
-void TopWin::setWindowIcon()
+void TopWin::setWindowManagerHints()
 {
     if (!staticallyInitialized) {
         initPixMap();
@@ -214,8 +286,9 @@ void TopWin::setWindowIcon()
     {
         XWMHints *hints = XAllocWMHints();
         
-        hints->flags  = IconPixmapHint;// | IconMaskHint ;//| IconWindowHint;
+        hints->flags  = IconPixmapHint; //|InputHint;// | IconMaskHint ;//| IconWindowHint;
         hints->icon_pixmap = pixMap;
+        //hints->input = false;
         XSetWMHints(getDisplay(), getWid(), hints);
         
         XFree(hints);

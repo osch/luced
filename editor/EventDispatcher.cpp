@@ -135,10 +135,15 @@ void EventDispatcher::doEventLoop()
 
             int p = 0;
             bool hasWaitingProcess = false;
-            for (; p < processes.getLength(); ++p) {
-                if (processes[p]->needsProcessing()) {
-                    hasWaitingProcess = true;
-                    break;
+            for (; p < processes.getLength();) {
+                if (processes[p]->isEnabled()) {
+                    if (processes[p]->needsProcessing()) {
+                        hasWaitingProcess = true;
+                        break;
+                    }
+                    ++p;
+                } else {
+                    processes.remove(p);
                 }
             }
             

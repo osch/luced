@@ -26,6 +26,7 @@
 
 #include "GuiWidget.h"
 #include "OwningPtr.h"
+#include "Callback.h"
 
 namespace LucED {
 
@@ -38,6 +39,13 @@ public:
     
     static Ptr create(GuiWidget* parent, string buttonText) {
         return Ptr(new Button(parent, buttonText));
+    }
+
+    void setButtonPressedCallback(const Callback1<Button*>& callback) {
+        pressedCallback = callback;
+    }
+    void setAsDefault(bool isDefault = true) {
+        isDefaultButton = isDefault;
     }
 
     virtual bool processEvent(const XEvent *event);
@@ -54,6 +62,8 @@ private:
     bool isButtonPressed;
     bool isMouseButtonPressed;
     bool isMouseOverButton;
+    Callback1<Button*> pressedCallback;
+    bool isDefaultButton;
 };
 
 } // namespace LucED

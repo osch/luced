@@ -83,31 +83,18 @@ class GuiLayoutSpacerFrame : public GuiElement
 public:
     typedef OwningPtr<GuiLayoutSpacerFrame> Ptr;
 
-    static Ptr create(GuiElement::Ptr member) {
-        return Ptr(new GuiLayoutSpacerFrame(member));
+    static Ptr create(GuiElement::Ptr element, int thickness) {
+        return Ptr(new GuiLayoutSpacerFrame(element, thickness));
     }
+    
+    virtual Measures getDesiredMeasures();
 
-    virtual Measures getDesiredMeasures() {
-        Measures m = member->getDesiredMeasures();
-        if (m.minWidth  != -1) m.minWidth  += 1;
-        if (m.minHeight != -1) m.minHeight += 1;
-        if (m.bestWidth != -1) m.bestWidth += 1;
-        if (m.bestHeight!= -1) m.bestHeight+= 1;
-        if (m.maxWidth  != -1) m.maxWidth  += 1;
-        if (m.maxHeight != -1) m.maxHeight += 1;
-        return m;
-    }
-    virtual void setPosition(Position p) {
-        p.w -= 1;
-        p.h -= 1;
-        member->setPosition(p);
-    }
+    virtual void setPosition(Position p);
 
 protected:
-    GuiLayoutSpacerFrame(GuiElement::Ptr member) : member(member)
-    {}
+    GuiLayoutSpacerFrame(GuiElement::Ptr member, int thickness);
     
-    GuiElement::Ptr member;
+    GuiElement::Ptr root;
 };
 
 } // namespace LucED

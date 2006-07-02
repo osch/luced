@@ -20,11 +20,13 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "DialogWin.h"
+#include "util.h"
 
 using namespace LucED;
 
-DialogWin::DialogWin(TopWin* referingWindow, int x, int y, unsigned int width, unsigned int height)
-    : TopWin(x, y, width, height, 0)
+DialogWin::DialogWin(TopWin* referingWindow)
+    : wasNeverShown(true),
+      referingWindow(referingWindow)
 {
     if (referingWindow != NULL) {
         XSetTransientForHint(getDisplay(), getWid(), referingWindow->getWid());
@@ -36,17 +38,46 @@ DialogWin::DialogWin(TopWin* referingWindow, int x, int y, unsigned int width, u
 void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
 {
     this->rootElement = rootElement;
-    Measures m = rootElement->getDesiredMeasures();
-    setPosition(Position(getPosition().x, getPosition().y, 
-                         m.bestWidth + 4, m.bestHeight + 4));
-    setSizeHints(getPosition().x, getPosition().y, 
-                         m.minWidth + 4, m.minHeight + 4, 1, 1);
+}
+
+void DialogWin::show()
+{
+    if (rootElement.isValid()) {
+        Measures m = rootElement->getDesiredMeasures();
+        m.minHeight += 4;   m.minWidth  += 4;
+        m.bestHeight += 4;  m.bestWidth += 4;
+        if (wasNeverShown) {
+            if (referingWindow != NULL)  {
+                Position pp = referingWindow->getPosition();
+                int x = pp.x + (pp.w - m.bestWidth)/2;
+                int y = pp.y + (pp.h - m.bestHeight)/2;
+                setPosition(Position(x, y, m.bestWidth, m.bestHeight));
+                setSizeHints(x, y, m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
+            } else {
+                setSize(m.bestWidth, m.bestHeight);
+                setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
+            }
+        } else {
+            setSizeHints(getPosition().x, getPosition().y, m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
+        }
+        wasNeverShown = false;
+    }
+    TopWin::show();
 }
 
 void DialogWin::treatNewWindowPosition(Position newPosition)
 {
-    TopWin::treatNewWindowPosition(newPosition);
-    rootElement->setPosition(Position(2, 2, newPosition.w - 4, newPosition.h - 4));
+    if (rootElement.isValid())
+    {
+        TopWin::treatNewWindowPosition(newPosition);
+        int dx = 2;
+        int dy = 2;
+        if (newPosition.w < 2*dx)
+           dx = (2*dx - newPosition.w)/2;
+        if (newPosition.h < 2*dy)
+           dy = (2*dy - newPosition.h)/2;
+        rootElement->setPosition(Position(dx, dy, newPosition.w - 2*dx, newPosition.h - 2*dy));
+    }
 }
 
 

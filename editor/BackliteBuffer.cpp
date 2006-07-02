@@ -70,6 +70,7 @@ void BackliteBuffer::deactivateSelection()
 
 void BackliteBuffer::extendSelectionTo(long textPos)
 {
+    ASSERT(hasSelection);
     if (isSelectionAnchorAtBegin)
     {
         if (textPos < beginSelection.getPos())

@@ -19,32 +19,38 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "TopWinOwner.h"
-#include "TopWin.h"
+#include "GuiLayoutSpacer.h"
+#include "GuiLayoutColumn.h"
+#include "GuiLayoutRow.h"
 
 using namespace LucED;
 
-      
-TopWinOwner::TopWinOwner()
-    : lastFocusedOwnedTopWin(NULL)
-{}
 
-void TopWinOwner::requestCloseChildWindow(TopWin* topWin)
+GuiLayoutSpacerFrame::GuiLayoutSpacerFrame(GuiElement::Ptr member, int thickness)
 {
-    for (int i = 0; i < ownedTopWins.getLength(); ++i)
-    {
-        if (ownedTopWins[i].getRawPtr() == topWin) {
-            ownedTopWins.remove(i);
-            if (lastFocusedOwnedTopWin == topWin) {
-                lastFocusedOwnedTopWin = NULL;
-            }
-            break;
-        }
-    }
+    GuiLayoutColumn::Ptr column0 = GuiLayoutColumn::create();
+    GuiLayoutRow::Ptr    row0    = GuiLayoutRow::create();
+    this->root = column0;
+
+    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, thickness, 0, thickness));
+    column0->addElement(row0);
+    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, thickness, 0, thickness));
+    column0->addSpacer();
+    
+    row0->addElement(GuiLayoutSpacer::create(0, 0, thickness, 0, thickness, 0));
+    row0->addElement(member);
+    row0->addElement(GuiLayoutSpacer::create(0, 0, thickness, 0, thickness, 0));
+    row0->addSpacer();
 }
 
-void TopWinOwner::reportFocusOwnership(TopWin* topWin)
+GuiElement::Measures GuiLayoutSpacerFrame::getDesiredMeasures()
 {
-    lastFocusedOwnedTopWin = topWin;
+    return root->getDesiredMeasures();
 }
+
+void GuiLayoutSpacerFrame::setPosition(Position p)
+{
+    root->setPosition(p);
+}
+
 

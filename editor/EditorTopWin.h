@@ -44,11 +44,10 @@ public:
     typedef WeakPtr<EditorTopWin> Ptr;
     
     static EditorTopWin::Ptr create(
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
-            int x, int y, unsigned int width, unsigned int height)
+            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer)
     {
         return transferOwnershipTo(
-                new EditorTopWin(textData, textStyles, hilitingBuffer, x, y, width, height),
+                new EditorTopWin(textData, textStyles, hilitingBuffer),
                 TopWinList::getInstance());
     }
     
@@ -58,22 +57,23 @@ public:
     virtual void treatNewWindowPosition(Position newPosition);
     virtual void treatFocusIn();
     virtual void treatFocusOut();
+    virtual void show();
     
     virtual void requestCloseChildWindow(TopWin *topWin);
     void invokeFindDialog();
     
 private:
     EditorTopWin(
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer,
-            int x, int y, unsigned int width, unsigned int height);
+            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer);
 
     TextEditorWidget::Ptr textEditor;
     ScrollBar::Ptr scrollBarH;
     ScrollBar::Ptr scrollBarV;    
     StatusLine::Ptr statusLine;
-    GuiLayoutColumn::Ptr layout;
+    GuiLayoutColumn::Ptr rootElement;
     KeyMapping<EditorTopWin> keyMapping;
     FindDialog::Ptr findDialog;
+    bool wasNeverShown;
 };
 
 } // namespace LucED

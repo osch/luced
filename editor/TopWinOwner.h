@@ -36,13 +36,27 @@ class TopWinOwner : NonCopyable
 public:
     virtual void requestCloseChildWindow(TopWin *topWin);
 protected:
+    TopWinOwner();
     int getNumberOfChildWindows() { return ownedTopWins.getLength(); }
+    TopWin* getLastFocusedOwnedTopWin() { return lastFocusedOwnedTopWin; }
 private:
-    friend class TopWin;
+    friend class TopWinOwnerAccessForTopWin;
+    virtual void reportFocusOwnership(TopWin *topWin);
+
     ObjectArray< OwningPtr<TopWin> > ownedTopWins;
+    TopWin* lastFocusedOwnedTopWin;
 };
 
-
+class TopWinOwnerAccessForTopWin : NonCopyable
+{
+protected:
+    static void reportFocusOwnershipToTopWinOwner(TopWin* topWin, TopWinOwner *owner) {
+        owner->reportFocusOwnership(topWin);
+    }
+    static void appendTopWinToTopWinOwner(OwningPtr<TopWin> topWin, TopWinOwner *owner) {
+        owner->ownedTopWins.append(topWin);
+    }
+};
 
 } // namespace LucED
 

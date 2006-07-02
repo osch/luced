@@ -56,6 +56,11 @@ public:
     virtual void setPosition(Position newPosition);
     virtual Measures getDesiredMeasures();
     
+    void setDesiredMeasuresInChars(int minWidth, int minHeight, 
+            int bestWidth, int bestHeight, int maxWidth, int maxHeight);
+
+    void setDesiredMeasuresInChars(int bestWidth, int bestHeight);
+    
     TextData* getTextData() {
         return textData.getRawPtr();
     }
@@ -95,6 +100,9 @@ public:
     }
     int getLineHeight() const {
         return lineHeight;
+    }
+    int getSpaceCharWidth() const {
+        return textStyles->get(0)->getSpaceWidth();
     }
     
     TextData::TextMark createNewMarkFromCursor();
@@ -207,6 +215,13 @@ private:
     Region redrawRegion; // collects Rectangles for redraw events
     
     Callback2Container<long,long> lineAndColumnListeners;
+    
+    int minWidthChars;
+    int minHeightChars;
+    int bestWidthChars;
+    int bestHeightChars;
+    int maxWidthChars;
+    int maxHeightChars;
 };
 
 } // namespace LucED

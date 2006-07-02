@@ -2,6 +2,7 @@
 #include "GuiLayoutColumn.h"
 #include "GuiLayoutSpacer.h"
 #include "OwningPtr.h"
+#include "GuiLayouter.h"
 
 using namespace LucED;
 
@@ -46,38 +47,6 @@ void GuiLayoutColumn::addSpacer(int minHeight, int maxHeight)
     elements.append(SpacerV::create(minHeight, maxHeight));
 }
 
-
-GuiElement::Measures GuiLayoutColumn::getDesiredMeasures()
-{
-    int bestWidth = 0;
-    int bestHeight = 0;
-    int minWidth = 0;
-    int minHeight = 0;
-    int maxWidth = 0;
-    int maxHeight = 0;
-    
-    for (int i = 0; i < elements.getLength(); ++i)
-    {
-        Measures m = elements[i]->getDesiredMeasures();
-        
-        if (m.bestHeight == -1) {
-            bestHeight += m.minHeight;
-            maxHeight = -1;
-        } else {
-            bestHeight += m.bestHeight;
-            if (maxHeight != -1) {
-                maxHeight += m.maxHeight;
-            }
-        }
-        if (m.bestWidth != -1) {
-            util::maximize(&bestWidth, m.bestWidth);
-        }
-        minHeight += m.minHeight;
-        util::maximize(&minWidth, m.minWidth);
-    }
-    return Measures(minWidth, minHeight, bestWidth, bestHeight, bestWidth, bestHeight);
-}
-
 static void maximize(int *a, int b)
 {
     if (*a != -1) {
@@ -100,81 +69,55 @@ static void addimize(int *a, int b)
     }
 }
 
-static void ensureBetween(int *a, int min, int max)
+
+GuiElement::Measures GuiLayoutColumn::getDesiredMeasures()
 {
-    if (*a != -1) {
-        if (*a < min) {
-            *a = min;
-        }
-        if (max != -1) {
-            if (*a > max) {
-                *a = max;
-            }
-        }
-    } else {
-        if (max != -1) {
-            *a = max;
-        }
+    int bestWidth = 0;
+    int bestHeight = 0;
+    int minWidth = 0;
+    int minHeight = 0;
+    int maxWidth = 0;
+    int maxHeight = 0;
+    int incrWidth = 1;
+    int incrHeight = 1;
+    
+    for (int i = 0; i < elements.getLength(); ++i)
+    {
+        Measures m = elements[i]->getDesiredMeasures();
+
+        addimize(&minHeight,  m.minHeight);
+        addimize(&bestHeight, m.bestHeight);
+        addimize(&maxHeight,  m.maxHeight);
+        
+        maximize(&minWidth,  m.minWidth);
+        maximize(&bestWidth, m.bestWidth);
+        maximize(&maxWidth,  m.maxWidth);
+        
+        maximize(&incrWidth,  m.incrWidth);
+        maximize(&incrHeight, m.incrHeight);
     }
+    minWidth  = bestWidth  - ((bestWidth  - minWidth) / incrWidth)  * incrWidth;
+    minHeight = bestHeight - ((bestHeight - minHeight)/ incrHeight) * incrHeight;
+    return Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight,
+                    incrWidth, incrHeight);
 }
 
 void GuiLayoutColumn::setPosition(Position p)
 {
-    int bestHeight = 0;
-    int minHeight = 0;
-    int maxHeight = 0;
-    int numberFlex = 0;
-
+    rowMeasures.clear();
+    
     for (int i = 0; i < elements.getLength(); ++i)
     {
-        Measures m = elements[i]->getDesiredMeasures();
-        
-        addimize(&minHeight,  m.minHeight);
-        addimize(&bestHeight, m.bestHeight);
-        addimize(&maxHeight,  m.maxHeight);
-
-        if (m.maxHeight == -1) {
-            ++numberFlex;
-        }
+        rowMeasures.append(elements[i]->getDesiredMeasures());
     }
-    if (bestHeight != -1 && bestHeight <= p.h) {
-        minHeight = bestHeight;
-    } else {
-        numberFlex = 0;
-    }
-    int addNonFlexHeight = 0;
-    int flexHeight = 0;
-    if (minHeight < p.h) {
-        if (numberFlex > 0) {
-            flexHeight = ROUNDED_DIV(p.h - minHeight, numberFlex);
-        } else {
-            addNonFlexHeight = p.h - minHeight;
-        }
-    }
-
+    
+    GuiLayouter<VerticalAdapter>::adjust(rowMeasures, p.h);
+    
     int y = p.y;
     for (int i = 0; i < elements.getLength(); ++i)
     {
-        Measures m = elements[i]->getDesiredMeasures();
-        
-        int h = 0;
-        if (m.maxHeight == -1) {
-            if (m.bestHeight != -1) {
-                h = m.bestHeight + flexHeight;
-            } else {
-                h = flexHeight;
-            }
-        } else {
-            if (bestHeight <= p.h) {
-                h = m.bestHeight;
-            } else {
-                h = m.minHeight + ROUNDED_DIV(addNonFlexHeight * (m.bestHeight - m.minHeight), (bestHeight - minHeight));
-            }
-            if (h > m.bestHeight) {
-                h = m.bestHeight;
-            }
-        }
-        elements[i]->setPosition(Position(p.x, y, p.w, h));
-        y += h;
+        Measures& m = rowMeasures[i];
+        elements[i]->setPosition(Position(p.x, y, p.w, m.bestHeight));
+        y += m.bestHeight;
     }
 }

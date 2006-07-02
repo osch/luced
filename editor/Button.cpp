@@ -32,7 +32,8 @@ Button::Button(GuiWidget* parent, string buttonText)
         buttonText(buttonText),
         isButtonPressed(false),
         isMouseButtonPressed(false),
-        isMouseOverButton(false)
+        isMouseOverButton(false),
+        isDefaultButton(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -44,7 +45,7 @@ GuiElement::Measures Button::getDesiredMeasures()
     int minHeight = getGuiTextHeight() + 2 * getRaisedBoxBorderWidth() + 6 + 2*BUTTON_BORDER;
 
     int bestWidth = minWidth + 4 * getGuiTextStyle()->getSpaceWidth() + 2*BUTTON_BORDER;
-    int bestHeight = minHeight + 2*BUTTON_BORDER;
+    int bestHeight = minHeight;
 
     return Measures(minWidth, minHeight, bestWidth, bestHeight, bestWidth, bestHeight);
 }
@@ -74,6 +75,10 @@ void Button::drawButton()
     } else {
         drawRaisedBox(BUTTON_BORDER, BUTTON_BORDER, 
                 position.w - 2*BUTTON_BORDER, position.h - 2*BUTTON_BORDER, color);
+    }
+    if (isDefaultButton) {
+        const int d = BUTTON_BORDER - 1;
+        drawFrame(d, d, position.w - 2 * d, position.h - 2 * d);
     }
     int w = getGuiTextStyle()->getTextWidth(buttonText);
     int x = (position.w - 2*BUTTON_BORDER - w) / 2 + BUTTON_BORDER;
@@ -136,6 +141,11 @@ bool Button::processEvent(const XEvent *event)
                 if (isButtonPressed) {
                     isButtonPressed = false;
                     drawButton();
+                    int x = event->xbutton.x;
+                    int y = event->xbutton.y;
+                    if (isMouseInsideButtonArea(x, y)) {
+                        pressedCallback.call(this);
+                    }
                 }
                 return true;
             }

@@ -58,6 +58,7 @@ public:
     
     virtual bool processEvent(const XEvent *event);
     virtual void setPosition(Position newPosition);
+    virtual void setSize(int width, int height);
     virtual void treatNewWindowPosition(Position newPosition) {}
     const Position& getPosition() { return position; }
     
@@ -124,6 +125,7 @@ protected:
     void drawGuiText(int x, int y, const string& ptr) {
         drawGuiText(x, y, ptr.c_str(), ptr.length());
     }
+    void drawFrame(int x, int y, int w, int h);
     int getGuiTextHeight();
     
 private:
