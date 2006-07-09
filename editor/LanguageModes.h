@@ -89,7 +89,8 @@ public:
     void append(const string& name);
     void append(LuaObject config);
     
-    LanguageMode::Ptr getModeForFile(const string& fileName);
+    LanguageMode::Ptr getLanguageModeForFile(const string& fileName);
+    LanguageMode::Ptr getDefaultLanguageMode();
     
 private:
     LanguageModes();

@@ -32,10 +32,14 @@ namespace LucED {
 template<class T> class KeyMapping : private NonCopyable
 {
 public:
-    typedef void (T::*MethodPtr)();
+    typedef void (*FunctionPtr)(T*);
     
-    KeyMapping(T* objectPtr) : objectPtr(objectPtr) {}
+    FunctionPtr find(int keyState, KeySym keySym)        { return find(Id(keyState, keySym)); }
+
+    void set(int keyState, KeySym keySym, FunctionPtr m) { set(Id(keyState, keySym), m); }
     
+private:
+
     struct Id
     {
         Id(int keyState, KeySym keySym) :
@@ -51,8 +55,7 @@ public:
         int keyState;
         KeySym keySym;
     };
-    
-private:
+
     class HashFunction
     {
     public:
@@ -62,12 +65,18 @@ private:
             return rslt;
         }
     };
-    typedef HashMap<Id, MethodPtr, HashFunction>  MyMap;
+    typedef HashMap<Id, FunctionPtr, HashFunction>  MyMap;
 
-public:
 
-    MethodPtr find(Id id) {
-        MethodPtr rslt = NULL;
+    void set(Id id, FunctionPtr m)
+    {
+        map.set(id, m);
+    }
+    
+
+    FunctionPtr find(Id id)
+    {
+        FunctionPtr rslt = NULL;
         
         typename MyMap::Value foundMethod = map.get(id);
         if (foundMethod.isValid()) {
@@ -76,20 +85,6 @@ public:
         return rslt;
     }
 
-    MethodPtr find(int keyState, KeySym keySym) {
-        return find(Id(keyState, keySym));
-    }
-    
-    void add(Id id, MethodPtr m) {
-        map.set(id, m);
-    }
-    
-    void add(int keyState, KeySym keySym, MethodPtr m) {
-        add(Id(keyState, keySym), m);
-    }
-    
-private:
-    T* objectPtr;
     MyMap map;
 };
 

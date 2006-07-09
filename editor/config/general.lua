@@ -39,8 +39,8 @@ globalConfig = {
           guiFont      = "-*-helvetica-medium-r-*-*-*-120-75-75-*-*-*-*",
           guiFontColor = "black",
           
-          initialWindowWidth  = 80,   -- size in characters
-          initialWindowHeight = 35,   -- size in characters
+          initialWindowWidth  = 90,    -- size in characters
+          initialWindowHeight = 35,    -- size in characters
           
           x11SelectionChunkLength = 20000,
 }

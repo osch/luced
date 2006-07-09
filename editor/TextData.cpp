@@ -140,37 +140,18 @@ void TextData::updateMarks(
     }
 }
 
-void TextData::insertAtMark(MarkHandle m, byte c)
+void TextData::setInsertFilterCallback(const Callback2<const byte**, long*>& filterCallback)
 {
-    TextMarkData& mark = marks[m.index];
-    long lineNumber = mark.line;
-    long pos = mark.pos;
-    
-    buffer.insert(pos, c);
-    
-    if (pos < this->beginChangedPos) {
-        this->beginChangedPos = pos;
-        this->changedAmount  += 1;
-        if (pos > this->oldEndChangedPos) {
-            this->oldEndChangedPos = pos;
-        }
-    } else if (pos < this->oldEndChangedPos + this->changedAmount) {
-        this->changedAmount  += 1;
-    } else {
-        this->oldEndChangedPos += pos - (this->oldEndChangedPos + this->changedAmount);
-        this->changedAmount  += 1;
-    }
-    if (c == '\n') {
-        this->numberLines += 1;
-        updateMarks(pos, pos, 1, lineNumber, 1);
-    } else {
-        updateMarks(pos, pos, 1, lineNumber,  0);
-    }
-
+    this->filterCallback = filterCallback;
 }
 
-void TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
+
+long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
 {
+    if (filterCallback.isValid()) {
+        filterCallback.call(&insertBuffer, &length);
+    }
+    
     int lineCounter = 0;
     for (int i = 0; i < length; ++i) {
         if (insertBuffer[i] == '\n') {
@@ -198,11 +179,18 @@ void TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
     }
     this->numberLines += lineCounter;
     updateMarks(pos, pos, length, lineNumber, lineCounter);
+    
+    return length;
 }
 
-void TextData::insertAtMark(MarkHandle m, const ByteArray& insertBuffer)
+long TextData::insertAtMark(MarkHandle m, byte c)
 {
-    insertAtMark(m, insertBuffer.getPtr(0), insertBuffer.getLength());
+    return insertAtMark(m, &c, 1);
+}
+
+long TextData::insertAtMark(MarkHandle m, const ByteArray& insertBuffer)
+{
+    return insertAtMark(m, insertBuffer.getPtr(0), insertBuffer.getLength());
 }
 
 

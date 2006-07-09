@@ -100,7 +100,7 @@ void LanguageModes::append(LuaObject config)
     }
 }
 
-LanguageMode::Ptr LanguageModes::getModeForFile(const string& fileName)
+LanguageMode::Ptr LanguageModes::getLanguageModeForFile(const string& fileName)
 {
     for (int i = 0; i < modes.getLength(); ++i)
     {
@@ -114,3 +114,10 @@ LanguageMode::Ptr LanguageModes::getModeForFile(const string& fileName)
     }
     return defaultLanguageMode;
 }
+
+LanguageMode::Ptr LanguageModes::getDefaultLanguageMode()
+{
+    return defaultLanguageMode;
+}
+
+

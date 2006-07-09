@@ -50,8 +50,8 @@ GlobalConfig::GlobalConfig()
           guiColor05("grey90"),
           guiFont("-*-helvetica-medium-r-*-*-*-120-75-75-*-*-*-*"),
           guiFontColor("black"),
-          initialWindowWidth(600),
-          initialWindowHeight(350),
+          initialWindowWidth(80),
+          initialWindowHeight(25),
           x11SelectionChunkLength(20000)
 {
     setlocale(LC_CTYPE, "");
@@ -66,15 +66,28 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const string&
         return SyntaxPatterns::Ptr();
     }
 }
+
+SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode) {
+    if (languageMode.isValid()) {
+        return getSyntaxPatternsForLanguageMode(languageMode->getName());
+    } else {
+        return SyntaxPatterns::Ptr();
+    }
+}
     
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForFileName(const string& fileName)
 {
-    return getSyntaxPatternsForLanguageMode(languageModes->getModeForFile(fileName)->getName());
+    return getSyntaxPatternsForLanguageMode(languageModes->getLanguageModeForFile(fileName)->getName());
 }
 
 LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const string& fileName)
 {
-    return languageModes->getModeForFile(fileName);
+    return languageModes->getLanguageModeForFile(fileName);
+}
+
+LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode()
+{
+    return languageModes->getDefaultLanguageMode();
 }
 
 

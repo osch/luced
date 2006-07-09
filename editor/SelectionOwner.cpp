@@ -65,7 +65,6 @@ SelectionOwner::~SelectionOwner()
         XSelectInput(getDisplay(), multiPartTargetWid, 0);
         EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
     }
-    XSetSelectionOwner(getDisplay(), x11AtomForSelection, None, CurrentTime);
     if (primarySelectionOwner == this) {
         primarySelectionOwner = NULL;
     }

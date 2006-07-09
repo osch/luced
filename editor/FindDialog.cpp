@@ -37,13 +37,11 @@ FindDialog::FindDialog(TopWin* referingWindow, int x, int y, unsigned int width,
     cancelButton = Button::create(this, "Cancel");
 
     TextData::Ptr          editData  = TextData::create();
-    LanguageMode::Ptr      languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName("");
+    LanguageMode::Ptr      languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
     Hiliting::Ptr          hiliting = Hiliting::create(editData, languageMode);
-    HilitingBuffer::Ptr    hilitingBuffer = HilitingBuffer::create(hiliting);
     
-    this->editField = TextEditorWidget::create(this, editData, 
-            GlobalConfig::getInstance()->getTextStyles(), 
-            hilitingBuffer);
+    this->editField = SingleLineEditorWidget::create(this, editData, 
+            GlobalConfig::getInstance()->getTextStyles(), hiliting);
     editField->setDesiredMeasuresInChars(
             20, 1, 40, 1, -1 , 1);
 

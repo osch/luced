@@ -147,6 +147,15 @@ void GuiWidget::setPosition(Position p)
     // this->position is set via ConfigureNotify event
 }
 
+Position GuiWidget::getAbsolutePosition()
+{
+    Position rslt(this->position);
+    Window child_return;
+    XTranslateCoordinates(getDisplay(), getWid(), getGuiRoot()->getRootWid(), 0, 0, &rslt.x, 
+                &rslt.y, &child_return);
+    return rslt;
+}
+
 void GuiWidget::setSize(int width, int height)
 {
     XResizeWindow(getDisplay(), wid, width, height);

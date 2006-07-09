@@ -213,9 +213,9 @@ public:
         pos -= getLengthOfPrevLineEnding(pos);
         return getThisLineBegin(pos);
     }
-    void insertAtMark(MarkHandle m, byte c);
-    void insertAtMark(MarkHandle m, const ByteArray& buffer);
-    void insertAtMark(MarkHandle m, const byte* buffer, long length);
+    long insertAtMark(MarkHandle m, byte c);
+    long insertAtMark(MarkHandle m, const ByteArray& buffer);
+    long insertAtMark(MarkHandle m, const byte* buffer, long length);
     void removeAtMark(MarkHandle m, long amount);
     
     void moveMarkToLineAndColumn(MarkHandle m, long line, long column);
@@ -232,6 +232,7 @@ public:
     bool isEndOfText(MarkHandle m) {
         return marks[m.index].pos == buffer.getLength();
     }
+    void setInsertFilterCallback(const Callback2<const byte**, long*>& filterCallback);
     void registerUpdateListener(const UpdateCallback& updateCallback);
     void registerFileNameListener(const Callback1<const string&>& fileNameCallback);
     void registerLengthListener(const Callback1<long>& lengthCallback);
@@ -274,6 +275,8 @@ private:
     Callback1Container<UpdateInfo> updateListeners;
     Callback1Container<const string&> fileNameListeners;
     Callback1Container<long> lengthListeners;
+    
+    Callback2<const byte**, long*> filterCallback;
     
     string fileName;
     long oldLength;

@@ -25,10 +25,9 @@
 #include "TopWin.h"
 #include "EventDispatcher.h"
 #include "ScrollBar.h"
-#include "TextEditorWidget.h"
+#include "MultiLineEditorWidget.h"
 #include "TextData.h"
 #include "TextStyle.h"
-#include "HilitingBuffer.h"
 #include "StatusLine.h"
 #include "GuiLayoutColumn.h"
 #include "OwningPtr.h"
@@ -44,10 +43,10 @@ public:
     typedef WeakPtr<EditorTopWin> Ptr;
     
     static EditorTopWin::Ptr create(
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer)
+            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
     {
         return transferOwnershipTo(
-                new EditorTopWin(textData, textStyles, hilitingBuffer),
+                new EditorTopWin(textData, textStyles, hiliting),
                 TopWinList::getInstance());
     }
     
@@ -64,9 +63,9 @@ public:
     
 private:
     EditorTopWin(
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer);
+            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting);
 
-    TextEditorWidget::Ptr textEditor;
+    MultiLineEditorWidget::Ptr textEditor;
     ScrollBar::Ptr scrollBarH;
     ScrollBar::Ptr scrollBarV;    
     StatusLine::Ptr statusLine;

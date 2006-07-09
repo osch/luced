@@ -286,9 +286,9 @@ void TopWin::setWindowManagerHints()
     {
         XWMHints *hints = XAllocWMHints();
         
-        hints->flags  = IconPixmapHint; //|InputHint;// | IconMaskHint ;//| IconWindowHint;
+        hints->flags  = IconPixmapHint|InputHint;// | IconMaskHint ;//| IconWindowHint;
         hints->icon_pixmap = pixMap;
-        //hints->input = false;
+        hints->input = True;
         XSetWMHints(getDisplay(), getWid(), hints);
         
         XFree(hints);

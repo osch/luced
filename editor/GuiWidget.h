@@ -61,6 +61,7 @@ public:
     virtual void setSize(int width, int height);
     virtual void treatNewWindowPosition(Position newPosition) {}
     const Position& getPosition() { return position; }
+    Position getAbsolutePosition();
     
     virtual void show();
     virtual void hide();

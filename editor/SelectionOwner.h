@@ -34,11 +34,17 @@ public:
     static SelectionOwner* getPrimarySelectionOwner() {return primarySelectionOwner;}
     static bool hasPrimarySelectionOwner() {return primarySelectionOwner != NULL;}
 
+    bool requestSelectionOwnership();
+    void releaseSelectionOwnership();
+    bool hasSelectionOwnership();
+    
+protected:
+    friend class SelectionOwnerAccessForPasteDataReceiver;
+    
     virtual long  initSelectionDataRequest() {return 0;}
     virtual const byte* getSelectionDataChunk(long pos, long length) {return NULL;}
     virtual void  endSelectionDataRequest() {}
-    
-protected:
+
     SelectionOwner(GuiWidget* baseWidget, Atom x11AtomForSelection = XA_PRIMARY);
     ~SelectionOwner();
     
@@ -46,9 +52,6 @@ protected:
     
     virtual void notifyAboutLostSelectionOwnership() {}
 
-    bool requestSelectionOwnership();
-    void releaseSelectionOwnership();
-    bool hasSelectionOwnership();
     
 private:
     GuiWidget* baseWidget;
@@ -61,6 +64,20 @@ private:
     Atom   multiPartTargetProp;
     
     static SelectionOwner* primarySelectionOwner;
+};
+
+class SelectionOwnerAccessForPasteDataReceiver
+{
+protected:
+    static long initSelectionDataRequest(SelectionOwner* o) {
+        return o->initSelectionDataRequest();
+    }
+    static const byte* getSelectionDataChunk(SelectionOwner* o, long pos, long length) {
+        return o->getSelectionDataChunk(pos, length);
+    }
+    static void endSelectionDataRequest(SelectionOwner* o) {
+        o->endSelectionDataRequest();
+    }
 };
 
 } // namespace LucED

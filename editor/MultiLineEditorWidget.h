@@ -19,38 +19,32 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef PASTEDATARECEIVER_H
-#define PASTEDATARECEIVER_H
+#ifndef MULTILINEEDITORWIDGET_H
+#define MULTILINEEDITORWIDGET_H
 
-#include "ByteArray.h"
-#include "GuiWidget.h"
-#include "SelectionOwner.h"
+#include "TextEditorWidget.h"
 
 namespace LucED {
 
-class PasteDataReceiver : GuiWidgetAccessForEventProcessors, SelectionOwnerAccessForPasteDataReceiver
+class MultiLineEditorWidget : public TextEditorWidget
 {
 public:
-    void requestSelectionPasting();
-    void requestClipboardPasting();
-    bool isReceivingPasteData();
-    
-protected:
-    PasteDataReceiver(GuiWidget* baseWidget);
+    typedef OwningPtr<MultiLineEditorWidget> Ptr;
 
-    bool processPasteDataReceiverEvent(const XEvent *event);
+    static MultiLineEditorWidget::Ptr create(GuiWidget *parent, 
+            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
+    {
+        return MultiLineEditorWidget::Ptr(new MultiLineEditorWidget(parent, 
+                textData, textStyles, hiliting));
+    }
 
-    virtual void notifyAboutBeginOfPastingData() = 0;
-    virtual void notifyAboutReceivedPasteData(const byte* data, long length) = 0;    
-    virtual void notifyAboutEndOfPastingData() = 0;    
 
 private:
-    GuiWidget* baseWidget;
-    bool isReceivingPasteDataFlag;
-    bool isMultiPartPastingFlag;
-    ByteArray pasteBuffer;
+    MultiLineEditorWidget(GuiWidget *parent, 
+            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting);
+
 };
 
-} // namespace LucED
+} // namespapce LucED
 
-#endif // PASTEDATARECEIVER_H
+#endif // MULTILINEEDITORWIDGET_H

@@ -28,7 +28,7 @@
 #include "GuiLayoutColumn.h"
 #include "DialogWin.h"
 #include "Slot.h"
-#include "TextEditorWidget.h"
+#include "SingleLineEditorWidget.h"
 
 namespace LucED {
 
@@ -53,7 +53,7 @@ private:
     void handleButtonPressed(Button* button);
 
     Button::Ptr findButton, cancelButton;
-    TextEditorWidget::Ptr editField;
+    SingleLineEditorWidget::Ptr editField;
     
     Slot1<Button*> slotForButtonPressed;
 };

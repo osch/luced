@@ -32,7 +32,7 @@
 
 using namespace LucED;
 
-EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer)
+EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
     : rootElement(GuiLayoutColumn::create()),
       keyMapping(this),
       wasNeverShown(true)
@@ -46,7 +46,7 @@ EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, H
 //    GuiLayoutTable::Ptr tableLayout = GuiLayoutTable::create(2, 2);
 //    rootElement->addElement(tableLayout);
     
-    textEditor = TextEditorWidget::create(this, textData, textStyles, hilitingBuffer);
+    textEditor = MultiLineEditorWidget::create(this, textData, textStyles, hiliting);
     
 //    GuiLayoutColumn::Ptr c1 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr c2 = GuiLayoutColumn::create();

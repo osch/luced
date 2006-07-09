@@ -57,15 +57,15 @@ void PasteDataReceiver::requestSelectionPasting()
     pasteBuffer.clear();
     if (SelectionOwner::hasPrimarySelectionOwner()) {
         SelectionOwner* selectionOwner = SelectionOwner::getPrimarySelectionOwner();
-        long length = selectionOwner->initSelectionDataRequest();
+        long length = initSelectionDataRequest(selectionOwner);
         if (length > 0) {
-            const byte* data = selectionOwner->getSelectionDataChunk(0, length);
+            const byte* data = getSelectionDataChunk(selectionOwner, 0, length);
             ByteArray buffer;
             buffer.append(data, length); // make copy, because data* could become invalid, if
                                          // paste is going into the same buffer
             notifyAboutReceivedPasteData(buffer.getPtr(0), buffer.getLength());
         }
-        selectionOwner->endSelectionDataRequest();
+        endSelectionDataRequest(selectionOwner);
         isReceivingPasteDataFlag = false;
     } else {
         XDeleteProperty(getDisplay(), getGuiWidgetWid(baseWidget), XA_PRIMARY);

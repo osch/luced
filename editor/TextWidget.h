@@ -43,14 +43,14 @@ public:
     
     virtual ~TextWidget();
     
-protected:
-    TextWidget(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, 
-            HilitingBuffer::Ptr hilitingBuffer);
-
     BackliteBuffer* getBackliteBuffer() {
         return backliteBuffer.getRawPtr();
     }
+
+protected:
+    TextWidget(GuiWidget *parent, 
+            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting);
+
 
 public:
     virtual void setPosition(Position newPosition);
@@ -125,9 +125,9 @@ public:
     void setLeftPix(long leftPix);
     long getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCursor = true);
     long getTextPosForPixX(long pixX, long beginOfLinePos);
-    void insertAtCursor(char c);
-    void insertAtCursor(const byte* buffer, long length);
-    void insertAtCursor(const ByteArray& buffer);
+    long insertAtCursor(char c);
+    long insertAtCursor(const byte* buffer, long length);
+    long insertAtCursor(const ByteArray& buffer);
     void removeAtCursor(long amount);
     
     virtual bool processEvent(const XEvent *event);

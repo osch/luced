@@ -111,11 +111,10 @@ public:
     }
     
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(const string& languageMode);
-    SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode) {
-        return getSyntaxPatternsForLanguageMode(languageMode->getName());
-    }
+    SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode);
     SyntaxPatterns::Ptr getSyntaxPatternsForFileName(const string& fileName);
     LanguageMode::Ptr   getLanguageModeForFileName(const string& fileName);
+    LanguageMode::Ptr   getDefaultLanguageMode();
 
 private:
     friend class SingletonInstance<GlobalConfig>;

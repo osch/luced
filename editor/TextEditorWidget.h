@@ -23,7 +23,6 @@
 #define TEXTEDITORWIDGET_H
 
 #include "TextWidget.h"
-#include "HilitingBuffer.h"
 #include "KeyMapping.h"
 #include "SelectionOwner.h"
 #include "PasteDataReceiver.h"
@@ -31,57 +30,12 @@
 
 namespace LucED {
 
-class TextEditorWidget : public TextWidget, SelectionOwner, PasteDataReceiver
+class TextEditorWidget : public TextWidget, public SelectionOwner, public PasteDataReceiver
 {
 public:
-    typedef OwningPtr<TextEditorWidget> Ptr;
-    typedef Callback1<long> ChangedValueCallback;
-
-    static TextEditorWidget::Ptr create(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer) {
-        return TextEditorWidget::Ptr(new TextEditorWidget(parent, 
-                textData, textStyles, hilitingBuffer));
-    }
-
-    virtual ~TextEditorWidget() {}
+    typedef void (EditActionFunction)(TextEditorWidget *);
 
     void assureCursorVisible();
-    void cursorLeft();
-    void cursorRight();
-    void cursorDown();
-    void cursorUp();
-    void cursorPageDown();
-    void cursorPageUp();
-    void cursorBeginOfLine();
-    void cursorEndOfLine();
-    void scrollDown();
-    void scrollUp();
-    void scrollLeft();
-    void scrollRight();
-    void scrollPageUp();
-    void scrollPageDown();
-    void scrollPageLeft();
-    void scrollPageRight();
-    void cursorBeginOfText();
-    void cursorEndOfText();
-    void newLine();
-    void backSpace();
-    void deleteKey();
-    void copyToClipboard();
-    void pasteFromClipboard();
-    void selectAll();
-    void selectionCursorLeft();
-    void selectionCursorRight();
-    void selectionCursorDown();
-    void selectionCursorUp();
-    void cursorWordLeft();
-    void cursorWordRight();
-    void selectionCursorWordLeft();
-    void selectionCursorWordRight();
-    void selectionCursorBeginOfLine();
-    void selectionCursorEndOfLine();
-    void selectionCursorPageDown();
-    void selectionCursorPageUp();
     
     void showCursor();
     void hideCursor();
@@ -93,22 +47,42 @@ public:
     void treatFocusOut();
     void disableCursorChanges();
     void enableCursorChanges();
+    bool areCursorChangesDisabled()  { return cursorChangesDisabled; }
+    void rememberCursorPixX()        { rememberedCursorPixX = getCursorPixX(); }
+    int  getRememberedCursorPixX()   { return rememberedCursorPixX; }
+    bool isWordCharacter(unsigned char c);
+    
+    void setEditAction(int keyState, KeySym keySym, EditActionFunction* action) {
+        keyMapping.set(keyState, keySym, action);
+    }
+    
     
     Slot1<ScrollStep::Type> slotForScrollStepV;
     Slot1<ScrollStep::Type> slotForScrollStepH;
 
-private:
-    TextEditorWidget(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer);
+    void scrollUp();
+    void scrollDown();
+    void scrollLeft();
+    void scrollRight();
+    void scrollPageUp();
+    void scrollPageDown();
+    void scrollPageLeft();
+    void scrollPageRight();
 
+protected:
+    TextEditorWidget(GuiWidget *parent, 
+            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting);
+
+    virtual void notifyAboutReceivedPasteData(const byte* data, long length);
+    virtual void notifyAboutEndOfPastingData();
+    virtual void notifyAboutBeginOfPastingData();
+
+private:
     virtual long  initSelectionDataRequest();
     virtual const byte* getSelectionDataChunk(long pos, long length);
     virtual void  endSelectionDataRequest();
     virtual void notifyAboutLostSelectionOwnership();
 
-    virtual void notifyAboutReceivedPasteData(const byte* data, long length);
-    virtual void notifyAboutEndOfPastingData();
-    virtual void notifyAboutBeginOfPastingData();
     
     void handleScrollStepV(ScrollStep::Type scrollStep);
     void handleScrollStepH(ScrollStep::Type scrollStep);

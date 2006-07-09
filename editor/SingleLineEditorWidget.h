@@ -19,38 +19,38 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef PASTEDATARECEIVER_H
-#define PASTEDATARECEIVER_H
+#ifndef SINGLELINEEDITORWIDGET_H
+#define SINGLELINEEDITORWIDGET_H
 
+#include "Slot.h"
 #include "ByteArray.h"
-#include "GuiWidget.h"
-#include "SelectionOwner.h"
+#include "TextEditorWidget.h"
 
 namespace LucED {
 
-class PasteDataReceiver : GuiWidgetAccessForEventProcessors, SelectionOwnerAccessForPasteDataReceiver
+class SingleLineEditorWidget : public TextEditorWidget
 {
 public:
-    void requestSelectionPasting();
-    void requestClipboardPasting();
-    bool isReceivingPasteData();
-    
-protected:
-    PasteDataReceiver(GuiWidget* baseWidget);
+    typedef OwningPtr<SingleLineEditorWidget> Ptr;
 
-    bool processPasteDataReceiverEvent(const XEvent *event);
+    static SingleLineEditorWidget::Ptr create(GuiWidget *parent, 
+            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
+    {
+        return SingleLineEditorWidget::Ptr(new SingleLineEditorWidget(parent, 
+                textData, textStyles, hiliting));
+    }
 
-    virtual void notifyAboutBeginOfPastingData() = 0;
-    virtual void notifyAboutReceivedPasteData(const byte* data, long length) = 0;    
-    virtual void notifyAboutEndOfPastingData() = 0;    
 
 private:
-    GuiWidget* baseWidget;
-    bool isReceivingPasteDataFlag;
-    bool isMultiPartPastingFlag;
-    ByteArray pasteBuffer;
+    SingleLineEditorWidget(GuiWidget *parent, 
+            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting);
+    
+    void filterInsert(const byte** buffer, long* length);
+    
+    Slot2<const byte**, long*> slotForInsertFilter;
+    ByteArray filterBuffer;
 };
 
-} // namespace LucED
+} // namespapce LucED
 
-#endif // PASTEDATARECEIVER_H
+#endif // SINGLELINEEDITORWIDGET_H

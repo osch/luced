@@ -56,7 +56,8 @@ MODULES = EditorTopWin    EventDispatcher   GuiRoot            GuiWidget \
           SelectionOwner  PasteDataReceiver StatusLine         GuiLayoutRow \
           Button          GuiLayoutColumn   GuiLayoutWidget \
           FindDialog      SingletonKeeper   TopWinList         TopWinOwner \
-          DialogWin       GuiLayoutSpacer
+          DialogWin       GuiLayoutSpacer   MultiLineEditorWidget \
+          SingleLineEditorWidget            StandardEditActions
 
 OBJS   = $(patsubst %, $(BUILD_DIR)/%.o, $(MODULES))
 

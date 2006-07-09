@@ -48,7 +48,7 @@ void DialogWin::show()
         m.bestHeight += 4;  m.bestWidth += 4;
         if (wasNeverShown) {
             if (referingWindow != NULL)  {
-                Position pp = referingWindow->getPosition();
+                Position pp = referingWindow->getAbsolutePosition();
                 int x = pp.x + (pp.w - m.bestWidth)/2;
                 int y = pp.y + (pp.h - m.bestHeight)/2;
                 setPosition(Position(x, y, m.bestWidth, m.bestHeight));

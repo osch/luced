@@ -40,7 +40,7 @@ static inline unsigned int calculateWidthOrHeightWithoutBorder(unsigned int tota
 }
 
 TextWidget::TextWidget(GuiWidget *parent, 
-        TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer)
+        TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
 
     : GuiWidget(parent, 0, 0, 1, 1, BORDER_WIDTH),
 
@@ -50,7 +50,7 @@ TextWidget::TextWidget(GuiWidget *parent,
       slotForVerticalScrollBarChangedValue(this, &TextWidget::setTopLineNumber),
       slotForHorizontalScrollBarChangedValue(this, &TextWidget::internSetLeftPix),
       textStyles(textStyles),
-      hilitingBuffer(hilitingBuffer),
+      hilitingBuffer(HilitingBuffer::create(hiliting)),
       backliteBuffer(BackliteBuffer::create(textData)),
       lineInfos(),
       topMarkId(textData->createNewMark()),
@@ -103,7 +103,7 @@ TextWidget::TextWidget(GuiWidget *parent,
     textData->registerUpdateListener(slotForTextDataUpdateTreatment);
     
     EventDispatcher::getInstance()->registerUpdateSource(slotForFlushPendingUpdates);
-      hilitingBuffer->registerUpdateListener(slotForHilitingUpdateTreatment);
+    hilitingBuffer->registerUpdateListener(slotForHilitingUpdateTreatment);
     backliteBuffer->registerUpdateListener(slotForHilitingUpdateTreatment);
     
     redrawRegion = XCreateRegion();
@@ -1335,19 +1335,19 @@ TextData::TextMark TextWidget::createNewMarkFromCursor()
     return textData->createNewMark(cursorMarkId);
 }
 
-void TextWidget::insertAtCursor(char c)
+long TextWidget::insertAtCursor(char c)
 {
-    textData->insertAtMark(cursorMarkId, c);
+    return textData->insertAtMark(cursorMarkId, c);
 }
 
-void TextWidget::insertAtCursor(const ByteArray& buffer)
+long TextWidget::insertAtCursor(const ByteArray& buffer)
 {
-    textData->insertAtMark(cursorMarkId, buffer);
+    return textData->insertAtMark(cursorMarkId, buffer);
 }
 
-void TextWidget::insertAtCursor(const byte* buffer, long length)
+long TextWidget::insertAtCursor(const byte* buffer, long length)
 {
-    textData->insertAtMark(cursorMarkId, buffer, length);
+    return textData->insertAtMark(cursorMarkId, buffer, length);
 }
 
 void TextWidget::removeAtCursor(long amount)

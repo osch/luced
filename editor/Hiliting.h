@@ -118,7 +118,7 @@ private:
     
     MemArray<int> ovector;
     
-    const int breakPointDistance;
+    int breakPointDistance;
 };
 
 } // namespace LucED

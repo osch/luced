@@ -41,8 +41,7 @@ Hiliting::Hiliting(TextData::Ptr textData, LanguageMode::Ptr languageMode)
           languageMode(languageMode),
           startNextProcessIterator(createNewIterator()),
           tryToBeLastBreakIterator(createNewIterator()),
-          processHandlerSlot(this, &Hiliting::process, &Hiliting::needsProcessing),
-          breakPointDistance(languageMode->getHilitingBreakPointDistance())
+          processHandlerSlot(this, &Hiliting::process, &Hiliting::needsProcessing)
 {
     textData->registerUpdateListener(slotForTextDataUpdateTreatment);
     EventDispatcher::getInstance()->registerUpdateSource(slotForFlushPendingUpdates);
@@ -51,6 +50,12 @@ Hiliting::Hiliting(TextData::Ptr textData, LanguageMode::Ptr languageMode)
     this->processingEndBeforeRestartFlag = false;
     this->needsProcessingFlag = false;
     this->syntaxPatterns = GlobalConfig::getInstance()->getSyntaxPatternsForLanguageMode(languageMode);
+    if (languageMode.isValid()) {
+        this->breakPointDistance = languageMode->getHilitingBreakPointDistance();
+    } else {
+        this->breakPointDistance = 50;
+    }
+
     if (syntaxPatterns.isValid()) {
         this->ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }

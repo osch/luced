@@ -20,8 +20,6 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include <ctype.h>
-#include <X11/keysym.h>
-#include <X11/Xatom.h>
 
 #include "TextEditorWidget.h"
 #include "util.h"
@@ -31,17 +29,12 @@
 
 using namespace LucED;
 
-static inline bool isWordCharacter(unsigned char c) {
-    return c == '_' || isalnum(c);
-}
-
 
 TextEditorWidget::TextEditorWidget(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, HilitingBuffer::Ptr hilitingBuffer)
-      : TextWidget(parent, textData, textStyles, hilitingBuffer),
+            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
+      : TextWidget(parent, textData, textStyles, hiliting),
         SelectionOwner(this),
         PasteDataReceiver(this),
-        keyMapping(this),
         rememberedCursorPixX(0),
         slotForScrollStepV(this, &TextEditorWidget::handleScrollStepV),
         slotForScrollStepH(this, &TextEditorWidget::handleScrollStepH),
@@ -53,77 +46,13 @@ TextEditorWidget::TextEditorWidget(GuiWidget *parent,
     hasFocusFlag = false;
     addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
 
-    keyMapping.add(                    0, XK_Left,      &TextEditorWidget::cursorLeft);
-    keyMapping.add(                    0, XK_Right,     &TextEditorWidget::cursorRight);
-    keyMapping.add(                    0, XK_KP_Left,   &TextEditorWidget::cursorLeft);
-    keyMapping.add(                    0, XK_KP_Right,  &TextEditorWidget::cursorRight);
-
-    keyMapping.add(                    0, XK_Down,      &TextEditorWidget::cursorDown);
-    keyMapping.add(                    0, XK_Up,        &TextEditorWidget::cursorUp);
-    keyMapping.add(                    0, XK_KP_Down,   &TextEditorWidget::cursorDown);
-    keyMapping.add(                    0, XK_KP_Up,     &TextEditorWidget::cursorUp);
-    
-    keyMapping.add(                    0, XK_Page_Down, &TextEditorWidget::cursorPageDown);
-    keyMapping.add(                    0, XK_Page_Up,   &TextEditorWidget::cursorPageUp);
-    keyMapping.add(             Mod1Mask, XK_Down,      &TextEditorWidget::cursorPageDown);
-    keyMapping.add(             Mod1Mask, XK_Up,        &TextEditorWidget::cursorPageUp);
-    
-    keyMapping.add(             Mod1Mask, XK_Left,      &TextEditorWidget::cursorBeginOfLine);
-    keyMapping.add(             Mod1Mask, XK_Right,     &TextEditorWidget::cursorEndOfLine);
-    keyMapping.add(             Mod1Mask, XK_KP_Left,   &TextEditorWidget::cursorBeginOfLine);
-    keyMapping.add(             Mod1Mask, XK_KP_Right,  &TextEditorWidget::cursorEndOfLine);
-
-    keyMapping.add(                    0, XK_Home,      &TextEditorWidget::cursorBeginOfLine);
-    keyMapping.add(                    0, XK_Begin,     &TextEditorWidget::cursorBeginOfLine);
-    keyMapping.add(                    0, XK_End,       &TextEditorWidget::cursorEndOfLine);
-
-    keyMapping.add( ControlMask|Mod1Mask, XK_Down,      &TextEditorWidget::scrollDown);
-    keyMapping.add( ControlMask|Mod1Mask, XK_Up,        &TextEditorWidget::scrollUp);
-    keyMapping.add( ControlMask|Mod1Mask, XK_KP_Down,   &TextEditorWidget::scrollDown);
-    keyMapping.add( ControlMask|Mod1Mask, XK_KP_Up,     &TextEditorWidget::scrollUp);
-
-    keyMapping.add( ControlMask|Mod1Mask, XK_Left,      &TextEditorWidget::scrollLeft);
-    keyMapping.add( ControlMask|Mod1Mask, XK_Right,     &TextEditorWidget::scrollRight);
-    keyMapping.add( ControlMask|Mod1Mask, XK_KP_Left,   &TextEditorWidget::scrollLeft);
-    keyMapping.add( ControlMask|Mod1Mask, XK_KP_Right,  &TextEditorWidget::scrollRight);
-
-    keyMapping.add(          ControlMask, XK_Home,      &TextEditorWidget::cursorBeginOfText);
-    keyMapping.add(          ControlMask, XK_Begin,     &TextEditorWidget::cursorBeginOfText);
-    keyMapping.add(          ControlMask, XK_End,       &TextEditorWidget::cursorEndOfText);
-
-    keyMapping.add(                    0, XK_Return,    &TextEditorWidget::newLine);
-    keyMapping.add(                    0, XK_KP_Enter,  &TextEditorWidget::newLine);
-
-    keyMapping.add(                    0, XK_BackSpace, &TextEditorWidget::backSpace);
-    keyMapping.add(                    0, XK_Delete,    &TextEditorWidget::deleteKey);
-
-    keyMapping.add(          ControlMask, XK_c,         &TextEditorWidget::copyToClipboard);
-    keyMapping.add(          ControlMask, XK_v,         &TextEditorWidget::pasteFromClipboard);
-    keyMapping.add(          ControlMask, XK_a,         &TextEditorWidget::selectAll);
-
-    keyMapping.add(            ShiftMask, XK_Left,      &TextEditorWidget::selectionCursorLeft);
-    keyMapping.add(            ShiftMask, XK_Right,     &TextEditorWidget::selectionCursorRight);
-    keyMapping.add(            ShiftMask, XK_KP_Left,   &TextEditorWidget::selectionCursorLeft);
-    keyMapping.add(            ShiftMask, XK_KP_Right,  &TextEditorWidget::selectionCursorRight);
-
-    keyMapping.add(            ShiftMask, XK_Down,      &TextEditorWidget::selectionCursorDown);
-    keyMapping.add(            ShiftMask, XK_Up,        &TextEditorWidget::selectionCursorUp);
-    keyMapping.add(            ShiftMask, XK_KP_Down,   &TextEditorWidget::selectionCursorDown);
-    keyMapping.add(            ShiftMask, XK_KP_Up,     &TextEditorWidget::selectionCursorUp);
-    
-    keyMapping.add(          ControlMask, XK_Left,      &TextEditorWidget::cursorWordLeft);
-    keyMapping.add(          ControlMask, XK_Right,     &TextEditorWidget::cursorWordRight);
-    keyMapping.add(ShiftMask|ControlMask, XK_Left,      &TextEditorWidget::selectionCursorWordLeft);
-    keyMapping.add(ShiftMask|ControlMask, XK_Right,     &TextEditorWidget::selectionCursorWordRight);
-
-    keyMapping.add(            ShiftMask, XK_Home,      &TextEditorWidget::selectionCursorBeginOfLine);
-    keyMapping.add(            ShiftMask, XK_Begin,     &TextEditorWidget::selectionCursorBeginOfLine);
-    keyMapping.add(            ShiftMask, XK_End,       &TextEditorWidget::selectionCursorEndOfLine);
-
-    keyMapping.add(            ShiftMask, XK_Page_Down, &TextEditorWidget::selectionCursorPageDown);
-    keyMapping.add(            ShiftMask, XK_Page_Up,   &TextEditorWidget::selectionCursorPageUp);
 }
 
+
+bool TextEditorWidget::isWordCharacter(unsigned char c)
+{
+    return c == '_' || isalnum(c);
+}
 
 void TextEditorWidget::assureCursorVisible()
 {
@@ -144,632 +73,10 @@ void TextEditorWidget::assureCursorVisible()
     }
 }
 
-void TextEditorWidget::cursorLeft()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        long cursorPos = getCursorTextPosition();
-        if (cursorPos > 0) {
-            moveCursorToTextPosition(cursorPos - 1);
-        }
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::cursorRight()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        long cursorPos = getCursorTextPosition();
-        if (cursorPos < getTextData()->getLength()) {
-            moveCursorToTextPosition(cursorPos + 1);
-        }
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-void TextEditorWidget::cursorDown()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        long pos = getCursorTextPosition();
-        pos = getTextData()->getNextLineBegin(pos);
-        if (getTextData()->isBeginOfLine(pos)) {
-            pos = getTextPosForPixX(rememberedCursorPixX, pos);
-            moveCursorToTextPosition(pos);
-        } else {
-            // Cursor is in last line
-        }
-    }
-    assureCursorVisible();
-}
-
-
-void TextEditorWidget::cursorUp()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        long pos = getCursorTextPosition();
-        pos = getTextData()->getPrevLineBegin(pos);
-        pos = getTextPosForPixX(rememberedCursorPixX, pos);
-        moveCursorToTextPosition(pos);
-    }
-    assureCursorVisible();
-}
-
-void TextEditorWidget::cursorWordLeft()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-
-        long pos = getCursorTextPosition();
-        while (pos > 0 && !isWordCharacter(getTextData()->getChar(pos - 1))) {
-            --pos;
-        }
-        while (pos > 0 && isWordCharacter(getTextData()->getChar(pos - 1))) {
-            --pos;
-        }
-        moveCursorToTextPosition(pos);
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::cursorWordRight()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-
-        long pos = getCursorTextPosition();
-        long len = getTextData()->getLength();
-        while (pos < len && isWordCharacter(getTextData()->getChar(pos))) {
-            ++pos;
-        }
-        while (pos < len && !isWordCharacter(getTextData()->getChar(pos))) {
-            ++pos;
-        }
-        moveCursorToTextPosition(pos);
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-
-void TextEditorWidget::selectionCursorLeft()
-{
-    if (!cursorChangesDisabled)
-    {
-        long cursorPos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(cursorPos);
-        }
-        if (cursorPos > 0) {
-            moveCursorToTextPosition(cursorPos - 1);
-        }
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::selectionCursorRight()
-{
-    if (!cursorChangesDisabled)
-    {
-        long cursorPos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(cursorPos);
-        }
-        if (cursorPos < getTextData()->getLength()) {
-            moveCursorToTextPosition(cursorPos + 1);
-        }
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-void TextEditorWidget::selectionCursorDown()
-{
-    if (!cursorChangesDisabled)
-    {
-        long pos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(pos);
-        }
-        pos = getTextData()->getNextLineBegin(pos);
-        if (getTextData()->isBeginOfLine(pos)) {
-            pos = getTextPosForPixX(rememberedCursorPixX, pos);
-            moveCursorToTextPosition(pos);
-        } else {
-            // Cursor is in last line
-        }
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-}
-
-
-void TextEditorWidget::selectionCursorUp()
-{
-    if (!cursorChangesDisabled)
-    {
-        long pos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(pos);
-        }
-        pos = getTextData()->getPrevLineBegin(pos);
-        pos = getTextPosForPixX(rememberedCursorPixX, pos);
-        moveCursorToTextPosition(pos);
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-}
-
-
-void TextEditorWidget::selectionCursorWordLeft()
-{
-    if (!cursorChangesDisabled)
-    {
-        long cursorPos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(cursorPos);
-        }
-        long pos = cursorPos;
-        while (pos > 0 && !isWordCharacter(getTextData()->getChar(pos - 1))) {
-            --pos;
-        }
-        while (pos > 0 && isWordCharacter(getTextData()->getChar(pos - 1))) {
-            --pos;
-        }
-        moveCursorToTextPosition(pos);
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::selectionCursorWordRight()
-{
-    if (!cursorChangesDisabled)
-    {
-        long cursorPos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(cursorPos);
-        }
-        long pos = cursorPos;
-        long len = getTextData()->getLength();
-        while (pos < len && isWordCharacter(getTextData()->getChar(pos))) {
-            ++pos;
-        }
-        while (pos < len && !isWordCharacter(getTextData()->getChar(pos))) {
-            ++pos;
-        }
-        moveCursorToTextPosition(pos);
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::cursorPageDown()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        long targetLine = getCursorLineNumber() + getNumberOfVisibleLines() - 1;
-        long targetTopLine = getTopLineNumber() + getNumberOfVisibleLines() - 1;
-
-        if (targetLine > getTextData()->getNumberOfLines()) {
-            targetLine = getCursorLineNumber();
-        }
-        if (targetTopLine > getTextData()->getNumberOfLines() - getNumberOfVisibleLines()) {
-            targetTopLine = getTextData()->getNumberOfLines() - getNumberOfVisibleLines();
-        }
-        TextData::TextMark mark = createNewMarkFromCursor();
-        mark.moveToLineAndColumn(targetLine, 0);
-
-        long newPos = getTextPosForPixX(rememberedCursorPixX, mark.getPos());
-        mark.moveToPos(newPos);
-
-        setTopLineNumber(targetTopLine);
-        moveCursorToTextMark(mark);
-    }
-    assureCursorVisible();
-}
-
-
-void TextEditorWidget::cursorPageUp()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        long targetLine = getCursorLineNumber() - (getNumberOfVisibleLines() - 1);
-        long targetTopLine = getTopLineNumber() - (getNumberOfVisibleLines() - 1);
-
-        if (targetLine < 0) {
-            targetLine = getCursorLineNumber();
-        }
-        if (targetTopLine < 0) {
-            targetTopLine = 0;
-        }
-        TextData::TextMark mark = createNewMarkFromCursor();
-        mark.moveToLineAndColumn(targetLine, 0);
-
-        long newPos = getTextPosForPixX(rememberedCursorPixX, mark.getPos());
-        mark.moveToPos(newPos);
-
-        setTopLineNumber(targetTopLine);
-        moveCursorToTextMark(mark);
-    }
-    assureCursorVisible();
-}
-
-void TextEditorWidget::selectionCursorPageDown()
-{
-    if (!cursorChangesDisabled)
-    {
-        long cursorPos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(cursorPos);
-        }
-
-        long targetLine = getCursorLineNumber() + getNumberOfVisibleLines() - 1;
-        long targetTopLine = getTopLineNumber() + getNumberOfVisibleLines() - 1;
-
-        if (targetLine > getTextData()->getNumberOfLines()) {
-            targetLine = getCursorLineNumber();
-        }
-        if (targetTopLine > getTextData()->getNumberOfLines() - getNumberOfVisibleLines()) {
-            targetTopLine = getTextData()->getNumberOfLines() - getNumberOfVisibleLines();
-        }
-        TextData::TextMark mark = createNewMarkFromCursor();
-        mark.moveToLineAndColumn(targetLine, 0);
-
-        long newPos = getTextPosForPixX(rememberedCursorPixX, mark.getPos());
-        mark.moveToPos(newPos);
-
-        setTopLineNumber(targetTopLine);
-        moveCursorToTextMark(mark);
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-}
-
-
-void TextEditorWidget::selectionCursorPageUp()
-{
-    if (!cursorChangesDisabled)
-    {
-        long cursorPos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(cursorPos);
-        }
-
-        long targetLine = getCursorLineNumber() - (getNumberOfVisibleLines() - 1);
-        long targetTopLine = getTopLineNumber() - (getNumberOfVisibleLines() - 1);
-
-        if (targetLine < 0) {
-            targetLine = getCursorLineNumber();
-        }
-        if (targetTopLine < 0) {
-            targetTopLine = 0;
-        }
-        TextData::TextMark mark = createNewMarkFromCursor();
-        mark.moveToLineAndColumn(targetLine, 0);
-
-        long newPos = getTextPosForPixX(rememberedCursorPixX, mark.getPos());
-        mark.moveToPos(newPos);
-
-        setTopLineNumber(targetTopLine);
-        moveCursorToTextMark(mark);
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-}
-
-void TextEditorWidget::cursorBeginOfLine()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        TextData::TextMark mark = createNewMarkFromCursor();
-        mark.moveToBeginOfLine();
-        moveCursorToTextMark(mark);
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::cursorEndOfLine()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        TextData::TextMark mark = createNewMarkFromCursor();
-        mark.moveToEndOfLine();
-        moveCursorToTextMark(mark);
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-void TextEditorWidget::selectionCursorBeginOfLine()
-{
-    if (!cursorChangesDisabled)
-    {
-        long cursorPos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(cursorPos);
-        }
-
-        TextData::TextMark mark = createNewMarkFromCursor();
-        mark.moveToBeginOfLine();
-        moveCursorToTextMark(mark);
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::selectionCursorEndOfLine()
-{
-    if (!cursorChangesDisabled)
-    {
-        long cursorPos = getCursorTextPosition();
-        if (!hasSelectionOwnership()) {
-            requestSelectionOwnership();
-            getBackliteBuffer()->activateSelection(cursorPos);
-        }
-
-        TextData::TextMark mark = createNewMarkFromCursor();
-        mark.moveToEndOfLine();
-        moveCursorToTextMark(mark);
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::cursorBeginOfText()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        moveCursorToTextPosition(0);
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::cursorEndOfText()
-{
-    if (!cursorChangesDisabled)
-    {
-        releaseSelectionOwnership();
-        moveCursorToTextPosition(getTextData()->getLength());
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
-
-void TextEditorWidget::scrollDown()
-{
-    if (getTopLineNumber() < getTextData()->getNumberOfLines() - getNumberOfVisibleLines()) {
-        setTopLineNumber(getTopLineNumber() + 1);
-    }
-}
-
-
-void TextEditorWidget::scrollUp()
-{
-    setTopLineNumber(getTopLineNumber() - 1);
-}
-
-
-void TextEditorWidget::scrollLeft()
-{
-    long newLeft = getLeftPix() - getTextStyles()->get(0)->getSpaceWidth();
-    setLeftPix(newLeft);
-}
-
-
-void TextEditorWidget::scrollRight()
-{
-    long newLeft = getLeftPix() + getTextStyles()->get(0)->getSpaceWidth();
-    setLeftPix(newLeft);
-}
-
-
-void TextEditorWidget::scrollPageUp()
-{
-    long targetTopLine = getTopLineNumber() - (getNumberOfVisibleLines() - 1);
-    
-    if (targetTopLine < 0) {
-        targetTopLine = 0;
-    }
-    setTopLineNumber(targetTopLine);
-}
-
-
-void TextEditorWidget::scrollPageDown()
-{
-    long targetTopLine = getTopLineNumber() + getNumberOfVisibleLines() - 1;
-    
-    if (targetTopLine > getTextData()->getNumberOfLines() - getNumberOfVisibleLines()) {
-        targetTopLine = getTextData()->getNumberOfLines() - getNumberOfVisibleLines();
-    }
-    setTopLineNumber(targetTopLine);
-}
-
-
-void TextEditorWidget::scrollPageLeft()
-{
-    int columns = getPixWidth() / getTextStyles()->get(0)->getSpaceWidth();
-    long newLeft = getLeftPix() - getTextStyles()->get(0)->getSpaceWidth() * (columns/2);
-    setLeftPix(newLeft);
-}
-
-
-void TextEditorWidget::scrollPageRight()
-{
-    int columns = getPixWidth() / getTextStyles()->get(0)->getSpaceWidth();
-    long newLeft = getLeftPix() + getTextStyles()->get(0)->getSpaceWidth() * (columns/2);
-    setLeftPix(newLeft);
-}
-
-
-void TextEditorWidget::newLine()
-{
-    if (!cursorChangesDisabled)
-    {
-        TextData::TextMark mark = createNewMarkFromCursor();
-        ByteArray whiteSpace;
-        whiteSpace.append('\n');
-
-        mark.moveToBeginOfLine();
-        while (!mark.isEndOfText() && mark.getPos() < getCursorTextPosition()) {
-            byte c = mark.getChar();
-            if (c == ' ' || c == '\t') {
-                whiteSpace.append(c);
-            } else {
-                break;
-            }
-            mark.inc();
-        }
-
-        hideCursor();
-        insertAtCursor(whiteSpace);
-        moveCursorToTextPosition(getCursorTextPosition() + whiteSpace.getLength());
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-    showCursor();
-}
-
-
-void TextEditorWidget::backSpace()
-{
-    if (!cursorChangesDisabled)
-    {
-        hideCursor();
-        if (hasSelectionOwnership()) {
-            long selBegin = getBackliteBuffer()->getBeginSelectionPos();
-            long selLength = getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            moveCursorToTextPosition(selBegin);
-            removeAtCursor(selLength);
-            releaseSelectionOwnership();
-        } else {
-            long pos = getCursorTextPosition();
-            if (pos > 0) {
-                moveCursorToTextPosition(pos - 1);
-                removeAtCursor(1);
-            }
-        }
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-    showCursor();
-}
-
-void TextEditorWidget::deleteKey()
-{
-    if (!cursorChangesDisabled)
-    {
-        hideCursor();
-        if (hasSelectionOwnership()) {
-            long selBegin = getBackliteBuffer()->getBeginSelectionPos();
-            long selLength = getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            moveCursorToTextPosition(selBegin);
-            removeAtCursor(selLength);
-            releaseSelectionOwnership();
-        } else {
-            removeAtCursor(1);
-        }
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-    showCursor();
-}
-
-
-void TextEditorWidget::copyToClipboard()
-{
-    if (!cursorChangesDisabled)
-    {
-        if (getBackliteBuffer()->hasActiveSelection()) {
-            long selBegin = getBackliteBuffer()->getBeginSelectionPos();
-            long selLength = getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            Clipboard::getInstance()->copyToClipboard(getTextData()->getAmount(selBegin, selLength), selLength);
-        }
-    }
-}
-
-void TextEditorWidget::selectAll()
-{
-    if (!cursorChangesDisabled && getTextData()->getLength() > 0)
-    {
-        requestSelectionOwnership();
-        if (hasSelectionOwnership()) {
-            getBackliteBuffer()->activateSelection(0);
-            getBackliteBuffer()->extendSelectionTo(getTextData()->getLength());
-        }
-    }
-}
-
-
-
-void TextEditorWidget::pasteFromClipboard()
-{
-    if (!cursorChangesDisabled)
-    {
-        if (hasSelectionOwnership()) {
-            long selBegin = getBackliteBuffer()->getBeginSelectionPos();
-            long selLength = getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            moveCursorToTextPosition(selBegin);
-            removeAtCursor(selLength);
-        }
-        requestClipboardPasting();
-        if (hasSelectionOwnership()) {
-            releaseSelectionOwnership();
-        }
-    }
-    assureCursorVisible();
-    rememberedCursorPixX = getCursorPixX();
-}
-
 void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long length)
 {
     if (length > 0) {
-        insertAtCursor(data, length);
+        length = insertAtCursor(data, length);
         moveCursorToTextPosition(getCursorTextPosition() + length);
     }
 }
@@ -1128,10 +435,11 @@ void TextEditorWidget::handleScrollRepeating()
 
 bool TextEditorWidget::processKeyboardEvent(const XEvent *event)
 {
-    KeyMapping<TextEditorWidget>::MethodPtr m = 
-            keyMapping.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
+    KeyMapping<TextEditorWidget>::FunctionPtr m = 
+            keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
     if (m != NULL) {
-        (this->*m)();
+        m(this);
         return true;
     } else {
         char buffer[100];
@@ -1147,8 +455,8 @@ bool TextEditorWidget::processKeyboardEvent(const XEvent *event)
                     removeAtCursor(selLength);
                     releaseSelectionOwnership();
                 }
-                insertAtCursor(buffer[0]);
-                moveCursorToTextPosition(getCursorTextPosition() + 1);
+                long insertedLength = insertAtCursor(buffer[0]);
+                moveCursorToTextPosition(getCursorTextPosition() + insertedLength);
                 if (getCursorLineNumber() < getTopLineNumber()) {
                     setTopLineNumber(getCursorLineNumber());
                 } else if ((getCursorLineNumber() - getTopLineNumber() + 1) * getLineHeight() > getHeightPix()) {
@@ -1252,3 +560,67 @@ void TextEditorWidget::handleScrollStepH(ScrollStep::Type scrollStep)
     }
 }
 
+void TextEditorWidget::scrollDown()
+{
+    if (this->getTopLineNumber() < this->getTextData()->getNumberOfLines() - this->getNumberOfVisibleLines()) {
+        this->setTopLineNumber(this->getTopLineNumber() + 1);
+    }
+}
+
+
+void TextEditorWidget::scrollUp()
+{
+    this->setTopLineNumber(this->getTopLineNumber() - 1);
+}
+
+
+void TextEditorWidget::scrollLeft()
+{
+    long newLeft = this->getLeftPix() - this->getTextStyles()->get(0)->getSpaceWidth();
+    this->setLeftPix(newLeft);
+}
+
+
+void TextEditorWidget::scrollRight()
+{
+    long newLeft = this->getLeftPix() + this->getTextStyles()->get(0)->getSpaceWidth();
+    this->setLeftPix(newLeft);
+}
+
+
+void TextEditorWidget::scrollPageUp()
+{
+    long targetTopLine = this->getTopLineNumber() - (this->getNumberOfVisibleLines() - 1);
+    
+    if (targetTopLine < 0) {
+        targetTopLine = 0;
+    }
+    this->setTopLineNumber(targetTopLine);
+}
+
+
+void TextEditorWidget::scrollPageDown()
+{
+    long targetTopLine = this->getTopLineNumber() + this->getNumberOfVisibleLines() - 1;
+    
+    if (targetTopLine > this->getTextData()->getNumberOfLines() - this->getNumberOfVisibleLines()) {
+        targetTopLine = this->getTextData()->getNumberOfLines() - this->getNumberOfVisibleLines();
+    }
+    this->setTopLineNumber(targetTopLine);
+}
+
+
+void TextEditorWidget::scrollPageLeft()
+{
+    int columns = this->getPixWidth() / this->getTextStyles()->get(0)->getSpaceWidth();
+    long newLeft = this->getLeftPix() - this->getTextStyles()->get(0)->getSpaceWidth() * (columns/2);
+    this->setLeftPix(newLeft);
+}
+
+
+void TextEditorWidget::scrollPageRight()
+{
+    int columns = this->getPixWidth() / this->getTextStyles()->get(0)->getSpaceWidth();
+    long newLeft = this->getLeftPix() + this->getTextStyles()->get(0)->getSpaceWidth() * (columns/2);
+    this->setLeftPix(newLeft);
+}
