@@ -35,6 +35,10 @@ public:
     WeakPtr() : ptr(NULL) {
     }
     
+    WeakPtr(T* ptr) : ptr(ptr) {
+        incWeakCounter(ptr);
+    }
+    
     ~WeakPtr() {
         decWeakCounter(ptr);
     }

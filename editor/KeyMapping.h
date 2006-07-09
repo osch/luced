@@ -26,17 +26,17 @@
 #include "HeapObject.h"
 #include "GuiRoot.h"
 #include "HashMap.h"
+#include "Callback.h"
 
 namespace LucED {
 
-template<class T> class KeyMapping : private NonCopyable
+class KeyMapping : private NonCopyable
 {
 public:
-    typedef void (*FunctionPtr)(T*);
     
-    FunctionPtr find(int keyState, KeySym keySym)        { return find(Id(keyState, keySym)); }
+    Callback0 find(int keyState, KeySym keySym)        { return find(Id(keyState, keySym)); }
 
-    void set(int keyState, KeySym keySym, FunctionPtr m) { set(Id(keyState, keySym), m); }
+    void set(int keyState, KeySym keySym, const Callback0& cb) { set(Id(keyState, keySym), cb); }
     
 private:
 
@@ -65,22 +65,22 @@ private:
             return rslt;
         }
     };
-    typedef HashMap<Id, FunctionPtr, HashFunction>  MyMap;
+    typedef HashMap<Id, Callback0, HashFunction>  MyMap;
 
 
-    void set(Id id, FunctionPtr m)
+    void set(Id id, const Callback0& cb)
     {
-        map.set(id, m);
+        map.set(id, cb);
     }
     
 
-    FunctionPtr find(Id id)
+    Callback0 find(Id id)
     {
-        FunctionPtr rslt = NULL;
+        Callback0 rslt;
         
-        typename MyMap::Value foundMethod = map.get(id);
-        if (foundMethod.isValid()) {
-            rslt = foundMethod.get();
+        MyMap::Value foundCallback = map.get(id);
+        if (foundCallback.isValid()) {
+            rslt = foundCallback.get();
         }
         return rslt;
     }

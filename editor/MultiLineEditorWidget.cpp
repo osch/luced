@@ -19,16 +19,15 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "StandardEditActions.h"
 #include "MultiLineEditorWidget.h"
 
 using namespace LucED;
 
 MultiLineEditorWidget::MultiLineEditorWidget(GuiWidget *parent, 
             TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
-    : TextEditorWidget(parent, textData, textStyles, hiliting)
+    : TextEditorWidget(parent, textData, textStyles, hiliting),
+      standardActions(StandardEditActions::createMultiLineActions(this))
 {
-    StandardEditActions::addMultiLineEditActions(this);
 }
 
 

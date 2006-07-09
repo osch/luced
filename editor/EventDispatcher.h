@@ -84,7 +84,7 @@ private:
         bool operator<(const TimerRegistration& t) const {
             return this->when.isLaterThan(t.when);
         }
-        bool isValid() const {
+        bool isValid() {
             return callback.isValid();
         }
     private:

@@ -19,7 +19,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "StandardEditActions.h"
 #include "SingleLineEditorWidget.h"
 
 using namespace LucED;
@@ -27,9 +26,9 @@ using namespace LucED;
 SingleLineEditorWidget::SingleLineEditorWidget(GuiWidget *parent, 
             TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
     : TextEditorWidget(parent, textData, textStyles, hiliting),
-      slotForInsertFilter(this, &SingleLineEditorWidget::filterInsert)
+      slotForInsertFilter(this, &SingleLineEditorWidget::filterInsert),
+      standardActions(StandardEditActions::createSingleLineActions(this))
 {
-    StandardEditActions::addSingleLineEditActions(this);
     getTextData()->setInsertFilterCallback(slotForInsertFilter);
 }
 

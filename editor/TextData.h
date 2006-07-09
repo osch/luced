@@ -232,10 +232,10 @@ public:
     bool isEndOfText(MarkHandle m) {
         return marks[m.index].pos == buffer.getLength();
     }
-    void setInsertFilterCallback(const Callback2<const byte**, long*>& filterCallback);
-    void registerUpdateListener(const UpdateCallback& updateCallback);
-    void registerFileNameListener(const Callback1<const string&>& fileNameCallback);
-    void registerLengthListener(const Callback1<long>& lengthCallback);
+    void setInsertFilterCallback(Callback2<const byte**, long*>& filterCallback);
+    void registerUpdateListener(UpdateCallback& updateCallback);
+    void registerFileNameListener(Callback1<const string&>& fileNameCallback);
+    void registerLengthListener(Callback1<long>& lengthCallback);
     
     void flushPendingUpdatesIntern();
     void flushPendingUpdates() {

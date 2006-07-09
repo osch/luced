@@ -30,9 +30,10 @@ template<class T> class OwningPtr : private HeapObjectRefManipulator
 {
 public:
     
-    OwningPtr(T *ptr = NULL) {
-        this->ptr = ptr;
-        incRefCounter(ptr);
+    OwningPtr(T *ptr = NULL) : ptr(ptr) {
+        if (ptr != NULL) {
+            obtainInitialOwnership(ptr);
+        }
     }
     
     ~OwningPtr() {
@@ -45,29 +46,43 @@ public:
     }
     
     template<class S> OwningPtr(const OwningPtr<S>& src) {
-        ptr = src.getRawPtr();
-        incRefCounter(ptr);
+        if (src.isValid()) {
+            ptr = src.getRawPtr();
+            incRefCounter(ptr);
+        } else {
+            ptr = NULL;
+        }
     }
     
     OwningPtr& operator=(const OwningPtr& src) {
-        if (this != &src) {
-            decRefCounter(ptr);
+        if (src.isValid()) {
+            T *ptr1 = ptr;
             ptr = src.getRawPtr();
             incRefCounter(ptr);
+            if (ptr1 != NULL) decRefCounter(ptr1);
+        } else {
+            invalidate();
         }
         return *this;
     }
     
     template<class S> OwningPtr& operator=(const OwningPtr<S>& src) {
-        T *ptr1 = ptr;
-        ptr = src.getRawPtr();
-        incRefCounter(ptr);
-        decRefCounter(ptr1);
+        if (src.isValid()) {
+            T *ptr1 = ptr;
+            ptr = src.getRawPtr();
+            incRefCounter(ptr);
+            if (ptr1 != NULL) decRefCounter(ptr1);
+        } else {
+            invalidate();
+        }
+        return *this;
     }
     
     void invalidate() {
-        decRefCounter(ptr);
-        ptr = NULL;
+        if (ptr != NULL) {
+            decRefCounter(ptr);
+            ptr = NULL;
+        }
     }
     
     bool isValid() const {
@@ -95,7 +110,7 @@ public:
     }
     
     template<class S> bool operator==(const OwningPtr<S>& rhs) const {
-        return ptr == rhs.ptr;
+        return ptr == rhs.getRawPtr();
     }
     
     template<class S> bool operator==(const S* ptr) const {

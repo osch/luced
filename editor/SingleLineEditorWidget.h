@@ -24,6 +24,7 @@
 
 #include "Slot.h"
 #include "ByteArray.h"
+#include "StandardEditActions.h"
 #include "TextEditorWidget.h"
 
 namespace LucED {
@@ -49,6 +50,7 @@ private:
     
     Slot2<const byte**, long*> slotForInsertFilter;
     ByteArray filterBuffer;
+    StandardEditActions::Ptr standardActions;
 };
 
 } // namespapce LucED

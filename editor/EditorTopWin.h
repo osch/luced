@@ -70,7 +70,7 @@ private:
     ScrollBar::Ptr scrollBarV;    
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
-    KeyMapping<EditorTopWin> keyMapping;
+    KeyMapping keyMapping;
     FindDialog::Ptr findDialog;
     bool wasNeverShown;
 };

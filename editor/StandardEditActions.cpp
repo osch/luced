@@ -7,8 +7,11 @@
 
 using namespace LucED;
 
+StandardEditActions::StandardEditActions(TextEditorWidget *editWidget)
+    : e(editWidget)
+{}
 
-void StandardEditActions::cursorLeft(TextEditorWidget *e)
+void StandardEditActions::cursorLeft()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -23,7 +26,7 @@ void StandardEditActions::cursorLeft(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::cursorRight(TextEditorWidget *e)
+void StandardEditActions::cursorRight()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -37,7 +40,7 @@ void StandardEditActions::cursorRight(TextEditorWidget *e)
     e->rememberCursorPixX();
 }
 
-void StandardEditActions::cursorDown(TextEditorWidget *e)
+void StandardEditActions::cursorDown()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -55,7 +58,7 @@ void StandardEditActions::cursorDown(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::cursorUp(TextEditorWidget *e)
+void StandardEditActions::cursorUp()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -68,7 +71,7 @@ void StandardEditActions::cursorUp(TextEditorWidget *e)
     e->assureCursorVisible();
 }
 
-void StandardEditActions::cursorWordLeft(TextEditorWidget *e)
+void StandardEditActions::cursorWordLeft()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -88,7 +91,7 @@ void StandardEditActions::cursorWordLeft(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::cursorWordRight(TextEditorWidget *e)
+void StandardEditActions::cursorWordRight()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -110,7 +113,7 @@ void StandardEditActions::cursorWordRight(TextEditorWidget *e)
 
 
 
-void StandardEditActions::selectionCursorLeft(TextEditorWidget *e)
+void StandardEditActions::selectionCursorLeft()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -129,7 +132,7 @@ void StandardEditActions::selectionCursorLeft(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::selectionCursorRight(TextEditorWidget *e)
+void StandardEditActions::selectionCursorRight()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -147,7 +150,7 @@ void StandardEditActions::selectionCursorRight(TextEditorWidget *e)
     e->rememberCursorPixX();
 }
 
-void StandardEditActions::selectionCursorDown(TextEditorWidget *e)
+void StandardEditActions::selectionCursorDown()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -169,7 +172,7 @@ void StandardEditActions::selectionCursorDown(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::selectionCursorUp(TextEditorWidget *e)
+void StandardEditActions::selectionCursorUp()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -187,7 +190,7 @@ void StandardEditActions::selectionCursorUp(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::selectionCursorWordLeft(TextEditorWidget *e)
+void StandardEditActions::selectionCursorWordLeft()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -211,7 +214,7 @@ void StandardEditActions::selectionCursorWordLeft(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::selectionCursorWordRight(TextEditorWidget *e)
+void StandardEditActions::selectionCursorWordRight()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -236,7 +239,7 @@ void StandardEditActions::selectionCursorWordRight(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::cursorPageDown(TextEditorWidget *e)
+void StandardEditActions::cursorPageDown()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -263,7 +266,7 @@ void StandardEditActions::cursorPageDown(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::cursorPageUp(TextEditorWidget *e)
+void StandardEditActions::cursorPageUp()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -289,7 +292,7 @@ void StandardEditActions::cursorPageUp(TextEditorWidget *e)
     e->assureCursorVisible();
 }
 
-void StandardEditActions::selectionCursorPageDown(TextEditorWidget *e)
+void StandardEditActions::selectionCursorPageDown()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -322,7 +325,7 @@ void StandardEditActions::selectionCursorPageDown(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::selectionCursorPageUp(TextEditorWidget *e)
+void StandardEditActions::selectionCursorPageUp()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -354,7 +357,7 @@ void StandardEditActions::selectionCursorPageUp(TextEditorWidget *e)
     e->assureCursorVisible();
 }
 
-void StandardEditActions::cursorBeginOfLine(TextEditorWidget *e)
+void StandardEditActions::cursorBeginOfLine()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -368,7 +371,7 @@ void StandardEditActions::cursorBeginOfLine(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::cursorEndOfLine(TextEditorWidget *e)
+void StandardEditActions::cursorEndOfLine()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -381,7 +384,7 @@ void StandardEditActions::cursorEndOfLine(TextEditorWidget *e)
     e->rememberCursorPixX();
 }
 
-void StandardEditActions::selectionCursorBeginOfLine(TextEditorWidget *e)
+void StandardEditActions::selectionCursorBeginOfLine()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -401,7 +404,7 @@ void StandardEditActions::selectionCursorBeginOfLine(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::selectionCursorEndOfLine(TextEditorWidget *e)
+void StandardEditActions::selectionCursorEndOfLine()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -421,7 +424,7 @@ void StandardEditActions::selectionCursorEndOfLine(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::cursorBeginOfText(TextEditorWidget *e)
+void StandardEditActions::cursorBeginOfText()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -433,7 +436,7 @@ void StandardEditActions::cursorBeginOfText(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::cursorEndOfText(TextEditorWidget *e)
+void StandardEditActions::cursorEndOfText()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -445,55 +448,55 @@ void StandardEditActions::cursorEndOfText(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::scrollDown(TextEditorWidget *e)
+void StandardEditActions::scrollDown()
 {
     e->scrollDown();
 }
 
 
-void StandardEditActions::scrollUp(TextEditorWidget *e)
+void StandardEditActions::scrollUp()
 {
     e->scrollUp();
 }
 
 
-void StandardEditActions::scrollLeft(TextEditorWidget *e)
+void StandardEditActions::scrollLeft()
 {
     e->scrollLeft();
 }
 
 
-void StandardEditActions::scrollRight(TextEditorWidget *e)
+void StandardEditActions::scrollRight()
 {
     e->scrollRight();
 }
 
 
-void StandardEditActions::scrollPageUp(TextEditorWidget *e)
+void StandardEditActions::scrollPageUp()
 {
     e->scrollPageUp();
 }
 
 
-void StandardEditActions::scrollPageDown(TextEditorWidget *e)
+void StandardEditActions::scrollPageDown()
 {
     e->scrollPageDown();
 }
 
 
-void StandardEditActions::scrollPageLeft(TextEditorWidget *e)
+void StandardEditActions::scrollPageLeft()
 {
     e->scrollPageLeft();
 }
 
 
-void StandardEditActions::scrollPageRight(TextEditorWidget *e)
+void StandardEditActions::scrollPageRight()
 {
     e->scrollPageRight();
 }
 
 
-void StandardEditActions::newLine(TextEditorWidget *e)
+void StandardEditActions::newLine()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -522,7 +525,7 @@ void StandardEditActions::newLine(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::backSpace(TextEditorWidget *e)
+void StandardEditActions::backSpace()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -546,7 +549,7 @@ void StandardEditActions::backSpace(TextEditorWidget *e)
     e->showCursor();
 }
 
-void StandardEditActions::deleteKey(TextEditorWidget *e)
+void StandardEditActions::deleteKey()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -567,7 +570,7 @@ void StandardEditActions::deleteKey(TextEditorWidget *e)
 }
 
 
-void StandardEditActions::copyToClipboard(TextEditorWidget *e)
+void StandardEditActions::copyToClipboard()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -579,7 +582,7 @@ void StandardEditActions::copyToClipboard(TextEditorWidget *e)
     }
 }
 
-void StandardEditActions::selectAll(TextEditorWidget *e)
+void StandardEditActions::selectAll()
 {
     if (!e->areCursorChangesDisabled() && e->getTextData()->getLength() > 0)
     {
@@ -593,7 +596,7 @@ void StandardEditActions::selectAll(TextEditorWidget *e)
 
 
 
-void StandardEditActions::pasteFromClipboard(TextEditorWidget *e)
+void StandardEditActions::pasteFromClipboard()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -612,82 +615,82 @@ void StandardEditActions::pasteFromClipboard(TextEditorWidget *e)
     e->rememberCursorPixX();
 }
 
-void StandardEditActions::addSingleLineEditActions(TextEditorWidget* e)
+void StandardEditActions::registerSingleLineEditActionsToEditWidget()
 {
-    e->setEditAction(                    0, XK_Left,      &cursorLeft);
-    e->setEditAction(                    0, XK_Right,     &cursorRight);
-    e->setEditAction(                    0, XK_KP_Left,   &cursorLeft);
-    e->setEditAction(                    0, XK_KP_Right,  &cursorRight);
+    e->setEditAction(                    0, XK_Left,      this, &StandardEditActions::cursorLeft);
+    e->setEditAction(                    0, XK_Right,     this, &StandardEditActions::cursorRight);
+    e->setEditAction(                    0, XK_KP_Left,   this, &StandardEditActions::cursorLeft);
+    e->setEditAction(                    0, XK_KP_Right,  this, &StandardEditActions::cursorRight);
 
-    e->setEditAction(             Mod1Mask, XK_Left,      &cursorBeginOfLine);
-    e->setEditAction(             Mod1Mask, XK_Right,     &cursorEndOfLine);
-    e->setEditAction(             Mod1Mask, XK_KP_Left,   &cursorBeginOfLine);
-    e->setEditAction(             Mod1Mask, XK_KP_Right,  &cursorEndOfLine);
+    e->setEditAction(             Mod1Mask, XK_Left,      this, &StandardEditActions::cursorBeginOfLine);
+    e->setEditAction(             Mod1Mask, XK_Right,     this, &StandardEditActions::cursorEndOfLine);
+    e->setEditAction(             Mod1Mask, XK_KP_Left,   this, &StandardEditActions::cursorBeginOfLine);
+    e->setEditAction(             Mod1Mask, XK_KP_Right,  this, &StandardEditActions::cursorEndOfLine);
 
-    e->setEditAction(                    0, XK_Home,      &cursorBeginOfLine);
-    e->setEditAction(                    0, XK_Begin,     &cursorBeginOfLine);
-    e->setEditAction(                    0, XK_End,       &cursorEndOfLine);
+    e->setEditAction(                    0, XK_Home,      this, &StandardEditActions::cursorBeginOfLine);
+    e->setEditAction(                    0, XK_Begin,     this, &StandardEditActions::cursorBeginOfLine);
+    e->setEditAction(                    0, XK_End,       this, &StandardEditActions::cursorEndOfLine);
 
-    e->setEditAction( ControlMask|Mod1Mask, XK_Left,      &scrollLeft);
-    e->setEditAction( ControlMask|Mod1Mask, XK_Right,     &scrollRight);
-    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Left,   &scrollLeft);
-    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Right,  &scrollRight);
+    e->setEditAction( ControlMask|Mod1Mask, XK_Left,      this, &StandardEditActions::scrollLeft);
+    e->setEditAction( ControlMask|Mod1Mask, XK_Right,     this, &StandardEditActions::scrollRight);
+    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Left,   this, &StandardEditActions::scrollLeft);
+    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Right,  this, &StandardEditActions::scrollRight);
 
-    e->setEditAction(          ControlMask, XK_Home,      &cursorBeginOfText);
-    e->setEditAction(          ControlMask, XK_Begin,     &cursorBeginOfText);
-    e->setEditAction(          ControlMask, XK_End,       &cursorEndOfText);
+    e->setEditAction(          ControlMask, XK_Home,      this, &StandardEditActions::cursorBeginOfText);
+    e->setEditAction(          ControlMask, XK_Begin,     this, &StandardEditActions::cursorBeginOfText);
+    e->setEditAction(          ControlMask, XK_End,       this, &StandardEditActions::cursorEndOfText);
 
-    e->setEditAction(                    0, XK_BackSpace, &backSpace);
-    e->setEditAction(                    0, XK_Delete,    &deleteKey);
+    e->setEditAction(                    0, XK_BackSpace, this, &StandardEditActions::backSpace);
+    e->setEditAction(                    0, XK_Delete,    this, &StandardEditActions::deleteKey);
 
-    e->setEditAction(          ControlMask, XK_c,         &copyToClipboard);
-    e->setEditAction(          ControlMask, XK_v,         &pasteFromClipboard);
-    e->setEditAction(          ControlMask, XK_a,         &selectAll);
+    e->setEditAction(          ControlMask, XK_c,         this, &StandardEditActions::copyToClipboard);
+    e->setEditAction(          ControlMask, XK_v,         this, &StandardEditActions::pasteFromClipboard);
+    e->setEditAction(          ControlMask, XK_a,         this, &StandardEditActions::selectAll);
 
-    e->setEditAction(            ShiftMask, XK_Left,      &selectionCursorLeft);
-    e->setEditAction(            ShiftMask, XK_Right,     &selectionCursorRight);
-    e->setEditAction(            ShiftMask, XK_KP_Left,   &selectionCursorLeft);
-    e->setEditAction(            ShiftMask, XK_KP_Right,  &selectionCursorRight);
+    e->setEditAction(            ShiftMask, XK_Left,      this, &StandardEditActions::selectionCursorLeft);
+    e->setEditAction(            ShiftMask, XK_Right,     this, &StandardEditActions::selectionCursorRight);
+    e->setEditAction(            ShiftMask, XK_KP_Left,   this, &StandardEditActions::selectionCursorLeft);
+    e->setEditAction(            ShiftMask, XK_KP_Right,  this, &StandardEditActions::selectionCursorRight);
     
-    e->setEditAction(          ControlMask, XK_Left,      &cursorWordLeft);
-    e->setEditAction(          ControlMask, XK_Right,     &cursorWordRight);
-    e->setEditAction(ShiftMask|ControlMask, XK_Left,      &selectionCursorWordLeft);
-    e->setEditAction(ShiftMask|ControlMask, XK_Right,     &selectionCursorWordRight);
+    e->setEditAction(          ControlMask, XK_Left,      this, &StandardEditActions::cursorWordLeft);
+    e->setEditAction(          ControlMask, XK_Right,     this, &StandardEditActions::cursorWordRight);
+    e->setEditAction(ShiftMask|ControlMask, XK_Left,      this, &StandardEditActions::selectionCursorWordLeft);
+    e->setEditAction(ShiftMask|ControlMask, XK_Right,     this, &StandardEditActions::selectionCursorWordRight);
 
-    e->setEditAction(            ShiftMask, XK_Home,      &selectionCursorBeginOfLine);
-    e->setEditAction(            ShiftMask, XK_Begin,     &selectionCursorBeginOfLine);
-    e->setEditAction(            ShiftMask, XK_End,       &selectionCursorEndOfLine);
+    e->setEditAction(            ShiftMask, XK_Home,      this, &StandardEditActions::selectionCursorBeginOfLine);
+    e->setEditAction(            ShiftMask, XK_Begin,     this, &StandardEditActions::selectionCursorBeginOfLine);
+    e->setEditAction(            ShiftMask, XK_End,       this, &StandardEditActions::selectionCursorEndOfLine);
 }
 
 
-void StandardEditActions::addMultiLineEditActions(TextEditorWidget* e)
+void StandardEditActions::registerMultiLineEditActionsToEditWidget()
 {
-    StandardEditActions::addSingleLineEditActions(e);
+    StandardEditActions::registerSingleLineEditActionsToEditWidget();
 
-    e->setEditAction(                    0, XK_Down,      &cursorDown);
-    e->setEditAction(                    0, XK_Up,        &cursorUp);
-    e->setEditAction(                    0, XK_KP_Down,   &cursorDown);
-    e->setEditAction(                    0, XK_KP_Up,     &cursorUp);
+    e->setEditAction(                    0, XK_Down,      this, &StandardEditActions::cursorDown);
+    e->setEditAction(                    0, XK_Up,        this, &StandardEditActions::cursorUp);
+    e->setEditAction(                    0, XK_KP_Down,   this, &StandardEditActions::cursorDown);
+    e->setEditAction(                    0, XK_KP_Up,     this, &StandardEditActions::cursorUp);
     
-    e->setEditAction(                    0, XK_Page_Down, &cursorPageDown);
-    e->setEditAction(                    0, XK_Page_Up,   &cursorPageUp);
-    e->setEditAction(             Mod1Mask, XK_Down,      &cursorPageDown);
-    e->setEditAction(             Mod1Mask, XK_Up,        &cursorPageUp);
+    e->setEditAction(                    0, XK_Page_Down, this, &StandardEditActions::cursorPageDown);
+    e->setEditAction(                    0, XK_Page_Up,   this, &StandardEditActions::cursorPageUp);
+    e->setEditAction(             Mod1Mask, XK_Down,      this, &StandardEditActions::cursorPageDown);
+    e->setEditAction(             Mod1Mask, XK_Up,        this, &StandardEditActions::cursorPageUp);
     
-    e->setEditAction( ControlMask|Mod1Mask, XK_Down,      &scrollDown);
-    e->setEditAction( ControlMask|Mod1Mask, XK_Up,        &scrollUp);
-    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Down,   &scrollDown);
-    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Up,     &scrollUp);
+    e->setEditAction( ControlMask|Mod1Mask, XK_Down,      this, &StandardEditActions::scrollDown);
+    e->setEditAction( ControlMask|Mod1Mask, XK_Up,        this, &StandardEditActions::scrollUp);
+    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Down,   this, &StandardEditActions::scrollDown);
+    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Up,     this, &StandardEditActions::scrollUp);
 
-    e->setEditAction(                    0, XK_Return,    &newLine);
-    e->setEditAction(                    0, XK_KP_Enter,  &newLine);
+    e->setEditAction(                    0, XK_Return,    this, &StandardEditActions::newLine);
+    e->setEditAction(                    0, XK_KP_Enter,  this, &StandardEditActions::newLine);
 
-    e->setEditAction(            ShiftMask, XK_Down,      &selectionCursorDown);
-    e->setEditAction(            ShiftMask, XK_Up,        &selectionCursorUp);
-    e->setEditAction(            ShiftMask, XK_KP_Down,   &selectionCursorDown);
-    e->setEditAction(            ShiftMask, XK_KP_Up,     &selectionCursorUp);
+    e->setEditAction(            ShiftMask, XK_Down,      this, &StandardEditActions::selectionCursorDown);
+    e->setEditAction(            ShiftMask, XK_Up,        this, &StandardEditActions::selectionCursorUp);
+    e->setEditAction(            ShiftMask, XK_KP_Down,   this, &StandardEditActions::selectionCursorDown);
+    e->setEditAction(            ShiftMask, XK_KP_Up,     this, &StandardEditActions::selectionCursorUp);
     
-    e->setEditAction(            ShiftMask, XK_Page_Down, &selectionCursorPageDown);
-    e->setEditAction(            ShiftMask, XK_Page_Up,   &selectionCursorPageUp);
+    e->setEditAction(            ShiftMask, XK_Page_Down, this, &StandardEditActions::selectionCursorPageDown);
+    e->setEditAction(            ShiftMask, XK_Page_Up,   this, &StandardEditActions::selectionCursorPageUp);
 }
 

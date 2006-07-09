@@ -140,7 +140,7 @@ void TextData::updateMarks(
     }
 }
 
-void TextData::setInsertFilterCallback(const Callback2<const byte**, long*>& filterCallback)
+void TextData::setInsertFilterCallback(Callback2<const byte**, long*>& filterCallback)
 {
     this->filterCallback = filterCallback;
 }
@@ -388,18 +388,18 @@ void TextData::flushPendingUpdatesIntern()
     }
 }
 
-void TextData::registerUpdateListener(const UpdateCallback& updateCallback)
+void TextData::registerUpdateListener(UpdateCallback& updateCallback)
 {
     updateListeners.registerCallback(updateCallback);
 }
 
-void TextData::registerFileNameListener(const Callback1<const string&>& fileNameCallback)
+void TextData::registerFileNameListener(Callback1<const string&>& fileNameCallback)
 {
     fileNameListeners.registerCallback(fileNameCallback);
     fileNameCallback.call(fileName);
 }
 
-void TextData::registerLengthListener(const Callback1<long>& lengthCallback)
+void TextData::registerLengthListener(Callback1<long>& lengthCallback)
 {
     lengthListeners.registerCallback(lengthCallback);
     lengthCallback.call(getLength());

@@ -32,7 +32,7 @@ class Slot0 : public Callback0, private NonCopyable
 public:
 
     template<class T> Slot0(T* objectPtr, void (T::*methodPtr)()) 
-        : Callback0(objectPtr, methodPtr) {}
+        : Callback0(WeakPtr<T>(objectPtr), methodPtr) {}
 
     ~Slot0() {
         this->disable();
@@ -45,7 +45,7 @@ template<class A1> class Slot1 : public Callback1<A1>, private NonCopyable
 public:
 
     template<class T> Slot1(T* objectPtr, void (T::*methodPtr)(A1)) 
-        : Callback1<A1>(objectPtr, methodPtr) {}
+        : Callback1<A1>(WeakPtr<T>(objectPtr), methodPtr) {}
 
     ~Slot1() {
         this->disable();
@@ -57,7 +57,7 @@ template<class A1> class Slot1Holder : private NonCopyable
 {
 public:
     template<class T> Callback1<A1> addSlot(T* objectPtr, void (T::*methodPtr)(A1)) {
-        slots.appendNew(objectPtr, methodPtr);
+        slots.appendNew(WeakPtr<T>(objectPtr), methodPtr);
         return slots[slots.getLength() - 1];
     }
 private:
@@ -69,7 +69,7 @@ template<class A1, class A2> class Slot2 : public Callback2<A1,A2>, private NonC
 public:
 
     template<class T> Slot2(T* objectPtr, void (T::*methodPtr)(A1,A2)) 
-        : Callback2<A1,A2>(objectPtr, methodPtr) {}
+        : Callback2<A1,A2>(WeakPtr<T>(objectPtr), methodPtr) {}
 
     ~Slot2() {
         this->disable();
@@ -82,7 +82,7 @@ template<class A1, class A2, class A3> class Slot3: public Callback3<A1,A2,A2>, 
 public:
 
     template<class T> Slot3(T* objectPtr, void (T::*methodPtr)(A1,A2,A3)) 
-        : Callback3<A1,A2,A3>(objectPtr, methodPtr) {}
+        : Callback3<A1,A2,A3>(WeakPtr<T>(objectPtr), methodPtr) {}
 
     ~Slot3() {
         this->disable();

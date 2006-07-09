@@ -22,6 +22,7 @@
 #ifndef MULTILINEEDITORWIDGET_H
 #define MULTILINEEDITORWIDGET_H
 
+#include "StandardEditActions.h"
 #include "TextEditorWidget.h"
 
 namespace LucED {
@@ -43,6 +44,7 @@ private:
     MultiLineEditorWidget(GuiWidget *parent, 
             TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting);
 
+    StandardEditActions::Ptr standardActions;
 };
 
 } // namespapce LucED

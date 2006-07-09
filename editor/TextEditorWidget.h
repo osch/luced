@@ -27,6 +27,8 @@
 #include "SelectionOwner.h"
 #include "PasteDataReceiver.h"
 #include "OwningPtr.h"
+#include "WeakPtr.h"
+#include "Callback.h"
 
 namespace LucED {
 
@@ -52,8 +54,8 @@ public:
     int  getRememberedCursorPixX()   { return rememberedCursorPixX; }
     bool isWordCharacter(unsigned char c);
     
-    void setEditAction(int keyState, KeySym keySym, EditActionFunction* action) {
-        keyMapping.set(keyState, keySym, action);
+    template<class T> void setEditAction(int keyState, KeySym keySym, T* object, void (T::*method)()) {
+        keyMapping.set(keyState, keySym, Callback0(WeakPtr<T>(object), method));
     }
     
     
@@ -88,7 +90,7 @@ private:
     void handleScrollStepH(ScrollStep::Type scrollStep);
 
     bool hasFocusFlag;
-    KeyMapping<TextEditorWidget> keyMapping;
+    KeyMapping keyMapping;
     long rememberedCursorPixX;
     
     bool hasMovingSelection;

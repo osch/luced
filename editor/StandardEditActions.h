@@ -2,53 +2,71 @@
 #define STANDARDEDITACTIONS_H
 
 #include "TextEditorWidget.h"
+#include "HeapObject.h"
 
 namespace LucED {
 
-namespace StandardEditActions
+class StandardEditActions : public HeapObject
 {
-   typedef void (EditActionFunction)(TextEditorWidget *);
+public:
+    typedef OwningPtr<StandardEditActions> Ptr;
+    
+    static Ptr createSingleLineActions(TextEditorWidget* editWidget) {
+        Ptr rslt(new StandardEditActions(editWidget));
+        rslt->registerSingleLineEditActionsToEditWidget();
+        return rslt;
+    }
+    static Ptr createMultiLineActions(TextEditorWidget* editWidget) {
+        Ptr rslt(new StandardEditActions(editWidget));
+        rslt->registerMultiLineEditActionsToEditWidget();
+        return rslt;
+    }
+    
+    void cursorLeft();
+    void cursorRight();
+    void cursorDown();
+    void cursorUp();
+    void cursorPageDown();
+    void cursorPageUp();
+    void cursorBeginOfLine();
+    void cursorEndOfLine();
+    void scrollDown();
+    void scrollUp();
+    void scrollLeft();
+    void scrollRight();
+    void scrollPageUp();
+    void scrollPageDown();
+    void scrollPageLeft();
+    void scrollPageRight();
+    void cursorBeginOfText();
+    void cursorEndOfText();
+    void newLine();
+    void backSpace();
+    void deleteKey();
+    void copyToClipboard();
+    void pasteFromClipboard();
+    void selectAll();
+    void selectionCursorLeft();
+    void selectionCursorRight();
+    void selectionCursorDown();
+    void selectionCursorUp();
+    void cursorWordLeft();
+    void cursorWordRight();
+    void selectionCursorWordLeft();
+    void selectionCursorWordRight();
+    void selectionCursorBeginOfLine();
+    void selectionCursorEndOfLine();
+    void selectionCursorPageDown();
+    void selectionCursorPageUp();
+    
+    
+private:
+    StandardEditActions(TextEditorWidget *editWidget);
+    
+    void registerSingleLineEditActionsToEditWidget();
+    void registerMultiLineEditActionsToEditWidget();
 
-    EditActionFunction cursorLeft;
-    EditActionFunction cursorRight;
-    EditActionFunction cursorDown;
-    EditActionFunction cursorUp;
-    EditActionFunction cursorPageDown;
-    EditActionFunction cursorPageUp;
-    EditActionFunction cursorBeginOfLine;
-    EditActionFunction cursorEndOfLine;
-    EditActionFunction scrollDown;
-    EditActionFunction scrollUp;
-    EditActionFunction scrollLeft;
-    EditActionFunction scrollRight;
-    EditActionFunction scrollPageUp;
-    EditActionFunction scrollPageDown;
-    EditActionFunction scrollPageLeft;
-    EditActionFunction scrollPageRight;
-    EditActionFunction cursorBeginOfText;
-    EditActionFunction cursorEndOfText;
-    EditActionFunction newLine;
-    EditActionFunction backSpace;
-    EditActionFunction deleteKey;
-    EditActionFunction copyToClipboard;
-    EditActionFunction pasteFromClipboard;
-    EditActionFunction selectAll;
-    EditActionFunction selectionCursorLeft;
-    EditActionFunction selectionCursorRight;
-    EditActionFunction selectionCursorDown;
-    EditActionFunction selectionCursorUp;
-    EditActionFunction cursorWordLeft;
-    EditActionFunction cursorWordRight;
-    EditActionFunction selectionCursorWordLeft;
-    EditActionFunction selectionCursorWordRight;
-    EditActionFunction selectionCursorBeginOfLine;
-    EditActionFunction selectionCursorEndOfLine;
-    EditActionFunction selectionCursorPageDown;
-    EditActionFunction selectionCursorPageUp;
-    
-    
-    void addSingleLineEditActions(TextEditorWidget* editor);
-    void addMultiLineEditActions(TextEditorWidget* editor);
+    WeakPtr<TextEditorWidget> e;
 };
 
 

@@ -29,16 +29,17 @@
 #include "GuiLayoutColumn.h"
 #include "GuiLayoutRow.h"
 #include "GuiLayoutSpacer.h"
+#include "Callback.h"
+#include "WeakPtr.h"
 
 using namespace LucED;
 
 EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
     : rootElement(GuiLayoutColumn::create()),
-      keyMapping(this),
       wasNeverShown(true)
 {
     addToXEventMask(ButtonPressMask);
-    keyMapping.add(            ControlMask, XK_f,      &EditorTopWin::invokeFindDialog);
+    keyMapping.set(            ControlMask, XK_f,      Callback0(WeakPtr<EditorTopWin>(this), &EditorTopWin::invokeFindDialog));
     
     statusLine = StatusLine::create(this);
     rootElement->addElement(statusLine);
@@ -138,17 +139,16 @@ void EditorTopWin::treatNewWindowPosition(Position newPosition)
 
 bool EditorTopWin::processKeyboardEvent(const XEvent *event)
 {
-    KeyMapping<EditorTopWin>::MethodPtr m = 
-            keyMapping.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    Callback0 m = keyMapping.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
 
-    if (m != NULL)
+    if (m.isValid())
     {
-        (this->*m)();
+        m.call();
         return true;
     } 
     else
     {
-        return textEditor->processKeyboardEvent(event);
+      return textEditor->processKeyboardEvent(event);
     }
 }
 

@@ -436,10 +436,9 @@ void TextEditorWidget::handleScrollRepeating()
 bool TextEditorWidget::processKeyboardEvent(const XEvent *event)
 {
     unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
-    KeyMapping<TextEditorWidget>::FunctionPtr m = 
-            keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-    if (m != NULL) {
-        m(this);
+    Callback0 m = keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    if (m.isValid()) {
+        m.call();
         return true;
     } else {
         char buffer[100];

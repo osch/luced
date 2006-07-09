@@ -31,6 +31,8 @@
 #include "debug.h"
 #include "NonCopyable.h"
 
+//#define PRINT_MALLOCS
+
 namespace LucED {
 
 
@@ -39,14 +41,24 @@ class HeapObjectCounters : NonCopyable
 private:
     friend class HeapObject;
     friend class HeapObjectRefManipulator;
-    HeapObjectCounters() : weakCounter(0), strongCounter(0) 
+    HeapObjectCounters() : weakCounter(0), strongCounter(1) 
 #ifdef DEBUG
+        , wasNeverOwned(true)
         , magic(MAGIC)
 #endif
     {}
+    void clear() {
+        weakCounter = 0;
+        strongCounter = 0;
+#ifdef DEBUG
+        magic = -1;
+        wasNeverOwned = false;
+#endif
+    }
 #ifdef DEBUG
     enum {MAGIC = 12345678};
     int magic;
+    bool wasNeverOwned;
 #endif
     int weakCounter;
     int strongCounter;
@@ -57,7 +69,6 @@ class HeapObject : NonCopyable
 protected:
 
     HeapObject() {
-//        printf("%s\n", typeid(this).name());
     }
     
 public:
@@ -73,7 +84,9 @@ protected:
         HeapObjectCounters *allocated = static_cast<HeapObjectCounters *>(
                 malloc(sizeof(HeapObjectCounters) + size));
         new(allocated) HeapObjectCounters();
-//        printf("----> HeapObject %p : allocating %8.d bytes : ", allocated + 1, size);
+        #ifdef PRINT_MALLOCS
+        printf("----> HeapObject %p : allocating %8.d bytes \n", allocated + 1, size);
+        #endif
         return allocated + 1;
     }
 
@@ -93,6 +106,18 @@ protected:
     static bool hasOwningReferences(const HeapObject *obj) {
         return (getCounters(obj)->strongCounter >= 1);
     }
+    static int obtainInitialOwnership(const HeapObject *obj) {
+#ifdef DEBUG
+        if (obj != NULL) {
+            #ifdef PRINT_MALLOCS
+            printf("----> HeapObject %p : initial Ownership\n", obj);
+            #endif
+            ASSERT(getCounters(obj)->wasNeverOwned);
+            ASSERT(getCounters(obj)->strongCounter == 1);
+            getCounters(obj)->wasNeverOwned = false;
+        }
+#endif
+    }
     static void incRefCounter(const HeapObject *obj) {
         if (obj != NULL) {
             getCounters(obj)->strongCounter += 1;
@@ -100,14 +125,23 @@ protected:
     }
     static void decRefCounter(const HeapObject *obj) {
         if (obj != NULL) {
-            ASSERT(hasOwningReferences(obj));
-            getCounters(obj)->strongCounter -= 1;
-            if (!hasOwningReferences(obj)) {
-                obj->~HeapObject();  // object destructor
-                if (!hasWeakReferences(obj)) {
-//                    printf("----> HeapObject %p : deleting\n", obj);
-                    free(getCounters(obj));
+            HeapObjectCounters* counters = getCounters(obj);
+            ASSERT(counters->strongCounter >= 1);
+            if (counters->strongCounter == 1) {
+                // keep strongCounter == 1 while destructing
+                obj->~HeapObject();
+                ASSERT(counters->weakCounter >= 0);
+                if (counters->weakCounter == 0) {
+                    counters->clear();
+                    #ifdef PRINT_MALLOCS
+                    printf("----> HeapObject %p : deleting\n", obj);
+                    #endif
+                    free(counters);
+                } else {
+                    counters->strongCounter -= 1;
                 }
+            } else {
+                counters->strongCounter -= 1;
             }
         }
     }
@@ -125,8 +159,12 @@ protected:
             ASSERT(hasWeakReferences(obj));
             getCounters(obj)->weakCounter -= 1;
             if (!hasWeakReferences(obj) && !hasOwningReferences(obj)) {
-//                printf("----> HeapObject %p : deleting\n", obj);
-                free(getCounters(obj));
+                #ifdef PRINT_MALLOCS
+                printf("----> HeapObject %p : deleting\n", obj);
+                #endif
+                HeapObjectCounters* counters = getCounters(obj);
+                counters->clear();
+                free(counters);
             }
         }
     }
