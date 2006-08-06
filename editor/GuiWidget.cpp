@@ -26,32 +26,45 @@
 #include "GuiWidget.h"
 #include "EventDispatcher.h"
 #include "GlobalConfig.h"
+#include "SingletonInstance.h"
 
 using namespace LucED;
 
-
-static bool staticallyInitialized = false;
-static GC guiWidget_gcid;
-static TextStyle* guiTextStyle = NULL;
-
-void initStatically()
+class GuiWidgetSingletonData : public HeapObject
 {
-    Display* display = GuiRoot::getInstance()->getDisplay();
-    GuiRoot* guiRoot = GuiRoot::getInstance();
-
-    guiWidget_gcid = XCreateGC(display, guiRoot->getRootWid(), 0, NULL);
-
-    XSetForeground(display, guiWidget_gcid, guiRoot->getBlackColor());
-    XSetBackground(display, guiWidget_gcid, guiRoot->getGreyColor());
-
-    XSetLineAttributes(display, guiWidget_gcid, 0, 
-        LineSolid, CapProjecting, JoinMiter);
-
-    XSetGraphicsExposures(display, guiWidget_gcid, True);
+public:
+    static GuiWidgetSingletonData* getInstance() { return instance.getPtr(); }
+    GC getGcid() { return gcid; }
+    TextStyle* getGuiTextStyle() { return &guiTextStyle; }
+private:
+    friend class SingletonInstance<GuiWidgetSingletonData>;
     
-    guiTextStyle = new TextStyle(GlobalConfig::getInstance()->getGuiFont(), GlobalConfig::getInstance()->getGuiFontColor());
-    XSetFont(display, guiWidget_gcid, guiTextStyle->getFont()->fid);
-}
+    GuiWidgetSingletonData()
+        : guiTextStyle(GlobalConfig::getInstance()->getGuiFont(), GlobalConfig::getInstance()->getGuiFontColor())
+    {
+        Display* display = GuiRoot::getInstance()->getDisplay();
+        GuiRoot* guiRoot = GuiRoot::getInstance();
+
+        gcid = XCreateGC(display, guiRoot->getRootWid(), 0, NULL);
+
+        XSetForeground(display, gcid, guiRoot->getBlackColor());
+        XSetBackground(display, gcid, guiRoot->getGreyColor());
+
+        XSetLineAttributes(display, gcid, 0, 
+            LineSolid, CapProjecting, JoinMiter);
+
+        XSetGraphicsExposures(display, gcid, True);
+
+        XSetFont(display, gcid, guiTextStyle.getFont()->fid);
+    }    
+    static SingletonInstance<GuiWidgetSingletonData> instance;
+    GC gcid;
+    TextStyle guiTextStyle;
+};
+
+SingletonInstance<GuiWidgetSingletonData> GuiWidgetSingletonData::instance;
+
+
 
 
 Display* GuiWidget::getDisplay()
@@ -79,10 +92,6 @@ GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsi
             x, y, width, height, border_width, 
             GuiRoot::getInstance()->getBlackColor(), GuiRoot::getInstance()->getGreyColor() );
  
-    if (!staticallyInitialized ) {
-        initStatically();
-        staticallyInitialized = true;
-    }
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
     addToXEventMask(StructureNotifyMask);
 }
@@ -98,23 +107,25 @@ GuiWidget::GuiWidget(GuiWidget* parent,
             x, y, width, height, border_width, 
             GuiRoot::getInstance()->getBlackColor(), GuiRoot::getInstance()->getGreyColor() );
     
-    if (!staticallyInitialized ) {
-        initStatically();
-        staticallyInitialized = true;
-    }
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
     addToXEventMask(StructureNotifyMask);
 }
 
 GuiWidget::~GuiWidget()
 {
+    if (nextFocusWidget.isValid() && nextFocusWidget->prevFocusWidget == this) {
+        nextFocusWidget->prevFocusWidget = prevFocusWidget;
+    }
+    if (prevFocusWidget.isValid() && prevFocusWidget->nextFocusWidget == this) {
+        prevFocusWidget->nextFocusWidget = nextFocusWidget;
+    }
     EventDispatcher::getInstance()->removeEventReceiver(EventRegistration(this, wid));
     if (isTopWindow) {
         XDestroyWindow(getDisplay(), wid);
     }
 }
 
-bool GuiWidget::processEvent(const XEvent *event)
+GuiElement::ProcessingResult GuiWidget::processEvent(const XEvent *event)
 {
     switch (event->type) {
 
@@ -130,13 +141,13 @@ bool GuiWidget::processEvent(const XEvent *event)
                     this->treatNewWindowPosition(newPosition);
                     position = newPosition;
                 }
-                return true;
+                return EVENT_PROCESSED;
             } else {
-                return false;
+                return NOT_PROCESSED;
             }
         }
         default: {
-            return false;
+            return NOT_PROCESSED;
         }
     }
 }
@@ -205,7 +216,7 @@ void GuiWidget::drawRaisedSurface(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
     Window wid = getWid();
-    GC gcid = guiWidget_gcid;
+    GC gcid = GuiWidgetSingletonData::getInstance()->getGcid();
 
     XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
     XFillRectangle(display, wid, gcid,
@@ -221,7 +232,7 @@ void GuiWidget::drawRaisedBox(int x, int y, int w, int h, GuiColor color)
 {
     Display* display = getDisplay();
     Window wid = getWid();
-    GC gcid = guiWidget_gcid;
+    GC gcid = GuiWidgetSingletonData::getInstance()->getGcid();
     
     int x1 = x, y1 = y, x2 = x + w -1, y2 = y + h - 1;
     int dx = w - 1, dy = h - 1;
@@ -259,7 +270,7 @@ void GuiWidget::drawPressedBox(int x, int y, int w, int h, GuiColor color)
 {
     Display* display = getDisplay();
     Window wid = getWid();
-    GC gcid = guiWidget_gcid;
+    GC gcid = GuiWidgetSingletonData::getInstance()->getGcid();
 
     int x1 = x, y1 = y, x2 = x + w -1, y2 = y + h - 1;
     int dx = w - 1, dy = h - 1;
@@ -296,7 +307,7 @@ void GuiWidget::drawArrow(int x, int y, int w, int h, const Direction::Type dire
 {
     Display* display = getDisplay();
     Window wid = getWid();
-    GC gcid = guiWidget_gcid;
+    GC gcid = GuiWidgetSingletonData::getInstance()->getGcid();
 
     XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
 
@@ -342,11 +353,47 @@ void GuiWidget::drawArrow(int x, int y, int w, int h, const Direction::Type dire
 }
 
 
+void GuiWidget::drawInactiveSunkenFrame(int x, int y, int w, int h)
+{
+    Display* display = getDisplay();
+    Window wid = getWid();
+    GC gc = GuiWidgetSingletonData::getInstance()->getGcid();
+    
+    w -= 1; 
+    h -= 1;
+    
+    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor02());
+    XDrawLine(display, wid,  gc,    x + 0, y + 0,    x + w, y + 0);
+    XDrawLine(display, wid,  gc,    x + 0, y + h,    x + 0, y + 0);
+
+    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor03());
+    XDrawLine(display, wid,  gc,    x + w, y + h,    x + 0, y + h);
+    XDrawLine(display, wid,  gc,    x + w, y + 0,    x + w, y + h);
+}
+
+void GuiWidget::drawActiveSunkenFrame(int x, int y, int w, int h)
+{
+    Display* display = getDisplay();
+    Window wid = getWid();
+    GC gc = GuiWidgetSingletonData::getInstance()->getGcid();
+    
+    w -= 1; 
+    h -= 1;
+    
+    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor01());
+    XDrawLine(display, wid,  gc,    x + 0, y + 0,    x + w, y + 0);
+    XDrawLine(display, wid,  gc,    x + 0, y + h,    x + 0, y + 0);
+
+    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor02());
+    XDrawLine(display, wid,  gc,    x + w, y + h,    x + 0, y + h);
+    XDrawLine(display, wid,  gc,    x + w, y + 0,    x + w, y + h);
+}
+
 void GuiWidget::drawFrame(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
     Window wid = getWid();
-    GC gc = guiWidget_gcid;
+    GC gc = GuiWidgetSingletonData::getInstance()->getGcid();
     
     w -= 1; 
     h -= 1;
@@ -360,22 +407,70 @@ void GuiWidget::drawFrame(int x, int y, int w, int h)
     XDrawLine(display, wid,  gc,    x + w, y + 0,    x + w, y + h);
 }
 
+void GuiWidget::undrawFrame(int x, int y, int w, int h)
+{
+    Display* display = getDisplay();
+    Window wid = getWid();
+    GC gc = GuiWidgetSingletonData::getInstance()->getGcid();
+    
+    w -= 1; 
+    h -= 1;
+    
+    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor03());
+    XDrawLine(display, wid,  gc,    x + 0, y + 0,    x + w, y + 0);
+    XDrawLine(display, wid,  gc,    x + 0, y + h,    x + 0, y + 0);
+
+//    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor05());
+    XDrawLine(display, wid,  gc,    x + w, y + h,    x + 0, y + h);
+    XDrawLine(display, wid,  gc,    x + w, y + 0,    x + w, y + h);
+}
+
+void GuiWidget::drawDottedFrame(int x, int y, int w, int h)
+{
+    Display* display = getDisplay();
+    Window wid = getWid();
+    GC gc = GuiWidgetSingletonData::getInstance()->getGcid();
+
+    XSetLineAttributes(display, gc, 0, 
+        LineOnOffDash, CapProjecting, JoinMiter);
+
+    char dashList[] = { 1, 1 };
+    XSetDashes(display, gc, 0, dashList, sizeof(dashList));
+
+    w -= 1; 
+    h -= 1;
+    
+    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor01());
+    XDrawLine(display, wid,  gc,    x + 0, y + 0,    x + w, y + 0);
+    XDrawLine(display, wid,  gc,    x + 0, y + h,    x + 0, y + 0);
+
+//    XSetForeground(display,  gc, GuiRoot::getInstance()->getGuiColor05());
+    XDrawLine(display, wid,  gc,    x + w, y + h,    x + 0, y + h);
+    XDrawLine(display, wid,  gc,    x + w, y + 0,    x + w, y + h);
+
+    XSetLineAttributes(display, gc, 0, 
+        LineSolid, CapProjecting, JoinMiter);
+}
+
+
 
 TextStyle* GuiWidget::getGuiTextStyle()
 {
-    return guiTextStyle;
+    return GuiWidgetSingletonData::getInstance()->getGuiTextStyle();
 }
 
 void GuiWidget::drawGuiText(int x, int y, const char* ptr, long length)
 {
-    XSetForeground(getDisplay(), guiWidget_gcid, guiTextStyle->getColor());
+    GC gc = GuiWidgetSingletonData::getInstance()->getGcid();
+
+    XSetForeground(getDisplay(), gc, getGuiTextStyle()->getColor());
     XDrawString(getDisplay(), getWid(), 
-                guiWidget_gcid, x, y + guiTextStyle->getLineAscent(), ptr, length);
+                gc, x, y + getGuiTextStyle()->getLineAscent(), ptr, length);
 }
 
 int GuiWidget::getGuiTextHeight()
 {
-    return guiTextStyle->getLineHeight();
+    return getGuiTextStyle()->getLineHeight();
 }
 
 GuiWidget::GuiClipping GuiWidget::obtainGuiClipping(int x, int y, int w, int h)
@@ -385,13 +480,13 @@ GuiWidget::GuiClipping GuiWidget::obtainGuiClipping(int x, int y, int w, int h)
     r.y = y;
     r.width  = w;
     r.height = h;
-    XSetClipRectangles(getDisplay(), guiWidget_gcid, 
+    XSetClipRectangles(getDisplay(), GuiWidgetSingletonData::getInstance()->getGcid(), 
             0, 0, &r, 1, Unsorted);    
     return GuiClipping(this);
 }
 
 GuiWidget::GuiClipping::~GuiClipping()
 {
-    XSetClipMask(guiWidget->getDisplay(), guiWidget_gcid, None);
+    XSetClipMask(guiWidget->getDisplay(), GuiWidgetSingletonData::getInstance()->getGcid(), None);
 }
 

@@ -39,18 +39,17 @@ static inline unsigned int calculateWidthOrHeightWithoutBorder(unsigned int tota
     return rslt;
 }
 
-TextWidget::TextWidget(GuiWidget *parent, 
-        TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
+TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
 
     : GuiWidget(parent, 0, 0, 1, 1, BORDER_WIDTH),
 
       position(0, 0, 1, 1),
-      textData(textData),
+      textData(hilitedText->getTextData()),
       slotForCursorBlinking(this, &TextWidget::blinkCursor),
       slotForVerticalScrollBarChangedValue(this, &TextWidget::setTopLineNumber),
       slotForHorizontalScrollBarChangedValue(this, &TextWidget::internSetLeftPix),
       textStyles(textStyles),
-      hilitingBuffer(HilitingBuffer::create(hiliting)),
+      hilitingBuffer(HilitingBuffer::create(hilitedText)),
       backliteBuffer(BackliteBuffer::create(textData)),
       lineInfos(),
       topMarkId(textData->createNewMark()),
@@ -1384,10 +1383,10 @@ static inline bool areIntersected(XRectangle *r1, XRectangle *r2)
     return false;
 }
 
-bool TextWidget::processEvent(const XEvent *event)
+GuiElement::ProcessingResult TextWidget::processEvent(const XEvent *event)
 {
-    if (GuiWidget::processEvent(event)) {
-        return true;
+    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
+        return EVENT_PROCESSED;
     } else {
         switch (event->type) {
         
@@ -1444,10 +1443,10 @@ bool TextWidget::processEvent(const XEvent *event)
                     XDestroyRegion(redrawRegion);
                     redrawRegion = XCreateRegion();
                 }
-                return true;
+                return EVENT_PROCESSED;
             }
             default:
-                return false;
+                return NOT_PROCESSED;
         }
     }
 }

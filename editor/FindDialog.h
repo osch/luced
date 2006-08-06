@@ -28,7 +28,7 @@
 #include "GuiLayoutColumn.h"
 #include "DialogWin.h"
 #include "Slot.h"
-#include "SingleLineEditorWidget.h"
+#include "SingleLineEditField.h"
 
 namespace LucED {
 
@@ -43,17 +43,15 @@ public:
                 new FindDialog(referingWindow, x, y, width, height),
                 referingWindow);
     }
-    virtual bool processKeyboardEvent(const XEvent *event);
-    virtual void treatFocusIn();
-    virtual void treatFocusOut();
     
+    virtual void treatFocusIn();
     
 private:
     FindDialog(TopWin* referingWindow, int x, int y, unsigned int width, unsigned int height);
     void handleButtonPressed(Button* button);
 
     Button::Ptr findButton, cancelButton;
-    SingleLineEditorWidget::Ptr editField;
+    SingleLineEditField::Ptr editField;
     
     Slot1<Button*> slotForButtonPressed;
 };

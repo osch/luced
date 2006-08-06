@@ -75,10 +75,10 @@ ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
  }
 
 
-bool ScrollBar::processEvent(const XEvent *event)
+GuiElement::ProcessingResult ScrollBar::processEvent(const XEvent *event)
 {
-    if (GuiWidget::processEvent(event)) {
-        return true;
+    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
+        return EVENT_PROCESSED;
     } else {
         
         switch (event->type) {
@@ -87,7 +87,7 @@ bool ScrollBar::processEvent(const XEvent *event)
             case Expose: {
                 this->drawArrows();
                 this->drawArea();
-                return true;
+                return EVENT_PROCESSED;
             }
 
             case ButtonPress: {
@@ -132,7 +132,7 @@ bool ScrollBar::processEvent(const XEvent *event)
                                 GlobalConfig::getInstance()->getScrollBarRepeatFirstMicroSecs(),
                                 slotForScrollStepRepeating);
                     }
-                    return true;
+                    return EVENT_PROCESSED;
                 }
                 break;
             }
@@ -141,7 +141,7 @@ bool ScrollBar::processEvent(const XEvent *event)
                 if (this->movingBar) {
                     //printf("ButtonReleased\n");
                     this->movingBar = false;
-                    return true;
+                    return EVENT_PROCESSED;
                 }
                 if (isButtonPressedForScrollStep) {
                     if (scrollStep == ScrollStep::LINE_UP) {
@@ -150,7 +150,7 @@ bool ScrollBar::processEvent(const XEvent *event)
                         drawDownButton();
                     }
                     isButtonPressedForScrollStep = false;
-                    return true;
+                    return EVENT_PROCESSED;
                 }
                 break;
             }
@@ -199,7 +199,7 @@ bool ScrollBar::processEvent(const XEvent *event)
                         }
                     }
                 }
-                return true;
+                return EVENT_PROCESSED;
             }
         }
         return propagateEventToParentWidget(event);

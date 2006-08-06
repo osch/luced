@@ -31,8 +31,8 @@ using namespace LucED;
 
 
 TextEditorWidget::TextEditorWidget(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
-      : TextWidget(parent, textData, textStyles, hiliting),
+            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
+      : TextWidget(parent, textStyles, hilitedText),
         SelectionOwner(this),
         PasteDataReceiver(this),
         rememberedCursorPixX(0),
@@ -110,16 +110,19 @@ static inline long calculateScrollTime(int diffPix, int lineHeight)
     return rslt;
 }
 
-bool TextEditorWidget::processEvent(const XEvent *event)
+GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
 {
-    if (processSelectionOwnerEvent(event) || processPasteDataReceiverEvent(event) 
-            || TextWidget::processEvent(event)) {
-        return true;
+    if (processSelectionOwnerEvent(event) == EVENT_PROCESSED || processPasteDataReceiverEvent(event) == EVENT_PROCESSED
+            || TextWidget::processEvent(event) == EVENT_PROCESSED) {
+        return EVENT_PROCESSED;
     } else {
         switch (event->type)
         {
             case ButtonPress:
             {
+                if (!hasFocusFlag) {
+                    requestFocusFor(this);
+                }
                 if (event->xbutton.button == Button1)
                 {
                     if (!cursorChangesDisabled)
@@ -215,7 +218,7 @@ bool TextEditorWidget::processEvent(const XEvent *event)
                         this->isMovingSelectionScrolling = false;
                         lastButtonPressedTime = event->xbutton.time;
                     }
-                    return true;
+                    return EVENT_PROCESSED;
                 }
                 else if (event->xbutton.button == Button2)
                 {
@@ -237,7 +240,10 @@ bool TextEditorWidget::processEvent(const XEvent *event)
                 else if (event->xbutton.button == Button4)
                 {
                     setTopLineNumber(getTopLineNumber() - 5);
-                    return true;
+                    if (hasMovingSelection) {
+                        setNewMousePositionForMovingSelection(event->xbutton.x, event->xbutton.y);
+                    }
+                    return EVENT_PROCESSED;
                 }
                 else if (event->xbutton.button == Button5)
                 {
@@ -246,16 +252,21 @@ bool TextEditorWidget::processEvent(const XEvent *event)
                     } else {
                         setTopLineNumber(getTopLineNumber() + 5);
                     }
-                    return true;
+                    if (hasMovingSelection) {
+                        setNewMousePositionForMovingSelection(event->xbutton.x, event->xbutton.y);
+                    }
+                    return EVENT_PROCESSED;
                 }
                 break;
             }
             case ButtonRelease:
             {
-                if (hasMovingSelection) {
-                    hasMovingSelection = false;
-                    isMovingSelectionScrolling = false;
-                    return true;
+                if (event->xbutton.button == Button1) {
+                    if (hasMovingSelection) {
+                        hasMovingSelection = false;
+                        isMovingSelectionScrolling = false;
+                        return EVENT_PROCESSED;
+                    }
                 }
                 break;
             }
@@ -271,110 +282,8 @@ bool TextEditorWidget::processEvent(const XEvent *event)
 
                     int x = event->xmotion.x;
                     int y = event->xmotion.y;
-                    this->movingSelectionY = y;
-                    this->movingSelectionX = x;
-                    long newCursorPos = getTextPosFromPixXY(x, y);
-
-                    if (wasDoubleClick) {
-                        long doubleClickPos = getTextPosFromPixXY(x, y, false);
-                        long p1 = doubleClickPos;
-                        long p2 = p1;
-                        TextData *textData = getTextData();
-
-                        if (doubleClickPos < textData->getLength())
-                        {
-                            if (isWordCharacter(textData->getChar(p1))) {
-                                while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
-                                    --p1;
-                                }
-                                while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
-                                    ++p2;
-                                }
-                            } else if (ispunct(textData->getChar(p1))) {
-                                while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
-                                    --p1;
-                                }
-                                while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
-                                    ++p2;
-                                }
-                            }
-                            if (p1 != getCursorTextPosition() || p2 != getCursorTextPosition())
-                            {
-                                if (!hasSelectionOwnership()) {
-                                    requestSelectionOwnership();
-                                    getBackliteBuffer()->activateSelection(getCursorTextPosition());
-                                }
-                                if (p1 < getBackliteBuffer()->getSelectionAnchorPos()) {
-                                    if (getBackliteBuffer()->isAnchorAtBegin()) {
-                                        long p = getBackliteBuffer()->getSelectionAnchorPos();
-                                        if (isWordCharacter(textData->getChar(p))) {
-                                            while (p < textData->getLength() && isWordCharacter(textData->getChar(p))) {
-                                                ++p;
-                                            }
-                                        } else if (ispunct(textData->getChar(p))) {
-                                            while (p < textData->getLength() && ispunct(textData->getChar(p))) {
-                                                ++p;
-                                            }
-                                        }
-                                        getBackliteBuffer()->extendSelectionTo(p);
-                                        getBackliteBuffer()->setAnchorToEndOfSelection();
-                                    }
-                                    getBackliteBuffer()->extendSelectionTo(p1);
-                                    newCursorPos = p1;
-                                } else {
-                                    if (!getBackliteBuffer()->isAnchorAtBegin()) {
-                                        long p = getBackliteBuffer()->getSelectionAnchorPos();
-                                        if (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
-                                            while (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
-                                                --p;
-                                            }
-                                        } else if (p > 0 && ispunct(textData->getChar(p - 1))) {
-                                            while (p > 0 && ispunct(textData->getChar(p - 1))) {
-                                               --p;
-                                            }
-                                        }
-                                        getBackliteBuffer()->extendSelectionTo(p);
-                                        getBackliteBuffer()->setAnchorToBeginOfSelection();
-                                    }
-                                    getBackliteBuffer()->extendSelectionTo(p2);
-                                    newCursorPos = p2;
-                                }
-                            }
-                        }
-                    } else {
-                        if (newCursorPos != getCursorTextPosition())
-                        {
-                            if (!hasSelectionOwnership()) {
-                                requestSelectionOwnership();
-                                getBackliteBuffer()->activateSelection(getCursorTextPosition());
-                            }
-                            getBackliteBuffer()->extendSelectionTo(newCursorPos);
-                        }
-                    }
-                    moveCursorToTextPosition(newCursorPos);
-                    assureCursorVisible();
-                    rememberedCursorPixX = getCursorPixX();
-
-                    if (y < 0 ) {
-                        if (!isMovingSelectionScrolling) {
-                            scrollUp();
-                            isMovingSelectionScrolling = true;
-                            EventDispatcher::getInstance()->registerTimerCallback(0, 
-                                    calculateScrollTime(-y, getLineHeight()),
-                                    slotForScrollRepeating);
-                        }
-                    } else if (y > getHeightPix()) {
-                        if (!isMovingSelectionScrolling) {
-                            scrollDown();
-                            isMovingSelectionScrolling = true;
-                            EventDispatcher::getInstance()->registerTimerCallback(0, 
-                                    calculateScrollTime(y - getHeightPix(), getLineHeight()),
-                                    slotForScrollRepeating);
-                        }
-                    } else {
-                        isMovingSelectionScrolling = false;
-                    }  
-                    return true;
+                    setNewMousePositionForMovingSelection(x, y);
+                    return EVENT_PROCESSED;
                 }
                 break;
             }
@@ -382,6 +291,133 @@ bool TextEditorWidget::processEvent(const XEvent *event)
         return propagateEventToParentWidget(event);
     }
 }
+
+void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
+{
+    if (hasMovingSelection)
+    {
+        this->movingSelectionY = y;
+        this->movingSelectionX = x;
+        long newCursorPos = getTextPosFromPixXY(x, y);
+
+        if (wasDoubleClick) {
+            long doubleClickPos = getTextPosFromPixXY(x, y, false);
+            long p1 = doubleClickPos;
+            long p2 = p1;
+            TextData *textData = getTextData();
+
+            if (doubleClickPos < textData->getLength())
+            {
+                if (isWordCharacter(textData->getChar(p1))) {
+                    while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
+                        --p1;
+                    }
+                    while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
+                        ++p2;
+                    }
+                } else if (ispunct(textData->getChar(p1))) {
+                    while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
+                        --p1;
+                    }
+                    while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
+                        ++p2;
+                    }
+                }
+                if (p1 != getCursorTextPosition() || p2 != getCursorTextPosition())
+                {
+                    if (!hasSelectionOwnership()) {
+                        requestSelectionOwnership();
+                        getBackliteBuffer()->activateSelection(getCursorTextPosition());
+                    }
+                    if (p1 < getBackliteBuffer()->getSelectionAnchorPos()) {
+                        if (getBackliteBuffer()->isAnchorAtBegin()) {
+                            long p = getBackliteBuffer()->getSelectionAnchorPos();
+                            if (isWordCharacter(textData->getChar(p))) {
+                                while (p < textData->getLength() && isWordCharacter(textData->getChar(p))) {
+                                    ++p;
+                                }
+                            } else if (ispunct(textData->getChar(p))) {
+                                while (p < textData->getLength() && ispunct(textData->getChar(p))) {
+                                    ++p;
+                                }
+                            }
+                            getBackliteBuffer()->extendSelectionTo(p);
+                            getBackliteBuffer()->setAnchorToEndOfSelection();
+                        }
+                        getBackliteBuffer()->extendSelectionTo(p1);
+                        newCursorPos = p1;
+                    } else {
+                        if (!getBackliteBuffer()->isAnchorAtBegin()) {
+                            long p = getBackliteBuffer()->getSelectionAnchorPos();
+                            if (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
+                                while (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
+                                    --p;
+                                }
+                            } else if (p > 0 && ispunct(textData->getChar(p - 1))) {
+                                while (p > 0 && ispunct(textData->getChar(p - 1))) {
+                                   --p;
+                                }
+                            }
+                            getBackliteBuffer()->extendSelectionTo(p);
+                            getBackliteBuffer()->setAnchorToBeginOfSelection();
+                        }
+                        getBackliteBuffer()->extendSelectionTo(p2);
+                        newCursorPos = p2;
+                    }
+                }
+            }
+        } else {
+            if (newCursorPos != getCursorTextPosition())
+            {
+                if (!hasSelectionOwnership()) {
+                    requestSelectionOwnership();
+                    getBackliteBuffer()->activateSelection(getCursorTextPosition());
+                }
+                getBackliteBuffer()->extendSelectionTo(newCursorPos);
+            }
+        }
+        moveCursorToTextPosition(newCursorPos);
+        assureCursorVisible();
+        rememberedCursorPixX = getCursorPixX();
+
+        if (y < 0 ) {
+            if (!isMovingSelectionScrolling) {
+                scrollUp();
+                isMovingSelectionScrolling = true;
+                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                        calculateScrollTime(-y, getLineHeight()),
+                        slotForScrollRepeating);
+            }
+        } else if (y > getHeightPix()) {
+            if (!isMovingSelectionScrolling) {
+                scrollDown();
+                isMovingSelectionScrolling = true;
+                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                        calculateScrollTime(y - getHeightPix(), getLineHeight()),
+                        slotForScrollRepeating);
+            }
+        } else if (x < 0 ) {
+            if (!isMovingSelectionScrolling) {
+                scrollLeft();
+                isMovingSelectionScrolling = true;
+                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                        calculateScrollTime(-x, getLineHeight()),
+                        slotForScrollRepeating);
+            }
+        } else if (x > getPixWidth() && !getTextData()->isEndOfLine(newCursorPos)) {
+            if (!isMovingSelectionScrolling) {
+                scrollRight();
+                isMovingSelectionScrolling = true;
+                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                        calculateScrollTime(x - getPixWidth(), getLineHeight()),
+                        slotForScrollRepeating);
+            }
+        } else {
+            isMovingSelectionScrolling = false;
+        }
+    }
+}
+
 
 long  TextEditorWidget::initSelectionDataRequest()
 {
@@ -417,29 +453,41 @@ void TextEditorWidget::handleScrollRepeating()
             assureCursorVisible();
             rememberedCursorPixX = getCursorPixX();
             getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-            if (movingSelectionY < 0 ) {
-                scrollUp();
-                EventDispatcher::getInstance()->registerTimerCallback(0, 
-                        calculateScrollTime(-movingSelectionY, getLineHeight()),
-                        slotForScrollRepeating);
-            } else if (movingSelectionY > getHeightPix()) {
-                scrollDown();
-                EventDispatcher::getInstance()->registerTimerCallback(0, 
-                        calculateScrollTime(movingSelectionY - getHeightPix(), getLineHeight()),
-                        slotForScrollRepeating);
-            }
+        }
+        if (movingSelectionY < 0 ) {
+            scrollUp();
+            EventDispatcher::getInstance()->registerTimerCallback(0, 
+                    calculateScrollTime(-movingSelectionY, getLineHeight()),
+                    slotForScrollRepeating);
+        } else if (movingSelectionY > getHeightPix()) {
+            scrollDown();
+            EventDispatcher::getInstance()->registerTimerCallback(0, 
+                    calculateScrollTime(movingSelectionY - getHeightPix(), getLineHeight()),
+                    slotForScrollRepeating);
+        } else if (movingSelectionX < 0 ) {
+            scrollLeft();
+            EventDispatcher::getInstance()->registerTimerCallback(0, 
+                    calculateScrollTime(-movingSelectionX, getLineHeight()),
+                    slotForScrollRepeating);
+        } else if (movingSelectionX > getPixWidth() && !getTextData()->isEndOfLine(newCursorPos)) {
+            scrollRight();
+            EventDispatcher::getInstance()->registerTimerCallback(0, 
+                    calculateScrollTime(movingSelectionX - getPixWidth(), getLineHeight()),
+                    slotForScrollRepeating);
+        } else {
+            isMovingSelectionScrolling = false;
         }
     }    
 }
 
 
-bool TextEditorWidget::processKeyboardEvent(const XEvent *event)
+GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent *event)
 {
     unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
     Callback0 m = keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
     if (m.isValid()) {
         m.call();
-        return true;
+        return EVENT_PROCESSED;
     } else {
         char buffer[100];
         int len = XLookupString(&((XEvent*)event)->xkey, buffer, 100, NULL, NULL);
@@ -472,9 +520,9 @@ bool TextEditorWidget::processKeyboardEvent(const XEvent *event)
             }
             assureCursorVisible();
             rememberedCursorPixX = getCursorPixX();
-            return true;
+            return EVENT_PROCESSED;
         } else {
-            return false;
+            return NOT_PROCESSED;
         }
     }
 }

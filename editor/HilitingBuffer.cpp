@@ -24,7 +24,7 @@
 
 using namespace LucED;
 
-static long calculateMaxDistance(Hiliting::Ptr hiliting)
+static long calculateMaxDistance(HilitedText::Ptr hiliting)
 {
     if (hiliting->getSyntaxPatterns().isValid()) {
         return 3 * util::maximum(
@@ -35,7 +35,7 @@ static long calculateMaxDistance(Hiliting::Ptr hiliting)
     }
 }
 
-HilitingBuffer::HilitingBuffer(Hiliting::Ptr hiliting)
+HilitingBuffer::HilitingBuffer(HilitedText::Ptr hiliting)
   : startPos(0),
     hiliting(hiliting),
     syntaxPatterns(hiliting->getSyntaxPatterns()),
@@ -55,7 +55,7 @@ HilitingBuffer::HilitingBuffer(Hiliting::Ptr hiliting)
 }
 
 
-void HilitingBuffer::treatHilitingUpdate(Hiliting::UpdateInfo update)
+void HilitingBuffer::treatHilitingUpdate(HilitedText::UpdateInfo update)
 {
     ASSERT(update.beginPos < update.endPos);
     
@@ -129,7 +129,7 @@ int HilitingBuffer::getNonBufferedTextStyle(long pos)
         // TODO: vielleicht besser PROCESS_AMOUNT, da das größte vorkommende Pattern
         //       größer als 2 * getHilitingBreakPointDistance() sein könnte.
         if (pos - searchStartPos >= maxDistance) {
-            // Hiliting would be too expensive -> return default style or approximate
+            // HilitedText would be too expensive -> return default style or approximate
             if (languageMode->hasApproximateUnknownHilitingFlag()) {
                 sp = syntaxPatterns->get(0);
                 patternStack.clear().append(0);

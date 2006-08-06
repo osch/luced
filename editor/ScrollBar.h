@@ -49,7 +49,7 @@ public:
         this->scrollStepCallback = callback;
     }
 
-    virtual bool processEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent *event);
     virtual void setPosition(Position newPosition);
     virtual Measures getDesiredMeasures();
 

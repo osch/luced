@@ -19,8 +19,12 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "DialogWin.h"
+#include <X11/keysym.h>
+
 #include "util.h"
+#include "Callback.h"
+#include "DialogWin.h"
+#include "Button.h"
 
 using namespace LucED;
 
@@ -33,6 +37,11 @@ DialogWin::DialogWin(TopWin* referingWindow)
     }
     addToXEventMask(ExposureMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
+    keyMapping.set(            0, XK_Tab,      Callback0(this, &DialogWin::switchFocusToNextWidget));
+    keyMapping.set(    ShiftMask, XK_Tab,      Callback0(this, &DialogWin::switchFocusToPrevWidget));
+    keyMapping.set(            0, XK_Escape,   Callback0(this, &DialogWin::requestCloseWindow));
+    keyMapping.set(            0, XK_Return,   Callback0(this, &DialogWin::handleDefaultButtonPress));
+    keyMapping.set(            0, XK_KP_Enter, Callback0(this, &DialogWin::handleDefaultButtonPress));
 }
 
 void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
@@ -82,16 +91,11 @@ void DialogWin::treatNewWindowPosition(Position newPosition)
 
 
 
-bool DialogWin::processKeyboardEvent(const XEvent *event)
-{
-    return false;
-}
 
-
-bool DialogWin::processEvent(const XEvent *event)
+GuiElement::ProcessingResult DialogWin::processEvent(const XEvent *event)
 {
-    if (TopWin::processEvent(event)) {
-        return true;
+    if (TopWin::processEvent(event) == EVENT_PROCESSED) {
+        return EVENT_PROCESSED;
     } else {
         switch (event->type)
         {
@@ -104,23 +108,155 @@ bool DialogWin::processEvent(const XEvent *event)
                     break;
                 }
                 drawRaisedBox(0, 0, getPosition().w, getPosition().h);
-                return true;
+                return EVENT_PROCESSED;
             }
         }
-        return false;
+        return NOT_PROCESSED;
     }
 }
 
 
 void DialogWin::treatFocusIn()
 {
+    if (focusedElement.isValid()) {
+        focusedElement->treatFocusIn();
+    }
+    if (this->actualDefaultButtonWidget.isValid()) {
+        this->actualDefaultButtonWidget->treatNewDefaultButtonState();
+    } else if (this->defaultDefaultButtonWidget.isValid()) {
+        this->actualDefaultButtonWidget = this->defaultDefaultButtonWidget;
+        this->actualDefaultButtonWidget->treatNewDefaultButtonState();
+    }
 }
 
 
 void DialogWin::treatFocusOut()
 {
+    if (focusedElement.isValid()) {
+        focusedElement->treatFocusOut();
+    }
+    if (this->actualDefaultButtonWidget.isValid()) {
+        this->actualDefaultButtonWidget->treatLostDefaultButtonState();
+        this->actualDefaultButtonWidget.invalidate();
+    }
+}
+
+void DialogWin::switchFocusToNextWidget()
+{
+    if (focusedElement.isValid()) {
+        GuiWidget* e = focusedElement;
+        do {
+            e = e->getNextFocusWidget();
+        } while (e != focusedElement && e != NULL && !e->isFocusable());
+        if (e != NULL) {
+            setFocus(e);
+        }
+    }
 }
 
 
+void DialogWin::switchFocusToPrevWidget()
+{
+    if (focusedElement.isValid()) {
+        GuiWidget* e = focusedElement;
+        do {
+            e = e->getPrevFocusWidget();
+        } while (e != focusedElement && e != NULL && !e->isFocusable());
+        if (e != NULL) {
+            setFocus(e);
+        }
+    }
+}
+
+
+
+GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const XEvent *event)
+{
+    if (focusedElement.isValid()) {
+        if (focusedElement->getFocusType() == NO_FOCUS) {
+            GuiWidget* e = focusedElement;
+            do {
+                e = e->getNextFocusWidget();
+            } while (e != focusedElement && !e->isFocusable());
+            focusedElement = e;
+        }
+        if (focusedElement->getFocusType() == TOTAL_FOCUS) {
+            return focusedElement->processKeyboardEvent(event);
+        } else {
+            Callback0 keyAction = keyMapping.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+            if (keyAction.isValid()) {
+                keyAction.call();
+                return EVENT_PROCESSED;
+            } else {
+                return focusedElement->processKeyboardEvent(event);
+            }
+        }
+    }
+    return NOT_PROCESSED;
+}
+
+
+void DialogWin::setFocus(GuiWidget* element)
+{
+    if (focusedElement != element) {
+        if (focusedElement.isValid()) {
+            focusedElement->treatFocusOut();
+        }
+        focusedElement = element;
+        if (focusedElement.isValid()) {
+            focusedElement->treatFocusIn();
+        }
+    }
+}
+
+
+
+void DialogWin::handleDefaultButtonPress()
+{
+    Button* defaultButton = dynamic_cast<Button*>(getActualDefaultButtonWidget());
+    if (defaultButton != NULL) {
+        defaultButton->emulateButtonPress();
+    }
+}
+
+void DialogWin::requestFocusFor(GuiWidget* w)
+{
+    setFocus(w);
+}
+
+GuiWidget* DialogWin::getActualDefaultButtonWidget()
+{
+    return actualDefaultButtonWidget;
+}
+
+void DialogWin::setDefaultButtonWidget(GuiWidget* widget)
+{
+    defaultDefaultButtonWidget = widget;
+    requestToBeActualDefaultButtonWidget(widget);
+}
+
+void DialogWin::requestToBeActualDefaultButtonWidget(GuiWidget* widget)
+{
+    GuiWidget* oldDefaultButtonWidget = this->actualDefaultButtonWidget;
+    this->actualDefaultButtonWidget = widget;
+    if (oldDefaultButtonWidget != NULL && oldDefaultButtonWidget != this->actualDefaultButtonWidget) {
+        oldDefaultButtonWidget->treatLostDefaultButtonState();
+    }
+    if (this->actualDefaultButtonWidget.isValid()) {
+        this->actualDefaultButtonWidget->treatNewDefaultButtonState();
+    }
+}
+
+void DialogWin::requestNotToBeActualDefaultButtonWidget(GuiWidget* widget)
+{
+    if (actualDefaultButtonWidget == widget) {
+        actualDefaultButtonWidget.invalidate();
+        widget->treatLostDefaultButtonState();
+    }
+    if (defaultDefaultButtonWidget.isValid()) {
+        actualDefaultButtonWidget = defaultDefaultButtonWidget;
+        defaultDefaultButtonWidget->treatNewDefaultButtonState();
+    }
+}
 
 

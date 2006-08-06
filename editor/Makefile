@@ -49,7 +49,7 @@ INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 MODULES = EditorTopWin    EventDispatcher   GuiRoot            GuiWidget \
           HeapMem         HilitingBase      KeyPressRepeater   ScrollBar \
           luced           TextData          TextEditorWidget   TextStyle \
-          TextWidget      TopWin            Hiliting           SyntaxPatterns \
+          TextWidget      TopWin            HilitedText        SyntaxPatterns \
           HilitingBuffer  LuaException      File               Regex \
           LuaObject       LuaInterpreter    ConfigException    GlobalConfig \
           LanguageModes   RegexException    BackliteBuffer     Clipboard \
@@ -57,7 +57,9 @@ MODULES = EditorTopWin    EventDispatcher   GuiRoot            GuiWidget \
           Button          GuiLayoutColumn   GuiLayoutWidget \
           FindDialog      SingletonKeeper   TopWinList         TopWinOwner \
           DialogWin       GuiLayoutSpacer   MultiLineEditorWidget \
-          SingleLineEditorWidget            StandardEditActions
+          SingleLineEditorWidget            StandardEditActions HeapObject \
+          SingleLineEditField LabelWidget
+          
 
 OBJS   = $(patsubst %, $(BUILD_DIR)/%.o, $(MODULES))
 

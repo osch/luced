@@ -19,43 +19,51 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLELINEEDITORWIDGET_H
-#define SINGLELINEEDITORWIDGET_H
+#ifndef SINGLELINEEDITFIELD_H
+#define SINGLELINEEDITFIELD_H
 
-#include "Slot.h"
-#include "ByteArray.h"
-#include "StandardEditActions.h"
-#include "TextEditorWidget.h"
+#include "SingleLineEditorWidget.h"
+#include "TextData.h"
 
-namespace LucED {
+namespace LucED
+{
 
-class SingleLineEditorWidget : public TextEditorWidget
+class SingleLineEditField : public GuiWidget
 {
 public:
-    typedef OwningPtr<SingleLineEditorWidget> Ptr;
+    typedef OwningPtr<SingleLineEditField> Ptr;
 
-    static SingleLineEditorWidget::Ptr create(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
+    static SingleLineEditField::Ptr create(GuiWidget *parent, 
+            LanguageMode::Ptr languageMode)
     {
-        return SingleLineEditorWidget::Ptr(new SingleLineEditorWidget(parent, textStyles, hilitedText));
+        return SingleLineEditField::Ptr(new SingleLineEditField(parent, 
+                languageMode));
     }
+
+    void setDesiredWidthInChars(int minWidth, int bestWidth, int maxWidth);
+    virtual Measures getDesiredMeasures();
+    virtual void setPosition(Position p);
 
     virtual bool isFocusable() { return true; }
     virtual FocusType getFocusType() { return NORMAL_FOCUS; }
-    
+    virtual void treatFocusIn();
+    virtual void treatFocusOut();
 
-protected:
-    SingleLineEditorWidget(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
+    virtual ProcessingResult processEvent(const XEvent *event);
+    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
     
+protected:    
+    virtual void requestFocusFor(GuiWidget* w);
+
 private:
-    void filterInsert(const byte** buffer, long* length);
-    
-    Slot2<const byte**, long*> slotForInsertFilter;
-    ByteArray filterBuffer;
-    StandardEditActions::Ptr standardActions;
+    SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr languageMode);
+    SingleLineEditorWidget::Ptr editorWidget;
+    void draw();
+    bool hasFocus;
 };
 
-} // namespapce LucED
 
-#endif // SINGLELINEEDITORWIDGET_H
+} // namespace LucED
+
+
+#endif // SINGLELINEEDITFIELD_H

@@ -20,7 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "util.h"
-#include "Hiliting.h"
+#include "HilitedText.h"
 #include "EventDispatcher.h"
 #include "GlobalConfig.h"
 
@@ -31,17 +31,17 @@
 
 using namespace LucED;
 
-Hiliting::Hiliting(TextData::Ptr textData, LanguageMode::Ptr languageMode)
+HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
         : processingEndBeforeRestartIterator(createNewIterator()),
           processingEndBeforeRestartFlag(false),
-          slotForTextDataUpdateTreatment(this, &Hiliting::treatTextDataUpdate),
-          slotForFlushPendingUpdates(this, &Hiliting::flushPendingUpdates),
+          slotForTextDataUpdateTreatment(this, &HilitedText::treatTextDataUpdate),
+          slotForFlushPendingUpdates(this, &HilitedText::flushPendingUpdates),
           textData(textData),
           rememberedLastProcessingRestartedIterator(createNewIterator()),
           languageMode(languageMode),
           startNextProcessIterator(createNewIterator()),
           tryToBeLastBreakIterator(createNewIterator()),
-          processHandlerSlot(this, &Hiliting::process, &Hiliting::needsProcessing)
+          processHandlerSlot(this, &HilitedText::process, &HilitedText::needsProcessing)
 {
     textData->registerUpdateListener(slotForTextDataUpdateTreatment);
     EventDispatcher::getInstance()->registerUpdateSource(slotForFlushPendingUpdates);
@@ -63,7 +63,7 @@ Hiliting::Hiliting(TextData::Ptr textData, LanguageMode::Ptr languageMode)
 }
 
 
-bool Hiliting::setBreak(IteratorHandle iterator, 
+bool HilitedText::setBreak(IteratorHandle iterator, 
         long startPos1, long startPos, long endPos, BreakType type, 
         const ByteArray& parsingStack)
 {
@@ -103,7 +103,7 @@ bool Hiliting::setBreak(IteratorHandle iterator,
 }
 
 
-bool Hiliting::fillWithBreaks(IteratorHandle iterator, 
+bool HilitedText::fillWithBreaks(IteratorHandle iterator, 
         long fillStart, long fillEnd,
         long *lastFillEnd, ByteArray& patternStack)
 {
@@ -130,7 +130,7 @@ bool Hiliting::fillWithBreaks(IteratorHandle iterator,
 }
 
 
-void Hiliting::gotoReparseStart(long textPos, IteratorHandle iterator)
+void HilitedText::gotoReparseStart(long textPos, IteratorHandle iterator)
 {
     moveIteratorToNextBefore(iterator, textPos);
     while (true)
@@ -173,12 +173,12 @@ void Hiliting::gotoReparseStart(long textPos, IteratorHandle iterator)
     }
 }
 
-bool Hiliting::needsProcessing()
+bool HilitedText::needsProcessing()
 {
     return needsProcessingFlag;
 }
 
-void Hiliting::treatTextDataUpdate(TextData::UpdateInfo u)
+void HilitedText::treatTextDataUpdate(TextData::UpdateInfo u)
 {
     if (!syntaxPatterns.isValid()) {
         return;
@@ -220,12 +220,12 @@ void Hiliting::treatTextDataUpdate(TextData::UpdateInfo u)
     ASSERT(!isEndOfBreaks(startNextProcessIterator));
 }
 
-void Hiliting::registerUpdateListener(const Callback1<UpdateInfo>& updateCallback)
+void HilitedText::registerUpdateListener(const Callback1<UpdateInfo>& updateCallback)
 {
     updateListeners.registerCallback(updateCallback);
 }
 
-void Hiliting::flushPendingUpdatesIntern()
+void HilitedText::flushPendingUpdatesIntern()
 {
     // todo: überdenken!!
     ASSERT(this->beginChangedPos <= this->endChangedPos);
@@ -236,7 +236,7 @@ void Hiliting::flushPendingUpdatesIntern()
     this->endChangedPos   = 0;
 }
 
-int Hiliting::process(int requestedProcessingAmount)
+int HilitedText::process(int requestedProcessingAmount)
 {
     if (!syntaxPatterns.isValid()) {
         return 0;

@@ -59,7 +59,7 @@ public:
 template<class T> class CallbackImpl0 : public CallbackBase0 
 {
 public:
-    static Ptr create(WeakPtr<T> objectPtr, void (T::*methodPtr)()) {
+    static Ptr create(T* objectPtr, void (T::*methodPtr)()) {
         return Ptr(new CallbackImpl0(objectPtr, methodPtr));
     }
 
@@ -79,10 +79,10 @@ private:
     WeakPtr<T> objectPtr;
     void (T::* methodPtr)();
     
-    CallbackImpl0(WeakPtr<T> objectPtr, void (T::*methodPtr)()) {
-        this->objectPtr = objectPtr;
-        this->methodPtr = methodPtr;
-    }
+    CallbackImpl0(T* objectPtr, void (T::*methodPtr)())
+        : objectPtr(objectPtr), 
+          methodPtr(methodPtr)
+    {}
 };
 
 
@@ -102,7 +102,7 @@ template<class T, class A1> class CallbackImpl1 : public CallbackBase1<A1>
 public:
     typedef OwningPtr< CallbackBase1<A1> > Ptr;
 
-    static Ptr create(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1)) {
+    static Ptr create(T* objectPtr, void (T::*methodPtr)(A1)) {
         return Ptr(new CallbackImpl1(objectPtr, methodPtr));
     }
 
@@ -122,10 +122,10 @@ private:
     WeakPtr<T> objectPtr;
     void (T::* methodPtr)(A1);
     
-    CallbackImpl1(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1)) {
-        this->objectPtr = objectPtr;
-        this->methodPtr = methodPtr;
-    }
+    CallbackImpl1(T* objectPtr, void (T::*methodPtr)(A1))
+        : objectPtr(objectPtr), 
+          methodPtr(methodPtr)
+    {}
 };
 
 
@@ -145,7 +145,7 @@ template<class T, class A1, class A2> class CallbackImpl2 : public CallbackBase2
 public:
     typedef OwningPtr< CallbackBase2<A1,A2> > Ptr;
 
-    static Ptr create(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1,A2)) {
+    static Ptr create(T* objectPtr, void (T::*methodPtr)(A1,A2)) {
         return Ptr(new CallbackImpl2(objectPtr, methodPtr));
     }
 
@@ -165,10 +165,10 @@ private:
     WeakPtr<T> objectPtr;
     void (T::* methodPtr)(A1,A2);
     
-    CallbackImpl2(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1,A2)) {
-        this->objectPtr = objectPtr;
-        this->methodPtr = methodPtr;
-    }
+    CallbackImpl2(T* objectPtr, void (T::*methodPtr)(A1,A2))
+        : objectPtr(objectPtr), 
+          methodPtr(methodPtr)
+    {}
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -187,7 +187,7 @@ template<class T, class A1, class A2, class A3> class CallbackImpl3 : public Cal
 public:
     typedef OwningPtr< CallbackBase3<A1,A2,A3> > Ptr;
 
-    static Ptr create(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
+    static Ptr create(T* objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
         return Ptr(new CallbackImpl3(objectPtr, methodPtr));
     }
 
@@ -207,10 +207,10 @@ private:
     WeakPtr<T> objectPtr;
     void (T::* methodPtr)(A1,A2,A3);
     
-    CallbackImpl3(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
-        this->objectPtr = objectPtr;
-        this->methodPtr = methodPtr;
-    }
+    CallbackImpl3(T* objectPtr, void (T::*methodPtr)(A1,A2,A3))
+        : objectPtr(objectPtr), 
+          methodPtr(methodPtr)
+    {}
 };
 
 } // namespace CallbackInternal
@@ -225,7 +225,7 @@ class Callback0
 public:
     Callback0() {}
 
-    template<class T> Callback0(WeakPtr<T> objectPtr, void (T::*methodPtr)()) {
+    template<class S, class T> Callback0(S* objectPtr, void (T::*methodPtr)()) {
         this->callback = CallbackInternal::CallbackImpl0<T>::create(objectPtr, methodPtr);
     }
 
@@ -257,7 +257,7 @@ template<class A1> class Callback1
 public:
     Callback1() {}
 
-    template<class T> Callback1(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1)) {
+    template<class T> Callback1(T* objectPtr, void (T::*methodPtr)(A1)) {
         this->callback = CallbackInternal::CallbackImpl1<T, A1>::create(objectPtr, methodPtr);
     }
 
@@ -289,7 +289,7 @@ template<class A1, class A2> class Callback2
 public:
     Callback2() {}
 
-    template<class T> Callback2(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1,A2)) {
+    template<class T> Callback2(T* objectPtr, void (T::*methodPtr)(A1,A2)) {
         this->callback = CallbackInternal::CallbackImpl2<T, A1, A2>::create(objectPtr, methodPtr);
     }
 
@@ -320,7 +320,7 @@ template<class A1, class A2, class A3> class Callback3
 public:
     Callback3() {}
 
-    template<class T> Callback3(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
+    template<class T> Callback3(T* objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
         this->callback = CallbackInternal::CallbackImpl3<T, A1, A2, A3>::create(objectPtr, methodPtr);
     }
 

@@ -6,27 +6,6 @@
 
 using namespace LucED;
 
-class SpacerV : public GuiElement
-{
-public:
-    typedef OwningPtr<SpacerV> Ptr;
-    static Ptr create(int minHeight, int maxHeight) {
-        return Ptr(new SpacerV(minHeight, maxHeight));
-    }
-    virtual Measures getDesiredMeasures() {
-        return Measures(
-                -1, minHeight == -1 ?  0 : minHeight, 
-                 0, maxHeight == -1 ? -1 : maxHeight, 
-                -1, maxHeight == -1 ? -1 : maxHeight);
-    }
-    virtual void setPosition(Position p) {}
-private:
-    SpacerV(int minHeight, int maxHeight) : minHeight(minHeight), maxHeight(maxHeight) {}
-    int minHeight;
-    int maxHeight;
-};
-
-
 void GuiLayoutColumn::addElement(GuiElement::Ptr element)
 {
     elements.append(element);
@@ -34,17 +13,12 @@ void GuiLayoutColumn::addElement(GuiElement::Ptr element)
 
 void GuiLayoutColumn::addSpacer(int height)
 {
-    elements.append(SpacerV::create(height, height));
+    elements.append(GuiLayoutSpacer::create(0, 0, 0, height, 0, -1));
 }
 
 void GuiLayoutColumn::addSpacer()
 {
     elements.append(GuiLayoutSpacer::create(0, 0, 0, 0, 0, -1));
-}
-
-void GuiLayoutColumn::addSpacer(int minHeight, int maxHeight)
-{
-    elements.append(SpacerV::create(minHeight, maxHeight));
 }
 
 static void maximize(int *a, int b)

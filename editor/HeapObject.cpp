@@ -19,34 +19,25 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef MULTILINEEDITORWIDGET_H
-#define MULTILINEEDITORWIDGET_H
+#include "HeapObject.h"
 
-#include "StandardEditActions.h"
-#include "TextEditorWidget.h"
+using namespace LucED;
 
-namespace LucED {
+#ifdef DEBUG
 
-class MultiLineEditorWidget : public TextEditorWidget
+int HeapObjectChecker::initCounter = 0;
+int HeapObjectChecker::allocCounter = 0;
+int HeapObjectChecker::destructCounter = 0;
+
+void HeapObjectChecker::assertAllCleared()
 {
-public:
-    typedef OwningPtr<MultiLineEditorWidget> Ptr;
+#ifdef PRINT_MALLOCS
+    printf("------------------------>  init: %d, alloc: %d, destruct: %d\n", initCounter, allocCounter, destructCounter);
+#else
+    ASSERT(initCounter == allocCounter);
+    ASSERT(initCounter == destructCounter);
+#endif
+}
 
-    static MultiLineEditorWidget::Ptr create(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
-    {
-        return MultiLineEditorWidget::Ptr(new MultiLineEditorWidget(parent, 
-                textStyles, hilitedText));
-    }
+#endif // DEBUG
 
-
-private:
-    MultiLineEditorWidget(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
-
-    StandardEditActions::Ptr standardActions;
-};
-
-} // namespapce LucED
-
-#endif // MULTILINEEDITORWIDGET_H

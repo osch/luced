@@ -21,6 +21,7 @@
 
 #include "Button.h"
 #include "GuiRoot.h"
+#include "TopWin.h"
 
 using namespace LucED;
 
@@ -33,7 +34,8 @@ Button::Button(GuiWidget* parent, string buttonText)
         isButtonPressed(false),
         isMouseButtonPressed(false),
         isMouseOverButton(false),
-        isDefaultButton(false)
+        isDefaultButton(false),
+        hasFocus(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -79,6 +81,17 @@ void Button::drawButton()
     if (isDefaultButton) {
         const int d = BUTTON_BORDER - 1;
         drawFrame(d, d, position.w - 2 * d, position.h - 2 * d);
+    } else {
+        const int d = BUTTON_BORDER - 1;
+        undrawFrame(d, d, position.w - 2 * d, position.h - 2 * d);
+    }
+    if (hasFocus) {
+        const int d = BUTTON_BORDER + 1;
+        if (isButtonPressed) {
+            drawDottedFrame(d+1, d+1, position.w - 2 * d - 1, position.h - 2 * d - 1);
+        } else {
+            drawDottedFrame(d, d, position.w - 2 * d - 1, position.h - 2 * d - 1);
+        }
     }
     int w = getGuiTextStyle()->getTextWidth(buttonText);
     int x = (position.w - 2*BUTTON_BORDER - w) / 2 + BUTTON_BORDER;
@@ -97,10 +110,21 @@ bool Button::isMouseInsideButtonArea(int mouseX, int mouseY)
                             && y >= BUTTON_BORDER - 1 && y <= position.h - 2*BUTTON_BORDER + 1);
 }
 
-bool Button::processEvent(const XEvent *event)
+static const int shortTime = 50 * 1000;
+
+static void waitShort(int microSecs = shortTime)
 {
-    if (GuiWidget::processEvent(event)) {
-        return true;
+    if (microSecs > 0) {
+        TimeVal timeVal;
+        timeVal.addMicroSecs(microSecs);
+        LucED::select(0, NULL, NULL, NULL, &timeVal);
+    }
+}
+
+GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
+{
+    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
+        return EVENT_PROCESSED;
     } else {
         
         switch (event->type) {
@@ -114,12 +138,14 @@ bool Button::processEvent(const XEvent *event)
                     break;
                 }
                 drawButton();
-                return true;
+                return EVENT_PROCESSED;
             }
 
             case ButtonPress: {
                 if (event->xbutton.button == Button1)
                 {
+                    earliestButtonReleaseTime.setToCurrentTime().addMicroSecs(shortTime);
+                    
                     isMouseButtonPressed = true;
                     int x = event->xbutton.x;
                     int y = event->xbutton.y;
@@ -131,7 +157,7 @@ bool Button::processEvent(const XEvent *event)
                         isButtonPressed = false;
                     }
                     drawButton();
-                    return true;
+                    return EVENT_PROCESSED;
                 }
                 break;
             }
@@ -139,15 +165,20 @@ bool Button::processEvent(const XEvent *event)
             case ButtonRelease: {
                 isMouseButtonPressed = false;
                 if (isButtonPressed) {
+                    TimeVal currentTime; currentTime.setToCurrentTime();
+                    if (earliestButtonReleaseTime.isLaterThan(currentTime)) {
+                        waitShort(TimeVal::diffMicroSecs(currentTime, earliestButtonReleaseTime));
+                    }
                     isButtonPressed = false;
                     drawButton();
+                    XFlush(getDisplay());
                     int x = event->xbutton.x;
                     int y = event->xbutton.y;
                     if (isMouseInsideButtonArea(x, y)) {
                         pressedCallback.call(this);
                     }
                 }
-                return true;
+                return EVENT_PROCESSED;
             }
 
             case MotionNotify:
@@ -192,7 +223,7 @@ bool Button::processEvent(const XEvent *event)
                 if (mustDraw) {
                     drawButton();
                 }
-                return true;
+                return EVENT_PROCESSED;
             }
             
             case EnterNotify: {
@@ -203,7 +234,7 @@ bool Button::processEvent(const XEvent *event)
                     drawButton();
                 }            
                 addToXEventMask(PointerMotionMask);
-                return true;
+                return EVENT_PROCESSED;
             }
             
             case LeaveNotify: {
@@ -212,11 +243,51 @@ bool Button::processEvent(const XEvent *event)
                     drawButton();
                 }
                 removeFromXEventMask(PointerMotionMask);
-                return true;
+                return EVENT_PROCESSED;
             }
         }
         return propagateEventToParentWidget(event);
     }
 }
 
+void Button::treatLostDefaultButtonState()
+{
+    isDefaultButton = false;
+    drawButton();
+}
 
+void Button::treatNewDefaultButtonState()
+{
+    isDefaultButton = true;
+    drawButton();
+}
+
+
+void Button::treatFocusIn()
+{
+    hasFocus = true;
+    requestToBeActualDefaultButtonWidget(this);
+    drawButton();
+}
+
+
+void Button::treatFocusOut()
+{
+    hasFocus = false;
+    requestNotToBeActualDefaultButtonWidget(this);
+    drawButton();
+}
+void Button::emulateButtonPress()
+{
+    bool oldIsButtonPressed = isButtonPressed;
+    isButtonPressed = true;
+    drawButton();
+    XFlush(getDisplay()); waitShort();
+    isButtonPressed = false;
+    drawButton();
+    XFlush(getDisplay()); waitShort();
+    isButtonPressed = oldIsButtonPressed;
+    drawButton();
+    XFlush(getDisplay()); waitShort();
+    pressedCallback.call(this);    
+}

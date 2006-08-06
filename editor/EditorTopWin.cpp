@@ -34,12 +34,12 @@
 
 using namespace LucED;
 
-EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
+EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
     : rootElement(GuiLayoutColumn::create()),
       wasNeverShown(true)
 {
     addToXEventMask(ButtonPressMask);
-    keyMapping.set(            ControlMask, XK_f,      Callback0(WeakPtr<EditorTopWin>(this), &EditorTopWin::invokeFindDialog));
+    keyMapping.set(            ControlMask, XK_f,      Callback0(this, &EditorTopWin::invokeFindDialog));
     
     statusLine = StatusLine::create(this);
     rootElement->addElement(statusLine);
@@ -47,7 +47,7 @@ EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, H
 //    GuiLayoutTable::Ptr tableLayout = GuiLayoutTable::create(2, 2);
 //    rootElement->addElement(tableLayout);
     
-    textEditor = MultiLineEditorWidget::create(this, textData, textStyles, hiliting);
+    textEditor = MultiLineEditorWidget::create(this, textStyles, hilitedText);
     
 //    GuiLayoutColumn::Ptr c1 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr c2 = GuiLayoutColumn::create();
@@ -80,6 +80,8 @@ EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, H
     
 //    rootElement->setPosition(Position(0, 0, width, height));
     
+    TextData::Ptr textData = hilitedText->getTextData();
+    
     textData->registerFileNameListener(statusLine->slotForSetFileName);
     textData->registerLengthListener(statusLine->slotForSetFileLength);
     textEditor->registerLineAndColumnListener(statusLine->slotForSetLineAndColumn);
@@ -108,6 +110,8 @@ EditorTopWin::EditorTopWin(TextData::Ptr textData, TextStyles::Ptr textStyles, H
 //                         m.bestWidth, m.bestHeight));
 
     setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
+    setSize(m.bestWidth, m.bestHeight);
+    rootElement->setPosition(Position(0, 0, m.bestWidth, m.bestHeight));
 //    setSizeHints(getPosition().x, getPosition().y, 
 //                         m.minWidth, m.minHeight, 1, 1);
 
@@ -137,14 +141,14 @@ void EditorTopWin::treatNewWindowPosition(Position newPosition)
     rootElement->setPosition(Position(0, 0, newPosition.w, newPosition.h));
 }
 
-bool EditorTopWin::processKeyboardEvent(const XEvent *event)
+GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *event)
 {
     Callback0 m = keyMapping.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
 
     if (m.isValid())
     {
         m.call();
-        return true;
+        return EVENT_PROCESSED;
     } 
     else
     {
@@ -153,10 +157,10 @@ bool EditorTopWin::processKeyboardEvent(const XEvent *event)
 }
 
 
-bool EditorTopWin::processEvent(const XEvent *event)
+GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent *event)
 {
-    if (TopWin::processEvent(event)) {
-        return true;
+    if (TopWin::processEvent(event) == EVENT_PROCESSED) {
+        return EVENT_PROCESSED;
     } else {
         switch (event->type)
         {
@@ -165,11 +169,11 @@ bool EditorTopWin::processEvent(const XEvent *event)
                  || event->xbutton.button == Button5)
                 {
                     textEditor->processEvent(event);
-                    return true;
+                    return EVENT_PROCESSED;
                 }
             }
         }
-        return false;
+        return NOT_PROCESSED;
     }
 }
 
@@ -187,7 +191,7 @@ void EditorTopWin::treatFocusOut()
 
 void EditorTopWin::requestCloseChildWindow(TopWin *topWin)
 {
-    if (findDialog.getRawPtr() == topWin) {
+    if (findDialog == topWin) {
         findDialog->hide();
     } else {
         TopWinOwner::requestCloseChildWindow(topWin);

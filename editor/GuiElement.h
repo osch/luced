@@ -22,9 +22,12 @@
 #ifndef GUIELEMENT_H
 #define GUIELEMENT_H
 
+#include <X11/Xlib.h>
+
 #include "HeapObject.h"
 #include "Position.h"
 #include "OwningPtr.h"
+#include "WeakPtr.h"
 
 namespace LucED {
 
@@ -64,9 +67,16 @@ public:
         int incrHeight;
     };
     
+    enum ProcessingResult
+    {
+        NOT_PROCESSED = 0,
+        EVENT_PROCESSED = 1
+    };
+    
     virtual Measures getDesiredMeasures() { return Measures(0, 0, 0, 0, 0, 0); };
     virtual void setPosition(Position p) = 0;
 
+    
 protected:
     GuiElement() {}
 };

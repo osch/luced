@@ -49,6 +49,8 @@ private:
     bool isReceivingPasteDataFlag;
     bool isMultiPartPastingFlag;
     ByteArray pasteBuffer;
+    Atom x11AtomForTargets;
+    Atom x11AtomForIncr;
 };
 
 } // namespace LucED

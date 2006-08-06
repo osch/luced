@@ -47,7 +47,7 @@ public:
     const ByteArray& getClipboardBuffer();    
     
     virtual void show() {ASSERT(false);} // always hidden
-    virtual bool processEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent *event);
     
     bool hasClipboardOwnership() {
         return hasSelectionOwnership();

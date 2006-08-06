@@ -40,10 +40,8 @@ public:
     
     virtual ~TopWin();
 
-    virtual bool processEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent *event);
 
-    virtual bool processKeyboardEvent(const XEvent *event) {return false;}
-    
     virtual void requestFocus();
     virtual void requestCloseWindow();
     virtual void treatNewWindowPosition(Position newPosition) {}

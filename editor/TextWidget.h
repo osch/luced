@@ -48,8 +48,7 @@ public:
     }
 
 protected:
-    TextWidget(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting);
+    TextWidget(GuiWidget *parent,TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
 
 
 public:
@@ -130,7 +129,7 @@ public:
     long insertAtCursor(const ByteArray& buffer);
     void removeAtCursor(long amount);
     
-    virtual bool processEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent *event);
     
     void startCursorBlinking();
     void stopCursorBlinking();

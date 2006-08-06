@@ -38,10 +38,10 @@
 
 namespace LucED {
 
-class Hiliting : public HilitingBase
+class HilitedText : public HilitingBase
 {
 public:
-    typedef OwningPtr<Hiliting> Ptr;
+    typedef OwningPtr<HilitedText> Ptr;
     
     struct UpdateInfo {
         long beginPos;
@@ -50,8 +50,8 @@ public:
             : beginPos(beginPos), endPos(endPos) {}
     };
 
-    static Hiliting::Ptr create(TextData::Ptr textData, LanguageMode::Ptr languageMode) {
-        return Hiliting::Ptr(new Hiliting(textData, languageMode));
+    static HilitedText::Ptr create(TextData::Ptr textData, LanguageMode::Ptr languageMode) {
+        return HilitedText::Ptr(new HilitedText(textData, languageMode));
     }
 
     int process(int requestedProcessingAmount);
@@ -79,7 +79,7 @@ public:
 
 private:
     
-    Hiliting(TextData::Ptr textData, LanguageMode::Ptr languageMode);
+    HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode);
 
     bool setBreak(IteratorHandle iterator, 
             long startPos1, long startPos, long endPos, BreakType type, 

@@ -43,15 +43,15 @@ public:
     typedef WeakPtr<EditorTopWin> Ptr;
     
     static EditorTopWin::Ptr create(
-            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting)
+            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
     {
         return transferOwnershipTo(
-                new EditorTopWin(textData, textStyles, hiliting),
+                new EditorTopWin(textStyles, hilitedText),
                 TopWinList::getInstance());
     }
     
-    virtual bool processEvent(const XEvent *event);
-    virtual bool processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent *event);
+    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
 
     virtual void treatNewWindowPosition(Position newPosition);
     virtual void treatFocusIn();
@@ -62,8 +62,7 @@ public:
     void invokeFindDialog();
     
 private:
-    EditorTopWin(
-            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting);
+    EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
 
     MultiLineEditorWidget::Ptr textEditor;
     ScrollBar::Ptr scrollBarH;
@@ -71,7 +70,7 @@ private:
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
     KeyMapping keyMapping;
-    FindDialog::Ptr findDialog;
+    WeakPtr<FindDialog> findDialog;
     bool wasNeverShown;
 };
 

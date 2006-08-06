@@ -101,6 +101,10 @@ public:
         return ptr;
     }
     
+    operator T*() {
+        return ptr;
+    }
+    
     bool operator==(const OwningPtr& rhs) const {
         return ptr == rhs.ptr;
     }
@@ -123,10 +127,6 @@ private:
     
 };
 
-template<class S, class T> bool operator==(const S* lhs, const OwningPtr<T>& rhs)
-{
-    return rhs.operator==(lhs);
-}
 
 } // namespace LucED
 

@@ -27,6 +27,7 @@
 #include "GuiWidget.h"
 #include "OwningPtr.h"
 #include "Callback.h"
+#include "TimeVal.h"
 
 namespace LucED {
 
@@ -44,13 +45,20 @@ public:
     void setButtonPressedCallback(const Callback1<Button*>& callback) {
         pressedCallback = callback;
     }
-    void setAsDefault(bool isDefault = true) {
-        isDefaultButton = isDefault;
-    }
+    
+    virtual void treatFocusIn();
+    virtual void treatFocusOut();
 
-    virtual bool processEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent *event);
     virtual Measures getDesiredMeasures();
     virtual void setPosition(Position newPosition);
+    virtual bool isFocusable() { return true; }
+    virtual FocusType getFocusType() { return NORMAL_FOCUS; }
+    
+    virtual void treatLostDefaultButtonState();
+    virtual void treatNewDefaultButtonState();
+    
+    void emulateButtonPress();
     
 private:
     void drawButton();
@@ -64,6 +72,8 @@ private:
     bool isMouseOverButton;
     Callback1<Button*> pressedCallback;
     bool isDefaultButton;
+    bool hasFocus;
+    TimeVal earliestButtonReleaseTime;
 };
 
 } // namespace LucED

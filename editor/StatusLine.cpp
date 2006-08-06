@@ -53,10 +53,10 @@ GuiElement::Measures StatusLine::getDesiredMeasures()
     return Measures(0, statusHeight, 0, statusHeight, -1, statusHeight);
 }
 
-bool StatusLine::processEvent(const XEvent *event)
+GuiElement::ProcessingResult StatusLine::processEvent(const XEvent *event)
 {
-    if (GuiWidget::processEvent(event)) {
-        return true;
+    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
+        return EVENT_PROCESSED;
     } else {
         
         switch (event->type) {
@@ -70,7 +70,7 @@ bool StatusLine::processEvent(const XEvent *event)
                     break;
                 }
                 this->drawArea();
-                return true;
+                return EVENT_PROCESSED;
             }
 
             case ButtonPress: {

@@ -26,16 +26,6 @@
 
 using namespace LucED;
 
-static bool staticallyInitialized = false;
-static Atom x11AtomForTargets;
-static Atom x11AtomForIncr;
-
-static void initializeStatically() {
-    staticallyInitialized = true;
-    x11AtomForTargets   = XInternAtom(GuiRoot::getInstance()->getDisplay(), "TARGETS", False);
-    x11AtomForIncr      = XInternAtom(GuiRoot::getInstance()->getDisplay(), "INCR", False);
-}
-
 static inline Display* getDisplay() {
     return GuiRoot::getInstance()->getDisplay();
 }
@@ -46,9 +36,8 @@ PasteDataReceiver::PasteDataReceiver(GuiWidget* baseWidget)
     isReceivingPasteDataFlag(false),
     isMultiPartPastingFlag(false)
 {
-    if (!staticallyInitialized) {
-        initializeStatically();
-    }
+    x11AtomForTargets   = XInternAtom(GuiRoot::getInstance()->getDisplay(), "TARGETS", False);
+    x11AtomForIncr      = XInternAtom(GuiRoot::getInstance()->getDisplay(), "INCR", False);
     addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 

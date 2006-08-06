@@ -46,10 +46,10 @@ int main(int argc, char **argv)
         TextStyles::Ptr     textStyles     = GlobalConfig::getInstance()->getTextStyles();
         LanguageMode::Ptr   languageMode   = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
         
-        TextData::Ptr textData = TextData::create();
-        Hiliting::Ptr hiliting = Hiliting::create(textData, languageMode);
+        TextData::Ptr textData    = TextData::create();
+        HilitedText::Ptr hilitedText = HilitedText::create(textData, languageMode);
 
-        EditorTopWin::Ptr win = EditorTopWin::create(textData, textStyles, hiliting);
+        EditorTopWin::Ptr win = EditorTopWin::create(textStyles, hilitedText);
         win->setTitle("Title - Test");
         win->show();
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
             textData->loadFile(argv[1]);  // TODO: this is all experimental!
         }
 
-        EditorTopWin::Ptr win2 = EditorTopWin::create(textData, textStyles, hiliting);
+        EditorTopWin::Ptr win2 = EditorTopWin::create(textStyles, hilitedText);
         win2->setTitle("Title - Test2");
         win2->show();
         
@@ -71,4 +71,7 @@ int main(int argc, char **argv)
     {
         fprintf(stderr, "ConfigException: %s\n", ex.getMessage().c_str());
     }
+#ifdef DEBUG
+    HeapObjectChecker::assertAllCleared();
+#endif    
 }

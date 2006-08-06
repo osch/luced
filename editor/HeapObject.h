@@ -31,10 +31,26 @@
 #include "debug.h"
 #include "NonCopyable.h"
 
-//#define PRINT_MALLOCS
+// #define PRINT_MALLOCS
 
 namespace LucED {
 
+#ifdef DEBUG
+class HeapObjectChecker : NonCopyable
+{
+public:
+    static void assertAllCleared();
+private:
+    friend class HeapObject;
+    friend class HeapObjectRefManipulator;
+    HeapObjectChecker();
+    
+    static int initCounter;
+    static int allocCounter;
+    static int destructCounter;
+    // no freeCounter, because some WeakPtrs are remaining until program termination
+};
+#endif // DEBUG
 
 class HeapObjectCounters : NonCopyable
 {
@@ -62,6 +78,13 @@ private:
 #endif
     int weakCounter;
     int strongCounter;
+public:
+    bool hasWeakReferences() const {
+        return weakCounter >= 1;
+    }
+    bool hasOwningReferences() const {
+        return strongCounter >= 1;
+    }
 };
 
 class HeapObject : NonCopyable
@@ -87,6 +110,9 @@ protected:
         #ifdef PRINT_MALLOCS
         printf("----> HeapObject %p : allocating %8.d bytes \n", allocated + 1, size);
         #endif
+        #ifdef DEBUG
+        HeapObjectChecker::allocCounter += 1;
+        #endif
         return allocated + 1;
     }
 
@@ -103,38 +129,55 @@ private:
 class HeapObjectRefManipulator
 {
 protected:
-    static bool hasOwningReferences(const HeapObject *obj) {
-        return (getCounters(obj)->strongCounter >= 1);
-    }
     static int obtainInitialOwnership(const HeapObject *obj) {
 #ifdef DEBUG
         if (obj != NULL) {
             #ifdef PRINT_MALLOCS
             printf("----> HeapObject %p : initial Ownership\n", obj);
+            printf("----- New %s at %p\n", typeid(*obj).name(), dynamic_cast<const void*>(obj));
             #endif
-            ASSERT(getCounters(obj)->wasNeverOwned);
-            ASSERT(getCounters(obj)->strongCounter == 1);
-            getCounters(obj)->wasNeverOwned = false;
+            #ifdef DEBUG
+            HeapObjectChecker::initCounter += 1;
+            #endif
+            HeapObjectCounters* heapObjectCounters = getHeapObjectCounters(obj);
+            ASSERT(heapObjectCounters->wasNeverOwned);
+            ASSERT(heapObjectCounters->strongCounter == 1);
+            heapObjectCounters->wasNeverOwned = false;
         }
 #endif
     }
+
     static void incRefCounter(const HeapObject *obj) {
         if (obj != NULL) {
-            getCounters(obj)->strongCounter += 1;
+            incRefCounter(getHeapObjectCounters(obj));
         }
     }
+    static void incRefCounter(HeapObjectCounters *counters) {
+        if (counters != NULL) {
+            counters->strongCounter += 1;
+        }
+    }
+
     static void decRefCounter(const HeapObject *obj) {
         if (obj != NULL) {
-            HeapObjectCounters* counters = getCounters(obj);
+            decRefCounter(getHeapObjectCounters(obj));
+        }
+    }
+    static void decRefCounter(HeapObjectCounters *counters) {
+        if (counters != NULL) {
             ASSERT(counters->strongCounter >= 1);
             if (counters->strongCounter == 1) {
                 // keep strongCounter == 1 while destructing
-                obj->~HeapObject();
+                void* rawPtr = counters + 1;
+                static_cast<HeapObject*>(rawPtr)->~HeapObject();
+                #ifdef DEBUG
+                HeapObjectChecker::destructCounter += 1;
+                #endif
                 ASSERT(counters->weakCounter >= 0);
                 if (counters->weakCounter == 0) {
                     counters->clear();
                     #ifdef PRINT_MALLOCS
-                    printf("----> HeapObject %p : deleting\n", obj);
+                    printf("----> HeapObject %p : deleting\n", counters + 1);
                     #endif
                     free(counters);
                 } else {
@@ -146,38 +189,51 @@ protected:
         }
     }
     
-    static bool hasWeakReferences(const HeapObject *obj) {
-        return (getCounters(obj)->weakCounter >= 1);
-    }
     static void incWeakCounter(const HeapObject *obj) {
         if (obj != NULL) {
-            getCounters(obj)->weakCounter += 1;
+            incWeakCounter(getHeapObjectCounters(obj));
         }
     }
+    static void incWeakCounter(HeapObjectCounters *counters) {
+        if (counters != NULL) {
+            counters->weakCounter += 1;
+        }
+    }
+
     static void decWeakCounter(const HeapObject *obj) {
         if (obj != NULL) {
-            ASSERT(hasWeakReferences(obj));
-            getCounters(obj)->weakCounter -= 1;
-            if (!hasWeakReferences(obj) && !hasOwningReferences(obj)) {
+            decWeakCounter(getHeapObjectCounters(obj));
+        }
+    }
+    static void decWeakCounter(HeapObjectCounters* counters) {
+        if (counters != NULL) {
+            ASSERT(counters->hasWeakReferences());
+            counters->weakCounter -= 1;
+            if (!counters->hasWeakReferences() && !counters->hasOwningReferences()) {
                 #ifdef PRINT_MALLOCS
-                printf("----> HeapObject %p : deleting\n", obj);
+                printf("----> HeapObject %p : deleting\n", counters + 1);
                 #endif
-                HeapObjectCounters* counters = getCounters(obj);
                 counters->clear();
                 free(counters);
             }
         }
     }
 
-private:
-    static HeapObjectCounters* getCounters(const void* heapObject) {
-        HeapObjectCounters* rslt = const_cast<HeapObjectCounters*>(
-            static_cast<const HeapObjectCounters*>(heapObject) - 1
-        );
+    static HeapObjectCounters* getHeapObjectCounters(const HeapObject* heapObject)
+    {
+        if (heapObject != NULL)
+        {
+            const void* rawAddress = dynamic_cast<const void*>(heapObject);
+            HeapObjectCounters* rslt = const_cast<HeapObjectCounters*>(
+                static_cast<const HeapObjectCounters*>(rawAddress) - 1
+            );
 #ifdef DEBUG
-        ASSERT(rslt->magic == HeapObjectCounters::MAGIC);
+            ASSERT(rslt->magic == HeapObjectCounters::MAGIC);
 #endif        
-        return rslt;
+            return rslt;
+        } else {
+            return NULL;
+        }
     }
 };
 

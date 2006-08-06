@@ -48,7 +48,7 @@ protected:
     SelectionOwner(GuiWidget* baseWidget, Atom x11AtomForSelection = XA_PRIMARY);
     ~SelectionOwner();
     
-    bool processSelectionOwnerEvent(const XEvent *event);
+    GuiElement::ProcessingResult processSelectionOwnerEvent(const XEvent *event);
     
     virtual void notifyAboutLostSelectionOwnership() {}
 
@@ -62,6 +62,9 @@ private:
     long alreadySentPos;
     Window multiPartTargetWid;
     Atom   multiPartTargetProp;
+    
+    Atom x11AtomForTargets;
+    Atom x11AtomForIncr;
     
     static SelectionOwner* primarySelectionOwner;
 };

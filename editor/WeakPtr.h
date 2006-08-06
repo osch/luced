@@ -32,107 +32,133 @@ template<class T> class WeakPtr : private HeapObjectRefManipulator
 {
 public:
     
-    WeakPtr() : ptr(NULL) {
+    WeakPtr() : ptr(NULL), heapObjectCounters(NULL) {
     }
     
-    WeakPtr(T* ptr) : ptr(ptr) {
-        incWeakCounter(ptr);
+    WeakPtr(T* ptr) : ptr(ptr), heapObjectCounters(getHeapObjectCounters(ptr)) {
+        incWeakCounter(heapObjectCounters);
     }
     
-    ~WeakPtr() {
-        decWeakCounter(ptr);
-    }
-    
-    WeakPtr(const WeakPtr& src) {
-        ptr = src.ptr;
-        incWeakCounter(ptr);
-    }
-    
-    operator T*() {
-        return getRawPtr();
+    WeakPtr(const WeakPtr& src) : ptr(src.getRawPtr()), heapObjectCounters(getHeapObjectCounters(ptr)) {
+        incWeakCounter(heapObjectCounters);
     }
     
     template<class S> WeakPtr(const WeakPtr<S>& src) {
-        ptr = src.getRawPtr();
-        incWeakCounter(ptr);
+        if (src.isValid()) {
+            ptr = src.getRawPtr();
+            heapObjectCounters = getHeapObjectCounters(ptr);
+            incWeakCounter(heapObjectCounters);
+        } else {
+            ptr = NULL;
+            heapObjectCounters = NULL;
+        }
     }
     
     template<class S> WeakPtr(const OwningPtr<S>& src) {
-        ptr = src.getRawPtr();
-        incWeakCounter(ptr);
+        if (src.isValid()) {
+            ptr = src.getRawPtr();
+            heapObjectCounters = getHeapObjectCounters(ptr);
+            incWeakCounter(heapObjectCounters);
+        } else {
+            ptr = NULL;
+            heapObjectCounters = NULL;
+        }
+    }
+    
+    ~WeakPtr() {
+        decWeakCounter(heapObjectCounters);
     }
     
     WeakPtr& operator=(const WeakPtr& src) {
-        if (this != &src) {
-            decWeakCounter(ptr);
-            ptr = src.ptr;
-            incWeakCounter(ptr);
+        checkOwningReferences();
+        if (src.isValid()) {
+            HeapObjectCounters* heapObjectCounters1 = heapObjectCounters;
+            ptr = src.getRawPtr();
+            heapObjectCounters = getHeapObjectCounters(ptr);
+            incWeakCounter(heapObjectCounters);
+            decWeakCounter(heapObjectCounters1);
+        } else {
+            invalidate();
         }
         return *this;
     }
     
     template<class S> WeakPtr& operator=(const WeakPtr<S>& src) {
-        if (this != &src) {
-            decWeakCounter(ptr);
-            ptr = src.ptr;
-            incWeakCounter(ptr);
+        checkOwningReferences();
+        if (src.isValid()) {
+            HeapObject* heapObjectCounters1 = heapObjectCounters;
+            ptr = src.getRawPtr();
+            heapObjectCounters = getHeapObjectCounters(ptr);
+            incWeakCounter(heapObjectCounters);
+            decWeakCounter(heapObjectCounters1);
+        } else {
+            invalidate();
         }
         return *this;
     }
     
     template<class S> WeakPtr& operator=(const OwningPtr<S>& src) {
-        decWeakCounter(ptr);
-        ptr = src.getRawPtr();
-        incWeakCounter(ptr);
+        checkOwningReferences();
+        if (src.isValid()) {
+            HeapObjectCounters* heapObjectCounters1 = heapObjectCounters;
+            ptr = src.getRawPtr();
+            heapObjectCounters = getHeapObjectCounters(ptr);
+            incWeakCounter(heapObjectCounters);
+            decWeakCounter(heapObjectCounters1);
+        } else {
+            invalidate();
+        }
         return *this;
     }
     
     void invalidate() {
-        decWeakCounter(ptr);
+        decWeakCounter(heapObjectCounters);
         ptr = NULL;
+        heapObjectCounters = NULL;
     }
     
-    bool isValid() {
+    bool isValid() const {
         checkOwningReferences();
         return ptr != NULL;
     }
-    
-    bool isInvalid() {
+
+    bool isInvalid() const {
         checkOwningReferences();
         return ptr == NULL;
     }
     
-    T* operator->() {
+    operator T*() const {
+        checkOwningReferences();
+        return getRawPtr();
+    }
+    
+    T* operator->() const {
         checkOwningReferences();
         return ptr;
     }
     
-    T* getRawPtr() {
+    T* getRawPtr() const {
         checkOwningReferences();
         return ptr;
     }
 
-    T* getRawPtr() const {
-        return ptr;
-    }
-    
-    bool operator==(const WeakPtr& rhs) const {
-        return ptr == rhs.ptr;
-    }
-    
-    template<class S> bool operator==(const WeakPtr<S>& rhs) const {
-        return ptr == rhs.ptr;
-    }
-    
 private:
 
-    void checkOwningReferences() {
-        if (ptr != NULL && !hasOwningReferences(ptr)) {
-            invalidate();
+    void checkOwningReferences() const {
+        if (ptr != NULL && !heapObjectCounters->hasOwningReferences()) {
+            decWeakCounter(heapObjectCounters);
+            ptr = NULL;
+            heapObjectCounters = NULL;
         }
     }
     
-    T *ptr;
+    mutable T *ptr;
+    
+    // seperate Copy of HeapObjectCounters* is needed for the case, that HeapObject
+    // is a virtual base class of T. In this case the upcast from T* to
+    // HeapObject* is dynamic and doesn't work, after *ptr was desctructed,
+    // i.e. after the destructor ~T() was invoked.
+    mutable HeapObjectCounters *heapObjectCounters;
     
 };
 

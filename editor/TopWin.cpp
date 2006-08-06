@@ -24,6 +24,7 @@
 #include "TopWin.h"
 #include "KeyPressRepeater.h"
 #include "GlobalConfig.h"
+#include "SingletonInstance.h"
 
 using namespace LucED;
 
@@ -55,6 +56,11 @@ TopWin::~TopWin()
 {
     if (this == expectedFocusTopWin) {
         expectedFocusTopWin = NULL;
+        if (GlobalConfig::getInstance()->getUseKeyPressRepeater())
+        {
+            KeyPressRepeater::getInstance()->reset();
+            GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
+        }
     }
 }
 
@@ -94,10 +100,10 @@ void TopWin::requestFocus()
     }
 }
 
-bool TopWin::processEvent(const XEvent *event)
+GuiElement::ProcessingResult TopWin::processEvent(const XEvent *event)
 {
-    if (GuiWidget::processEvent(event)) {
-        return true;
+    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
+        return EVENT_PROCESSED;
     } else {
         
         switch (event->type) {
@@ -109,25 +115,25 @@ bool TopWin::processEvent(const XEvent *event)
                         XSetInputFocus(getDisplay(), getWid(), RevertToNone, CurrentTime);
                         requestFocusAfterMapped = false;
                     }
-                    return true;
+                    return EVENT_PROCESSED;
                 } else {
-                    return false;
+                    return NOT_PROCESSED;
                 }
             }
 
             case UnmapNotify: {
                 if (event->xunmap.window == getWid()) {
                     mapped = false;
-                    return true;
+                    return EVENT_PROCESSED;
                 } else {
-                    return false;
+                    return NOT_PROCESSED;
                 }
             }
 
             case ClientMessage: {
                 if (event->xclient.data.l[0] == this->x11InternAtomForDeleteWindow) {
                     this->requestCloseWindow();
-                    return true;
+                    return EVENT_PROCESSED;
 /*                } else if (event->xclient.data.l[0] == this->x11InternAtomForTakeFocus) {
 printf("TakeFocus\n");
                     long timestamp = event->xclient.data.l[1];
@@ -136,7 +142,7 @@ printf("TakeFocus\n");
                     return true;
 */
                 } else {
-                    return false;
+                    return NOT_PROCESSED;
                 }   
             }
             
@@ -147,15 +153,15 @@ printf("TakeFocus\n");
                     if (KeyPressRepeater::getInstance()->isRepeating())
                     {
                         if (!KeyPressRepeater::getInstance()->addKeyModifier(event)) {
-                            bool processed = processKeyboardEvent(event);
+                            ProcessingResult processed = processKeyboardEvent(event);
                             KeyPressRepeater::getInstance()->repeatEvent(event);
                             return processed;
                         } else {
-                            return true;
+                            return EVENT_PROCESSED;
                         }
                     }
                     else {
-                        bool processed = processKeyboardEvent(event);
+                        ProcessingResult processed = processKeyboardEvent(event);
                         KeyPressRepeater::getInstance()->repeatEvent(event);
                         return processed;
                     }
@@ -195,7 +201,7 @@ printf("TakeFocus\n");
                        KeyPressRepeater::getInstance()->removeKeyModifier(event);
                     }
                 }
-                return true;
+                return EVENT_PROCESSED;
             }
 
             case FocusOut: {
@@ -220,7 +226,7 @@ printf("TakeFocus\n");
                     expectedFocusTopWin->treatFocusOut();
                     expectedFocusTopWin = NULL;
                 }
-                return true;
+                return EVENT_PROCESSED;
             }
 
             case FocusIn: {
@@ -241,12 +247,12 @@ printf("TakeFocus\n");
                 treatFocusIn();
                 reportFocusOwnershipToTopWinOwner(this, owner);
                 reportFocusOwnershipToTopWinOwner(this, this);
-                return true;
+                return EVENT_PROCESSED;
             }
 
 
             default: {
-                return false;
+                return NOT_PROCESSED;
             }
         }
     }
@@ -260,27 +266,35 @@ void TopWin::setTitle(const char* title)
 
 #include "luced.xpm"
 
-static bool staticallyInitialized = false;
-static Pixmap pixMap;
-
-static void initPixMap()
+class TopWinSingletonData : public HeapObject
 {
-    pixMap = 0;
+public:
+    static TopWinSingletonData* getInstance() { return instance.getPtr(); }
+    Pixmap getPixmap() { return pixMap; }
+private:
+    friend class SingletonInstance<TopWinSingletonData>;
     
-    if (XpmCreatePixmapFromData(
-            GuiRoot::getInstance()->getDisplay(),
-            GuiRoot::getInstance()->getRootWid(), luced_xpm, &pixMap, NULL, NULL) != 0) {
+    TopWinSingletonData()
+    {
         pixMap = 0;
-    }
 
-}
+        if (XpmCreatePixmapFromData(
+                GuiRoot::getInstance()->getDisplay(),
+                GuiRoot::getInstance()->getRootWid(), luced_xpm, &pixMap, NULL, NULL) != 0) {
+            pixMap = 0;
+        }
+    }    
+    static SingletonInstance<TopWinSingletonData> instance;
+    Pixmap pixMap;
+};
+
+SingletonInstance<TopWinSingletonData> TopWinSingletonData::instance;
+
+
 
 void TopWin::setWindowManagerHints()
 {
-    if (!staticallyInitialized) {
-        initPixMap();
-        staticallyInitialized = true;
-    }
+    Pixmap pixMap = TopWinSingletonData::getInstance()->getPixmap();
     
     if (pixMap != 0)
     {
@@ -299,5 +313,6 @@ void TopWin::requestCloseWindow()
 {
     owner->requestCloseChildWindow(this);
 }
+
 
 

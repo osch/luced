@@ -23,7 +23,7 @@
 #define HILITINGBUFFER_H
 
 #include "HeapObject.h"
-#include "Hiliting.h"
+#include "HilitedText.h"
 #include "CallbackContainer.h"
 #include "MemArray.h"
 #include "OwningPtr.h"
@@ -43,7 +43,7 @@ public:
             : beginPos(beginPos), endPos(endPos) {}
     };
 
-    static HilitingBuffer::Ptr create(Hiliting::Ptr hiliting) {
+    static HilitingBuffer::Ptr create(HilitedText::Ptr hiliting) {
         return HilitingBuffer::Ptr(new HilitingBuffer(hiliting));
     }
     
@@ -59,19 +59,19 @@ public:
 
 private:
     
-    HilitingBuffer(Hiliting::Ptr hiliting);
+    HilitingBuffer(HilitedText::Ptr hiliting);
     
     int getNonBufferedTextStyle(long textPos);
 
 
-    void treatHilitingUpdate(Hiliting::UpdateInfo update);
-    Slot1<Hiliting::UpdateInfo> slotForHilitingUpdateTreatment;
+    void treatHilitingUpdate(HilitedText::UpdateInfo update);
+    Slot1<HilitedText::UpdateInfo> slotForHilitingUpdateTreatment;
     
     void treatTextDataUpdate(TextData::UpdateInfo update);
     Slot1<TextData::UpdateInfo> slotForTextDataUpdateTreatment;
     
-    Hiliting::Ptr hiliting;
-    Hiliting::Iterator iterator;
+    HilitedText::Ptr hiliting;
+    HilitedText::Iterator iterator;
     TextData::Ptr textData;
     SyntaxPatterns::Ptr syntaxPatterns;
     LanguageMode::Ptr languageMode;

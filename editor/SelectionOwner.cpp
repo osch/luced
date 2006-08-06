@@ -29,17 +29,6 @@ using namespace LucED;
 
 SelectionOwner* SelectionOwner::primarySelectionOwner = NULL;
 
-static bool staticallyInitialized = false;
-static Atom x11AtomForTargets;
-static Atom x11AtomForIncr;
-
-static void initializeStatically() {
-    staticallyInitialized = true;
-    x11AtomForTargets   = XInternAtom(GuiRoot::getInstance()->getDisplay(), "TARGETS", False);
-    x11AtomForIncr      = XInternAtom(GuiRoot::getInstance()->getDisplay(), "INCR", False);
-}
-
-
 static inline Display* getDisplay() {
     return GuiRoot::getInstance()->getDisplay();
 }
@@ -51,9 +40,8 @@ SelectionOwner::SelectionOwner(GuiWidget* baseWidget, Atom x11AtomForSelection)
         hasRequestedSelectionOwnership(false),
         sendingMultiPart(false)
 {
-    if (!staticallyInitialized) {
-        initializeStatically();
-    }
+    x11AtomForTargets   = XInternAtom(GuiRoot::getInstance()->getDisplay(), "TARGETS", False);
+    x11AtomForIncr      = XInternAtom(GuiRoot::getInstance()->getDisplay(), "INCR", False);
     addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 
@@ -113,7 +101,7 @@ bool SelectionOwner::hasSelectionOwnership()
     return hasRequestedSelectionOwnership;
 }
 
-bool SelectionOwner::processSelectionOwnerEvent(const XEvent *event)
+GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEvent *event)
 {
     switch (event->type) {
     
@@ -122,7 +110,7 @@ bool SelectionOwner::processSelectionOwnerEvent(const XEvent *event)
             if (event->xselectionclear.selection ==  x11AtomForSelection) {
                 hasRequestedSelectionOwnership = false;
                 notifyAboutLostSelectionOwnership();
-                return true;
+                return GuiElement::EVENT_PROCESSED;
             }
             break;
         }
@@ -186,7 +174,7 @@ bool SelectionOwner::processSelectionOwnerEvent(const XEvent *event)
             }
             XSendEvent(getDisplay(), e.requestor, 0, 0, (XEvent *)&e);
 
-            return true;                
+            return GuiElement::EVENT_PROCESSED;
             break;
         }
         case PropertyNotify:
@@ -220,10 +208,10 @@ bool SelectionOwner::processSelectionOwnerEvent(const XEvent *event)
                             sendLength);
                     alreadySentPos += sendLength;
                 }
-                return true;
+                return GuiElement::EVENT_PROCESSED;
             }
             break;
         }
     }
-    return false;
+    return GuiElement::NOT_PROCESSED;
 }

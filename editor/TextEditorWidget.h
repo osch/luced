@@ -42,8 +42,8 @@ public:
     void showCursor();
     void hideCursor();
 
-    virtual bool processEvent(const XEvent *event);
-    virtual bool processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent *event);
+    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
 
     void treatFocusIn();
     void treatFocusOut();
@@ -55,7 +55,7 @@ public:
     bool isWordCharacter(unsigned char c);
     
     template<class T> void setEditAction(int keyState, KeySym keySym, T* object, void (T::*method)()) {
-        keyMapping.set(keyState, keySym, Callback0(WeakPtr<T>(object), method));
+        keyMapping.set(keyState, keySym, Callback0(object, method));
     }
     
     
@@ -72,8 +72,7 @@ public:
     void scrollPageRight();
 
 protected:
-    TextEditorWidget(GuiWidget *parent, 
-            TextData::Ptr textData, TextStyles::Ptr textStyles, Hiliting::Ptr hiliting);
+    TextEditorWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
 
     virtual void notifyAboutReceivedPasteData(const byte* data, long length);
     virtual void notifyAboutEndOfPastingData();
@@ -85,6 +84,7 @@ private:
     virtual void  endSelectionDataRequest();
     virtual void notifyAboutLostSelectionOwnership();
 
+    void setNewMousePositionForMovingSelection(int x, int y);
     
     void handleScrollStepV(ScrollStep::Type scrollStep);
     void handleScrollStepH(ScrollStep::Type scrollStep);

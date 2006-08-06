@@ -38,6 +38,7 @@ namespace LucED {
 
 class EventDispatcher;
 class GuiRoot;
+class TopWin;
 
 class GuiWidget : public GuiElement
 {
@@ -56,7 +57,7 @@ public:
         Window wid;
     };
     
-    virtual bool processEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent *event);
     virtual void setPosition(Position newPosition);
     virtual void setSize(int width, int height);
     virtual void treatNewWindowPosition(Position newPosition) {}
@@ -66,6 +67,23 @@ public:
     virtual void show();
     virtual void hide();
     
+    enum FocusType {
+        NO_FOCUS,
+        NORMAL_FOCUS,
+        TOTAL_FOCUS
+    };
+
+    virtual bool isFocusable() { return false; }
+    virtual FocusType getFocusType() { return NO_FOCUS; }
+    virtual void treatFocusIn() {}
+    virtual void treatFocusOut() {}
+    virtual ProcessingResult processKeyboardEvent(const XEvent *event) { return NOT_PROCESSED; }
+    virtual void treatLostDefaultButtonState() {}
+    virtual void treatNewDefaultButtonState() {}
+    
+    void setNextFocusWidget(GuiWidget* n) { nextFocusWidget = n; n->prevFocusWidget = this; }
+    GuiWidget* getNextFocusWidget() { return nextFocusWidget; }
+    GuiWidget* getPrevFocusWidget() { return prevFocusWidget; }
     
 protected:
 
@@ -94,6 +112,14 @@ protected:
     
     GuiClipping obtainGuiClipping(int x, int y, int w, int h);
 
+    virtual void requestFocusFor(GuiWidget* w) { if (parent != NULL) parent->requestFocusFor(w); }
+    virtual void requestToBeActualDefaultButtonWidget(GuiWidget* w) { 
+        if (parent != NULL) parent->requestToBeActualDefaultButtonWidget(w);
+    }
+    virtual void requestNotToBeActualDefaultButtonWidget(GuiWidget* w) { 
+        if (parent != NULL) parent->requestNotToBeActualDefaultButtonWidget(w);
+    }
+
 public:
     Window getWid() const {
         return wid;
@@ -106,11 +132,11 @@ protected:
     void addToXEventMask(long eventMask);
     void removeFromXEventMask(long eventMask);
     
-    bool propagateEventToParentWidget(const XEvent *event) {
-        if (parent != NULL) {
+    ProcessingResult propagateEventToParentWidget(const XEvent *event) {
+        if (parent.isValid()) {
             return parent->processEvent(event);
         } else {
-            return false;
+            return NOT_PROCESSED;
         }
     }
     
@@ -126,8 +152,13 @@ protected:
     void drawGuiText(int x, int y, const string& ptr) {
         drawGuiText(x, y, ptr.c_str(), ptr.length());
     }
+    void drawActiveSunkenFrame(int x, int y, int w, int h);
+    void drawInactiveSunkenFrame(int x, int y, int w, int h);
     void drawFrame(int x, int y, int w, int h);
+    void undrawFrame(int x, int y, int w, int h);
+    void drawDottedFrame(int x, int y, int w, int h);
     int getGuiTextHeight();
+    
     
 private:
     friend class GuiWidgetAccessForEventProcessors;
@@ -135,8 +166,10 @@ private:
     bool isTopWindow;
     Window wid;
     long eventMask;
-    GuiWidget *parent;
+    WeakPtr<GuiWidget> parent;
     Position position;
+    WeakPtr<GuiWidget> nextFocusWidget;
+    WeakPtr<GuiWidget> prevFocusWidget;
 };
 
 class GuiWidgetAccessForEventProcessors

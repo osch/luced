@@ -25,6 +25,7 @@
 #include "GuiLayoutSpacer.h"
 #include "TextData.h"
 #include "GlobalConfig.h"
+#include "LabelWidget.h"
 
 using namespace LucED;
 
@@ -33,26 +34,22 @@ FindDialog::FindDialog(TopWin* referingWindow, int x, int y, unsigned int width,
       slotForButtonPressed(this, &FindDialog::handleButtonPressed)
 {
     findButton = Button::create(this, "Find");
-    findButton->setAsDefault();
     cancelButton = Button::create(this, "Cancel");
+   
+    this->editField = SingleLineEditField::create(this, 
+                                                  GlobalConfig::getInstance()->getDefaultLanguageMode());
+    editField->setDesiredWidthInChars(20, 40, -1);
 
-    TextData::Ptr          editData  = TextData::create();
-    LanguageMode::Ptr      languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
-    Hiliting::Ptr          hiliting = Hiliting::create(editData, languageMode);
-    
-    this->editField = SingleLineEditorWidget::create(this, editData, 
-            GlobalConfig::getInstance()->getTextStyles(), hiliting);
-    editField->setDesiredMeasuresInChars(
-            20, 1, 40, 1, -1 , 1);
-
+    LabelWidget::Ptr label0 = LabelWidget::create(this, "String to Find:");
     GuiLayoutColumn::Ptr column0 = GuiLayoutColumn::create();
     GuiLayoutRow::Ptr row0 = GuiLayoutRow::create();
     GuiLayoutSpacerFrame::Ptr frame0 = GuiLayoutSpacerFrame::create(column0, 10);
     setRootElement(frame0);
 
     column0->addSpacer();
+    column0->addElement(label0);
     column0->addElement(editField);
-    column0->addSpacer();
+    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, 10, 0, -1));
     column0->addElement(row0);
     column0->addSpacer();
 
@@ -65,9 +62,16 @@ FindDialog::FindDialog(TopWin* referingWindow, int x, int y, unsigned int width,
     findButton->setButtonPressedCallback(slotForButtonPressed);
     cancelButton->setButtonPressedCallback(slotForButtonPressed);
 
+    label0->show();
     editField->show();
     findButton->show();
-    cancelButton->show();    
+    cancelButton->show();  
+    
+    editField->setNextFocusWidget(findButton);
+    findButton->setNextFocusWidget(cancelButton);
+    cancelButton->setNextFocusWidget(editField);
+    setFocus(editField);
+    setDefaultButtonWidget(findButton);
 }
 
 
@@ -83,18 +87,7 @@ void FindDialog::handleButtonPressed(Button* button)
 
 void FindDialog::treatFocusIn()
 {
-    editField->treatFocusIn();
+    setFocus(editField);
+    DialogWin::treatFocusIn();
 }
-
-
-void FindDialog::treatFocusOut()
-{
-    editField->treatFocusOut();
-}
-
-bool FindDialog::processKeyboardEvent(const XEvent *event)
-{
-    return editField->processKeyboardEvent(event);
-}
-
 

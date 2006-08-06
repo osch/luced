@@ -64,7 +64,7 @@ const ByteArray& Clipboard::getClipboardBuffer() {
 }
 
 
-bool Clipboard::processEvent(const XEvent *event)
+GuiElement::ProcessingResult Clipboard::processEvent(const XEvent *event)
 {
     return processSelectionOwnerEvent(event);
 }

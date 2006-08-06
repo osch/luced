@@ -19,34 +19,49 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef MULTILINEEDITORWIDGET_H
-#define MULTILINEEDITORWIDGET_H
+#ifndef LABELWIDGET_H
+#define LABELWIDGET_H
 
-#include "StandardEditActions.h"
-#include "TextEditorWidget.h"
+#include <string>
+
+#include "GuiWidget.h"
+#include "Callback.h"
+#include "Slot.h"
+#include "OwningPtr.h"
 
 namespace LucED {
 
-class MultiLineEditorWidget : public TextEditorWidget
+using std::string;
+
+class LabelWidget : public GuiWidget
 {
 public:
-    typedef OwningPtr<MultiLineEditorWidget> Ptr;
 
-    static MultiLineEditorWidget::Ptr create(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
+    typedef OwningPtr<LabelWidget> Ptr;
+
+    static LabelWidget::Ptr create(GuiWidget* parent, const string& leftText, const string& rightText = "")
     {
-        return MultiLineEditorWidget::Ptr(new MultiLineEditorWidget(parent, 
-                textStyles, hilitedText));
+        return LabelWidget::Ptr(new LabelWidget(parent, leftText, rightText));
     }
 
+    virtual ProcessingResult processEvent(const XEvent *event);
+    virtual void setPosition(Position newPosition);
+    virtual Measures getDesiredMeasures();
 
+    
 private:
-    MultiLineEditorWidget(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
 
-    StandardEditActions::Ptr standardActions;
+    LabelWidget(GuiWidget* parent, const string& leftText, const string& rightText);
+
+    void draw();
+    
+    Position position;
+    string leftText;
+    string rightText;
 };
 
-} // namespapce LucED
 
-#endif // MULTILINEEDITORWIDGET_H
+} // namespace LucED
+
+
+#endif // LABELWIDGET_H
