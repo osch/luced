@@ -40,8 +40,6 @@ DialogWin::DialogWin(TopWin* referingWindow)
     keyMapping.set(            0, XK_Tab,      Callback0(this, &DialogWin::switchFocusToNextWidget));
     keyMapping.set(    ShiftMask, XK_Tab,      Callback0(this, &DialogWin::switchFocusToPrevWidget));
     keyMapping.set(            0, XK_Escape,   Callback0(this, &DialogWin::requestCloseWindow));
-    keyMapping.set(            0, XK_Return,   Callback0(this, &DialogWin::handleDefaultButtonPress));
-    keyMapping.set(            0, XK_KP_Enter, Callback0(this, &DialogWin::handleDefaultButtonPress));
 }
 
 void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
@@ -121,12 +119,6 @@ void DialogWin::treatFocusIn()
     if (focusedElement.isValid()) {
         focusedElement->treatFocusIn();
     }
-    if (this->actualDefaultButtonWidget.isValid()) {
-        this->actualDefaultButtonWidget->treatNewDefaultButtonState();
-    } else if (this->defaultDefaultButtonWidget.isValid()) {
-        this->actualDefaultButtonWidget = this->defaultDefaultButtonWidget;
-        this->actualDefaultButtonWidget->treatNewDefaultButtonState();
-    }
 }
 
 
@@ -134,10 +126,6 @@ void DialogWin::treatFocusOut()
 {
     if (focusedElement.isValid()) {
         focusedElement->treatFocusOut();
-    }
-    if (this->actualDefaultButtonWidget.isValid()) {
-        this->actualDefaultButtonWidget->treatLostDefaultButtonState();
-        this->actualDefaultButtonWidget.invalidate();
     }
 }
 
@@ -183,11 +171,19 @@ GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const XEvent *event
         if (focusedElement->getFocusType() == TOTAL_FOCUS) {
             return focusedElement->processKeyboardEvent(event);
         } else {
+            bool hotKeyProcessed = false;
             KeyMapping::Id keyMappingId(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-            HotKeyMapping::Value foundHotKeyWidget = hotKeyMapping.get(keyMappingId);
-            if (foundHotKeyWidget.isValid() && foundHotKeyWidget.get().isValid()) {
-                foundHotKeyWidget.get()->treatHotKeyEvent(keyMappingId);
-            } else {
+            HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping.get(keyMappingId);
+            if (foundHotKeyWidgets.isValid()) {
+                WidgetQueue::Ptr widgets = foundHotKeyWidgets.get();
+                ASSERT(widgets.isValid());
+                GuiWidget* w = widgets->getLast();
+                if (w != NULL) {
+                    w->treatHotKeyEvent(keyMappingId);
+                    hotKeyProcessed = true;
+                }
+            } 
+            if (!hotKeyProcessed) {
                 Callback0 keyAction = keyMapping.find(keyMappingId);
                 if (keyAction.isValid()) {
                     keyAction.call();
@@ -217,71 +213,47 @@ void DialogWin::setFocus(GuiWidget* element)
 
 
 
-void DialogWin::handleDefaultButtonPress()
-{
-    Button* defaultButton = dynamic_cast<Button*>(getActualDefaultButtonWidget());
-    if (defaultButton != NULL) {
-        defaultButton->emulateButtonPress();
-    }
-}
-
 void DialogWin::requestFocusFor(GuiWidget* w)
 {
     setFocus(w);
 }
 
-GuiWidget* DialogWin::getActualDefaultButtonWidget()
+void DialogWin::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w)
 {
-    return actualDefaultButtonWidget;
+    ASSERT(w != NULL);
+    
+    HotKeyMapping::Value foundWidgets = hotKeyMapping.get(id);
+    WidgetQueue::Ptr widgets;
+
+    if (foundWidgets.isValid()) {
+        widgets = foundWidgets.get();
+        ASSERT(widgets.isValid());
+        GuiWidget* activeWidget = widgets->getLast();
+        if (activeWidget != NULL) {
+            activeWidget->treatLostHotKeyRegistration(id);
+        }
+    } else {
+        widgets = WidgetQueue::create();
+        this->hotKeyMapping.set(id, widgets);
+    }
+    widgets->append(w);
+    w->treatNewHotKeyRegistration(id);
 }
 
-void DialogWin::setDefaultButtonWidget(GuiWidget* widget)
+void DialogWin::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w)
 {
-    defaultDefaultButtonWidget = widget;
-    requestToBeActualDefaultButtonWidget(widget);
-}
-
-void DialogWin::requestToBeActualDefaultButtonWidget(GuiWidget* widget)
-{
-    GuiWidget* oldDefaultButtonWidget = this->actualDefaultButtonWidget;
-    this->actualDefaultButtonWidget = widget;
-    if (oldDefaultButtonWidget != NULL && oldDefaultButtonWidget != this->actualDefaultButtonWidget) {
-        oldDefaultButtonWidget->treatLostDefaultButtonState();
-    }
-    if (this->actualDefaultButtonWidget.isValid()) {
-        this->actualDefaultButtonWidget->treatNewDefaultButtonState();
-    }
-}
-
-void DialogWin::requestNotToBeActualDefaultButtonWidget(GuiWidget* widget)
-{
-    if (actualDefaultButtonWidget == widget) {
-        actualDefaultButtonWidget.invalidate();
-        widget->treatLostDefaultButtonState();
-    }
-    if (defaultDefaultButtonWidget.isValid()) {
-        actualDefaultButtonWidget = defaultDefaultButtonWidget;
-        defaultDefaultButtonWidget->treatNewDefaultButtonState();
-    }
-}
-
-
-void DialogWin::requestHotKeyFor(const KeyMapping::Id& id, GuiWidget* w)
-{
-    HotKeyMapping::Value value = hotKeyMapping.get(id);
-    if (value.isValid() && value.get().isValid()) {
-        value.get()->treatLostHotKey(id);
-    }
-    hotKeyMapping.set(id, w);
-    w->treatNewHotKey(id);
-}
-
-void DialogWin::requestHotKeyRemovalFor(const KeyMapping::Id& id, GuiWidget* w)
-{
-    HotKeyMapping::Value value = hotKeyMapping.get(id);
-    if (value.isValid() && value.get().isValid()) {
-        if (value.get() == w) {
-            value.get()->treatLostHotKey(id);
+    ASSERT(w != NULL);
+    HotKeyMapping::Value foundWidgets = hotKeyMapping.get(id);
+    if (foundWidgets.isValid()) {
+        WidgetQueue::Ptr widgets = foundWidgets.get();
+        ASSERT(widgets.isValid());
+        if (widgets->getLast() == w) {
+            widgets->removeLast();
+            w->treatLostHotKeyRegistration(id);
+            GuiWidget* newActive = widgets->getLast();
+            if (newActive != NULL) {
+                newActive->treatNewHotKeyRegistration(id);
+            }
         }
     }
 }

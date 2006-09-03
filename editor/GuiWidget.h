@@ -78,11 +78,9 @@ public:
     virtual void treatFocusIn() {}
     virtual void treatFocusOut() {}
     virtual ProcessingResult processKeyboardEvent(const XEvent *event) { return NOT_PROCESSED; }
-    virtual void treatLostDefaultButtonState() {}
-    virtual void treatNewDefaultButtonState() {}
 
-    virtual void treatLostHotKey(const KeyMapping::Id& id) {}
-    virtual void treatNewHotKey(const KeyMapping::Id& id) {}
+    virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id) {}
+    virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id) {}
     virtual void treatHotKeyEvent(const KeyMapping::Id& id) {}
     
     
@@ -117,20 +115,15 @@ protected:
     
     GuiClipping obtainGuiClipping(int x, int y, int w, int h);
 
+protected:
     virtual void requestFocusFor(GuiWidget* w) {
         if (parent != NULL) parent->requestFocusFor(w);
     }
-    virtual void requestToBeActualDefaultButtonWidget(GuiWidget* w) { 
-        if (parent != NULL) parent->requestToBeActualDefaultButtonWidget(w);
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w) {
+        if (parent != NULL) parent->requestHotKeyRegistrationFor(id, w);
     }
-    virtual void requestNotToBeActualDefaultButtonWidget(GuiWidget* w) { 
-        if (parent != NULL) parent->requestNotToBeActualDefaultButtonWidget(w);
-    }
-    virtual void requestHotKeyFor(const KeyMapping::Id& id, GuiWidget* w) {
-        if (parent != NULL) parent->requestHotKeyFor(id, w);
-    }
-    virtual void requestHotKeyRemovalFor(const KeyMapping::Id& id, GuiWidget* w) {
-        if (parent != NULL) parent->requestHotKeyRemovalFor(id, w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w) {
+        if (parent != NULL) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
     }
 
 public:

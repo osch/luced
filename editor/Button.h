@@ -57,9 +57,11 @@ public:
     
     virtual void treatLostDefaultButtonState();
     virtual void treatNewDefaultButtonState();
-    virtual void treatLostHotKey(const KeyMapping::Id& id);
-    virtual void treatNewHotKey(const KeyMapping::Id& id);
+    virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id);
+    virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatHotKeyEvent(const KeyMapping::Id& id);
+    
+    void setAsDefaultButton();
     
     void emulateButtonPress();
     
@@ -75,6 +77,7 @@ private:
     bool isMouseOverButton;
     Callback1<Button*> pressedCallback;
     bool isDefaultButton;
+    bool isPermanentDefaultButton;
     bool hasFocus;
     TimeVal earliestButtonReleaseTime;
     bool hasHotKey;

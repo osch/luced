@@ -81,6 +81,14 @@ public:
         ASSERT(i < getLength());
         return *this->getPtr(i);
     }
+    T getLast() const {
+        ASSERT(getLength() > 0);
+        return *this->getPtr(getLength() - 1);
+    }
+    T& getLast() {
+        ASSERT(getLength() > 0);
+        return *this->getPtr(getLength() - 1);
+    }
     const T& operator[](long i) const {
         ASSERT(i < getLength());
         return *this->getPtr(i);
@@ -108,6 +116,10 @@ public:
     }
     ObjectArray<T>& remove(long pos) {
         removeAmount(pos, 1);
+    }
+    ObjectArray<T>& removeLast() {
+        ASSERT(getLength() > 0);
+        removeAmount(getLength() - 1, 1);
     }
     ObjectArray<T>& removeBetween(long pos1, long pos2) {
         removeAmount(pos1, pos2 - pos1);

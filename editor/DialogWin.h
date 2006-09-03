@@ -24,6 +24,8 @@
 
 #include "TopWin.h"
 #include "KeyMapping.h"
+#include "HeapObjectArray.h"
+#include "WeakPtrQueue.h"
 
 namespace LucED {
 
@@ -41,13 +43,8 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    virtual GuiWidget* getActualDefaultButtonWidget();
-    virtual void requestToBeActualDefaultButtonWidget(GuiWidget* widget);
-    virtual void requestNotToBeActualDefaultButtonWidget(GuiWidget* widget);
-    virtual void setDefaultButtonWidget(GuiWidget* widget);
-
-    virtual void requestHotKeyFor(const KeyMapping::Id& id, GuiWidget* w);
-    virtual void requestHotKeyRemovalFor(const KeyMapping::Id& id, GuiWidget* w);
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
     
 protected:
     DialogWin(TopWin* referingWindow);
@@ -58,7 +55,6 @@ protected:
     
     void switchFocusToNextWidget();
     void switchFocusToPrevWidget();
-    void handleDefaultButtonPress();
     virtual void requestFocusFor(GuiWidget* w);
     
 private:
@@ -67,12 +63,11 @@ private:
     WeakPtr<TopWin> referingWindow;
     
     KeyMapping keyMapping;
-    typedef HashMap< KeyMapping::Id, WeakPtr<GuiWidget> > HotKeyMapping;
+    typedef WeakPtrQueue<GuiWidget> WidgetQueue;
+    typedef HashMap< KeyMapping::Id, WidgetQueue::Ptr > HotKeyMapping;
     HotKeyMapping hotKeyMapping;
     
     WeakPtr<GuiWidget> focusedElement;
-    WeakPtr<GuiWidget> actualDefaultButtonWidget;
-    WeakPtr<GuiWidget> defaultDefaultButtonWidget;
 };
 
 } // namespace LucED

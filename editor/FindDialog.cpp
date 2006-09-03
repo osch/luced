@@ -71,7 +71,8 @@ FindDialog::FindDialog(TopWin* referingWindow, int x, int y, unsigned int width,
     findButton->setNextFocusWidget(cancelButton);
     cancelButton->setNextFocusWidget(editField);
     setFocus(editField);
-    setDefaultButtonWidget(findButton);
+    //setDefaultButtonWidget(findButton);
+    findButton->setAsDefaultButton();
     setTitle("Find");
 }
 

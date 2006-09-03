@@ -39,7 +39,8 @@ Button::Button(GuiWidget* parent, string buttonText)
         isDefaultButton(false),
         hasFocus(false),
         hasHotKey(false),
-        showHotKey(false)
+        showHotKey(false),
+        isPermanentDefaultButton(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -53,7 +54,7 @@ Button::Button(GuiWidget* parent, string buttonText)
         // showHotKey = true;
         string keySymString;
         keySymString.append(1, (char) tolower(hotKeyChar));
-        requestHotKeyFor(KeyMapping::Id(Mod1Mask, keySymString), this);
+        requestHotKeyRegistrationFor(KeyMapping::Id(Mod1Mask, keySymString), this);
     } else {
         this->buttonText = buttonText;
     }
@@ -283,46 +284,66 @@ void Button::treatNewDefaultButtonState()
     drawButton();
 }
 
-void Button::treatLostHotKey(const KeyMapping::Id& id)
+void Button::treatLostHotKeyRegistration(const KeyMapping::Id& id)
 {
     if (id == KeyMapping::Id(0, XK_Return)
      || id == KeyMapping::Id(0, XK_KP_Enter))
     {
-        isDefaultButton = false;
+        if (isDefaultButton) {
+            isDefaultButton = false;
+            drawButton();
+        }
     } else {
-        showHotKey = false;
+        if (showHotKey) {
+            showHotKey = false;
+            drawButton();
+        }
     }
-    drawButton();
 }
 
 
-void Button::treatNewHotKey(const KeyMapping::Id& id)
+void Button::treatNewHotKeyRegistration(const KeyMapping::Id& id)
 {
     if (id == KeyMapping::Id(0, XK_Return)
      || id == KeyMapping::Id(0, XK_KP_Enter))
     {
-        isDefaultButton = true;
+        if (!isDefaultButton) {
+            isDefaultButton = true;
+            drawButton();
+        }
     } else {
-        showHotKey = true;
+        if (!showHotKey) {
+            showHotKey = true;
+            drawButton();
+        }
     }
-    drawButton();
 }
 
 
 void Button::treatFocusIn()
 {
-    hasFocus = true;
-    requestToBeActualDefaultButtonWidget(this);
-    drawButton();
+    if (!isDefaultButton) {
+        requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
+        requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
+    }
+    if (!hasFocus) {
+        hasFocus = true;
+        drawButton();
+    }
 }
 
 
 void Button::treatFocusOut()
 {
     hasFocus = false;
-    requestNotToBeActualDefaultButtonWidget(this);
+    if (!isPermanentDefaultButton) {
+        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
+        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
+    }
     drawButton();
 }
+
+
 void Button::emulateButtonPress()
 {
     bool oldIsButtonPressed = isButtonPressed;
@@ -343,3 +364,9 @@ void Button::treatHotKeyEvent(const KeyMapping::Id& id)
     emulateButtonPress();
 }
 
+void Button::setAsDefaultButton()
+{
+    requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
+    requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
+    isPermanentDefaultButton = true;
+}
