@@ -19,6 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <X11/keysym.h>
+
 #include "Button.h"
 #include "GuiRoot.h"
 #include "TopWin.h"
@@ -30,15 +32,30 @@ using namespace LucED;
 Button::Button(GuiWidget* parent, string buttonText)
       : GuiWidget(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
-        buttonText(buttonText),
         isButtonPressed(false),
         isMouseButtonPressed(false),
         isMouseOverButton(false),
         isDefaultButton(false),
-        hasFocus(false)
+        hasFocus(false),
+        hasHotKey(false),
+        showHotKey(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
+    int p1 = buttonText.find_first_of(']', 1);
+    if (p1 != string::npos) {
+        hotKeyChar = buttonText[p1 - 1];
+        this->buttonText = buttonText.substr(0, p1) + buttonText.substr(p1 + 1);
+        hotKeyPixX = getGuiTextStyle()->getTextWidth(buttonText.substr(0, p1 - 1));
+        hotKeyPixW = getGuiTextStyle()->getCharWidth(hotKeyChar);
+        hasHotKey = true;
+        // showHotKey = true;
+        string keySymString;
+        keySymString.append(1, tolower(hotKeyChar));
+        requestHotKeyFor(KeyMapping::Id(Mod1Mask, keySymString), this);
+    } else {
+        this->buttonText = buttonText;
+    }
 }
 
 GuiElement::Measures Button::getDesiredMeasures()
@@ -98,6 +115,9 @@ void Button::drawButton()
     if (x < BUTTON_BORDER) { x = BUTTON_BORDER; }
     int y = (position.h - 2*BUTTON_BORDER - getGuiTextHeight()) / 2 + BUTTON_BORDER;
     if (y < BUTTON_BORDER) { y = BUTTON_BORDER; }
+    if (showHotKey) {
+        drawLine(x + textOffset + hotKeyPixX, y + textOffset + getGuiTextHeight(), hotKeyPixW, 0);
+    }
     drawGuiText(x + textOffset, y + textOffset, buttonText);
 }
 
@@ -262,6 +282,31 @@ void Button::treatNewDefaultButtonState()
     drawButton();
 }
 
+void Button::treatLostHotKey(const KeyMapping::Id& id)
+{
+    if (id == KeyMapping::Id(0, XK_Return)
+     || id == KeyMapping::Id(0, XK_KP_Enter))
+    {
+        isDefaultButton = false;
+    } else {
+        showHotKey = false;
+    }
+    drawButton();
+}
+
+
+void Button::treatNewHotKey(const KeyMapping::Id& id)
+{
+    if (id == KeyMapping::Id(0, XK_Return)
+     || id == KeyMapping::Id(0, XK_KP_Enter))
+    {
+        isDefaultButton = true;
+    } else {
+        showHotKey = true;
+    }
+    drawButton();
+}
+
 
 void Button::treatFocusIn()
 {
@@ -291,3 +336,9 @@ void Button::emulateButtonPress()
     XFlush(getDisplay()); waitShort();
     pressedCallback.call(this);    
 }
+
+void Button::treatHotKeyEvent(const KeyMapping::Id& id)
+{
+    emulateButtonPress();
+}
+

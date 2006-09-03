@@ -57,6 +57,9 @@ public:
     
     virtual void treatLostDefaultButtonState();
     virtual void treatNewDefaultButtonState();
+    virtual void treatLostHotKey(const KeyMapping::Id& id);
+    virtual void treatNewHotKey(const KeyMapping::Id& id);
+    virtual void treatHotKeyEvent(const KeyMapping::Id& id);
     
     void emulateButtonPress();
     
@@ -74,6 +77,11 @@ private:
     bool isDefaultButton;
     bool hasFocus;
     TimeVal earliestButtonReleaseTime;
+    bool hasHotKey;
+    bool showHotKey;
+    char hotKeyChar;
+    int hotKeyPixX;
+    int hotKeyPixW;
 };
 
 } // namespace LucED

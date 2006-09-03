@@ -64,8 +64,8 @@ public:
     int getLineDescent() const {
         return lineDescent;
     }
-    XFontStruct *getFont() const {
-        return font;
+    Font getFontId() const {
+        return font->fid;
     }
     int getTextWidth(const char* str, int length) const {
         int rslt = 0;

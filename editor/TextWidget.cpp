@@ -298,7 +298,7 @@ inline void TextWidget::applyTextStyle(int styleIndex)
 //    XSetBackground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
 
     XSetForeground(getDisplay(), textWidget_gcid, style->getColor());
-    XSetFont(      getDisplay(), textWidget_gcid, style->getFont()->fid);
+    XSetFont(      getDisplay(), textWidget_gcid, style->getFontId());
 }
 
 inline int TextWidget::calcVisiblePixX(LineInfo *li, long pos)

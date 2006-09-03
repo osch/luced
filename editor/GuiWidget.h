@@ -32,7 +32,7 @@
 #include "GuiRoot.h"
 #include "TextStyle.h"
 #include "OwningPtr.h"
-
+#include "KeyMapping.h"
 
 namespace LucED {
 
@@ -80,6 +80,11 @@ public:
     virtual ProcessingResult processKeyboardEvent(const XEvent *event) { return NOT_PROCESSED; }
     virtual void treatLostDefaultButtonState() {}
     virtual void treatNewDefaultButtonState() {}
+
+    virtual void treatLostHotKey(const KeyMapping::Id& id) {}
+    virtual void treatNewHotKey(const KeyMapping::Id& id) {}
+    virtual void treatHotKeyEvent(const KeyMapping::Id& id) {}
+    
     
     void setNextFocusWidget(GuiWidget* n) { nextFocusWidget = n; n->prevFocusWidget = this; }
     GuiWidget* getNextFocusWidget() { return nextFocusWidget; }
@@ -112,12 +117,20 @@ protected:
     
     GuiClipping obtainGuiClipping(int x, int y, int w, int h);
 
-    virtual void requestFocusFor(GuiWidget* w) { if (parent != NULL) parent->requestFocusFor(w); }
+    virtual void requestFocusFor(GuiWidget* w) {
+        if (parent != NULL) parent->requestFocusFor(w);
+    }
     virtual void requestToBeActualDefaultButtonWidget(GuiWidget* w) { 
         if (parent != NULL) parent->requestToBeActualDefaultButtonWidget(w);
     }
     virtual void requestNotToBeActualDefaultButtonWidget(GuiWidget* w) { 
         if (parent != NULL) parent->requestNotToBeActualDefaultButtonWidget(w);
+    }
+    virtual void requestHotKeyFor(const KeyMapping::Id& id, GuiWidget* w) {
+        if (parent != NULL) parent->requestHotKeyFor(id, w);
+    }
+    virtual void requestHotKeyRemovalFor(const KeyMapping::Id& id, GuiWidget* w) {
+        if (parent != NULL) parent->requestHotKeyRemovalFor(id, w);
     }
 
 public:
@@ -141,6 +154,7 @@ protected:
     }
     
     TextStyle* getGuiTextStyle();
+    void drawLine(int x, int y, int dx, int dy);
     void drawRaisedSurface(int x, int y, int w, int h);
     void drawRaisedBox(int x, int y, int w, int h, GuiColor color);
     void drawRaisedBox(int x, int y, int w, int h);

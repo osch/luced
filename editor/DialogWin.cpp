@@ -183,12 +183,18 @@ GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const XEvent *event
         if (focusedElement->getFocusType() == TOTAL_FOCUS) {
             return focusedElement->processKeyboardEvent(event);
         } else {
-            Callback0 keyAction = keyMapping.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-            if (keyAction.isValid()) {
-                keyAction.call();
-                return EVENT_PROCESSED;
+            KeyMapping::Id keyMappingId(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+            HotKeyMapping::Value foundHotKeyWidget = hotKeyMapping.get(keyMappingId);
+            if (foundHotKeyWidget.isValid() && foundHotKeyWidget.get().isValid()) {
+                foundHotKeyWidget.get()->treatHotKeyEvent(keyMappingId);
             } else {
-                return focusedElement->processKeyboardEvent(event);
+                Callback0 keyAction = keyMapping.find(keyMappingId);
+                if (keyAction.isValid()) {
+                    keyAction.call();
+                    return EVENT_PROCESSED;
+                } else {
+                    return focusedElement->processKeyboardEvent(event);
+                }
             }
         }
     }
@@ -260,3 +266,22 @@ void DialogWin::requestNotToBeActualDefaultButtonWidget(GuiWidget* widget)
 }
 
 
+void DialogWin::requestHotKeyFor(const KeyMapping::Id& id, GuiWidget* w)
+{
+    HotKeyMapping::Value value = hotKeyMapping.get(id);
+    if (value.isValid() && value.get().isValid()) {
+        value.get()->treatLostHotKey(id);
+    }
+    hotKeyMapping.set(id, w);
+    w->treatNewHotKey(id);
+}
+
+void DialogWin::requestHotKeyRemovalFor(const KeyMapping::Id& id, GuiWidget* w)
+{
+    HotKeyMapping::Value value = hotKeyMapping.get(id);
+    if (value.isValid() && value.get().isValid()) {
+        if (value.get() == w) {
+            value.get()->treatLostHotKey(id);
+        }
+    }
+}

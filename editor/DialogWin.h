@@ -45,6 +45,9 @@ public:
     virtual void requestToBeActualDefaultButtonWidget(GuiWidget* widget);
     virtual void requestNotToBeActualDefaultButtonWidget(GuiWidget* widget);
     virtual void setDefaultButtonWidget(GuiWidget* widget);
+
+    virtual void requestHotKeyFor(const KeyMapping::Id& id, GuiWidget* w);
+    virtual void requestHotKeyRemovalFor(const KeyMapping::Id& id, GuiWidget* w);
     
 protected:
     DialogWin(TopWin* referingWindow);
@@ -64,6 +67,9 @@ private:
     WeakPtr<TopWin> referingWindow;
     
     KeyMapping keyMapping;
+    typedef HashMap< KeyMapping::Id, WeakPtr<GuiWidget> > HotKeyMapping;
+    HotKeyMapping hotKeyMapping;
+    
     WeakPtr<GuiWidget> focusedElement;
     WeakPtr<GuiWidget> actualDefaultButtonWidget;
     WeakPtr<GuiWidget> defaultDefaultButtonWidget;

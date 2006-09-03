@@ -55,7 +55,7 @@ private:
 
         XSetGraphicsExposures(display, gcid, True);
 
-        XSetFont(display, gcid, guiTextStyle.getFont()->fid);
+        XSetFont(display, gcid, guiTextStyle.getFontId());
     }    
     static SingletonInstance<GuiWidgetSingletonData> instance;
     GC gcid;
@@ -212,6 +212,16 @@ static inline void drawLine(Display *display, Window wid, GC gc, int x, int y, i
             x, y, x + dx, y + dy);
 }
 
+void GuiWidget::drawLine(int x, int y, int dx, int dy)
+{
+    Display* display = getDisplay();
+    Window wid = getWid();
+    GC gcid = GuiWidgetSingletonData::getInstance()->getGcid();
+    XSetForeground(display, gcid, getGuiRoot()->getBlackColor());
+    XDrawLine(display, wid,  gcid, 
+            x, y, x + dx, y + dy);
+}
+
 void GuiWidget::drawRaisedSurface(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
@@ -242,9 +252,9 @@ void GuiWidget::drawRaisedBox(int x, int y, int w, int h, GuiColor color)
                 x + dx, y + 1, 0, dy - 1);
 */
         XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor05());
-        drawLine(display, wid, gcid,
+        ::drawLine(display, wid, gcid,
                 x, y, dx - 1, 0);
-        drawLine(display, wid, gcid,
+        ::drawLine(display, wid, gcid,
                 x, y, 0, dy - 1);
 
         XSetForeground(display, gcid, color);
@@ -252,9 +262,9 @@ void GuiWidget::drawRaisedBox(int x, int y, int w, int h, GuiColor color)
                 x + 1, y + 1, dx - 1, dy - 1);
 
         XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
-        drawLine(display, wid, gcid,
+        ::drawLine(display, wid, gcid,
                 x + dx, y, 0, dy);
-        drawLine(display, wid, gcid,
+        ::drawLine(display, wid, gcid,
                 x, y + dy, dx, 0);
 
 
@@ -276,13 +286,13 @@ void GuiWidget::drawPressedBox(int x, int y, int w, int h, GuiColor color)
     int dx = w - 1, dy = h - 1;
         
 /*        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
-        drawLine(display, wid, gcid, 
+        ::drawLine(display, wid, gcid, 
                 x + dx, y + 1, 0, dy - 1);
 */
         XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
-        drawLine(display, wid, gcid,
+        ::drawLine(display, wid, gcid,
                 x, y, dx - 1, 0);
-        drawLine(display, wid, gcid,
+        ::drawLine(display, wid, gcid,
                 x, y, 0, dy - 1);
 
         XSetForeground(display, gcid, color);
@@ -290,9 +300,9 @@ void GuiWidget::drawPressedBox(int x, int y, int w, int h, GuiColor color)
                 x + 1, y + 1, dx - 1, dy - 1);
 
         XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor05());
-        drawLine(display, wid, gcid,
+        ::drawLine(display, wid, gcid,
                 x + dx, y, 0, dy);
-        drawLine(display, wid, gcid,
+        ::drawLine(display, wid, gcid,
                 x, y + dy, dx, 0);
 
 

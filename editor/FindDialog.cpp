@@ -33,8 +33,8 @@ FindDialog::FindDialog(TopWin* referingWindow, int x, int y, unsigned int width,
     : DialogWin(referingWindow),
       slotForButtonPressed(this, &FindDialog::handleButtonPressed)
 {
-    findButton = Button::create(this, "Find");
-    cancelButton = Button::create(this, "Cancel");
+    findButton = Button::create(this, "F]ind");
+    cancelButton = Button::create(this, "C]ancel");
    
     this->editField = SingleLineEditField::create(this, 
                                                   GlobalConfig::getInstance()->getDefaultLanguageMode());
@@ -72,6 +72,7 @@ FindDialog::FindDialog(TopWin* referingWindow, int x, int y, unsigned int width,
     cancelButton->setNextFocusWidget(editField);
     setFocus(editField);
     setDefaultButtonWidget(findButton);
+    setTitle("Find");
 }
 
 

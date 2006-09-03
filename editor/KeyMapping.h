@@ -30,20 +30,20 @@
 
 namespace LucED {
 
+
 class KeyMapping : private NonCopyable
 {
 public:
     
-    Callback0 find(int keyState, KeySym keySym)        { return find(Id(keyState, keySym)); }
-
-    void set(int keyState, KeySym keySym, const Callback0& cb) { set(Id(keyState, keySym), cb); }
-    
-private:
-
-    struct Id
+    class Id
     {
+    public:
         Id(int keyState, KeySym keySym) :
             keyState(keyState), keySym(keySym)
+        {}
+
+        Id(int keyState, string keySym) :
+            keyState(keyState), keySym(XStringToKeysym(keySym.c_str()))
         {}
         
         bool operator<(const Id& rhs) const {
@@ -52,30 +52,27 @@ private:
         bool operator==(const Id& rhs) const {
             return keyState == rhs.keyState && keySym == rhs.keySym;
         }
+        int getKeyState() const { return keyState; }
+        KeySym getKeySym() const { return keySym; }
+
+        class HashFunction
+        {
+        public:
+            size_t operator()(const KeyMapping::Id& id) const {
+                size_t rslt = id.getKeyState();
+                rslt = (rslt << 16) ^ id.getKeyState() ^ (id.getKeySym() << 16) ^ (id.getKeySym());
+                return rslt;
+            }
+        };
+
+    private:
         int keyState;
         KeySym keySym;
     };
 
-    class HashFunction
-    {
-    public:
-        size_t operator()(const Id& id) const {
-            size_t rslt = id.keyState;
-            rslt = (rslt << 16) ^ id.keyState ^ (id.keySym << 16) ^ (id.keySym);
-            return rslt;
-        }
-    };
-    typedef HashMap<Id, Callback0, HashFunction>  MyMap;
+    Callback0 find(int keyState, KeySym keySym)        { return find(Id(keyState, keySym)); }
 
-
-    void set(Id id, const Callback0& cb)
-    {
-        map.set(id, cb);
-    }
-    
-
-    Callback0 find(Id id)
-    {
+    Callback0 find(Id id) {
         Callback0 rslt;
         
         MyMap::Value foundCallback = map.get(id);
@@ -85,7 +82,29 @@ private:
         return rslt;
     }
 
+    void set(int keyState, KeySym keySym, const Callback0& cb) { set(Id(keyState, keySym), cb); }
+    
+
+    void set(Id id, const Callback0& cb)
+    {
+        map.set(id, cb);
+    }
+    
+
+private:
+
+    typedef HashMap<Id, Callback0, Id::HashFunction>  MyMap;
+
+
     MyMap map;
+};
+
+template<> class HashFunction<KeyMapping::Id>
+{
+public:
+    size_t operator()(const KeyMapping::Id& id) const {
+        return KeyMapping::Id::HashFunction()(id);
+    }
 };
 
 } // namespace LucED
