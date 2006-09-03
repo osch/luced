@@ -19,6 +19,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <ctype.h>
 #include <X11/keysym.h>
 
 #include "Button.h"
@@ -51,7 +52,7 @@ Button::Button(GuiWidget* parent, string buttonText)
         hasHotKey = true;
         // showHotKey = true;
         string keySymString;
-        keySymString.append(1, tolower(hotKeyChar));
+        keySymString.append(1, (char) tolower(hotKeyChar));
         requestHotKeyFor(KeyMapping::Id(Mod1Mask, keySymString), this);
     } else {
         this->buttonText = buttonText;
