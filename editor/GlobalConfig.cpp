@@ -28,7 +28,7 @@
 
 using namespace LucED;
 
-static SingletonInstance<GlobalConfig> instance;;
+SingletonInstance<GlobalConfig> GlobalConfig::instance;;
 
 GlobalConfig* GlobalConfig::getInstance()
 {
@@ -52,7 +52,10 @@ GlobalConfig::GlobalConfig()
           guiFontColor("black"),
           initialWindowWidth(80),
           initialWindowHeight(25),
-          x11SelectionChunkLength(20000)
+          x11SelectionChunkLength(20000),
+          buttonInnerSpacing(2),
+          guiSpacing(2),
+          editorPanelOnTop(false)
 {
     setlocale(LC_CTYPE, "");
 }
@@ -234,6 +237,31 @@ void GlobalConfig::readConfig(const string& configPath)
             }
             this->x11SelectionChunkLength = (int) o.toNumber();
         }
+
+        o = globalConfig["buttonInnerSpacing"];
+        if (o.isValid()) {
+            if (!o.isNumber()) {
+                throw ConfigException("invalid buttonInnerSpacing");
+            }
+            this->buttonInnerSpacing = (int) o.toNumber();
+        }
+
+        o = globalConfig["guiSpacing"];
+        if (o.isValid()) {
+            if (!o.isNumber()) {
+                throw ConfigException("invalid guiSpacing");
+            }
+            this->guiSpacing = (int) o.toNumber();
+        }
+
+        o = globalConfig["editorPanelOnTop"];
+        if (o.isValid()) {
+            if (!o.isBoolean()) {
+                throw ConfigException("invalid editorPanelOnTop");
+            }
+            this->editorPanelOnTop = o.toBoolean();
+        }
+
     }
 
 

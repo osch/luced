@@ -81,6 +81,32 @@ template<class K, class V, class H = HashFunction<K> > class HashMap
 {
 public:
     typedef HashMapValue<V> Value;
+ 
+    class Iterator
+    {
+    public:
+        bool isAtEnd() const {
+            return iter == end;
+        }
+        void gotoNext() {
+            if (iter != end) {
+                ++iter;
+            }
+        }
+        K getKey() const {
+            return iter->first;
+        }
+        V getValue() const {
+            return iter->second;
+        }
+    private:
+        friend class HashMap;
+        typedef typename hash_map<K,V,H>::const_iterator Iter;
+        Iterator(Iter begin, Iter end) : iter(begin), end(end)
+        {}
+        Iter iter;
+        Iter end;
+    };
     
     void set(const K& key, const V& value) {
         map[key] = value;
@@ -92,6 +118,10 @@ public:
         } else {
             return Value(foundPair->second);
         }
+    }
+    
+    Iterator getIterator() const {
+        return Iterator(map.begin(), map.end());
     }
     bool hasKey(const K& key) const {
         typename hash_map<K,V,H>::const_iterator foundPair = map.find(key);

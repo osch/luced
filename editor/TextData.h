@@ -106,6 +106,9 @@ public:
         void moveToEndOfLine() {
             textData->moveMarkToEndOfLine(*this);
         }
+        void moveToNextLineBegin() {
+            textData->moveMarkToNextLineBegin(*this);
+        }
         byte getChar() {
             return textData->getChar(*this);
         }
@@ -195,6 +198,7 @@ public:
         return pos;
     }
     long getThisLineBegin(long pos) const {
+        ASSERT(pos <= getLength());
         while (pos > 0) {
             if (buffer[pos - 1] == '\n')
                 return pos;
@@ -217,6 +221,7 @@ public:
     long insertAtMark(MarkHandle m, const ByteArray& buffer);
     long insertAtMark(MarkHandle m, const byte* buffer, long length);
     void removeAtMark(MarkHandle m, long amount);
+    void clear();
     
     void moveMarkToLineAndColumn(MarkHandle m, long line, long column);
     void moveMarkToBeginOfLine(MarkHandle m);
@@ -232,7 +237,7 @@ public:
     bool isEndOfText(MarkHandle m) {
         return marks[m.index].pos == buffer.getLength();
     }
-    void setInsertFilterCallback(Callback2<const byte**, long*>& filterCallback);
+    void setInsertFilterCallback(const Callback2<const byte**, long*>& filterCallback);
     void registerUpdateListener(UpdateCallback& updateCallback);
     void registerFileNameListener(Callback1<const string&>& fileNameCallback);
     void registerLengthListener(Callback1<long>& lengthCallback);
@@ -247,13 +252,13 @@ public:
     long getBeginChangedPos() {return beginChangedPos;}
     long getChangedAmount()   {return changedAmount;}
     long getTextPositionOfMark(MarkHandle mark) const {
-    	return marks[mark.index].pos;
+        return marks[mark.index].pos;
     }
     long getColumnNumberOfMark(MarkHandle mark) const {
-    	return marks[mark.index].column;
+        return marks[mark.index].column;
     }
     long getLineNumberOfMark(MarkHandle mark) const {
-    	return marks[mark.index].line;
+        return marks[mark.index].line;
     }
     
 private:

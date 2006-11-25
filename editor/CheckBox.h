@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef BUTTON_H
-#define BUTTON_H
+#ifndef CHECKBOX_H
+#define CHECKBOX_H
 
 #include <string>
 
@@ -33,18 +33,17 @@ namespace LucED {
 
 using std::string;
 
-class Button : public GuiWidget
+class CheckBox : public GuiWidget
 {
 public:
-    typedef OwningPtr<Button> Ptr;
+    typedef OwningPtr<CheckBox> Ptr;
     
     static Ptr create(GuiWidget* parent, string buttonText) {
-        return Ptr(new Button(parent, buttonText));
+        return Ptr(new CheckBox(parent, buttonText));
     }
     
-    int getStandardHeight();
 
-    void setButtonPressedCallback(const Callback1<Button*>& callback) {
+    void setButtonPressedCallback(const Callback1<CheckBox*>& callback) {
         pressedCallback = callback;
     }
     
@@ -62,23 +61,22 @@ public:
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatHotKeyEvent(const KeyMapping::Id& id);
     
-    void setAsDefaultButton();
     
-    void emulateButtonPress();
+    void setChecked(bool checked);
+    
+    bool isChecked() const;
     
 private:
-    void drawButton();
+    void draw();
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
-    Button(GuiWidget* parent, string buttonText);
+    CheckBox(GuiWidget* parent, string buttonText);
     Position position;
     string buttonText;
-    bool isButtonPressed;
+    bool isBoxChecked;
     bool isMouseButtonPressed;
     bool isMouseOverButton;
-    Callback1<Button*> pressedCallback;
-    bool isDefaultButton;
-    bool isPermanentDefaultButton;
+    Callback1<CheckBox*> pressedCallback;
     bool hasFocus;
     TimeVal earliestButtonReleaseTime;
     bool hasHotKey;
@@ -90,4 +88,4 @@ private:
 
 } // namespace LucED
 
-#endif // BUTTON_H
+#endif // CHECKBOX_H

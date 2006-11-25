@@ -55,7 +55,8 @@ ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
       isV(orientation == Orientation::VERTICAL),
       slotForSetValue(this, &ScrollBar::setValue),
       slotForSetValueRange(this, &ScrollBar::setValueRange),
-      slotForScrollStepRepeating(this, &ScrollBar::handleScrollStepRepeating)
+      slotForScrollStepRepeating(this, &ScrollBar::handleScrollStepRepeating),
+      hilitedPart(NONE)
 {
     totalValue = 0;
     originalTotalValue = 0;
@@ -64,7 +65,7 @@ ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
     movingBar = false;
     movingYOffset = 0;
     isButtonPressedForScrollStep = false;
-    addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
+    addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     calculateValuesFromPosition();
 
     if (!scrollBarInitialized) {
@@ -112,11 +113,21 @@ GuiElement::ProcessingResult ScrollBar::processEvent(const XEvent *event)
                     else if (0 <= y && y < arrowLength) {
                         isButtonPressedForScrollStep = true;
                         drawPressedUpButton();
+                        if (value == 0 && scrollY != 0) {
+                            this->scrollY = calcScrollY();
+                            //printf("setValue -> scrollY = %d\n", this->scrollY);
+                            drawArea();
+                        }
                         scrollStepCallback.call(scrollStep = ScrollStep::LINE_UP);
                     }
                     else if (h - arrowLength <= y && y < h) {
                         isButtonPressedForScrollStep = true;
                         drawPressedDownButton();
+                        if (value == totalValue - heightValue && scrollY != calcHighestScrollY()) {
+                            this->scrollY = calcHighestScrollY();
+                            //printf("setValue -> scrollY = %d\n", this->scrollY);
+                            drawArea();
+                        }
                         scrollStepCallback.call(scrollStep = ScrollStep::LINE_DOWN);
                     }
                     else if (arrowLength <= y && y < this->scrollY + arrowLength) {
@@ -199,6 +210,22 @@ GuiElement::ProcessingResult ScrollBar::processEvent(const XEvent *event)
                         }
                     }
                 }
+                hiliteScrollBarPartAtMousePosition(event->xmotion.x, event->xmotion.y);
+                return EVENT_PROCESSED;
+            }
+            case EnterNotify: {
+                int x = event->xcrossing.x;
+                int y = event->xcrossing.y;
+                hiliteScrollBarPartAtMousePosition(x, y);
+                addToXEventMask(PointerMotionMask);
+                return EVENT_PROCESSED;
+            }
+            
+            case LeaveNotify: {
+                int x = event->xcrossing.x;
+                int y = event->xcrossing.y;
+                hiliteScrollBarPartAtMousePosition(x, y);
+                removeFromXEventMask(PointerMotionMask);
                 return EVENT_PROCESSED;
             }
         }
@@ -206,6 +233,77 @@ GuiElement::ProcessingResult ScrollBar::processEvent(const XEvent *event)
     }
 }
     
+void ScrollBar::hiliteScrollBarPartAtMousePosition(int mouseX, int mouseY)
+{
+    int x, y;
+    int w, h;
+    if (this->isV) {
+        x = mouseX;
+        y = mouseY;
+        w = position.w;
+        h = position.h;
+    } else {
+        x = mouseY;
+        y = mouseX;
+        w = position.h;
+        h = position.w;
+    }
+    HilitedPart newPart = NONE;
+    if (0 <= x && x < w)
+    {
+        if ((y >= this->scrollY + arrowLength) 
+                && (y < this->scrollY + arrowLength + this->scrollHeight)) {
+            newPart = SCROLLER;
+        }
+        else if (0 <= y && y < arrowLength) {
+            newPart = TOP_ARROW;
+        }
+        else if (h - arrowLength <= y && y < h) {
+            newPart = BOTTOM_ARROW;
+        }
+        else if (arrowLength <= y && y < this->scrollY + arrowLength) {
+        }
+        else if (this->scrollY + arrowLength + scrollHeight <= y && y < h - arrowLength) {
+        }
+    }
+    if (newPart != hilitedPart)
+    {
+        HilitedPart oldPart = hilitedPart;
+        
+        hilitedPart = newPart;
+        
+        switch (oldPart) {
+            case SCROLLER: {
+                drawArea();
+                break;
+            }
+            case TOP_ARROW: {
+                drawUpButton();
+                break;
+            }
+            case BOTTOM_ARROW: {
+                drawDownButton();
+                break;
+            }
+        }
+
+        switch (hilitedPart) {
+            case SCROLLER: {
+                drawArea();
+                break;
+            }
+            case TOP_ARROW: {
+                drawUpButton();
+                break;
+            }
+            case BOTTOM_ARROW: {
+                drawDownButton();
+                break;
+            }
+        }
+    }
+}
+
 void ScrollBar::setPosition(Position newPosition)
 {
     if (position != newPosition) {
@@ -225,11 +323,11 @@ GuiElement::Measures ScrollBar::getDesiredMeasures()
     if (this->isV) {
         return Measures(scrollBarWidth, 2*scrollBarWidth + MIN_SCROLLER_HEIGHT, scrollBarWidth, 
                         2*scrollBarWidth + 2*MIN_SCROLLER_HEIGHT , 
-                        scrollBarWidth, -1);
+                        scrollBarWidth, INT_MAX);
     } else {
         return Measures(2*scrollBarWidth + MIN_SCROLLER_HEIGHT, scrollBarWidth, 
                         2*scrollBarWidth + 2*MIN_SCROLLER_HEIGHT, scrollBarWidth, 
-                        -1, scrollBarWidth);
+                        INT_MAX, scrollBarWidth);
     }
 }
 
@@ -238,12 +336,19 @@ void ScrollBar::drawUpButton()
     Display* display = getDisplay();
     GuiRoot* guiRoot = getGuiRoot();
 
+    GuiColor color;
+    if (hilitedPart == TOP_ARROW) {
+        color = GuiRoot::getInstance()->getGuiColor04();
+    } else {
+        color = GuiRoot::getInstance()->getGuiColor03();
+    }
+
     if (this->isV)
     {
         int w = position.w; //scrollAreaWidth;
         int h = position.h; //scrollAreaLength;
 
-        drawRaisedBox(0, 0, arrowLength, arrowLength);
+        drawRaisedBox(0, 0, arrowLength, arrowLength, color);
         drawArrow(    0, 0, arrowLength, arrowLength, Direction::UP);
     }
     else
@@ -251,7 +356,7 @@ void ScrollBar::drawUpButton()
         int w = position.w; // scrollAreaLength;
         int h = position.h; // scrollAreaWidth;
 
-        drawRaisedBox(0, 0, arrowLength, arrowLength);
+        drawRaisedBox(0, 0, arrowLength, arrowLength, color);
         drawArrow(    0, 0, arrowLength, arrowLength, Direction::LEFT);
     }
 }
@@ -261,12 +366,19 @@ void ScrollBar::drawDownButton()
     Display* display = getDisplay();
     GuiRoot* guiRoot = getGuiRoot();
 
+    GuiColor color;
+    if (hilitedPart == BOTTOM_ARROW) {
+        color = GuiRoot::getInstance()->getGuiColor04();
+    } else {
+        color = GuiRoot::getInstance()->getGuiColor03();
+    }
+
     if (this->isV)
     {
         int w = position.w; //scrollAreaWidth;
         int h = position.h; //scrollAreaLength;
         
-        drawRaisedBox(0, h - arrowLength, arrowLength, arrowLength);
+        drawRaisedBox(0, h - arrowLength, arrowLength, arrowLength, color);
         drawArrow(    0, h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
     }
     else
@@ -274,7 +386,7 @@ void ScrollBar::drawDownButton()
         int w = position.w; // scrollAreaLength;
         int h = position.h; // scrollAreaWidth;
 
-        drawRaisedBox(w - arrowLength, 0, arrowLength, arrowLength);
+        drawRaisedBox(w - arrowLength, 0, arrowLength, arrowLength, color);
         drawArrow(    w - arrowLength, 0, arrowLength, arrowLength, Direction::RIGHT);
     }
 }
@@ -284,12 +396,19 @@ void ScrollBar::drawPressedUpButton()
     Display* display = getDisplay();
     GuiRoot* guiRoot = getGuiRoot();
 
+    GuiColor color;
+    if (hilitedPart == TOP_ARROW) {
+        color = GuiRoot::getInstance()->getGuiColor04();
+    } else {
+        color = GuiRoot::getInstance()->getGuiColor03();
+    }
+
     if (this->isV)
     {
         int w = position.w; //scrollAreaWidth;
         int h = position.h; //scrollAreaLength;
 
-        drawPressedBox(0, 0, arrowLength, arrowLength);
+        drawPressedBox(0, 0, arrowLength, arrowLength, color);
         drawArrow(     1 + 0, 1 + 0, arrowLength, arrowLength, Direction::UP);
     }
     else
@@ -297,7 +416,7 @@ void ScrollBar::drawPressedUpButton()
         int w = position.w; // scrollAreaLength;
         int h = position.h; // scrollAreaWidth;
 
-        drawPressedBox(0, 0, arrowLength, arrowLength);
+        drawPressedBox(0, 0, arrowLength, arrowLength, color);
         drawArrow(     1 + 0, 1 + 0, arrowLength, arrowLength, Direction::LEFT);
     }
 }
@@ -307,12 +426,19 @@ void ScrollBar::drawPressedDownButton()
     Display* display = getDisplay();
     GuiRoot* guiRoot = getGuiRoot();
 
+    GuiColor color;
+    if (hilitedPart == BOTTOM_ARROW) {
+        color = GuiRoot::getInstance()->getGuiColor04();
+    } else {
+        color = GuiRoot::getInstance()->getGuiColor03();
+    }
+
     if (this->isV)
     {
         int w = position.w; //scrollAreaWidth;
         int h = position.h; //scrollAreaLength;
         
-        drawPressedBox(0, h - arrowLength, arrowLength, arrowLength);
+        drawPressedBox(0, h - arrowLength, arrowLength, arrowLength, color);
         drawArrow(     1 + 0, 1 + h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
     }
     else
@@ -320,7 +446,7 @@ void ScrollBar::drawPressedDownButton()
         int w = position.w; // scrollAreaLength;
         int h = position.h; // scrollAreaWidth;
 
-        drawPressedBox(w - arrowLength, 0, arrowLength, arrowLength);
+        drawPressedBox(w - arrowLength, 0, arrowLength, arrowLength, color);
         drawArrow(     1 + w - arrowLength, 1 + 0, arrowLength, arrowLength, Direction::RIGHT);
     }
 }
@@ -359,7 +485,13 @@ void ScrollBar::drawArea()
                     0, arrowLength, w - 1, this->scrollY);
         }
 
-        drawRaisedBox(0, scrollY, arrowLength, this->scrollHeight);
+        GuiColor color;
+        if (hilitedPart == SCROLLER) {
+            color = GuiRoot::getInstance()->getGuiColor04();
+        } else {
+            color = GuiRoot::getInstance()->getGuiColor03();
+        }
+        drawRaisedBox(0, scrollY, arrowLength, this->scrollHeight, color);
 
         if (this->scrollY < calcHighestScrollY()) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());
@@ -390,7 +522,13 @@ void ScrollBar::drawArea()
                     arrowLength, 0, this->scrollY, h - 1);
         }
 
-        drawRaisedBox(scrollY, 0, this->scrollHeight, arrowLength);
+        GuiColor color;
+        if (hilitedPart == SCROLLER) {
+            color = GuiRoot::getInstance()->getGuiColor04();
+        } else {
+            color = GuiRoot::getInstance()->getGuiColor03();
+        }
+        drawRaisedBox(scrollY, 0, this->scrollHeight, arrowLength, color);
 
         if (this->scrollY < calcHighestScrollY()) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());

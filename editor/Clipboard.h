@@ -55,6 +55,7 @@ public:
 
 private:
     friend class SingletonInstance<Clipboard>;
+    static SingletonInstance<Clipboard> instance;
     
     Clipboard();
     

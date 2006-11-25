@@ -43,6 +43,9 @@ globalConfig = {
           initialWindowHeight = 35,    -- size in characters
           
           x11SelectionChunkLength = 20000,
+          buttonInnerSpacing = 2,
+          guiSpacing = 2,
+          editorPanelOnTop = false
 }
 
 

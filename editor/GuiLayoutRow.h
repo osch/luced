@@ -1,6 +1,7 @@
 #ifndef GUILAYOUTROW_H
 #define GUILAYOUTROW_H
 
+#include "util.h"
 #include "GuiElement.h"
 #include "ObjectArray.h"
 #include "OwningPtr.h"
@@ -26,6 +27,26 @@ public:
 private:
     GuiLayoutRow() {}
     
+    static void maximize(int *a, int b) {
+        if (*a != INT_MAX) {
+            if (b == INT_MAX) {
+                *a = INT_MAX;
+            } else {
+                util::maximize(a, b);
+            }
+        }
+    }
+
+    static void addimize(int *a, int b) {
+        if (*a != INT_MAX) {
+            if (b == INT_MAX) {
+                *a = INT_MAX;
+            } else {
+                *a += b;
+            }
+        }
+    }
+
     ObjectArray<GuiElement::Ptr> elements;
     ObjectArray<Measures> columnMeasures;
 };

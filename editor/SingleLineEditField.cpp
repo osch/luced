@@ -21,21 +21,33 @@
 
 #include "SingleLineEditField.h"
 #include "GlobalConfig.h"
+#include "util.h"
 
 using namespace LucED;
 
 SingleLineEditField::SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr languageMode)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
-      hasFocus(false)
+      hasFocus(false),
+      adjustment(VerticalAdjustment::TOP),
+      layoutHeight(0),
+      heightOffset(0)
 {
     addToXEventMask(ExposureMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
     editorWidget = SingleLineEditorWidget::create(
                        this, GlobalConfig::getInstance()->getTextStyles(), 
                        HilitedText::create(TextData::create(), languageMode));
+    editorWidget->setDesiredMeasuresInChars(5,  1, 
+                                            20, 1, 
+                                            40,  1);
     editorWidget->show();
 }
 
+void SingleLineEditField::setLayoutHeight(int height, VerticalAdjustment::Type adjust)
+{
+    layoutHeight = height;
+    adjustment = adjust;
+}
 
 GuiElement::ProcessingResult SingleLineEditField::processEvent(const XEvent *event)
 {
@@ -43,8 +55,8 @@ GuiElement::ProcessingResult SingleLineEditField::processEvent(const XEvent *eve
         return EVENT_PROCESSED;
     } else {
         
-        switch (event->type) {
-            
+        switch (event->type)
+        {
             case GraphicsExpose:
                 if (event->xgraphicsexpose.count > 0) {
                     break;
@@ -69,7 +81,6 @@ GuiElement::ProcessingResult SingleLineEditField::processKeyboardEvent(const XEv
 
 void SingleLineEditField::setDesiredWidthInChars(int minWidth, int bestWidth, int maxWidth)
 {
-
     editorWidget->setDesiredMeasuresInChars(minWidth,  1, 
                                             bestWidth, 1, 
                                             maxWidth,  1);
@@ -79,38 +90,63 @@ static const int BORDER = 1;
 
 void SingleLineEditField::draw()
 {
-    int d = 0;
+    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+    int ud = heightOffset;
+    int ld = (adjustment == VerticalAdjustment::CENTER) ? heightOffset : 0;
     if (hasFocus) {
-        drawActiveSunkenFrame(d, d, getPosition().w - 2 * d, getPosition().h - 2 * d);
+        drawActiveSunkenFrame(  guiSpacing, ud + guiSpacing, getPosition().w - guiSpacing, getPosition().h - ud - ld - guiSpacing);
     } else {
-        drawInactiveSunkenFrame(d, d, getPosition().w - 2 * d, getPosition().h - 2 * d);
+        drawInactiveSunkenFrame(guiSpacing, ud + guiSpacing, getPosition().w - guiSpacing, getPosition().h - ud - ld - guiSpacing);
     }
 }
 
 GuiElement::Measures SingleLineEditField::getDesiredMeasures()
 {
+    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+
     Measures rslt = editorWidget->getDesiredMeasures();
 
-    rslt.minWidth += 2 * BORDER;
-    rslt.bestWidth += 2 * BORDER;
-    if (rslt.maxWidth != -1)
-        rslt.maxWidth += 2 * BORDER;
+    rslt.minWidth += 2 * BORDER + guiSpacing;
+    rslt.bestWidth += 2 * BORDER + guiSpacing;
+    if (rslt.maxWidth != INT_MAX)
+        rslt.maxWidth += 2 * BORDER + guiSpacing;
         
-    rslt.minHeight += 2 * BORDER;
-    rslt.bestHeight += 2 * BORDER;
-    if (rslt.maxHeight != -1)
-        rslt.maxHeight += 2 * BORDER;
-        
+    rslt.minHeight += 2 * BORDER + guiSpacing;
+    rslt.bestHeight += 2 * BORDER + guiSpacing;
+    if (rslt.maxHeight != INT_MAX)
+        rslt.maxHeight += 2 * BORDER + guiSpacing;
+    
+    rslt.minHeight  = util::maximum(rslt.minHeight,  layoutHeight);
+    rslt.bestHeight = util::maximum(rslt.bestHeight, layoutHeight);
+    rslt.maxHeight  = util::maximum(rslt.maxHeight,  layoutHeight);
     return rslt;
 }
 
 void SingleLineEditField::setPosition(Position p) 
 {
+    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+
     GuiWidget::setPosition(p);
-    p.x  = BORDER;
-    p.y  = BORDER;
-    p.h -= 2 * BORDER;
-    p.w -= 2 * BORDER;
+
+    Measures m = editorWidget->getDesiredMeasures();
+
+    p.x  = BORDER + guiSpacing;
+    p.y  = BORDER + guiSpacing;
+    p.h -= 2 * BORDER + guiSpacing;
+    p.w -= 2 * BORDER + guiSpacing;
+    
+    heightOffset = 0;
+    if (p.h > m.bestHeight) {
+        int d = p.h - m.bestHeight;
+        if (adjustment == VerticalAdjustment::CENTER) {
+            heightOffset = d/2;
+            p.y += d/2;
+            p.h -= d - d/2;
+        } else if (adjustment == VerticalAdjustment::BOTTOM) {
+            heightOffset = d;
+            p.y += d;
+        }
+    }
     editorWidget->setPosition(p);
 }
 

@@ -31,8 +31,8 @@ using namespace LucED;
 
 
 TextEditorWidget::TextEditorWidget(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
-      : TextWidget(parent, textStyles, hilitedText),
+            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth)
+      : TextWidget(parent, textStyles, hilitedText, borderWidth),
         SelectionOwner(this),
         PasteDataReceiver(this),
         rememberedCursorPixX(0),
@@ -72,6 +72,25 @@ void TextEditorWidget::assureCursorVisible()
         setLeftPix(newLeftPix);
     }
 }
+
+void TextEditorWidget::moveCursorToTextMarkAndAdjustVisibility(TextData::MarkHandle m)
+{
+    moveCursorToTextMark(m);
+    if (getCursorLineNumber() < getTopLineNumber()) {
+        int newTopLineNumber = getCursorLineNumber() - getNumberOfVisibleLines() / 4;
+        if (newTopLineNumber < 0) {
+            newTopLineNumber = 0;
+        }
+        setTopLineNumber(newTopLineNumber);
+    } else if (getCursorLineNumber() >= getTopLineNumber() + getNumberOfVisibleLines()) {
+        int newTopLineNumber = getCursorLineNumber() - getNumberOfVisibleLines() + getNumberOfVisibleLines() / 4;
+        if (newTopLineNumber + getNumberOfVisibleLines() > getTextData()->getNumberOfLines()) {
+            newTopLineNumber = getTextData()->getNumberOfLines() - getNumberOfVisibleLines();
+        }
+        setTopLineNumber(newTopLineNumber);
+    }
+}
+
 
 void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long length)
 {

@@ -19,42 +19,49 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef DIALOGWIN_H
-#define DIALOGWIN_H
+#ifndef GOTOLINEDIALOG_H
+#define GOTOLINEDIALOG_H
 
 #include "TopWin.h"
-#include "KeyMapping.h"
-#include "HeapObjectArray.h"
-#include "WeakPtrQueue.h"
+#include "EventDispatcher.h"
+#include "Button.h"
+#include "GuiLayoutColumn.h"
+#include "DialogWin.h"
+#include "Slot.h"
+#include "SingleLineEditField.h"
+#include "PanelDialogWin.h"
 
 namespace LucED {
 
-
-class DialogWin : public TopWin
+class GotoLineDialog : public PanelDialogWin
 {
 public:
-    typedef WeakPtr<DialogWin> Ptr;
-
-    virtual void treatNewWindowPosition(Position newPosition);
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
-
-    virtual void show();
-
-protected:
-    DialogWin(TopWin* referingWindow);
+    typedef WeakPtr<GotoLineDialog> Ptr;
     
-    void setRootElement(OwningPtr<GuiElement> rootElement);
-    GuiElement* getRootElement() {return rootElement.getRawPtr();}
+    static GotoLineDialog::Ptr create(TopWin* referingWindow, TextEditorWidget* editorWidget) {
+        return transferOwnershipTo(
+                new GotoLineDialog(referingWindow, editorWidget),
+                referingWindow);
+    }
     
-    
+    virtual void treatFocusIn();
+    virtual void requestCloseWindow();
+
 private:
-    OwningPtr<GuiElement> rootElement;
-    bool wasNeverShown;
-    WeakPtr<TopWin> referingWindow;
+    GotoLineDialog(TopWin* referingWindow, TextEditorWidget* editorWidget);
     
-    KeyMapping keyMapping;
+    void handleButtonPressed(Button* button);
+    void filterInsert(const byte** buffer, long* length);
+
+    Button::Ptr gotoButton;
+    Button::Ptr cancelButton;
+    SingleLineEditField::Ptr editField;
+  
+    WeakPtr<TextEditorWidget> editorWidget;
+    Slot1<Button*> slotForButtonPressed;
+    ByteArray filterBuffer;
 };
 
 } // namespace LucED
 
-#endif // DIALOGWIN_H
+#endif // GOTOLINEDIALOG_H

@@ -73,6 +73,7 @@ public:
     
 private:
     friend class SingletonInstance<EventDispatcher>;
+    static SingletonInstance<EventDispatcher> instance;
     
     class TimerRegistration
     {

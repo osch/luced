@@ -45,12 +45,14 @@ protected:
     virtual void notifyAboutEndOfPastingData() = 0;    
 
 private:
+
     GuiWidget* baseWidget;
     bool isReceivingPasteDataFlag;
     bool isMultiPartPastingFlag;
     ByteArray pasteBuffer;
     Atom x11AtomForTargets;
     Atom x11AtomForIncr;
+    Display* const display;
 };
 
 } // namespace LucED

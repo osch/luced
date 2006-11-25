@@ -88,6 +88,8 @@ public:
     GuiWidget* getNextFocusWidget() { return nextFocusWidget; }
     GuiWidget* getPrevFocusWidget() { return prevFocusWidget; }
     
+    void setWinGravity(int winGravity);
+    
 protected:
 
     GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width);
@@ -114,6 +116,7 @@ protected:
     friend class GuiClipping;
     
     GuiClipping obtainGuiClipping(int x, int y, int w, int h);
+    void setBitGravity(int bitGravity);
 
 protected:
     virtual void requestFocusFor(GuiWidget* w) {
@@ -125,6 +128,9 @@ protected:
     virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w) {
         if (parent != NULL) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
     }
+    virtual void requestCloseFor(GuiWidget* w) {
+        if (parent != NULL) parent->requestCloseFor(w);
+    }    
 
 public:
     Window getWid() const {
@@ -148,7 +154,9 @@ protected:
     
     TextStyle* getGuiTextStyle();
     void drawLine(int x, int y, int dx, int dy);
+    void drawLine(int x, int y, int dx, int dy, GuiColor color);
     void drawRaisedSurface(int x, int y, int w, int h);
+    void drawRaisedSurface(int x, int y, int w, int h, GuiColor color);
     void drawRaisedBox(int x, int y, int w, int h, GuiColor color);
     void drawRaisedBox(int x, int y, int w, int h);
     int getRaisedBoxBorderWidth();

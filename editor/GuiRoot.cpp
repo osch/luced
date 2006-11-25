@@ -27,7 +27,7 @@
 
 using namespace LucED;
 
-static SingletonInstance<GuiRoot> instance;
+SingletonInstance<GuiRoot> GuiRoot::instance;
 
 GuiRoot* GuiRoot::getInstance()
 {

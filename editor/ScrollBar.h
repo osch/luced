@@ -62,6 +62,8 @@ public:
     
 private:
 
+    enum HilitedPart { TOP_ARROW, SCROLLER, BOTTOM_ARROW, NONE };
+
     ScrollBar(GuiWidget* parent, Orientation::Type orientation);
 
     void calculateValuesFromPosition();
@@ -77,11 +79,12 @@ private:
     void drawPressedDownButton();
     void drawArea();
     void drawArrows();
+    void hiliteScrollBarPartAtMousePosition(int mouseX, int mouseY);
 
     
     Callback1<long> changedValueCallback;
     Callback1<ScrollStep::Type> scrollStepCallback;
-        
+    
     Position position;
 
     const bool isV;
@@ -104,6 +107,7 @@ private:
     ScrollStep::Type scrollStep;
     Slot0 slotForScrollStepRepeating;
     void handleScrollStepRepeating();
+    HilitedPart hilitedPart;
 };
 
 

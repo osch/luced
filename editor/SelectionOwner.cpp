@@ -29,19 +29,16 @@ using namespace LucED;
 
 SelectionOwner* SelectionOwner::primarySelectionOwner = NULL;
 
-static inline Display* getDisplay() {
-    return GuiRoot::getInstance()->getDisplay();
-}
-
 
 SelectionOwner::SelectionOwner(GuiWidget* baseWidget, Atom x11AtomForSelection)
       : baseWidget(baseWidget),
         x11AtomForSelection(x11AtomForSelection),
         hasRequestedSelectionOwnership(false),
-        sendingMultiPart(false)
+        sendingMultiPart(false),
+        display(GuiRoot::getInstance()->getDisplay())
 {
-    x11AtomForTargets   = XInternAtom(GuiRoot::getInstance()->getDisplay(), "TARGETS", False);
-    x11AtomForIncr      = XInternAtom(GuiRoot::getInstance()->getDisplay(), "INCR", False);
+    x11AtomForTargets   = XInternAtom(display, "TARGETS", False);
+    x11AtomForIncr      = XInternAtom(display, "INCR", False);
     addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 
@@ -50,7 +47,7 @@ SelectionOwner::~SelectionOwner()
 {
     if (sendingMultiPart) {
         sendingMultiPart = false;
-        XSelectInput(getDisplay(), multiPartTargetWid, 0);
+        XSelectInput(display, multiPartTargetWid, 0);
         EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
     }
     if (primarySelectionOwner == this) {
@@ -63,12 +60,12 @@ bool SelectionOwner::requestSelectionOwnership()
 {
     if (sendingMultiPart) {
         sendingMultiPart = false;
-        XSelectInput(getDisplay(), multiPartTargetWid, 0);
+        XSelectInput(display, multiPartTargetWid, 0);
         EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
     }
     if (!hasRequestedSelectionOwnership) {
-        XSetSelectionOwner(getDisplay(), x11AtomForSelection, getGuiWidgetWid(baseWidget), CurrentTime);
-        hasRequestedSelectionOwnership = (XGetSelectionOwner(getDisplay(), x11AtomForSelection) == getGuiWidgetWid(baseWidget));
+        XSetSelectionOwner(display, x11AtomForSelection, getGuiWidgetWid(baseWidget), CurrentTime);
+        hasRequestedSelectionOwnership = (XGetSelectionOwner(display, x11AtomForSelection) == getGuiWidgetWid(baseWidget));
         if (x11AtomForSelection == XA_PRIMARY && hasRequestedSelectionOwnership) {
             if (primarySelectionOwner != NULL && primarySelectionOwner != this) {
                 // No SelectionClear event if selection owner changes within LucED (why!?!?!)
@@ -91,7 +88,7 @@ void SelectionOwner::releaseSelectionOwnership()
         if (hasRequestedSelectionOwnership) {
             notifyAboutLostSelectionOwnership();
         }
-        XSetSelectionOwner(getDisplay(), x11AtomForSelection, None, CurrentTime);
+        XSetSelectionOwner(display, x11AtomForSelection, None, CurrentTime);
         hasRequestedSelectionOwnership = false;
     }
 }
@@ -125,14 +122,14 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
             e.property  = event->xselectionrequest.property;
             if (e.target == x11AtomForTargets) {
                 Atom myTargets[] = {XA_STRING};
-                XChangeProperty(getDisplay(), e.requestor, e.property,
-		        XA_ATOM, sizeof(Atom)*8, 0, (unsigned char*)myTargets,
-		        sizeof(myTargets)/sizeof(Atom));
+                XChangeProperty(display, e.requestor, e.property,
+                                XA_ATOM, sizeof(Atom)*8, 0, (unsigned char*)myTargets,
+                                sizeof(myTargets)/sizeof(Atom));
             } else if (e.target == XA_STRING)
             {
                 if (sendingMultiPart) {
                     sendingMultiPart = false;
-		    XSelectInput(getDisplay(), multiPartTargetWid, 0);
+                    XSelectInput(display, multiPartTargetWid, 0);
                     EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
                 }
                 if (hasRequestedSelectionOwnership && e.selection == x11AtomForSelection)
@@ -142,9 +139,9 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                     {
                         // send all at once
                     
-                        XChangeProperty(getDisplay(), e.requestor, e.property,
-		                XA_STRING, 8, PropModeReplace,
-		                (unsigned char *)getSelectionDataChunk(0, selectionDataLength),
+                        XChangeProperty(display, e.requestor, e.property,
+                        XA_STRING, 8, PropModeReplace,
+                                (unsigned char *)getSelectionDataChunk(0, selectionDataLength),
                                 selectionDataLength);
                         endSelectionDataRequest();
                     } 
@@ -157,9 +154,9 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                         this->sendingMultiPart = true;
                         this->alreadySentPos = 0;
 
-                        XChangeProperty(getDisplay(), multiPartTargetWid, multiPartTargetProp,
-		                x11AtomForIncr, 32, PropModeReplace, 0, 0);
-			XSelectInput(getDisplay(), multiPartTargetWid, PropertyChangeMask);
+                        XChangeProperty(display, multiPartTargetWid, multiPartTargetProp,
+                                        x11AtomForIncr, 32, PropModeReplace, 0, 0);
+                        XSelectInput(display, multiPartTargetWid, PropertyChangeMask);
                         
                         // this method should only be used for Windows from other applications
                         ASSERT(EventDispatcher::getInstance()->isForeignWidget(multiPartTargetWid));
@@ -172,7 +169,7 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
             } else {
                 e.property = 0;
             }
-            XSendEvent(getDisplay(), e.requestor, 0, 0, (XEvent *)&e);
+            XSendEvent(display, e.requestor, 0, 0, (XEvent *)&e);
 
             return GuiElement::EVENT_PROCESSED;
             break;
@@ -185,12 +182,12 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                 {
                     // multi-part finished
                     
-                    XChangeProperty(getDisplay(), multiPartTargetWid, 
+                    XChangeProperty(display, multiPartTargetWid, 
                             multiPartTargetProp,
-		            XA_STRING, 8, PropModeReplace,
-		            0, 0);
+                            XA_STRING, 8, PropModeReplace,
+                            0, 0);
                     sendingMultiPart = false;
-		    XSelectInput(getDisplay(), multiPartTargetWid, 0);
+                    XSelectInput(display, multiPartTargetWid, 0);
                     EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
                     endSelectionDataRequest();
                 }
@@ -201,10 +198,10 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                     long sendLength = util::minimum(GlobalConfig::getInstance()->getX11SelectionChunkLength(),
                                                     selectionDataLength - alreadySentPos);
                     
-                    XChangeProperty(getDisplay(), multiPartTargetWid, 
+                    XChangeProperty(display, multiPartTargetWid, 
                             multiPartTargetProp,
-		            XA_STRING, 8, PropModeReplace,
-		            (unsigned char *)getSelectionDataChunk(alreadySentPos, sendLength),
+                            XA_STRING, 8, PropModeReplace,
+                            (unsigned char *)getSelectionDataChunk(alreadySentPos, sendLength),
                             sendLength);
                     alreadySentPos += sendLength;
                 }

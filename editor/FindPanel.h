@@ -19,34 +19,46 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef FINDPANEL_H
+#define FINDPANEL_H
 
-typedef unsigned char byte;
+#include "DialogPanel.h"
+#include "Button.h"
+#include "CheckBox.h"
+#include "TextEditorWidget.h"
+#include "SingleLineEditField.h"
 
 namespace LucED {
 
-namespace ScrollStep
+class FindPanel : public DialogPanel
 {
-    enum Type {LINE_UP, LINE_DOWN, PAGE_UP, PAGE_DOWN};
-}
+public:
+    typedef OwningPtr<FindPanel> Ptr;
 
-namespace Direction
-{
-    enum Type {UP, RIGHT, DOWN, LEFT};
-}
+    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget) {
+        return Ptr(new FindPanel(parent, editorWidget));
+    }
+    
+    virtual void treatFocusIn();
+    
+private:
+    FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget);
 
-namespace Orientation
-{
-    enum Type {HORIZONTAL, VERTICAL};
-}
+    void handleButtonPressed(Button* button);
 
-namespace VerticalAdjustment
-{
-    enum Type {TOP, CENTER, BOTTOM};
-}
+
+    WeakPtr<TextEditorWidget> editorWidget;
+
+    SingleLineEditField::Ptr editField;
+    Button::Ptr findNextButton;
+    Button::Ptr findPrevButton;
+    Button::Ptr cancelButton;
+    Button::Ptr goBackButton;
+    CheckBox::Ptr ignoreCaseCheckBox;
+    CheckBox::Ptr wholeWordCheckBox;
+    CheckBox::Ptr regularExprCheckBox;
+};
 
 } // namespace LucED
 
-
-#endif // TYPES_H
+#endif // FINDPANEL_H

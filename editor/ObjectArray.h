@@ -132,6 +132,10 @@ public:
         }
         return *this;
     }
+    ObjectArray<T>& insert(long pos, const T& source) {
+        insert(pos, &source, 1);
+        return *this;
+    }
     ObjectArray<T>& insert(long pos, const ObjectArray<T>& src, long srcPos, long srcLength) {
         ASSERT(0 <= srcLength && srcPos + srcLength <= src.getLength());
         insert(pos, src.getPtr(srcPos), srcLength);

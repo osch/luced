@@ -1,3 +1,5 @@
+#include <limits.h>
+
 #include "util.h"
 #include "GuiLayoutColumn.h"
 #include "GuiLayoutSpacer.h"
@@ -6,41 +8,14 @@
 
 using namespace LucED;
 
-void GuiLayoutColumn::addElement(GuiElement::Ptr element)
-{
-    elements.append(element);
-}
-
 void GuiLayoutColumn::addSpacer(int height)
 {
-    elements.append(GuiLayoutSpacer::create(0, 0, 0, height, 0, -1));
+    elements.append(GuiLayoutSpacer::create(0, 0, 0, height, 0, INT_MAX));
 }
 
 void GuiLayoutColumn::addSpacer()
 {
-    elements.append(GuiLayoutSpacer::create(0, 0, 0, 0, 0, -1));
-}
-
-static void maximize(int *a, int b)
-{
-    if (*a != -1) {
-        if (b == -1) {
-            *a = -1;
-        } else {
-            util::maximize(a, b);
-        }
-    }
-}
-
-static void addimize(int *a, int b)
-{
-    if (*a != -1) {
-        if (b == -1) {
-            *a = -1;
-        } else {
-            *a += b;
-        }
-    }
+    elements.append(GuiLayoutSpacer::create(0, 0, 0, 0, 0, INT_MAX));
 }
 
 
@@ -53,7 +28,7 @@ GuiElement::Measures GuiLayoutColumn::getDesiredMeasures()
     int maxWidth = 0;
     int maxHeight = 0;
     int incrWidth = 1;
-    int incrHeight = 1;
+    int incrHeight = INT_MAX;
     
     for (int i = 0; i < elements.getLength(); ++i)
     {
@@ -66,9 +41,14 @@ GuiElement::Measures GuiLayoutColumn::getDesiredMeasures()
         maximize(&minWidth,  m.minWidth);
         maximize(&bestWidth, m.bestWidth);
         maximize(&maxWidth,  m.maxWidth);
-        
+
         maximize(&incrWidth,  m.incrWidth);
-        maximize(&incrHeight, m.incrHeight);
+        if (m.maxHeight > m.bestHeight && m.incrHeight < incrHeight) {
+            incrHeight = m.incrHeight;
+        }
+    }
+    if (incrHeight == INT_MAX) {
+        incrHeight = 1;
     }
     minWidth  = bestWidth  - ((bestWidth  - minWidth) / incrWidth)  * incrWidth;
     minHeight = bestHeight - ((bestHeight - minHeight)/ incrHeight) * incrHeight;

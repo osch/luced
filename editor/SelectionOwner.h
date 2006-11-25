@@ -54,6 +54,7 @@ protected:
 
     
 private:
+
     GuiWidget* baseWidget;
     Atom x11AtomForSelection;
     bool sendingMultiPart;
@@ -65,6 +66,7 @@ private:
     
     Atom x11AtomForTargets;
     Atom x11AtomForIncr;
+    Display* const display;
     
     static SelectionOwner* primarySelectionOwner;
 };

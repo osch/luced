@@ -24,6 +24,7 @@
 
 #include "LabelWidget.h"
 #include "util.h"
+#include "GlobalConfig.h"
 
 using namespace LucED;
 
@@ -31,10 +32,18 @@ LabelWidget::LabelWidget(GuiWidget* parent, const string& leftText, const string
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
       leftText(leftText),
-      rightText(rightText)
+      rightText(rightText),
+      adjustment(VerticalAdjustment::TOP),
+      layoutHeight(0)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
+}
+
+void LabelWidget::setLayoutHeight(int height, VerticalAdjustment::Type adjust)
+{
+    layoutHeight = height;
+    adjustment = adjust;
 }
 
 void LabelWidget::setPosition(Position newPosition)
@@ -47,9 +56,10 @@ void LabelWidget::setPosition(Position newPosition)
 
 GuiElement::Measures LabelWidget::getDesiredMeasures()
 {
-    int height = getGuiTextHeight() + 1;
-    int width  = getGuiTextStyle()->getTextWidth(leftText.c_str(), leftText.length());
-    return Measures(width, height, width, height, -1, height);
+    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+    int height = util::maximum(getGuiTextHeight() + guiSpacing, layoutHeight);
+    int width  = getGuiTextStyle()->getTextWidth(leftText.c_str(), leftText.length()) + guiSpacing;
+    return Measures(width, height, width, height, INT_MAX, height);
 }
 
 GuiElement::ProcessingResult LabelWidget::processEvent(const XEvent *event)
@@ -90,7 +100,14 @@ GuiElement::ProcessingResult LabelWidget::processEvent(const XEvent *event)
 
 void LabelWidget::draw()
 {
+    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
     drawRaisedSurface(0, 0, position.w, position.h);
-    drawGuiText( 0, 0, leftText.c_str(), leftText.length());
+    if (adjustment == VerticalAdjustment::TOP) {
+        drawGuiText(guiSpacing, guiSpacing, leftText.c_str(), leftText.length());
+    } else if (adjustment == VerticalAdjustment::BOTTOM) {
+        drawGuiText(guiSpacing, position.h - getGuiTextHeight(), leftText.c_str(), leftText.length());
+    } else {
+        drawGuiText(guiSpacing, (position.h - getGuiTextHeight()) / 2, leftText.c_str(), leftText.length());
+    }
 }
 

@@ -23,9 +23,11 @@
 
 using namespace LucED;
 
+static const int BORDER_WIDTH = 2;
+
 SingleLineEditorWidget::SingleLineEditorWidget(GuiWidget *parent, 
             TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
-    : TextEditorWidget(parent, textStyles, hilitedText),
+    : TextEditorWidget(parent, textStyles, hilitedText, BORDER_WIDTH),
       slotForInsertFilter(this, &SingleLineEditorWidget::filterInsert),
       standardActions(StandardEditActions::createSingleLineActions(this))
 {

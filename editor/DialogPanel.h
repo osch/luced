@@ -19,10 +19,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef DIALOGWIN_H
-#define DIALOGWIN_H
+#ifndef DIALOGPANEL_H
+#define DIALOGPANEL_H
 
-#include "TopWin.h"
+#include "GuiWidget.h"
 #include "KeyMapping.h"
 #include "HeapObjectArray.h"
 #include "WeakPtrQueue.h"
@@ -30,31 +30,54 @@
 namespace LucED {
 
 
-class DialogWin : public TopWin
+class DialogPanel : public GuiWidget
 {
 public:
-    typedef WeakPtr<DialogWin> Ptr;
+    typedef OwningPtr<DialogPanel> Ptr;
+    
+    static Ptr create(GuiWidget* parent) {
+        return Ptr(new DialogPanel(parent));
+    }
+
+    virtual Measures getDesiredMeasures();
 
     virtual void treatNewWindowPosition(Position newPosition);
+    virtual ProcessingResult processEvent(const XEvent *event);
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);
 
-    virtual void show();
+    virtual void treatFocusIn();
+    virtual void treatFocusOut();
 
-protected:
-    DialogWin(TopWin* referingWindow);
-    
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
+
     void setRootElement(OwningPtr<GuiElement> rootElement);
+    void setFocus(GuiWidget* element);
+    
+protected:
+    DialogPanel(GuiWidget* parent);
+    
     GuiElement* getRootElement() {return rootElement.getRawPtr();}
     
+    void switchFocusToNextWidget();
+    void switchFocusToPrevWidget();
+    virtual void requestFocusFor(GuiWidget* w);
     
 private:
     OwningPtr<GuiElement> rootElement;
     bool wasNeverShown;
-    WeakPtr<TopWin> referingWindow;
     
-    KeyMapping keyMapping;
+    KeyMapping keyMapping1;
+    KeyMapping keyMapping2;
+    typedef WeakPtrQueue<GuiWidget> WidgetQueue;
+    typedef HashMap< KeyMapping::Id, WidgetQueue::Ptr > HotKeyMapping;
+    HotKeyMapping hotKeyMapping;
+    
+    WeakPtr<GuiWidget> focusedElement;
+    
+    bool hasFocus;
 };
 
 } // namespace LucED
 
-#endif // DIALOGWIN_H
+#endif // DIALOGPANEL_H

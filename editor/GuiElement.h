@@ -73,6 +73,7 @@ public:
         EVENT_PROCESSED = 1
     };
     
+    
     virtual Measures getDesiredMeasures() { return Measures(0, 0, 0, 0, 0, 0); };
     virtual void setPosition(Position p) = 0;
 

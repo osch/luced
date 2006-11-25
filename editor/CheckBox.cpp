@@ -22,7 +22,7 @@
 #include <ctype.h>
 #include <X11/keysym.h>
 
-#include "Button.h"
+#include "CheckBox.h"
 #include "GuiRoot.h"
 #include "TopWin.h"
 #include "GlobalConfig.h"
@@ -31,17 +31,15 @@ using namespace LucED;
 
 const int BUTTON_OUTER_BORDER = 1;
 
-Button::Button(GuiWidget* parent, string buttonText)
+CheckBox::CheckBox(GuiWidget* parent, string buttonText)
       : GuiWidget(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
-        isButtonPressed(false),
+        isBoxChecked(false),
         isMouseButtonPressed(false),
         isMouseOverButton(false),
-        isDefaultButton(false),
         hasFocus(false),
         hasHotKey(false),
-        showHotKey(false),
-        isPermanentDefaultButton(false)
+        showHotKey(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -61,31 +59,23 @@ Button::Button(GuiWidget* parent, string buttonText)
     }
 }
 
-
-int Button::getStandardHeight()
-{
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
-    int buttonInnerSpacing = GlobalConfig::getInstance()->getButtonInnerSpacing();
-
-    return getGuiTextHeight() + 2 * getRaisedBoxBorderWidth()  + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
-}
-
-GuiElement::Measures Button::getDesiredMeasures()
+GuiElement::Measures CheckBox::getDesiredMeasures()
 {
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
 
     int buttonInnerSpacing = GlobalConfig::getInstance()->getButtonInnerSpacing();
-    int minWidth = getGuiTextStyle()->getTextWidth(buttonText) + 2 * getRaisedBoxBorderWidth() + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
+    int minWidth = getGuiTextStyle()->getLineHeight() * 2;
     int minHeight = getGuiTextHeight() + 2 * getRaisedBoxBorderWidth()  + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
 
-    int bestWidth = minWidth + 4 * getGuiTextStyle()->getSpaceWidth() + 2*BUTTON_OUTER_BORDER + guiSpacing;
+    int bestWidth = (getGuiTextStyle()->getTextWidth(buttonText) + 2 * getRaisedBoxBorderWidth() + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing) 
+                  + 4 * getGuiTextStyle()->getSpaceWidth() + 2*BUTTON_OUTER_BORDER + guiSpacing;
     int bestHeight = minHeight;
 
     return Measures(minWidth, minHeight, bestWidth, bestHeight, bestWidth, bestHeight);
 }
 
 
-void Button::setPosition(Position newPosition)
+void CheckBox::setPosition(Position newPosition)
 {
     if (position != newPosition) {
         GuiWidget::setPosition(newPosition);
@@ -93,45 +83,56 @@ void Button::setPosition(Position newPosition)
     }
 }
 
-void Button::drawButton()
+void CheckBox::draw()
 {
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
 
     int textOffset = 0;
+    int w = getGuiTextStyle()->getTextWidth(buttonText);
+    int x = (position.w - getGuiTextStyle()->getLineHeight() - 2*BUTTON_OUTER_BORDER - w - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing + getGuiTextStyle()->getLineHeight();
+    if (x < BUTTON_OUTER_BORDER + guiSpacing + getGuiTextStyle()->getLineHeight()) { x = BUTTON_OUTER_BORDER + guiSpacing + getGuiTextStyle()->getLineHeight(); }
+    int y = (position.h - 2*BUTTON_OUTER_BORDER - getGuiTextHeight() - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
+    if (y < BUTTON_OUTER_BORDER + guiSpacing) { y = BUTTON_OUTER_BORDER + guiSpacing; }
+
     GuiColor color;
     if (isMouseOverButton) {
         color = GuiRoot::getInstance()->getGuiColor04();
     } else {
         color = GuiRoot::getInstance()->getGuiColor03();
     }
-    if (isButtonPressed) {
-        drawPressedBox(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
-                position.w - 2*BUTTON_OUTER_BORDER - guiSpacing, position.h - 2*BUTTON_OUTER_BORDER - guiSpacing, color);
-        textOffset = 1;
-    } else {
-        drawRaisedBox(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
-                position.w - 2*BUTTON_OUTER_BORDER - guiSpacing, position.h - 2*BUTTON_OUTER_BORDER - guiSpacing, color);
-    }
-    if (isDefaultButton) {
-        const int d = BUTTON_OUTER_BORDER - 1;
-        drawFrame(d + guiSpacing, d + guiSpacing, position.w - 2 * d - guiSpacing, position.h - 2 * d - guiSpacing);
-    } else {
-        const int d = BUTTON_OUTER_BORDER - 1;
-        undrawFrame(d + guiSpacing, d + guiSpacing, position.w - 2 * d - guiSpacing, position.h - 2 * d - guiSpacing);
-    }
-    if (hasFocus) {
-        const int d = BUTTON_OUTER_BORDER + 1;
-        if (isButtonPressed) {
-            drawDottedFrame(d+1 + guiSpacing, d+1 + guiSpacing, position.w - 2 * d - 1 - guiSpacing, position.h - 2 * d - 1 - guiSpacing);
-        } else {
-            drawDottedFrame(d + guiSpacing, d + guiSpacing, position.w - 2 * d - 1 - guiSpacing, position.h - 2 * d - 1 - guiSpacing);
+    {
+//        drawRaisedBox(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
+//                position.w - 2*BUTTON_OUTER_BORDER - guiSpacing, position.h - 2*BUTTON_OUTER_BORDER - guiSpacing, color);
+        drawRaisedSurface(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
+                position.w - 2*BUTTON_OUTER_BORDER - guiSpacing, position.h - 2*BUTTON_OUTER_BORDER - guiSpacing, GuiRoot::getInstance()->getGuiColor03());
+
+        int bx = BUTTON_OUTER_BORDER + guiSpacing + 3;
+        int by = y + 2;
+        int bw = getGuiTextStyle()->getLineHeight() - 2;
+        drawPressedBox(bx, by, bw, bw, color);
+        if (isBoxChecked) {
+            int cx = bx + 3;
+            int cy = by + 3;
+            int cw = bw - 7;
+            int cw1 = cw / 3;
+            int cw2 = cw - cw1;
+            int ch  = cw;
+            int ch1 = cw1;
+            int ch2 = ch - ch1;
+            
+            drawLine(cx,       cy +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
+            drawLine(cx + cw1, cy + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
+
+            drawLine(cx,       cy + 1 +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
+            drawLine(cx + cw1, cy + 1 + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
         }
     }
-    int w = getGuiTextStyle()->getTextWidth(buttonText);
-    int x = (position.w - 2*BUTTON_OUTER_BORDER - w - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
-    if (x < BUTTON_OUTER_BORDER + guiSpacing) { x = BUTTON_OUTER_BORDER + guiSpacing; }
-    int y = (position.h - 2*BUTTON_OUTER_BORDER - getGuiTextHeight() - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
-    if (y < BUTTON_OUTER_BORDER + guiSpacing) { y = BUTTON_OUTER_BORDER + guiSpacing; }
+    const int d = BUTTON_OUTER_BORDER - 1;
+    undrawFrame(d + guiSpacing, d + guiSpacing, position.w - 2 * d - guiSpacing, position.h - 2 * d - guiSpacing);
+    if (hasFocus) {
+        const int d = BUTTON_OUTER_BORDER;
+        drawDottedFrame(d + guiSpacing, d + guiSpacing + 1, position.w - 2 * d - 1 - guiSpacing, position.h - 2 * d - 1 - guiSpacing);
+    }
     if (showHotKey) {
         //drawLine(x + textOffset + hotKeyPixX, y + textOffset + getGuiTextHeight(), hotKeyPixW, 0);
         int lineY = getGuiTextStyle()->getLineAscent() + 1;
@@ -144,7 +145,7 @@ void Button::drawButton()
 }
 
 
-bool Button::isMouseInsideButtonArea(int mouseX, int mouseY)
+bool CheckBox::isMouseInsideButtonArea(int mouseX, int mouseY)
 {
     int x = mouseX;
     int y = mouseY;
@@ -163,7 +164,7 @@ static void waitShort(int microSecs = shortTime)
     }
 }
 
-GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
+GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
@@ -179,7 +180,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                 if (event->xexpose.count > 0) {
                     break;
                 }
-                drawButton();
+                draw();
                 return EVENT_PROCESSED;
             }
 
@@ -194,11 +195,10 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                     
                     if (isMouseInsideButtonArea(x, y))
                     {
-                        isButtonPressed = true;
+                        isBoxChecked = !isBoxChecked;
                     } else {
-                        isButtonPressed = false;
                     }
-                    drawButton();
+                    draw();
                     return EVENT_PROCESSED;
                 }
                 break;
@@ -206,20 +206,6 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
 
             case ButtonRelease: {
                 isMouseButtonPressed = false;
-                if (isButtonPressed) {
-                    TimeVal currentTime; currentTime.setToCurrentTime();
-                    if (earliestButtonReleaseTime.isLaterThan(currentTime)) {
-                        waitShort(TimeVal::diffMicroSecs(currentTime, earliestButtonReleaseTime));
-                    }
-                    isButtonPressed = false;
-                    drawButton();
-                    XFlush(getDisplay());
-                    int x = event->xbutton.x;
-                    int y = event->xbutton.y;
-                    if (isMouseInsideButtonArea(x, y)) {
-                        pressedCallback.call(this);
-                    }
-                }
                 return EVENT_PROCESSED;
             }
 
@@ -236,21 +222,6 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                 int x = event->xmotion.x;
                 int y = event->xmotion.y;
 
-                if (isMouseButtonPressed)
-                {
-                    if (isMouseInsideButtonArea(x, y))
-                    {
-                        if (!isButtonPressed) {
-                            isButtonPressed = true;
-                            mustDraw = true;
-                        }
-                    } else {
-                        if (isButtonPressed) {
-                            isButtonPressed = false;
-                            mustDraw = true;
-                        }
-                    }
-                }
                 if (isMouseInsideButtonArea(x, y)) {
                     if (!isMouseOverButton) {
                         isMouseOverButton = true;
@@ -263,7 +234,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                     }
                 }
                 if (mustDraw) {
-                    drawButton();
+                    draw();
                 }
                 return EVENT_PROCESSED;
             }
@@ -273,7 +244,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                 int y = event->xcrossing.y;
                 if (isMouseInsideButtonArea(x, y) && !isMouseOverButton) {
                     isMouseOverButton = true;
-                    drawButton();
+                    draw();
                 }            
                 addToXEventMask(PointerMotionMask);
                 return EVENT_PROCESSED;
@@ -282,7 +253,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
             case LeaveNotify: {
                 if (isMouseOverButton) {
                     isMouseOverButton = false;
-                    drawButton();
+                    draw();
                 }
                 removeFromXEventMask(PointerMotionMask);
                 return EVENT_PROCESSED;
@@ -293,101 +264,69 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
 }
 
 
-GuiElement::ProcessingResult Button::processKeyboardEvent(const XEvent *event)
+GuiElement::ProcessingResult CheckBox::processKeyboardEvent(const XEvent *event)
 {
     bool processed = false;
     KeyMapping::Id pressedKey(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
     if (KeyMapping::Id(0, XK_space) == pressedKey) {
-        emulateButtonPress();
+        isBoxChecked = !isBoxChecked;
+        draw();
         processed = true;
     }
     return processed ? EVENT_PROCESSED : NOT_PROCESSED;
 }
 
 
-void Button::treatLostHotKeyRegistration(const KeyMapping::Id& id)
+void CheckBox::treatLostHotKeyRegistration(const KeyMapping::Id& id)
 {
-    if (id == KeyMapping::Id(0, XK_Return)
-     || id == KeyMapping::Id(0, XK_KP_Enter))
-    {
-        if (isDefaultButton) {
-            isDefaultButton = false;
-            drawButton();
-        }
-    } else {
-        if (showHotKey) {
-            showHotKey = false;
-            drawButton();
-        }
+    if (showHotKey) {
+        showHotKey = false;
+        draw();
     }
 }
 
 
-void Button::treatNewHotKeyRegistration(const KeyMapping::Id& id)
+void CheckBox::treatNewHotKeyRegistration(const KeyMapping::Id& id)
 {
-    if (id == KeyMapping::Id(0, XK_Return)
-     || id == KeyMapping::Id(0, XK_KP_Enter))
-    {
-        if (!isDefaultButton) {
-            isDefaultButton = true;
-            drawButton();
-        }
-    } else {
-        if (!showHotKey) {
-            showHotKey = true;
-            drawButton();
-        }
+    if (!showHotKey) {
+        showHotKey = true;
+        draw();
     }
 }
 
 
-void Button::treatFocusIn()
+void CheckBox::treatFocusIn()
 {
-    if (!isDefaultButton) {
-        requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
-        requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
-    }
     if (!hasFocus) {
         hasFocus = true;
-        drawButton();
+        draw();
     }
 }
 
 
-void Button::treatFocusOut()
+void CheckBox::treatFocusOut()
 {
     hasFocus = false;
-    if (!isPermanentDefaultButton) {
-        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
-        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
+    draw();
+}
+
+
+void CheckBox::treatHotKeyEvent(const KeyMapping::Id& id)
+{
+    isBoxChecked = !isBoxChecked;
+    draw();
+}
+
+void CheckBox::setChecked(bool checked)
+{
+    if (checked != isBoxChecked) {
+        isBoxChecked = checked;
+        draw();
     }
-    drawButton();
 }
 
-
-void Button::emulateButtonPress()
+bool CheckBox::isChecked() const
 {
-    bool oldIsButtonPressed = isButtonPressed;
-    isButtonPressed = true;
-    drawButton();
-    XFlush(getDisplay()); waitShort();
-    isButtonPressed = false;
-    drawButton();
-    XFlush(getDisplay()); waitShort();
-    isButtonPressed = oldIsButtonPressed;
-    drawButton();
-    XFlush(getDisplay()); waitShort();
-    pressedCallback.call(this);    
+    return isBoxChecked;
 }
 
-void Button::treatHotKeyEvent(const KeyMapping::Id& id)
-{
-    emulateButtonPress();
-}
-
-void Button::setAsDefaultButton()
-{
-    requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
-    requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
-    isPermanentDefaultButton = true;
-}

@@ -49,7 +49,7 @@ public:
         return create(width, width, width);
     }
     static Ptr create() {
-        return create(0, 0, -1);
+        return create(0, 0, INT_MAX);
     }
 private:
     GuiLayoutSpacerH(const Measures& m) : GuiLayoutSpacer(m)
@@ -71,7 +71,7 @@ public:
         return create(height, height, height);
     }
     static Ptr create() {
-        return create(0, 0, -1);
+        return create(0, 0, INT_MAX);
     }
 private:
     GuiLayoutSpacerV(const Measures& m) : GuiLayoutSpacer(m)
@@ -93,7 +93,7 @@ public:
 
 protected:
     GuiLayoutSpacerFrame(GuiElement::Ptr member, int thickness);
-    
+
     GuiElement::Ptr root;
 };
 

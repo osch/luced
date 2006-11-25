@@ -47,10 +47,11 @@ public:
         if (this->microSecs != 0) {
             processingAmount = (int)(
                     (((double)processingAmount)/((double)this->microSecs)) * ((double)requestedMicroSecs));
-            if (processingAmount == 0)
-                processingAmount = 1;
-            else if (processingAmount > 1000)
-                processingAmount = 1000;
+        }
+        if (processingAmount == 0) {
+            processingAmount = 1;
+        } else if (processingAmount > 1000) {
+            processingAmount = 1000;
         }
         ASSERT(processingAmount > 0);
         TimeVal startTime;

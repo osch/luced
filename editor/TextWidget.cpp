@@ -24,7 +24,6 @@
 #include "TimeVal.h"
 #include "EventDispatcher.h"
 
-#define BORDER_WIDTH 4
 #define CURSOR_WIDTH 2
 
 using namespace LucED;
@@ -32,16 +31,16 @@ using namespace LucED;
 static bool textWidgetInitialized = false;
 static GC textWidget_gcid;
 
-static inline unsigned int calculateWidthOrHeightWithoutBorder(unsigned int totalWidth)
+static inline unsigned int calculateWidthOrHeightWithoutBorder(unsigned int totalWidth, int border)
 {
-    unsigned int rslt = totalWidth - 2 * BORDER_WIDTH;
-    if (rslt <= 0) rslt = 2 * BORDER_WIDTH;
+    unsigned int rslt = totalWidth - 2 * border;
+    if (rslt <= 0) rslt = 2 * border;
     return rslt;
 }
 
-TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
+TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border)
 
-    : GuiWidget(parent, 0, 0, 1, 1, BORDER_WIDTH),
+    : GuiWidget(parent, 0, 0, 1, 1, border),
 
       position(0, 0, 1, 1),
       textData(hilitedText->getTextData()),
@@ -61,8 +60,10 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       minHeightChars(1),
       bestWidthChars(80),
       bestHeightChars(25),
-      maxWidthChars(-1),
-      maxHeightChars(-1)
+      maxWidthChars(INT_MAX),
+      maxHeightChars(INT_MAX),
+      border(border),
+      adjustment(VerticalAdjustment::TOP)
 {
     totalPixWidth = 0;
     leftPix = 0;
@@ -91,12 +92,13 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
 
     addToXEventMask(ExposureMask);
 
-    XSetWindowAttributes at;
-    at.backing_store = Always;
-    at.bit_gravity = NorthWestGravity; //StaticGravity;
-    XChangeWindowAttributes(getDisplay(), getWid(), 
-            //CWBackingStore|
-            CWBitGravity, &at);
+//    XSetWindowAttributes at;
+//    at.backing_store = Always;
+//    at.bit_gravity = StaticGravity; // NorthWestGravity; //StaticGravity;
+//    XChangeWindowAttributes(getDisplay(), getWid(), 
+//            //CWBackingStore|
+//            CWBitGravity, &at);
+    setBitGravity(NorthWestGravity);
             
     textData->flushPendingUpdates();
     textData->registerUpdateListener(slotForTextDataUpdateTreatment);
@@ -798,17 +800,19 @@ LineInfo* TextWidget::getValidLineInfo(long line)
         long pos = getTopLeftTextPosition();
 
         do {
-            LineInfo *li = lineInfos.getPtr(l);
+            li = lineInfos.getPtr(l);
 
             if (!li->valid) {
                 fillLineInfo(pos, li);
             }
+            ASSERT(li->valid);
             l    += 1;
             pos   = li->endOfLinePos;
             pos  += textData->getLengthOfLineEnding(pos);
 
         } while (l < line);
     }
+    ASSERT(li->valid);
     return li;
 }
 
@@ -875,7 +879,8 @@ long TextWidget::getCursorPixX()
     return x;
 }
 
-void TextWidget::calcTotalPixWidth() {
+long TextWidget::calcLongestVisiblePixWidth()
+{
     int y = 0;
     int line = 0;
     long pos = getTopLeftTextPosition();
@@ -901,6 +906,14 @@ void TextWidget::calcTotalPixWidth() {
     }
     rslt += CURSOR_WIDTH;
 
+    return rslt;
+}
+
+void TextWidget::calcTotalPixWidth()
+{
+    long rslt = calcLongestVisiblePixWidth();
+
+    totalPixWidth = 0;
     MAXIMIZE(&totalPixWidth, leftPix + position.w);
     MAXIMIZE(&totalPixWidth, rslt);
 }
@@ -920,7 +933,8 @@ void TextWidget::setTopLineNumber(long n)
     if (n < 0) 
         n = 0;
         
-    if (n != oldTopLineNumber) {
+    if (n != oldTopLineNumber)
+    {
         
         lineInfos.moveFirst(n - oldTopLineNumber);
         textData->moveMarkToLineAndColumn(topMarkId, n, 0);
@@ -1125,72 +1139,153 @@ void TextWidget::setLeftPix(long newLeftPix)
     updateHorizontalScrollBar= true;
 }
 
+void TextWidget::setResizeAdjustment(VerticalAdjustment::Type adjustment)
+{
+    this->adjustment = adjustment;
+}
 
 void TextWidget::setPosition(Position newPosition)
 {
-    if (position != newPosition) {
-        long topLineNumber = getTopLineNumber();
+    if (position != newPosition)
+    {
+        long oldTopLineNumber = getTopLineNumber();
         
-        newPosition.w = calculateWidthOrHeightWithoutBorder(newPosition.w);
-        newPosition.h = calculateWidthOrHeightWithoutBorder(newPosition.h);
+        int oldVisibleLines = getNumberOfVisibleLines();
 
-        GuiWidget::setPosition(newPosition);
+        int cursorLine = getCursorLineNumber();
+        int cursorPixX = getCursorPixX();
+        bool cursorWasVisible = false;
+        int oldCursorLinesToTop;
+        int oldCursorLinesToBottom;
+        int oldCursorPixXToLeft;
+        int oldCursorPixXToRight;
+        
+        if (cursorLine >= oldTopLineNumber && cursorLine < oldTopLineNumber + getNumberOfVisibleLines()) {
+            if (cursorPixX >= getLeftPix() && cursorPixX < getRightPix()) {
+                cursorWasVisible = true;
+                oldCursorLinesToTop = cursorLine - oldTopLineNumber;
+                oldCursorLinesToBottom = oldTopLineNumber + getNumberOfVisibleLines() - cursorLine;
+                oldCursorPixXToLeft = cursorPixX - getLeftPix();
+                oldCursorPixXToRight = getRightPix() - cursorPixX;
+            }
+        }
+        int oldPositionH = position.h;
+        int oldPositionW = position.w;
+        int oldLeftPix   = getLeftPix();
+        
+        newPosition.w = calculateWidthOrHeightWithoutBorder(newPosition.w, border);
+        newPosition.h = calculateWidthOrHeightWithoutBorder(newPosition.h, border);
+
+        int newVisibleLines = newPosition.h / lineHeight; // not rounded
+        long newTopLine;
+        bool forceRedraw = false;
+        
+        if (adjustment == VerticalAdjustment::TOP) {
+            newTopLine = oldTopLineNumber;
+            GuiWidget::setPosition(newPosition);
+        } else if (oldTopLineNumber + oldVisibleLines - newVisibleLines >= 0) {
+            setBitGravity(StaticGravity); // screen content can be preservered
+            GuiWidget::setPosition(newPosition);
+            setBitGravity(NorthWestGravity);
+
+            newTopLine = oldTopLineNumber + oldVisibleLines - newVisibleLines;
+            oldTopLineNumber = newTopLine;
+            textData->moveMarkToLineAndColumn(topMarkId, oldTopLineNumber, 0);
+        } else {
+            newTopLine = 0;
+            forceRedraw = true;
+            setBitGravity(StaticGravity); // prevent flickering
+            GuiWidget::setPosition(newPosition);
+            setBitGravity(NorthWestGravity);
+        }
+
         position = newPosition;
         unclip();
         
-        visibleLines = position.h / lineHeight; // not rounded
+        visibleLines = newVisibleLines; // not rounded
         
-        lineInfos.setLength(ROUNDED_UP_DIV(position.h, lineHeight));
+        lineInfos.setLength(ROUNDED_UP_DIV(newPosition.h, lineHeight));
         lineInfos.setAllInvalid();
 
-        if (topLineNumber != 0 && 
-                topLineNumber + visibleLines > textData->getNumberOfLines()) {
+        int  newLeftPix = oldLeftPix;
+
+        if (oldTopLineNumber != 0 && 
+                oldTopLineNumber + visibleLines > textData->getNumberOfLines())
+        {
             long newTopLine = textData->getNumberOfLines() - visibleLines;
             if (newTopLine < 0)
                 newTopLine = 0;
-            updateVerticalScrollBar = true;
-            setTopLineNumber(newTopLine);
-        } else {
-            updateVerticalScrollBar = true;
+        }
+        
+        if (cursorWasVisible)
+        {
+            if (cursorLine < newTopLine) {
+                newTopLine = cursorLine;
+            }
+            if (cursorLine >= newTopLine + visibleLines) {
+                newTopLine = cursorLine - visibleLines + 1;
+            }
+            if (cursorPixX <= oldLeftPix) {
+                newLeftPix = cursorPixX - textStyles->get(0)->getSpaceWidth();
+                if (newLeftPix < 0) {
+                    newLeftPix = 0;
+                }
+            }
+            if (cursorPixX >= oldLeftPix + newPosition.w - textStyles->get(0)->getSpaceWidth()) {
+                newLeftPix = cursorPixX - newPosition.w + textStyles->get(0)->getSpaceWidth();
+                if (newLeftPix < 0) {
+                    newLeftPix = 0;
+                }
+            }
+        }
+        
+        totalPixWidth = 0;
+        if (newTopLine != oldTopLineNumber || forceRedraw) {
+            if (newLeftPix != oldLeftPix || forceRedraw) {
+                leftPix = newLeftPix;
+                textData->moveMarkToLineAndColumn(topMarkId, newTopLine, 0);
+                redraw();
+            } else {
+                setTopLineNumber(newTopLine);
+            }
+        }
+        else if (newLeftPix != oldLeftPix) {
+            internSetLeftPix(newLeftPix);
         }
         totalPixWidth = 0;
         calcTotalPixWidth();
-        updateHorizontalScrollBar= true;
+        updateVerticalScrollBar = true;
+        updateHorizontalScrollBar = true;
     }
 }
 
 GuiElement::Measures TextWidget::getDesiredMeasures()
 {
     
-    return Measures(  minWidthChars * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH, 
-                     minHeightChars * lineHeight + 2*BORDER_WIDTH, 
+    Measures rslt(  minWidthChars * textStyles->get(0)->getSpaceWidth() + 2*border, 
+                     minHeightChars * lineHeight + 2*border, 
                     
-                     bestWidthChars * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH, 
-                    bestHeightChars * lineHeight + 2*BORDER_WIDTH,
+                     bestWidthChars * textStyles->get(0)->getSpaceWidth() + 2*border, 
+                    bestHeightChars * lineHeight + 2*border,
 
-                     maxWidthChars == -1 ? -1 :  maxWidthChars * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH,
-                    maxHeightChars == -1 ? -1 : maxHeightChars * lineHeight + 2*BORDER_WIDTH,
+                     maxWidthChars == INT_MAX ? INT_MAX :  maxWidthChars * textStyles->get(0)->getSpaceWidth() + 2*border,
+                    maxHeightChars == INT_MAX ? INT_MAX : maxHeightChars * lineHeight + 2*border,
 
                     textStyles->get(0)->getSpaceWidth(), lineHeight);
 //                    1, 1);
     
-//    return Measures( 2 * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH, lineHeight + 2*BORDER_WIDTH, 
-//                    35 * textStyles->get(0)->getSpaceWidth() + 2*BORDER_WIDTH, lineHeight + 2*BORDER_WIDTH,
-//                    -1, -1,
+//    return Measures( 2 * textStyles->get(0)->getSpaceWidth() + 2*border, lineHeight + 2*border, 
+//                    35 * textStyles->get(0)->getSpaceWidth() + 2*border, lineHeight + 2*border,
+//                    INT_MAX, INT_MAX,
 //                    textStyles->get(0)->getSpaceWidth(), lineHeight);
+    return rslt;
 }
 
 
 
 void TextWidget::unclip()
 {
-    XRectangle r;
-    r.x = 0;
-    r.y = 0;
-    r.width  = position.w;
-    r.height = position.h;
-    XSetClipRectangles(getDisplay(), textWidget_gcid, 
-            0, 0, &r, 1, Unsorted);    
+    XSetClipMask(getDisplay(), textWidget_gcid, None);
 }
 
 
@@ -1465,16 +1560,20 @@ static inline void adjustLineInfoPosition(long *pos, long beginChangedPos, long 
 void TextWidget::treatTextDataUpdate(TextData::UpdateInfo u)
 {
     bool redraw = false;
-    long topPos = getTopLeftTextPosition();
     long newEndChangedPos = u.oldEndChangedPos + u.changedAmount;
 
+    long oldTopPos = textData->getTextPositionOfMark(topMarkId);
     if (!textData->isBeginOfLine(topMarkId.getPos())) {
         textData->moveMarkToBeginOfLine(topMarkId);
     }
+    long newTopPos = textData->getTextPositionOfMark(topMarkId);
 
-    if ((topPos <= newEndChangedPos+1 || topPos <= u.oldEndChangedPos+1) && endPos >= u.beginChangedPos) {
+    if ((newTopPos <= newEndChangedPos+1 || newTopPos <= u.oldEndChangedPos+1) && endPos >= u.beginChangedPos) {
                                                        // not > because text could end before display
         redraw = true;
+        if (newTopPos >= textData->getLength()) {
+            leftPix = 0;
+        }
     }
 
     if (redraw) {

@@ -116,6 +116,10 @@ public:
         gapSize += amount * sizeof(T);
         return *this;
     }
+    void clear() {
+        gapPos = 0;
+        gapSize = mem.getCapacity();
+    }
 
 private:
     long gapPos;

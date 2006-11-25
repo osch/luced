@@ -50,7 +50,7 @@ void StatusLine::setPosition(Position newPosition)
 GuiElement::Measures StatusLine::getDesiredMeasures()
 {
     int statusHeight = getGuiTextHeight() + 4;
-    return Measures(0, statusHeight, 0, statusHeight, -1, statusHeight);
+    return Measures(0, statusHeight, 0, statusHeight, INT_MAX, statusHeight);
 }
 
 GuiElement::ProcessingResult StatusLine::processEvent(const XEvent *event)

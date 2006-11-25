@@ -33,9 +33,11 @@
 #include "OwningPtr.h"
 #include "TopWinList.h"
 #include "KeyMapping.h"
-#include "FindDialog.h"
+#include "GotoLineDialog.h"
+#include "FindPanel.h"
 
 namespace LucED {
+
 
 class EditorTopWin : public TopWin
 {
@@ -58,20 +60,28 @@ public:
     virtual void treatFocusOut();
     virtual void show();
     
+    virtual void requestCloseFor(GuiWidget* w);
     virtual void requestCloseChildWindow(TopWin *topWin);
-    void invokeFindDialog();
-    
+    void invokeGotoLineDialog();
+    void invokeFindPanel();
+
 private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
-
+    void handleEscapeKey();
+    
     MultiLineEditorWidget::Ptr textEditor;
     ScrollBar::Ptr scrollBarH;
     ScrollBar::Ptr scrollBarV;    
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
     KeyMapping keyMapping;
-    WeakPtr<FindDialog> findDialog;
+    WeakPtr<GotoLineDialog> gotoLineDialog;
     bool wasNeverShown;
+
+    FindPanel::Ptr findPanel;
+    int upperPanelIndex;
+    int lowerPanelIndex;
+    bool isFindPanelInvoked;
 };
 
 } // namespace LucED

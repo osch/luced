@@ -500,6 +500,12 @@ void StandardEditActions::newLine()
 {
     if (!e->areCursorChangesDisabled())
     {
+        if (e->hasSelectionOwnership()) {
+            long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
+            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+            e->moveCursorToTextPosition(selBegin);
+            e->removeAtCursor(selLength);
+        }
         TextData::TextMark mark = e->createNewMarkFromCursor();
         ByteArray whiteSpace;
         whiteSpace.append('\n');

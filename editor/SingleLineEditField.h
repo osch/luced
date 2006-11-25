@@ -40,7 +40,9 @@ public:
                 languageMode));
     }
 
+    void setLayoutHeight(int height, VerticalAdjustment::Type adjust);
     void setDesiredWidthInChars(int minWidth, int bestWidth, int maxWidth);
+
     virtual Measures getDesiredMeasures();
     virtual void setPosition(Position p);
 
@@ -48,6 +50,10 @@ public:
     virtual FocusType getFocusType() { return NORMAL_FOCUS; }
     virtual void treatFocusIn();
     virtual void treatFocusOut();
+
+    TextData* getTextData() {
+        return editorWidget->getTextData();
+    }
 
     virtual ProcessingResult processEvent(const XEvent *event);
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);
@@ -60,6 +66,9 @@ private:
     SingleLineEditorWidget::Ptr editorWidget;
     void draw();
     bool hasFocus;
+    VerticalAdjustment::Type adjustment;
+    int layoutHeight;
+    int heightOffset;
 };
 
 

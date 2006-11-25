@@ -1,4 +1,28 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2006 Oliver Schmidt, osch@luced.de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef GUILAYOUTER_H
+#define GUILAYOUTER_H
+
+#include <limits.h>
 
 #include "debug.h"
 #include "util.h"
@@ -53,7 +77,7 @@ public:
             Adapter a(measures[i]);
             minValue  += a.getMinValue();
             bestValue += a.getBestValue();
-            if (a.getMaxValue() == -1) {
+            if (a.getMaxValue() == INT_MAX) {
                 maxValue += a.getBestValue();
                 totalFlexValue += a.getBestValue();
             } else {
@@ -73,7 +97,7 @@ public:
 
         if (targetValue < bestValue) {
             for (int i = 0; i < measures.getLength(); ++i) {
-            	Adapter a(measures[i]);
+                Adapter a(measures[i]);
                 a.setBestValue(a.getMinValue());
             }
             bestValue = minValue;
@@ -89,10 +113,12 @@ public:
         int numberFlexWithContent = 0;
         for (int i = 0; i < measures.getLength(); ++i) {
             Adapter a(measures[i]);
-            if (a.getMaxValue() != -1) {
-                int di = ((ROUNDED_DIV(d * a.getMaxValue(), (maxValue - totalFlexValue))) / a.getIncrValue()) * a.getIncrValue();
-                a.setBestValue(a.getBestValue() + di);
-                used += di;
+            if (a.getMaxValue() != INT_MAX) {
+                if (d > 0 && maxValue != totalFlexValue) {
+                    int di = ((ROUNDED_DIV(d * a.getMaxValue(), (maxValue - totalFlexValue))) / a.getIncrValue()) * a.getIncrValue();
+                    a.setBestValue(a.getBestValue() + di);
+                    used += di;
+                }
                 if (a.getBestValue() > a.getMaxValue()) {
                     used -= (a.getBestValue() - a.getMaxValue());
                     a.setBestValue(a.getMaxValue());
@@ -113,7 +139,7 @@ public:
                 int di = (actualValue - used) / numberFlexWithContent;
                 for (int i = 0; used < actualValue && i < measures.getLength(); ++i) {
                     Adapter a(measures[i]);
-                    if (a.getMaxValue() == -1 && a.getMinValue() > 0) {
+                    if (a.getMaxValue() == INT_MAX && a.getMinValue() > 0) {
                         int mdi = (di / a.getIncrValue()) * a.getIncrValue();
                         a.setBestValue(a.getBestValue() + mdi);
                         used += mdi;
@@ -124,7 +150,7 @@ public:
             {
                 for (int i = measures.getLength() - 1; used < actualValue && i >= 0; --i) {
                     Adapter a(measures[i]);
-                    if (a.getMaxValue() == -1 && a.getIncrValue() > 1 && a.getMinValue() > 0) {
+                    if (a.getMaxValue() == INT_MAX && a.getIncrValue() > 1 && a.getMinValue() > 0) {
                         if (a.getIncrValue() >= actualValue - used) {
                             int d = ((actualValue - used) / a.getIncrValue()) * a.getIncrValue();
                             a.setBestValue(a.getBestValue() + d);
@@ -137,7 +163,7 @@ public:
             {
                 for (int i = measures.getLength() - 1; used < actualValue && i >= 0; --i) {
                     Adapter a(measures[i]);
-                    if (a.getMaxValue() == -1 && a.getIncrValue() == 1 && a.getMinValue() > 0) {
+                    if (a.getMaxValue() == INT_MAX && a.getIncrValue() == 1 && a.getMinValue() > 0) {
                         int d = actualValue - used;
                         a.setBestValue(a.getBestValue() + d);
                         used += d;
@@ -152,7 +178,7 @@ public:
                 int di = (actualValue - used) / numberFlexWithoutContent;
                 for (int i = 0; used < actualValue && i < measures.getLength(); ++i) {
                     Adapter a(measures[i]);
-                    if (a.getMaxValue() == -1 && a.getMinValue() == 0) {
+                    if (a.getMaxValue() == INT_MAX && a.getMinValue() == 0) {
                         int mdi = (di / a.getIncrValue()) * a.getIncrValue();
                         a.setBestValue(a.getBestValue() + mdi);
                         used += mdi;
@@ -163,7 +189,7 @@ public:
             {
                 for (int i = measures.getLength() - 1; used < actualValue && i >= 0; --i) {
                     Adapter a(measures[i]);
-                    if (a.getMaxValue() == -1 && a.getIncrValue() > 1 && a.getMinValue() == 0) {
+                    if (a.getMaxValue() == INT_MAX && a.getIncrValue() > 1 && a.getMinValue() == 0) {
                         if (a.getIncrValue() >= actualValue - used) {
                             int d = ((actualValue - used) / a.getIncrValue()) * a.getIncrValue();
                             a.setBestValue(a.getBestValue() + d);
@@ -176,7 +202,7 @@ public:
             {
                 for (int i = measures.getLength() - 1; used < actualValue && i >= 0; --i) {
                     Adapter a(measures[i]);
-                    if (a.getMaxValue() == -1 && a.getIncrValue() == 1 && a.getMinValue() == 0) {
+                    if (a.getMaxValue() == INT_MAX && a.getIncrValue() == 1 && a.getMinValue() == 0) {
                         int d = actualValue - used;
                         a.setBestValue(a.getBestValue() + d);
                         used += d;
@@ -188,7 +214,7 @@ public:
         {
             for (int i = measures.getLength() - 1; used < actualValue && i >= 0; --i) {
                 Adapter a(measures[i]);
-                if (a.getMaxValue() == -1) {
+                if (a.getMaxValue() == INT_MAX) {
                     int d = actualValue - used;
                     a.setBestValue(a.getBestValue() + d);
                     used += d;
@@ -196,6 +222,92 @@ public:
             }
         }
     }
+
+
+
+
+//    static void adjust(ObjectArray<GuiElement::Measures> &measures, const int actualValue)
+//    {
+//    printf("GuiLayoutColumn::setPosition %d\n", actualValue);
+//
+//        int bestHeight = 0;
+//        int minHeight = 0;
+//        int maxHeight = 0;
+//        int numberFlex = 0;
+//
+//        for (int i = 0; i < measures.getLength(); ++i)
+//        {
+//            Adapter a(measures[i]);
+//
+//            addimize(&minHeight,  a.getMinValue());
+//            addimize(&bestHeight, a.getBestValue());
+//            addimize(&maxHeight,  a.getMaxValue());
+//
+//    printf("GuiLayoutColumn::setPosition: bestHeight(%d)=%d\n", i, a.getBestValue());
+//
+//            if (a.getMaxValue() == INT_MAX) {
+//                ++numberFlex;
+//            }
+//        }
+//    printf("GuiLayoutColumn::setPosition: numberFlexA %d, bestHeight %d\n", numberFlex, bestHeight);
+//        if (bestHeight != INT_MAX && bestHeight <= actualValue) {
+//            minHeight = bestHeight;
+//        } else {
+//            numberFlex = 0;
+//        }
+//        int addNonFlexHeight = 0;
+//        int flexHeight = 0;
+//        if (minHeight < actualValue) {
+//            if (numberFlex > 0) {
+//                flexHeight = ROUNDED_DIV(actualValue - minHeight, numberFlex);
+//            } else {
+//                addNonFlexHeight = actualValue - minHeight;
+//            }
+//        }
+//    printf("GuiLayoutColumn::setPosition: numberFlexB %d, flexHeight %d\n", numberFlex, flexHeight);
+//
+//        for (int i = 0; i < measures.getLength(); ++i)
+//        {
+//            Adapter a(measures[i]);
+//
+//            int h = 0;
+//            if (a.getMaxValue() == INT_MAX) {
+//                if (a.getBestValue() != INT_MAX) {
+//                    h = a.getBestValue() + flexHeight;
+//                } else {
+//                    h = flexHeight;
+//                }
+//            } else {
+//                if (bestHeight <= actualValue) {
+//                    h = a.getBestValue();
+//                } else {
+//                    if (bestHeight > minHeight) {
+//                        h = a.getMinValue() + ROUNDED_DIV(addNonFlexHeight * (a.getBestValue() - a.getMinValue()), 
+//                                                          (bestHeight - minHeight));
+//                    } else {
+//                        h = a.getMinValue();
+//                    }
+//                }
+//                if (h > a.getBestValue()) {
+//                    h = a.getBestValue();
+//                }
+//            }
+//    printf("GuiLayoutColumn::setPosition for Row %d ---> %d\n", i, h);
+//            a.setBestValue(h);
+//        }
+//    }
+//
+//private:
+//    static void addimize(int *a, int b) {
+//        if (*a != INT_MAX) {
+//            if (b == INT_MAX) {
+//                *a = INT_MAX;
+//            } else {
+//                *a += b;
+//            }
+//        }
+//    }
+
 };
 
 } // namespace LucED

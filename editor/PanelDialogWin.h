@@ -19,34 +19,41 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef PANELDIALOGWIN_H
+#define PANELDIALOGWIN_H
 
-typedef unsigned char byte;
+#include "TopWin.h"
+#include "EventDispatcher.h"
+#include "Button.h"
+#include "GuiLayoutColumn.h"
+#include "DialogWin.h"
+#include "Slot.h"
+#include "SingleLineEditField.h"
+#include "DialogPanel.h"
 
 namespace LucED {
 
-namespace ScrollStep
+class PanelDialogWin : public DialogWin
 {
-    enum Type {LINE_UP, LINE_DOWN, PAGE_UP, PAGE_DOWN};
-}
+public:
+    typedef WeakPtr<PanelDialogWin> Ptr;
+    
+    virtual void treatFocusIn();
+    virtual void treatFocusOut();
+    
+    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
+    void setRootElement(OwningPtr<GuiElement> rootElement);
+    
+protected:
+    PanelDialogWin(TopWin* referingWindow);
+    void setFocus(GuiWidget* element);
 
-namespace Direction
-{
-    enum Type {UP, RIGHT, DOWN, LEFT};
-}
-
-namespace Orientation
-{
-    enum Type {HORIZONTAL, VERTICAL};
-}
-
-namespace VerticalAdjustment
-{
-    enum Type {TOP, CENTER, BOTTOM};
-}
+private:
+    DialogPanel::Ptr dialogPanel;
+};
 
 } // namespace LucED
 
-
-#endif // TYPES_H
+#endif // PANELDIALOGWIN_H

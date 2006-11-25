@@ -222,6 +222,16 @@ void GuiWidget::drawLine(int x, int y, int dx, int dy)
             x, y, x + dx, y + dy);
 }
 
+void GuiWidget::drawLine(int x, int y, int dx, int dy, GuiColor color)
+{
+    Display* display = getDisplay();
+    Window wid = getWid();
+    GC gcid = GuiWidgetSingletonData::getInstance()->getGcid();
+    XSetForeground(display, gcid, color);
+    XDrawLine(display, wid,  gcid, 
+            x, y, x + dx, y + dy);
+}
+
 void GuiWidget::drawRaisedSurface(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
@@ -232,6 +242,18 @@ void GuiWidget::drawRaisedSurface(int x, int y, int w, int h)
     XFillRectangle(display, wid, gcid,
             x, y, w, h);
 }
+
+void GuiWidget::drawRaisedSurface(int x, int y, int w, int h, GuiColor color)
+{
+    Display* display = getDisplay();
+    Window wid = getWid();
+    GC gcid = GuiWidgetSingletonData::getInstance()->getGcid();
+
+    XSetForeground(display, gcid, color);
+    XFillRectangle(display, wid, gcid,
+            x, y, w, h);
+}
+
 
 int GuiWidget::getRaisedBoxBorderWidth()
 {
@@ -499,4 +521,23 @@ GuiWidget::GuiClipping::~GuiClipping()
 {
     XSetClipMask(guiWidget->getDisplay(), GuiWidgetSingletonData::getInstance()->getGcid(), None);
 }
+
+
+void GuiWidget::setWinGravity(int winGravity)
+{
+    XSetWindowAttributes at;
+    at.win_gravity = winGravity;
+    XChangeWindowAttributes(getDisplay(), getWid(), 
+            CWWinGravity, &at);
+}
+
+
+void GuiWidget::setBitGravity(int bitGravity)
+{
+    XSetWindowAttributes at;
+    at.bit_gravity = bitGravity;
+    XChangeWindowAttributes(getDisplay(), getWid(), 
+            CWBitGravity, &at);
+}
+
 

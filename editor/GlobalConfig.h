@@ -96,6 +96,15 @@ public:
     long getX11SelectionChunkLength() {
         return x11SelectionChunkLength;
     }
+    int getButtonInnerSpacing() {
+        return buttonInnerSpacing;
+    }
+    int getGuiSpacing() {
+        return guiSpacing;
+    }
+    bool isEditorPanelOnTop() const {
+        return editorPanelOnTop;
+    }
 
     TextStyles::Ptr getTextStyles() {
         return textStyles;
@@ -118,6 +127,7 @@ public:
 
 private:
     friend class SingletonInstance<GlobalConfig>;
+    static SingletonInstance<GlobalConfig> instance;
     
     GlobalConfig();
     
@@ -150,6 +160,9 @@ private:
     LanguageModes::Ptr languageModes;
     
     long x11SelectionChunkLength;
+    int buttonInnerSpacing;
+    int guiSpacing;
+    bool editorPanelOnTop;
 };
 
 } // namespace LucED

@@ -73,6 +73,7 @@ public:
 
 private:
     friend class SingletonInstance<GuiRoot>;
+    static SingletonInstance<GuiRoot> instance;
     
     GuiRoot();
     

@@ -15,9 +15,9 @@ public:
     }
     virtual Measures getDesiredMeasures() {
         return Measures(
-                minWidth == -1 ?  0 : minWidth, 0, 
-                maxWidth, -1, 
-                maxWidth == -1 ? -1 : maxWidth, 0);
+                minWidth == INT_MAX ?  0 : minWidth, 0, 
+                maxWidth, INT_MAX, 
+                maxWidth == INT_MAX ? INT_MAX : maxWidth, 0);
     }
     virtual void setPosition(Position p) {}
 private:
@@ -39,7 +39,7 @@ void GuiLayoutRow::addSpacer(int width)
 
 void GuiLayoutRow::addSpacer()
 {
-    elements.append(GuiLayoutSpacer::create(0, 0, 0, 0, -1, 0));
+    elements.append(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
 }
 
 void GuiLayoutRow::addSpacer(int minWidth, int maxWidth)
@@ -47,28 +47,6 @@ void GuiLayoutRow::addSpacer(int minWidth, int maxWidth)
     elements.append(SpacerH::create(minWidth, maxWidth));
 }
 
-
-static void maximize(int *a, int b)
-{
-    if (*a != -1) {
-        if (b == -1) {
-            *a = -1;
-        } else {
-            util::maximize(a, b);
-        }
-    }
-}
-
-static void addimize(int *a, int b)
-{
-    if (*a != -1) {
-        if (b == -1) {
-            *a = -1;
-        } else {
-            *a += b;
-        }
-    }
-}
 
 GuiElement::Measures GuiLayoutRow::getDesiredMeasures()
 {

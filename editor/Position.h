@@ -9,7 +9,7 @@ public:
     Position()
         : x(0), y(0), w(0), h(0) {}
 
-    Position(int x, int y, unsigned int width, unsigned int height)
+    Position(int x, int y, int width, int height)
         : x(x), y(y), w(width), h(height) {}
 
     bool operator==(const Position& p) const {
@@ -21,7 +21,7 @@ public:
     }
 
     int x, y;
-    unsigned int w, h;
+    int w, h;
 };
     
 } // namespace LucED

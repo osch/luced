@@ -46,6 +46,7 @@ public:
     
 private:
     friend class SingletonInstance<KeyPressRepeater>;
+    static SingletonInstance<KeyPressRepeater> instance;
     
     KeyPressRepeater();
     void processRepeatingEvent();

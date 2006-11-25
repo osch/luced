@@ -24,7 +24,7 @@
 
 using namespace LucED;
 
-static SingletonInstance<TopWinList> instance;
+SingletonInstance<TopWinList> TopWinList::instance;
 
 TopWinList* TopWinList::getInstance()
 {

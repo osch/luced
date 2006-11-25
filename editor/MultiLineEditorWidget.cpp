@@ -23,9 +23,11 @@
 
 using namespace LucED;
 
+static const int BORDER_WIDTH = 4;
+
 MultiLineEditorWidget::MultiLineEditorWidget(GuiWidget *parent, 
             TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
-    : TextEditorWidget(parent, textStyles, hilitedText),
+    : TextEditorWidget(parent, textStyles, hilitedText, BORDER_WIDTH),
       standardActions(StandardEditActions::createMultiLineActions(this))
 {
 }

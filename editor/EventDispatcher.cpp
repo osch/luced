@@ -31,7 +31,7 @@
 
 using namespace LucED;
 
-static SingletonInstance<EventDispatcher> instance;
+SingletonInstance<EventDispatcher> EventDispatcher::instance;
 
 EventDispatcher* EventDispatcher::getInstance()
 {

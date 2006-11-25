@@ -26,18 +26,14 @@
 
 using namespace LucED;
 
-static inline Display* getDisplay() {
-    return GuiRoot::getInstance()->getDisplay();
-}
-
-
 PasteDataReceiver::PasteDataReceiver(GuiWidget* baseWidget)
   : baseWidget(baseWidget),
     isReceivingPasteDataFlag(false),
-    isMultiPartPastingFlag(false)
+    isMultiPartPastingFlag(false),
+    display(GuiRoot::getInstance()->getDisplay())
 {
-    x11AtomForTargets   = XInternAtom(GuiRoot::getInstance()->getDisplay(), "TARGETS", False);
-    x11AtomForIncr      = XInternAtom(GuiRoot::getInstance()->getDisplay(), "INCR", False);
+    x11AtomForTargets   = XInternAtom(display, "TARGETS", False);
+    x11AtomForIncr      = XInternAtom(display, "INCR", False);
     addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 
@@ -57,8 +53,8 @@ void PasteDataReceiver::requestSelectionPasting()
         endSelectionDataRequest(selectionOwner);
         isReceivingPasteDataFlag = false;
     } else {
-        XDeleteProperty(getDisplay(), getGuiWidgetWid(baseWidget), XA_PRIMARY);
-        XConvertSelection(getDisplay(), XA_PRIMARY, XA_STRING, XA_PRIMARY, getGuiWidgetWid(baseWidget), CurrentTime);
+        XDeleteProperty(display, getGuiWidgetWid(baseWidget), XA_PRIMARY);
+        XConvertSelection(display, XA_PRIMARY, XA_STRING, XA_PRIMARY, getGuiWidgetWid(baseWidget), CurrentTime);
         isMultiPartPastingFlag = false;
         isReceivingPasteDataFlag = true;
         notifyAboutBeginOfPastingData();
@@ -75,8 +71,8 @@ void PasteDataReceiver::requestClipboardPasting()
         }
         isReceivingPasteDataFlag = false;
     } else {
-        XDeleteProperty(getDisplay(), getGuiWidgetWid(baseWidget), Clipboard::getInstance()->getX11AtomForClipboard());
-        XConvertSelection(getDisplay(), Clipboard::getInstance()->getX11AtomForClipboard(),
+        XDeleteProperty(display, getGuiWidgetWid(baseWidget), Clipboard::getInstance()->getX11AtomForClipboard());
+        XConvertSelection(display, Clipboard::getInstance()->getX11AtomForClipboard(),
                              XA_STRING, Clipboard::getInstance()->getX11AtomForClipboard(), getGuiWidgetWid(baseWidget), CurrentTime);
         isMultiPartPastingFlag = false;
         isReceivingPasteDataFlag = true;
@@ -108,7 +104,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                 Atom actualType; int format; unsigned long portionLength;
                 unsigned char* portion = NULL;
 
-                XGetWindowProperty(getDisplay(),
+                XGetWindowProperty(display,
                         event->xselection.requestor,
                         event->xselection.property,
                         0, 0, False, AnyPropertyType,
@@ -119,7 +115,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                 if (isReceivingPasteDataFlag && actualType == x11AtomForIncr)
                 {
                     isMultiPartPastingFlag = true;
-                    XDeleteProperty(getDisplay(), event->xselection.requestor, event->xselection.property);
+                    XDeleteProperty(display, event->xselection.requestor, event->xselection.property);
                     return true;
                 }
                 else if (format != 8 || remainingLength == 0)
@@ -129,7 +125,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                 else if (isReceivingPasteDataFlag)
                 {
                     portion = NULL;
-                    XGetWindowProperty(getDisplay(),
+                    XGetWindowProperty(display,
                             event->xselection.requestor,
                             event->xselection.property,
                             0, remainingLength, False, AnyPropertyType,
@@ -141,7 +137,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                     notifyAboutEndOfPastingData();
                     isMultiPartPastingFlag = false;
                     isReceivingPasteDataFlag = false;
-                    XDeleteProperty(getDisplay(), event->xselection.requestor, event->xselection.property);
+                    XDeleteProperty(display, event->xselection.requestor, event->xselection.property);
                     XFree(portion);
                     return true;
                 }
@@ -158,7 +154,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                 Atom actualType; int format; unsigned long portionLength;
                 unsigned char* portion = NULL;
 
-                XGetWindowProperty(getDisplay(),
+                XGetWindowProperty(display,
                         event->xproperty.window,
                         event->xproperty.atom,
                         0, 0, False, AnyPropertyType,
@@ -169,7 +165,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                 if (isReceivingPasteDataFlag && actualType == x11AtomForIncr)
                 {
                     isMultiPartPastingFlag = true;
-                    XDeleteProperty(getDisplay(), event->xproperty.window, event->xproperty.atom);
+                    XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
                     return true;
                 }
                 else if (format != 8 || actualType != XA_STRING)
@@ -182,7 +178,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                         notifyAboutReceivedPasteData(pasteBuffer.getPtr(0), pasteBuffer.getLength());
                         pasteBuffer.clear();
                     }
-                    XDeleteProperty(getDisplay(), event->xproperty.window, event->xproperty.atom);
+                    XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
                     notifyAboutEndOfPastingData();
                     isMultiPartPastingFlag = false;
                     isReceivingPasteDataFlag = false;
@@ -191,7 +187,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                 else if (isReceivingPasteDataFlag)
                 {
                     portion = NULL;
-                    XGetWindowProperty(getDisplay(),
+                    XGetWindowProperty(display,
                             event->xproperty.window,
                             event->xproperty.atom,
                             0, remainingLength, False, AnyPropertyType,
@@ -206,7 +202,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                         isReceivingPasteDataFlag = false;
                     }
                     XFree(portion);
-                    XDeleteProperty(getDisplay(), event->xproperty.window, event->xproperty.atom);
+                    XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
                     return true;
                 }
 

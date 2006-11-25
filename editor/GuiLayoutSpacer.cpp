@@ -35,12 +35,10 @@ GuiLayoutSpacerFrame::GuiLayoutSpacerFrame(GuiElement::Ptr member, int thickness
     column0->addElement(GuiLayoutSpacer::create(0, 0, 0, thickness, 0, thickness));
     column0->addElement(row0);
     column0->addElement(GuiLayoutSpacer::create(0, 0, 0, thickness, 0, thickness));
-    column0->addSpacer();
     
     row0->addElement(GuiLayoutSpacer::create(0, 0, thickness, 0, thickness, 0));
     row0->addElement(member);
     row0->addElement(GuiLayoutSpacer::create(0, 0, thickness, 0, thickness, 0));
-    row0->addSpacer();
 }
 
 GuiElement::Measures GuiLayoutSpacerFrame::getDesiredMeasures()
@@ -50,6 +48,12 @@ GuiElement::Measures GuiLayoutSpacerFrame::getDesiredMeasures()
 
 void GuiLayoutSpacerFrame::setPosition(Position p)
 {
+    Measures desired = root->getDesiredMeasures();
+    if (desired.bestHeight < p.h) {
+        int d = p.h - desired.bestHeight;
+        p.y += d/2;
+        p.h -= d/2;
+    }
     root->setPosition(p);
 }
 

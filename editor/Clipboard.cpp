@@ -28,7 +28,7 @@
 using namespace LucED;
 
 
-static SingletonInstance<Clipboard> instance;
+SingletonInstance<Clipboard> Clipboard::instance;
 
 
 Clipboard* Clipboard::getInstance()

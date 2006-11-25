@@ -38,6 +38,7 @@ public:
     typedef void (EditActionFunction)(TextEditorWidget *);
 
     void assureCursorVisible();
+    void moveCursorToTextMarkAndAdjustVisibility(TextData::MarkHandle m);
     
     void showCursor();
     void hideCursor();
@@ -72,7 +73,7 @@ public:
     void scrollPageRight();
 
 protected:
-    TextEditorWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
+    TextEditorWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth);
 
     virtual void notifyAboutReceivedPasteData(const byte* data, long length);
     virtual void notifyAboutEndOfPastingData();

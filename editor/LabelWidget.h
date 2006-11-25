@@ -24,6 +24,7 @@
 
 #include <string>
 
+#include "types.h"
 #include "GuiWidget.h"
 #include "Callback.h"
 #include "Slot.h"
@@ -48,6 +49,7 @@ public:
     virtual void setPosition(Position newPosition);
     virtual Measures getDesiredMeasures();
 
+    void setLayoutHeight(int height, VerticalAdjustment::Type adjust);
     
 private:
 
@@ -58,6 +60,8 @@ private:
     Position position;
     string leftText;
     string rightText;
+    VerticalAdjustment::Type adjustment;
+    int layoutHeight;
 };
 
 

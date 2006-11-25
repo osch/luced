@@ -129,18 +129,19 @@ void TextData::updateMarks(
                 continue;
             }
             if (!beginColCalculated) {
-                long bol = getThisLineBegin(beginChangedPos + 1);
+                long bol = getThisLineBegin(beginChangedPos);
                 beginColCalculated = true;
-                beginColumns = beginChangedPos + 1 - bol;
+                beginColumns = beginChangedPos - bol;
             }
-            marks[i].pos    = beginChangedPos + 1;
+            marks[i].pos    = beginChangedPos;
             marks[i].column = beginColumns;
             marks[i].line   = beginLineNumber;
+            ASSERT(marks[i].pos <= this->getLength());
         }
     }
 }
 
-void TextData::setInsertFilterCallback(Callback2<const byte**, long*>& filterCallback)
+void TextData::setInsertFilterCallback(const Callback2<const byte**, long*>& filterCallback)
 {
     this->filterCallback = filterCallback;
 }
@@ -151,35 +152,36 @@ long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
     if (filterCallback.isValid()) {
         filterCallback.call(&insertBuffer, &length);
     }
-    
-    int lineCounter = 0;
-    for (int i = 0; i < length; ++i) {
-        if (insertBuffer[i] == '\n') {
-            ++lineCounter;
+    if (length > 0)
+    {
+        int lineCounter = 0;
+        for (int i = 0; i < length; ++i) {
+            if (insertBuffer[i] == '\n') {
+                ++lineCounter;
+            }
         }
-    }
 
-    TextMarkData& mark = marks[m.index];
-    long lineNumber = mark.line;
-    long pos = mark.pos;
-    
-    buffer.insert(pos, insertBuffer, length);
+        TextMarkData& mark = marks[m.index];
+        long lineNumber = mark.line;
+        long pos = mark.pos;
 
-    if (pos < this->beginChangedPos) {
-        this->beginChangedPos = pos;
-        this->changedAmount  += length;
-        if (pos > this->oldEndChangedPos) {
-            this->oldEndChangedPos = pos;
+        buffer.insert(pos, insertBuffer, length);
+
+        if (pos < this->beginChangedPos) {
+            this->beginChangedPos = pos;
+            this->changedAmount  += length;
+            if (pos > this->oldEndChangedPos) {
+                this->oldEndChangedPos = pos;
+            }
+        } else if (pos < this->oldEndChangedPos + this->changedAmount) {
+            this->changedAmount  += length;
+        } else {
+            this->oldEndChangedPos += pos - (this->oldEndChangedPos + this->changedAmount);
+            this->changedAmount  += length;
         }
-    } else if (pos < this->oldEndChangedPos + this->changedAmount) {
-        this->changedAmount  += length;
-    } else {
-        this->oldEndChangedPos += pos - (this->oldEndChangedPos + this->changedAmount);
-        this->changedAmount  += length;
+        this->numberLines += lineCounter;
+        updateMarks(pos, pos, length, lineNumber, lineCounter);
     }
-    this->numberLines += lineCounter;
-    updateMarks(pos, pos, length, lineNumber, lineCounter);
-    
     return length;
 }
 
@@ -224,8 +226,27 @@ void TextData::removeAtMark(MarkHandle m, long amount)
 }
 
 
+void TextData::clear()
+{
+    int oldLength = getLength();
+    if (oldLength > 0) {
+        int oldNumberLines = numberLines;
+        this->buffer.clear();
+        this->numberLines = 1;
+        this->changedAmount -= oldLength;
+        this->oldEndChangedPos = oldLength;
+        this->beginChangedPos = 0;
+        updateMarks(0, oldLength, -oldLength, 0, -(oldNumberLines - 1));
+    }
+}
+
+
 void TextData::moveMarkToLineAndColumn(MarkHandle m, long newLine, long newColumn)
 {
+    if (newLine >= numberLines) {
+        newLine = numberLines - 1;
+    }
+
     TextMarkData& mark = marks[m.index];
 
     if (newLine < mark.line) {
@@ -259,9 +280,12 @@ void TextData::moveMarkToLineAndColumn(MarkHandle m, long newLine, long newColum
     }
     ASSERT(isBeginOfLine(mark.pos));
     mark.line   = newLine;
-    mark.pos   += newColumn;
-    mark.column = newColumn;
-
+    int c = 0;
+    for (int i = mark.pos; !isEndOfLine(i) && i < mark.pos + newColumn; ++i) {
+        ++c;
+    }
+    mark.pos   += c;
+    mark.column = c;
 }
 
 void TextData::moveMarkToBeginOfLine(MarkHandle m)

@@ -39,7 +39,8 @@ public:
 
 private:
     friend class SingletonInstance<TopWinList>;
-    
+    static SingletonInstance<TopWinList> instance;
+  
     TopWinList() {}
 };
 

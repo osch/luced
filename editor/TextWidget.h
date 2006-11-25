@@ -48,11 +48,13 @@ public:
     }
 
 protected:
-    TextWidget(GuiWidget *parent,TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
-
+    TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border);
 
 public:
     virtual void setPosition(Position newPosition);
+    
+    void setResizeAdjustment(VerticalAdjustment::Type adjustment);
+    
     virtual Measures getDesiredMeasures();
     
     void setDesiredMeasuresInChars(int minWidth, int minHeight, 
@@ -108,7 +110,7 @@ public:
 
     void moveCursorToTextPosition(long pos);
     void moveCursorToTextMark(TextData::MarkHandle m);
-
+    
     long getTopLineNumber() const {
         return textData->getLineNumberOfMark(topMarkId);
     }
@@ -148,6 +150,7 @@ private:
     void unclip();
     void clip(int x, int y, int w, int h);
     void calcTotalPixWidth();
+    long calcLongestVisiblePixWidth();
     void fillLineInfo(long beginOfLinePos, LineInfo* li);
     LineInfo* getValidLineInfo(long line);
     void appendToOutBuf(LineInfo *li, long pos,
@@ -221,6 +224,8 @@ private:
     int bestHeightChars;
     int maxWidthChars;
     int maxHeightChars;
+    int border;
+    VerticalAdjustment::Type adjustment;
 };
 
 } // namespace LucED

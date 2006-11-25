@@ -34,15 +34,56 @@
 
 using namespace LucED;
 
+class PanelLayoutAdapter : public GuiElement
+{
+public:
+    typedef OwningPtr<PanelLayoutAdapter> Ptr;
+    
+    static Ptr create(MultiLineEditorWidget* editorWidget, GuiElement* panel) {
+        return Ptr(new PanelLayoutAdapter(editorWidget, panel));
+    }
+
+    virtual Measures getDesiredMeasures() {
+        Measures rslt = panel->getDesiredMeasures();
+        int lineHeight = editorWidget->getLineHeight();
+        rslt.minHeight  = ROUNDED_UP_DIV(rslt.minHeight,  lineHeight) * lineHeight;
+        rslt.bestHeight = ROUNDED_UP_DIV(rslt.bestHeight, lineHeight) * lineHeight;
+        if (rslt.maxHeight != INT_MAX) {
+            rslt.maxHeight = ROUNDED_UP_DIV(rslt.maxHeight, lineHeight) * lineHeight;
+        }
+        return rslt;
+    }
+    
+    virtual void setPosition(Position p) {
+        panel->setPosition(p);
+    }
+    
+private:
+    PanelLayoutAdapter(MultiLineEditorWidget* editorWidget, GuiElement* panel)
+        : editorWidget(editorWidget),
+          panel(panel)
+    {}
+    
+
+    WeakPtr<MultiLineEditorWidget> editorWidget;
+    WeakPtr<GuiElement> panel;
+};
+
+
+
 EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
     : rootElement(GuiLayoutColumn::create()),
-      wasNeverShown(true)
+      wasNeverShown(true),
+      isFindPanelInvoked(false)
 {
     addToXEventMask(ButtonPressMask);
-    keyMapping.set(            ControlMask, XK_f,      Callback0(this, &EditorTopWin::invokeFindDialog));
+    keyMapping.set(            ControlMask, XK_l,      Callback0(this, &EditorTopWin::invokeGotoLineDialog));
+    keyMapping.set(            ControlMask, XK_f,      Callback0(this, &EditorTopWin::invokeFindPanel));
+    keyMapping.set(                      0, XK_Escape, Callback0(this, &EditorTopWin::handleEscapeKey));
     
     statusLine = StatusLine::create(this);
-    rootElement->addElement(statusLine);
+    int statusLineIndex = rootElement->addElement(statusLine);
+    upperPanelIndex = statusLineIndex + 1;
     
 //    GuiLayoutTable::Ptr tableLayout = GuiLayoutTable::create(2, 2);
 //    rootElement->addElement(tableLayout);
@@ -62,18 +103,20 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 //    tableLayout->setElement(0, 1, scrollBarV);
     
     c2->addElement(textEditor);
-    c2->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, -1, 1));
+    c2->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, INT_MAX, 1));
     r1->addElement(c2);
-    r1->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, 1, -1));
+    r1->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, 1, INT_MAX));
     r1->addElement(scrollBarV);
     
     scrollBarH = ScrollBar::create(this, Orientation::HORIZONTAL);
 //    tableLayout->setElement(1, 0, scrollBarH);
     
 //    c2->addElement(r2);
-    rootElement->addElement(r2);
+    int r2Index = rootElement->addElement(r2);
+    lowerPanelIndex = r2Index + 1;
+    
     r2->addElement(scrollBarH);
-//    c1->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, -1, 1));
+//    c1->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, INT_MAX, 1));
 //    c1->addElement(scrollBarH);
     int w = GlobalConfig::getInstance()->getScrollBarWidth();
     r2->addElement(GuiLayoutSpacer::create(w, w, w, w, w, w));
@@ -100,10 +143,6 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
             GlobalConfig::getInstance()->getInitialWindowHeight()
     );
 
-    textEditor->show();
-    scrollBarV->show();
-    scrollBarH->show();
-    statusLine->show();
 
     Measures m = rootElement->getDesiredMeasures();
 //    setPosition(Position(getPosition().x, getPosition().y, 
@@ -115,6 +154,10 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 //    setSizeHints(getPosition().x, getPosition().y, 
 //                         m.minWidth, m.minHeight, 1, 1);
 
+    textEditor->show();
+    scrollBarV->show();
+    scrollBarH->show();
+    statusLine->show();
 }
 
 void EditorTopWin::show()
@@ -152,7 +195,11 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
     } 
     else
     {
-      return textEditor->processKeyboardEvent(event);
+        if (isFindPanelInvoked) {
+            return findPanel->processKeyboardEvent(event);
+        } else {
+            return textEditor->processKeyboardEvent(event);
+        }
     }
 }
 
@@ -180,30 +227,92 @@ GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent *event)
 
 void EditorTopWin::treatFocusIn()
 {
-    textEditor->treatFocusIn();
+    if (isFindPanelInvoked) {
+        findPanel->treatFocusIn();
+    } else {
+        textEditor->treatFocusIn();
+    }
 }
 
 
 void EditorTopWin::treatFocusOut()
 {
-    textEditor->treatFocusOut();
+    if (isFindPanelInvoked) {
+        findPanel->treatFocusOut();
+    } else {
+        textEditor->treatFocusOut();
+    }
 }
 
 void EditorTopWin::requestCloseChildWindow(TopWin *topWin)
 {
-    if (findDialog == topWin) {
-        findDialog->hide();
+    if (gotoLineDialog == topWin) {
+        gotoLineDialog->hide();
     } else {
         TopWinOwner::requestCloseChildWindow(topWin);
     }
 }
 
-void EditorTopWin::invokeFindDialog()
+void EditorTopWin::invokeGotoLineDialog()
 {
-    if (!findDialog.isValid()) {
-        findDialog = FindDialog::create(this, 250, 250, 100, 100);
+    if (!gotoLineDialog.isValid()) {
+        gotoLineDialog = GotoLineDialog::create(this, textEditor);
     }
-    findDialog->requestFocus();
+    gotoLineDialog->requestFocus();
 }
 
+
+void EditorTopWin::invokeFindPanel()
+{
+    if (!isFindPanelInvoked) {
+        if (findPanel.isInvalid()) {
+            findPanel = FindPanel::create(this, textEditor);
+        }
+        int panelIndex;
+        if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
+            textEditor->setResizeAdjustment(VerticalAdjustment::BOTTOM);
+            panelIndex = upperPanelIndex;
+        } else {
+            textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
+            panelIndex = lowerPanelIndex;
+        }
+        rootElement->insertElementAtPosition(PanelLayoutAdapter::create(textEditor, findPanel), panelIndex);
+        Position p = getPosition();
+        rootElement->setPosition(Position(0, 0, p.w, p.h));
+        findPanel->show();
+        findPanel->treatFocusIn();
+        textEditor->treatFocusOut();
+        isFindPanelInvoked = true;
+        textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
+    }
+}
+
+void EditorTopWin::requestCloseFor(GuiWidget* w)
+{
+    if (w == findPanel && isFindPanelInvoked) {
+        int panelIndex;
+        if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
+            textEditor->setResizeAdjustment(VerticalAdjustment::BOTTOM);
+            panelIndex = upperPanelIndex;
+        } else {
+            textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
+            panelIndex = lowerPanelIndex;
+        }
+        rootElement->removeElementAtPosition(panelIndex);
+        findPanel->hide();
+        findPanel->treatFocusOut();
+        textEditor->treatFocusIn();
+        isFindPanelInvoked = false;
+        Position p = getPosition();
+        rootElement->setPosition(Position(0, 0, p.w, p.h));
+        textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
+    }
+}
+
+void EditorTopWin::handleEscapeKey()
+{
+    if (isFindPanelInvoked) {
+        requestCloseFor(findPanel);
+    }
+}
 
