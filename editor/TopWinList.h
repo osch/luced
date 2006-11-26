@@ -37,6 +37,10 @@ public:
     static TopWinList* getInstance();
     virtual void requestCloseChildWindow(TopWin *topWin);
 
+    int getNumberOfTopWins() const {
+        return getNumberOfChildWindows();
+    }
+
 private:
     friend class SingletonInstance<TopWinList>;
     static SingletonInstance<TopWinList> instance;

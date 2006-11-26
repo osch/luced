@@ -21,6 +21,8 @@
 
 #include "EventDispatcher.h"
 #include "TopWinList.h"
+#include "Clipboard.h"
+#include "GlobalConfig.h"
 
 using namespace LucED;
 
@@ -35,7 +37,10 @@ void TopWinList::requestCloseChildWindow(TopWin *topWin)
 {
     TopWinOwner::requestCloseChildWindow(topWin);
     
-    if (getNumberOfChildWindows() == 0) {
+    if (getNumberOfChildWindows() == 0
+     && (!GlobalConfig::getInstance()->shouldKeepRunningIfOwningClipboard() 
+      || !Clipboard::getInstance()->hasClipboardOwnership()))
+    {
         EventDispatcher::getInstance()->requestProgramTermination();
     }
     

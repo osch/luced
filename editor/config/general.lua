@@ -45,7 +45,9 @@ globalConfig = {
           x11SelectionChunkLength = 20000,
           buttonInnerSpacing = 2,
           guiSpacing = 2,
-          editorPanelOnTop = false
+          editorPanelOnTop = false,
+          
+          keepRunningIfOwningClipboard = false
 }
 
 

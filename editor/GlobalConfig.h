@@ -105,6 +105,9 @@ public:
     bool isEditorPanelOnTop() const {
         return editorPanelOnTop;
     }
+    bool shouldKeepRunningIfOwningClipboard() const {
+        return keepRunningIfOwningClipboard;
+    }
 
     TextStyles::Ptr getTextStyles() {
         return textStyles;
@@ -163,6 +166,7 @@ private:
     int buttonInnerSpacing;
     int guiSpacing;
     bool editorPanelOnTop;
+    bool keepRunningIfOwningClipboard;
 };
 
 } // namespace LucED

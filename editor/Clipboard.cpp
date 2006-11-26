@@ -24,6 +24,7 @@
 #include "util.h"
 #include "Clipboard.h"
 #include "EventDispatcher.h"
+#include "TopWinList.h"
 
 using namespace LucED;
 
@@ -88,4 +89,7 @@ void  Clipboard::endSelectionDataRequest()
 
 void  Clipboard::notifyAboutLostSelectionOwnership()
 {
+    if (TopWinList::getInstance()->getNumberOfTopWins() == 0) {
+        EventDispatcher::getInstance()->requestProgramTermination();
+    }
 }

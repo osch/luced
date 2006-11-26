@@ -55,7 +55,8 @@ GlobalConfig::GlobalConfig()
           x11SelectionChunkLength(20000),
           buttonInnerSpacing(2),
           guiSpacing(2),
-          editorPanelOnTop(false)
+          editorPanelOnTop(false),
+          keepRunningIfOwningClipboard(false)
 {
     setlocale(LC_CTYPE, "");
 }
@@ -260,6 +261,14 @@ void GlobalConfig::readConfig(const string& configPath)
                 throw ConfigException("invalid editorPanelOnTop");
             }
             this->editorPanelOnTop = o.toBoolean();
+        }
+
+        o = globalConfig["keepRunningIfOwningClipboard"];
+        if (o.isValid()) {
+            if (!o.isBoolean()) {
+                throw ConfigException("invalid keepRunningIfOwningClipboard");
+            }
+            this->keepRunningIfOwningClipboard = o.toBoolean();
         }
 
     }

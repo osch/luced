@@ -37,8 +37,8 @@ public:
     virtual void requestCloseChildWindow(TopWin *topWin);
 protected:
     TopWinOwner();
-    int getNumberOfChildWindows() { return ownedTopWins.getLength(); }
-    TopWin* getLastFocusedOwnedTopWin() { return lastFocusedOwnedTopWin; }
+    int getNumberOfChildWindows()       const { return ownedTopWins.getLength(); }
+    TopWin* getLastFocusedOwnedTopWin() const { return lastFocusedOwnedTopWin; }
 private:
     friend class TopWinOwnerAccessForTopWin;
     virtual void reportFocusOwnership(TopWin *topWin);
