@@ -2,7 +2,7 @@
 --
 --   LucED - The Lucid Editor
 --
---   Copyright (C) 2005-2006 Oliver Schmidt, osch@luced.de
+--   Copyright (C) 2005-2006 Oliver Schmidt, osch at luced dot de
 --
 --   This program is free software; you can redistribute it and/or modify it
 --   under the terms of the GNU General Public License Version 2 as published
