@@ -1631,3 +1631,11 @@ void TextWidget::setDesiredMeasuresInChars(int bestWidth, int bestHeight)
     this->bestWidthChars  = bestWidth;
     this->bestHeightChars = bestHeight;
 }
+
+void TextWidget::notifyAboutHotKeyEventForOtherWidget()
+{
+    if (isCursorBlinking()) {
+        startCursorBlinking(); // redraw Cursor while Hotkey for other widget
+    }
+}
+

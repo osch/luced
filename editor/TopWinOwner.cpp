@@ -21,12 +21,14 @@
 
 #include "TopWinOwner.h"
 #include "TopWin.h"
+#include "EventDispatcher.h"
 
 using namespace LucED;
 
       
 TopWinOwner::TopWinOwner()
-    : lastFocusedOwnedTopWin(NULL)
+    : lastFocusedOwnedTopWin(NULL),
+      hasRegisteredAsUpdateSource(false)
 {}
 
 void TopWinOwner::requestCloseChildWindow(TopWin* topWin)
@@ -34,7 +36,13 @@ void TopWinOwner::requestCloseChildWindow(TopWin* topWin)
     for (int i = 0; i < ownedTopWins.getLength(); ++i)
     {
         if (ownedTopWins[i].getRawPtr() == topWin) {
+            ownedTopWins[i]->hide();
+            toBeClosedTopWins.append(ownedTopWins[i]);
             ownedTopWins.remove(i);
+            if (!hasRegisteredAsUpdateSource) {
+                EventDispatcher::getInstance()->registerUpdateSource(Callback0(this, &TopWinOwner::closePendingChilds));
+                hasRegisteredAsUpdateSource = true;
+            }
             if (lastFocusedOwnedTopWin == topWin) {
                 lastFocusedOwnedTopWin = NULL;
             }
@@ -47,4 +55,12 @@ void TopWinOwner::reportFocusOwnership(TopWin* topWin)
 {
     lastFocusedOwnedTopWin = topWin;
 }
+
+void TopWinOwner::closePendingChilds()
+{
+    toBeClosedTopWins.clear();
+    hasRegisteredAsUpdateSource = false;
+    EventDispatcher::getInstance()->deregisterAllUpdateSourceCallbacksFor(this);
+}
+
 

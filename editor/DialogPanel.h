@@ -53,6 +53,7 @@ public:
 
     void setRootElement(OwningPtr<GuiElement> rootElement);
     void setFocus(GuiWidget* element);
+    virtual void notifyAboutHotKeyEventForOtherWidget();
     
 protected:
     DialogPanel(GuiWidget* parent);

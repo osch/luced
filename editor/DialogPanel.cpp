@@ -197,56 +197,50 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
             }
         }
     }
-    if (focusedElement.isValid()) {
-        if (focusedElement->getFocusType() == TOTAL_FOCUS) {
-            focusedElement->processKeyboardEvent(event);
-            processed = true;
-        } else {
-            bool hotKeyProcessed = false;
-            KeyMapping::Id keyMappingId(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-            HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping.get(keyMappingId);
-            if (foundHotKeyWidgets.isValid()) {
-                WidgetQueue::Ptr widgets = foundHotKeyWidgets.get();
-                ASSERT(widgets.isValid());
-                GuiWidget* w = widgets->getLast();
-                if (w != NULL) {
-                    w->treatHotKeyEvent(keyMappingId);
-                    hotKeyProcessed = true;
+
+    if (focusedElement.isValid() && focusedElement->getFocusType() == TOTAL_FOCUS) {
+        focusedElement->processKeyboardEvent(event);
+        processed = true;
+    } else {
+        bool hotKeyProcessed = false;
+        KeyMapping::Id keyMappingId(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+        HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping.get(keyMappingId);
+        if (foundHotKeyWidgets.isValid()) {
+            WidgetQueue::Ptr widgets = foundHotKeyWidgets.get();
+            ASSERT(widgets.isValid());
+            WeakPtr<GuiWidget> w = widgets->getLast();
+            if (w.isValid()) {
+                w->treatHotKeyEvent(keyMappingId);
+                if (focusedElement.isValid() && w != focusedElement) {
+                    focusedElement->notifyAboutHotKeyEventForOtherWidget();
                 }
-            } 
-            if (!hotKeyProcessed) {
-                Callback0 keyAction = keyMapping1.find(keyMappingId);
-                if (keyAction.isValid()) {
-                    keyAction.call();
-                    processed = true;
-                } else {
+                hotKeyProcessed = true;
+                processed = true;
+            }
+        } 
+        if (!hotKeyProcessed) {
+            Callback0 keyAction = keyMapping1.find(keyMappingId);
+            if (keyAction.isValid()) {
+                keyAction.call();
+                processed = true;
+            } else {
+                if (focusedElement.isValid()) {
                     ProcessingResult rslt = focusedElement->processKeyboardEvent(event);
-                    if (rslt != EVENT_PROCESSED) {
-                        Callback0 keyAction = keyMapping2.find(keyMappingId);
-                        if (keyAction.isValid()) {
-                            keyAction.call();
-                            processed = true;
-                        }
-                    } else {
+                    if (rslt == EVENT_PROCESSED) {
+                        processed = true;
+                    }
+                }
+                if (!processed) {
+                    Callback0 keyAction = keyMapping2.find(keyMappingId);
+                    if (keyAction.isValid()) {
+                        keyAction.call();
                         processed = true;
                     }
                 }
             }
         }
-    } else {
-        KeyMapping::Id keyMappingId(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-        Callback0 keyAction = keyMapping1.find(keyMappingId);
-        if (keyAction.isValid()) {
-            keyAction.call();
-            processed = true;
-        } else {
-            Callback0 keyAction = keyMapping2.find(keyMappingId);
-            if (keyAction.isValid()) {
-                keyAction.call();
-                processed = true;
-            }
-        }
     }
+
     return processed ? EVENT_PROCESSED : NOT_PROCESSED;
 }
 
@@ -316,3 +310,11 @@ void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id
         }
     }
 }
+
+void DialogPanel::notifyAboutHotKeyEventForOtherWidget()
+{
+    if (focusedElement.isValid()) {
+        focusedElement->notifyAboutHotKeyEventForOtherWidget();
+    }    
+}
+

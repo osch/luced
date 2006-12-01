@@ -27,6 +27,8 @@
 #include "CheckBox.h"
 #include "TextEditorWidget.h"
 #include "SingleLineEditField.h"
+#include "MessageBox.h"
+#include "Callback.h"
 
 namespace LucED {
 
@@ -35,14 +37,14 @@ class FindPanel : public DialogPanel
 public:
     typedef OwningPtr<FindPanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget) {
-        return Ptr(new FindPanel(parent, editorWidget));
+    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker) {
+        return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker));
     }
     
     virtual void treatFocusIn();
     
 private:
-    FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget);
+    FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker);
 
     void handleButtonPressed(Button* button);
 
@@ -57,6 +59,7 @@ private:
     CheckBox::Ptr ignoreCaseCheckBox;
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
+    Callback1<MessageBoxParameter> messageBoxInvoker;
 };
 
 } // namespace LucED

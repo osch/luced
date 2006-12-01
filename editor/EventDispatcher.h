@@ -53,6 +53,7 @@ public:
     bool isForeignWidget(Window wid);
 
     void registerUpdateSource(const UpdateCallback& updateCallback);
+    void deregisterAllUpdateSourceCallbacksFor(WeakPtr<HeapObject> callbackObject);
     
     void registerTimerCallback(const TimeVal& when, const TimerCallback& callback) {
         timers.push(TimerRegistration(when, callback));

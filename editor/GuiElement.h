@@ -31,7 +31,7 @@
 
 namespace LucED {
 
-class GuiElement : public HeapObject
+class GuiElement : virtual public HeapObject
 {
 public:
     typedef OwningPtr<GuiElement> Ptr;

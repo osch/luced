@@ -132,7 +132,10 @@ public:
     void removeAtCursor(long amount);
     
     virtual ProcessingResult processEvent(const XEvent *event);
-    
+
+    bool isCursorBlinking() const {
+        return cursorIsBlinking;
+    }    
     void startCursorBlinking();
     void stopCursorBlinking();
     void setCursorActive();
@@ -144,7 +147,8 @@ public:
     Slot1<long> slotForHorizontalScrollBarChangedValue;
     
     void registerLineAndColumnListener(const Callback2<long,long>& listener);
-    
+    void notifyAboutHotKeyEventForOtherWidget();
+        
 private:
     
     void unclip();

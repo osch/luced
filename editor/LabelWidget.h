@@ -50,6 +50,13 @@ public:
     virtual Measures getDesiredMeasures();
 
     void setLayoutHeight(int height, VerticalAdjustment::Type adjust);
+
+    virtual FocusType getFocusType() { return fakeFocusFlag ? NORMAL_FOCUS : NO_FOCUS; }
+    virtual bool isFocusable()       { return fakeFocusFlag ? true : false; }
+    
+    void setFakeFocus(bool fakeFocusFlag) {
+        this->fakeFocusFlag = fakeFocusFlag;
+    }
     
 private:
 
@@ -62,6 +69,7 @@ private:
     string rightText;
     VerticalAdjustment::Type adjustment;
     int layoutHeight;
+    bool fakeFocusFlag;
 };
 
 

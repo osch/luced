@@ -55,11 +55,11 @@ MODULES = EditorTopWin    EventDispatcher   GuiRoot            GuiWidget \
           LanguageModes   RegexException    BackliteBuffer     Clipboard \
           SelectionOwner  PasteDataReceiver StatusLine         GuiLayoutRow \
           Button          GuiLayoutColumn   GuiLayoutWidget \
-          GotoLineDialog  SingletonKeeper   TopWinList         TopWinOwner \
+          GotoLinePanel   SingletonKeeper   TopWinList         TopWinOwner \
           DialogWin       GuiLayoutSpacer   MultiLineEditorWidget \
           SingleLineEditorWidget            StandardEditActions HeapObject \
           SingleLineEditField LabelWidget   DialogPanel        PanelDialogWin \
-          FindPanel       CheckBox
+          FindPanel       CheckBox          MessageBox
           
 
 OBJS   = $(patsubst %, $(BUILD_DIR)/%.o, $(MODULES))

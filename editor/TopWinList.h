@@ -31,7 +31,7 @@ namespace LucED {
 
 class TopWin;
 
-class TopWinList : public HeapObject, public TopWinOwner
+class TopWinList : public TopWinOwner
 {
 public:
     static TopWinList* getInstance();

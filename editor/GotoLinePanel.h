@@ -19,47 +19,43 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef KEYPRESSREPEATER_H
-#define KEYPRESSREPEATER_H
+#ifndef GOTOLINEPANEL_H
+#define GOTOLINEPANEL_H
 
-#include "HeapObject.h"
-#include "Slot.h"
-#include "EventDispatcher.h"
-#include "TimeVal.h"
-#include "SingletonInstance.h"
+#include "DialogPanel.h"
+#include "Button.h"
+#include "CheckBox.h"
+#include "TextEditorWidget.h"
+#include "SingleLineEditField.h"
 
 namespace LucED {
 
-class KeyPressRepeater : public HeapObject
+class GotoLinePanel : public DialogPanel
 {
 public:
+    typedef OwningPtr<GotoLinePanel> Ptr;
+
+    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget) {
+        return Ptr(new GotoLinePanel(parent, editorWidget));
+    }
     
-    static KeyPressRepeater* getInstance();
-    static bool isInstanceValid();
-    
-    void repeatEvent(const XEvent *event);
-    void reset();
-    
-    bool isRepeating() const;
-    bool isRepeatingEvent(const XEvent *event) const;
-    bool addKeyModifier(const XEvent *event);
-    bool removeKeyModifier(const XEvent *event);
+    virtual void treatFocusIn();
     
 private:
-    friend class SingletonInstance<KeyPressRepeater>;
-    static SingletonInstance<KeyPressRepeater> instance;
-    
-    KeyPressRepeater();
-    void processRepeatingEvent();
+    GotoLinePanel(GuiWidget* parent, TextEditorWidget* editorWidget);
 
-    Slot0 slotForRepeatTimer;
-    XEvent event;
-    int repeatCount;
-    bool isRepeatingFlag;
-    
-    TimeVal when;
+    void handleButtonPressed(Button* button);
+
+    void filterInsert(const byte** buffer, long* length);
+
+    Button::Ptr gotoButton;
+    Button::Ptr cancelButton;
+    SingleLineEditField::Ptr editField;
+  
+    WeakPtr<TextEditorWidget> editorWidget;
+    ByteArray filterBuffer;
 };
 
 } // namespace LucED
 
-#endif // KEYPRESSREPEATER_H
+#endif // GOTOLINEPANEL_H

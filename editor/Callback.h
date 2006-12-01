@@ -54,6 +54,7 @@ public:
 
     virtual ~CallbackBase0() {}
     virtual void call() = 0;
+    virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
 };
 
 template<class T> class CallbackImpl0 : public CallbackBase0 
@@ -75,6 +76,9 @@ public:
     bool isEnabled() {
         return objectPtr.isValid();
     }
+    virtual WeakPtr<HeapObject> getObjectPtr() const {
+        return objectPtr;
+    }
 private:
     WeakPtr<T> objectPtr;
     void (T::* methodPtr)();
@@ -95,6 +99,7 @@ public:
 
     virtual ~CallbackBase1() {}
     virtual void call(A1) = 0;
+    virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
 };
 
 template<class T, class A1> class CallbackImpl1 : public CallbackBase1<A1> 
@@ -118,6 +123,9 @@ public:
     bool isEnabled() {
         return objectPtr.isValid();
     }
+    virtual WeakPtr<HeapObject> getObjectPtr() const {
+        return objectPtr;
+    }
 private:
     WeakPtr<T> objectPtr;
     void (T::* methodPtr)(A1);
@@ -138,6 +146,7 @@ public:
 
     virtual ~CallbackBase2() {}
     virtual void call(A1, A2) = 0;
+    virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
 };
 
 template<class T, class A1, class A2> class CallbackImpl2 : public CallbackBase2<A1,A2> 
@@ -161,6 +170,9 @@ public:
     bool isEnabled() {
         return objectPtr.isValid();
     }
+    virtual WeakPtr<HeapObject> getObjectPtr() const {
+        return objectPtr;
+    }
 private:
     WeakPtr<T> objectPtr;
     void (T::* methodPtr)(A1,A2);
@@ -180,6 +192,7 @@ public:
 
     virtual ~CallbackBase3() {}
     virtual void call(A1, A2, A3) = 0;
+    virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
 };
 
 template<class T, class A1, class A2, class A3> class CallbackImpl3 : public CallbackBase3<A1,A2,A3> 
@@ -202,6 +215,9 @@ public:
     }
     bool isEnabled() {
         return objectPtr.isValid();
+    }
+    virtual WeakPtr<HeapObject> getObjectPtr() const {
+        return objectPtr;
     }
 private:
     WeakPtr<T> objectPtr;
@@ -244,6 +260,13 @@ public:
         if (callback.isValid())
             callback->disable();
     }
+    WeakPtr<HeapObject> getObjectPtr() const {
+        if (callback.isValid()) {
+            return callback->getObjectPtr();
+        } else {
+            return WeakPtr<HeapObject>();
+        }
+    }
 private:
     CallbackInternal::CallbackBase0::Ptr callback;
 };
@@ -275,6 +298,9 @@ public:
     void disable() {
         if (callback.isValid())
             callback->disable();
+    }
+    WeakPtr<HeapObject> getObjectPtr() const {
+        return callback->getObjectPtr();
     }
 private:
     typename CallbackInternal::CallbackBase1<A1>::Ptr callback;
@@ -308,6 +334,9 @@ public:
         if (callback.isValid())
             callback->disable();
     }
+    WeakPtr<HeapObject> getObjectPtr() const {
+        return callback->getObjectPtr();
+    }
 private:
     typename CallbackInternal::CallbackBase2<A1,A2>::Ptr callback;
 };
@@ -338,6 +367,9 @@ public:
     void disable() {
         if (callback.isValid())
             callback->disable();
+    }
+    WeakPtr<HeapObject> getObjectPtr() const {
+        return callback->getObjectPtr();
     }
 private:
     typename CallbackInternal::CallbackBase3<A1,A2,A3>::Ptr callback;

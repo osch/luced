@@ -73,12 +73,12 @@ private:
 
 EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
     : rootElement(GuiLayoutColumn::create()),
-      wasNeverShown(true),
-      isFindPanelInvoked(false)
+      wasNeverShown(true)
 {
     addToXEventMask(ButtonPressMask);
-    keyMapping.set(            ControlMask, XK_l,      Callback0(this, &EditorTopWin::invokeGotoLineDialog));
+    keyMapping.set(            ControlMask, XK_l,      Callback0(this, &EditorTopWin::invokeGotoLinePanel));
     keyMapping.set(            ControlMask, XK_f,      Callback0(this, &EditorTopWin::invokeFindPanel));
+    keyMapping.set(            ControlMask, XK_w,      Callback0(this, &EditorTopWin::requestCloseWindow));
     keyMapping.set(                      0, XK_Escape, Callback0(this, &EditorTopWin::handleEscapeKey));
     
     statusLine = StatusLine::create(this);
@@ -195,11 +195,18 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
     } 
     else
     {
-        if (isFindPanelInvoked) {
-            return findPanel->processKeyboardEvent(event);
-        } else {
-            return textEditor->processKeyboardEvent(event);
+        ProcessingResult rslt = NOT_PROCESSED;
+        
+        if (invokedPanel.isValid()) {
+            rslt = invokedPanel->processKeyboardEvent(event);
         }
+        if (rslt == NOT_PROCESSED) {
+            rslt = textEditor->processKeyboardEvent(event);
+            if (rslt == EVENT_PROCESSED && invokedPanel.isValid()) {
+                invokedPanel->notifyAboutHotKeyEventForOtherWidget();
+            }
+        }
+        return rslt;
     }
 }
 
@@ -227,8 +234,8 @@ GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent *event)
 
 void EditorTopWin::treatFocusIn()
 {
-    if (isFindPanelInvoked) {
-        findPanel->treatFocusIn();
+    if (invokedPanel.isValid()) {
+        invokedPanel->treatFocusIn();
     } else {
         textEditor->treatFocusIn();
     }
@@ -237,8 +244,8 @@ void EditorTopWin::treatFocusIn()
 
 void EditorTopWin::treatFocusOut()
 {
-    if (isFindPanelInvoked) {
-        findPanel->treatFocusOut();
+    if (invokedPanel.isValid()) {
+        invokedPanel->treatFocusOut();
     } else {
         textEditor->treatFocusOut();
     }
@@ -246,28 +253,34 @@ void EditorTopWin::treatFocusOut()
 
 void EditorTopWin::requestCloseChildWindow(TopWin *topWin)
 {
-    if (gotoLineDialog == topWin) {
-        gotoLineDialog->hide();
-    } else {
-        TopWinOwner::requestCloseChildWindow(topWin);
-    }
+    TopWinOwner::requestCloseChildWindow(topWin);
 }
 
-void EditorTopWin::invokeGotoLineDialog()
+void EditorTopWin::invokeGotoLinePanel()
 {
-    if (!gotoLineDialog.isValid()) {
-        gotoLineDialog = GotoLineDialog::create(this, textEditor);
+    if (gotoLinePanel.isInvalid()) {
+        gotoLinePanel = GotoLinePanel::create(this, textEditor);
     }
-    gotoLineDialog->requestFocus();
+    invokePanel(gotoLinePanel);
 }
 
 
 void EditorTopWin::invokeFindPanel()
 {
-    if (!isFindPanelInvoked) {
-        if (findPanel.isInvalid()) {
-            findPanel = FindPanel::create(this, textEditor);
+    if (findPanel.isInvalid()) {
+        findPanel = FindPanel::create(this, textEditor, 
+                                      Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox));
+    }
+    invokePanel(findPanel);
+}
+
+void EditorTopWin::invokePanel(DialogPanel* panel)
+{
+    if (invokedPanel != panel) {
+        if (invokedPanel.isValid()) {
+            requestCloseFor(invokedPanel);
         }
+        ASSERT(invokedPanel.isInvalid());
         int panelIndex;
         if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
             textEditor->setResizeAdjustment(VerticalAdjustment::BOTTOM);
@@ -276,20 +289,20 @@ void EditorTopWin::invokeFindPanel()
             textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
             panelIndex = lowerPanelIndex;
         }
-        rootElement->insertElementAtPosition(PanelLayoutAdapter::create(textEditor, findPanel), panelIndex);
+        rootElement->insertElementAtPosition(PanelLayoutAdapter::create(textEditor, panel), panelIndex);
         Position p = getPosition();
         rootElement->setPosition(Position(0, 0, p.w, p.h));
-        findPanel->show();
-        findPanel->treatFocusIn();
+        panel->show();
+        panel->treatFocusIn();
         textEditor->treatFocusOut();
-        isFindPanelInvoked = true;
+        invokedPanel = panel;
         textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
     }
 }
 
 void EditorTopWin::requestCloseFor(GuiWidget* w)
 {
-    if (w == findPanel && isFindPanelInvoked) {
+    if (w == invokedPanel) {
         int panelIndex;
         if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
             textEditor->setResizeAdjustment(VerticalAdjustment::BOTTOM);
@@ -299,10 +312,10 @@ void EditorTopWin::requestCloseFor(GuiWidget* w)
             panelIndex = lowerPanelIndex;
         }
         rootElement->removeElementAtPosition(panelIndex);
-        findPanel->hide();
-        findPanel->treatFocusOut();
+        w->hide();
+        w->treatFocusOut();
         textEditor->treatFocusIn();
-        isFindPanelInvoked = false;
+        invokedPanel.invalidate();
         Position p = getPosition();
         rootElement->setPosition(Position(0, 0, p.w, p.h));
         textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
@@ -311,8 +324,17 @@ void EditorTopWin::requestCloseFor(GuiWidget* w)
 
 void EditorTopWin::handleEscapeKey()
 {
-    if (isFindPanelInvoked) {
-        requestCloseFor(findPanel);
+    if (invokedPanel.isValid()) {
+        requestCloseFor(invokedPanel);
     }
+}
+
+void EditorTopWin::invokeMessageBox(MessageBoxParameter p)
+{
+    if (messageBox.isValid()) {
+        requestCloseChildWindow(messageBox);
+    }
+    messageBox = MessageBox::create(this, p);
+    messageBox->requestFocus();
 }
 

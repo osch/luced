@@ -31,7 +31,7 @@ namespace LucED {
 class TopWin;
 
 
-class TopWinOwner : NonCopyable
+class TopWinOwner : public virtual HeapObject
 {
 public:
     virtual void requestCloseChildWindow(TopWin *topWin);
@@ -43,8 +43,12 @@ private:
     friend class TopWinOwnerAccessForTopWin;
     virtual void reportFocusOwnership(TopWin *topWin);
 
+    void closePendingChilds();
+    
     ObjectArray< OwningPtr<TopWin> > ownedTopWins;
     TopWin* lastFocusedOwnedTopWin;
+    bool hasRegisteredAsUpdateSource;
+    ObjectArray< OwningPtr<TopWin> > toBeClosedTopWins;
 };
 
 class TopWinOwnerAccessForTopWin : NonCopyable

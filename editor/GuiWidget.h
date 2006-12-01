@@ -78,6 +78,7 @@ public:
     virtual void treatFocusIn() {}
     virtual void treatFocusOut() {}
     virtual ProcessingResult processKeyboardEvent(const XEvent *event) { return NOT_PROCESSED; }
+    virtual void notifyAboutHotKeyEventForOtherWidget() {}
 
     virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id) {}
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id) {}

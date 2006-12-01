@@ -242,3 +242,10 @@ ProcessHandler EventDispatcher::getNextWaitingProcess()
     }
     return ProcessHandler();
 }
+
+void EventDispatcher::deregisterAllUpdateSourceCallbacksFor(WeakPtr<HeapObject> callbackObject)
+{
+    updateCallbacks.deregisterAllCallbacksFor(callbackObject);
+}
+
+

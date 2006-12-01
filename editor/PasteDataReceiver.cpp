@@ -23,6 +23,7 @@
 #include "PasteDataReceiver.h"
 #include "Clipboard.h"
 #include "SelectionOwner.h"
+#include "EventDispatcher.h"
 
 using namespace LucED;
 
@@ -58,6 +59,10 @@ void PasteDataReceiver::requestSelectionPasting()
         isMultiPartPastingFlag = false;
         isReceivingPasteDataFlag = true;
         notifyAboutBeginOfPastingData();
+        EventDispatcher::getInstance()->registerTimerCallback(3, 0, 
+                                                              Callback0(this, 
+                                                                        &PasteDataReceiver::handleTimerEvent));
+        lastPasteEventTime.setToCurrentTime();
     }
 }
 
@@ -77,6 +82,10 @@ void PasteDataReceiver::requestClipboardPasting()
         isMultiPartPastingFlag = false;
         isReceivingPasteDataFlag = true;
         notifyAboutBeginOfPastingData();
+        EventDispatcher::getInstance()->registerTimerCallback(3, 0, 
+                                                              Callback0(this, 
+                                                                        &PasteDataReceiver::handleTimerEvent));
+        lastPasteEventTime.setToCurrentTime();
     }
 }
 
@@ -87,12 +96,13 @@ bool PasteDataReceiver::isReceivingPasteData()
 
 bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
 {
-    switch(event->type)
+    switch (event->type)
     {
         case SelectionNotify:
         {
             if (isReceivingPasteDataFlag && event->xselection.property == None)
             {
+                lastPasteEventTime.setToCurrentTime();
                 isReceivingPasteDataFlag = false;
                 isMultiPartPastingFlag = false;
                 notifyAboutEndOfPastingData();
@@ -100,6 +110,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
             else if (event->xselection.property == Clipboard::getInstance()->getX11AtomForClipboard()
                   || event->xselection.property == XA_PRIMARY)
             {
+                lastPasteEventTime.setToCurrentTime();
                 unsigned long remainingLength = 0;
                 Atom actualType; int format; unsigned long portionLength;
                 unsigned char* portion = NULL;
@@ -150,6 +161,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
               || event->xproperty.atom == XA_PRIMARY) 
                     && event->xproperty.state == PropertyNewValue)
             {
+                lastPasteEventTime.setToCurrentTime();
                 unsigned long remainingLength = 0;
                 Atom actualType; int format; unsigned long portionLength;
                 unsigned char* portion = NULL;
@@ -211,5 +223,25 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
         }
     }
     return false;
+}
+
+void PasteDataReceiver::handleTimerEvent()
+{
+    if (isReceivingPasteDataFlag)
+    {
+        TimeVal t1, t2;
+        t1 = lastPasteEventTime;
+        t1.addSecs(3);
+        t2.setToCurrentTime();
+
+        if (t2.isLaterThan(t1)) {
+            notifyAboutEndOfPastingData();
+            isMultiPartPastingFlag = false;
+            isReceivingPasteDataFlag = false;
+        } else {
+            EventDispatcher::getInstance()->registerTimerCallback(3, 0, 
+                    Callback0(this, &PasteDataReceiver::handleTimerEvent));
+        }
+    }
 }
 

@@ -57,6 +57,7 @@ public:
 
     virtual ProcessingResult processEvent(const XEvent *event);
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual void notifyAboutHotKeyEventForOtherWidget();
     
 protected:    
     virtual void requestFocusFor(GuiWidget* w);

@@ -34,6 +34,11 @@ KeyPressRepeater* KeyPressRepeater::getInstance()
     return instance.getPtr();
 }
 
+bool KeyPressRepeater::isInstanceValid()
+{
+    return instance.isValid();
+}
+
 KeyPressRepeater::KeyPressRepeater()
     : slotForRepeatTimer(this, &KeyPressRepeater::processRepeatingEvent)
 {

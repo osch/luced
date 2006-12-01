@@ -19,47 +19,56 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef KEYPRESSREPEATER_H
-#define KEYPRESSREPEATER_H
+#ifndef MESSAGEBOX_H
+#define MESSAGEBOX_H
 
-#include "HeapObject.h"
-#include "Slot.h"
+#include "TopWin.h"
 #include "EventDispatcher.h"
-#include "TimeVal.h"
-#include "SingletonInstance.h"
+#include "Button.h"
+#include "GuiLayoutColumn.h"
+#include "DialogWin.h"
+#include "Slot.h"
+#include "PanelDialogWin.h"
 
 namespace LucED {
 
-class KeyPressRepeater : public HeapObject
+class MessageBoxParameter
 {
 public:
+    MessageBoxParameter& setTitle(std::string title) {
+        this->title = title;
+        return *this;
+    }
+    MessageBoxParameter& setMessage(std::string message) {
+        this->message = message;
+        return *this;
+    }
+private:
+    friend class MessageBox;
+    std::string title;
+    std::string message;
+};
+
+class MessageBox : public PanelDialogWin
+{
+public:
+    typedef WeakPtr<MessageBox> Ptr;
     
-    static KeyPressRepeater* getInstance();
-    static bool isInstanceValid();
-    
-    void repeatEvent(const XEvent *event);
-    void reset();
-    
-    bool isRepeating() const;
-    bool isRepeatingEvent(const XEvent *event) const;
-    bool addKeyModifier(const XEvent *event);
-    bool removeKeyModifier(const XEvent *event);
+    static MessageBox::Ptr create(TopWin* referingWindow, 
+                                  MessageBoxParameter p) {
+        return transferOwnershipTo(
+                new MessageBox(referingWindow, p),
+                referingWindow);
+    }
     
 private:
-    friend class SingletonInstance<KeyPressRepeater>;
-    static SingletonInstance<KeyPressRepeater> instance;
+    MessageBox(TopWin* referingWindow, MessageBoxParameter p);
     
-    KeyPressRepeater();
-    void processRepeatingEvent();
+    void handleButtonPressed(Button* button);
 
-    Slot0 slotForRepeatTimer;
-    XEvent event;
-    int repeatCount;
-    bool isRepeatingFlag;
-    
-    TimeVal when;
+    Button::Ptr button1;
 };
 
 } // namespace LucED
 
-#endif // KEYPRESSREPEATER_H
+#endif // MESSAGEBOX_H

@@ -58,7 +58,9 @@ TopWin::~TopWin()
         expectedFocusTopWin = NULL;
         if (GlobalConfig::getInstance()->getUseKeyPressRepeater())
         {
-            KeyPressRepeater::getInstance()->reset();
+            if (KeyPressRepeater::isInstanceValid()) {
+                KeyPressRepeater::getInstance()->reset();
+            }
             GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
         }
     }

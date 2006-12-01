@@ -28,9 +28,10 @@
 
 using namespace LucED;
 
-FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget)
+FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker)
     : DialogPanel(parent),
-      editorWidget(editorWidget)
+      editorWidget(editorWidget),
+      messageBoxInvoker(messageBoxInvoker)
 {
     GuiLayoutColumn::Ptr  c0 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr  c1 = GuiLayoutColumn::create();
@@ -115,6 +116,8 @@ void FindPanel::handleButtonPressed(Button* button)
 {
     if (button == cancelButton) {
         requestCloseFor(this);
+    } else if (button == goBackButton) {
+        messageBoxInvoker.call(MessageBoxParameter().setTitle("xxx title xxx").setMessage("xxx message xxx"));
     }
 }
 

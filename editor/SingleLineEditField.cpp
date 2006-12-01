@@ -171,3 +171,10 @@ void SingleLineEditField::treatFocusOut()
     editorWidget->treatFocusOut();
 }
 
+void SingleLineEditField::notifyAboutHotKeyEventForOtherWidget()
+{
+    if (hasFocus && editorWidget->isCursorBlinking()) {
+        editorWidget->startCursorBlinking(); // redraw Cursor while Hotkey for other widget
+    }
+}
+

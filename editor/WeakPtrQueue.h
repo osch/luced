@@ -42,11 +42,11 @@ public:
         ptrArray.append(x);
     }
     
-    T* getLast() const {
-        T* rslt = NULL;
-        while (ptrArray.getLength() > 0 && rslt == NULL) {
+    WeakPtr<T> getLast() const {
+        WeakPtr<T> rslt;
+        while (ptrArray.getLength() > 0 && rslt.isInvalid()) {
             rslt = ptrArray.getLast();
-            if (rslt == NULL) {
+            if (rslt.isInvalid()) {
                 ptrArray.removeLast();
             }
         }

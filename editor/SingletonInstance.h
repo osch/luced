@@ -49,6 +49,10 @@ public:
         return instancePtr.getRawPtr();
     }
 
+    bool isValid() const {
+        return wasInstantiated && instancePtr.isValid();
+    }
+
 private:
     bool wasInstantiated;
     WeakPtr<T> instancePtr;

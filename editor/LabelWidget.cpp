@@ -34,7 +34,8 @@ LabelWidget::LabelWidget(GuiWidget* parent, const string& leftText, const string
       leftText(leftText),
       rightText(rightText),
       adjustment(VerticalAdjustment::TOP),
-      layoutHeight(0)
+      layoutHeight(0),
+      fakeFocusFlag(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -59,7 +60,7 @@ GuiElement::Measures LabelWidget::getDesiredMeasures()
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
     int height = util::maximum(getGuiTextHeight() + guiSpacing, layoutHeight);
     int width  = getGuiTextStyle()->getTextWidth(leftText.c_str(), leftText.length()) + guiSpacing;
-    return Measures(width, height, width, height, INT_MAX, height);
+    return Measures(width, height, width, height, width, height);
 }
 
 GuiElement::ProcessingResult LabelWidget::processEvent(const XEvent *event)

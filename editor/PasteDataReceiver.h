@@ -25,10 +25,13 @@
 #include "ByteArray.h"
 #include "GuiWidget.h"
 #include "SelectionOwner.h"
+#include "TimeVal.h"
 
 namespace LucED {
 
-class PasteDataReceiver : GuiWidgetAccessForEventProcessors, SelectionOwnerAccessForPasteDataReceiver
+class PasteDataReceiver : public virtual HeapObject,
+                          public GuiWidgetAccessForEventProcessors, 
+                          public SelectionOwnerAccessForPasteDataReceiver
 {
 public:
     void requestSelectionPasting();
@@ -45,6 +48,9 @@ protected:
     virtual void notifyAboutEndOfPastingData() = 0;    
 
 private:
+
+    void handleTimerEvent();
+    TimeVal lastPasteEventTime;
 
     GuiWidget* baseWidget;
     bool isReceivingPasteDataFlag;

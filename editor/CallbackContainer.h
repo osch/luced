@@ -33,6 +33,16 @@ public:
     void registerCallback(const Callback0& callback) {
         listeners.append(callback);
     }
+    
+    void deregisterAllCallbacksFor(HeapObject* callbackObject) {
+        for (int i = 0; i < listeners.getLength();) {
+            if (listeners[i].getObjectPtr() == callbackObject) {
+                listeners.remove(i);
+            } else {
+                ++i;
+            }
+        }
+    }
 
     void invokeAllCallbacks() {
         for (long i = 0; i < listeners.getLength();) {
