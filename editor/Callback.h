@@ -241,6 +241,14 @@ class Callback0
 public:
     Callback0() {}
 
+    template<class S, class T> Callback0(OwningPtr<S> objectPtr, void (T::*methodPtr)()) {
+        this->callback = CallbackInternal::CallbackImpl0<T>::create(objectPtr, methodPtr);
+    }
+
+    template<class S, class T> Callback0(WeakPtr<S> objectPtr, void (T::*methodPtr)()) {
+        this->callback = CallbackInternal::CallbackImpl0<T>::create(objectPtr, methodPtr);
+    }
+
     template<class S, class T> Callback0(S* objectPtr, void (T::*methodPtr)()) {
         this->callback = CallbackInternal::CallbackImpl0<T>::create(objectPtr, methodPtr);
     }

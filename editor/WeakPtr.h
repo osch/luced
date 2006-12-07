@@ -54,6 +54,17 @@ public:
         }
     }
     
+    WeakPtr(const OwningPtr<T>& src) {
+        if (src.isValid()) {
+            ptr = src.getRawPtr();
+            heapObjectCounters = getHeapObjectCounters(ptr);
+            incWeakCounter(heapObjectCounters);
+        } else {
+            ptr = NULL;
+            heapObjectCounters = NULL;
+        }
+    }
+
     template<class S> WeakPtr(const OwningPtr<S>& src) {
         if (src.isValid()) {
             ptr = src.getRawPtr();

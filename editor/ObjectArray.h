@@ -81,7 +81,7 @@ public:
         ASSERT(i < getLength());
         return *this->getPtr(i);
     }
-    T getLast() const {
+    const T& getLast() const {
         ASSERT(getLength() > 0);
         return *this->getPtr(getLength() - 1);
     }

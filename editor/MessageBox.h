@@ -43,10 +43,23 @@ public:
         this->message = message;
         return *this;
     }
+    MessageBoxParameter& setDefaultButton(std::string buttonLabel, const Callback0& callback) {
+        defaultButtonLabel = buttonLabel;
+        defaultButtonCallback = callback;
+        return *this;
+    }
+    MessageBoxParameter& setCancelButton(std::string buttonLabel) {
+        cancelButtonLabel = buttonLabel;
+        return *this;
+    }
+    
 private:
     friend class MessageBox;
     std::string title;
     std::string message;
+    std::string defaultButtonLabel;
+    Callback0   defaultButtonCallback;
+    std::string cancelButtonLabel;
 };
 
 class MessageBox : public PanelDialogWin
@@ -67,6 +80,8 @@ private:
     void handleButtonPressed(Button* button);
 
     Button::Ptr button1;
+    Button::Ptr button2;
+    Callback0 defaultButtonCallback;
 };
 
 } // namespace LucED

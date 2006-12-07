@@ -924,6 +924,7 @@ void TextWidget::setTopLineNumber(long n)
     unclip();
     
     textData->flushPendingUpdates();
+    processAllExposureEvents();
     
     long oldTopLineNumber = getTopLineNumber();
     
@@ -978,6 +979,7 @@ void TextWidget::setTopLineNumber(long n)
             startCursorBlinking();
         }
     }
+    processAllExposureEvents();
 }
 
 
@@ -1082,6 +1084,7 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
 void TextWidget::internSetLeftPix(long newLeftPix)
 {
     textData->flushPendingUpdates();
+    processAllExposureEvents();
 
     if (newLeftPix < 0)
         newLeftPix = 0;
@@ -1131,6 +1134,7 @@ void TextWidget::internSetLeftPix(long newLeftPix)
             redraw();
         }
     }
+    processAllExposureEvents();
 }
 
 void TextWidget::setLeftPix(long newLeftPix)
@@ -1144,10 +1148,14 @@ void TextWidget::setResizeAdjustment(VerticalAdjustment::Type adjustment)
     this->adjustment = adjustment;
 }
 
+
 void TextWidget::setPosition(Position newPosition)
 {
     if (position != newPosition)
     {
+        textData->flushPendingUpdates();
+        processAllExposureEvents();
+        
         long oldTopLineNumber = getTopLineNumber();
         
         int oldVisibleLines = getNumberOfVisibleLines();
@@ -1199,8 +1207,10 @@ void TextWidget::setPosition(Position newPosition)
             setBitGravity(NorthWestGravity);
         }
 
+
         position = newPosition;
         unclip();
+
         
         visibleLines = newVisibleLines; // not rounded
         
@@ -1256,6 +1266,8 @@ void TextWidget::setPosition(Position newPosition)
         calcTotalPixWidth();
         updateVerticalScrollBar = true;
         updateHorizontalScrollBar = true;
+    
+        processAllExposureEvents();
     }
 }
 
@@ -1546,6 +1558,16 @@ GuiElement::ProcessingResult TextWidget::processEvent(const XEvent *event)
     }
 }
 
+
+void TextWidget::processAllExposureEvents()
+{
+    XFlush(getDisplay());
+    XEvent newEvent;
+    while (XCheckWindowEvent(getDisplay(), getWid(), ExposureMask, &newEvent) == True)
+    {
+        this->processEvent(&newEvent);
+    }
+}
 
 static inline void adjustLineInfoPosition(long *pos, long beginChangedPos, long oldEndChangedPos, long changedAmount)
 {

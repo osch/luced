@@ -19,34 +19,38 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REGEXEXCEPTION_H
-#define REGEXEXCEPTION_H
+#include "SearchHistory.h"
 
-#include <exception>
-#include <string>
+using namespace LucED;
 
-namespace LucED {
+SingletonInstance<SearchHistory> SearchHistory::instance;
 
-using std::exception;
-using std::string;
-
-class RegexException : public exception
+SearchHistory* SearchHistory::getInstance()
 {
-public:
-    RegexException(const char* message, int position);
-    RegexException(const string& message);
-    virtual ~RegexException() throw() {}
-    virtual const char *what();
-    string getMessage();
-    int getPosition() const {
-        return position;
+    return instance.getPtr();
+}
+
+SearchHistory::SearchHistory()
+{
+    entries.append(Entry("", ""));
+}
+
+
+void SearchHistory::append(std::string findString, std::string replaceString)
+{
+    bool wasAppended = false;
+
+    Entry& last = entries.getLast();
+    if (last.getFindString() == "" || last.getFindString() == findString)
+    {
+        if (last.getReplaceString() == "" || last.getReplaceString() == replaceString) {
+            last.setFindString(findString);
+            last.setReplaceString(replaceString);
+            wasAppended = true;
+        }
     }
-private:
-    const char* whatString;
-    string message;
-    int position;
-};
 
-} // namespace LucED
-
-#endif // REGEXEXCEPTION_H
+    if (!wasAppended) {
+        entries.append(Entry(findString, replaceString));
+    }
+}

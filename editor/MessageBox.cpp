@@ -32,7 +32,16 @@ using namespace LucED;
 MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
     : PanelDialogWin(referingWindow)
 {
-    button1 = Button::create(this, "O]K");
+    if (p.defaultButtonLabel == "") {
+        button1 = Button::create(this, "O]K");
+    } else {
+        button1 = Button::create(this, p.defaultButtonLabel);
+        if (p.cancelButtonLabel == "") {
+            button2 = Button::create(this, "C]ancel");
+        } else {
+            button2 = Button::create(this, p.cancelButtonLabel);
+        }
+    }
    
     LabelWidget::Ptr label0 = LabelWidget::create(this, p.message);
     GuiLayoutColumn::Ptr column0 = GuiLayoutColumn::create();
@@ -48,21 +57,39 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
 
     row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
     row0->addElement(button1);
+    if (button2.isValid()) {
+        row0->addElement(button2);
+    }
     row0->addElement(GuiLayoutSpacer::create(3, 0, 10, 0, 10, 0));
     //row0->addElement(cancelButton);
     row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
     
+    if (p.defaultButtonCallback.isValid()) {
+        defaultButtonCallback = p.defaultButtonCallback;
+    }
     Callback1<Button*> buttonCallback(this, &MessageBox::handleButtonPressed);
     button1->setButtonPressedCallback(buttonCallback);
 
+    if (button2.isValid()) {
+        button2->setButtonPressedCallback(buttonCallback);
+    }
+
     label0->show();
     button1->show();
+    if (button2.isValid()) {
+        button2->show();
+    }
     
     button1->setAsDefaultButton();
     setTitle(p.title);
 
     label0->setNextFocusWidget(button1);
-    button1->setNextFocusWidget(label0);
+    if (button2.isValid()) {
+        button1->setNextFocusWidget(button2);
+        button2->setNextFocusWidget(label0);
+    } else {
+        button1->setNextFocusWidget(label0);
+    }
     setFocus(label0);
     label0->setFakeFocus(true);
 }
@@ -70,9 +97,15 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
 
 void MessageBox::handleButtonPressed(Button* button)
 {
-    if (button == button1)
-    {
-        requestCloseWindow();
+    if (button == button1 && defaultButtonCallback.isValid()) {
+            requestCloseWindow();
+            defaultButtonCallback.call();
+    } else {
+        if ((button == button1 && button2.isInvalid()) 
+         || (button == button2 && button2.isValid()))
+        {
+            requestCloseWindow();
+        }
     }
 }
 

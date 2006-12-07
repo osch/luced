@@ -39,6 +39,8 @@ public:
 
     void assureCursorVisible();
     void moveCursorToTextMarkAndAdjustVisibility(TextData::MarkHandle m);
+    void moveCursorToTextPositionAndAdjustVisibility(int position);
+    void adjustCursorVisibility();
     
     void showCursor();
     void hideCursor();

@@ -178,3 +178,8 @@ void SingleLineEditField::notifyAboutHotKeyEventForOtherWidget()
     }
 }
 
+void SingleLineEditField::setCursorPosition(int position)
+{
+    editorWidget->moveCursorToTextPositionAndAdjustVisibility(position);
+}
+

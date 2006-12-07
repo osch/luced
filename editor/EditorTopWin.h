@@ -64,7 +64,8 @@ public:
     virtual void requestCloseFor(GuiWidget* w);
     virtual void requestCloseChildWindow(TopWin *topWin);
     void invokeGotoLinePanel();
-    void invokeFindPanel();
+    void invokeFindPanelBackward();
+    void invokeFindPanelForward();
 
 private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);

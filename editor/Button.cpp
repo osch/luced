@@ -41,7 +41,7 @@ Button::Button(GuiWidget* parent, string buttonText)
         hasFocus(false),
         hasHotKey(false),
         showHotKey(false),
-        isPermanentDefaultButton(false)
+        isExplicitDefaultButton(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -152,7 +152,7 @@ bool Button::isMouseInsideButtonArea(int mouseX, int mouseY)
                             && y >= BUTTON_OUTER_BORDER - 1 && y <= position.h - 2*BUTTON_OUTER_BORDER + 1);
 }
 
-static const int shortTime = 50 * 1000;
+static const int shortTime = 20 * 1000;
 
 static void waitShort(int microSecs = shortTime)
 {
@@ -217,7 +217,11 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                     int x = event->xbutton.x;
                     int y = event->xbutton.y;
                     if (isMouseInsideButtonArea(x, y)) {
-                        pressedCallback.call(this);
+                        if (pressedCallback0.isValid()) {
+                            pressedCallback0.call();
+                        } else {
+                            pressedCallback1.call(this);
+                        }
                     }
                 }
                 return EVENT_PROCESSED;
@@ -357,7 +361,7 @@ void Button::treatFocusIn()
 void Button::treatFocusOut()
 {
     hasFocus = false;
-    if (!isPermanentDefaultButton) {
+    if (!isExplicitDefaultButton) {
         requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
         requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
     }
@@ -377,7 +381,11 @@ void Button::emulateButtonPress()
     isButtonPressed = oldIsButtonPressed;
     drawButton();
     XFlush(getDisplay()); waitShort();
-    pressedCallback.call(this);    
+    if (pressedCallback0.isValid()) {
+        pressedCallback0.call();
+    } else {
+        pressedCallback1.call(this);
+    }
 }
 
 void Button::treatHotKeyEvent(const KeyMapping::Id& id)
@@ -385,9 +393,16 @@ void Button::treatHotKeyEvent(const KeyMapping::Id& id)
     emulateButtonPress();
 }
 
-void Button::setAsDefaultButton()
+void Button::setAsDefaultButton(bool isDefault)
 {
-    requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
-    requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
-    isPermanentDefaultButton = true;
+    if (isDefault != isExplicitDefaultButton) {
+        if (isDefault) {
+            requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
+            requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
+            isExplicitDefaultButton = true;
+        } else {
+            isExplicitDefaultButton = false;
+        }
+        drawButton();
+    }
 }

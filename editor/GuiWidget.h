@@ -66,6 +66,9 @@ public:
     
     virtual void show();
     virtual void hide();
+    bool isVisible() const {
+        return visible;
+    }
     
     enum FocusType {
         NO_FOCUS,
@@ -186,6 +189,7 @@ private:
     Position position;
     WeakPtr<GuiWidget> nextFocusWidget;
     WeakPtr<GuiWidget> prevFocusWidget;
+    bool visible;
 };
 
 class GuiWidgetAccessForEventProcessors

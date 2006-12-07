@@ -29,6 +29,8 @@
 #include "SingleLineEditField.h"
 #include "MessageBox.h"
 #include "Callback.h"
+#include "Regex.h"
+#include "types.h"
 
 namespace LucED {
 
@@ -43,11 +45,25 @@ public:
     
     virtual void treatFocusIn();
     
+    void setDefaultDirection(Direction::Type direction) {
+        ASSERT(direction == Direction::UP || direction == Direction::DOWN);
+        defaultDirection = direction;
+        findPrevButton->setAsDefaultButton(direction != Direction::DOWN);
+        findNextButton->setAsDefaultButton(direction == Direction::DOWN);
+    }
+    
+    void findAgainForward();
+    void findAgainBackward();
+    
 private:
     FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker);
 
     void handleButtonPressed(Button* button);
 
+    void handleContinueAtBeginningButton();
+    void handleContinueAtEndButton();
+    
+    void internalFindNext(bool forward, int textPosition, bool wrapping);
 
     WeakPtr<TextEditorWidget> editorWidget;
 
@@ -60,6 +76,8 @@ private:
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
     Callback1<MessageBoxParameter> messageBoxInvoker;
+    Regex regex;
+    Direction::Type defaultDirection;
 };
 
 } // namespace LucED

@@ -86,7 +86,8 @@ GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsi
     : isTopWindow(true),
       parent(NULL),
       eventMask(0),
-      position(x, y, width, height)
+      position(x, y, width, height),
+      visible(false)
 {
     wid = XCreateSimpleWindow(getDisplay(), getRootWid(), 
             x, y, width, height, border_width, 
@@ -101,7 +102,8 @@ GuiWidget::GuiWidget(GuiWidget* parent,
     : isTopWindow(false),
       parent(parent),
       eventMask(0),
-      position(x, y, width, height)
+      position(x, y, width, height),
+      visible(false)
 {
     wid = XCreateSimpleWindow(getDisplay(), parent->getWid(), 
             x, y, width, height, border_width, 
@@ -176,11 +178,13 @@ void GuiWidget::setSize(int width, int height)
 void GuiWidget::show()
 {
     XMapWindow(getDisplay(), wid);
+    visible = true;
 }
 
 void GuiWidget::hide()
 {
     XUnmapWindow(getDisplay(), wid);
+    visible = false;
 }
 
 void GuiWidget::setBackgroundColor(GuiColor color)

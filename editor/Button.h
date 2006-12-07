@@ -45,7 +45,13 @@ public:
     int getStandardHeight();
 
     void setButtonPressedCallback(const Callback1<Button*>& callback) {
-        pressedCallback = callback;
+        pressedCallback1 = callback;
+        pressedCallback0.disable();
+    }
+    
+    void setButtonPressedCallback(const Callback0 callback) {
+        pressedCallback0 = callback;
+        pressedCallback1.disable();
     }
     
     virtual void treatFocusIn();
@@ -62,7 +68,7 @@ public:
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatHotKeyEvent(const KeyMapping::Id& id);
     
-    void setAsDefaultButton();
+    void setAsDefaultButton(bool isDefault = true);
     
     void emulateButtonPress();
     
@@ -76,9 +82,11 @@ private:
     bool isButtonPressed;
     bool isMouseButtonPressed;
     bool isMouseOverButton;
-    Callback1<Button*> pressedCallback;
+    Callback1<Button*> pressedCallback1;
+    Callback0          pressedCallback0;
+
     bool isDefaultButton;
-    bool isPermanentDefaultButton;
+    bool isExplicitDefaultButton;
     bool hasFocus;
     TimeVal earliestButtonReleaseTime;
     bool hasHotKey;

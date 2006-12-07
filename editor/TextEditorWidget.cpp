@@ -73,9 +73,8 @@ void TextEditorWidget::assureCursorVisible()
     }
 }
 
-void TextEditorWidget::moveCursorToTextMarkAndAdjustVisibility(TextData::MarkHandle m)
+void TextEditorWidget::adjustCursorVisibility()
 {
-    moveCursorToTextMark(m);
     if (getCursorLineNumber() < getTopLineNumber()) {
         int newTopLineNumber = getCursorLineNumber() - getNumberOfVisibleLines() / 4;
         if (newTopLineNumber < 0) {
@@ -89,8 +88,29 @@ void TextEditorWidget::moveCursorToTextMarkAndAdjustVisibility(TextData::MarkHan
         }
         setTopLineNumber(newTopLineNumber);
     }
+    long pixX = getCursorPixX();
+    int spaceWidth = getTextStyles()->get(0)->getSpaceWidth();
+    
+    if (pixX < getLeftPix() + spaceWidth) {
+        setLeftPix(pixX - spaceWidth);
+    } else if (pixX > getRightPix() - spaceWidth) {
+        long newLeftPix = spaceWidth 
+                * util::roundedUpDiv(pixX - (getRightPix() - getLeftPix()) + spaceWidth, spaceWidth);
+        setLeftPix(newLeftPix);
+    }
 }
 
+void TextEditorWidget::moveCursorToTextMarkAndAdjustVisibility(TextData::MarkHandle m)
+{
+    moveCursorToTextMark(m);
+    adjustCursorVisibility();
+}
+
+void TextEditorWidget::moveCursorToTextPositionAndAdjustVisibility(int position)
+{
+    moveCursorToTextPosition(position);
+    adjustCursorVisibility();
+}
 
 void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long length)
 {

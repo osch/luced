@@ -54,6 +54,8 @@ public:
     TextData* getTextData() {
         return editorWidget->getTextData();
     }
+    
+    void setCursorPosition(int position);
 
     virtual ProcessingResult processEvent(const XEvent *event);
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);

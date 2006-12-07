@@ -76,10 +76,6 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
       wasNeverShown(true)
 {
     addToXEventMask(ButtonPressMask);
-    keyMapping.set(            ControlMask, XK_l,      Callback0(this, &EditorTopWin::invokeGotoLinePanel));
-    keyMapping.set(            ControlMask, XK_f,      Callback0(this, &EditorTopWin::invokeFindPanel));
-    keyMapping.set(            ControlMask, XK_w,      Callback0(this, &EditorTopWin::requestCloseWindow));
-    keyMapping.set(                      0, XK_Escape, Callback0(this, &EditorTopWin::handleEscapeKey));
     
     statusLine = StatusLine::create(this);
     int statusLineIndex = rootElement->addElement(statusLine);
@@ -158,6 +154,17 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     scrollBarV->show();
     scrollBarH->show();
     statusLine->show();
+
+    findPanel = FindPanel::create(this, textEditor, 
+                                  Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox));
+
+    keyMapping.set(            ControlMask, XK_l,      Callback0(this,      &EditorTopWin::invokeGotoLinePanel));
+    keyMapping.set(            ControlMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelForward));
+    keyMapping.set(  ControlMask|ShiftMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelBackward));
+    keyMapping.set(            ControlMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainForward));
+    keyMapping.set(  ControlMask|ShiftMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainBackward));
+    keyMapping.set(            ControlMask, XK_w,      Callback0(this,      &EditorTopWin::requestCloseWindow));
+    keyMapping.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
 }
 
 void EditorTopWin::show()
@@ -265,12 +272,20 @@ void EditorTopWin::invokeGotoLinePanel()
 }
 
 
-void EditorTopWin::invokeFindPanel()
+void EditorTopWin::invokeFindPanelForward()
+{
+    ASSERT(findPanel.isValid());
+    findPanel->setDefaultDirection(Direction::DOWN);
+    invokePanel(findPanel);
+}
+
+void EditorTopWin::invokeFindPanelBackward()
 {
     if (findPanel.isInvalid()) {
         findPanel = FindPanel::create(this, textEditor, 
                                       Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox));
     }
+    findPanel->setDefaultDirection(Direction::UP);
     invokePanel(findPanel);
 }
 
@@ -303,6 +318,9 @@ void EditorTopWin::invokePanel(DialogPanel* panel)
 void EditorTopWin::requestCloseFor(GuiWidget* w)
 {
     if (w == invokedPanel) {
+        if (messageBox.isValid()) {
+            requestCloseChildWindow(messageBox);
+        }
         int panelIndex;
         if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
             textEditor->setResizeAdjustment(VerticalAdjustment::BOTTOM);

@@ -188,6 +188,8 @@ private:
     
     void drawCursor(long cursorPos);
     
+    void processAllExposureEvents();
+    
     TimeVal cursorNextBlinkTime;
     
     Position position;

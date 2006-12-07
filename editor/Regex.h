@@ -39,6 +39,7 @@ public:
     enum CreateOption {
         MULTILINE = PCRE_MULTILINE,
         EXTENDED = PCRE_EXTENDED,
+        ANCHORED = PCRE_ANCHORED
     };
     typedef OptionBits<CreateOption> CreateOptions;
     
