@@ -50,7 +50,7 @@ void File::loadInto(ByteBuffer& buffer)
     }
 }
 
-string File::getAbsoluteFileName()
+string File::getAbsoluteFileName() const
 {
     string buffer;
     if (name.length() > 0 && name[0] == '/') {
@@ -75,3 +75,22 @@ string File::getAbsoluteFileName()
     return buffer;
 }
 
+string File::getBaseName() const
+{
+    int i = name.length();
+    while (i > 0 && name[i-1] != '/') {
+        i -= 1;
+    }
+    return name.substr(i);
+}
+
+string File::getDirName() const
+{
+    string absoluteName = getAbsoluteFileName();
+
+    int i = absoluteName.length();
+    while (i > 0 && absoluteName[i-1] != '/') {
+        i -= 1;
+    }
+    return absoluteName.substr(0, i);
+}

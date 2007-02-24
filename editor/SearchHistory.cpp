@@ -38,6 +38,9 @@ SearchHistory::SearchHistory()
 
 void SearchHistory::append(std::string findString, std::string replaceString)
 {
+    if (findString == "" && replaceString == "") {
+        return;
+    }
     bool wasAppended = false;
 
     Entry& last = entries.getLast();

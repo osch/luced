@@ -54,6 +54,8 @@ public:
     
     void findAgainForward();
     void findAgainBackward();
+
+    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
     
 private:
     FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker);
@@ -78,6 +80,7 @@ private:
     Callback1<MessageBoxParameter> messageBoxInvoker;
     Regex regex;
     Direction::Type defaultDirection;
+    int historyIndex;
 };
 
 } // namespace LucED

@@ -31,6 +31,7 @@
 #include "GuiLayoutSpacer.h"
 #include "Callback.h"
 #include "WeakPtr.h"
+#include "File.h"
 
 using namespace LucED;
 
@@ -122,6 +123,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     TextData::Ptr textData = hilitedText->getTextData();
     
     textData->registerFileNameListener(statusLine->slotForSetFileName);
+    textData->registerFileNameListener(Callback1<const string&>(this, &EditorTopWin::handleNewFileName));
     textData->registerLengthListener(statusLine->slotForSetFileLength);
     textEditor->registerLineAndColumnListener(statusLine->slotForSetLineAndColumn);
     
@@ -354,5 +356,12 @@ void EditorTopWin::invokeMessageBox(MessageBoxParameter p)
     }
     messageBox = MessageBox::create(this, p);
     messageBox->requestFocus();
+}
+
+void EditorTopWin::handleNewFileName(const string& fileName)
+{
+    File file(fileName);
+    
+    setTitle(file.getBaseName() + " - " + file.getDirName());
 }
 

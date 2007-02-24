@@ -35,10 +35,20 @@ class TopWinOwner : public virtual HeapObject
 {
 public:
     virtual void requestCloseChildWindow(TopWin *topWin);
+    
 protected:
     TopWinOwner();
-    int getNumberOfChildWindows()       const { return ownedTopWins.getLength(); }
+
+    int getNumberOfChildWindows() const {
+        return ownedTopWins.getLength();
+    }
+    
+    TopWin* getChildWindow(int i) {
+        return ownedTopWins[i];
+    }
+    
     TopWin* getLastFocusedOwnedTopWin() const { return lastFocusedOwnedTopWin; }
+
 private:
     friend class TopWinOwnerAccessForTopWin;
     virtual void reportFocusOwnership(TopWin *topWin);

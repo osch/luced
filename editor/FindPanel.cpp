@@ -19,6 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <X11/keysym.h>
+
 #include "FindPanel.h"
 #include "GuiLayoutColumn.h"
 #include "GuiLayoutRow.h"
@@ -34,7 +36,8 @@ FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback
     : DialogPanel(parent),
       editorWidget(editorWidget),
       messageBoxInvoker(messageBoxInvoker),
-      defaultDirection(Direction::DOWN)
+      defaultDirection(Direction::DOWN),
+      historyIndex(-1)  
 {
     GuiLayoutColumn::Ptr  c0 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr  c1 = GuiLayoutColumn::create();
@@ -105,6 +108,7 @@ FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback
     ignoreCaseCheckBox->show();
     regularExprCheckBox->show();
     wholeWordCheckBox->show();
+
 }
 
 void FindPanel::treatFocusIn()
@@ -114,9 +118,10 @@ void FindPanel::treatFocusIn()
 }
 
 
-
 void FindPanel::internalFindNext(bool forward, int textPosition, bool isWrapping)
 {
+    historyIndex = -1;
+
     int editFieldLength = editField->getTextData()->getLength();
     std::string editFieldContent((char*)editField->getTextData()->getAmount(0, editFieldLength), editFieldLength);
 
@@ -272,3 +277,40 @@ void FindPanel::findAgainBackward()
 }
 
     
+GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event)
+{
+    bool processed = false;
+    KeyMapping::Id pressedKey(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+
+    if (KeyMapping::Id(0, XK_Up)    == pressedKey
+     || KeyMapping::Id(0, XK_KP_Up) == pressedKey)
+    {
+        if (historyIndex < 0) {
+            int editFieldLength = editField->getTextData()->getLength();
+            std::string editFieldContent((char*)editField->getTextData()->getAmount(0, editFieldLength), editFieldLength);
+            SearchHistory::getInstance()->append(editFieldContent);
+            historyIndex = SearchHistory::getInstance()->getEntryCount();
+        }
+        if (historyIndex > 0) {
+            --historyIndex;
+            WeakPtr<TextData> textData = editField->getTextData();
+            textData->clear();
+            std::string lastFindString = SearchHistory::getInstance()->getEntry(historyIndex).getFindString();
+            textData->insertAtMark(textData->createNewMark(), (const byte*) lastFindString.c_str(), lastFindString.length());
+            
+        } 
+        processed = true;
+    }
+    else if (KeyMapping::Id(0, XK_Down)    == pressedKey
+          || KeyMapping::Id(0, XK_KP_Down) == pressedKey)
+    {
+        processed = true;
+    }
+    if (!processed) {
+        return DialogPanel::processKeyboardEvent(event);
+    } else {
+        return EVENT_PROCESSED;
+    }
+}
+
+

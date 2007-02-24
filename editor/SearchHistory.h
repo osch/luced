@@ -64,6 +64,14 @@ public:
         return entries.getLast();
     }
 
+    int getEntryCount() const {
+        return entries.getLength();
+    }
+    
+    const Entry& getEntry(int index) const {
+        return entries[index];
+    }
+    
 private:
     friend class SingletonInstance<SearchHistory>;
     static SingletonInstance<SearchHistory> instance;

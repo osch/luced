@@ -40,6 +40,10 @@ public:
     int getNumberOfTopWins() const {
         return getNumberOfChildWindows();
     }
+    
+    TopWin* getTopWin(int i) {
+        return getChildWindow(i);
+    }
 
 private:
     friend class SingletonInstance<TopWinList>;

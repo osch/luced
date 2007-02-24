@@ -39,7 +39,11 @@ public:
         : name(fileName)
     {}
     
-    string getAbsoluteFileName();
+    string getAbsoluteFileName() const;
+    
+    string getBaseName() const;
+    
+    string getDirName() const;
 
     void loadInto(ByteBuffer& buffer);
     

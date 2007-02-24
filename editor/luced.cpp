@@ -36,30 +36,76 @@ int main(int argc, char **argv)
     {
         SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
         
-        string fileName;
-        if (argc >= 2) {
-            fileName = argv[1];
-        }
-
         GlobalConfig::getInstance()->readConfig("./config");
 
-        TextStyles::Ptr     textStyles     = GlobalConfig::getInstance()->getTextStyles();
-        LanguageMode::Ptr   languageMode   = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
-        
-        TextData::Ptr textData    = TextData::create();
-        HilitedText::Ptr hilitedText = HilitedText::create(textData, languageMode);
+        TextStyles::Ptr  textStyles     = GlobalConfig::getInstance()->getTextStyles();
 
-        EditorTopWin::Ptr win = EditorTopWin::create(textStyles, hilitedText);
-        win->setTitle("Title - Test");
-        win->show();
+        for (int argIndex = 1; argIndex < argc; ++argIndex)
+        {
+            const char* fileName;
+            int         numberOfWindowsForThisFile = 1;
+            
+            while (argIndex < argc && argv[argIndex][0] == '-' && argv[argIndex][1] != '-')
+            {
+                // Parameter is a command option
+            
+                if (strcmp(argv[argIndex], "-n") == 0)
+                {
+                    argIndex += 1;
 
-        if (argc >= 2) {
-            textData->loadFile(argv[1]);  // TODO: this is all experimental!
+                    if (argIndex >= argc) {
+                        fprintf(stderr, "Command option -n needs additional argument\n");
+                        return 8;
+                    }
+                    
+                    numberOfWindowsForThisFile = atoi(argv[argIndex]);
+                    
+                    if (numberOfWindowsForThisFile < 1) {
+                        fprintf(stderr, "Command option -n needs additional argument number >= 1\n");
+                        return 8;
+                    }
+                    
+                    argIndex += 1;
+                }
+                else
+                {
+                    fprintf(stderr, "Unknown command option %s\n", argv[argIndex]);
+                    return 8;
+                }
+            }
+            if (argIndex < argc)
+            {
+                // Parameter is a filename
+
+                if (argv[argIndex][0] == '-') {
+                    fileName = argv[argIndex] + 1;  // "--fname" means filename == "-fname"
+                } else {
+                    fileName = argv[argIndex];
+                }
+                
+                LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
+                TextData::Ptr     textData     = TextData::create();
+                HilitedText::Ptr  hilitedText  = HilitedText::create(textData, languageMode);
+
+                textData->loadFile(fileName);
+
+                for (int i = 0; i < numberOfWindowsForThisFile; ++i)
+                {
+                    EditorTopWin::Ptr win = EditorTopWin::create(textStyles, hilitedText);
+                }
+            }
+            else
+            {
+                fprintf(stderr, "Command needs filename parameter\n");
+                return 8;
+            }
         }
+        
+        TopWinList* topWins = TopWinList::getInstance();
 
-        EditorTopWin::Ptr win2 = EditorTopWin::create(textStyles, hilitedText);
-        win2->setTitle("Title - Test2");
-        win2->show();
+        for (int i = 0; i < topWins->getNumberOfTopWins(); ++i) {
+            topWins->getTopWin(i)->show();
+        }
         
         EventDispatcher::getInstance()->doEventLoop();
     }

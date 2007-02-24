@@ -73,6 +73,8 @@ private:
     void invokePanel(DialogPanel* panel);
     void invokeMessageBox(MessageBoxParameter p);
     
+    void handleNewFileName(const string& fileName);
+    
     MultiLineEditorWidget::Ptr textEditor;
     ScrollBar::Ptr scrollBarH;
     ScrollBar::Ptr scrollBarV;    
