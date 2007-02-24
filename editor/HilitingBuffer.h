@@ -47,7 +47,7 @@ public:
         return HilitingBuffer::Ptr(new HilitingBuffer(hiliting));
     }
     
-    int HilitingBuffer::getTextStyle(long textPos) {
+    int getTextStyle(long textPos) {
         if (textPos >= startPos && textPos - startPos < styleBuffer.getLength()) {
             return styleBuffer[textPos - startPos];
         } else {
