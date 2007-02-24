@@ -33,10 +33,7 @@ class TimeVal
 {
 public:
 
-    friend int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal)
-    {
-        return select(n, readfds, writefds, exceptfds, &timeVal->timeval);
-    }
+    friend int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal);
     
     /**
      * Time t2 should be later than t1.
@@ -155,6 +152,12 @@ public:
 public:
     struct timeval timeval;
 };
+
+
+inline int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal)
+{
+    return select(n, readfds, writefds, exceptfds, &timeVal->timeval);
+}
 
 
 } // namespace LucED
