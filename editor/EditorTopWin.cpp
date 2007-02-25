@@ -32,6 +32,7 @@
 #include "Callback.h"
 #include "WeakPtr.h"
 #include "File.h"
+#include "FileException.h"
 
 using namespace LucED;
 
@@ -122,6 +123,8 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     
     TextData::Ptr textData = hilitedText->getTextData();
     
+    textData->registerModifiedFlagListener(Callback1<bool>(this, &EditorTopWin::handleChangedModifiedFlag));
+    
     textData->registerFileNameListener(statusLine->slotForSetFileName);
     textData->registerFileNameListener(Callback1<const string&>(this, &EditorTopWin::handleNewFileName));
     textData->registerLengthListener(statusLine->slotForSetFileLength);
@@ -167,6 +170,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping.set(  ControlMask|ShiftMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainBackward));
     keyMapping.set(            ControlMask, XK_w,      Callback0(this,      &EditorTopWin::requestCloseWindow));
     keyMapping.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
+    keyMapping.set(            ControlMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveKey));
 }
 
 void EditorTopWin::show()
@@ -362,6 +366,30 @@ void EditorTopWin::handleNewFileName(const string& fileName)
 {
     File file(fileName);
     
-    setTitle(file.getBaseName() + " - " + file.getDirName());
+    if (textEditor->getTextData()->getModifiedFlag() == false) {
+        setTitle(file.getBaseName() + " - " + file.getDirName());
+    } else {
+        setTitle(file.getBaseName() + " (modified) - " + file.getDirName());
+    }
 }
 
+void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
+{
+    File file(textEditor->getTextData()->getFileName());
+    
+    if (modifiedFlag == false) {
+        setTitle(file.getBaseName() + " - " + file.getDirName());
+    } else {
+        setTitle(file.getBaseName() + " (modified) - " + file.getDirName());
+    }
+}
+
+void EditorTopWin::handleSaveKey()
+{
+    try {
+        textEditor->getTextData()->save();
+    } catch (FileException& ex) {
+        invokeMessageBox(MessageBoxParameter().setTitle("Error")
+                                              .setMessage(ex.getMessage()));
+    }
+}

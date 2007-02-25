@@ -28,7 +28,8 @@ using namespace std;
 using namespace LucED;
 
 TextData::TextData() 
-        : slotForFlushPendingUpdates(this, &TextData::flushPendingUpdates)
+        : slotForFlushPendingUpdates(this, &TextData::flushPendingUpdates),
+          modifiedFlag(false)
 {
     numberLines = 1;
     beginChangedPos = 0;
@@ -54,6 +55,21 @@ void TextData::loadFile(const char *filename)
     this->oldEndChangedPos = 0;
     this->fileName = File(filename).getAbsoluteFileName();
     fileNameListeners.invokeAllCallbacks(this->fileName);
+
+    if (modifiedFlag == true) {
+        modifiedFlag = false;
+        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+    }
+}
+
+void TextData::save()
+{
+    File(fileName).storeData(buffer);
+
+    if (modifiedFlag == true) {
+        modifiedFlag = false;
+        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+    }
 }
 
 long TextData::getLength() const {
@@ -185,6 +201,12 @@ long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
         this->numberLines += lineCounter;
         updateMarks(pos, pos, length, lineNumber, lineCounter);
     }
+
+    if (modifiedFlag == false) {
+        modifiedFlag = true;
+        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+    }
+
     return length;
 }
 
@@ -226,6 +248,11 @@ void TextData::removeAtMark(MarkHandle m, long amount)
     }
     this->numberLines -= lineCounter;
     updateMarks(pos, pos + amount, -amount, lineNumber, -lineCounter);
+
+    if (modifiedFlag == false) {
+        modifiedFlag = true;
+        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+    }
 }
 
 
@@ -240,6 +267,11 @@ void TextData::clear()
         this->oldEndChangedPos = oldLength;
         this->beginChangedPos = 0;
         updateMarks(0, oldLength, -oldLength, 0, -(oldNumberLines - 1));
+    }
+
+    if (modifiedFlag == false) {
+        modifiedFlag = true;
+        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
     }
 }
 
@@ -430,5 +462,11 @@ void TextData::registerLengthListener(Callback1<long> lengthCallback)
 {
     lengthListeners.registerCallback(lengthCallback);
     lengthCallback.call(getLength());
+}
+
+void TextData::registerModifiedFlagListener(Callback1<bool> modifiedFlagCallback)
+{
+    changedModifiedFlagListeners.registerCallback(modifiedFlagCallback);
+    modifiedFlagCallback.call(modifiedFlag);
 }
 

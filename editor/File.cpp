@@ -30,6 +30,7 @@
 #include "File.h"
 #include "ByteArray.h"
 #include "Regex.h"
+#include "FileException.h"
 
 using namespace LucED;
 using std::string;
@@ -45,8 +46,31 @@ void File::loadInto(ByteBuffer& buffer)
         fstat(fd, &stat_st);
         len = stat_st.st_size;
         ptr = buffer.appendAmount(len);
-        read(fd, ptr, len);
-        close(fd);
+        if (read(fd, ptr, len) == -1) {
+            throw FileException(string() + "error reading from file '" + name + "': " + strerror(errno));
+        }
+        if (close(fd) == -1) {
+            throw FileException(string() + "error closing file '" + name + "' after reading: " + strerror(errno));
+        }
+    } else {
+        throw FileException(string() + "error opening file '" + name + "' for reading: " + strerror(errno));
+    }
+}
+
+void File::storeData(ByteBuffer& data)
+{
+    int fd = open(name.c_str(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+    
+    if (fd != -1) {
+        long length = data.getLength();
+        if (write(fd, data.getAmount(0, length), length) == -1) {
+            throw FileException(string() + "error writing to file '" + name + "': " + strerror(errno));
+        }
+        if (close(fd) == -1) {
+            throw FileException(string() + "error closing file '" + name + "' after writing: " + strerror(errno));
+        }
+    } else {
+        throw FileException(string() + "error opening file '" + name + "' for writing: " + strerror(errno));
     }
 }
 

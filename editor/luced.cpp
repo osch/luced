@@ -49,30 +49,30 @@ int main(int argc, char **argv)
             {
                 // Parameter is a command option
             
-                if (strcmp(argv[argIndex], "-n") == 0)
+                if (strcmp(argv[argIndex], "-w") == 0)
                 {
                     argIndex += 1;
 
                     if (argIndex >= argc) {
-                        fprintf(stderr, "Command option -n needs additional argument\n");
+                        fprintf(stderr, "Command option -w needs additional argument\n");
                         return 8;
                     }
                     
                     numberOfWindowsForThisFile = atoi(argv[argIndex]);
                     
                     if (numberOfWindowsForThisFile < 1) {
-                        fprintf(stderr, "Command option -n needs additional argument number >= 1\n");
+                        fprintf(stderr, "Command option -w needs additional argument number >= 1\n");
                         return 8;
                     }
-                    
-                    argIndex += 1;
                 }
                 else
                 {
                     fprintf(stderr, "Unknown command option %s\n", argv[argIndex]);
                     return 8;
                 }
+                argIndex += 1;
             }
+            
             if (argIndex < argc)
             {
                 // Parameter is a filename

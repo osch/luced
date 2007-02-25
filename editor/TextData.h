@@ -148,6 +148,7 @@ public:
     }
 
     void loadFile(const char *filename);
+    void save();
 
     long getLength() const;
     long getNumberOfLines() const;
@@ -241,6 +242,7 @@ public:
     void registerUpdateListener(UpdateCallback updateCallback);
     void registerFileNameListener(Callback1<const string&> fileNameCallback);
     void registerLengthListener(Callback1<long> lengthCallback);
+    void registerModifiedFlagListener(Callback1<bool> modifiedFlagCallback);
     
     void flushPendingUpdatesIntern();
     void flushPendingUpdates() {
@@ -259,6 +261,14 @@ public:
     }
     long getLineNumberOfMark(MarkHandle mark) const {
         return marks[mark.index].line;
+    }
+    
+    string getFileName() const {
+        return fileName;
+    }
+    
+    bool getModifiedFlag() const {
+        return modifiedFlag;
     }
     
 private:
@@ -280,11 +290,13 @@ private:
     Callback1Container<UpdateInfo> updateListeners;
     Callback1Container<const string&> fileNameListeners;
     Callback1Container<long> lengthListeners;
+    Callback1Container<bool> changedModifiedFlagListeners;
     
     Callback2<const byte**, long*> filterCallback;
     
     string fileName;
     long oldLength;
+    bool modifiedFlag;
 };
 
 } // namespace LucED

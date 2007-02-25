@@ -19,41 +19,28 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FILE_H
-#define FILE_H
+#ifndef FILEEXCEPTION_H
+#define FILEEXCEPTION_H
 
+#include <exception>
 #include <string>
-
-#include "NonCopyable.h"
-#include "ByteBuffer.h"
 
 namespace LucED {
 
+using std::exception;
 using std::string;
 
-class File : public NonCopyable
+class FileException : public exception
 {
 public:
-
-    File(const string& fileName)
-        : name(fileName)
-    {}
-    
-    string getAbsoluteFileName() const;
-    
-    string getBaseName() const;
-    
-    string getDirName() const;
-
-    void loadInto(ByteBuffer& buffer);
-    
-    void storeData(ByteBuffer& data);
-    
+    FileException(string message);
+    virtual ~FileException() throw() {}
+    virtual const char *what();
+    string getMessage();
 private:
-    const string name;
+    string message;
 };
 
 } // namespace LucED
 
-#endif // FILE_H
-
+#endif // FILEEXCEPTION_H

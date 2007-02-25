@@ -70,10 +70,12 @@ public:
 private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
     void handleEscapeKey();
+    void handleSaveKey();
     void invokePanel(DialogPanel* panel);
     void invokeMessageBox(MessageBoxParameter p);
     
     void handleNewFileName(const string& fileName);
+    void handleChangedModifiedFlag(bool modifiedFlag);
     
     MultiLineEditorWidget::Ptr textEditor;
     ScrollBar::Ptr scrollBarH;

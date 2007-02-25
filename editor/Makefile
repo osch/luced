@@ -59,7 +59,8 @@ MODULES = EditorTopWin    EventDispatcher   GuiRoot            GuiWidget \
           DialogWin       GuiLayoutSpacer   MultiLineEditorWidget \
           SingleLineEditorWidget            StandardEditActions HeapObject \
           SingleLineEditField LabelWidget   DialogPanel        PanelDialogWin \
-          FindPanel       CheckBox          MessageBox         SearchHistory
+          FindPanel       CheckBox          MessageBox         SearchHistory \
+          FileException   
           
 
 OBJS   = $(patsubst %, $(BUILD_DIR)/%.o, $(MODULES))
