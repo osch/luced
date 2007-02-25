@@ -273,6 +273,8 @@ public:
     
 private:
 
+    friend class ViewCounterTextDataAccess;
+
     TextData();
     MemBuffer<byte> buffer;
     long numberLines;
@@ -297,6 +299,22 @@ private:
     string fileName;
     long oldLength;
     bool modifiedFlag;
+    int viewCounter;
+};
+
+
+class ViewCounterTextDataAccess
+{
+protected:
+    int getViewCounter(TextData* textData) {
+        return textData->viewCounter;
+    }
+    void decViewCounter(TextData* textData) {
+        textData->viewCounter -= 1;
+    }
+    void incViewCounter(TextData* textData) {
+        textData->viewCounter += 1;
+    }
 };
 
 } // namespace LucED

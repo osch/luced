@@ -122,6 +122,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 //    rootElement->setPosition(Position(0, 0, width, height));
     
     TextData::Ptr textData = hilitedText->getTextData();
+    ViewCounterTextDataAccess::incViewCounter(textData);
     
     textData->registerModifiedFlagListener(Callback1<bool>(this, &EditorTopWin::handleChangedModifiedFlag));
     
@@ -171,6 +172,11 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping.set(            ControlMask, XK_w,      Callback0(this,      &EditorTopWin::requestCloseWindow));
     keyMapping.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
     keyMapping.set(            ControlMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveKey));
+}
+
+EditorTopWin::~EditorTopWin()
+{
+    ViewCounterTextDataAccess::decViewCounter(textEditor->getTextData());
 }
 
 void EditorTopWin::show()
@@ -393,3 +399,40 @@ void EditorTopWin::handleSaveKey()
                                               .setMessage(ex.getMessage()));
     }
 }
+
+void EditorTopWin::saveAndClose()
+{
+    try {
+        textEditor->getTextData()->save();
+        requestCloseWindow();
+    } catch (FileException& ex) {
+        invokeMessageBox(MessageBoxParameter().setTitle("Error")
+                                              .setMessage(ex.getMessage()));
+    }
+}
+
+void EditorTopWin::requestCloseWindow()
+{
+    File file(textEditor->getTextData()->getFileName());
+
+    if (ViewCounterTextDataAccess::getViewCounter(textEditor->getTextData()) == 1
+     && textEditor->getTextData()->getModifiedFlag() == true)
+    {
+        invokeMessageBox(MessageBoxParameter().setTitle("Save File")
+                                              .setMessage(string() + "Save file '" + file.getBaseName() 
+                                                                   + "' before closing?")
+                                              .setDefaultButton(    "S]ave",    Callback0(this, &EditorTopWin::saveAndClose))
+                                              .setAlternativeButton("D]iscard", Callback0(this, &EditorTopWin::requestCloseWindowAndDiscardChanges)));
+        
+    }
+    else
+    {
+        TopWin::requestCloseWindow();
+    }
+}
+
+void EditorTopWin::requestCloseWindowAndDiscardChanges()
+{
+    TopWin::requestCloseWindow();
+}
+

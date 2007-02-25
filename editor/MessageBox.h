@@ -48,6 +48,11 @@ public:
         defaultButtonCallback = callback;
         return *this;
     }
+    MessageBoxParameter& setAlternativeButton(std::string buttonLabel, const Callback0& callback) {
+        alternativeButtonLabel = buttonLabel;
+        alternativeButtonCallback = callback;
+        return *this;
+    }
     MessageBoxParameter& setCancelButton(std::string buttonLabel) {
         cancelButtonLabel = buttonLabel;
         return *this;
@@ -59,6 +64,8 @@ private:
     std::string message;
     std::string defaultButtonLabel;
     Callback0   defaultButtonCallback;
+    std::string alternativeButtonLabel;
+    Callback0   alternativeButtonCallback;
     std::string cancelButtonLabel;
 };
 
@@ -81,7 +88,9 @@ private:
 
     Button::Ptr button1;
     Button::Ptr button2;
+    Button::Ptr button3;
     Callback0 defaultButtonCallback;
+    Callback0 alternativeButtonCallback;
 };
 
 } // namespace LucED

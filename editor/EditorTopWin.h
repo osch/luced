@@ -40,7 +40,8 @@
 namespace LucED {
 
 
-class EditorTopWin : public TopWin
+class EditorTopWin : public  TopWin,
+                     private ViewCounterTextDataAccess
 {
 public:
     typedef WeakPtr<EditorTopWin> Ptr;
@@ -52,6 +53,8 @@ public:
                 new EditorTopWin(textStyles, hilitedText),
                 TopWinList::getInstance());
     }
+    
+    ~EditorTopWin();
     
     virtual ProcessingResult processEvent(const XEvent *event);
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);
@@ -66,9 +69,13 @@ public:
     void invokeGotoLinePanel();
     void invokeFindPanelBackward();
     void invokeFindPanelForward();
-
+    virtual void requestCloseWindow();
+    
 private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
+    void saveAndClose();
+    void requestCloseWindowAndDiscardChanges();
+
     void handleEscapeKey();
     void handleSaveKey();
     void invokePanel(DialogPanel* panel);

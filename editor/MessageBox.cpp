@@ -37,10 +37,14 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
     } else {
         button1 = Button::create(this, p.defaultButtonLabel);
         if (p.cancelButtonLabel == "") {
-            button2 = Button::create(this, "C]ancel");
+            button3 = Button::create(this, "C]ancel");
         } else {
-            button2 = Button::create(this, p.cancelButtonLabel);
+            button3 = Button::create(this, p.cancelButtonLabel);
         }
+    }
+
+    if (p.alternativeButtonLabel.length() > 0) {
+        button2 = Button::create(this, p.alternativeButtonLabel);
     }
    
     LabelWidget::Ptr label0 = LabelWidget::create(this, p.message);
@@ -60,6 +64,9 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
     if (button2.isValid()) {
         row0->addElement(button2);
     }
+    if (button3.isValid()) {
+        row0->addElement(button3);
+    }
     row0->addElement(GuiLayoutSpacer::create(3, 0, 10, 0, 10, 0));
     //row0->addElement(cancelButton);
     row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
@@ -71,11 +78,20 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
     button1->setButtonPressedCallback(buttonCallback);
 
     if (button2.isValid()) {
+        if (p.alternativeButtonCallback.isValid()) {
+            alternativeButtonCallback = p.alternativeButtonCallback;
+        }
         button2->setButtonPressedCallback(buttonCallback);
+    }
+    if (button3.isValid()) {
+        button3->setButtonPressedCallback(buttonCallback);
     }
 
     label0->show();
     button1->show();
+    if (button3.isValid()) {
+        button3->show();
+    }
     if (button2.isValid()) {
         button2->show();
     }
@@ -83,15 +99,17 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
     button1->setAsDefaultButton();
     setTitle(p.title);
 
-    label0->setNextFocusWidget(button1);
-    if (button2.isValid()) {
-        button1->setNextFocusWidget(button2);
-        button2->setNextFocusWidget(label0);
-    } else {
-        button1->setNextFocusWidget(label0);
+    if (button3.isValid()) {
+        if (button2.isValid()) {
+            button1->setNextFocusWidget(button2);
+            button2->setNextFocusWidget(button3);
+            button3->setNextFocusWidget(button1);
+        } else {
+            button1->setNextFocusWidget(button3);
+            button3->setNextFocusWidget(button1);
+        }
     }
-    setFocus(label0);
-    label0->setFakeFocus(true);
+    setFocus(button1);
 }
 
 
@@ -101,10 +119,14 @@ void MessageBox::handleButtonPressed(Button* button)
             requestCloseWindow();
             defaultButtonCallback.call();
     } else {
-        if ((button == button1 && button2.isInvalid()) 
-         || (button == button2 && button2.isValid()))
+        if ((button == button1 && button3.isInvalid()) 
+         || (button == button3 && button3.isValid()))
         {
             requestCloseWindow();
+        }
+        else if (button == button2) {
+            requestCloseWindow();
+            alternativeButtonCallback.call();
         }
     }
 }

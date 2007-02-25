@@ -29,7 +29,8 @@ using namespace LucED;
 
 TextData::TextData() 
         : slotForFlushPendingUpdates(this, &TextData::flushPendingUpdates),
-          modifiedFlag(false)
+          modifiedFlag(false),
+          viewCounter(0)
 {
     numberLines = 1;
     beginChangedPos = 0;
