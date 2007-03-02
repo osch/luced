@@ -43,15 +43,6 @@ static int myX11ErrorHandler(Display *display, XErrorEvent *errorEvent)
     fprintf(stderr, "LucED: %s\n", buffer);
 }
 
-void GuiRoot::onexitFunc()
-{
-    GuiRoot *guiRoot = GuiRoot::getInstance();
-    if (guiRoot->originalKeyboardModeWasAutoRepeat) {
-        XAutoRepeatOn(guiRoot->display);
-        XFlush(guiRoot->display);
-    }
-}
-
 GuiRoot::GuiRoot()
 {
     XSetErrorHandler(myX11ErrorHandler);
@@ -95,8 +86,6 @@ GuiRoot::GuiRoot()
     XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor05().c_str(),
             &xcolor1_st, &xcolor2_st);
     guiColor05 = GuiColor(xcolor1_st.pixel);
-
-    //atexit(onexitFunc);
 }
 
 GuiRoot::~GuiRoot()
@@ -105,6 +94,7 @@ GuiRoot::~GuiRoot()
         XAutoRepeatOn(display);
         XFlush(display);
     }
+    XCloseDisplay(display);
 }
 
 GuiColor GuiRoot::getGuiColor(const string& colorName)

@@ -94,7 +94,6 @@ private:
     GuiColor guiColor04;
     GuiColor guiColor05;
 
-    static void onexitFunc();
 };
 
 
