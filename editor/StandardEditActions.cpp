@@ -98,12 +98,17 @@ void StandardEditActions::cursorWordLeft()
     {
         e->releaseSelectionOwnership();
 
-        long pos = e->getCursorTextPosition();
+        long cursorPos = e->getCursorTextPosition();
+        long pos = cursorPos;
+        
         while (pos > 0 && !e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
             --pos;
         }
-        while (pos > 0 && e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
-            --pos;
+        if (pos == cursorPos)
+        {
+            while (pos > 0 && e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
+                --pos;
+            }
         }
         e->moveCursorToTextPosition(pos);
     }
@@ -118,13 +123,18 @@ void StandardEditActions::cursorWordRight()
     {
         e->releaseSelectionOwnership();
 
-        long pos = e->getCursorTextPosition();
+        long cursorPos = e->getCursorTextPosition();
         long len = e->getTextData()->getLength();
+
+        long pos = cursorPos;
         while (pos < len && e->isWordCharacter(e->getTextData()->getChar(pos))) {
             ++pos;
         }
-        while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
-            ++pos;
+        if (pos == cursorPos)
+        {
+            while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
+                ++pos;
+            }
         }
         e->moveCursorToTextPosition(pos);
     }
@@ -224,8 +234,11 @@ void StandardEditActions::selectionCursorWordLeft()
         while (pos > 0 && !e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
             --pos;
         }
-        while (pos > 0 && e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
-            --pos;
+        if (pos == cursorPos)
+        {
+            while (pos > 0 && e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
+                --pos;
+            }
         }
         e->moveCursorToTextPosition(pos);
         e->getBackliteBuffer()->extendSelectionTo(e->getCursorTextPosition());
@@ -249,8 +262,11 @@ void StandardEditActions::selectionCursorWordRight()
         while (pos < len && e->isWordCharacter(e->getTextData()->getChar(pos))) {
             ++pos;
         }
-        while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
-            ++pos;
+        if (pos == cursorPos)
+        {
+            while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
+                ++pos;
+            }
         }
         e->moveCursorToTextPosition(pos);
         e->getBackliteBuffer()->extendSelectionTo(e->getCursorTextPosition());
@@ -692,6 +708,39 @@ void StandardEditActions::redo()
     e->rememberCursorPixX();
 }
 
+
+void StandardEditActions::selectWord()
+{
+    if (!e->areCursorChangesDisabled())
+    {
+        long len  = e->getTextData()->getLength();
+        long cursorPos = e->getCursorTextPosition();
+        long spos = cursorPos;
+        long epos = cursorPos;
+
+        while (epos < len
+               && e->isWordCharacter(e->getTextData()->getChar(epos)))
+        {
+            ++epos;
+        }
+        
+        while (spos > 0
+               && e->isWordCharacter(e->getTextData()->getChar(spos - 1)))
+        {
+            --spos;
+        }
+
+        if (!e->hasSelectionOwnership()) {
+            e->requestSelectionOwnership();
+        }
+        e->getBackliteBuffer()->activateSelection(spos);
+        e->getBackliteBuffer()->extendSelectionTo(epos);
+    }
+    e->assureCursorVisible();
+    e->rememberCursorPixX();
+}
+
+
 void StandardEditActions::registerSingleLineEditActionsToEditWidget()
 {
     e->setEditAction(                    0, XK_Left,      this, &StandardEditActions::cursorLeft);
@@ -740,6 +789,8 @@ void StandardEditActions::registerSingleLineEditActionsToEditWidget()
 
     e->setEditAction(          ControlMask, XK_z,         this, &StandardEditActions::undo);
     e->setEditAction(ShiftMask|ControlMask, XK_z,         this, &StandardEditActions::redo);
+
+    e->setEditAction(          ControlMask, XK_space,     this, &StandardEditActions::selectWord);
 }
 
 

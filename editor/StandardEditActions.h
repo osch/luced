@@ -80,7 +80,8 @@ public:
     void selectionCursorPageDown();
     void selectionCursorPageUp();
     void undo();
-    void redo();    
+    void redo();
+    void selectWord();
     
 private:
     StandardEditActions(TextEditorWidget *editWidget);
