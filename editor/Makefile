@@ -64,9 +64,11 @@ MODULES = EditorTopWin           EventDispatcher     GuiRoot            GuiWidge
           CommandlineException
           
 
-LIB_OBJS = $(patsubst %, $(BUILD_DIR)/libluced.a(%.o), $(MODULES))
+LIB_MBRS = $(patsubst %, $(BUILD_DIR)/libluced.a(%.o), $(MODULES))
+LIB_OBJS = $(patsubst %, $(BUILD_DIR)/%.o,             $(MODULES))
 
-.PHONY: default clean
+.PHONY:        default clean
+.INTERMEDIATE: $(LIB_OBJS)
 
 default: luced lc
 
@@ -79,7 +81,7 @@ lc: $(BUILD_DIR)/lc.o $(BUILD_DIR)/libluced.a
 $(BUILD_DIR)/%.o: %.cpp
 	$(COMPILE_RUN)
 
-$(BUILD_DIR)/libluced.a: $(LIB_OBJS)
+$(BUILD_DIR)/libluced.a: $(LIB_MBRS)
 
 $(BUILD_DIR)/libluced.a(%.o): $(BUILD_DIR)/%.o
 	ar -r $(BUILD_DIR)/libluced.a $<
@@ -120,7 +122,7 @@ endif
 define COMPILE_RUN
 	@mkdir -p $(@D) && mkdir -p $(BUILD_DIR)/deps
 	$(CPPCOMP_PRG) -g $(CPPCOMP_OPTS) $(CPP_DEFINES) $(INCL_OPTS) -c $<  -o "$@" \
-	-MMD -MT "$@" -MF $(BUILD_DIR)/deps/$(*F).dep 
+	-MMD -MF $(BUILD_DIR)/deps/$(*F).dep 
 endef
 
 define LINK_RUN
