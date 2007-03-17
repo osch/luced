@@ -34,7 +34,9 @@ class TopWin;
 class TopWinList : public TopWinOwner
 {
 public:
-    static TopWinList* getInstance();
+    static TopWinList* getInstance() {
+        return instance.getPtr();
+    }
     virtual void requestCloseChildWindow(TopWin *topWin);
 
     int getNumberOfTopWins() const {

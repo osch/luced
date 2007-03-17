@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2006 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,25 +19,32 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "EventDispatcher.h"
-#include "TopWinList.h"
-#include "Clipboard.h"
-#include "GlobalConfig.h"
+#ifndef COMMANDLINEEXCEPTION_H
+#define COMMANDLINEEXCEPTION_H
 
-using namespace LucED;
+#include <exception>
+#include <string>
 
-SingletonInstance<TopWinList> TopWinList::instance;
+namespace LucED {
 
+using std::exception;
+using std::string;
 
-void TopWinList::requestCloseChildWindow(TopWin *topWin)
+class CommandlineException : public exception
 {
-    TopWinOwner::requestCloseChildWindow(topWin);
-    
-    if (getNumberOfChildWindows() == 0
-     && (!GlobalConfig::getInstance()->shouldKeepRunningIfOwningClipboard() 
-      || !Clipboard::getInstance()->hasClipboardOwnership()))
-    {
-        EventDispatcher::getInstance()->requestProgramTermination();
-    }
-    
-}
+public:
+    CommandlineException(const string& message)
+        : message(message)
+    {}
+
+    virtual ~CommandlineException() throw() {}
+    virtual const char *what();
+    string getMessage();
+
+private:
+    string message;
+};
+
+} // namespace LucED
+
+#endif // COMMANDLINEEXCEPTION_H

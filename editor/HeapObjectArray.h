@@ -70,6 +70,10 @@ public:
         ASSERT(ObjectArray<T>::getLength() > 0);
         return get(ObjectArray<T>::getLength() - 1);
     }
+    
+    void set(long i, const T& value) {
+        at(i) = value;
+    }
 
 private:
 

@@ -80,6 +80,23 @@ public:
             return getPtr(startPos);
         }
     }
+    const T* getAmount(long startPos, long amount) const {
+        long endPos = startPos + amount;
+        ASSERT(0 <= startPos && startPos <= endPos
+                && endPos <= getLength());
+        if (gapPos < startPos || endPos <= gapPos) {
+            return getPtr(startPos);
+        } else {
+            long newGap;
+            if (gapPos - startPos < endPos - gapPos) {
+                newGap = startPos;
+            } else {
+                newGap = endPos;
+            }
+            moveGap(newGap);
+            return getPtr(startPos);
+        }
+    }
     T* getTotalAmount() {
         return getAmount(0, getLength());
     }
@@ -112,6 +129,8 @@ public:
         return *this; 
     }
     MemBuffer& removeAmount(long pos, long amount) {
+        ASSERT(0 <= pos && pos <= getLength());
+        ASSERT(pos < getLength() || amount == 0);
         moveGap(pos);
         gapSize += amount * sizeof(T);
         return *this;
@@ -120,13 +139,16 @@ public:
         gapPos = 0;
         gapSize = mem.getCapacity();
     }
+    MemBuffer& removeTail(long pos) {
+        return removeAmount(pos, getLength() - pos);
+    }
 
 private:
-    long gapPos;
-    long gapSize; // in Bytes 
-    HeapMem mem;
+    mutable long gapPos;
+    mutable long gapSize; // in Bytes 
+    mutable HeapMem mem;
 
-    void moveGap(long pos) {
+    void moveGap(long pos) const {
         if (gapPos != pos) {
             byte* buffer = mem.getPtr(0);
             long len;

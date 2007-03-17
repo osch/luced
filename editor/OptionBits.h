@@ -42,6 +42,15 @@ public:
     T getOptions() {
         return bits;
     }
+    bool isSet(B bit) const {
+        return bits & bit;
+    }
+    void clear() {
+        bits = 0;
+    }
+    void set(B bit) {
+        bits |= bit;
+    }
 private:
     T bits;
 };

@@ -33,6 +33,7 @@
 #include "ProcessHandler.h"
 #include "HashMap.h"
 #include "SingletonInstance.h"
+#include "GuiRootProperty.h"
 
 namespace LucED {
 
@@ -71,6 +72,9 @@ public:
     }
     
     void registerProcess(ProcessHandler process);
+
+    void registerEventReceiverForRootProperty(GuiRootProperty property,
+                                              Callback1<XEvent*> callback);
     
 private:
     friend class SingletonInstance<EventDispatcher>;
@@ -115,6 +119,10 @@ private:
     
     ObjectArray<ProcessHandler> processes;
     
+    typedef HashMap< GuiRootProperty, Callback1<XEvent*> > RootPropertiesMap;
+    RootPropertiesMap rootPropertyListeners;
+    bool hasRootPropertyListeners;
+    Window rootWid;
 };
 
 

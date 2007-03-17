@@ -29,11 +29,6 @@ using namespace LucED;
 
 SingletonInstance<GuiRoot> GuiRoot::instance;
 
-GuiRoot* GuiRoot::getInstance()
-{
-    return instance.getPtr();
-}
-
 static char buffer[4000];
 
 static int myX11ErrorHandler(Display *display, XErrorEvent *errorEvent)

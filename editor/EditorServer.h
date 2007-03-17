@@ -19,25 +19,50 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "EventDispatcher.h"
-#include "TopWinList.h"
-#include "Clipboard.h"
-#include "GlobalConfig.h"
+#ifndef EDITORSERVER_H
+#define EDITORSERVER_H
 
-using namespace LucED;
+#include <string>
 
-SingletonInstance<TopWinList> TopWinList::instance;
+#include "HeapObject.h"
+#include "SingletonInstance.h"
+#include "GuiRootProperty.h"
+#include "HeapObjectArray.h"
 
-
-void TopWinList::requestCloseChildWindow(TopWin *topWin)
+namespace LucED
 {
-    TopWinOwner::requestCloseChildWindow(topWin);
+
+using std::string;
+
+class EditorServer : public HeapObject
+{
+public:
     
-    if (getNumberOfChildWindows() == 0
-     && (!GlobalConfig::getInstance()->shouldKeepRunningIfOwningClipboard() 
-      || !Clipboard::getInstance()->hasClipboardOwnership()))
-    {
-        EventDispatcher::getInstance()->requestProgramTermination();
+    static EditorServer* getInstance() {
+        return instance.getPtr();
     }
     
-}
+    ~EditorServer();
+    
+    void startWithCommandline(HeapObjectArray<string>::Ptr commandline);
+    
+private:
+    friend class SingletonInstance<EditorServer>;
+    static SingletonInstance<EditorServer> instance;
+  
+    EditorServer()
+        : isStarted(false)
+    {}
+    
+    void processEventForServerProperty(XEvent* event);
+    void processEventForCommandProperty(XEvent* event);
+    void processCommandline(HeapObjectArray<string>::Ptr commandline);
+
+    bool isStarted;
+    GuiRootProperty serverProperty;
+    GuiRootProperty commandProperty;
+};
+
+} // namespace LucED
+
+#endif // EDITORSERVER_H

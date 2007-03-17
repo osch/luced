@@ -79,7 +79,8 @@ public:
     void selectionCursorEndOfLine();
     void selectionCursorPageDown();
     void selectionCursorPageUp();
-    
+    void undo();
+    void redo();    
     
 private:
     StandardEditActions(TextEditorWidget *editWidget);

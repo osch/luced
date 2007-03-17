@@ -2,3 +2,4 @@ sandbox.mk
 sandbox_options.h
 build
 luced
+test.cpp

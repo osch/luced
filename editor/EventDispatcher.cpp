@@ -39,8 +39,9 @@ EventDispatcher* EventDispatcher::getInstance()
 }
 
 EventDispatcher::EventDispatcher()
+    : doQuit(false),
+      hasRootPropertyListeners(false)
 {
-    doQuit = false;
     x11FileDescriptor = ConnectionNumber(GuiRoot::getInstance()->getDisplay());
 }
 
@@ -93,14 +94,31 @@ void EventDispatcher::processEvent(XEvent *event)
             XRefreshKeyboardMapping(&event->xmapping);
         }
     } else {
-        WidgetMap::Value foundWidget = widgetMap.get(event->xany.window);
-        if (foundWidget.isValid()) {
-            foundWidget.get()->processEvent(event);
-        } else {
-            foundWidget = foreignWidgetListeners.get(event->xany.window);
-            if (foundWidget.isValid()){
+        if (hasRootPropertyListeners && event->xany.window == rootWid
+                                     && event->type == PropertyNotify)
+        {
+            GuiRootProperty property(event->xproperty.atom);
+            RootPropertiesMap::Value foundListener = rootPropertyListeners.get(property);
+            if (foundListener.isValid()) {
+                Callback1<XEvent*> callback = foundListener.get();
+                if (callback.isValid()) {
+                    callback.call(event);
+                } else {
+                    rootPropertyListeners.remove(property);
+                }
+            }
+        }
+        else
+        {
+            WidgetMap::Value foundWidget = widgetMap.get(event->xany.window);
+            if (foundWidget.isValid()) {
                 foundWidget.get()->processEvent(event);
-            }   
+            } else {
+                foundWidget = foreignWidgetListeners.get(event->xany.window);
+                if (foundWidget.isValid()){
+                    foundWidget.get()->processEvent(event);
+                }   
+            }
         }
     }
 }
@@ -212,6 +230,7 @@ void EventDispatcher::doEventLoop()
             }
         }
     }
+    doQuit = false;
 }
 
 void EventDispatcher::registerUpdateSource(const UpdateCallback& updateCallback)
@@ -247,5 +266,19 @@ void EventDispatcher::deregisterAllUpdateSourceCallbacksFor(WeakPtr<HeapObject> 
 {
     updateCallbacks.deregisterAllCallbacksFor(callbackObject);
 }
+
+
+void EventDispatcher::registerEventReceiverForRootProperty(GuiRootProperty property,
+                                                           Callback1<XEvent*> callback)
+{
+    if (!hasRootPropertyListeners) {
+        GuiRoot* root = GuiRoot::getInstance();
+        rootWid = root->getRootWid();
+        XSelectInput(root->getDisplay(), rootWid, PropertyChangeMask);    
+        hasRootPropertyListeners = true;
+    }
+    rootPropertyListeners.set(property, callback);
+}
+
 
 

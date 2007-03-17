@@ -46,34 +46,43 @@ LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_LUA_OPTS) $(LINK_EX
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 
                  
-MODULES = EditorTopWin    EventDispatcher   GuiRoot            GuiWidget \
-          HeapMem         HilitingBase      KeyPressRepeater   ScrollBar \
-          luced           TextData          TextEditorWidget   TextStyle \
-          TextWidget      TopWin            HilitedText        SyntaxPatterns \
-          HilitingBuffer  LuaException      File               Regex \
-          LuaObject       LuaInterpreter    ConfigException    GlobalConfig \
-          LanguageModes   RegexException    BackliteBuffer     Clipboard \
-          SelectionOwner  PasteDataReceiver StatusLine         GuiLayoutRow \
-          Button          GuiLayoutColumn   GuiLayoutWidget \
-          GotoLinePanel   SingletonKeeper   TopWinList         TopWinOwner \
-          DialogWin       GuiLayoutSpacer   MultiLineEditorWidget \
-          SingleLineEditorWidget            StandardEditActions HeapObject \
-          SingleLineEditField LabelWidget   DialogPanel        PanelDialogWin \
-          FindPanel       CheckBox          MessageBox         SearchHistory \
-          FileException   
+MODULES = EditorTopWin           EventDispatcher     GuiRoot            GuiWidget \
+          HeapMem                HilitingBase        KeyPressRepeater   ScrollBar \
+                                 TextData            TextEditorWidget   TextStyle \
+          TextWidget             TopWin              HilitedText        SyntaxPatterns \
+          HilitingBuffer         LuaException        File               Regex \
+          LuaObject              LuaInterpreter      ConfigException    GlobalConfig \
+          LanguageModes          RegexException      BackliteBuffer     Clipboard \
+          SelectionOwner         PasteDataReceiver   StatusLine         GuiLayoutRow \
+          Button                 GuiLayoutColumn     GuiLayoutWidget \
+          GotoLinePanel          SingletonKeeper     TopWinList         TopWinOwner \
+          DialogWin              GuiLayoutSpacer     MultiLineEditorWidget \
+          SingleLineEditorWidget StandardEditActions HeapObject \
+          SingleLineEditField    LabelWidget         DialogPanel        PanelDialogWin \
+          FindPanel              CheckBox            MessageBox         SearchHistory \
+          FileException          EditorServer        ClientServerUtil   EditorClient  \
+          CommandlineException
           
 
-OBJS   = $(patsubst %, $(BUILD_DIR)/%.o, $(MODULES))
+LIB_OBJS = $(patsubst %, $(BUILD_DIR)/libluced.a(%.o), $(MODULES))
 
 .PHONY: default clean
 
-default: luced
+default: luced lc
 
-luced: $(OBJS)
+luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
+	$(LINK_RUN)
+
+lc: $(BUILD_DIR)/lc.o $(BUILD_DIR)/libluced.a
 	$(LINK_RUN)
 
 $(BUILD_DIR)/%.o: %.cpp
 	$(COMPILE_RUN)
+
+$(BUILD_DIR)/libluced.a: $(LIB_OBJS)
+
+$(BUILD_DIR)/libluced.a(%.o): $(BUILD_DIR)/%.o
+	ar -r $(BUILD_DIR)/libluced.a $<
 
 clean:
 	rm -rf $(BUILD_DIR)

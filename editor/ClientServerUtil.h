@@ -19,25 +19,32 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "EventDispatcher.h"
-#include "TopWinList.h"
-#include "Clipboard.h"
-#include "GlobalConfig.h"
+#ifndef CLIENTSERVERUTIL_H
+#define CLIENTSERVERUTIL_H
 
-using namespace LucED;
+#include <string>
 
-SingletonInstance<TopWinList> TopWinList::instance;
+#include "GuiRootProperty.h"
+#include "HeapObjectArray.h"
 
-
-void TopWinList::requestCloseChildWindow(TopWin *topWin)
+namespace LucED
 {
-    TopWinOwner::requestCloseChildWindow(topWin);
+
+using std::string;
+
+class ClientServerUtil
+{
+public:
+    static GuiRootProperty getDefaultServerRunningProperty();
     
-    if (getNumberOfChildWindows() == 0
-     && (!GlobalConfig::getInstance()->shouldKeepRunningIfOwningClipboard() 
-      || !Clipboard::getInstance()->hasClipboardOwnership()))
-    {
-        EventDispatcher::getInstance()->requestProgramTermination();
-    }
+    static GuiRootProperty getDefaultServerCommandProperty();
     
-}
+    static string quoteCommandline(HeapObjectArray<string>::Ptr commandline);
+
+    static HeapObjectArray<string>::Ptr unquoteCommandline(const string& commandline);
+};
+
+} // namespace LucED
+
+#endif // CLIENTSERVERUTIL_H
+

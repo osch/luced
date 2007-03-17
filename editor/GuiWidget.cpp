@@ -467,8 +467,8 @@ void GuiWidget::drawDottedFrame(int x, int y, int w, int h)
     Window wid = getWid();
     GC gc = GuiWidgetSingletonData::getInstance()->getGcid();
 
-    XSetLineAttributes(display, gc, 0, 
-        LineOnOffDash, CapProjecting, JoinMiter);
+    XSetLineAttributes(display, gc, 1, 
+        LineOnOffDash, CapButt, JoinMiter);
 
     char dashList[] = { 1, 1 };
     XSetDashes(display, gc, 0, dashList, sizeof(dashList));
@@ -485,7 +485,7 @@ void GuiWidget::drawDottedFrame(int x, int y, int w, int h)
     XDrawLine(display, wid,  gc,    x + w, y + 0,    x + w, y + h);
 
     XSetLineAttributes(display, gc, 0, 
-        LineSolid, CapProjecting, JoinMiter);
+        LineSolid, CapButt, JoinMiter);
 }
 
 

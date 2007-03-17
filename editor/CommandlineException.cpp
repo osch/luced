@@ -19,25 +19,19 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "EventDispatcher.h"
-#include "TopWinList.h"
-#include "Clipboard.h"
-#include "GlobalConfig.h"
+#include "CommandlineException.h"
+
 
 using namespace LucED;
 
-SingletonInstance<TopWinList> TopWinList::instance;
-
-
-void TopWinList::requestCloseChildWindow(TopWin *topWin)
+const char* CommandlineException::what()
 {
-    TopWinOwner::requestCloseChildWindow(topWin);
-    
-    if (getNumberOfChildWindows() == 0
-     && (!GlobalConfig::getInstance()->shouldKeepRunningIfOwningClipboard() 
-      || !Clipboard::getInstance()->hasClipboardOwnership()))
-    {
-        EventDispatcher::getInstance()->requestProgramTermination();
-    }
-    
+    static const char* whatString = "CommandlineException";
+    return whatString;
 }
+
+string CommandlineException::getMessage()
+{
+    return message;
+}
+

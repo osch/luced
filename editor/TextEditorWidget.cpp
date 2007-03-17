@@ -45,7 +45,7 @@ TextEditorWidget::TextEditorWidget(GuiWidget *parent,
 {
     hasFocusFlag = false;
     addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
-
+    getTextData()->activateHistory();
 }
 
 

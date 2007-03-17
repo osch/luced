@@ -40,7 +40,10 @@ class GuiRoot : public HeapObject
 {
 public:
 
-    static GuiRoot* getInstance();
+    static GuiRoot* getInstance() {
+        return instance.getPtr();
+    }
+    
     ~GuiRoot();
     
     Window getRootWid() const {

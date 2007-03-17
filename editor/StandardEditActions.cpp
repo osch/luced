@@ -642,6 +642,56 @@ void StandardEditActions::pasteFromClipboard()
     e->rememberCursorPixX();
 }
 
+void StandardEditActions::undo()
+{
+    if (!e->areCursorChangesDisabled())
+    {
+        TextData::TextMark mark = e->createNewMarkFromCursor();
+        long length = e->getTextData()->undo(mark);
+        e->moveCursorToTextMark(mark);
+        if (length > 0) {
+            e->requestSelectionOwnership();
+            if (e->hasSelectionOwnership()) {
+                long cursorPos = e->getCursorTextPosition();
+                e->getBackliteBuffer()->activateSelection(cursorPos);
+                e->moveCursorToTextPosition(cursorPos + length);
+                e->getBackliteBuffer()->extendSelectionTo(e->getCursorTextPosition());
+            }
+        } else {
+            if (e->hasSelectionOwnership()) {
+                e->releaseSelectionOwnership();
+            }
+        }
+    }
+    e->assureCursorVisible();
+    e->rememberCursorPixX();
+}
+
+void StandardEditActions::redo()
+{
+    if (!e->areCursorChangesDisabled())
+    {
+        TextData::TextMark mark = e->createNewMarkFromCursor();
+        long length = e->getTextData()->redo(mark);
+        e->moveCursorToTextMark(mark);
+        if (length > 0) {
+            e->requestSelectionOwnership();
+            if (e->hasSelectionOwnership()) {
+                long cursorPos = e->getCursorTextPosition();
+                e->getBackliteBuffer()->activateSelection(cursorPos);
+                e->moveCursorToTextPosition(cursorPos + length);
+                e->getBackliteBuffer()->extendSelectionTo(e->getCursorTextPosition());
+            }
+        } else {
+            if (e->hasSelectionOwnership()) {
+                e->releaseSelectionOwnership();
+            }
+        }
+    }
+    e->assureCursorVisible();
+    e->rememberCursorPixX();
+}
+
 void StandardEditActions::registerSingleLineEditActionsToEditWidget()
 {
     e->setEditAction(                    0, XK_Left,      this, &StandardEditActions::cursorLeft);
@@ -687,6 +737,9 @@ void StandardEditActions::registerSingleLineEditActionsToEditWidget()
     e->setEditAction(            ShiftMask, XK_Home,      this, &StandardEditActions::selectionCursorBeginOfLine);
     e->setEditAction(            ShiftMask, XK_Begin,     this, &StandardEditActions::selectionCursorBeginOfLine);
     e->setEditAction(            ShiftMask, XK_End,       this, &StandardEditActions::selectionCursorEndOfLine);
+
+    e->setEditAction(          ControlMask, XK_z,         this, &StandardEditActions::undo);
+    e->setEditAction(ShiftMask|ControlMask, XK_z,         this, &StandardEditActions::redo);
 }
 
 

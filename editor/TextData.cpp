@@ -30,7 +30,8 @@ using namespace LucED;
 TextData::TextData() 
         : slotForFlushPendingUpdates(this, &TextData::flushPendingUpdates),
           modifiedFlag(false),
-          viewCounter(0)
+          viewCounter(0),
+          hasHistoryFlag(false)
 {
     numberLines = 1;
     beginChangedPos = 0;
@@ -40,7 +41,7 @@ TextData::TextData()
     EventDispatcher::getInstance()->registerUpdateSource(slotForFlushPendingUpdates);
 }
 
-void TextData::loadFile(const char *filename)
+void TextData::loadFile(const string& filename)
 {
     File(filename).loadInto(buffer);
     long len = buffer.getLength();
@@ -67,6 +68,9 @@ void TextData::save()
 {
     File(fileName).storeData(buffer);
 
+    if (hasHistory()) {
+        history->setPreviousActionToSavedState();
+    }
     if (modifiedFlag == true) {
         modifiedFlag = false;
         changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
@@ -167,11 +171,8 @@ void TextData::setInsertFilterCallback(Callback2<const byte**, long*> filterCall
 }
 
 
-long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
+inline long TextData::internalInsertAtMark(MarkHandle m, const byte* insertBuffer, long length)
 {
-    if (filterCallback.isValid()) {
-        filterCallback.call(&insertBuffer, &length);
-    }
     if (length > 0)
     {
         int lineCounter = 0;
@@ -203,26 +204,119 @@ long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
         updateMarks(pos, pos, length, lineNumber, lineCounter);
     }
 
-    if (modifiedFlag == false) {
-        modifiedFlag = true;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-    }
-
     return length;
 }
 
-long TextData::insertAtMark(MarkHandle m, byte c)
+long TextData::undo(MarkHandle m)
 {
-    return insertAtMark(m, &c, 1);
+    long totalLength = 0;
+    
+    if (hasHistory())
+    {
+        do
+        {
+            switch (history->getPreviousActionType())
+            {
+                case EditingHistory::ACTION_INSERT: {
+                    long pos               = history->getPreviousActionTextPos();
+                    long length            = history->getPreviousActionLength();
+                    moveMarkToPos(m, pos);
+                    history->undoInsertAction(buffer.getAmount(pos, length));
+                    internalRemoveAtMark(m, length);
+                    break;
+                }
+                case EditingHistory::ACTION_DELETE: {
+                    long pos               = history->getPreviousActionTextPos();
+                    long length            = history->getPreviousActionLength();
+                    moveMarkToPos(m, pos);
+                    internalInsertAtMark(m,  history->getContentForUndoDeleteAction(), length);
+                    history->undoDeleteAction();
+                    totalLength += length;
+                    break;
+                }
+                case EditingHistory::ACTION_NONE: {
+                    break;
+                }
+            }
+        } while (!history->isPreviousActionSectionSeperator());
+
+        bool newModifiedFlag = !history->isPreviousActionSavedState();
+        if (newModifiedFlag != modifiedFlag) {
+            modifiedFlag = newModifiedFlag;
+            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        }
+    }
+    return totalLength;
 }
 
-long TextData::insertAtMark(MarkHandle m, const ByteArray& insertBuffer)
+long TextData::redo(MarkHandle m)
 {
-    return insertAtMark(m, insertBuffer.getPtr(0), insertBuffer.getLength());
+    long totalLength = 0;
+        
+    if (hasHistory())
+    {
+        do
+        {
+            switch (history->getNextActionType())
+            {
+                case EditingHistory::ACTION_INSERT: {
+                    long pos               = history->getNextActionTextPos();
+                    long length            = history->getNextActionLength();
+                    moveMarkToPos(m, pos);
+                    internalInsertAtMark(m, history->getContentForRedoInsertAction(), length);
+                    history->redoInsertAction();
+                    totalLength += length;
+                    break;
+                }
+                case EditingHistory::ACTION_DELETE: {
+                    long pos               = history->getNextActionTextPos();
+                    long length            = history->getNextActionLength();
+                    moveMarkToPos(m, pos);
+                    history->redoDeleteAction(buffer.getAmount(pos, length), length);
+                    internalRemoveAtMark(m, length);
+                    break;
+                }
+                case EditingHistory::ACTION_NONE: {
+                    break;
+                }
+            }
+        } while (!history->isPreviousActionSectionSeperator());
+
+        bool newModifiedFlag = !history->isPreviousActionSavedState();
+        if (newModifiedFlag != modifiedFlag) {
+            modifiedFlag = newModifiedFlag;
+            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        }
+    }
+    return totalLength;
+}
+
+long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
+{
+    if (filterCallback.isValid()) {
+        filterCallback.call(&insertBuffer, &length);
+    }
+    if (length > 0)
+    {
+        if (hasHistory()) {
+            TextMarkData& mark = marks[m.index];
+            long pos = mark.pos;
+            history->rememberInsertAction(pos, length);
+        }
+        internalInsertAtMark(m, insertBuffer, length);
+
+        if (modifiedFlag == false) {
+            modifiedFlag = true;
+            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        }
+    }
+    return length;
 }
 
 
-void TextData::removeAtMark(MarkHandle m, long amount)
+
+
+inline void TextData::internalRemoveAtMark(MarkHandle m, long amount)
 {
     TextMarkData& mark = marks[m.index];
     long lineNumber = mark.line;
@@ -249,6 +343,23 @@ void TextData::removeAtMark(MarkHandle m, long amount)
     }
     this->numberLines -= lineCounter;
     updateMarks(pos, pos + amount, -amount, lineNumber, -lineCounter);
+
+    if (modifiedFlag == false) {
+        modifiedFlag = true;
+        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+    }
+}
+
+void TextData::removeAtMark(MarkHandle m, long amount)
+{
+    TextMarkData& mark = marks[m.index];
+
+    if (hasHistory()) {
+        history->rememberDeleteAction(mark.pos, 
+                                      amount, 
+                                      buffer.getAmount(mark.pos, amount));
+    }
+    internalRemoveAtMark(m, amount);
 
     if (modifiedFlag == false) {
         modifiedFlag = true;
@@ -434,6 +545,10 @@ void TextData::moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark)
 void TextData::flushPendingUpdatesIntern()
 {
     ASSERT(changedAmount != 0 || oldEndChangedPos != 0);
+    
+    if (hasHistory()) {
+        history->setSectionMarkOnHistoryTop();
+    }
 
     updateListeners.invokeAllCallbacks(UpdateInfo(beginChangedPos, oldEndChangedPos, changedAmount));
     

@@ -19,105 +19,65 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "EditorTopWin.h"
+#include <string>
+
 #include "EventDispatcher.h"
-#include "TextStyle.h"
 #include "SyntaxPatterns.h"
 #include "LuaException.h"
 #include "GlobalConfig.h"
 #include "ConfigException.h"
 #include "SingletonKeeper.h"
+#include "EditorServer.h"
+#include "HeapObjectArray.h"
+#include "CommandlineException.h"
+#include "FileException.h"
 
 using namespace LucED;
+using std::string;
 
 int main(int argc, char **argv)
 {
+    int rc = 0;
+    
     try
     {
         SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
         
-        GlobalConfig::getInstance()->readConfig("./config");
-
-        TextStyles::Ptr  textStyles     = GlobalConfig::getInstance()->getTextStyles();
-
+        HeapObjectArray<string>::Ptr commandline = HeapObjectArray<string>::create();
         for (int argIndex = 1; argIndex < argc; ++argIndex)
         {
-            const char* fileName;
-            int         numberOfWindowsForThisFile = 1;
-            
-            while (argIndex < argc && argv[argIndex][0] == '-' && argv[argIndex][1] != '-')
-            {
-                // Parameter is a command option
-            
-                if (strcmp(argv[argIndex], "-w") == 0)
-                {
-                    argIndex += 1;
-
-                    if (argIndex >= argc) {
-                        fprintf(stderr, "Command option -w needs additional argument\n");
-                        return 8;
-                    }
-                    
-                    numberOfWindowsForThisFile = atoi(argv[argIndex]);
-                    
-                    if (numberOfWindowsForThisFile < 1) {
-                        fprintf(stderr, "Command option -w needs additional argument number >= 1\n");
-                        return 8;
-                    }
-                }
-                else
-                {
-                    fprintf(stderr, "Unknown command option %s\n", argv[argIndex]);
-                    return 8;
-                }
-                argIndex += 1;
-            }
-            
-            if (argIndex < argc)
-            {
-                // Parameter is a filename
-
-                if (argv[argIndex][0] == '-') {
-                    fileName = argv[argIndex] + 1;  // "--fname" means filename == "-fname"
-                } else {
-                    fileName = argv[argIndex];
-                }
-                
-                LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
-                TextData::Ptr     textData     = TextData::create();
-                HilitedText::Ptr  hilitedText  = HilitedText::create(textData, languageMode);
-
-                textData->loadFile(fileName);
-
-                for (int i = 0; i < numberOfWindowsForThisFile; ++i)
-                {
-                    EditorTopWin::Ptr win = EditorTopWin::create(textStyles, hilitedText);
-                }
-            }
-            else
-            {
-                fprintf(stderr, "Command needs filename parameter\n");
-                return 8;
-            }
+            commandline->append(string(argv[argIndex]));
         }
-        
-        TopWinList* topWins = TopWinList::getInstance();
 
-        for (int i = 0; i < topWins->getNumberOfTopWins(); ++i) {
-            topWins->getTopWin(i)->show();
-        }
-        
+        GlobalConfig::getInstance()->readConfig("./config");
+
+        EditorServer::getInstance()->startWithCommandline(commandline);
+
         EventDispatcher::getInstance()->doEventLoop();
+        
+    }
+    catch (CommandlineException& ex)
+    {
+        fprintf(stderr, "CommandlineException: %s\n", ex.getMessage().c_str());
+        rc = 1;
     }
     catch (LuaException& ex)
     {
         fprintf(stderr, "LuaException: %s\n", ex.getMessage().c_str());
+        rc = 1;
     }
     catch (ConfigException& ex)
     {
         fprintf(stderr, "ConfigException: %s\n", ex.getMessage().c_str());
+        rc = 1;
+    }
+    catch (FileException& ex)
+    {
+        fprintf(stderr, "FileException: %s\n", ex.getMessage().c_str());
+        rc = 8;
     }
 #ifdef DEBUG
     HeapObjectChecker::assertAllCleared();
-#endif    
+#endif
+    return rc;
 }

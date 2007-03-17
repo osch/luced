@@ -22,6 +22,8 @@
 #ifndef TEXTDATA_H
 #define TEXTDATA_H
 
+#include <string>
+
 #include "HeapObject.h"
 #include "MemBuffer.h"
 #include "ByteArray.h"
@@ -29,9 +31,11 @@
 #include "Slot.h"
 #include "CallbackContainer.h"
 #include "OwningPtr.h"
+#include "EditingHistory.h"
 
 namespace LucED {
 
+using std::string;
 
 class TextData : public HeapObject
 {
@@ -147,7 +151,7 @@ public:
         return TextData::Ptr(new TextData());
     }
 
-    void loadFile(const char *filename);
+    void loadFile(const string& filename);
     void save();
 
     long getLength() const;
@@ -218,9 +222,24 @@ public:
         pos -= getLengthOfPrevLineEnding(pos);
         return getThisLineBegin(pos);
     }
-    long insertAtMark(MarkHandle m, byte c);
-    long insertAtMark(MarkHandle m, const ByteArray& buffer);
+
+private:
+    long internalInsertAtMark(MarkHandle m, const byte* buffer, long length);
+    void internalRemoveAtMark(MarkHandle m, long amount);
+
+public:
     long insertAtMark(MarkHandle m, const byte* buffer, long length);
+
+    long insertAtMark(MarkHandle m, byte c) {
+        return insertAtMark(m, &c, 1);
+    }
+    long insertAtMark(MarkHandle m, const ByteArray& insertBuffer) {
+        return insertAtMark(m, insertBuffer.getPtr(0), insertBuffer.getLength());
+    }
+
+    long undo(MarkHandle m);
+    long redo(MarkHandle m);
+
     void removeAtMark(MarkHandle m, long amount);
     void clear();
     
@@ -271,6 +290,15 @@ public:
         return modifiedFlag;
     }
     
+    bool hasHistory() const {
+        return hasHistoryFlag;
+    }
+    
+    void activateHistory() {
+        history = EditingHistory::create();
+        hasHistoryFlag = true;
+    }
+
 private:
 
     friend class ViewCounterTextDataAccess;
@@ -300,6 +328,8 @@ private:
     long oldLength;
     bool modifiedFlag;
     int viewCounter;
+    bool hasHistoryFlag;
+    EditingHistory::Ptr history;
 };
 
 
