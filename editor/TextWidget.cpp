@@ -926,6 +926,8 @@ void TextWidget::setTopLineNumber(long n)
     textData->flushPendingUpdates();
     processAllExposureEvents();
     
+    calcTotalPixWidth();
+
     long oldTopLineNumber = getTopLineNumber();
     
     if ( n > textData->getNumberOfLines() - 1)
@@ -1086,11 +1088,14 @@ void TextWidget::internSetLeftPix(long newLeftPix)
     textData->flushPendingUpdates();
     processAllExposureEvents();
 
+    calcTotalPixWidth();
+
     if (newLeftPix < 0)
         newLeftPix = 0;
     
     if (newLeftPix > totalPixWidth - position.w)
         newLeftPix = totalPixWidth - position.w;
+
 
     if (leftPix < newLeftPix) {
         long diffPix = newLeftPix - leftPix;

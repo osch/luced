@@ -64,6 +64,12 @@ void TextData::loadFile(const string& filename)
     }
 }
 
+void TextData::setFileName(const string& filename)
+{
+    this->fileName = File(filename).getAbsoluteFileName();
+    fileNameListeners.invokeAllCallbacks(this->fileName);
+}
+
 void TextData::save()
 {
     File(fileName).storeData(buffer);

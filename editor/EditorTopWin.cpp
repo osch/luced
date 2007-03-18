@@ -73,9 +73,9 @@ private:
 
 
 
-EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
+EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
-      wasNeverShown(true)
+      flagForSetSizeHintAtFirstShow(true)
 {
     addToXEventMask(ButtonPressMask);
     
@@ -149,13 +149,23 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     Measures m = rootElement->getDesiredMeasures();
 //    setPosition(Position(getPosition().x, getPosition().y, 
 //                         m.bestWidth, m.bestHeight));
-
-    setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
-    setSize(m.bestWidth, m.bestHeight);
-    rootElement->setPosition(Position(0, 0, m.bestWidth, m.bestHeight));
+    if (width == -1 || height == -1)
+    {
+        setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
+        setSize(m.bestWidth, m.bestHeight);
+        rootElement->setPosition(Position(0, 0, m.bestWidth, m.bestHeight));
+    }
+    else
+    {
+        setSizeHints(width, height, m.incrWidth, m.incrHeight);
+        setSize(width, height);
+        rootElement->setPosition(Position(0, 0, width, height));
+    }
 //    setSizeHints(getPosition().x, getPosition().y, 
 //                         m.minWidth, m.minHeight, 1, 1);
 
+    flagForSetSizeHintAtFirstShow = true;
+    
     textEditor->show();
     scrollBarV->show();
     scrollBarH->show();
@@ -172,6 +182,8 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping.set(            ControlMask, XK_w,      Callback0(this,      &EditorTopWin::requestCloseWindow));
     keyMapping.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
     keyMapping.set(            ControlMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveKey));
+    keyMapping.set(            ControlMask, XK_n,      Callback0(this,      &EditorTopWin::createEmptyWindow));
+    keyMapping.set(  ControlMask|ShiftMask, XK_n,      Callback0(this,      &EditorTopWin::createCloneWindow));
 }
 
 EditorTopWin::~EditorTopWin()
@@ -183,16 +195,18 @@ void EditorTopWin::show()
 {
     if (rootElement.isValid())
     {
-        if (wasNeverShown) {
-//            setPosition(Position(getPosition().x, getPosition().y, 
-//                                 m.bestWidth, m.bestHeight));
-            Measures m = rootElement->getDesiredMeasures();
-            setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
-            setSize(m.bestWidth, m.bestHeight);
-            wasNeverShown = false;
-        }
-//        setSizeHints(getPosition().x, getPosition().y, 
-//                             m.minWidth, m.minHeight, 1, 1);
+// TODO: What was the following code good for?!? ( -- it causes problems for initial window sizes)
+//    
+//        if (flagForSetSizeHintAtFirstShow) {
+////            setPosition(Position(getPosition().x, getPosition().y, 
+////                                 m.bestWidth, m.bestHeight));
+//            Measures m = rootElement->getDesiredMeasures();
+//            setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
+//            setSize(m.bestWidth, m.bestHeight);
+//            flagForSetSizeHintAtFirstShow = false;
+//        }
+////        setSizeHints(getPosition().x, getPosition().y, 
+////                             m.minWidth, m.minHeight, 1, 1);
     }
     GuiWidget::show();
 }
@@ -434,5 +448,40 @@ void EditorTopWin::requestCloseWindow()
 void EditorTopWin::requestCloseWindowAndDiscardChanges()
 {
     TopWin::requestCloseWindow();
+}
+
+void EditorTopWin::createEmptyWindow()
+{
+    TextStyles::Ptr   textStyles   = GlobalConfig::getInstance()->getTextStyles();
+    LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
+
+    string untitledFileName = File(textEditor->getTextData()->getFileName()).getDirName() + "/Untitled";
+    TextData::Ptr     emptyTextData     = TextData::create();
+                      emptyTextData->setFileName(untitledFileName);
+
+    HilitedText::Ptr  hilitedText  = HilitedText::create(emptyTextData, languageMode);
+
+    EditorTopWin::Ptr win          = EditorTopWin::create(textStyles, hilitedText);
+                      win->show();
+}
+
+void EditorTopWin::setSize(int width, int height)
+{
+    flagForSetSizeHintAtFirstShow = false;
+    TopWin::setSize(width, height);
+}
+
+void EditorTopWin::createCloneWindow()
+{
+    Position myPosition = this->getPosition();
+
+    EditorTopWin::Ptr newWin = EditorTopWin::create(textEditor->getTextStyles(), 
+                                                    textEditor->getHilitedText(),
+                                                    myPosition.w, 
+                                                    myPosition.h);
+    newWin->textEditor->moveCursorToTextMark(this->textEditor->createNewMarkFromCursor());
+    newWin->textEditor->setTopLineNumber(    this->textEditor->getTopLineNumber());
+    newWin->textEditor->setLeftPix(          this->textEditor->getLeftPix());
+    newWin->show();
 }
 

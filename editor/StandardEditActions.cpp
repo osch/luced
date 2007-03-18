@@ -625,6 +625,21 @@ void StandardEditActions::copyToClipboard()
     }
 }
 
+void StandardEditActions::cutToClipboard()
+{
+    if (!e->areCursorChangesDisabled())
+    {
+        if (e->getBackliteBuffer()->hasActiveSelection()) {
+            long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
+            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+            Clipboard::getInstance()->copyToClipboard(e->getTextData()->getAmount(selBegin, selLength), selLength);
+            e->moveCursorToTextPosition(selBegin);
+            e->removeAtCursor(selLength);
+            e->releaseSelectionOwnership();
+        }
+    }
+}
+
 void StandardEditActions::selectAll()
 {
     if (!e->areCursorChangesDisabled() && e->getTextData()->getLength() > 0)
@@ -770,6 +785,7 @@ void StandardEditActions::registerSingleLineEditActionsToEditWidget()
     e->setEditAction(                    0, XK_Delete,    this, &StandardEditActions::deleteKey);
 
     e->setEditAction(          ControlMask, XK_c,         this, &StandardEditActions::copyToClipboard);
+    e->setEditAction(          ControlMask, XK_x,         this, &StandardEditActions::cutToClipboard);
     e->setEditAction(          ControlMask, XK_v,         this, &StandardEditActions::pasteFromClipboard);
     e->setEditAction(          ControlMask, XK_a,         this, &StandardEditActions::selectAll);
 

@@ -47,10 +47,10 @@ public:
     typedef WeakPtr<EditorTopWin> Ptr;
     
     static EditorTopWin::Ptr create(
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
+            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width = -1, int height = -1)
     {
         return transferOwnershipTo(
-                new EditorTopWin(textStyles, hilitedText),
+                new EditorTopWin(textStyles, hilitedText, width, height),
                 TopWinList::getInstance());
     }
     
@@ -62,6 +62,7 @@ public:
     virtual void treatNewWindowPosition(Position newPosition);
     virtual void treatFocusIn();
     virtual void treatFocusOut();
+    virtual void setSize(int width, int height);
     virtual void show();
     
     virtual void requestCloseFor(GuiWidget* w);
@@ -72,7 +73,7 @@ public:
     virtual void requestCloseWindow();
     
 private:
-    EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
+    EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
     void saveAndClose();
     void requestCloseWindowAndDiscardChanges();
 
@@ -80,6 +81,8 @@ private:
     void handleSaveKey();
     void invokePanel(DialogPanel* panel);
     void invokeMessageBox(MessageBoxParameter p);
+    void createEmptyWindow();
+    void createCloneWindow();
     
     void handleNewFileName(const string& fileName);
     void handleChangedModifiedFlag(bool modifiedFlag);
@@ -91,7 +94,7 @@ private:
     GuiLayoutColumn::Ptr rootElement;
     KeyMapping keyMapping;
     GotoLinePanel::Ptr gotoLinePanel;
-    bool wasNeverShown;
+    bool flagForSetSizeHintAtFirstShow;
 
     FindPanel::Ptr findPanel;
     int upperPanelIndex;

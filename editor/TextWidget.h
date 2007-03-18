@@ -66,8 +66,16 @@ public:
         return textData.getRawPtr();
     }
     
-    TextStyles* getTextStyles() {
-        return textStyles.getRawPtr();
+    TextStyles::Ptr getTextStyles() const {
+        return textStyles;
+    }
+    
+    LanguageMode::Ptr getLanguageMode() const {
+        return hilitingBuffer->getLanguageMode();
+    }
+    
+    HilitedText::Ptr getHilitedText() const {
+        return hilitingBuffer->getHilitedText();
     }
 
     long getTopLeftTextPosition() const {

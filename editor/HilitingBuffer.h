@@ -56,6 +56,14 @@ public:
     }
     
     void registerUpdateListener(const Callback1<UpdateInfo>& updateCallback);
+    
+    LanguageMode::Ptr getLanguageMode() const {
+        return languageMode;
+    }
+    
+    HilitedText::Ptr getHilitedText() const {
+        return hiliting;
+    }
 
 private:
     

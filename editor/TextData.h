@@ -152,6 +152,7 @@ public:
     }
 
     void loadFile(const string& filename);
+    void setFileName(const string& filename);
     void save();
 
     long getLength() const;

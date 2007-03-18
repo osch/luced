@@ -65,6 +65,7 @@ public:
     void backSpace();
     void deleteKey();
     void copyToClipboard();
+    void cutToClipboard();
     void pasteFromClipboard();
     void selectAll();
     void selectionCursorLeft();
