@@ -51,7 +51,21 @@ public:
         if (textPos >= startPos && textPos - startPos < styleBuffer.getLength()) {
             return styleBuffer[textPos - startPos];
         } else {
-            return getNonBufferedTextStyle(textPos);
+            long numberStyles = 150;
+            if (textPos + numberStyles > textData->getLength()) {
+                numberStyles = textData->getLength() - textPos;
+            }
+            byte* rslt = getNonBufferedTextStyles(textPos, numberStyles);
+            return rslt == NULL ? 0 : *rslt;
+        }
+    }
+    
+    byte* getTextStyles(long textPos, long numberStyles) {
+        ASSERT(textPos + numberStyles <= textData->getLength());
+        if (textPos >= startPos && numberStyles <= styleBuffer.getLength()) {
+            return styleBuffer.getPtr(textPos - startPos);
+        } else {
+            return getNonBufferedTextStyles(textPos, numberStyles);
         }
     }
     
@@ -69,7 +83,7 @@ private:
     
     HilitingBuffer(HilitedText::Ptr hiliting);
     
-    int getNonBufferedTextStyle(long textPos);
+    byte* getNonBufferedTextStyles(long textPos, long numberStyles);
 
 
     void treatHilitingUpdate(HilitedText::UpdateInfo update);

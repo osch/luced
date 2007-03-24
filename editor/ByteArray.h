@@ -56,18 +56,13 @@ public:
         ASSERT(0 <= startPos && startPos + amount <= getLength());
         memset(getPtr(startPos), fillByte, amount);
     }
-    void appendAndFillAmountWith(long amount, byte fillByte) {
+    byte* appendAndFillAmountWith(long amount, byte fillByte) {
         long pos = getLength();
-        appendAmount(amount);
+        byte* rslt = appendAmount(amount);
         fillAmountWith(pos, amount, fillByte);
+        return rslt;
     }
 };
-
-static inline bool operator==(const ByteArray& lhs, const ByteArray& rhs)
-{
-    return lhs.getLength() == rhs.getLength() 
-            && memcmp(lhs.getPtr(0), rhs.getPtr(0), lhs.getLength()) == 0;
-}
 
 } // namespace LucED
 

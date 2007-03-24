@@ -83,14 +83,6 @@ void TextData::save()
     }
 }
 
-long TextData::getLength() const {
-    return buffer.getLength();
-}
-
-long TextData::getNumberOfLines() const {
-    return numberLines;
-}
-
 TextData::TextMark TextData::createNewMark() {
     long i = 0;
     for (; i < marks.getLength(); ++i) {
@@ -121,9 +113,6 @@ TextData::TextMark TextData::createNewMark(MarkHandle src)
     return rslt;
 }
 
-byte* TextData::getAmount(long pos, long amount) {
-    return buffer.getAmount(pos, amount);
-}
 
 void TextData::updateMarks(
         long beginChangedPos, long oldEndChangedPos, long changedAmount,

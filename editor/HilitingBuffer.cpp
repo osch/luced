@@ -94,13 +94,22 @@ static inline void fillSubs(ObjectArray<CombinedSubPatternStyle>& sps, ByteArray
     }
 }
 
-int HilitingBuffer::getNonBufferedTextStyle(long pos)
+byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
 {
+    if (numberStyles == 0) {
+        return NULL;
+    }
+    
+    const long desiredEndPos = pos + numberStyles;
+    
+    ASSERT(0 <= pos && pos < desiredEndPos);
+    ASSERT(desiredEndPos <= textData->getLength());
+    
     SyntaxPattern* sp = NULL;
     long searchStartPos = 0;
     
     if (!syntaxPatterns.isValid()) {
-        return 0;
+        return NULL;
     }
 
     if (patternStack.getLength() > 0 && styleBuffer.getLength() > 0) {
@@ -138,7 +147,7 @@ int HilitingBuffer::getNonBufferedTextStyle(long pos)
                     searchStartPos = 0;
                 }
             } else {
-                return 0;
+                return NULL;
             }
         }
         else
@@ -162,7 +171,7 @@ int HilitingBuffer::getNonBufferedTextStyle(long pos)
     
     // searchEndPos
 
-    long searchEndPos = pos + maxDistance;
+    long searchEndPos = desiredEndPos + maxDistance;
     util::minimize(&searchEndPos, textData->getLength());
     
     while (true) 
@@ -201,8 +210,8 @@ int HilitingBuffer::getNonBufferedTextStyle(long pos)
                 styleBuffer.appendAndFillAmountWith(ovector[1], sp->style);
                 fillSubs(sp->combinedSubs, styleBuffer, styleBufferPos, ovector);
 
-                if (pos < searchStartPos + ovector[1]) {
-                    return styleBuffer[pos - this->startPos];
+                if (desiredEndPos <= searchStartPos + ovector[1]) {
+                    return styleBuffer.getPtr(pos - this->startPos);
                 }
                 patternStack.removeLast();
                 sp = syntaxPatterns->get(patternStack.getLast());
@@ -222,8 +231,8 @@ int HilitingBuffer::getNonBufferedTextStyle(long pos)
                     long styleBufferPos = styleBuffer.getLength();
                     styleBuffer.appendAndFillAmountWith(ovector[1], sp->style);
 
-                    if (pos < searchStartPos + ovector[1]) {
-                        return styleBuffer[pos - this->startPos];
+                    if (desiredEndPos <= searchStartPos + ovector[1]) {
+                        return styleBuffer.getPtr(pos - this->startPos);
                     }
                     searchStartPos += ovector[1];
                     
@@ -236,8 +245,8 @@ int HilitingBuffer::getNonBufferedTextStyle(long pos)
                     styleBuffer.fillAmountWith(styleBufferPos + ovector[0], ovector[1] - ovector[0], childPat->style);
                     fillSubs(sp->combinedSubs, styleBuffer, styleBufferPos, ovector);
                     
-                    if (pos < searchStartPos + ovector[1]) {
-                        return styleBuffer[pos - this->startPos];
+                    if (desiredEndPos <= searchStartPos + ovector[1]) {
+                        return styleBuffer.getPtr(pos - this->startPos);
                     }
                     if (childPat->hasEndPattern) {
                         patternStack.append(syntaxPatterns->getChildPatternId(sp, cid));
@@ -251,7 +260,7 @@ int HilitingBuffer::getNonBufferedTextStyle(long pos)
         } else {
             // nothing matched
             styleBuffer.appendAndFillAmountWith(searchEndPos - searchStartPos, sp->style);
-            return styleBuffer[pos - this->startPos];
+            return styleBuffer.getPtr(pos - this->startPos);
         }
 
     }

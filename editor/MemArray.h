@@ -57,7 +57,10 @@ public:
                 && endPos <= getLength());
         return getPtr(startPos);
     }
-    T getLast() const {
+    const T& getLast() const {
+        return *getPtr(getLength() - 1);
+    }
+    T& getLast() {
         return *getPtr(getLength() - 1);
     }
     long getLength() const {
@@ -119,9 +122,8 @@ public:
         append(&source, 1);
         return *this;
     }
-    MemArray& appendAmount(long amount) {
-        insertAmount(size, amount);
-        return *this;
+    T* appendAmount(long amount) {
+        return insertAmount(size, amount);
     }
     MemArray& increaseTo(long newSize) {
         if (newSize > size) {
@@ -129,6 +131,16 @@ public:
         }
         return *this;
     }
+    
+    bool operator==(const MemArray<T>& rhs) const {
+        return (getLength() == rhs.getLength()
+             && memcmp(getPtr(0), rhs.getPtr(0), getLength() * sizeof(T)) == 0);
+    }
+    
+    bool operator !=(const MemArray<T>& rhs) const {
+        return !(*this == rhs);
+    }
+    
 protected:
     long size;
     mutable HeapMem mem;

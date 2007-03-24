@@ -132,164 +132,282 @@ void TextWidget::treatHilitingUpdate(HilitingBuffer::UpdateInfo update)
     }
 }
 
-static inline void writeInt2ToMem(unsigned int i, unsigned char *ptr)
-{
-    char b;
-    b = (i & 0x00FF00) >>  8;
-    *(ptr++) = b;
-    b = (i & 0x0000FF);
-    *(ptr++) = b;
-}
 
-static inline int getInt2FromMem(unsigned char *ptr)
+class TextWidget::FillLineInfoIterator
 {
-    int rslt;
-    rslt  = *(ptr++) << 8;
-    rslt += *(ptr);
-    return rslt;
-}
+public:
+    FillLineInfoIterator(const TextData*       textData, 
+                         HilitingBuffer*       hilitingBuffer, 
+                         BackliteBuffer*       backliteBuffer,
+                         const TextStyles*     textStyles,
+                         long                  textPos)
+        : textData(textData),
+          hilitingBuffer(hilitingBuffer),
+          backliteBuffer(backliteBuffer),
+          textStyles(textStyles),
+          pixelPos(0),
+          textPos(textPos),
+          isEndOfLineFlag(textData->isEndOfLine(textPos)),
+          c(isEndOfLineFlag ? 0 : textData->getChar(textPos)),
+          styleIndex(hilitingBuffer->getTextStyle(textPos)),
+          style(textStyles->get(styleIndex)),
+          spaceWidth(textStyles->get(0)->getSpaceWidth()),
+          tabWidth(8 * textStyles->get(0)->getSpaceWidth()),
+          charWidth(isEndOfLineFlag ? 0 : style->getCharWidth(c)),
+          doBackgroundFlag(true),
+          background(backliteBuffer->getBackground(textPos))
+    {}
+    bool isAtEndOfLine()    const { return isEndOfLineFlag; }
+    long getTextPos()       const { return textPos; }
+    long getPixelPos()      const { return pixelPos; }
+    unsigned char getChar() const { return c; }
+    int getCharWidth() const { return charWidth; }
+    int getTabWidth()  const { return tabWidth; }
+    int getSpaceWidth() const { return spaceWidth; }
+    int getBackground() const { ASSERT(doBackgroundFlag == true); return background; }
 
-
-static inline void completeLengthField(ByteArray& buf, long pixelPos, 
-        int lastStyleBegin, long lastStylePixBegin)
-{
-    if (lastStyleBegin != -1) {
-        int len = buf.getLength() - (lastStyleBegin + 1 + 1 + 2 + 2);
-        int pixWidth = pixelPos - lastStylePixBegin;
-        
-        writeInt2ToMem(len, 
-                buf.getPtr(lastStyleBegin + 1 + 1));
-        writeInt2ToMem(pixWidth, 
-                buf.getPtr(lastStyleBegin + 1 + 1 + 2));
+    int setDoBackground(bool flag)
+    {
+        doBackgroundFlag = flag; 
+        if (flag) background = backliteBuffer->getBackground(textPos);
     }
-}
 
-
-inline void TextWidget::appendToOutBuf(LineInfo *li, long pos,
-        int c, int background, int styleIndex, int *print, long *pixelPos, int *lastBackground, int *lastStyle,
-        int *lastStyleBegin, long *lastStylePixBegin)
-{
-    const TextStyle *style = textStyles->get(styleIndex);
-    
-    if (*print == 0) {
-        if (c == '\t') {
-            int tabWidth = 8 * textStyles->get(0)->getSpaceWidth();
-            if (((*pixelPos / tabWidth) + 1) * tabWidth >= leftPix) {
-                li->leftPixOffset = leftPix - *pixelPos;
-                li->startPos = pos;
-                *print = 1;
-            }
+    int getCharRBearing() const
+    { 
+        if (c != '\t') {
+            return style->getCharRBearing(c);
         } else {
-            if (*pixelPos + style->getCharRBearing(c) >= leftPix) {
-                li->leftPixOffset = leftPix - *pixelPos;
-                li->startPos = pos;
-                *print = 1;
-            }
-        }
-    } else {
-        if (*print == 1 && *pixelPos + style->getCharLBearing(c) 
-                >= leftPix + position.w) {
-            *print = 2;
-            li->endPos = pos;
-            completeLengthField(li->outBuf, *pixelPos, *lastStyleBegin, *lastStylePixBegin);
+            return (((pixelPos / tabWidth) + 1) * tabWidth) - pixelPos;
         }
     }
-    if (*print == 1) {
-        if (*lastStyle != styleIndex || *lastBackground != background || c == '\t') {
-            if (*lastStyle != -1) {
-                completeLengthField(li->outBuf, *pixelPos, *lastStyleBegin, *lastStylePixBegin);
-            }
-            if (c == '\t') {
-                *lastStyle = -2;
-            } else {
-                *lastStyle = styleIndex;
-            }
-            *lastBackground = background;
-            *lastStyleBegin = li->outBuf.getLength();
-            *lastStylePixBegin = *pixelPos;
-            li->outBuf.append(background);
-            li->outBuf.append(styleIndex);
-            li->outBuf.appendAmount(4);
+    int getCharLBearing() const { return style->getCharLBearing(c); }
+    int getStyleIndex()  const { return styleIndex; }
+
+    void increment()
+    {
+        ASSERT(isEndOfLineFlag == false);
+
+        if (c== '\t') {
+            pixelPos  = ((pixelPos / tabWidth) + 1) * tabWidth;
+        } else {
+            pixelPos += charWidth;
         }
-        li->outBuf.append(c);
+        textPos += 1;
+        if (!textData->isEndOfLine(textPos)) {
+            c          = textData->getChar(textPos);
+            styleIndex = hilitingBuffer->getTextStyle(textPos);
+            style      = textStyles->get(styleIndex);
+            charWidth  = style->getCharWidth(c);
+        } else {
+            isEndOfLineFlag = true;
+            c          = 0;
+            styleIndex = 0;
+            style      = textStyles->get(0);
+            charWidth  = 0;
+        }
+        if (doBackgroundFlag == true) {
+            background = backliteBuffer->getBackground(textPos);
+        }
     }
-    if (c== '\t') {
-        int tabWidth = 8 * textStyles->get(0)->getSpaceWidth();
-        *pixelPos  = ((*pixelPos / tabWidth) + 1) * tabWidth;
-    } else {
-        *pixelPos += style->getCharWidth(c);
+
+private:
+    const TextData*   const textData;
+    HilitingBuffer*   const hilitingBuffer;
+    BackliteBuffer*   const backliteBuffer;
+    const TextStyles* const textStyles;
+    long pixelPos;
+    long textPos;
+    bool isEndOfLineFlag;
+    unsigned char c;
+    int  styleIndex;
+    const TextStyle* style;
+    const int tabWidth;
+    const int spaceWidth;
+    int charWidth;
+    bool doBackgroundFlag;
+    int background;
+};
+
+class TextWidget::FragmentFiller
+{
+public:
+    FragmentFiller(MemArray<LineInfo::FragmentInfo>& fragments)
+        : fragments(fragments),
+          lastStyle(-1),
+          lastBackground(-1),
+          lastStylePixBegin(-1),
+          lastStyleBeginTextPos(-1)
+    {}
+
+    bool hasStyleChanged(const FillLineInfoIterator& i) const
+    {
+        return lastStyle      != i.getStyleIndex() 
+            || lastBackground != i.getBackground();  // was also: i.getChar() == '\t'
     }
-}
+
+    bool hasRememberedStyle() const
+    {
+        return lastStyle != -1;
+    }
+
+    void completeFragment(const FillLineInfoIterator& i) 
+    {
+        ASSERT(lastStyle             != -1);
+        ASSERT(lastStyleBeginTextPos != -1);
+        ASSERT(lastStylePixBegin     != -1);
+        ASSERT(fragments.getLength() >=  1);
+
+        fragments.getLast().numberBytes = i.getTextPos() - lastStyleBeginTextPos;
+        fragments.getLast().pixWidth    = i.getPixelPos() - lastStylePixBegin;
+    }
+
+    void beginNewFragment(const FillLineInfoIterator& i)
+    {
+        if (i.getChar() == '\t') {
+            lastStyle = -2;
+        } else {
+            lastStyle = i.getStyleIndex();
+        }
+        lastBackground        = i.getBackground();
+        lastStylePixBegin     = i.getPixelPos();
+        lastStyleBeginTextPos = i.getTextPos();
+
+        fragments.appendAmount(1);
+        fragments.getLast().background = i.getBackground();
+        fragments.getLast().styleIndex = i.getStyleIndex();
+    #ifdef DEBUG
+        fragments.getLast().numberBytes = -1;
+        fragments.getLast().pixWidth    = -1;
+    #endif
+    }
+
+private:
+    MemArray<LineInfo::FragmentInfo>&       fragments;
+    int                                     lastStyle;
+    int                                     lastBackground;
+    long                                    lastStylePixBegin;
+    long                                    lastStyleBeginTextPos;
+};
 
 
 void TextWidget::fillLineInfo(long beginOfLinePos, LineInfo* li)
 {
-    long pos = beginOfLinePos;
-    long col = 0;
-    long pixelPos = 0;
+    FillLineInfoIterator       i(textData, hilitingBuffer, backliteBuffer, textStyles, beginOfLinePos);
+    FragmentFiller             f(li->fragments);
+    
     int  print = 0;
-    int  lastStyle = -1;
-    int  lastBackground = -1;
-    int  lastStyleBegin = -1;
-    long lastStylePixBegin = -1;
     
     li->beginOfLinePos = beginOfLinePos;
     li->leftPixOffset = 0;
-    li->rightPixOffset = 0;
     li->startPos = -1;
     li->endPos = -1;
     li->isEndOfText = false;
+
+    li->fragments.clear();
     li->outBuf.clear();
     li->styles.clear();
     
-    if (textData->isEndOfLine(pos)) {
-        if (leftPix <= textStyles->get(0)->getSpaceWidth()) {
-            li->startPos = beginOfLinePos;
-            li->endPos   = beginOfLinePos;
-            li->leftPixOffset = leftPix;
+
+    if (i.isAtEndOfLine())
+    {
+        if (this->leftPix <= i.getSpaceWidth()) {
+            li->startPos = i.getTextPos();
+            li->endPos   = i.getTextPos();
+            li->leftPixOffset = this->leftPix;
         }
-        li->backgroundToEnd = backliteBuffer->getBackground(pos);
-    } else {
-        do {
-            unsigned char c = textData->getChar(pos);
-
-            int style = hilitingBuffer->getTextStyle(pos);
-
-//            if (c == '\t') {
-//                do {
-//                    appendToOutBuf(tw, li, pos, (unsigned char)(' '), style, 
-//                            &print, &pixelPos, &lastStyle, &lastStyleBegin, &lastStylePixBegin);
-//                    col += 1;
-//                } while (col % 8 != 0);
-//                pos += 1;
-//            } else {
-                int background = backliteBuffer->getBackground(pos);
-                appendToOutBuf(li, pos, c, background, style, &print, &pixelPos, &lastBackground, &lastStyle,
-                        &lastStyleBegin, &lastStylePixBegin);
-                col += 1; pos += 1;
-//            }
-            if (print == 1) {
-                li->styles.append(style);
-            }
-            if (textData->isEndOfLine(pos)) {
-                li->rightPixOffset = textStyles->get(style)->getCharRBearing(c) 
-                        - textStyles->get(style)->getCharWidth(c);
-                if (print == 1) {
-                    li->endPos = pos;
-                }
-                li->backgroundToEnd = backliteBuffer->getBackground(pos);
-            }
-        } while (!textData->isEndOfLine(pos));
+        li->backgroundToEnd = i.getBackground();
     }
-    if (print == 1) {
-        completeLengthField(li->outBuf, pixelPos, lastStyleBegin, lastStylePixBegin);
+    else
+    {
+        i.setDoBackground(false);
+        do
+        {
+            ASSERT(print == 0);
+            
+            if (i.getPixelPos() + i.getCharRBearing() >= this->leftPix) {
+                print = 1;
+                break;
+            }
+            i.increment();
+        }
+        while (!i.isAtEndOfLine());
+        i.setDoBackground(true);
+
+        if (print == 1)
+        {
+            li->leftPixOffset = leftPix - i.getPixelPos();
+            li->startPos      = i.getTextPos();
+
+            f.beginNewFragment(i);
+
+            i.increment();
+        }
+
+        while (!i.isAtEndOfLine())
+        {
+            ASSERT(print == 1);
+            
+            if (i.getPixelPos() + i.getCharLBearing() >= this->leftPix + this->position.w)
+            {
+                print = 2;
+                break;
+            }
+            if (f.hasStyleChanged(i))
+            {
+                f.completeFragment(i);
+                f.beginNewFragment(i);
+            }
+            i.increment();
+        }
+
+        if (print != 0)
+        {
+            f.completeFragment(i);
+
+            li->endPos = i.getTextPos();
+            
+            long addLength = i.getTextPos() - li->startPos;
+            memcpy(li->outBuf.appendAmount(addLength), 
+                   textData->getAmount(li->startPos, addLength),
+                   addLength);
+
+            byte* stylesPtr = hilitingBuffer->getTextStyles(li->startPos, addLength);
+            if (stylesPtr != NULL) {
+                memcpy(li->styles.appendAmount(addLength), 
+                       stylesPtr,
+                       addLength);
+            } else {
+                memset(li->styles.appendAmount(addLength), 0, addLength);
+            }
+        }
+
+        if (print == 2)
+        {
+            i.increment();
+
+            i.setDoBackground(false);
+            while (!i.isAtEndOfLine())
+            {
+                i.increment();
+            }
+            i.setDoBackground(true);
+        }
+
+        li->backgroundToEnd = i.getBackground();
     }
+
     li->valid = true;
-    li->endOfLinePos = pos;
-    li->totalPixWidth = pixelPos;
-    li->pixWidth = pixelPos - (leftPix - li->leftPixOffset);
-    li->isEndOfText = (pos == textData->getLength());
+    li->endOfLinePos = i.getTextPos();
+    li->totalPixWidth = i.getPixelPos();
+    li->pixWidth = i.getPixelPos() - (this->leftPix - li->leftPixOffset);
+    li->isEndOfText = (i.getTextPos() == textData->getLength());
     
+    ASSERT((print == 0 && (   (li->startPos == -1 && li->endPos == -1)
+                           || (li->startPos >=  0 && li->endPos >= li->startPos)
+                          )
+           )
+        || (print != 0 && li->startPos >=  0 && li->endPos >=  li->startPos));
+        
     ASSERT(li->styles.getLength() == li->endPos - li->startPos);
 }
 
@@ -339,7 +457,8 @@ inline void TextWidget::clearLine(LineInfo *li, int y)
 }*/
 ///////////////////
 
-    ByteArray& buf = li->outBuf;
+    ByteArray& buf                    = li->outBuf;
+    MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
     byte *ptr, *end;
     long x = 0;
     long accX = 0;
@@ -350,13 +469,15 @@ inline void TextWidget::clearLine(LineInfo *li, int y)
         ptr = buf.getPtr(0);
         end = ptr + buf.getLength();
 
-        while (ptr < end) {
-            int background = *(ptr++);
-            int style      = *(ptr++);
-            int len        = getInt2FromMem(ptr);
-            ptr += 2;
-            int pixWidth   = getInt2FromMem(ptr);
-            ptr += 2;
+        for (int i = 0, n = fragments.getLength(); i < n; ++i)
+        {
+            ASSERT(ptr < end);
+            
+            int background = fragments[i].background;
+            int styleIndex = fragments[i].styleIndex;
+            int len        = fragments[i].numberBytes;
+            int pixWidth   = fragments[i].pixWidth;
+
             if (background != accBackground) {
                 if (accBackground != -1) {
                     if (accBackground == 0) {
@@ -410,6 +531,7 @@ inline void TextWidget::clearLine(LineInfo *li, int y)
 inline void TextWidget::printLineWithoutCursor(LineInfo *li, int y)
 {
     ByteArray& buf = li->outBuf;
+    MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
     byte *ptr, *end;
     long x = 0;
     
@@ -418,15 +540,17 @@ inline void TextWidget::printLineWithoutCursor(LineInfo *li, int y)
         ptr = buf.getPtr(0);
         end = ptr + buf.getLength();
 
-        while (ptr < end) {
-            int background = *(ptr++);
-            int style      = *(ptr++);
-            int len        = getInt2FromMem(ptr);
-            ptr += 2;
-            int pixWidth   = getInt2FromMem(ptr);
-            ptr += 2;
+        for (int i = 0, n = fragments.getLength(); i < n; ++i)
+        {
+            ASSERT(ptr < end);
+            
+            int background = fragments[i].background;
+            int styleIndex = fragments[i].styleIndex;
+            int len        = fragments[i].numberBytes;
+            int pixWidth   = fragments[i].pixWidth;
+
             if (len > 0 && *ptr != '\t') {
-                applyTextStyle(style);
+                applyTextStyle(styleIndex);
                 XDrawString(getDisplay(), getWid(), 
                         textWidget_gcid, -li->leftPixOffset + x, y + lineAscent, (char*) ptr, len);
                 //printf("print <%.*s> \n", len, ptr);
@@ -441,6 +565,7 @@ inline void TextWidget::printLineWithoutCursor(LineInfo *li, int y)
 inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
 {
     ByteArray& buf = li->outBuf;
+    MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
     byte *ptr, *end;
     long x = -li->leftPixOffset;;
     long accX = -li->leftPixOffset;;
@@ -451,13 +576,15 @@ inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
         ptr = buf.getPtr(0);
         end = ptr + buf.getLength();
 
-        while (ptr < end) {
-            int background = *(ptr++);
-            int style      = *(ptr++);
-            int len        = getInt2FromMem(ptr);
-            ptr += 2;
-            int pixWidth   = getInt2FromMem(ptr);
-            ptr += 2;
+        for (int i = 0, n = fragments.getLength(); i < n; ++i)
+        {
+            ASSERT(ptr < end);
+            
+            int background = fragments[i].background;
+            int styleIndex = fragments[i].styleIndex;
+            int len        = fragments[i].numberBytes;
+            int pixWidth   = fragments[i].pixWidth;
+
             if (background != accBackground) {
                 if (accBackground != -1) {
                     if (accBackground == 0) {
@@ -530,6 +657,7 @@ inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
 inline void TextWidget::printPartialLineWithoutCursor(LineInfo *li, int y, int x1, int x2)
 {
     ByteArray& buf = li->outBuf;
+    MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
     unsigned char *ptr, *end;
     int x = -li->leftPixOffset;
     
@@ -538,18 +666,14 @@ inline void TextWidget::printPartialLineWithoutCursor(LineInfo *li, int y, int x
         ptr = buf.getPtr(0);
         end = ptr + buf.getLength();
 
-        while (ptr < end) {
-            int len;
-            int pixWidth;
-
-            int background = *ptr;
-            ptr += 1;
-            int styleIndex = *ptr;
-            ptr += 1;
-            len            = getInt2FromMem(ptr);
-            ptr += 2;
-            pixWidth       = getInt2FromMem(ptr);
-            ptr += 2;
+        for (int i = 0, n = fragments.getLength(); i < n; ++i)
+        {
+            ASSERT(ptr < end);
+            
+            int background = fragments[i].background;
+            int styleIndex = fragments[i].styleIndex;
+            int len        = fragments[i].numberBytes;
+            int pixWidth   = fragments[i].pixWidth;
 
             const TextStyle *style = textStyles->get(styleIndex);
             

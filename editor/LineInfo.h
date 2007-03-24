@@ -41,7 +41,7 @@ private:
                 || isEndOfText != rhs.isEndOfText || backgroundToEnd != rhs.backgroundToEnd) {
             return true;
         }
-        return !(outBuf == rhs.outBuf);
+        return (fragments != rhs.fragments) || (outBuf != rhs.outBuf);
     }
     
     bool   valid;
@@ -53,9 +53,19 @@ private:
     long   totalPixWidth;
     int    pixWidth;
     int    leftPixOffset;
-    int    rightPixOffset;
     int    backgroundToEnd;
+    
+    class FragmentInfo
+    {
+    public:
+        int background;
+        int styleIndex;
+        int numberBytes;
+        int pixWidth;
+    };
+    MemArray<FragmentInfo> fragments;
     ByteArray outBuf;
+
     ByteArray styles;
 };
 

@@ -155,8 +155,13 @@ public:
     void setFileName(const string& filename);
     void save();
 
-    long getLength() const;
-    long getNumberOfLines() const;
+    long getLength() const {
+        return buffer.getLength();
+    }
+
+    long getNumberOfLines() const {
+        return numberLines;
+    }
 
     TextMark createNewMark();
     TextMark createNewMark(MarkHandle src);
@@ -164,7 +169,9 @@ public:
         return &(marks[index]);
     }
 
-    byte *getAmount(long pos, long amount);
+    byte* getAmount(long pos, long amount) {
+        return buffer.getAmount(pos, amount);
+    }
 
     const byte& operator[](long pos) const {
         return buffer[pos];
