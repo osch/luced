@@ -465,6 +465,8 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
 
 long  TextEditorWidget::initSelectionDataRequest()
 {
+    ASSERT(getBackliteBuffer()->hasActiveSelection());
+    
     long selBegin = getBackliteBuffer()->getBeginSelectionPos();
     long selLength = getBackliteBuffer()->getEndSelectionPos() - selBegin;
     disableCursorChanges();
@@ -473,6 +475,8 @@ long  TextEditorWidget::initSelectionDataRequest()
 
 const byte* TextEditorWidget::getSelectionDataChunk(long pos, long length)
 {
+    ASSERT(getBackliteBuffer()->hasActiveSelection());
+
     long selBegin = getBackliteBuffer()->getBeginSelectionPos();
     return getTextData()->getAmount(selBegin + pos, length);
 }

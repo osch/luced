@@ -622,6 +622,8 @@ void StandardEditActions::copyToClipboard()
             long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
             long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
             Clipboard::getInstance()->copyToClipboard(e->getTextData()->getAmount(selBegin, selLength), selLength);
+        } else {
+            Clipboard::getInstance()->copyActiveSelectionToClipboard();
         }
     }
 }

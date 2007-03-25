@@ -97,7 +97,7 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode()
 
 void GlobalConfig::readConfig(const string& configPath)
 {
-    LuaInterpreter::Ptr lua = LuaInterpreter::create();
+    LuaInterpreter* lua = LuaInterpreter::getInstance();
     lua->executeFile(configPath + "/general.lua");
     
     // globalConfig

@@ -27,6 +27,13 @@
 using namespace LucED;
 
 
+SingletonInstance<LuaInterpreter> LuaInterpreter::instance;;
+
+LuaInterpreter* LuaInterpreter::getInstance()
+{
+    return instance.getPtr();
+}
+
 LuaInterpreter::LuaInterpreter()
 {
     L = lua_open();
@@ -42,6 +49,17 @@ void LuaInterpreter::executeFile(string name)
     ByteBuffer buffer;
     File(name).loadInto(buffer);
     int error = luaL_loadbuffer(L, (const char*) buffer.getTotalAmount(), buffer.getLength(), name.c_str())
+            || lua_pcall(L, 0, 0, 0);
+    if (error) {
+        LuaException ex(lua_tostring(L, -1));
+        lua_pop(L, 1);
+        throw ex;
+    }
+}
+
+void LuaInterpreter::executeScript(const char* scriptBegin, long scriptLength)
+{
+    int error = luaL_loadbuffer(L, scriptBegin, scriptLength, "memory")
             || lua_pcall(L, 0, 0, 0);
     if (error) {
         LuaException ex(lua_tostring(L, -1));

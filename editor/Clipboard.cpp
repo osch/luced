@@ -41,6 +41,7 @@ Clipboard* Clipboard::getInstance()
 Clipboard::Clipboard()
       : GuiWidget(0,0,1,1,0),
         SelectionOwner(this, XInternAtom(getDisplay(), "CLIPBOARD", False)),
+        PasteDataReceiver(this),
         sendingMultiPart(false)
 {
     addToXEventMask(PropertyChangeMask);
@@ -59,6 +60,14 @@ void Clipboard::copyToClipboard(const byte* ptr, long length)
     }
 }
 
+void Clipboard::copyActiveSelectionToClipboard()
+{
+    if (requestSelectionOwnership()) {
+        clipboardBuffer.clear();
+        requestSelectionPasting();
+    }
+}
+
 
 const ByteArray& Clipboard::getClipboardBuffer() {
     return clipboardBuffer;
@@ -67,7 +76,15 @@ const ByteArray& Clipboard::getClipboardBuffer() {
 
 GuiElement::ProcessingResult Clipboard::processEvent(const XEvent *event)
 {
-    return processSelectionOwnerEvent(event);
+    if (processSelectionOwnerEvent(event)    == GuiElement::EVENT_PROCESSED
+     || processPasteDataReceiverEvent(event) == GuiElement::EVENT_PROCESSED)
+    {
+        return GuiElement::EVENT_PROCESSED;
+    }
+    else
+    {
+        return GuiElement::NOT_PROCESSED;
+    }
 }
 
 
@@ -93,3 +110,25 @@ void  Clipboard::notifyAboutLostSelectionOwnership()
         EventDispatcher::getInstance()->requestProgramTermination();
     }
 }
+
+void Clipboard::notifyAboutBeginOfPastingData()
+{
+    if (hasSelectionOwnership()) {
+        clipboardBuffer.clear();
+    }
+}
+
+void Clipboard::notifyAboutReceivedPasteData(const byte* data, long length)
+{
+    if (hasSelectionOwnership()) {
+        clipboardBuffer.append(data, length);
+    }
+}
+
+
+void Clipboard::notifyAboutEndOfPastingData()
+{
+}
+
+
+

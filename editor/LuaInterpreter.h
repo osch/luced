@@ -29,6 +29,7 @@
 #include "ObjectArray.h"
 #include "LuaObject.h"
 #include "OwningPtr.h"
+#include "SingletonInstance.h"
 
 namespace LucED {
 
@@ -38,7 +39,15 @@ class LuaInterpreter : public HeapObject, private LuaInterpreterAccessToLuaObjec
 {
 public:
     typedef OwningPtr<LuaInterpreter> Ptr;
+
+    /**
+     * Gets the global LuaInterpreter.
+     */
+    static LuaInterpreter* getInstance();
     
+    /**
+     * Creates a new LuaInterpreter
+     */
     static Ptr create() {
         return Ptr(new LuaInterpreter());
     }
@@ -46,12 +55,17 @@ public:
     virtual ~LuaInterpreter();
     
     void executeFile(string name);
+    void executeScript(const char* beginScript, long scriptLength);
+    void executeScript(string script) {
+        executeScript(script.c_str(), script.length());
+    }
     LuaObject getGlobal(const char* name);
     void setGlobal(const char* name, LuaObject value);
     void clearGlobal(const char* name);
     
 private:
     friend class LuaObjectAccessToLuaInterpreter;
+    friend class SingletonInstance<LuaInterpreter>;
     
     class TableInfo
     {
@@ -61,6 +75,8 @@ private:
         int stackIndex;
     };
     
+    static SingletonInstance<LuaInterpreter> instance;
+
     LuaInterpreter();
     void releaseTable(int index);
     int newLuaObject(int stackIndex);

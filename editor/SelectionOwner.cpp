@@ -106,6 +106,9 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
         {
             if (event->xselectionclear.selection ==  x11AtomForSelection) {
                 hasRequestedSelectionOwnership = false;
+                if (x11AtomForSelection == XA_PRIMARY && primarySelectionOwner == this) {
+                    primarySelectionOwner = NULL;
+                }
                 notifyAboutLostSelectionOwnership();
                 return GuiElement::EVENT_PROCESSED;
             }

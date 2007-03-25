@@ -27,17 +27,21 @@
 #include "ByteArray.h"
 #include "SelectionOwner.h"
 #include "SingletonInstance.h"
+#include "PasteDataReceiver.h"
 
 namespace LucED {
 
-class Clipboard : public GuiWidget, SelectionOwner
+class Clipboard : public GuiWidget, 
+                  public SelectionOwner,
+                  public PasteDataReceiver
 {
 public:
     
     static Clipboard* getInstance();
     
     void copyToClipboard(const byte* buffer, long length);
-
+    void copyActiveSelectionToClipboard();
+    
     Atom getX11AtomForClipboard() {
         return x11AtomForClipboard;
     }
@@ -63,7 +67,11 @@ private:
     virtual const byte* getSelectionDataChunk(long pos, long length);
     virtual void  endSelectionDataRequest();
     virtual void notifyAboutLostSelectionOwnership();
-    
+
+    virtual void notifyAboutReceivedPasteData(const byte* data, long length);
+    virtual void notifyAboutEndOfPastingData();
+    virtual void notifyAboutBeginOfPastingData();
+
     Atom x11AtomForClipboard;
     Atom x11AtomForTargets;
     Atom x11AtomForIncr;

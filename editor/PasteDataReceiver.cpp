@@ -94,7 +94,7 @@ bool PasteDataReceiver::isReceivingPasteData()
     return isReceivingPasteDataFlag;
 }
 
-bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
+GuiElement::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
 {
     switch (event->type)
     {
@@ -127,11 +127,11 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                 {
                     isMultiPartPastingFlag = true;
                     XDeleteProperty(display, event->xselection.requestor, event->xselection.property);
-                    return true;
+                    return GuiElement::EVENT_PROCESSED;
                 }
                 else if (format != 8 || remainingLength == 0)
                 {
-                    return true;
+                    return GuiElement::EVENT_PROCESSED;
                 }
                 else if (isReceivingPasteDataFlag)
                 {
@@ -150,7 +150,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                     isReceivingPasteDataFlag = false;
                     XDeleteProperty(display, event->xselection.requestor, event->xselection.property);
                     XFree(portion);
-                    return true;
+                    return GuiElement::EVENT_PROCESSED;
                 }
             }
             break;
@@ -178,11 +178,11 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                 {
                     isMultiPartPastingFlag = true;
                     XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
-                    return true;
+                    return GuiElement::EVENT_PROCESSED;
                 }
                 else if (format != 8 || actualType != XA_STRING)
                 {
-                    return true;
+                    return GuiElement::EVENT_PROCESSED;
                 }
                 else if (isReceivingPasteDataFlag && remainingLength == 0)
                 {
@@ -194,7 +194,7 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                     notifyAboutEndOfPastingData();
                     isMultiPartPastingFlag = false;
                     isReceivingPasteDataFlag = false;
-                    return true;
+                    return GuiElement::EVENT_PROCESSED;
                 }
                 else if (isReceivingPasteDataFlag)
                 {
@@ -215,14 +215,14 @@ bool PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
                     }
                     XFree(portion);
                     XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
-                    return true;
+                    return GuiElement::EVENT_PROCESSED;
                 }
 
             }
             break;
         }
     }
-    return false;
+    return GuiElement::NOT_PROCESSED;
 }
 
 void PasteDataReceiver::handleTimerEvent()

@@ -26,6 +26,7 @@
 #include "GuiWidget.h"
 #include "SelectionOwner.h"
 #include "TimeVal.h"
+#include "GuiElement.h"
 
 namespace LucED {
 
@@ -41,7 +42,7 @@ public:
 protected:
     PasteDataReceiver(GuiWidget* baseWidget);
 
-    bool processPasteDataReceiverEvent(const XEvent *event);
+    GuiElement::ProcessingResult processPasteDataReceiverEvent(const XEvent *event);
 
     virtual void notifyAboutBeginOfPastingData() = 0;
     virtual void notifyAboutReceivedPasteData(const byte* data, long length) = 0;    
