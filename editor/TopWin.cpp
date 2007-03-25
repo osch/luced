@@ -286,6 +286,14 @@ private:
             pixMap = 0;
         }
     }    
+
+    ~TopWinSingletonData()
+    {
+        if (pixMap != 0) {
+            XFreePixmap(GuiRoot::getInstance()->getDisplay(), pixMap);
+        }
+    }
+
     static SingletonInstance<TopWinSingletonData> instance;
     Pixmap pixMap;
 };

@@ -159,6 +159,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
         {
             case ButtonPress:
             {
+                showMousePointer();
                 if (!hasFocusFlag) {
                     requestFocusFor(this);
                 }
@@ -300,6 +301,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
             }
             case ButtonRelease:
             {
+                showMousePointer();
                 if (event->xbutton.button == Button1) {
                     if (hasMovingSelection) {
                         hasMovingSelection = false;
@@ -311,6 +313,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
             }
             case MotionNotify:
             {
+                showMousePointer();
                 if (hasMovingSelection) {
                     XEvent newEvent;
                     XFlush(getDisplay());
@@ -323,6 +326,8 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                     int y = event->xmotion.y;
                     setNewMousePositionForMovingSelection(x, y);
                     return EVENT_PROCESSED;
+                } else {
+                    removeFromXEventMask(PointerMotionMask);
                 }
                 break;
             }
@@ -522,6 +527,11 @@ void TextEditorWidget::handleScrollRepeating()
 
 GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent *event)
 {
+    if (hasFocusFlag && event->type == KeyPress) {
+        hideMousePointer();
+        addToXEventMask(PointerMotionMask);
+    }
+    
     unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
     Callback0 m = keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
     if (m.isValid()) {
@@ -588,6 +598,7 @@ void TextEditorWidget::treatFocusIn()
         setCursorActive();
         startCursorBlinking();
     }
+    showMousePointer();
     hasFocusFlag = true;
 }
 
@@ -596,6 +607,7 @@ void TextEditorWidget::treatFocusOut()
 {
     setCursorInactive();
     stopCursorBlinking();
+    showMousePointer();
     hasFocusFlag = false;
 }
 

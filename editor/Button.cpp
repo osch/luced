@@ -278,7 +278,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                 if (isMouseInsideButtonArea(x, y) && !isMouseOverButton) {
                     isMouseOverButton = true;
                     drawButton();
-                }            
+                }
                 addToXEventMask(PointerMotionMask);
                 return EVENT_PROCESSED;
             }

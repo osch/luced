@@ -157,9 +157,22 @@ public:
     void registerLineAndColumnListener(const Callback2<long,long>& listener);
     void notifyAboutHotKeyEventForOtherWidget();
         
-
+    void showMousePointer() {
+        if (isMousePointerHidden) {
+            internalShowMousePointer();
+        }
+    }
+    void hideMousePointer() {
+        if (!isMousePointerHidden) {
+            internalHideMousePointer();
+        }
+    }
+    
 private:
 
+    
+    void internalShowMousePointer();
+    void internalHideMousePointer();
     
     void unclip();
     void clip(int x, int y, int w, int h);
@@ -242,6 +255,7 @@ private:
     int maxHeightChars;
     int border;
     VerticalAdjustment::Type adjustment;
+    bool isMousePointerHidden;
 };
 
 } // namespace LucED

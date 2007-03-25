@@ -19,6 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <X11/cursorfont.h>
+
 #include "TextWidget.h"
 #include "util.h"
 #include "TimeVal.h"
@@ -38,6 +40,62 @@ static inline unsigned int calculateWidthOrHeightWithoutBorder(unsigned int tota
     return rslt;
 }
 
+namespace LucED
+{
+
+class TextWidgetSingletonData : public HeapObject
+{
+public:
+    static TextWidgetSingletonData* getInstance() { return instance.getPtr(); }
+
+    Cursor getEmptyMouseCursor() { return emptyMouseCursor; }
+    Cursor getTextMouseCursor() { return textMouseCursor; }
+
+private:
+    friend class SingletonInstance<TextWidgetSingletonData>;
+    
+    TextWidgetSingletonData()
+    {
+        static const char emptyPixmapBytes[] = {0x00, 0x00, 0x00, 0x00};
+
+        Pixmap emptyPixmap = XCreateBitmapFromData(GuiRoot::getInstance()->getDisplay(),
+                                                   GuiRoot::getInstance()->getRootWid(), 
+                                                   emptyPixmapBytes, 1, 1);
+
+        XColor dummyForegoundColor  = {1, 0, 0, 0, DoRed|DoGreen|DoBlue, 0};
+        XColor dummyBackgroundColor = {0, 0, 0, 0, DoRed|DoGreen|DoBlue, 0};
+        
+        emptyMouseCursor = XCreatePixmapCursor(GuiRoot::getInstance()->getDisplay(), emptyPixmap, emptyPixmap, 
+                                               &dummyForegoundColor, &dummyBackgroundColor, 0, 0);
+
+        XFreePixmap(GuiRoot::getInstance()->getDisplay(), emptyPixmap);
+
+        textMouseCursor = XCreateFontCursor(GuiRoot::getInstance()->getDisplay(), XC_xterm);
+    }
+    
+    ~TextWidgetSingletonData()
+    {
+        XFreeCursor(GuiRoot::getInstance()->getDisplay(), emptyMouseCursor);
+        XFreeCursor(GuiRoot::getInstance()->getDisplay(), textMouseCursor);
+    }
+    
+    static SingletonInstance<TextWidgetSingletonData> instance;
+
+    Cursor emptyMouseCursor;
+    Cursor textMouseCursor;
+};
+
+} // namespace LucED
+
+
+using namespace LucED;
+
+SingletonInstance<TextWidgetSingletonData> TextWidgetSingletonData::instance;
+
+
+/**
+ * TextWidget-Constructor.
+ */
 TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border)
 
     : GuiWidget(parent, 0, 0, 1, 1, border),
@@ -63,7 +121,8 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       maxWidthChars(INT_MAX),
       maxHeightChars(INT_MAX),
       border(border),
-      adjustment(VerticalAdjustment::TOP)
+      adjustment(VerticalAdjustment::TOP),
+      isMousePointerHidden(false)
 {
     totalPixWidth = 0;
     leftPix = 0;
@@ -108,6 +167,8 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
     backliteBuffer->registerUpdateListener(slotForHilitingUpdateTreatment);
     
     redrawRegion = XCreateRegion();
+    
+    XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
 }
 
 TextWidget::~TextWidget()
@@ -1794,4 +1855,18 @@ void TextWidget::notifyAboutHotKeyEventForOtherWidget()
         startCursorBlinking(); // redraw Cursor while Hotkey for other widget
     }
 }
+
+void TextWidget::internalShowMousePointer()
+{
+    isMousePointerHidden = false;
+    XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
+}
+
+
+void TextWidget::internalHideMousePointer()
+{
+    isMousePointerHidden = true;
+    XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getEmptyMouseCursor());
+}
+
 
