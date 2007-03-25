@@ -74,6 +74,13 @@ public:
     void scrollPageLeft();
     void scrollPageRight();
 
+    void showMousePointer() {
+        TextWidget::showMousePointer();
+    }
+    void hideMousePointer() {
+        TextWidget::hideMousePointer();
+        addToXEventMask(PointerMotionMask);
+    }
 protected:
     TextEditorWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth);
 

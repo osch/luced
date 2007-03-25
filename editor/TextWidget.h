@@ -50,6 +50,17 @@ public:
 protected:
     TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border);
 
+    void showMousePointer() {
+        if (isMousePointerHidden) {
+            internalShowMousePointer();
+        }
+    }
+    void hideMousePointer() {
+        if (!isMousePointerHidden) {
+            internalHideMousePointer();
+        }
+    }
+    
 public:
     virtual void setPosition(Position newPosition);
     
@@ -157,17 +168,6 @@ public:
     void registerLineAndColumnListener(const Callback2<long,long>& listener);
     void notifyAboutHotKeyEventForOtherWidget();
         
-    void showMousePointer() {
-        if (isMousePointerHidden) {
-            internalShowMousePointer();
-        }
-    }
-    void hideMousePointer() {
-        if (!isMousePointerHidden) {
-            internalHideMousePointer();
-        }
-    }
-    
 private:
 
     

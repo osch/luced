@@ -223,6 +223,10 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
 
     if (m.isValid())
     {
+        if (event->type == KeyPress) {
+            textEditor->hideMousePointer();
+        }
+
         m.call();
         return EVENT_PROCESSED;
     } 

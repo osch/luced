@@ -529,7 +529,6 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
 {
     if (hasFocusFlag && event->type == KeyPress) {
         hideMousePointer();
-        addToXEventMask(PointerMotionMask);
     }
     
     unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
