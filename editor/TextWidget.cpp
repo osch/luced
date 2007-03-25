@@ -133,14 +133,17 @@ void TextWidget::treatHilitingUpdate(HilitingBuffer::UpdateInfo update)
 }
 
 
-class TextWidget::FillLineInfoIterator
+namespace LucED
+{
+
+class TextWidgetFillLineInfoIterator
 {
 public:
-    FillLineInfoIterator(const TextData*       textData, 
-                         HilitingBuffer*       hilitingBuffer, 
-                         BackliteBuffer*       backliteBuffer,
-                         const TextStyles*     textStyles,
-                         long                  textPos)
+    TextWidgetFillLineInfoIterator(const TextData*       textData, 
+                                   HilitingBuffer*       hilitingBuffer, 
+                                   BackliteBuffer*       backliteBuffer,
+                                   const TextStyles*     textStyles,
+                                   long                  textPos)
         : textData(textData),
           hilitingBuffer(hilitingBuffer),
           backliteBuffer(backliteBuffer),
@@ -228,10 +231,10 @@ private:
     int background;
 };
 
-class TextWidget::FragmentFiller
+class TextWidgetFragmentFiller
 {
 public:
-    FragmentFiller(MemArray<LineInfo::FragmentInfo>& fragments)
+    TextWidgetFragmentFiller(MemArray<LineInfo::FragmentInfo>& fragments)
         : fragments(fragments),
           lastStyle(-1),
           lastBackground(-1),
@@ -239,7 +242,7 @@ public:
           lastStyleBeginTextPos(-1)
     {}
 
-    bool hasStyleChanged(const FillLineInfoIterator& i) const
+    bool hasStyleChanged(const TextWidgetFillLineInfoIterator& i) const
     {
         return lastStyle      != i.getStyleIndex() 
             || lastBackground != i.getBackground();  // was also: i.getChar() == '\t'
@@ -250,7 +253,7 @@ public:
         return lastStyle != -1;
     }
 
-    void completeFragment(const FillLineInfoIterator& i) 
+    void completeFragment(const TextWidgetFillLineInfoIterator& i) 
     {
         ASSERT(lastStyle             != -1);
         ASSERT(lastStyleBeginTextPos != -1);
@@ -261,7 +264,7 @@ public:
         fragments.getLast().pixWidth    = i.getPixelPos() - lastStylePixBegin;
     }
 
-    void beginNewFragment(const FillLineInfoIterator& i)
+    void beginNewFragment(const TextWidgetFillLineInfoIterator& i)
     {
         if (i.getChar() == '\t') {
             lastStyle = -2;
@@ -289,11 +292,13 @@ private:
     long                                    lastStyleBeginTextPos;
 };
 
+} // namespace LucED
+
 
 void TextWidget::fillLineInfo(long beginOfLinePos, LineInfo* li)
 {
-    FillLineInfoIterator       i(textData, hilitingBuffer, backliteBuffer, textStyles, beginOfLinePos);
-    FragmentFiller             f(li->fragments);
+    TextWidgetFillLineInfoIterator i(textData, hilitingBuffer, backliteBuffer, textStyles, beginOfLinePos);
+    TextWidgetFragmentFiller       f(li->fragments);
     
     int  print = 0;
     

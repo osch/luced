@@ -157,10 +157,9 @@ public:
     void registerLineAndColumnListener(const Callback2<long,long>& listener);
     void notifyAboutHotKeyEventForOtherWidget();
         
+
 private:
 
-    class FillLineInfoIterator;
-    class FragmentFiller;
     
     void unclip();
     void clip(int x, int y, int w, int h);

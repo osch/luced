@@ -34,6 +34,7 @@ public:
 
 private:
     friend class TextWidget;
+    friend class TextWidgetFragmentFiller;
     friend class LineInfos;
 
     bool isDifferentOnScreenThan(const LineInfo& rhs) const {
