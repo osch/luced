@@ -542,6 +542,7 @@ void StandardEditActions::newLine()
             long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
             e->moveCursorToTextPosition(selBegin);
             e->removeAtCursor(selLength);
+            e->releaseSelectionOwnership();
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
         ByteArray whiteSpace;
