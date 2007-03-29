@@ -33,124 +33,185 @@ extern "C" {
 
 #include "HeapObject.h"
 #include "HeapObjectArray.h"
+#include "LuaStackChecker.h"
 
-namespace LucED {
+namespace LucED 
+{
 
 using std::string;
 
 class LuaInterpreter;
 class LuaObjectList;
 
-class LuaObjectAccessToLuaInterpreter : private HeapObjectRefManipulator
-{
-protected:
-    static void incTableRefCounter(LuaInterpreter *lua, int index);
-    static void decTableRefCounter(LuaInterpreter *lua, int index);
-    static lua_State* getL(LuaInterpreter *lua);
-    static int getStackIndex(LuaInterpreter *lua, int index);
-    static int newLuaObject(LuaInterpreter *lua, int stackIndex);
-};
-
-
-class LuaObject : private LuaObjectAccessToLuaInterpreter
+class LuaObject
 {
 public:
     static const LuaObject none;
     
-    LuaObject() : lua(NULL), index(-1) {}
+    LuaObject() {
+        lua_pushnil(L);
+        stackIndex = lua_gettop(L);
+    #ifdef DEBUG
+        stackGeneration = LuaStackChecker::getInstance()->registerAndGetGeneration(stackIndex);
+    #endif
+        lua_checkstack(L, 10);
+    }
         
-    LuaObject(const LuaObject& src) {
-        lua   = src.lua;
-        index = src.index;
-        incTableRefCounter(lua, index);
+    LuaObject(const LuaObject& rhs) {
+        lua_pushvalue(L, rhs.stackIndex);
+        stackIndex = lua_gettop(L);
+    #ifdef DEBUG
+        stackGeneration = LuaStackChecker::getInstance()->registerAndGetGeneration(stackIndex);
+    #endif
+        lua_checkstack(L, 10);
     }
-    LuaObject& operator=(const LuaObject& src) {
-        LuaInterpreter *oldLua = lua;
-        int oldIndex = index;
-        lua = src.lua;
-        index = src.index;
-        incTableRefCounter(lua, index);
-        decTableRefCounter(oldLua, oldIndex);
+
+    LuaObject& operator=(const LuaObject& rhs) {
+        lua_pushvalue(L, rhs.stackIndex);
+        lua_replace(L, stackIndex);
+        return *this;
     }
+
     ~LuaObject() {
-        decTableRefCounter(lua, index);
+    #ifdef DEBUG
+        LuaStackChecker::getInstance()->truncateGenerationAtStackIndex(stackGeneration, stackIndex);
+    #endif
+        lua_remove(L, stackIndex);
     }
     bool isValid() const {
-        return lua != NULL && !isNil();
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        return stackIndex != -1 && !isNil();
     }
     bool isNil() const {
-        return lua_isnil(getL(), getStackIndex());
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        return lua_isnil(L, stackIndex);
     }
     
     bool isBoolean() const {
-        return lua_isboolean(getL(), getStackIndex());
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        return lua_isboolean(L, stackIndex);
     }
     bool isNumber() const {
-        return lua_isnumber(getL(), getStackIndex());
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        return lua_isnumber(L, stackIndex);
     }
     bool isString() const {
-        return lua_isstring(getL(), getStackIndex());
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        return lua_isstring(L, stackIndex);
     }
     bool isTable() const {
-        return lua_istable(getL(), getStackIndex());
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        return lua_istable(L, stackIndex);
     }
     bool isFunction() const {
-        return lua_isfunction(getL(), getStackIndex());
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        return lua_isfunction(L, stackIndex);
+    }
+    void setNil() const {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        lua_pushnil(L);
+        lua_replace(L, stackIndex);
     }
     LuaObject call() const;
     LuaObject call(const LuaObject& arg) const;
     LuaObject call(const LuaObjectList& args) const;
     
-    const char* getTypeName() const;
+    const char* getTypeName() const {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        return lua_typename(L, lua_type(L, stackIndex));
+    }
     
     bool toBoolean() const {
-        return lua_toboolean(getL(), getStackIndex());
+        return lua_toboolean(L, stackIndex);
     }
     double toNumber() const {
-        return lua_tonumber(getL(), getStackIndex());
+        return lua_tonumber(L, stackIndex);
     }
     string toString() const {
-        return string(lua_tostring(getL(), getStackIndex()),
-                      lua_strlen(  getL(), getStackIndex()));
+        return string(lua_tostring(L, stackIndex),
+                      lua_strlen(  L, stackIndex));
     }
-    LuaObject operator[](const char* fieldName);
-    LuaObject operator[](const string& fieldName);
-    LuaObject operator[](int index);
     
-    typedef HeapObjectArray<string> KeyList;
-    KeyList::Ptr getTableKeys() const;
+    bool operator==(const char* rhs) const {
+        int rhsLength = strlen(rhs);
+        return rhsLength == lua_strlen(L, stackIndex)
+            && memcmp(lua_tostring(L, stackIndex), rhs, rhsLength) == 0;
+    }
+    bool operator!=(const char* rhs) const {
+        return !(*this == rhs);
+    }
+    
+    bool operator==(const string& rhs) const {
+        return rhs.length() == lua_strlen(L, stackIndex)
+            && memcmp(lua_tostring(L, stackIndex), rhs.c_str(), rhs.length()) == 0;
+    }
+    bool operator!=(const string& rhs) const {
+        return !(*this == rhs);
+    }
+    
+    LuaObject operator[](const char* fieldName) {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        lua_pushstring(L, fieldName);
+        lua_gettable(L, stackIndex);
+        return LuaObject(lua_gettop(L));
+    }
+
+    LuaObject operator[](const string& fieldName) {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        lua_pushlstring(L, fieldName.c_str(), fieldName.length());
+        lua_gettable(L, stackIndex);
+        return LuaObject(lua_gettop(L));
+    }
+
+    LuaObject operator[](int index) {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        lua_pushnumber(L, index);
+        lua_gettable(L, stackIndex);
+        return LuaObject(lua_gettop(L));
+    }
+
     
 private:
-    friend class LuaInterpreterAccessToLuaObject;
-    LuaObject(LuaInterpreter *lua, int index) : lua(lua), index(index) {
-        incTableRefCounter(lua, index);
+    friend class LuaInterpreter;
+    friend class LuaIterator;
+    
+    LuaObject(int stackIndex) : stackIndex(stackIndex)
+    {
+    #ifdef DEBUG
+        stackGeneration = LuaStackChecker::getInstance()->registerAndGetGeneration(stackIndex);
+    #endif
+        lua_checkstack(L, 10);
     }
-    int getStackIndex() const {
-        return LuaObjectAccessToLuaInterpreter::getStackIndex(lua, index);
-    }
-    lua_State* getL() const {
-        return LuaObjectAccessToLuaInterpreter::getL(lua);
-    }
-    LuaObject newLuaObject(int stackIndex) const {
-        return LuaObject(lua, LuaObjectAccessToLuaInterpreter::newLuaObject(lua, stackIndex));
-    }
-    LuaInterpreter *lua;
-    int index;
+    
+    static lua_State* L;
+    
+    int stackIndex;
+#ifdef DEBUG
+    int stackGeneration;
+#endif
 };
 
-class LuaInterpreterAccessToLuaObject
+inline bool operator==(const char* lhs, const LuaObject& rhs)
 {
-protected:
-    static LuaObject constructLuaObject(LuaInterpreter *lua, int index) {
-        return LuaObject(lua, index);
-    }
-    static int getStackIndex(const LuaObject& object) {
-        return object.getStackIndex();
-    }
-};
+    return rhs == lhs;
+}
 
-};
+inline bool operator!=(const char* lhs, const LuaObject& rhs)
+{
+    return rhs != lhs;
+}
 
-#include "LuaInterpreter.h"
+inline bool operator==(const string& lhs, const LuaObject& rhs)
+{
+   return rhs == lhs;
+}
+
+inline bool operator!=(const string& lhs, const LuaObject& rhs)
+{
+   return rhs != lhs;
+}
+
+
+} // namespace LucED
 
 #endif // LUAOBJECT_H

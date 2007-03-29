@@ -33,6 +33,8 @@
 #include "WeakPtr.h"
 #include "File.h"
 #include "FileException.h"
+#include "LuaInterpreter.h"
+#include "LuaException.h"
 
 using namespace LucED;
 
@@ -183,7 +185,8 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
     keyMapping.set(            ControlMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveKey));
     keyMapping.set(            ControlMask, XK_n,      Callback0(this,      &EditorTopWin::createEmptyWindow));
-    keyMapping.set(  ControlMask|ShiftMask, XK_n,      Callback0(this,      &EditorTopWin::createCloneWindow));
+    keyMapping.set(               Mod1Mask, XK_c,      Callback0(this,      &EditorTopWin::createCloneWindow));
+    keyMapping.set(               Mod1Mask, XK_l,      Callback0(this,      &EditorTopWin::executeLuaScript));
 }
 
 EditorTopWin::~EditorTopWin()
@@ -487,5 +490,24 @@ void EditorTopWin::createCloneWindow()
     newWin->textEditor->setTopLineNumber(    this->textEditor->getTopLineNumber());
     newWin->textEditor->setLeftPix(          this->textEditor->getLeftPix());
     newWin->show();
+}
+
+void EditorTopWin::executeLuaScript()
+{
+    if (textEditor->hasSelectionOwnership())
+    {
+        try
+        {
+            long selBegin  = textEditor->getBackliteBuffer()->getBeginSelectionPos();
+            long selLength = textEditor->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+            LuaInterpreter::getInstance()->executeScript((const char*) textEditor->getTextData()->getAmount(selBegin, selLength),
+                                                         selLength);
+        }
+        catch (LuaException& ex)
+        {
+            invokeMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                                  .setMessage(ex.getMessage()));
+        }
+    }
 }
 

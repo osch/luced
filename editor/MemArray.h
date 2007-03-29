@@ -63,6 +63,12 @@ public:
     T& getLast() {
         return *getPtr(getLength() - 1);
     }
+    T getAndRemoveLast() {
+        int length = getLength();
+        T rslt = *getPtr(length - 1);
+        removeAmount(length - 1, 1);
+        return rslt;
+    }
     long getLength() const {
         return size;
     }

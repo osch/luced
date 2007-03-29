@@ -25,7 +25,6 @@
 #include <string>
 
 #include "HeapObject.h"
-#include "LuaObject.h"
 #include "TextStyle.h"
 #include "HeapHashMap.h"
 #include "SyntaxPatterns.h"

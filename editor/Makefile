@@ -57,7 +57,7 @@ MODULES = EditorTopWin           EventDispatcher     GuiRoot            GuiWidge
           Button                 GuiLayoutColumn     GuiLayoutWidget \
           GotoLinePanel          SingletonKeeper     TopWinList         TopWinOwner \
           DialogWin              GuiLayoutSpacer     MultiLineEditorWidget \
-          SingleLineEditorWidget StandardEditActions HeapObject \
+          SingleLineEditorWidget StandardEditActions HeapObject         LuaStackChecker \
           SingleLineEditField    LabelWidget         DialogPanel        PanelDialogWin \
           FindPanel              CheckBox            MessageBox         SearchHistory \
           FileException          EditorServer        ClientServerUtil   EditorClient  \

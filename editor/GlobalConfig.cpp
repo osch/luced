@@ -25,6 +25,8 @@
 #include "ConfigException.h"
 #include "DirectoryReader.h"
 #include "RegexException.h"
+#include "LuaInterpreter.h"
+#include "LuaObject.h"
 
 using namespace LucED;
 
@@ -94,7 +96,6 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode()
     return languageModes->getDefaultLanguageMode();
 }
 
-
 void GlobalConfig::readConfig(const string& configPath)
 {
     LuaInterpreter* lua = LuaInterpreter::getInstance();
@@ -103,6 +104,7 @@ void GlobalConfig::readConfig(const string& configPath)
     // globalConfig
     
     LuaObject globalConfig = lua->getGlobal("globalConfig");
+    
     if (globalConfig.isValid())
     {
         if (!globalConfig.isTable()) {
@@ -297,7 +299,7 @@ void GlobalConfig::readConfig(const string& configPath)
         if (textStyleNameToIndexMap->hasKey(name)) {
             throw ConfigException("duplicate textstyle '" + name + "'");
         }
-        
+
         textStyleNameToIndexMap->set(name, i);
         
         LuaObject f = o["font"];

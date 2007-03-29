@@ -28,7 +28,6 @@
 #include "ObjectArray.h"
 #include "Regex.h"
 #include "MemArray.h"
-#include "LuaObject.h"
 #include "HashMap.h"
 #include "SyntaxPatterns.h"
 #include "OwningPtr.h"
@@ -36,6 +35,8 @@
 namespace LucED {
 
 using std::string;
+
+class LuaObject;
 
 class LanguageMode : public HeapObject
 {
@@ -45,9 +46,7 @@ public:
     static Ptr create(const string& name, Regex regex = Regex()) {
         return Ptr(new LanguageMode(name, regex));
     }
-    static Ptr create(LuaObject config) {
-        return Ptr(new LanguageMode(config));
-    }
+    static Ptr create(LuaObject config);
         
     string getName() const {
         return name;

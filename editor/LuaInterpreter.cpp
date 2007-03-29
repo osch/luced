@@ -19,95 +19,126 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
 #include "LuaInterpreter.h"
 #include "File.h"
 #include "ByteBuffer.h"
 #include "LuaException.h"
+#include "LuaObject.h"
+#include "LuaStackChecker.h"
 
 using namespace LucED;
 
+namespace LucED
+{
+
+class LuaFunction
+{
+public:
+
+    static int function_print(lua_State* L)
+    {
+        bool wasError = false;
+        int numberOfArguments = lua_gettop(L);
+        int numberOfResults = 0;
+        
+        LuaInterpreter* lua = static_cast<LuaInterpreter*>(lua_touserdata(L, lua_upvalueindex(1)));
+        ASSERT(lua != 0);
+
+        try
+        {
+            for (int i = 1; i <= numberOfArguments; ++i)
+            {
+                string value = string(lua_tostring(L, i),
+                                      lua_strlen(L, i));
+                printf("print <%s>\n", value.c_str());
+            }
+        }
+        catch (...)
+        {
+            lua_pushstring(L, "unknown error");
+            wasError = true;
+        }
+
+        if (wasError) {
+            lua_error(L);
+        } else {
+            return numberOfResults;
+        }
+    }
+};
+
+} // namespace LucED
 
 SingletonInstance<LuaInterpreter> LuaInterpreter::instance;;
 
-LuaInterpreter* LuaInterpreter::getInstance()
-{
-    return instance.getPtr();
-}
 
 LuaInterpreter::LuaInterpreter()
 {
+    LuaStackChecker::getInstance(); // assure that StackChecker exists for all LuaObjects
+    
     L = lua_open();
+
+    luaopen_base(L);
+    luaopen_table(L);
+    luaopen_io(L);
+    luaopen_string(L);
+    luaopen_math(L);
+    luaopen_debug(L);
+    luaopen_loadlib(L);
+
+    lua_pushlightuserdata(L, this);
+    lua_pushcclosure(L, LuaFunction::function_print, 1);    
+    lua_setglobal(L, "print");
+    
+    LuaObject::L = L;
 }
 
 LuaInterpreter::~LuaInterpreter()
 {
     lua_close(L);
+    
+    LuaObject::L = NULL;
 }
 
-void LuaInterpreter::executeFile(string name)
+
+
+string LuaInterpreter::executeScript(const char* scriptBegin, long scriptLength, string name)
+{
+    int error = luaL_loadbuffer(L, scriptBegin, scriptLength, name.c_str())
+            || lua_pcall(L, 0, 0, 0);
+
+    if (error) {
+        LuaException ex(lua_tostring(L, -1));
+        lua_pop(L, 1);
+        throw ex;
+    }
+    return string();
+}
+
+string LuaInterpreter::executeFile(string name)
 {
     ByteBuffer buffer;
     File(name).loadInto(buffer);
-    int error = luaL_loadbuffer(L, (const char*) buffer.getTotalAmount(), buffer.getLength(), name.c_str())
-            || lua_pcall(L, 0, 0, 0);
-    if (error) {
-        LuaException ex(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        throw ex;
-    }
+    return executeScript((const char*) buffer.getTotalAmount(), buffer.getLength(), name);
 }
 
-void LuaInterpreter::executeScript(const char* scriptBegin, long scriptLength)
-{
-    int error = luaL_loadbuffer(L, scriptBegin, scriptLength, "memory")
-            || lua_pcall(L, 0, 0, 0);
-    if (error) {
-        LuaException ex(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        throw ex;
-    }
-}
-
-
-int LuaInterpreter::newLuaObject(int stackIndex)
-{
-    int found = -1;
-    for (int i = 0; i < tables.getLength(); ++i) {
-        if (tables[i].usageCounter == 0) {
-            found = i;
-            break;
-        }
-    }
-    if (found == -1) {
-        tables.append(TableInfo(stackIndex));
-        found = tables.getLength() - 1;
-    } else {
-        tables[found].stackIndex = stackIndex;
-    }
-    return found;
-}
 
 LuaObject LuaInterpreter::getGlobal(const char* name)
 {
     lua_getglobal(L, name);
-    int stackIndex = lua_gettop(L);
-    return constructLuaObject(this, newLuaObject(stackIndex));
+    return LuaObject(lua_gettop(L));
 }
 
-void LuaInterpreter::releaseTable(int index)
-{
-    int stackIndex = tables[index].stackIndex;
-    lua_remove(L, stackIndex);
-    for (int i = 0; i < tables.getLength(); ++i) {
-        if (tables[i].usageCounter > 0 && tables[i].stackIndex > stackIndex) {
-            tables[i].stackIndex -= 1;
-        }
-    }
-}
 
 void LuaInterpreter::setGlobal(const char* name, LuaObject value)
 {
-    lua_pushvalue(L, getStackIndex(value));
+    lua_pushvalue(L, value.stackIndex);
     lua_setglobal(L, name);
 }
 
@@ -117,3 +148,4 @@ void LuaInterpreter::clearGlobal(const char* name)
     lua_pushnil(L);
     lua_setglobal(L, name);
 }
+

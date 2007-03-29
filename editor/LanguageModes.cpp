@@ -22,8 +22,14 @@
 #include "LanguageModes.h"
 #include "ConfigException.h"
 #include "RegexException.h"
+#include "LuaObject.h"
 
 using namespace LucED;
+
+LanguageMode::Ptr LanguageMode::create(LuaObject config)
+{
+    return Ptr(new LanguageMode(config));
+}
 
 
 LanguageMode::LanguageMode(const string& name, Regex regex)

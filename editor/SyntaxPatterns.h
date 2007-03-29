@@ -24,7 +24,6 @@
 
 #include "TextStyle.h"
 #include "HeapObject.h"
-#include "LuaObject.h"
 #include "HeapHashMap.h"
 #include "Regex.h"
 #include "MemArray.h"
@@ -32,6 +31,8 @@
 
 namespace LucED {
 
+
+class LuaObject;
 
 struct SubPatternDescriptor
 {
@@ -90,9 +91,7 @@ public:
     typedef OwningPtr<SyntaxPatterns> Ptr;
     typedef HeapHashMap<string,int> NameToIndexMap;
     
-    static SyntaxPatterns::Ptr create(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap) {
-        return Ptr(new SyntaxPatterns(config, textStyleToIndexMap));
-    }
+    static Ptr create(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap);
 
     static TextStyles::Ptr getPreliminaryStaticTextStyles();
     

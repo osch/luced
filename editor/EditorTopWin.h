@@ -83,6 +83,7 @@ private:
     void invokeMessageBox(MessageBoxParameter p);
     void createEmptyWindow();
     void createCloneWindow();
+    void executeLuaScript();
     
     void handleNewFileName(const string& fileName);
     void handleChangedModifiedFlag(bool modifiedFlag);

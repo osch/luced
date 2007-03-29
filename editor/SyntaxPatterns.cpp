@@ -24,8 +24,16 @@
 #include "ConfigException.h"
 #include "HeapHashMap.h"
 #include "util.h"
+#include "LuaObject.h"
+#include "LuaIterator.h"
 
 using namespace LucED;
+
+
+SyntaxPatterns::Ptr SyntaxPatterns::create(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap)
+{
+    return Ptr(new SyntaxPatterns(config, textStyleToIndexMap));
+}
 
 
 //TextStyles::Ptr     SyntaxPatterns::preliminaryStaticTextStyles;
@@ -95,18 +103,19 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
         throw ConfigException("pattern 'root' not properly defined");
     }
     NameToIndexMap::Ptr nameToIndexMap = NameToIndexMap::create();
-    LuaObject::KeyList::Ptr keys = config.getTableKeys();
+    
+    ObjectArray<string> patternNames;
 
     nameToIndexMap->set("root", 0);
-    for (int i=0; i < keys->getLength();) {
-        if (keys->get(i) != "root") {
-            nameToIndexMap->set(keys->get(i), i + 1);
+    for (LuaIterator i = 0; i.in(config);) {
+        string patternName = i.key().toString();
+        if (patternName != "root") {
+            nameToIndexMap->set(patternName, i + 1);  // i+1, because 0 is index for "root"
+            patternNames.append(patternName);
             ++i;
-        } else {
-            keys->remove(i);
         }
     }
-    allPatterns.appendAmount(keys->getLength() + 1);
+    allPatterns.appendAmount(patternNames.getLength() + 1);
     
     {
         SyntaxPattern* sp = allPatterns.getPtr(0);
@@ -123,8 +132,8 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
         fillChildPatterns(sp, root, nameToIndexMap);
     }
     
-    for (int i = 0; i < keys->getLength(); ++i) {
-        string name = keys->get(i);
+    for (int i = 0; i < patternNames.getLength(); ++i) {
+        string name = patternNames[i];
         SyntaxPattern* sp = allPatterns.getPtr(i + 1);
         sp->name = name;
         LuaObject p = config[name];
@@ -171,13 +180,12 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 if (!o.isTable()) {
                     throw ConfigException("pattern '" + sp->name + "': invalid 'beginSubstyles' element");
                 }
-                LuaObject::KeyList::Ptr keys = o.getTableKeys();
-                for (int j = 0; j < keys->getLength(); ++j) {
-                    string k = keys->get(j);
-                    if (!o[k].isString()) {
+                for (LuaIterator j = 0; j.in(o); ++j) {
+                    string k = j.key().toString();
+                    if (!j.value().isString()) {
                         throw ConfigException("pattern '" + sp->name + "': invalid 'beginSubstyles' element '" + k + "'");
                     }
-                    NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(o[k].toString());
+                    NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(j.value().toString());
                     if (!foundIndex.isValid()) {
                         throw ConfigException("pattern '" + sp->name + "': invalid 'beginSubstyles' element '" + k + "'");
                     }
@@ -190,13 +198,12 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 if (!o.isTable()) {
                     throw ConfigException("pattern '" + sp->name + "': invalid 'endSubstyles' element");
                 }
-                LuaObject::KeyList::Ptr keys = o.getTableKeys();
-                for (int j = 0; j < keys->getLength(); ++j) {
-                    string k = keys->get(j);
-                    if (!o[k].isString()) {
+                for (LuaIterator j; j.in(o); ++j) {
+                    string k = j.key().toString();
+                    if (!j.value().isString()) {
                         throw ConfigException("pattern '" + sp->name + "': invalid 'endSubstyles' element '" + k + "'");
                     }
-                    NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(o[k].toString());
+                    NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(j.value().toString());
                     if (!foundIndex.isValid()) {
                         throw ConfigException("pattern '" + sp->name + "': invalid 'endSubstyles' element '" + k + "'");
                     }
@@ -223,13 +230,12 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 if (!o.isTable()) {
                     throw ConfigException("pattern '" + sp->name + "': invalid 'substyles' element");
                 }
-                LuaObject::KeyList::Ptr keys = o.getTableKeys();
-                for (int j = 0; j < keys->getLength(); ++j) {
-                    string k = keys->get(j);
-                    if (!o[k].isString()) {
+                for (LuaIterator j = 0; j.in(o); ++j) {
+                    string k = j.key().toString();
+                    if (!j.value().isString()) {
                         throw ConfigException("pattern '" + sp->name + "': invalid 'substyles' element '" + k + "'");
                     }
-                    NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(o[k].toString());
+                    NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(j.value().toString());
                     if (!foundIndex.isValid()) {
                         throw ConfigException("pattern '" + sp->name + "': invalid 'substyles' element '" + k + "'");
                     }
