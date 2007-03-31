@@ -76,6 +76,7 @@ private:
     Atom x11AtomForTargets;
     Atom x11AtomForIncr;
     ByteArray clipboardBuffer;
+    ByteArray newBuffer;
     bool hasRequestedClipboardOwnership;
     
     bool sendingMultiPart;

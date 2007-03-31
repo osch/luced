@@ -680,6 +680,7 @@ void StandardEditActions::undo()
 {
     if (!e->areCursorChangesDisabled())
     {
+        e->hideCursor();
         TextData::TextMark mark = e->createNewMarkFromCursor();
         long length = e->getTextData()->undo(mark);
         e->moveCursorToTextMark(mark);
@@ -699,6 +700,7 @@ void StandardEditActions::undo()
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
+    e->showCursor();
 }
 
 void StandardEditActions::redo()

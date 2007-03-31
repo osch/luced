@@ -54,7 +54,7 @@ MODULES = EditorTopWin           EventDispatcher     GuiRoot            GuiWidge
           LuaObject              LuaInterpreter      ConfigException    GlobalConfig \
           LanguageModes          RegexException      BackliteBuffer     Clipboard \
           SelectionOwner         PasteDataReceiver   StatusLine         GuiLayoutRow \
-          Button                 GuiLayoutColumn     GuiLayoutWidget \
+          Button                 GuiLayoutColumn     GuiLayoutWidget    LuaStoredObject \
           GotoLinePanel          SingletonKeeper     TopWinList         TopWinOwner \
           DialogWin              GuiLayoutSpacer     MultiLineEditorWidget \
           SingleLineEditorWidget StandardEditActions HeapObject         LuaStackChecker \

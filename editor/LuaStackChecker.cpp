@@ -48,7 +48,7 @@ int LuaStackChecker::registerAndGetGeneration(int stackIndex)
 
 void LuaStackChecker::truncateGenerationAtStackIndex(int generation, int stackIndex)
 {
-    ASSERT(stackIndex >= generationOffset);
+    ASSERT(generation >= generationOffset);
 
     newestGeneration += 1;
 

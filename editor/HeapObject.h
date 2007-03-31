@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <new>
 #include <typeinfo>
 
@@ -107,18 +108,24 @@ protected:
         HeapObjectCounters *allocated = static_cast<HeapObjectCounters *>(
                 malloc(sizeof(HeapObjectCounters) + size));
         new(allocated) HeapObjectCounters();
-        #ifdef PRINT_MALLOCS
+    #ifdef PRINT_MALLOCS
         printf("----> HeapObject %p : allocating %8.d bytes \n", allocated + 1, size);
-        #endif
-        #ifdef DEBUG
+    #endif
+    #ifdef DEBUG
         HeapObjectChecker::allocCounter += 1;
-        #endif
+    #endif
         return allocated + 1;
     }
 
-    // should be private, but gcc doesn't allow this    
     void operator delete(void* ptr, size_t size) {
-        ASSERT(true == false);
+        HeapObjectCounters* beginPtr = const_cast<HeapObjectCounters*>(
+            static_cast<const HeapObjectCounters*>(ptr) - 1
+        );
+    #ifdef DEBUG
+        HeapObjectChecker::allocCounter -= 1;
+        memset(beginPtr, 'X', size + sizeof(HeapObjectCounters));
+    #endif
+        free(beginPtr);
     }
 
 private:

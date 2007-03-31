@@ -180,7 +180,7 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 if (!o.isTable()) {
                     throw ConfigException("pattern '" + sp->name + "': invalid 'beginSubstyles' element");
                 }
-                for (LuaIterator j = 0; j.in(o); ++j) {
+                for (LuaIterator j; j.in(o);) {
                     string k = j.key().toString();
                     if (!j.value().isString()) {
                         throw ConfigException("pattern '" + sp->name + "': invalid 'beginSubstyles' element '" + k + "'");
@@ -198,7 +198,7 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 if (!o.isTable()) {
                     throw ConfigException("pattern '" + sp->name + "': invalid 'endSubstyles' element");
                 }
-                for (LuaIterator j; j.in(o); ++j) {
+                for (LuaIterator j; j.in(o);) {
                     string k = j.key().toString();
                     if (!j.value().isString()) {
                         throw ConfigException("pattern '" + sp->name + "': invalid 'endSubstyles' element '" + k + "'");
@@ -230,7 +230,7 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 if (!o.isTable()) {
                     throw ConfigException("pattern '" + sp->name + "': invalid 'substyles' element");
                 }
-                for (LuaIterator j = 0; j.in(o); ++j) {
+                for (LuaIterator j; j.in(o);) {
                     string k = j.key().toString();
                     if (!j.value().isString()) {
                         throw ConfigException("pattern '" + sp->name + "': invalid 'substyles' element '" + k + "'");

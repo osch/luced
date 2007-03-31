@@ -306,7 +306,9 @@ public:
         history = EditingHistory::create();
         hasHistoryFlag = true;
     }
-
+    
+    void setHistorySeparator();
+    
 private:
 
     friend class ViewCounterTextDataAccess;

@@ -306,7 +306,8 @@ public:
     bool hasStyleChanged(const TextWidgetFillLineInfoIterator& i) const
     {
         return lastStyle      != i.getStyleIndex() 
-            || lastBackground != i.getBackground();  // was also: i.getChar() == '\t'
+            || lastBackground != i.getBackground()
+            || i.getChar() == '\t';
     }
 
     bool hasRememberedStyle() const

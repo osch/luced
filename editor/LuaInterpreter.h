@@ -36,6 +36,10 @@ extern "C" {
 #include "OwningPtr.h"
 #include "SingletonInstance.h"
 #include "LuaObject.h"
+#include "LuaCFunctionArguments.h"
+#include "LuaCFunctionResult.h"
+#include "LuaCFunction.h"
+#include "LuaStoredObject.h"
 
 namespace LucED
 {
@@ -63,9 +67,20 @@ public:
     void setGlobal(const char* name, LuaObject value);
     void clearGlobal(const char* name);
     
+    template<class ImplFunction> 
+    void setGlobal(const char* name, LuaCFunction<ImplFunction>)
+    {
+        lua_pushcfunction(L, &LuaCFunction<ImplFunction>::invokeFunction);
+        lua_setglobal(L, name);
+    }
+    
 private:
     friend class SingletonInstance<LuaInterpreter>;
-   
+    friend class LuaPrintFunction;
+    friend class LuaStdoutWriteFunction;
+    friend class LuaIoWriteFunction;
+    friend class LuaIoOutputFunction;
+    
     ~LuaInterpreter();
 
     static SingletonInstance<LuaInterpreter> instance;
@@ -73,6 +88,30 @@ private:
     LuaInterpreter();
     
     lua_State *L;
+
+    class StoredObjects : public HeapObject
+    {
+    public:
+        typedef OwningPtr<StoredObjects> Ptr;
+        
+        static Ptr create() {
+            return Ptr(new StoredObjects());
+        }
+      
+        LuaStoredObject::Ptr originalToStringFunction;
+        LuaStoredObject::Ptr originalIoOutputFunction;
+        LuaStoredObject::Ptr originalIoWriteFunction;
+        LuaStoredObject::Ptr lucedStdout;
+
+    private:
+        StoredObjects()
+        {}
+    };
+    
+    StoredObjects::Ptr storedObjects;
+    bool isLucedStdoutActive;
+    
+    string printBuffer;
 };
 
 

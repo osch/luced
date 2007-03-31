@@ -30,6 +30,7 @@ lua_State* LuaObject::L = NULL;
 LuaObject LuaObject::call() const
 {
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+    lua_checkstack(L, 10);
     lua_pushvalue(L, stackIndex);
     int error = lua_pcall(L, 0, 1, 0);
 
@@ -46,6 +47,7 @@ LuaObject LuaObject::call() const
 LuaObject LuaObject::call(const LuaObject& arg) const
 {
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+    lua_checkstack(L, 10);
     lua_pushvalue(L, stackIndex);
     lua_pushvalue(L, arg.stackIndex);
     

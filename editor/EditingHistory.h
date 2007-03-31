@@ -44,7 +44,8 @@ public:
     };
     
     enum ActionFlag {
-        FLAG_SECTION_MARK = 1
+        FLAG_SECTION_MARK = 1,
+        FLAG_MERGE_STOP = 2
     };
     
     typedef OptionBits<ActionFlag> ActionFlags;
@@ -68,9 +69,9 @@ public:
     
     void rememberInsertAction(long beginIndex, long length)
     {
-        if (getPreviousActionType() == ACTION_INSERT
-            && (   getPreviousActionTextPos() + getPreviousActionLength() == beginIndex
-                || getPreviousActionTextPos() == beginIndex))
+        if (isPreviousActionMergeable()
+            && getPreviousActionType() == ACTION_INSERT
+            && getPreviousActionTextPos() + getPreviousActionLength() == beginIndex)
         {
             actions.removeTail(nextActionIndex);
             actions[nextActionIndex - 1].length += length;
@@ -93,7 +94,8 @@ public:
     
     void rememberDeleteAction(long beginIndex, long length, const byte* data)
     {
-        if (getPreviousActionType() == ACTION_DELETE
+        if (isPreviousActionMergeable()
+         && getPreviousActionType() == ACTION_DELETE
          && beginIndex                 <= getPreviousActionTextPos()
          && getPreviousActionTextPos() <= beginIndex + length)
         {
@@ -152,7 +154,19 @@ public:
             actions[actions.getLength() - 1].flags.set(FLAG_SECTION_MARK);
         }
     }
+
+    void setSectionMarkOnPreviousAction() {
+        if (nextActionIndex > 0) {
+            actions[nextActionIndex - 1].flags.set(FLAG_SECTION_MARK);
+        }
+    }
     
+    void setMergeStopMarkOnPreviousAction() {
+        if (nextActionIndex > 0) {
+            actions[nextActionIndex - 1].flags.set(FLAG_MERGE_STOP);
+        }
+    }
+
     bool isFirstAction() const
     {
         return nextActionIndex == 0;
@@ -163,6 +177,14 @@ public:
             return true;
         } else {
             return actions[nextActionIndex - 1].flags.isSet(FLAG_SECTION_MARK);
+        }
+    }
+    
+    bool isPreviousActionMergeable() const {
+        if (nextActionIndex == 0) {
+            return false;
+        } else {
+            return !actions[nextActionIndex - 1].flags.isSet(FLAG_MERGE_STOP);
         }
     }
     

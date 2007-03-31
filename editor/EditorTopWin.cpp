@@ -500,8 +500,26 @@ void EditorTopWin::executeLuaScript()
         {
             long selBegin  = textEditor->getBackliteBuffer()->getBeginSelectionPos();
             long selLength = textEditor->getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            LuaInterpreter::getInstance()->executeScript((const char*) textEditor->getTextData()->getAmount(selBegin, selLength),
-                                                         selLength);
+            string output = LuaInterpreter::getInstance()->executeScript((const char*) textEditor->getTextData()->getAmount(selBegin, selLength),
+                                                                         selLength);
+            textEditor->getTextData()->setHistorySeparator();
+            textEditor->hideCursor();
+            textEditor->moveCursorToTextPosition(selBegin + selLength);
+            if (output.length() > 0) {
+                textEditor->insertAtCursor((const byte*) output.c_str(), output.length());
+                textEditor->getBackliteBuffer()->activateSelection(selBegin + selLength);
+                textEditor->getBackliteBuffer()->extendSelectionTo(selBegin + selLength + output.length());
+
+                textEditor->moveCursorToTextPosition(selBegin + selLength + output.length());
+                textEditor->assureCursorVisible();
+                textEditor->moveCursorToTextPosition(selBegin + selLength);
+            } else {
+                textEditor->releaseSelectionOwnership();
+            }
+            textEditor->getTextData()->setHistorySeparator();
+            textEditor->assureCursorVisible();
+            textEditor->rememberCursorPixX();
+            textEditor->showCursor();
         }
         catch (LuaException& ex)
         {

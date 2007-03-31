@@ -55,8 +55,8 @@ public:
             lua_replace(L, valueObject.stackIndex);
             lua_replace(L,   keyObject.stackIndex);
         } else {
-              keyObject.setNil();
-            valueObject.setNil();
+              keyObject.setToNil();
+            valueObject.setToNil();
         }
         return rslt;
     }

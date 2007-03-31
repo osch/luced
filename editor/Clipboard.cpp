@@ -63,7 +63,6 @@ void Clipboard::copyToClipboard(const byte* ptr, long length)
 void Clipboard::copyActiveSelectionToClipboard()
 {
     if (requestSelectionOwnership()) {
-        clipboardBuffer.clear();
         requestSelectionPasting();
     }
 }
@@ -113,21 +112,21 @@ void  Clipboard::notifyAboutLostSelectionOwnership()
 
 void Clipboard::notifyAboutBeginOfPastingData()
 {
-    if (hasSelectionOwnership()) {
-        clipboardBuffer.clear();
-    }
+    newBuffer.clear();
 }
 
 void Clipboard::notifyAboutReceivedPasteData(const byte* data, long length)
 {
-    if (hasSelectionOwnership()) {
-        clipboardBuffer.append(data, length);
-    }
+    newBuffer.append(data, length);
 }
 
 
 void Clipboard::notifyAboutEndOfPastingData()
 {
+    if (hasSelectionOwnership() && newBuffer.getLength() > 0) {
+        clipboardBuffer = newBuffer;
+    }
+    newBuffer.clear();
 }
 
 

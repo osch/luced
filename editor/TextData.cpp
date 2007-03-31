@@ -581,3 +581,10 @@ void TextData::registerModifiedFlagListener(Callback1<bool> modifiedFlagCallback
     modifiedFlagCallback.call(modifiedFlag);
 }
 
+void TextData::setHistorySeparator()
+{
+    if (hasHistory()) {
+        history->setSectionMarkOnPreviousAction();
+        history->setMergeStopMarkOnPreviousAction();
+    }
+}
