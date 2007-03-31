@@ -28,11 +28,11 @@ BUILD_DIR       := build
 
 LINK_X11_OPTS   := -L /usr/X11R6/lib/ -lX11 -lXpm
 LINK_PCRE_OPTS  := -lpcre
-LINK_LUA_OPTS   := $(shell if type lua-config >/dev/null 2>&1; then lua-config --libs; else echo "-llualib -llua"; fi)
+LINK_LUA_OPTS   := -llua5.1
 LINK_EXTRA_OPTS := 
 LINK_OPTS       :=
 
-INCL_LUA_OPTS   := $(shell if type lua-config >/dev/null 2>&1; then lua-config --include; fi)
+INCL_LUA_OPTS   := -I /usr/include/lua5.1
 INCL_EXTRA_OPTS :=
 INCL_OPTS       :=
 
