@@ -32,6 +32,8 @@
 
 using namespace LucED;
 
+using std::string;
+
 FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker)
     : DialogPanel(parent),
       editorWidget(editorWidget),
@@ -98,6 +100,8 @@ FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback
     r1->addElement(goBackButton);
     r1->addElement(cancelButton);
     
+    ignoreCaseCheckBox->setChecked(true);
+    
     findNextButton->setAsDefaultButton();
     label0->show();
     editField->show();
@@ -108,7 +112,6 @@ FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback
     ignoreCaseCheckBox->show();
     regularExprCheckBox->show();
     wholeWordCheckBox->show();
-
 }
 
 void FindPanel::treatFocusIn()
@@ -123,7 +126,7 @@ void FindPanel::internalFindNext(bool forward, int textPosition, bool isWrapping
     historyIndex = -1;
 
     int editFieldLength = editField->getTextData()->getLength();
-    std::string editFieldContent((char*)editField->getTextData()->getAmount(0, editFieldLength), editFieldLength);
+    string editFieldContent((char*)editField->getTextData()->getAmount(0, editFieldLength), editFieldLength);
 
     if (editFieldContent.length() <= 0) {
         return;
@@ -131,7 +134,29 @@ void FindPanel::internalFindNext(bool forward, int textPosition, bool isWrapping
 
     try
     {
-        regex = Regex(editFieldContent, Regex::MULTILINE | Regex::ANCHORED);
+        string searchPattern = editFieldContent;
+        
+        Regex::CreateOptions opts = Regex::MULTILINE | Regex::ANCHORED;
+        if (ignoreCaseCheckBox->isChecked()) {
+            opts |= Regex::IGNORE_CASE;
+        }
+        if (!regularExprCheckBox->isChecked()) {
+            string escapedPattern;
+            for (int i = 0, n = editFieldContent.length(); i < n; ++i) {
+                switch (editFieldContent[i]) {
+                    case '\\': case '^': case '$': case '.': case '[': case ']':
+                    case '(':  case ')': case '?': case '*': case '+': case '{':
+                    case '}':  case '-': escapedPattern.push_back('\\');
+                }
+                escapedPattern.push_back(editFieldContent[i]);
+            }
+            searchPattern = escapedPattern;
+        }
+        if (wholeWordCheckBox->isChecked()) {
+            searchPattern.insert(0, "\\b");
+            searchPattern.append("\\b");
+        }
+        regex = Regex(searchPattern, opts);
         SearchHistory::getInstance()->append(editFieldContent);
         int   textLength     = editorWidget->getTextData()->getLength();
         byte* textStart      = editorWidget->getTextData()->getAmount(0, textLength);
@@ -253,7 +278,7 @@ void FindPanel::findAgainForward()
     } else {
         WeakPtr<TextData> textData = editField->getTextData();
         textData->clear();
-        std::string lastFindString = SearchHistory::getInstance()->getLast().getFindString();
+        string lastFindString = SearchHistory::getInstance()->getLast().getFindString();
         textData->insertAtMark(textData->createNewMark(), (const byte*) lastFindString.c_str(), lastFindString.length());
     }
     int   textPosition   = editorWidget->getCursorTextPosition();
@@ -287,7 +312,7 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
     {
         if (historyIndex < 0) {
             int editFieldLength = editField->getTextData()->getLength();
-            std::string editFieldContent((char*)editField->getTextData()->getAmount(0, editFieldLength), editFieldLength);
+            string editFieldContent((char*)editField->getTextData()->getAmount(0, editFieldLength), editFieldLength);
             SearchHistory::getInstance()->append(editFieldContent);
             historyIndex = SearchHistory::getInstance()->getEntryCount();
         }
@@ -295,7 +320,7 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
             --historyIndex;
             WeakPtr<TextData> textData = editField->getTextData();
             textData->clear();
-            std::string lastFindString = SearchHistory::getInstance()->getEntry(historyIndex).getFindString();
+            string lastFindString = SearchHistory::getInstance()->getEntry(historyIndex).getFindString();
             textData->insertAtMark(textData->createNewMark(), (const byte*) lastFindString.c_str(), lastFindString.length());
             
         } 
