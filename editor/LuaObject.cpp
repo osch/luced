@@ -27,7 +27,17 @@ using namespace LucED;
 
 lua_State* LuaObject::L = NULL;
 
-LuaObject LuaObject::call() const
+#ifdef DEBUG
+int  LuaObject::LuaFunctionArguments::newestStackGeneration = 0;
+int  LuaObject::LuaFunctionArguments::highestStackIndex     = 0;
+int  LuaObject::LuaFunctionArguments::startStackIndex       = 0;
+#endif
+
+int LuaObject::LuaFunctionArguments::numberArguments = 0;
+int LuaObject::LuaFunctionArguments::refCounter      = 0;
+
+/*
+LuaObject LuaObject::call()
 {
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
     lua_checkstack(L, 10);
@@ -43,8 +53,8 @@ LuaObject LuaObject::call() const
         return LuaObject(lua_gettop(L));
     }
 }
-
-LuaObject LuaObject::call(const LuaObject& arg) const
+*/
+/*LuaObject LuaObject::call(const LuaObject& arg) const
 {
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
     lua_checkstack(L, 10);
@@ -82,5 +92,5 @@ LuaObject LuaObject::call(const LuaObjectList& list) const
     }
 }
 
-
+*/
 

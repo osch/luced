@@ -26,6 +26,7 @@
 
 #include "LuaCFunctionArguments.h"
 #include "LuaCFunctionResult.h"
+#include "BaseException.h"
 
 namespace LucED
 {
@@ -46,6 +47,11 @@ private:
             try
             {
                 numberOfResults = ImplFunction()(args).numberOfResults;
+            }
+            catch (BaseException& ex)
+            {
+                lua_pushstring(L, ex.getMessage().c_str());
+                wasError = true;
             }
             catch (std::exception& ex)
             {

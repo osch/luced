@@ -60,6 +60,7 @@ public:
     
     string executeFile(string name);
     string executeScript(const char* beginScript, long scriptLength, string name = string());
+    string executeExpression(const char* beginScript, long scriptLength, string name = string());
     string executeScript(string script, string name = string()) {
         return executeScript(script.c_str(), script.length(), name);
     }

@@ -22,28 +22,27 @@
 #ifndef REGEXEXCEPTION_H
 #define REGEXEXCEPTION_H
 
-#include <exception>
-#include <string>
+#include "BaseException.h"
 
 namespace LucED {
 
-using std::exception;
-using std::string;
-
-class RegexException : public exception
+class RegexException : public BaseException
 {
 public:
-    RegexException(const char* message, int position);
-    RegexException(const string& message);
-    virtual ~RegexException() throw() {}
+    RegexException(const char* message, int position)
+        : BaseException(message),
+          position(position)
+    {}
+    RegexException(const string& message)
+        : BaseException(message),
+          position(-1)
+    {}
     virtual const char *what();
-    string getMessage();
+
     int getPosition() const {
         return position;
     }
 private:
-    const char* whatString;
-    string message;
     int position;
 };
 

@@ -19,22 +19,36 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CONFIGEXCEPTION_H
-#define CONFIGEXCEPTION_H
+#ifndef BASEEXCEPTION_H
+#define BASEEXCEPTION_H
 
-#include "BaseException.h"
+#include <exception>
+#include <string>
 
-namespace LucED {
+namespace LucED
+{
 
-class ConfigException : public BaseException
+using std::exception;
+using std::string;
+
+class BaseException : public exception
 {
 public:
-    ConfigException(string message)
-        : BaseException(message)
+    string getMessage() const {
+        return message;
+    }
+    virtual ~BaseException() throw() {}
+
+    virtual const char *what() = 0;
+
+protected:
+    BaseException(const string& message)
+        : message(message)
     {}
-    virtual const char *what();
+private:
+    string message;
 };
 
 } // namespace LucED
 
-#endif // CONFIGEXCEPTION_H
+#endif // BASEEXCEPTION_H

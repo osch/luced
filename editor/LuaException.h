@@ -22,23 +22,17 @@
 #ifndef LUAEXCEPTION_H
 #define LUAEXCEPTION_H
 
-#include <exception>
-#include <string>
+#include "BaseException.h"
 
 namespace LucED {
 
-using std::exception;
-using std::string;
-
-class LuaException : public exception
+class LuaException : public BaseException
 {
 public:
-    LuaException(string message);
-    virtual ~LuaException() throw() {}
+    LuaException(string message)
+        : BaseException(message)
+    {}
     virtual const char *what();
-    string getMessage();
-private:
-    string message;
 };
 
 } // namespace LucED

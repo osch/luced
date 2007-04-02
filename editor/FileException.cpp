@@ -24,19 +24,9 @@
 
 using namespace LucED;
 
-FileException::FileException(string message)
-        : message(message)
-{
-}
-
 const char* FileException::what()
 {
     static const char* whatString = "FileException";
     return whatString;
-}
-
-string FileException::getMessage()
-{
-    return message;
 }
 

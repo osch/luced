@@ -34,6 +34,8 @@ extern "C" {
 #include "HeapObject.h"
 #include "HeapObjectArray.h"
 #include "LuaStackChecker.h"
+#include "LuaException.h"
+#include "NonCopyable.h"
 
 namespace LucED 
 {
@@ -41,6 +43,7 @@ namespace LucED
 using std::string;
 
 template<class ImplFunction> class LuaCFunction;
+template<int N> class LuaFunctionArguments;
 
 class LuaInterpreter;
 class LuaObjectList;
@@ -131,10 +134,6 @@ public:
         lua_newtable(L);
         lua_replace(L, stackIndex);
     }
-    
-    LuaObject call() const;
-    LuaObject call(const LuaObject& arg) const;
-    LuaObject call(const LuaObjectList& args) const;
     
     const char* getTypeName() const {
         ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
@@ -341,8 +340,116 @@ public:
         ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
         return LuaObjectTableElementRef<const LuaObject&>(stackIndex, key);
     }
-
     
+    class LuaFunctionArguments
+    {
+    public:
+    
+        LuaFunctionArguments()
+        {
+            ++refCounter;
+            lua_checkstack(LuaObject::L, 20);
+            if (refCounter == 1) {
+                ASSERT(numberArguments == 0);
+                lua_pushnil(LuaObject::L); // placeholder for function
+            }
+        #ifdef DEBUG
+            if (refCounter == 1) {
+                newestStackGeneration = LuaStackChecker::getInstance()->getNewestGeneration();
+                highestStackIndex     = LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(newestStackGeneration);
+                startStackIndex       = lua_gettop(LuaObject::L) - 1;
+            } else {
+                checkStack();
+            }
+        #endif
+        }
+        
+        LuaFunctionArguments(const LuaFunctionArguments& rhs)
+        {
+        #ifdef DEBUG
+            checkStack();
+        #endif
+            ++refCounter;
+        }
+        
+        ~LuaFunctionArguments() {
+            --refCounter;
+            if (refCounter == 0 && numberArguments > 0) {
+                #ifdef DEBUG
+                    ASSERT(newestStackGeneration == LuaStackChecker::getInstance()->getNewestGeneration());
+                    ASSERT(highestStackIndex     == LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(newestStackGeneration));
+                #endif
+                lua_pop(LuaObject::L, numberArguments + 1);
+                numberArguments = 0;
+            }
+        }
+        LuaFunctionArguments& operator<<(const LuaObject& arg)
+        {
+        #ifdef DEBUG
+            checkStack();
+        #endif
+            lua_pushvalue(LuaObject::L, arg.stackIndex);
+            ++numberArguments;
+            if (numberArguments % 10 == 0) {
+                lua_checkstack(LuaObject::L, 20);
+            }
+            return *this;
+        }
+        
+        int getLength() const {
+            return numberArguments;
+        }
+    
+    private:
+        friend class LuaObject;
+
+    #ifdef DEBUG
+        void checkStack() const {
+            ASSERT(startStackIndex + 1 + numberArguments == lua_gettop(LuaObject::L));
+            ASSERT(newestStackGeneration == LuaStackChecker::getInstance()->getNewestGeneration());
+            ASSERT(highestStackIndex     == LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(newestStackGeneration));
+        }
+        static int  newestStackGeneration;
+        static int  highestStackIndex;
+        static int  startStackIndex;
+    #endif
+        static int numberArguments;
+        static int refCounter;
+    };
+    
+
+    LuaObject call(const LuaFunctionArguments& args = LuaFunctionArguments())
+    {
+    #ifdef DEBGUG
+        args.checkStack();
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+    #endif
+        lua_checkstack(L, 10);
+        lua_pushvalue(L, stackIndex);
+
+        lua_replace(L, -args.getLength() - 2);
+
+        int error = lua_pcall(L, args.getLength(), 1, 0);
+        args.numberArguments = 0;
+        
+        if (error != 0)
+        {
+            LuaException ex(lua_tostring(L, -1));
+            lua_pop(L, 1);
+            throw ex;
+        } else {    
+            return LuaObject(lua_gettop(L));
+        }
+    }
+    
+    operator LuaFunctionArguments() const {
+        return LuaFunctionArguments() << *this;
+    }
+    
+    LuaFunctionArguments operator<<(const LuaObject& rhs) const {
+        return LuaFunctionArguments() << *this << rhs;
+    }
+
 private:
     friend class LuaInterpreter;
     friend class LuaIterator;
@@ -379,6 +486,13 @@ private:
     int stackGeneration;
 #endif
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+//
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 inline bool operator==(const char* lhs, const LuaObject& rhs)
 {

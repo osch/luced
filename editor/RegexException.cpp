@@ -23,27 +23,10 @@
 
 using namespace LucED;
 
-RegexException::RegexException(const char* message, int position)
-        : whatString(message), position(position)
-{}
-
-RegexException::RegexException(const string& message)
-        : message(message), position(-1)
-{
-    whatString = "RegexException";
-}
 
 const char* RegexException::what()
 {
+    static const char* whatString = "RegexException";
     return whatString;
-}
-
-string RegexException::getMessage()
-{
-    if (message.length() > 0) {
-        return message;
-    } else {
-        return string(whatString);
-    }
 }
 

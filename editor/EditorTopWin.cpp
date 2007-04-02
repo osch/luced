@@ -494,9 +494,13 @@ void EditorTopWin::createCloneWindow()
 
 void EditorTopWin::executeLuaScript()
 {
-    if (textEditor->hasSelectionOwnership())
+    if (textEditor->areCursorChangesDisabled())
     {
-        try
+        return;
+    }
+    try
+    {
+        if (textEditor->hasSelectionOwnership())
         {
             long selBegin  = textEditor->getBackliteBuffer()->getBeginSelectionPos();
             long selLength = textEditor->getBackliteBuffer()->getEndSelectionPos() - selBegin;
@@ -521,11 +525,57 @@ void EditorTopWin::executeLuaScript()
             textEditor->rememberCursorPixX();
             textEditor->showCursor();
         }
-        catch (LuaException& ex)
+        else
         {
-            invokeMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                                  .setMessage(ex.getMessage()));
+            long cursorPos = textEditor->getCursorTextPosition();
+            long spos = cursorPos;
+            int parenCounter = 0;
+            
+            while (spos > 0)
+            {
+                byte c = textEditor->getTextData()->getChar(spos - 1);
+                if (parenCounter > 0)
+                {
+                    if (c == '(') {
+                        --parenCounter;
+                    } else if (c == ')') {
+                        ++parenCounter;
+                    }
+                    --spos;
+                }
+                else if (textEditor->isWordCharacter(c) || c == '.') {
+                    --spos;
+                }
+                else if (c == ')') {
+                    ++parenCounter;
+                    --spos;
+                } else {
+                    break;
+                }
+            }
+            if (spos < cursorPos)
+            {
+                string output = LuaInterpreter::getInstance()->executeExpression((const char*) textEditor->getTextData()->getAmount(spos, cursorPos - spos),
+                                                                                 cursorPos - spos);
+                if (output.length() > 0) 
+                {
+                    textEditor->hideCursor();
+                    textEditor->moveCursorToTextPosition(spos);
+                    textEditor->removeAtCursor(cursorPos - spos);
+                    textEditor->insertAtCursor((const byte*) output.c_str(), output.length());
+                    textEditor->moveCursorToTextPosition(spos + output.length());
+                    textEditor->getTextData()->setHistorySeparator();
+                    textEditor->assureCursorVisible();
+                    textEditor->rememberCursorPixX();
+                    textEditor->showCursor();
+                }
+            }
         }
+    }
+    catch (LuaException& ex)
+    {
+        invokeMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                              .setMessage(ex.getMessage()));
     }
 }
 

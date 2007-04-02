@@ -22,27 +22,17 @@
 #ifndef COMMANDLINEEXCEPTION_H
 #define COMMANDLINEEXCEPTION_H
 
-#include <exception>
-#include <string>
+#include "BaseException.h"
 
 namespace LucED {
 
-using std::exception;
-using std::string;
-
-class CommandlineException : public exception
+class CommandlineException : public BaseException
 {
 public:
     CommandlineException(const string& message)
-        : message(message)
+        : BaseException(message)
     {}
-
-    virtual ~CommandlineException() throw() {}
     virtual const char *what();
-    string getMessage();
-
-private:
-    string message;
 };
 
 } // namespace LucED

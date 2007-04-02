@@ -24,19 +24,9 @@
 
 using namespace LucED;
 
-LuaException::LuaException(string message)
-        : message(message)
-{
-}
-
 const char* LuaException::what()
 {
     static const char* whatString = "LuaException";
     return whatString;
-}
-
-string LuaException::getMessage()
-{
-    return message;
 }
 

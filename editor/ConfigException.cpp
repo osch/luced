@@ -24,19 +24,9 @@
 
 using namespace LucED;
 
-ConfigException::ConfigException(string message)
-        : message(message)
-{
-}
-
 const char* ConfigException::what()
 {
     static const char* whatString = "ConfigException";
     return whatString;
-}
-
-string ConfigException::getMessage()
-{
-    return message;
 }
 

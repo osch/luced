@@ -23,6 +23,8 @@
 
 using namespace LucED;
 
+#ifdef DEBUG
+
 SingletonInstance<LuaStackChecker> LuaStackChecker::instance;
 
 
@@ -66,3 +68,5 @@ void LuaStackChecker::truncateGenerationAtStackIndex(int generation, int stackIn
         highestStackIndices.removeAmount(0, 1);
     }
 }
+
+#endif // DEBUG

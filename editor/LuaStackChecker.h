@@ -28,6 +28,7 @@
 namespace LucED
 {
 
+#ifdef DEBUG
 class LuaStackChecker : public HeapObject
 {
 public:
@@ -42,6 +43,10 @@ public:
     int registerAndGetGeneration(int stackIndex);
     
     void truncateGenerationAtStackIndex(int generation, int stackIndex);
+
+    int getNewestGeneration() {
+        return newestGeneration;
+    }
 
 private:
     friend class SingletonInstance<LuaStackChecker>;
@@ -59,6 +64,7 @@ private:
     int generationOffset;
     MemArray<int> highestStackIndices;
 };
+#endif // DEBUG
 
 } // namespace LucED
 

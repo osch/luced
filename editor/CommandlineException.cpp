@@ -30,8 +30,4 @@ const char* CommandlineException::what()
     return whatString;
 }
 
-string CommandlineException::getMessage()
-{
-    return message;
-}
 

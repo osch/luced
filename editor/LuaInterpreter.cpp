@@ -176,7 +176,9 @@ SingletonInstance<LuaInterpreter> LuaInterpreter::instance;;
 
 LuaInterpreter::LuaInterpreter()
 {
+#ifdef DEBUG
     LuaStackChecker::getInstance(); // assure that StackChecker exists for all LuaObjects
+#endif
     
     L = luaL_newstate();
 
@@ -236,6 +238,34 @@ string LuaInterpreter::executeScript(const char* scriptBegin, long scriptLength,
     }
     string rslt = printBuffer;
     printBuffer = "";
+    return rslt;
+}
+
+string LuaInterpreter::executeExpression(const char* scriptBegin, long scriptLength, string name)
+{
+    printBuffer = "";
+    
+    string script = "return ";
+    script.append(scriptBegin, scriptBegin + scriptLength);
+    
+    int error = luaL_loadbuffer(L, script.c_str(), script.length(), name.c_str())
+            || lua_pcall(L, 0, 1, 0);
+
+    if (error) {
+        LuaException ex(lua_tostring(L, -1));
+        lua_pop(L, 1);
+        throw ex;
+    }
+
+    LuaObject exprRslt = LuaObject(lua_gettop(L));
+
+//    LuaObject toStringFunction = storedObjects->originalToStringFunction->retrieve();
+//    ASSERT(toStringFunction.isFunction());
+
+    string rslt = printBuffer;
+    printBuffer = "";
+//    rslt.append(toStringFunction.call(exprRslt).toString());
+    rslt.append(exprRslt.toString());
     return rslt;
 }
 

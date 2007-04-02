@@ -22,23 +22,17 @@
 #ifndef FILEEXCEPTION_H
 #define FILEEXCEPTION_H
 
-#include <exception>
-#include <string>
+#include "BaseException.h"
 
 namespace LucED {
 
-using std::exception;
-using std::string;
-
-class FileException : public exception
+class FileException : public BaseException
 {
 public:
-    FileException(string message);
-    virtual ~FileException() throw() {}
+    FileException(string message)
+        : BaseException(message)
+    {}
     virtual const char *what();
-    string getMessage();
-private:
-    string message;
 };
 
 } // namespace LucED
