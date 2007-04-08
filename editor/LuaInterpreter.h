@@ -40,6 +40,7 @@ extern "C" {
 #include "LuaCFunctionResult.h"
 #include "LuaCFunction.h"
 #include "LuaStoredObject.h"
+#include "LuaObjectList.h"
 
 namespace LucED
 {
@@ -57,14 +58,26 @@ public:
         return instance.getPtr();
     }
     
-    
-    string executeFile(string name);
-    string executeScript(const char* beginScript, long scriptLength, string name = string());
-    string executeExpression(const char* beginScript, long scriptLength, string name = string());
-    string executeScript(string script, string name = string()) {
+    class Result
+    {
+    public:
+        string        output;
+        LuaObjectList objects;
+    };    
+    Result executeFile(string name);
+    Result executeScript(const char* beginScript, long scriptLength, string name = string());
+    Result executeExpression(const char* beginScript, long scriptLength, string name = string());
+
+    Result executeExpression(const string& expr, string name = string()) {
+        return executeExpression(expr.c_str(), expr.length(), name);
+    }
+    Result executeScript(string script, string name = string()) {
         return executeScript(script.c_str(), script.length(), name);
     }
     LuaObject getGlobal(const char* name);
+    LuaObject getGlobal(const string& name) {
+        return getGlobal(name.c_str());
+    }
     void setGlobal(const char* name, LuaObject value);
     void clearGlobal(const char* name);
     

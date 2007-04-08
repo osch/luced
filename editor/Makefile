@@ -48,7 +48,7 @@ INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
                  
 MODULES = EditorTopWin           EventDispatcher     GuiRoot            GuiWidget \
           HeapMem                HilitingBase        KeyPressRepeater   ScrollBar \
-                                 TextData            TextEditorWidget   TextStyle \
+          FindUtil               TextData            TextEditorWidget   TextStyle \
           TextWidget             TopWin              HilitedText        SyntaxPatterns \
           HilitingBuffer         LuaException        File               Regex \
           LuaObject              LuaInterpreter      ConfigException    GlobalConfig \
@@ -61,7 +61,7 @@ MODULES = EditorTopWin           EventDispatcher     GuiRoot            GuiWidge
           SingleLineEditField    LabelWidget         DialogPanel        PanelDialogWin \
           FindPanel              CheckBox            MessageBox         SearchHistory \
           FileException          EditorServer        ClientServerUtil   EditorClient  \
-          CommandlineException
+          CommandlineException   LuaFunctionArguments 
           
 
 LIB_MBRS = $(patsubst %, $(BUILD_DIR)/libluced.a(%.o), $(MODULES))

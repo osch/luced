@@ -312,6 +312,15 @@ public:
         historyDataIndex += length;
         nextActionIndex += 1;
     }
+    
+    void clear()
+    {
+        nextActionIndex  = 0;
+        historyDataIndex = 0;
+        savedActionIndex = -1;
+        actions.clear();
+        historyData.clear();
+    }
 
 private:
 

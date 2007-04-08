@@ -661,17 +661,26 @@ void TextEditorWidget::handleScrollStepH(ScrollStep::Type scrollStep)
     }
 }
 
-void TextEditorWidget::scrollDown()
+bool TextEditorWidget::scrollDown()
 {
     if (this->getTopLineNumber() < this->getTextData()->getNumberOfLines() - this->getNumberOfVisibleLines()) {
         this->setTopLineNumber(this->getTopLineNumber() + 1);
+        return true;
+    } else {
+        return false;
     }
 }
 
 
-void TextEditorWidget::scrollUp()
+bool TextEditorWidget::scrollUp()
 {
-    this->setTopLineNumber(this->getTopLineNumber() - 1);
+    long topLine = this->getTopLineNumber();
+    if (topLine > 0) {
+        this->setTopLineNumber(this->getTopLineNumber() - 1);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 

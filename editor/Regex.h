@@ -50,7 +50,9 @@ public:
     };
     typedef OptionBits<MatchOption> MatchOptions;
 
-    Regex() : re(NULL) {}
+    Regex() : re(NULL) {
+        pcre_callout = pcreCalloutCallback;
+    }
     Regex(const string&    expr, CreateOptions createOptions = CreateOptions());
     Regex(const ByteArray& expr, CreateOptions createOptions = CreateOptions());
     Regex(const Regex& src);
@@ -68,15 +70,48 @@ public:
     int getOvecSize() const {
         return 3 * (pcre_info(re, NULL, NULL) + 1);
     }
+    int getNumberOfCapturingSubpatterns() const {
+        return pcre_info(re, NULL, NULL);
+    }
     
     bool findMatch( const char *subject, int length, int startoffset,
-            MatchOptions matchOptions, MemArray<int>& ovector ) {
+            MatchOptions matchOptions, MemArray<int>& ovector )
+    {
+        ASSERT(pcre_callout == pcreCalloutCallback);
+
         return pcre_exec(re, NULL, subject, length, startoffset, matchOptions.getOptions(), 
                 ovector.getPtr(0), ovector.getLength()) > 0;
     }
     
+    bool findMatch(void* object, int (*calloutFunctionX)(void*,pcre_callout_block*),
+                   const char *subject, int length, int startoffset,
+                   MatchOptions matchOptions, MemArray<int>& ovector)
+    {
+        ASSERT(pcre_callout == pcreCalloutCallback);
+        
+        CalloutData calloutData;
+                    calloutData.object = object;
+                    calloutData.calloutFunction = calloutFunctionX;
+                    
+        pcre_extra extra;
+                   extra.flags        = PCRE_EXTRA_CALLOUT_DATA;
+                   extra.callout_data = &calloutData;
+        
+        bool rslt = pcre_exec(re, &extra, subject, length, startoffset, matchOptions.getOptions(), 
+                    ovector.getPtr(0), ovector.getLength()) > 0;
+
+        return rslt;
+    }
+    
     
 private:
+
+    struct CalloutData
+    {
+        void* object;
+        int (*calloutFunction)(void*,pcre_callout_block*);
+    };
+    static int pcreCalloutCallback(pcre_callout_block*);
     static const unsigned char* pcreCharTable;
     pcre *re;
 };

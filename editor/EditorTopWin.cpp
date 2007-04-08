@@ -174,7 +174,8 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     statusLine->show();
 
     findPanel = FindPanel::create(this, textEditor, 
-                                  Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox));
+                                  Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox),
+                                  Callback1<DialogPanel*>       (this, &EditorTopWin::invokePanel));
 
     keyMapping.set(            ControlMask, XK_l,      Callback0(this,      &EditorTopWin::invokeGotoLinePanel));
     keyMapping.set(            ControlMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelForward));
@@ -187,6 +188,9 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping.set(            ControlMask, XK_n,      Callback0(this,      &EditorTopWin::createEmptyWindow));
     keyMapping.set(               Mod1Mask, XK_c,      Callback0(this,      &EditorTopWin::createCloneWindow));
     keyMapping.set(               Mod1Mask, XK_l,      Callback0(this,      &EditorTopWin::executeLuaScript));
+    
+    keyMapping.set(            ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionForward));
+    keyMapping.set(  ShiftMask|ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionBackward));
 }
 
 EditorTopWin::~EditorTopWin()
@@ -314,10 +318,7 @@ void EditorTopWin::invokeFindPanelForward()
 
 void EditorTopWin::invokeFindPanelBackward()
 {
-    if (findPanel.isInvalid()) {
-        findPanel = FindPanel::create(this, textEditor, 
-                                      Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox));
-    }
+    ASSERT(findPanel.isValid());
     findPanel->setDefaultDirection(Direction::UP);
     invokePanel(findPanel);
 }
@@ -504,8 +505,10 @@ void EditorTopWin::executeLuaScript()
         {
             long selBegin  = textEditor->getBackliteBuffer()->getBeginSelectionPos();
             long selLength = textEditor->getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            string output = LuaInterpreter::getInstance()->executeScript((const char*) textEditor->getTextData()->getAmount(selBegin, selLength),
-                                                                         selLength);
+            
+            LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeScript((const char*) textEditor->getTextData()->getAmount(selBegin, selLength),
+                                                                                               selLength);
+            string output = scriptResult.output;
             textEditor->getTextData()->setHistorySeparator();
             textEditor->hideCursor();
             textEditor->moveCursorToTextPosition(selBegin + selLength);
@@ -555,8 +558,12 @@ void EditorTopWin::executeLuaScript()
             }
             if (spos < cursorPos)
             {
-                string output = LuaInterpreter::getInstance()->executeExpression((const char*) textEditor->getTextData()->getAmount(spos, cursorPos - spos),
-                                                                                 cursorPos - spos);
+                LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeExpression((const char*) textEditor->getTextData()->getAmount(spos, cursorPos - spos),
+                                                                                                       cursorPos - spos);
+                string output = scriptResult.output;
+                for (int i = 0, n = scriptResult.objects.getLength(); i < n; ++i) {
+                    output += scriptResult.objects[i].toString();
+                }
                 if (output.length() > 0) 
                 {
                     textEditor->hideCursor();

@@ -53,6 +53,8 @@ public:
     void cursorEndOfLine();
     void scrollDown();
     void scrollUp();
+    void scrollCursorDown();
+    void scrollCursorUp();
     void scrollLeft();
     void scrollRight();
     void scrollPageUp();
@@ -72,6 +74,8 @@ public:
     void selectionCursorRight();
     void selectionCursorDown();
     void selectionCursorUp();
+    void selectionLineCursorDown();
+    void selectionLineCursorUp();
     void cursorWordLeft();
     void cursorWordRight();
     void selectionCursorWordLeft();

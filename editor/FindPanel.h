@@ -22,6 +22,8 @@
 #ifndef FINDPANEL_H
 #define FINDPANEL_H
 
+#include <string>
+
 #include "DialogPanel.h"
 #include "Button.h"
 #include "CheckBox.h"
@@ -31,16 +33,21 @@
 #include "Callback.h"
 #include "Regex.h"
 #include "types.h"
+#include "FindUtil.h"
 
 namespace LucED {
+
+using std::string;
 
 class FindPanel : public DialogPanel
 {
 public:
     typedef OwningPtr<FindPanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker) {
-        return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker));
+    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker,
+                                                                         Callback1<DialogPanel*>        panelInvoker)
+    {
+        return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker));
     }
     
     virtual void treatFocusIn();
@@ -55,19 +62,32 @@ public:
     void findAgainForward();
     void findAgainBackward();
 
+    void findSelectionForward();
+    void findSelectionBackward();
+
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);
     
+    virtual void show();
+    
 private:
-    FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker);
+    FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker,
+                                                                 Callback1<DialogPanel*>        panelInvoker);
+
+    void executeFind(bool isWrapping, FindUtil& f, const Callback0& handleContinueSearchButton);
 
     void handleButtonPressed(Button* button);
 
     void handleContinueAtBeginningButton();
     void handleContinueAtEndButton();
     
+    void handleContinueSelectionFindAtBeginningButton();
+    void handleContinueSelectionFindAtEndButton();
+    
     void internalFindNext(bool forward, int textPosition, bool wrapping);
+    
+    void handleModifiedEditField(bool modifiedFlag);
 
-    WeakPtr<TextEditorWidget> editorWidget;
+    WeakPtr<TextEditorWidget> e;
 
     SingleLineEditField::Ptr editField;
     Button::Ptr findNextButton;
@@ -78,9 +98,11 @@ private:
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
     Callback1<MessageBoxParameter> messageBoxInvoker;
+    Callback1<DialogPanel*>        panelInvoker;
     Regex regex;
     Direction::Type defaultDirection;
     int historyIndex;
+    string selectionSearchString;
 };
 
 } // namespace LucED

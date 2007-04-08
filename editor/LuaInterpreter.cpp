@@ -152,7 +152,6 @@ public:
         for (int i = 0; i < numberOfArguments; ++i)
         {
             string value = args[i].toString();
-            printf("test <%s>\n", value.c_str());
             rslt << args[i];
         }
         return rslt;
@@ -224,32 +223,38 @@ LuaInterpreter::~LuaInterpreter()
 
 
 
-string LuaInterpreter::executeScript(const char* scriptBegin, long scriptLength, string name)
+LuaInterpreter::Result LuaInterpreter::executeScript(const char* scriptBegin, long scriptLength, string name)
 {
     printBuffer = "";
-    
+    int oldTop = lua_gettop(L);
     int error = luaL_loadbuffer(L, scriptBegin, scriptLength, name.c_str())
-            || lua_pcall(L, 0, 0, 0);
+            || lua_pcall(L, 0, LUA_MULTRET, 0);
 
     if (error) {
         LuaException ex(lua_tostring(L, -1));
         lua_pop(L, 1);
         throw ex;
     }
-    string rslt = printBuffer;
+    Result rslt;
+           rslt.output = printBuffer;
+    for (int i = oldTop + 1, n = lua_gettop(L); i <= n; ++i) {
+        rslt.objects.appendObjectWithStackIndex(i);
+    }
     printBuffer = "";
+
     return rslt;
 }
 
-string LuaInterpreter::executeExpression(const char* scriptBegin, long scriptLength, string name)
+LuaInterpreter::Result LuaInterpreter::executeExpression(const char* scriptBegin, long scriptLength, string name)
 {
     printBuffer = "";
     
     string script = "return ";
     script.append(scriptBegin, scriptBegin + scriptLength);
     
+    int oldTop = lua_gettop(L);
     int error = luaL_loadbuffer(L, script.c_str(), script.length(), name.c_str())
-            || lua_pcall(L, 0, 1, 0);
+            || lua_pcall(L, 0, LUA_MULTRET, 0);
 
     if (error) {
         LuaException ex(lua_tostring(L, -1));
@@ -257,19 +262,17 @@ string LuaInterpreter::executeExpression(const char* scriptBegin, long scriptLen
         throw ex;
     }
 
-    LuaObject exprRslt = LuaObject(lua_gettop(L));
-
-//    LuaObject toStringFunction = storedObjects->originalToStringFunction->retrieve();
-//    ASSERT(toStringFunction.isFunction());
-
-    string rslt = printBuffer;
+    Result rslt;
+           rslt.output = printBuffer;
+    for (int i = oldTop + 1, n = lua_gettop(L); i <= n; ++i) {
+        rslt.objects.appendObjectWithStackIndex(i);
+    }
     printBuffer = "";
-//    rslt.append(toStringFunction.call(exprRslt).toString());
-    rslt.append(exprRslt.toString());
+
     return rslt;
 }
 
-string LuaInterpreter::executeFile(string name)
+LuaInterpreter::Result LuaInterpreter::executeFile(string name)
 {
     ByteBuffer buffer;
     File(name).loadInto(buffer);

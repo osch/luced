@@ -29,7 +29,7 @@ namespace LucED {
 class RegexException : public BaseException
 {
 public:
-    RegexException(const char* message, int position)
+    RegexException(const string& message, int position)
         : BaseException(message),
           position(position)
     {}

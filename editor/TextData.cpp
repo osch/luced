@@ -345,6 +345,15 @@ inline void TextData::internalRemoveAtMark(MarkHandle m, long amount)
     }
 }
 
+void TextData::setModifiedFlag(bool newFlag)
+{
+    if (newFlag != modifiedFlag)
+    {
+        modifiedFlag = newFlag;
+        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+    }
+}
+
 void TextData::removeAtMark(MarkHandle m, long amount)
 {
     TextMarkData& mark = marks[m.index];
@@ -362,6 +371,13 @@ void TextData::removeAtMark(MarkHandle m, long amount)
     }
 }
 
+void TextData::clearHistory()
+{
+    if (hasHistory()) {
+        history->clear();
+    }
+}
+
 
 void TextData::clear()
 {
@@ -374,6 +390,10 @@ void TextData::clear()
         this->oldEndChangedPos = oldLength;
         this->beginChangedPos = 0;
         updateMarks(0, oldLength, -oldLength, 0, -(oldNumberLines - 1));
+    }
+
+    if (hasHistory()) {
+        history->clear();
     }
 
     if (modifiedFlag == false) {

@@ -27,8 +27,17 @@ using namespace LucED;
 
 const unsigned char* Regex::pcreCharTable = NULL;
 
+int Regex::pcreCalloutCallback(pcre_callout_block* calloutBlock)
+{
+    CalloutData* d = static_cast<CalloutData*>(calloutBlock->callout_data);
+    return d->calloutFunction(d->object, calloutBlock);
+}
+    
+    
 Regex::Regex(const string& expr, CreateOptions createOptions)
 {
+    pcre_callout = pcreCalloutCallback;
+
     if (pcreCharTable == NULL) {
         pcreCharTable = pcre_maketables();
     }
@@ -45,6 +54,8 @@ Regex::Regex(const string& expr, CreateOptions createOptions)
 
 Regex::Regex(const ByteArray& expr, CreateOptions createOptions)
 {
+    pcre_callout = pcreCalloutCallback;
+
     const char *errortext;
     int errorpos;
 

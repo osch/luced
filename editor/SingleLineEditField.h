@@ -55,6 +55,10 @@ public:
         return editorWidget->getTextData();
     }
     
+    void showCursor() {
+        editorWidget->showCursor();
+    }
+    
     void setCursorPosition(int position);
 
     virtual ProcessingResult processEvent(const XEvent *event);

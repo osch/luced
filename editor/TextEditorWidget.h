@@ -65,8 +65,8 @@ public:
     Slot1<ScrollStep::Type> slotForScrollStepV;
     Slot1<ScrollStep::Type> slotForScrollStepH;
 
-    void scrollUp();
-    void scrollDown();
+    bool scrollUp();
+    bool scrollDown();
     void scrollLeft();
     void scrollRight();
     void scrollPageUp();

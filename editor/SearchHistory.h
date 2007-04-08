@@ -39,10 +39,12 @@ public:
     class Entry
     {
     public:
-        Entry(std::string findString, std::string replaceString)
-            : findString(findString),
-              replaceString(replaceString)
+        Entry()
+            : wholeWordFlag(false),
+              regexFlag(false),
+              ignoreCaseFlag(false)
         {}
+
         std::string getFindString()    const { return findString; }
         std::string getReplaceString() const { return replaceString; }
 
@@ -52,13 +54,35 @@ public:
         void setFindString(std::string findString) {
             this->findString = findString;
         }
+        
+        void setWholeWordFlag(bool flag) {
+            wholeWordFlag = flag;
+        }
+        void setRegexFlag(bool flag) {
+            regexFlag = flag;
+        }
+        void setIgnoreCaseFlag(bool flag) {
+            ignoreCaseFlag = flag;
+        }
+        bool getWholeWordFlag() const {
+            return wholeWordFlag;
+        }
+        bool getRegexFlag() const {
+            return regexFlag;
+        }
+        bool getIgnoreCaseFlag() const {
+            return ignoreCaseFlag;
+        }
 
     private:
         std::string findString;
         std::string replaceString;
+        bool wholeWordFlag;
+        bool regexFlag;
+        bool ignoreCaseFlag;
     };
 
-    void append(std::string findString, std::string replaceString = "");
+    void append(const Entry& newEntry);
 
     const Entry& getLast() const {
         return entries.getLast();
@@ -69,6 +93,10 @@ public:
     }
     
     const Entry& getEntry(int index) const {
+        return entries[index];
+    }
+    
+    Entry& getEntry(int index) {
         return entries[index];
     }
     

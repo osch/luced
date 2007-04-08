@@ -297,10 +297,13 @@ public:
     bool getModifiedFlag() const {
         return modifiedFlag;
     }
+    void setModifiedFlag(bool flag);
     
     bool hasHistory() const {
         return hasHistoryFlag;
     }
+    
+    void clearHistory();
     
     void activateHistory() {
         history = EditingHistory::create();

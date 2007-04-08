@@ -43,10 +43,12 @@ namespace LucED
 using std::string;
 
 template<class ImplFunction> class LuaCFunction;
-template<int N> class LuaFunctionArguments;
 
 class LuaInterpreter;
 class LuaObjectList;
+class LuaFunctionArguments;
+
+
 
 class LuaObject
 {
@@ -73,6 +75,15 @@ public:
         
     LuaObject(const LuaObject& rhs) {
         lua_pushvalue(L, rhs.stackIndex);
+        stackIndex = lua_gettop(L);
+    #ifdef DEBUG
+        stackGeneration = LuaStackChecker::getInstance()->registerAndGetGeneration(stackIndex);
+    #endif
+        lua_checkstack(L, 10);
+    }
+
+    LuaObject(const string& rhs) {
+        lua_pushlstring(L, rhs.c_str(), rhs.length());
         stackIndex = lua_gettop(L);
     #ifdef DEBUG
         stackGeneration = LuaStackChecker::getInstance()->registerAndGetGeneration(stackIndex);
@@ -143,6 +154,13 @@ public:
     bool toBoolean() const {
         return lua_toboolean(L, stackIndex);
     }
+    bool isTrue() const {
+        return lua_toboolean(L, stackIndex);
+    }
+    bool isFalse() const {
+        return !lua_toboolean(L, stackIndex);
+    }
+
     double toNumber() const {
         return lua_tonumber(L, stackIndex);
     }
@@ -256,6 +274,12 @@ public:
             lua_pop(LuaObject::L, 1);
             return rslt;
         }
+        bool isTrue() const {
+            return toBoolean();
+        }
+        bool isFalse() const {
+            return !toBoolean();
+        }
         double toNumber() const {
             push(key);
             lua_gettable(LuaObject::L, tableStackIndex);
@@ -341,114 +365,12 @@ public:
         return LuaObjectTableElementRef<const LuaObject&>(stackIndex, key);
     }
     
-    class LuaFunctionArguments
-    {
-    public:
-    
-        LuaFunctionArguments()
-        {
-            ++refCounter;
-            lua_checkstack(LuaObject::L, 20);
-            if (refCounter == 1) {
-                ASSERT(numberArguments == 0);
-                lua_pushnil(LuaObject::L); // placeholder for function
-            }
-        #ifdef DEBUG
-            if (refCounter == 1) {
-                newestStackGeneration = LuaStackChecker::getInstance()->getNewestGeneration();
-                highestStackIndex     = LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(newestStackGeneration);
-                startStackIndex       = lua_gettop(LuaObject::L) - 1;
-            } else {
-                checkStack();
-            }
-        #endif
-        }
-        
-        LuaFunctionArguments(const LuaFunctionArguments& rhs)
-        {
-        #ifdef DEBUG
-            checkStack();
-        #endif
-            ++refCounter;
-        }
-        
-        ~LuaFunctionArguments() {
-            --refCounter;
-            if (refCounter == 0 && numberArguments > 0) {
-                #ifdef DEBUG
-                    ASSERT(newestStackGeneration == LuaStackChecker::getInstance()->getNewestGeneration());
-                    ASSERT(highestStackIndex     == LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(newestStackGeneration));
-                #endif
-                lua_pop(LuaObject::L, numberArguments + 1);
-                numberArguments = 0;
-            }
-        }
-        LuaFunctionArguments& operator<<(const LuaObject& arg)
-        {
-        #ifdef DEBUG
-            checkStack();
-        #endif
-            lua_pushvalue(LuaObject::L, arg.stackIndex);
-            ++numberArguments;
-            if (numberArguments % 10 == 0) {
-                lua_checkstack(LuaObject::L, 20);
-            }
-            return *this;
-        }
-        
-        int getLength() const {
-            return numberArguments;
-        }
-    
-    private:
-        friend class LuaObject;
+    LuaObject call(const LuaFunctionArguments& args);
+    LuaObject call();
 
-    #ifdef DEBUG
-        void checkStack() const {
-            ASSERT(startStackIndex + 1 + numberArguments == lua_gettop(LuaObject::L));
-            ASSERT(newestStackGeneration == LuaStackChecker::getInstance()->getNewestGeneration());
-            ASSERT(highestStackIndex     == LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(newestStackGeneration));
-        }
-        static int  newestStackGeneration;
-        static int  highestStackIndex;
-        static int  startStackIndex;
-    #endif
-        static int numberArguments;
-        static int refCounter;
-    };
+    operator LuaFunctionArguments() const;
     
-
-    LuaObject call(const LuaFunctionArguments& args = LuaFunctionArguments())
-    {
-    #ifdef DEBGUG
-        args.checkStack();
-        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
-    #endif
-        lua_checkstack(L, 10);
-        lua_pushvalue(L, stackIndex);
-
-        lua_replace(L, -args.getLength() - 2);
-
-        int error = lua_pcall(L, args.getLength(), 1, 0);
-        args.numberArguments = 0;
-        
-        if (error != 0)
-        {
-            LuaException ex(lua_tostring(L, -1));
-            lua_pop(L, 1);
-            throw ex;
-        } else {    
-            return LuaObject(lua_gettop(L));
-        }
-    }
-    
-    operator LuaFunctionArguments() const {
-        return LuaFunctionArguments() << *this;
-    }
-    
-    LuaFunctionArguments operator<<(const LuaObject& rhs) const {
-        return LuaFunctionArguments() << *this << rhs;
-    }
+    LuaFunctionArguments operator<<(const LuaObject& rhs) const;
 
 private:
     friend class LuaInterpreter;
@@ -456,6 +378,9 @@ private:
     friend class LuaStoredObject;
     friend class LuaCFunctionArguments;
     friend class LuaCFunctionResult;
+    friend class LuaFunctionArguments;
+    friend class LuaObjectList;
+    friend class ObjectArray<LuaObject>;
     
     explicit LuaObject(int stackIndex) : stackIndex(stackIndex)
     {
@@ -517,6 +442,7 @@ inline bool operator!=(const string& lhs, const LuaObject& rhs)
 } // namespace LucED
 
 #include "LuaCFunction.h"
+#include "LuaFunctionArguments.h"
 
 namespace LucED
 {
@@ -534,6 +460,47 @@ LuaObject::LuaObject(LuaCFunction<ImplFunction>)
 #endif
     lua_checkstack(L, 10);
 }
+
+
+inline LuaObject LuaObject::call(const LuaFunctionArguments& args)
+{
+#ifdef DEBGUG
+    args.checkStack();
+    ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+#endif
+    lua_checkstack(L, 10);
+    lua_pushvalue(L, stackIndex);
+
+    lua_replace(L, -args.getLength() - 2);
+
+    int error = lua_pcall(L, args.getLength(), 1, 0);
+    args.numberArguments = 0;
+
+    if (error != 0)
+    {
+        LuaException ex(lua_tostring(L, -1));
+        lua_pop(L, 1);
+        throw ex;
+    } else {    
+        return LuaObject(lua_gettop(L));
+    }
+}
+
+inline LuaObject LuaObject::call()
+{
+    return call(LuaFunctionArguments());
+}
+
+inline LuaObject::operator LuaFunctionArguments() const 
+{
+    return LuaFunctionArguments() << *this;
+}
+
+inline LuaFunctionArguments LuaObject::operator<<(const LuaObject& rhs) const
+{
+    return LuaFunctionArguments() << *this << rhs;
+}
+
 
 } // namespace LucED
 

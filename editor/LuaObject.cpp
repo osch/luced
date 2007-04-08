@@ -27,15 +27,6 @@ using namespace LucED;
 
 lua_State* LuaObject::L = NULL;
 
-#ifdef DEBUG
-int  LuaObject::LuaFunctionArguments::newestStackGeneration = 0;
-int  LuaObject::LuaFunctionArguments::highestStackIndex     = 0;
-int  LuaObject::LuaFunctionArguments::startStackIndex       = 0;
-#endif
-
-int LuaObject::LuaFunctionArguments::numberArguments = 0;
-int LuaObject::LuaFunctionArguments::refCounter      = 0;
-
 /*
 LuaObject LuaObject::call()
 {

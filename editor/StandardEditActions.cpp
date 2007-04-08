@@ -25,6 +25,7 @@
 
 #include "Clipboard.h"
 #include "StandardEditActions.h"
+#include "FindUtil.h"
 
 using namespace LucED;
 
@@ -104,11 +105,8 @@ void StandardEditActions::cursorWordLeft()
         while (pos > 0 && !e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
             --pos;
         }
-        if (pos == cursorPos)
-        {
-            while (pos > 0 && e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
-                --pos;
-            }
+        while (pos > 0 && e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
+            --pos;
         }
         e->moveCursorToTextPosition(pos);
     }
@@ -127,14 +125,11 @@ void StandardEditActions::cursorWordRight()
         long len = e->getTextData()->getLength();
 
         long pos = cursorPos;
-        while (pos < len && e->isWordCharacter(e->getTextData()->getChar(pos))) {
+        while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
             ++pos;
         }
-        if (pos == cursorPos)
-        {
-            while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
-                ++pos;
-            }
+        while (pos < len && e->isWordCharacter(e->getTextData()->getChar(pos))) {
+            ++pos;
         }
         e->moveCursorToTextPosition(pos);
     }
@@ -221,6 +216,120 @@ void StandardEditActions::selectionCursorUp()
 }
 
 
+void StandardEditActions::selectionLineCursorDown()
+{
+    if (!e->areCursorChangesDisabled())
+    {
+        long cursorPos = e->getCursorTextPosition();
+        long nextLineBeginPos = e->getTextData()->getNextLineBegin(cursorPos);
+        
+        if (e->hasSelectionOwnership())
+        {
+            long spos1 = e->getBackliteBuffer()->getBeginSelectionPos();
+            long spos2 = e->getTextData()->getThisLineBegin(spos1);
+            if (spos1 != spos2) {
+                bool wasAnchorAtBegin = e->getBackliteBuffer()->isAnchorAtBegin();
+                e->getBackliteBuffer()->setAnchorToEndOfSelection();
+                e->getBackliteBuffer()->extendSelectionTo(spos2);
+                if (wasAnchorAtBegin) {
+                    e->getBackliteBuffer()->setAnchorToBeginOfSelection();
+                }
+            }
+            long epos1 = e->getBackliteBuffer()->getEndSelectionPos();
+            if (!e->getTextData()->isBeginOfLine(epos1)) {
+                long epos2 = e->getTextData()->getNextLineBegin(epos1);
+                if (epos1 != epos2) {
+                    bool wasAnchorAtBegin = e->getBackliteBuffer()->isAnchorAtBegin();
+                    e->getBackliteBuffer()->setAnchorToBeginOfSelection();
+                    e->getBackliteBuffer()->extendSelectionTo(epos2);
+                    if (!wasAnchorAtBegin) {
+                        e->getBackliteBuffer()->setAnchorToEndOfSelection();
+                    }
+                    epos1 = epos2;
+                }
+            }
+            if (epos1 == nextLineBeginPos) {
+                e->getBackliteBuffer()->setAnchorToBeginOfSelection();
+            }
+        } else {
+            e->requestSelectionOwnership();
+            long pos1 = e->getTextData()->getThisLineBegin(cursorPos);
+            e->getBackliteBuffer()->activateSelection(pos1);
+        }
+
+        if (e->getTextData()->isBeginOfLine(nextLineBeginPos)) {
+            cursorPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), nextLineBeginPos);
+            e->moveCursorToTextPosition(cursorPos);
+        } else {
+            // Cursor is in last line
+        }
+        long pos2;
+        if (e->getBackliteBuffer()->isAnchorAtBegin()) {
+            pos2 = e->getTextData()->getNextLineBegin(cursorPos);
+        } else {
+            pos2 = e->getTextData()->getThisLineBegin(cursorPos);
+        }
+        e->getBackliteBuffer()->extendSelectionTo(pos2);
+    }
+    e->assureCursorVisible();
+}
+
+
+void StandardEditActions::selectionLineCursorUp()
+{
+    if (!e->areCursorChangesDisabled())
+    {
+        long cursorPos = e->getCursorTextPosition();
+        long prevLineBeginPos = e->getTextData()->getPrevLineBegin(cursorPos);
+        long nextLineBeginPos = e->getTextData()->getNextLineBegin(cursorPos);
+        if (e->hasSelectionOwnership())
+        {
+            long spos1 = e->getBackliteBuffer()->getBeginSelectionPos();
+            long spos2 = e->getTextData()->getThisLineBegin(spos1);
+            if (spos1 != spos2) {
+                bool wasAnchorAtBegin = e->getBackliteBuffer()->isAnchorAtBegin();
+                e->getBackliteBuffer()->setAnchorToEndOfSelection();
+                e->getBackliteBuffer()->extendSelectionTo(spos2);
+                if (wasAnchorAtBegin) {
+                    e->getBackliteBuffer()->setAnchorToBeginOfSelection();
+                }
+            }
+            if (spos2 == e->getTextData()->getThisLineBegin(cursorPos)) {
+                e->getBackliteBuffer()->setAnchorToEndOfSelection();
+            }
+            long epos1 = e->getBackliteBuffer()->getEndSelectionPos();
+            if (!e->getTextData()->isBeginOfLine(epos1)) {
+                long epos2 = e->getTextData()->getNextLineBegin(epos1);
+                if (epos1 != epos2) {
+                    bool wasAnchorAtBegin = e->getBackliteBuffer()->isAnchorAtBegin();
+                    e->getBackliteBuffer()->setAnchorToBeginOfSelection();
+                    e->getBackliteBuffer()->extendSelectionTo(epos2);
+                    if (!wasAnchorAtBegin) {
+                        e->getBackliteBuffer()->setAnchorToEndOfSelection();
+                    }
+                    epos1 = epos2;
+                }
+            }
+        } else {
+            e->requestSelectionOwnership();
+            e->getBackliteBuffer()->activateSelection(nextLineBeginPos);
+            e->getBackliteBuffer()->setAnchorToEndOfSelection();
+        }
+
+        cursorPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), prevLineBeginPos);
+        e->moveCursorToTextPosition(cursorPos);
+        long pos2;
+        if (e->getBackliteBuffer()->isAnchorAtBegin()) {
+            pos2 = e->getTextData()->getNextLineBegin(cursorPos);
+        } else {
+            pos2 = e->getTextData()->getThisLineBegin(cursorPos);
+        }
+        e->getBackliteBuffer()->extendSelectionTo(pos2);
+    }
+    e->assureCursorVisible();
+}
+
+
 void StandardEditActions::selectionCursorWordLeft()
 {
     if (!e->areCursorChangesDisabled())
@@ -234,11 +343,8 @@ void StandardEditActions::selectionCursorWordLeft()
         while (pos > 0 && !e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
             --pos;
         }
-        if (pos == cursorPos)
-        {
-            while (pos > 0 && e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
-                --pos;
-            }
+        while (pos > 0 && e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
+            --pos;
         }
         e->moveCursorToTextPosition(pos);
         e->getBackliteBuffer()->extendSelectionTo(e->getCursorTextPosition());
@@ -259,14 +365,11 @@ void StandardEditActions::selectionCursorWordRight()
         }
         long pos = cursorPos;
         long len = e->getTextData()->getLength();
-        while (pos < len && e->isWordCharacter(e->getTextData()->getChar(pos))) {
+        while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
             ++pos;
         }
-        if (pos == cursorPos)
-        {
-            while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
-                ++pos;
-            }
+        while (pos < len && e->isWordCharacter(e->getTextData()->getChar(pos))) {
+            ++pos;
         }
         e->moveCursorToTextPosition(pos);
         e->getBackliteBuffer()->extendSelectionTo(e->getCursorTextPosition());
@@ -490,10 +593,48 @@ void StandardEditActions::scrollDown()
     e->scrollDown();
 }
 
+void StandardEditActions::scrollCursorDown()
+{
+    e->assureCursorVisible();
+    if (!e->areCursorChangesDisabled())
+    {
+        e->hideCursor();
+        e->releaseSelectionOwnership();
+        if (e->scrollDown()) {
+            long pos = e->getCursorTextPosition();
+            pos = e->getTextData()->getNextLineBegin(pos);
+            if (e->getTextData()->isBeginOfLine(pos)) {
+                pos = e->getTextPosForPixX(e->getRememberedCursorPixX(), pos);
+                e->moveCursorToTextPosition(pos);
+            } else {
+                // Cursor is in last line
+            }
+        }
+        e->showCursor();
+    }
+}
+
 
 void StandardEditActions::scrollUp()
 {
     e->scrollUp();
+}
+
+void StandardEditActions::scrollCursorUp()
+{
+    e->assureCursorVisible();
+    if (!e->areCursorChangesDisabled())
+    {
+        e->hideCursor();
+        e->releaseSelectionOwnership();
+        if (e->scrollUp()) {
+            long pos = e->getCursorTextPosition();
+            pos = e->getTextData()->getPrevLineBegin(pos);
+            pos = e->getTextPosForPixX(e->getRememberedCursorPixX(), pos);
+            e->moveCursorToTextPosition(pos);
+        }
+        e->showCursor();
+    }
 }
 
 
@@ -826,8 +967,11 @@ void StandardEditActions::registerMultiLineEditActionsToEditWidget()
     
     e->setEditAction(                    0, XK_Page_Down, this, &StandardEditActions::cursorPageDown);
     e->setEditAction(                    0, XK_Page_Up,   this, &StandardEditActions::cursorPageUp);
-    e->setEditAction(             Mod1Mask, XK_Down,      this, &StandardEditActions::cursorPageDown);
-    e->setEditAction(             Mod1Mask, XK_Up,        this, &StandardEditActions::cursorPageUp);
+
+    e->setEditAction(             Mod1Mask, XK_Down,      this, &StandardEditActions::scrollCursorDown);
+    e->setEditAction(             Mod1Mask, XK_Up,        this, &StandardEditActions::scrollCursorUp);
+    e->setEditAction(             Mod1Mask, XK_KP_Down,   this, &StandardEditActions::scrollCursorDown);
+    e->setEditAction(             Mod1Mask, XK_KP_Up,     this, &StandardEditActions::scrollCursorUp);
     
     e->setEditAction( ControlMask|Mod1Mask, XK_Down,      this, &StandardEditActions::scrollDown);
     e->setEditAction( ControlMask|Mod1Mask, XK_Up,        this, &StandardEditActions::scrollUp);
@@ -842,6 +986,11 @@ void StandardEditActions::registerMultiLineEditActionsToEditWidget()
     e->setEditAction(            ShiftMask, XK_KP_Down,   this, &StandardEditActions::selectionCursorDown);
     e->setEditAction(            ShiftMask, XK_KP_Up,     this, &StandardEditActions::selectionCursorUp);
     
+    e->setEditAction(ControlMask|ShiftMask, XK_Down,      this, &StandardEditActions::selectionLineCursorDown);
+    e->setEditAction(ControlMask|ShiftMask, XK_Up,        this, &StandardEditActions::selectionLineCursorUp);
+    e->setEditAction(ControlMask|ShiftMask, XK_KP_Down,   this, &StandardEditActions::selectionLineCursorDown);
+    e->setEditAction(ControlMask|ShiftMask, XK_KP_Up,     this, &StandardEditActions::selectionLineCursorUp);
+
     e->setEditAction(            ShiftMask, XK_Page_Down, this, &StandardEditActions::selectionCursorPageDown);
     e->setEditAction(            ShiftMask, XK_Page_Up,   this, &StandardEditActions::selectionCursorPageUp);
 }

@@ -19,38 +19,17 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUAOBJECTLIST_H
-#define LUAOBJECTLIST_H
+#include "LuaFunctionArguments.h"
 
-#include "LuaObject.h"
-#include "HeapObjectArray.h"
+using namespace LucED;
 
-namespace LucED {
+#ifdef DEBUG
+int  LuaFunctionArguments::newestStackGeneration = 0;
+int  LuaFunctionArguments::highestStackIndex     = 0;
+int  LuaFunctionArguments::startStackIndex       = 0;
+#endif
 
-class LuaObjectList
-{
-public:
-    LuaObjectList() : objects(HeapObjectArray<LuaObject>::create()) {}
+int LuaFunctionArguments::numberArguments = 0;
+int LuaFunctionArguments::refCounter      = 0;
 
-    void append(const LuaObject& object) {
-        objects->append(object);
-    }
-    const LuaObject& operator[](int index) const {
-        return objects->at(index);
-    }
-    int getLength() const {
-        return objects->getLength();
-    }
-private:
-    friend class LuaInterpreter;
-    
-    void appendObjectWithStackIndex(int stackIndex) {
-        objects->appendNew(stackIndex);
-    }
-    
-    HeapObjectArray<LuaObject>::Ptr objects;
-};
 
-} // namespace LucED
-
-#endif // LUAOBJECTLIST_H
