@@ -23,7 +23,7 @@
 
 using namespace LucED;
 
-using std::string;
+
 
 SingletonInstance<SearchHistory> SearchHistory::instance;
 
@@ -40,8 +40,8 @@ SearchHistory::SearchHistory()
 
 void SearchHistory::append(const Entry& newEntry)
 {
-    string findString = newEntry.getFindString();
-    string replaceString = newEntry.getReplaceString();
+    String findString = newEntry.getFindString();
+    String replaceString = newEntry.getReplaceString();
     if (findString == "" && replaceString == "") {
         return;
     }

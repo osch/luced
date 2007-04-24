@@ -22,7 +22,7 @@
 #ifndef TEXTSTYLE_H
 #define TEXTSTYLE_H
 
-#include <string>
+#include "String.h"
 
 #include "NonCopyable.h"
 #include "GuiRoot.h"
@@ -32,12 +32,12 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class TextStyle : NonCopyable
 {
 public:
-    TextStyle(const string& fontname, const string& colorName);
+    TextStyle(const String& fontname, const String& colorName);
     ~TextStyle();
 
     GuiColor getColor() const {
@@ -74,8 +74,8 @@ public:
         }
         return rslt;
     }
-    int getTextWidth(const string& str) const {
-        return getTextWidth(str.c_str(), str.length());
+    int getTextWidth(const String& str) const {
+        return getTextWidth(str.toCString(), str.getLength());
     }
 private:
     XFontStruct *font;
@@ -104,7 +104,7 @@ public:
         return &textStyles[index];
     }
     
-    void appendNewStyle(const string& fontname, const string& color) {
+    void appendNewStyle(const String& fontname, const String& color) {
         textStyles.appendNew(fontname, color);
     }
     

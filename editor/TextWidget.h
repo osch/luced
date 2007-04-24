@@ -147,6 +147,12 @@ public:
     long getTextPosForPixX(long pixX, long beginOfLinePos);
     long insertAtCursor(char c);
     long insertAtCursor(const byte* buffer, long length);
+    long insertAtCursor(const String& s) {
+        return insertAtCursor((const byte*) s.toCString(), s.getLength());
+    }
+    long insertAtCursor(TextData* d) {
+        return insertAtCursor(d->getAmount(0, d->getLength()), d->getLength());
+    }
     long insertAtCursor(const ByteArray& buffer);
     void removeAtCursor(long amount);
     

@@ -22,7 +22,7 @@
 #ifndef REGEX_H
 #define REGEX_H
 
-#include <string>
+#include "String.h"
 #include <pcre.h>
 
 #include "MemArray.h"
@@ -31,7 +31,7 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class Regex
 {
@@ -53,7 +53,7 @@ public:
     Regex() : re(NULL) {
         pcre_callout = pcreCalloutCallback;
     }
-    Regex(const string&    expr, CreateOptions createOptions = CreateOptions());
+    Regex(const String&    expr, CreateOptions createOptions = CreateOptions());
     Regex(const ByteArray& expr, CreateOptions createOptions = CreateOptions());
     Regex(const Regex& src);
     Regex& operator=(const Regex& src);
@@ -64,7 +64,7 @@ public:
         return re != NULL;
     }
 
-    int getStringNumber(const string& substringName) const;
+    int getStringNumber(const String& substringName) const;
     int getStringNumber(const ByteArray& substringName) const;
 
     int getOvecSize() const {

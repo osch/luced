@@ -35,31 +35,31 @@ GuiRootProperty ClientServerUtil::getDefaultServerCommandProperty()
     return GuiRootProperty("LUCED_COMMAND_");
 }
 
-string ClientServerUtil::quoteCommandline(HeapObjectArray<string>::Ptr commandline)
+String ClientServerUtil::quoteCommandline(HeapObjectArray<String>::Ptr commandline)
 {
     const int argc = commandline->getLength();
-    string rslt;
+    String rslt;
     
     for (int i = 0; i < argc; ++i)
     {
-        const string argument = commandline->get(i);
+        const String argument = commandline->get(i);
         
-        for (int j = 0; j < argument.length(); ++j)
+        for (int j = 0; j < argument.getLength(); ++j)
         {
             if (j == 0 && i > 0) {
-                rslt += ' ';
+                rslt << ' ';
             }
             switch (argument[j]) {
                 case ' ': {
-                    rslt += "\\ ";
+                    rslt << "\\ ";
                     break;
                 }
                 case '\\': {
-                    rslt += "\\\\";
+                    rslt << "\\\\";
                     break;
                 }
                 default: {
-                    rslt += argument[j];
+                    rslt << argument[j];
                     break;
                 }
             }
@@ -69,27 +69,27 @@ string ClientServerUtil::quoteCommandline(HeapObjectArray<string>::Ptr commandli
 }
 
 
-HeapObjectArray<string>::Ptr ClientServerUtil::unquoteCommandline(const string& commandline)
+HeapObjectArray<String>::Ptr ClientServerUtil::unquoteCommandline(const String& commandline)
 {
-    HeapObjectArray<string>::Ptr  rslt = HeapObjectArray<string>::create();
-    string s;
+    HeapObjectArray<String>::Ptr  rslt = HeapObjectArray<String>::create();
+    String s;
     
-    for (int i = 0; i < commandline.length(); ++i)
+    for (int i = 0; i < commandline.getLength(); ++i)
     {
-        if (commandline[i] == ' ' && s.length() > 0) {
+        if (commandline[i] == ' ' && s.getLength() > 0) {
             rslt->append(s);
             s = "";
         }
         else {
-            if (commandline[i] == '\\' && i + 1 < commandline.length()) {
-                s += commandline[i + 1];
+            if (commandline[i] == '\\' && i + 1 < commandline.getLength()) {
+                s << commandline[i + 1];
                 i += 1;
             } else {
-                s += commandline[i];
+                s << commandline[i];
             }
         }
     }
-    if (s.length() > 0)
+    if (s.getLength() > 0)
     {
         rslt->append(s);
     }

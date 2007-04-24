@@ -151,7 +151,7 @@ public:
         LuaCFunctionResult rslt;
         for (int i = 0; i < numberOfArguments; ++i)
         {
-            string value = args[i].toString();
+            String value = args[i].toString();
             rslt << args[i];
         }
         return rslt;
@@ -223,11 +223,11 @@ LuaInterpreter::~LuaInterpreter()
 
 
 
-LuaInterpreter::Result LuaInterpreter::executeScript(const char* scriptBegin, long scriptLength, string name)
+LuaInterpreter::Result LuaInterpreter::executeScript(const char* scriptBegin, long scriptLength, String name)
 {
     printBuffer = "";
     int oldTop = lua_gettop(L);
-    int error = luaL_loadbuffer(L, scriptBegin, scriptLength, name.c_str())
+    int error = luaL_loadbuffer(L, scriptBegin, scriptLength, name.toCString())
             || lua_pcall(L, 0, LUA_MULTRET, 0);
 
     if (error) {
@@ -245,15 +245,15 @@ LuaInterpreter::Result LuaInterpreter::executeScript(const char* scriptBegin, lo
     return rslt;
 }
 
-LuaInterpreter::Result LuaInterpreter::executeExpression(const char* scriptBegin, long scriptLength, string name)
+LuaInterpreter::Result LuaInterpreter::executeExpression(const char* scriptBegin, long scriptLength, String name)
 {
     printBuffer = "";
     
-    string script = "return ";
-    script.append(scriptBegin, scriptBegin + scriptLength);
+    String script = "return ";
+    script.append(scriptBegin, scriptLength);
     
     int oldTop = lua_gettop(L);
-    int error = luaL_loadbuffer(L, script.c_str(), script.length(), name.c_str())
+    int error = luaL_loadbuffer(L, script.toCString(), script.getLength(), name.toCString())
             || lua_pcall(L, 0, LUA_MULTRET, 0);
 
     if (error) {
@@ -272,7 +272,7 @@ LuaInterpreter::Result LuaInterpreter::executeExpression(const char* scriptBegin
     return rslt;
 }
 
-LuaInterpreter::Result LuaInterpreter::executeFile(string name)
+LuaInterpreter::Result LuaInterpreter::executeFile(String name)
 {
     ByteBuffer buffer;
     File(name).loadInto(buffer);

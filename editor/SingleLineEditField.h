@@ -24,6 +24,7 @@
 
 #include "SingleLineEditorWidget.h"
 #include "TextData.h"
+#include "EditFieldGroup.h"
 
 namespace LucED
 {
@@ -34,10 +35,10 @@ public:
     typedef OwningPtr<SingleLineEditField> Ptr;
 
     static SingleLineEditField::Ptr create(GuiWidget *parent, 
-            LanguageMode::Ptr languageMode)
+            LanguageMode::Ptr languageMode, TextData::Ptr textData = TextData::Ptr())
     {
         return SingleLineEditField::Ptr(new SingleLineEditField(parent, 
-                languageMode));
+                languageMode, textData));
     }
 
     void setLayoutHeight(int height, VerticalAdjustment::Type adjust);
@@ -55,11 +56,27 @@ public:
         return editorWidget->getTextData();
     }
     
+    bool hasFocus() const {
+        return hasFocusFlag;
+    }
+    
     void showCursor() {
-        editorWidget->showCursor();
+        if (!cursorStaysHidden) {
+            editorWidget->showCursor();
+        }
+    }
+    
+    void hideCursor() {
+        editorWidget->hideCursor();
+        cursorStaysHidden = true;
     }
     
     void setCursorPosition(int position);
+    
+    void setToEditFieldGroup(EditFieldGroup::Ptr editFieldGroup) {
+        this->editFieldGroup = editFieldGroup;
+        editFieldGroup->registerCursorFocusLostHandler(Callback0(this, &SingleLineEditField::hideCursor));
+    }
 
     virtual ProcessingResult processEvent(const XEvent *event);
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);
@@ -69,13 +86,16 @@ protected:
     virtual void requestFocusFor(GuiWidget* w);
 
 private:
-    SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr languageMode);
+    SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr languageMode, TextData::Ptr textData);
     SingleLineEditorWidget::Ptr editorWidget;
     void draw();
-    bool hasFocus;
+    bool hasFocusFlag;
     VerticalAdjustment::Type adjustment;
     int layoutHeight;
     int heightOffset;
+
+    EditFieldGroup::Ptr editFieldGroup;
+    bool cursorStaysHidden;
 };
 
 

@@ -22,35 +22,35 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include <string>
+#include "String.h"
 
 #include "NonCopyable.h"
 #include "ByteBuffer.h"
 
 namespace LucED {
 
-using std::string;
+
 
 class File : public NonCopyable
 {
 public:
 
-    File(const string& fileName)
+    File(const String& fileName)
         : name(fileName)
     {}
     
-    string getAbsoluteFileName() const;
+    String getAbsoluteFileName() const;
     
-    string getBaseName() const;
+    String getBaseName() const;
     
-    string getDirName() const;
+    String getDirName() const;
 
     void loadInto(ByteBuffer& buffer);
     
     void storeData(ByteBuffer& data);
     
 private:
-    const string name;
+    const String name;
 };
 
 } // namespace LucED

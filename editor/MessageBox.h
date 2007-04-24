@@ -35,38 +35,38 @@ namespace LucED {
 class MessageBoxParameter
 {
 public:
-    MessageBoxParameter& setTitle(std::string title) {
+    MessageBoxParameter& setTitle(String title) {
         this->title = title;
         return *this;
     }
-    MessageBoxParameter& setMessage(std::string message) {
+    MessageBoxParameter& setMessage(String message) {
         this->message = message;
         return *this;
     }
-    MessageBoxParameter& setDefaultButton(std::string buttonLabel, const Callback0& callback) {
+    MessageBoxParameter& setDefaultButton(String buttonLabel, const Callback0& callback) {
         defaultButtonLabel = buttonLabel;
         defaultButtonCallback = callback;
         return *this;
     }
-    MessageBoxParameter& setAlternativeButton(std::string buttonLabel, const Callback0& callback) {
+    MessageBoxParameter& setAlternativeButton(String buttonLabel, const Callback0& callback) {
         alternativeButtonLabel = buttonLabel;
         alternativeButtonCallback = callback;
         return *this;
     }
-    MessageBoxParameter& setCancelButton(std::string buttonLabel) {
+    MessageBoxParameter& setCancelButton(String buttonLabel) {
         cancelButtonLabel = buttonLabel;
         return *this;
     }
     
 private:
     friend class MessageBox;
-    std::string title;
-    std::string message;
-    std::string defaultButtonLabel;
+    String title;
+    String message;
+    String defaultButtonLabel;
     Callback0   defaultButtonCallback;
-    std::string alternativeButtonLabel;
+    String alternativeButtonLabel;
     Callback0   alternativeButtonCallback;
-    std::string cancelButtonLabel;
+    String cancelButtonLabel;
 };
 
 class MessageBox : public PanelDialogWin

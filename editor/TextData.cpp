@@ -41,7 +41,7 @@ TextData::TextData()
     EventDispatcher::getInstance()->registerUpdateSource(slotForFlushPendingUpdates);
 }
 
-void TextData::loadFile(const string& filename)
+void TextData::loadFile(const String& filename)
 {
     File(filename).loadInto(buffer);
     long len = buffer.getLength();
@@ -64,7 +64,7 @@ void TextData::loadFile(const string& filename)
     }
 }
 
-void TextData::setFileName(const string& filename)
+void TextData::setFileName(const String& filename)
 {
     this->fileName = File(filename).getAbsoluteFileName();
     fileNameListeners.invokeAllCallbacks(this->fileName);
@@ -583,7 +583,7 @@ void TextData::registerUpdateListener(UpdateCallback updateCallback)
     updateListeners.registerCallback(updateCallback);
 }
 
-void TextData::registerFileNameListener(Callback1<const string&> fileNameCallback)
+void TextData::registerFileNameListener(Callback1<const String&> fileNameCallback)
 {
     fileNameListeners.registerCallback(fileNameCallback);
     fileNameCallback.call(fileName);

@@ -19,37 +19,52 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GUILAYOUTWIDGET_H
-#define GUILAYOUTWIDGET_H
+#ifndef EDITFIELDGROUP_H
+#define EDITFIELDGROUP_H
 
-#include "String.h"
-
-#include "GuiWidget.h"
+#include "HeapObject.h"
+#include "ObjectArray.h"
 #include "OwningPtr.h"
 
-namespace LucED {
+namespace LucED
+{
 
-
-
-class GuiLayoutWidget : public GuiWidget
+class EditFieldGroup : public HeapObject
 {
 public:
-    typedef OwningPtr<GuiLayoutWidget> Ptr;
+    typedef OwningPtr<EditFieldGroup> Ptr;
     
-    static Ptr create(GuiWidget* parent, int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight) {
-        return Ptr(new GuiLayoutWidget(parent, Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight)));
+    static Ptr create() {
+        return Ptr(new EditFieldGroup());
     }
-
-    //virtual bool processEvent(const XEvent *event);
-    virtual Measures getDesiredMeasures();
-    virtual void setPosition(Position newPosition);
+    
+    void registerCursorFocusLostHandler(const Callback0& handleCursorFocusLost) {
+        listeners.append(handleCursorFocusLost);
+    }
+    
+    void invokeAllCursorFocusLostExceptFor(HeapObject* caller) {
+        for (int i = 0; i < listeners.getLength();) {
+            if (!listeners[i].isValid()) {
+                listeners.remove(i);
+            } else {
+                if (listeners[i].getObjectPtr() != caller) {
+                    listeners[i].call();
+                }
+                ++i;
+            }
+        }
+        lastFocusObject = caller;
+    }
+    
+    HeapObject* getLastFocusObject() const {
+        return lastFocusObject;
+    }
     
 private:
-    GuiLayoutWidget(GuiWidget* parent, const Measures& m);
-    Measures measures;
-    Position position;
+    ObjectArray< Callback0 > listeners;
+    WeakPtr<HeapObject> lastFocusObject;
 };
 
 } // namespace LucED
 
-#endif // GUILAYOUTWIDGET_H
+#endif // EDITFIELDGROUP_H

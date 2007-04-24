@@ -19,7 +19,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include <ctype.h>
 #include <X11/keysym.h>
 
 #include "CheckBox.h"
@@ -31,7 +30,7 @@ using namespace LucED;
 
 const int BUTTON_OUTER_BORDER = 1;
 
-CheckBox::CheckBox(GuiWidget* parent, string buttonText)
+CheckBox::CheckBox(GuiWidget* parent, String buttonText)
       : GuiWidget(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
         isBoxChecked(false),
@@ -43,16 +42,16 @@ CheckBox::CheckBox(GuiWidget* parent, string buttonText)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    int p1 = buttonText.find_first_of(']', 1);
-    if (p1 != string::npos) {
+    int p1 = buttonText.findFirstOf(']', 1);
+    if (p1 != -1) {
         hotKeyChar = buttonText[p1 - 1];
-        this->buttonText = buttonText.substr(0, p1) + buttonText.substr(p1 + 1);
-        hotKeyPixX = getGuiTextStyle()->getTextWidth(buttonText.substr(0, p1 - 1));
+        this->buttonText = String() << buttonText.getSubstring(0, p1) << buttonText.getTail(p1 + 1);
+        hotKeyPixX = getGuiTextStyle()->getTextWidth(buttonText.getSubstring(0, p1 - 1));
         hotKeyPixW = getGuiTextStyle()->getCharWidth(hotKeyChar);
         hasHotKey = true;
         // showHotKey = true;
-        string keySymString;
-        keySymString.append(1, (char) tolower(hotKeyChar));
+        String keySymString;
+        keySymString.appendLowerChar(hotKeyChar);
         requestHotKeyRegistrationFor(KeyMapping::Id(Mod1Mask, keySymString), this);
     } else {
         this->buttonText = buttonText;

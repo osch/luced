@@ -26,7 +26,7 @@
 #include <X11/X.h>
 #include <X11/Xutil.h>
 
-#include <string>
+#include "String.h"
 
 #include "HeapObject.h"
 #include "GuiColor.h"
@@ -34,7 +34,7 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class GuiRoot : public HeapObject
 {
@@ -49,7 +49,11 @@ public:
     Window getRootWid() const {
         return rootWid;
     }
-
+        
+    void flushDisplay() const {
+        XFlush(getDisplay());
+    }
+    
     Display* getDisplay() const {
         return display;
     }
@@ -72,7 +76,7 @@ public:
     GuiColor getGuiColor04() const {return guiColor04;}
     GuiColor getGuiColor05() const {return guiColor05;}
     
-    GuiColor getGuiColor(const string& colorName);
+    GuiColor getGuiColor(const String& colorName);
 
 private:
     friend class SingletonInstance<GuiRoot>;

@@ -64,7 +64,7 @@ GlobalConfig::GlobalConfig()
 }
 
 
-SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const string& languageMode) {
+SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String& languageMode) {
     NameToIndexMap::Value foundIndex = languageModeToSyntaxIndex->get(languageMode);
     if (foundIndex.isValid()) {
         return allSyntaxPatterns.get(foundIndex.get());
@@ -81,12 +81,12 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode:
     }
 }
     
-SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForFileName(const string& fileName)
+SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForFileName(const String& fileName)
 {
     return getSyntaxPatternsForLanguageMode(languageModes->getLanguageModeForFile(fileName)->getName());
 }
 
-LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const string& fileName)
+LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const String& fileName)
 {
     return languageModes->getLanguageModeForFile(fileName);
 }
@@ -96,10 +96,10 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode()
     return languageModes->getDefaultLanguageMode();
 }
 
-void GlobalConfig::readConfig(const string& configPath)
+void GlobalConfig::readConfig(const String& configPath)
 {
     LuaInterpreter* lua = LuaInterpreter::getInstance();
-    lua->executeFile(configPath + "/general.lua");
+    lua->executeFile(String() << configPath << "/general.lua");
     
     // globalConfig
     
@@ -292,26 +292,26 @@ void GlobalConfig::readConfig(const string& configPath)
         if (!n.isString()) {
             throw ConfigException("textstyle has invalid name");
         }
-        string name = n.toString();
+        String name = n.toString();
         if (i == 0 && name != "default") {
             throw ConfigException("first textstyle must be named 'default'");
         }
         if (textStyleNameToIndexMap->hasKey(name)) {
-            throw ConfigException("duplicate textstyle '" + name + "'");
+            throw ConfigException(String() << "duplicate textstyle '" << name << "'");
         }
 
         textStyleNameToIndexMap->set(name, i);
         
         LuaObject f = o["font"];
         if (!f.isString()) {
-            throw ConfigException("invalid font in textstyle '" + name + "'");
+            throw ConfigException(String() << "invalid font in textstyle '" << name << "'");
         }
-        string fontname = f.toString();
+        String fontname = f.toString();
         LuaObject c = o["color"];
         if (!c.isString()) {
-            throw ConfigException("invalid color in textstyle '" + name + "'");
+            throw ConfigException(String() << "invalid color in textstyle '" << name << "'");
         }
-        string colorname = c.toString();
+        String colorname = c.toString();
         textStyles->appendNewStyle(fontname, colorname);
     }
     if (textStyles->getLength() == 0) {
@@ -344,25 +344,25 @@ void GlobalConfig::readConfig(const string& configPath)
     
     languageModeToSyntaxIndex = NameToIndexMap::create();
     
-    DirectoryReader dirReader(configPath + "/syntaxpatterns");
+    DirectoryReader dirReader(String() << configPath << "/syntaxpatterns");
     for (int i = 0; dirReader.next();) {
         if (dirReader.isFile()) {
-            string name = dirReader.getName();
-            if (name.length() > 4 && name.substr(name.length() - 4, 4) == ".lua") {
-                name = name.substr(0, name.length() - 4);
+            String name = dirReader.getName();
+            if (name.getLength() > 4 && name.getSubstring(name.getLength() - 4, 4) == ".lua") {
+                name = name.getSubstring(0, name.getLength() - 4);
                 lua->clearGlobal("syntaxpatterns");
-                lua->executeFile(configPath + "/syntaxpatterns/" + name + ".lua");
+                lua->executeFile(String() << configPath << "/syntaxpatterns/" << name << ".lua");
                 languageModeToSyntaxIndex->set(name, i);
                 LuaObject sp = lua->getGlobal("syntaxPatterns");
                 if (!sp.isTable()) {
-                    throw ConfigException("Syntaxpattern '" + name + "' has invalid 'syntaxpatterns' element");
+                    throw ConfigException(String() << "Syntaxpattern '" << name << "' has invalid 'syntaxpatterns' element");
                 }
                 try {
                     allSyntaxPatterns.append(
                             SyntaxPatterns::create(sp, textStyleNameToIndexMap));
                 } catch (RegexException& ex) {
-                    throw ConfigException("syntaxpatterns for language mode '" + name + "' have invalid regex: "
-                            + ex.getMessage());
+                    throw ConfigException(String() << "syntaxpatterns for language mode '" << name << "' have invalid regex: "
+                            << ex.getMessage());
                 }
                 if (!languageModeToIndex->hasKey(name)) {
                     languageModes->append(name);

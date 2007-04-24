@@ -29,7 +29,7 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class GuiRootProperty
 {
@@ -39,31 +39,31 @@ public:
         : atom(0)
     {}
         
-    explicit GuiRootProperty(string propertyName)
+    explicit GuiRootProperty(String propertyName)
     {
         GuiRoot* root = GuiRoot::getInstance();
-        atom = XInternAtom(root->getDisplay(), propertyName.c_str(), False);
+        atom = XInternAtom(root->getDisplay(), propertyName.toCString(), False);
     }
     
     explicit GuiRootProperty(Atom atom)
         : atom(atom)
     {}
     
-    void setValue(string value)
+    void setValue(String value)
     {
         if (atom != 0) {
             GuiRoot* root = GuiRoot::getInstance();
             XChangeProperty(root->getDisplay(), root->getRootWid(), atom, XA_STRING, 8,
-                PropModeReplace, (unsigned char *)value.c_str(), value.length());
+                PropModeReplace, (unsigned char *)value.toCString(), value.getLength());
         }
     }
     
-    string getValue() const
+    String getValue() const
     {
         return getValue(false);
     }
 
-    string getValueAndRemove() const
+    String getValueAndRemove() const
     {
         return getValue(true);
     }
@@ -117,7 +117,7 @@ public:
             Atom atom = atoms[i];
             char* name = XGetAtomName(root->getDisplay(), atom); 
             
-            printf("Property '%s' = '%s'\n", name, GuiRootProperty(name).getValue().c_str());
+            printf("Property '%s' = '%s'\n", name, GuiRootProperty(name).getValue().toCString());
             
             XFree(name);
         }
@@ -136,9 +136,9 @@ public:
     }
     
 private:
-    string getValue(bool remove) const
+    String getValue(bool remove) const
     {
-        string rslt;
+        String rslt;
     
         if (atom != 0)
         {
@@ -155,7 +155,7 @@ private:
                  == Success)
             {
                 if (actualTypeAtom == XA_STRING && format == 8) {
-                    rslt = string((const char*)propertyValue, numberItems);
+                    rslt = String((const char*)propertyValue, numberItems);
                 }
                 XFree(propertyValue);
             }

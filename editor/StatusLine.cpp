@@ -20,7 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
-#include <string.h>
+#include "String.h"
 
 #include "StatusLine.h"
 #include "util.h"
@@ -95,8 +95,8 @@ void StatusLine::drawFileName()
             getRaisedBoxBorderWidth(), getRaisedBoxBorderWidth(), 
             position.w - 2 * getRaisedBoxBorderWidth(), position.h - 2 * getRaisedBoxBorderWidth());
     
-    drawGuiText(  4, 2, fileName.c_str(), fileName.length());
-    lengthPos = getGuiTextStyle()->getTextWidth(fileName.c_str(), fileName.length())
+    drawGuiText(  4, 2, fileName.toCString(), fileName.getLength());
+    lengthPos = getGuiTextStyle()->getTextWidth(fileName.toCString(), fileName.getLength())
             + 3 * getGuiTextStyle()->getSpaceWidth();
 }
 
@@ -134,7 +134,7 @@ void StatusLine::drawArea()
     drawLineAndColumn();
 }
 
-void StatusLine::setFileName(const string& fileName)
+void StatusLine::setFileName(const String& fileName)
 {
     this->fileName = fileName;
     drawArea();

@@ -22,7 +22,7 @@
 #ifndef LABELWIDGET_H
 #define LABELWIDGET_H
 
-#include <string>
+#include "String.h"
 
 #include "types.h"
 #include "GuiWidget.h"
@@ -32,7 +32,7 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class LabelWidget : public GuiWidget
 {
@@ -40,14 +40,18 @@ public:
 
     typedef OwningPtr<LabelWidget> Ptr;
 
-    static LabelWidget::Ptr create(GuiWidget* parent, const string& leftText, const string& rightText = "")
+    static LabelWidget::Ptr create(GuiWidget* parent, const String& leftText, const String& rightText = "")
     {
         return LabelWidget::Ptr(new LabelWidget(parent, leftText, rightText));
     }
 
     virtual ProcessingResult processEvent(const XEvent *event);
     virtual void setPosition(Position newPosition);
+
+    void setDesiredMeasures(Measures m);
+
     virtual Measures getDesiredMeasures();
+    Measures getOwnDesiredMeasures();
 
     void setLayoutHeight(int height, VerticalAdjustment::Type adjust);
 
@@ -60,16 +64,18 @@ public:
     
 private:
 
-    LabelWidget(GuiWidget* parent, const string& leftText, const string& rightText);
+    LabelWidget(GuiWidget* parent, const String& leftText, const String& rightText);
 
     void draw();
     
     Position position;
-    string leftText;
-    string rightText;
+    String leftText;
+    String rightText;
     VerticalAdjustment::Type adjustment;
     int layoutHeight;
     bool fakeFocusFlag;
+    bool hasForcedMeasuresFlag;
+    Measures forcedMeasures;
 };
 
 

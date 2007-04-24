@@ -129,7 +129,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     textData->registerModifiedFlagListener(Callback1<bool>(this, &EditorTopWin::handleChangedModifiedFlag));
     
     textData->registerFileNameListener(statusLine->slotForSetFileName);
-    textData->registerFileNameListener(Callback1<const string&>(this, &EditorTopWin::handleNewFileName));
+    textData->registerFileNameListener(Callback1<const String&>(this, &EditorTopWin::handleNewFileName));
     textData->registerLengthListener(statusLine->slotForSetFileLength);
     textEditor->registerLineAndColumnListener(statusLine->slotForSetLineAndColumn);
     
@@ -177,20 +177,26 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
                                   Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox),
                                   Callback1<DialogPanel*>       (this, &EditorTopWin::invokePanel));
 
-    keyMapping.set(            ControlMask, XK_l,      Callback0(this,      &EditorTopWin::invokeGotoLinePanel));
-    keyMapping.set(            ControlMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelForward));
-    keyMapping.set(  ControlMask|ShiftMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelBackward));
-    keyMapping.set(            ControlMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainForward));
-    keyMapping.set(  ControlMask|ShiftMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainBackward));
-    keyMapping.set(            ControlMask, XK_w,      Callback0(this,      &EditorTopWin::requestCloseWindow));
-    keyMapping.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
-    keyMapping.set(            ControlMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveKey));
-    keyMapping.set(            ControlMask, XK_n,      Callback0(this,      &EditorTopWin::createEmptyWindow));
-    keyMapping.set(               Mod1Mask, XK_c,      Callback0(this,      &EditorTopWin::createCloneWindow));
-    keyMapping.set(               Mod1Mask, XK_l,      Callback0(this,      &EditorTopWin::executeLuaScript));
+    replacePanel = ReplacePanel::create(this, textEditor, findPanel,
+                                  Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox),
+                                  Callback1<DialogPanel*>       (this, &EditorTopWin::invokePanel));
+
+    keyMapping1.set(            ControlMask, XK_l,      Callback0(this,      &EditorTopWin::invokeGotoLinePanel));
+    keyMapping1.set(            ControlMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelForward));
+    keyMapping1.set(  ControlMask|ShiftMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelBackward));
+    keyMapping1.set(            ControlMask, XK_r,      Callback0(this,      &EditorTopWin::invokeReplacePanelForward));
+    keyMapping1.set(  ControlMask|ShiftMask, XK_r,      Callback0(this,      &EditorTopWin::invokeReplacePanelBackward));
+    keyMapping1.set(            ControlMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainForward));
+    keyMapping1.set(  ControlMask|ShiftMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainBackward));
+    keyMapping1.set(            ControlMask, XK_w,      Callback0(this,      &EditorTopWin::requestCloseWindow));
+    keyMapping1.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
+    keyMapping1.set(            ControlMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveKey));
+    keyMapping1.set(            ControlMask, XK_n,      Callback0(this,      &EditorTopWin::createEmptyWindow));
+    keyMapping2.set(               Mod1Mask, XK_c,      Callback0(this,      &EditorTopWin::createCloneWindow));
+    keyMapping2.set(               Mod1Mask, XK_l,      Callback0(this,      &EditorTopWin::executeLuaScript));
     
-    keyMapping.set(            ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionForward));
-    keyMapping.set(  ShiftMask|ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionBackward));
+    keyMapping1.set(            ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionForward));
+    keyMapping1.set(  ShiftMask|ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionBackward));
 }
 
 EditorTopWin::~EditorTopWin()
@@ -226,7 +232,9 @@ void EditorTopWin::treatNewWindowPosition(Position newPosition)
 
 GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *event)
 {
-    Callback0 m = keyMapping.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    ProcessingResult rslt = NOT_PROCESSED;
+
+    Callback0 m = keyMapping1.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
 
     if (m.isValid())
     {
@@ -235,23 +243,35 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
         }
 
         m.call();
-        return EVENT_PROCESSED;
+        rslt = EVENT_PROCESSED;
     } 
-    else
+
+    if (rslt == NOT_PROCESSED && invokedPanel.isValid()) {
+        rslt = invokedPanel->processKeyboardEvent(event);
+    }
+    
+    if (rslt == NOT_PROCESSED)
     {
-        ProcessingResult rslt = NOT_PROCESSED;
-        
-        if (invokedPanel.isValid()) {
-            rslt = invokedPanel->processKeyboardEvent(event);
-        }
-        if (rslt == NOT_PROCESSED) {
+       m = keyMapping2.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+
+       if (m.isValid())
+       {
+           if (event->type == KeyPress) {
+               textEditor->hideMousePointer();
+           }
+
+           m.call();
+           rslt = EVENT_PROCESSED;
+       } 
+       else
+       {
             rslt = textEditor->processKeyboardEvent(event);
             if (rslt == EVENT_PROCESSED && invokedPanel.isValid()) {
                 invokedPanel->notifyAboutHotKeyEventForOtherWidget();
             }
-        }
-        return rslt;
+       }
     }
+    return rslt;
 }
 
 
@@ -323,6 +343,20 @@ void EditorTopWin::invokeFindPanelBackward()
     invokePanel(findPanel);
 }
 
+void EditorTopWin::invokeReplacePanelForward()
+{
+    ASSERT(replacePanel.isValid());
+    replacePanel->setDefaultDirection(Direction::DOWN);
+    invokePanel(replacePanel);
+}
+
+void EditorTopWin::invokeReplacePanelBackward()
+{
+    ASSERT(replacePanel.isValid());
+    replacePanel->setDefaultDirection(Direction::UP);
+    invokePanel(replacePanel);
+}
+
 void EditorTopWin::invokePanel(DialogPanel* panel)
 {
     if (invokedPanel != panel) {
@@ -390,14 +424,14 @@ void EditorTopWin::invokeMessageBox(MessageBoxParameter p)
     messageBox->requestFocus();
 }
 
-void EditorTopWin::handleNewFileName(const string& fileName)
+void EditorTopWin::handleNewFileName(const String& fileName)
 {
     File file(fileName);
     
     if (textEditor->getTextData()->getModifiedFlag() == false) {
-        setTitle(file.getBaseName() + " - " + file.getDirName());
+        setTitle(String() << file.getBaseName() << " - " << file.getDirName());
     } else {
-        setTitle(file.getBaseName() + " (modified) - " + file.getDirName());
+        setTitle(String() << file.getBaseName() << " (modified) - " << file.getDirName());
     }
 }
 
@@ -406,9 +440,9 @@ void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
     File file(textEditor->getTextData()->getFileName());
     
     if (modifiedFlag == false) {
-        setTitle(file.getBaseName() + " - " + file.getDirName());
+        setTitle(String() << file.getBaseName() << " - " << file.getDirName());
     } else {
-        setTitle(file.getBaseName() + " (modified) - " + file.getDirName());
+        setTitle(String() << file.getBaseName() << " (modified) - " << file.getDirName());
     }
 }
 
@@ -441,8 +475,8 @@ void EditorTopWin::requestCloseWindow()
      && textEditor->getTextData()->getModifiedFlag() == true)
     {
         invokeMessageBox(MessageBoxParameter().setTitle("Save File")
-                                              .setMessage(string() + "Save file '" + file.getBaseName() 
-                                                                   + "' before closing?")
+                                              .setMessage(String() << "Save file '" << file.getBaseName() 
+                                                                   << "' before closing?")
                                               .setDefaultButton(    "S]ave",    Callback0(this, &EditorTopWin::saveAndClose))
                                               .setAlternativeButton("D]iscard", Callback0(this, &EditorTopWin::requestCloseWindowAndDiscardChanges)));
         
@@ -463,7 +497,7 @@ void EditorTopWin::createEmptyWindow()
     TextStyles::Ptr   textStyles   = GlobalConfig::getInstance()->getTextStyles();
     LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
 
-    string untitledFileName = File(textEditor->getTextData()->getFileName()).getDirName() + "/Untitled";
+    String untitledFileName = File(String() << textEditor->getTextData()->getFileName()).getDirName() << "/Untitled";
     TextData::Ptr     emptyTextData     = TextData::create();
                       emptyTextData->setFileName(untitledFileName);
 
@@ -508,16 +542,16 @@ void EditorTopWin::executeLuaScript()
             
             LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeScript((const char*) textEditor->getTextData()->getAmount(selBegin, selLength),
                                                                                                selLength);
-            string output = scriptResult.output;
+            String output = scriptResult.output;
             textEditor->getTextData()->setHistorySeparator();
             textEditor->hideCursor();
             textEditor->moveCursorToTextPosition(selBegin + selLength);
-            if (output.length() > 0) {
-                textEditor->insertAtCursor((const byte*) output.c_str(), output.length());
+            if (output.getLength() > 0) {
+                textEditor->insertAtCursor((const byte*) output.toCString(), output.getLength());
                 textEditor->getBackliteBuffer()->activateSelection(selBegin + selLength);
-                textEditor->getBackliteBuffer()->extendSelectionTo(selBegin + selLength + output.length());
+                textEditor->getBackliteBuffer()->extendSelectionTo(selBegin + selLength + output.getLength());
 
-                textEditor->moveCursorToTextPosition(selBegin + selLength + output.length());
+                textEditor->moveCursorToTextPosition(selBegin + selLength + output.getLength());
                 textEditor->assureCursorVisible();
                 textEditor->moveCursorToTextPosition(selBegin + selLength);
             } else {
@@ -560,17 +594,17 @@ void EditorTopWin::executeLuaScript()
             {
                 LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeExpression((const char*) textEditor->getTextData()->getAmount(spos, cursorPos - spos),
                                                                                                        cursorPos - spos);
-                string output = scriptResult.output;
+                String output = scriptResult.output;
                 for (int i = 0, n = scriptResult.objects.getLength(); i < n; ++i) {
-                    output += scriptResult.objects[i].toString();
+                    output << scriptResult.objects[i].toString();
                 }
-                if (output.length() > 0) 
+                if (output.getLength() > 0) 
                 {
                     textEditor->hideCursor();
                     textEditor->moveCursorToTextPosition(spos);
                     textEditor->removeAtCursor(cursorPos - spos);
-                    textEditor->insertAtCursor((const byte*) output.c_str(), output.length());
-                    textEditor->moveCursorToTextPosition(spos + output.length());
+                    textEditor->insertAtCursor((const byte*) output.toCString(), output.getLength());
+                    textEditor->moveCursorToTextPosition(spos + output.getLength());
                     textEditor->getTextData()->setHistorySeparator();
                     textEditor->assureCursorVisible();
                     textEditor->rememberCursorPixX();

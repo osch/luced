@@ -62,23 +62,23 @@ GuiRoot::GuiRoot()
             &xcolor1_st, &xcolor2_st);
     greyColor  = GuiColor(xcolor1_st.pixel);
     
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor01().c_str(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor01().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor01 = GuiColor(xcolor1_st.pixel);
     
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor02().c_str(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor02().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor02 = GuiColor(xcolor1_st.pixel);
     
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor03().c_str(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor03().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor03 = GuiColor(xcolor1_st.pixel);
     
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor04().c_str(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor04().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor04 = GuiColor(xcolor1_st.pixel);
 
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor05().c_str(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor05().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor05 = GuiColor(xcolor1_st.pixel);
 }
@@ -92,11 +92,11 @@ GuiRoot::~GuiRoot()
     XCloseDisplay(display);
 }
 
-GuiColor GuiRoot::getGuiColor(const string& colorName)
+GuiColor GuiRoot::getGuiColor(const String& colorName)
 {
     XColor xcolor1_st, xcolor2_st;
 
-    XAllocNamedColor(display, rootWinAttr.colormap, colorName.c_str(),
+    XAllocNamedColor(display, rootWinAttr.colormap, colorName.toCString(),
             &xcolor1_st, &xcolor2_st);
     return GuiColor(xcolor1_st.pixel);
 }

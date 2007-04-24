@@ -35,6 +35,7 @@
 #include "KeyMapping.h"
 #include "GotoLinePanel.h"
 #include "FindPanel.h"
+#include "ReplacePanel.h"
 #include "MessageBox.h"
 
 namespace LucED {
@@ -67,9 +68,14 @@ public:
     
     virtual void requestCloseFor(GuiWidget* w);
     virtual void requestCloseChildWindow(TopWin *topWin);
+
     void invokeGotoLinePanel();
     void invokeFindPanelBackward();
     void invokeFindPanelForward();
+
+    void invokeReplacePanelBackward();
+    void invokeReplacePanelForward();
+
     virtual void requestCloseWindow();
     
 private:
@@ -85,7 +91,7 @@ private:
     void createCloneWindow();
     void executeLuaScript();
     
-    void handleNewFileName(const string& fileName);
+    void handleNewFileName(const String& fileName);
     void handleChangedModifiedFlag(bool modifiedFlag);
     
     MultiLineEditorWidget::Ptr textEditor;
@@ -93,11 +99,13 @@ private:
     ScrollBar::Ptr scrollBarV;    
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
-    KeyMapping keyMapping;
+    KeyMapping keyMapping1;
+    KeyMapping keyMapping2;
     GotoLinePanel::Ptr gotoLinePanel;
     bool flagForSetSizeHintAtFirstShow;
 
     FindPanel::Ptr findPanel;
+    ReplacePanel::Ptr replacePanel;
     int upperPanelIndex;
     int lowerPanelIndex;
     

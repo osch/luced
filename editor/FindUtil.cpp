@@ -19,11 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include <ctype.h>
-
 #include "FindUtil.h"
 #include "MemArray.h"
-#include "Regex.h"
 #include "LuaInterpreter.h"
 #include "RegexException.h"
 
@@ -49,24 +46,24 @@ int FindUtil::pcreCalloutFunction(void* selfVoidPtr, pcre_callout_block* callout
             MemArray<int>& args = self->calloutObjects[calloutBlock->callout_number - 1].args;
             
             LuaFunctionArguments luaArgs;
-            string firstArg;
+            String firstArg;
             
             if (args.getLength() == 0) {
                 if (capt != -1 && ovector[capt * 2 + 1] == pos) {
-                    firstArg = string(ptr + ovector[capt * 2 + 0], ovector[capt * 2 + 1] - ovector[capt * 2 + 0]);
+                    firstArg = String(ptr + ovector[capt * 2 + 0], ovector[capt * 2 + 1] - ovector[capt * 2 + 0]);
                 } else {
-                    firstArg = string(ptr + pos - 1, 1);
+                    firstArg = String(ptr + pos - 1, 1);
                 }
                 luaArgs << firstArg;
             } else {
-                string k;
+                String k;
                 for (int j = 0, m = args.getLength(); j < m; ++j)
                 {
                     if (args[j] == 0) {
                         int start = calloutBlock->start_match; 
-                        k = string(ptr + start, pos - start);
+                        k = String(ptr + start, pos - start);
                     } else if (args[j] <= top) {
-                        k = string(ptr + ovector[args[j] * 2 + 0], ovector[args[j] * 2 + 1] - ovector[args[j] * 2 + 0]);
+                        k = String(ptr + ovector[args[j] * 2 + 0], ovector[args[j] * 2 + 1] - ovector[args[j] * 2 + 0]);
                     }
                     luaArgs << k;
                     if (j == 0) {
@@ -101,25 +98,16 @@ namespace // anonymous namespace
     class PreParam
     {
     public:
-        PreParam(const string& name, int pos) : name(name), pos(pos)
+        PreParam(const String& name, int pos) : name(name), pos(pos)
         {}
-        string name;
+        String name;
         int    pos;
     };
     
-    bool isNumber(const string& s) {
-        for (int i = 0, n = s.length(); i < n; ++i) {
-            if (!isdigit(s[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     class MyRegexException : public BaseException
     {
     public:
-        MyRegexException(const string& message, int position)
+        MyRegexException(const String& message, int position)
             : BaseException(message),
               position(position)
         {}
@@ -135,14 +123,32 @@ namespace // anonymous namespace
 } // anonymous namespace
 
 
+String FindUtil::quoteRegexCharacters(const String& s)
+{
+    String rslt;
+    for (int i = 0, n = s.getLength(); i < n; ++i)
+    {
+        char c = s[i];
+        switch (c) {
+            case '\\': case '^': case '$': case '.': case '[': case ']':
+            case '(':  case ')': case '?': case '*': case '+': case '{':
+            case '}':  case '-': { rslt << '\\' << c; break; }
+            
+            case '\n':           { rslt << '\\' << 'n'; break; }
+            
+            default:             { rslt << c; }
+        }
+    }
+    return rslt;
+}
 
-void FindUtil::findNext()
+void FindUtil::initialize()
 {
     ObjectArray< ObjectArray<PreParam> > preParams;
     
     calloutObjects.clear();
 
-    if (searchString.length() <= 0) {
+    if (searchString.getLength() <= 0) {
         return;
     }
 
@@ -151,9 +157,7 @@ void FindUtil::findNext()
         opts |= Regex::IGNORE_CASE;
     }
 
-    MemArray<int> expressionPositions;
-
-    string searchPattern;
+    String searchPattern;
     if (wholeWordFlag) {
         searchPattern.append("\\b");             expressionPositions.append(0);
     }
@@ -161,7 +165,7 @@ void FindUtil::findNext()
     if (regexFlag)
     {
         int calloutCounter = 1;
-        for (int i = 0, n = searchString.length(); i < n; ++i) {
+        for (int i = 0, n = searchString.getLength(); i < n; ++i) {
             if ((i == 0 || searchString[i-1] != '\\')
              && searchString[i] == '(' && i+3 < n && searchString[i+1] == '*') {
                 {
@@ -200,7 +204,7 @@ void FindUtil::findNext()
                     } else {
                         varEnd = j-1;
                     }
-                    string varName = searchString.substr(i+2, varEnd - (i+2));
+                    String varName = searchString.getSubstring(i+2, varEnd - (i+2));
 
                     LuaInterpreter::Result exprResult = lua->executeExpression(varName);
                     
@@ -211,7 +215,7 @@ void FindUtil::findNext()
                     }
 
                     if (!g.isTable() && !g.isFunction()) {                    
-                        throw RegexException("Lua expression '" + varName + "' must evaluate to table or function.", i+2);
+                        throw RegexException(String() << "Lua expression '" << varName << "' must evaluate to table or function.", i+2);
                     }
                     calloutObjects.appendNew(LuaStoredObject::store(g));
                     preParams.appendAmount(1);
@@ -224,7 +228,7 @@ void FindUtil::findNext()
                             }
                             if (p2 > p)
                             {
-                                string paramString = searchString.substr(p, p2 - p);
+                                String paramString = searchString.getSubstring(p, p2 - p);
                                 preParams.getLast().append(PreParam(paramString, p));
                             }
                             p = p2;
@@ -237,56 +241,94 @@ void FindUtil::findNext()
                     && searchString[i] == '(' && i+3 < n && searchString[i+1] == '?' && searchString[i+2] == 'C') {
                 throw RegexException("Callout pattern '(?C...)' not allowed.", i);
             } else {
-                searchPattern.push_back(searchString[i]);           expressionPositions.append(i);
+                searchPattern.append(searchString[i]);           expressionPositions.append(i);
             }
         }
     }
     else {
-        for (int i = 0, n = searchString.length(); i < n; ++i) {
+        for (int i = 0, n = searchString.getLength(); i < n; ++i) {
             switch (searchString[i]) {
                 case '\\': case '^': case '$': case '.': case '[': case ']':
                 case '(':  case ')': case '?': case '*': case '+': case '{':
-                case '}':  case '-': searchPattern.push_back('\\'); expressionPositions.append(i);
+                case '}':  case '-': searchPattern.append('\\'); expressionPositions.append(i);
             }
-            searchPattern.push_back(searchString[i]);               expressionPositions.append(i);
+            searchPattern.append(searchString[i]);               expressionPositions.append(i);
         }
     }
     if (wholeWordFlag) {
-        searchString.append("\\b");                                expressionPositions.append(searchString.length());
+        searchString.append("\\b");                                expressionPositions.append(searchString.getLength());
     }
     
-    expressionPositions.append(searchString.length());
+    expressionPositions.append(searchString.getLength());
 
+    regex = Regex(searchPattern, opts);
+
+    ovector.clear();
+    ovector.appendAmount(regex.getOvecSize());
+
+    for (int i = 0, n = preParams.getLength(); i < n; ++i)
+    {
+        ObjectArray<PreParam>& p = preParams[i];
+        for (int j = 0, m = p.getLength(); j < m; ++j)
+        {
+            int parenNumber;
+            if (p[j].name.consistsOfDigits()) {
+                parenNumber = p[j].name.toInt();
+                if (parenNumber < 0 || parenNumber > regex.getNumberOfCapturingSubpatterns()) {
+                    throw MyRegexException(String() << "Invalid number '" << p[j].name << "' for capturing substring", p[j].pos);
+                }
+            } else {
+                try {
+                    parenNumber = regex.getStringNumber(p[j].name);
+                } catch (RegexException& ex) {
+                    throw MyRegexException(ex.getMessage(), p[j].pos);
+                }
+            }
+            calloutObjects[i].args.append(parenNumber);
+        }
+    }
+}
+
+bool FindUtil::doesMatch()
+{
     try
     {
-        Regex regex = Regex(searchPattern, opts);
+        if (!wasInitialized) {
+            initialize();
+            wasInitialized = true;
+        }
+
         int   textLength     = textData->getLength();
         byte* textStart      = textData->getAmount(0, textLength);
-        ovector.clear();
-        ovector.appendAmount(regex.getOvecSize());
-        
-        for (int i = 0, n = preParams.getLength(); i < n; ++i)
-        {
-            ObjectArray<PreParam>& p = preParams[i];
-            for (int j = 0, m = p.getLength(); j < m; ++j)
-            {
-                int parenNumber;
-                if (isNumber(p[j].name)) {
-                    parenNumber = atoi(p[j].name.c_str());
-                    if (parenNumber < 0 || parenNumber > regex.getNumberOfCapturingSubpatterns()) {
-                        throw MyRegexException("Invalid number '" + p[j].name + "' for capturing substring", p[j].pos);
-                    }
-                } else {
-                    try {
-                        parenNumber = regex.getStringNumber(p[j].name);
-                    } catch (RegexException& ex) {
-                        throw MyRegexException(ex.getMessage(), p[j].pos);
-                    }
-                }
-                calloutObjects[i].args.append(parenNumber);
-            }
+
+        if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
+                            (char*)textStart, textLength, textPosition, Regex::MatchOptions(), ovector)) {
+            wasFoundFlag = true;
+        } else {
+            wasFoundFlag = false;
+        }
+        return wasFoundFlag;
+    }
+    catch (MyRegexException& ex) {
+        throw RegexException(ex.getMessage(), ex.getPosition());
+    }
+    catch (RegexException& ex) {
+        throw RegexException(ex.getMessage(), expressionPositions[ex.getPosition()]);
+    }
+}
+
+void FindUtil::findNext()
+{
+    try
+    {
+        if (!wasInitialized) {
+            initialize();
+            wasInitialized = true;
         }
         
+        int   textLength     = textData->getLength();
+        byte* textStart      = textData->getAmount(0, textLength);
+
         wasFoundFlag = false;
         if (searchForwardFlag) 
         {

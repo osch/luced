@@ -29,7 +29,7 @@ namespace LucED {
 class LuaException : public BaseException
 {
 public:
-    LuaException(string message)
+    LuaException(String message)
         : BaseException(message)
     {}
     virtual const char *what();

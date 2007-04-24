@@ -29,7 +29,7 @@ namespace LucED {
 class FileException : public BaseException
 {
 public:
-    FileException(string message)
+    FileException(String message)
         : BaseException(message)
     {}
     virtual const char *what();

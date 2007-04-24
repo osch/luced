@@ -29,11 +29,11 @@ namespace LucED {
 class RegexException : public BaseException
 {
 public:
-    RegexException(const string& message, int position)
+    RegexException(const String& message, int position)
         : BaseException(message),
           position(position)
     {}
-    RegexException(const string& message)
+    RegexException(const String& message)
         : BaseException(message),
           position(-1)
     {}

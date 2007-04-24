@@ -19,7 +19,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include <string>
+#include "String.h"
 
 #include "EventDispatcher.h"
 #include "SyntaxPatterns.h"
@@ -33,7 +33,7 @@
 #include "FileException.h"
 
 using namespace LucED;
-using std::string;
+
 
 int main(int argc, char **argv)
 {
@@ -43,10 +43,10 @@ int main(int argc, char **argv)
     {
         SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
         
-        HeapObjectArray<string>::Ptr commandline = HeapObjectArray<string>::create();
+        HeapObjectArray<String>::Ptr commandline = HeapObjectArray<String>::create();
         for (int argIndex = 1; argIndex < argc; ++argIndex)
         {
-            commandline->append(string(argv[argIndex]));
+            commandline->append(String(argv[argIndex]));
         }
 
         GlobalConfig::getInstance()->readConfig("./config");
@@ -58,22 +58,22 @@ int main(int argc, char **argv)
     }
     catch (CommandlineException& ex)
     {
-        fprintf(stderr, "CommandlineException: %s\n", ex.getMessage().c_str());
+        fprintf(stderr, "CommandlineException: %s\n", ex.getMessage().toCString());
         rc = 1;
     }
     catch (LuaException& ex)
     {
-        fprintf(stderr, "LuaException: %s\n", ex.getMessage().c_str());
+        fprintf(stderr, "LuaException: %s\n", ex.getMessage().toCString());
         rc = 1;
     }
     catch (ConfigException& ex)
     {
-        fprintf(stderr, "ConfigException: %s\n", ex.getMessage().c_str());
+        fprintf(stderr, "ConfigException: %s\n", ex.getMessage().toCString());
         rc = 1;
     }
     catch (FileException& ex)
     {
-        fprintf(stderr, "FileException: %s\n", ex.getMessage().c_str());
+        fprintf(stderr, "FileException: %s\n", ex.getMessage().toCString());
         rc = 8;
     }
 #ifdef DEBUG

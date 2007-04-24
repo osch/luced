@@ -43,7 +43,7 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
         }
     }
 
-    if (p.alternativeButtonLabel.length() > 0) {
+    if (p.alternativeButtonLabel.getLength() > 0) {
         button2 = Button::create(this, p.alternativeButtonLabel);
     }
    

@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-#include <string>
+#include "String.h"
 
 #include "EditorServer.h"
 #include "EventDispatcher.h"
@@ -33,7 +33,7 @@
 #include "HeapObjectArray.h"
 
 using namespace LucED;
-using std::string;
+
 
 SingletonInstance<EditorServer> EditorServer::instance;
 
@@ -45,7 +45,7 @@ EditorServer::~EditorServer()
     }
 }
 
-void EditorServer::startWithCommandline(HeapObjectArray<string>::Ptr commandline)
+void EditorServer::startWithCommandline(HeapObjectArray<String>::Ptr commandline)
 {
     serverProperty = GuiRootProperty(ClientServerUtil::getDefaultServerRunningProperty());
     serverProperty.setValue("running");
@@ -88,9 +88,9 @@ void EditorServer::processEventForCommandProperty(XEvent* event)
     }
     else if (event->xproperty.state == PropertyNewValue)
     {
-        string commandline = commandProperty.getValueAndRemove();
-        printf(" *********** Event: command newValue <%s>\n", commandline.c_str());
-        if (commandline.length() > 0) {
+        String commandline = commandProperty.getValueAndRemove();
+        printf(" *********** Event: command newValue <%s>\n", commandline.toCString());
+        if (commandline.getLength() > 0) {
             processCommandline(ClientServerUtil::unquoteCommandline(commandline));
         }
     }
@@ -110,7 +110,7 @@ namespace // anonymous namespace
               textStyles(GlobalConfig::getInstance()->getTextStyles())
         {}
 
-        void openFile(int numberOfWindows, const string& fileName)
+        void openFile(int numberOfWindows, const String& fileName)
         {
             LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
             TextData::Ptr     textData     = TextData::create();
@@ -139,7 +139,7 @@ namespace // anonymous namespace
 
 } // anonymous namespace
 
-void EditorServer::processCommandline(HeapObjectArray<string>::Ptr commandline)
+void EditorServer::processCommandline(HeapObjectArray<String>::Ptr commandline)
 {
     ASSERT(isStarted);
 

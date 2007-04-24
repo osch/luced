@@ -168,8 +168,8 @@ protected:
     void drawPressedBox(int x, int y, int w, int h);
     void drawArrow(int x, int y, int w, int h, const Direction::Type direct);
     void drawGuiText(int x, int y, const char* ptr, long length);
-    void drawGuiText(int x, int y, const string& ptr) {
-        drawGuiText(x, y, ptr.c_str(), ptr.length());
+    void drawGuiText(int x, int y, const String& ptr) {
+        drawGuiText(x, y, ptr.toCString(), ptr.getLength());
     }
     void drawActiveSunkenFrame(int x, int y, int w, int h);
     void drawInactiveSunkenFrame(int x, int y, int w, int h);

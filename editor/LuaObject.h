@@ -23,7 +23,7 @@
 #define LUAOBJECT_H
 
 #include <stddef.h>
-#include <string>
+#include "String.h"
 
 extern "C" {
 #include <lua.h>
@@ -40,7 +40,7 @@ extern "C" {
 namespace LucED 
 {
 
-using std::string;
+
 
 template<class ImplFunction> class LuaCFunction;
 
@@ -82,8 +82,8 @@ public:
         lua_checkstack(L, 10);
     }
 
-    LuaObject(const string& rhs) {
-        lua_pushlstring(L, rhs.c_str(), rhs.length());
+    LuaObject(const String& rhs) {
+        lua_pushlstring(L, rhs.toCString(), rhs.getLength());
         stackIndex = lua_gettop(L);
     #ifdef DEBUG
         stackGeneration = LuaStackChecker::getInstance()->registerAndGetGeneration(stackIndex);
@@ -164,13 +164,13 @@ public:
     double toNumber() const {
         return lua_tonumber(L, stackIndex);
     }
-    string toString() const {
+    String toString() const {
         size_t len;
         const char* ptr = lua_tolstring(L, stackIndex, &len);
         if (ptr != NULL) {
-            return string(ptr, len);
+            return String(ptr, len);
         } else {
-            return string();
+            return String();
         }
     }
     
@@ -192,12 +192,12 @@ public:
         return !(*this == rhs);
     }
     
-    bool operator==(const string& rhs) const {
+    bool operator==(const String& rhs) const {
         return isString() 
-            && rhs.length() == lua_strlen(L, stackIndex)
-            && memcmp(lua_tostring(L, stackIndex), rhs.c_str(), rhs.length()) == 0;
+            && rhs.getLength() == lua_strlen(L, stackIndex)
+            && memcmp(lua_tostring(L, stackIndex), rhs.toCString(), rhs.getLength()) == 0;
     }
-    bool operator!=(const string& rhs) const {
+    bool operator!=(const String& rhs) const {
         return !(*this == rhs);
     }
     
@@ -287,10 +287,10 @@ public:
             lua_pop(LuaObject::L, 1);
             return rslt;
         }
-        string toString() const {
+        String toString() const {
             push(key);
             lua_gettable(LuaObject::L, tableStackIndex);
-            string rslt = string(lua_tostring(L, -1),
+            String rslt = String(lua_tostring(L, -1),
                                  lua_strlen(  L, -1));
             lua_pop(LuaObject::L, 1);
             return rslt;
@@ -319,16 +319,16 @@ public:
             return !(*this == rhs);
         }
 
-        bool operator==(const string& rhs) const {
+        bool operator==(const String& rhs) const {
             push(key);
             lua_gettable(LuaObject::L, tableStackIndex);
             bool rslt = isString() 
-                && rhs.length() == lua_strlen(L, stackIndex)
-                && memcmp(lua_tostring(L, stackIndex), rhs.c_str(), rhs.length()) == 0;
+                && rhs.getLength() == lua_strlen(L, stackIndex)
+                && memcmp(lua_tostring(L, stackIndex), rhs.toCString(), rhs.getLength()) == 0;
             lua_pop(LuaObject::L, 1);
             return rslt;
         }
-        bool operator!=(const string& rhs) const {
+        bool operator!=(const String& rhs) const {
             return !(*this == rhs);
         }
 
@@ -350,9 +350,9 @@ public:
         return LuaObjectTableElementRef<const char*>(stackIndex, fieldName);
     }
 
-    LuaObjectTableElementRef<const string&> operator[](const string& fieldName) {
+    LuaObjectTableElementRef<const String&> operator[](const String& fieldName) {
         ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
-        return LuaObjectTableElementRef<const string&>(stackIndex, fieldName);
+        return LuaObjectTableElementRef<const String&>(stackIndex, fieldName);
     }
 
     LuaObjectTableElementRef<int> operator[](int index) {
@@ -393,8 +393,8 @@ private:
     static void push(const char* arg) {
         lua_pushstring(L, arg);
     }
-    static void push(const string& arg) {
-        lua_pushlstring(L, arg.c_str(), arg.length());
+    static void push(const String& arg) {
+        lua_pushlstring(L, arg.toCString(), arg.getLength());
     }
     static void push(int arg) {
         lua_pushnumber(L, arg);
@@ -429,12 +429,12 @@ inline bool operator!=(const char* lhs, const LuaObject& rhs)
     return rhs != lhs;
 }
 
-inline bool operator==(const string& lhs, const LuaObject& rhs)
+inline bool operator==(const String& lhs, const LuaObject& rhs)
 {
    return rhs == lhs;
 }
 
-inline bool operator!=(const string& lhs, const LuaObject& rhs)
+inline bool operator!=(const String& lhs, const LuaObject& rhs)
 {
    return rhs != lhs;
 }

@@ -50,7 +50,7 @@ private:
             }
             catch (BaseException& ex)
             {
-                lua_pushstring(L, ex.getMessage().c_str());
+                lua_pushstring(L, ex.getMessage().toCString());
                 wasError = true;
             }
             catch (std::exception& ex)

@@ -202,39 +202,48 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
         focusedElement->processKeyboardEvent(event);
         processed = true;
     } else {
-        bool hotKeyProcessed = false;
-        KeyMapping::Id keyMappingId(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-        HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping.get(keyMappingId);
-        if (foundHotKeyWidgets.isValid()) {
-            WidgetQueue::Ptr widgets = foundHotKeyWidgets.get();
-            ASSERT(widgets.isValid());
-            WeakPtr<GuiWidget> w = widgets->getLast();
-            if (w.isValid()) {
-                w->treatHotKeyEvent(keyMappingId);
-                if (focusedElement.isValid() && w != focusedElement) {
-                    focusedElement->notifyAboutHotKeyEventForOtherWidget();
-                }
-                hotKeyProcessed = true;
-                processed = true;
+        for (int i = 0; !processed && i < 2; ++i)
+        {
+            bool hotKeyProcessed = false;
+            KeyMapping::Id keyMappingId(0, 0);
+            switch (i) {
+                case 0: keyMappingId = KeyMapping::Id(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+                        break;
+                case 1: keyMappingId = KeyMapping::Id(         Mod1Mask, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+                        break;
             }
-        } 
-        if (!hotKeyProcessed) {
-            Callback0 keyAction = keyMapping1.find(keyMappingId);
-            if (keyAction.isValid()) {
-                keyAction.call();
-                processed = true;
-            } else {
-                if (focusedElement.isValid()) {
-                    ProcessingResult rslt = focusedElement->processKeyboardEvent(event);
-                    if (rslt == EVENT_PROCESSED) {
-                        processed = true;
+            HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping.get(keyMappingId);
+            if (foundHotKeyWidgets.isValid()) {
+                WidgetQueue::Ptr widgets = foundHotKeyWidgets.get();
+                ASSERT(widgets.isValid());
+                WeakPtr<GuiWidget> w = widgets->getLast();
+                if (w.isValid()) {
+                    w->treatHotKeyEvent(keyMappingId);
+                    if (focusedElement.isValid() && w != focusedElement) {
+                        focusedElement->notifyAboutHotKeyEventForOtherWidget();
                     }
+                    hotKeyProcessed = true;
+                    processed = true;
                 }
-                if (!processed) {
-                    Callback0 keyAction = keyMapping2.find(keyMappingId);
-                    if (keyAction.isValid()) {
-                        keyAction.call();
-                        processed = true;
+            } 
+            if (!hotKeyProcessed) {
+                Callback0 keyAction = keyMapping1.find(keyMappingId);
+                if (keyAction.isValid()) {
+                    keyAction.call();
+                    processed = true;
+                } else {
+                    if (focusedElement.isValid()) {
+                        ProcessingResult rslt = focusedElement->processKeyboardEvent(event);
+                        if (rslt == EVENT_PROCESSED) {
+                            processed = true;
+                        }
+                    }
+                    if (!processed) {
+                        Callback0 keyAction = keyMapping2.find(keyMappingId);
+                        if (keyAction.isValid()) {
+                            keyAction.call();
+                            processed = true;
+                        }
                     }
                 }
             }

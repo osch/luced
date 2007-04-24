@@ -22,7 +22,7 @@
 #ifndef STATUSLINE_H
 #define STATUSLINE_H
 
-#include <string>
+#include "String.h"
 
 #include "GuiWidget.h"
 #include "Callback.h"
@@ -31,7 +31,7 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class StatusLine : public GuiWidget
 {
@@ -49,11 +49,11 @@ public:
     virtual Measures getDesiredMeasures();
 
     void setLineAndColumn(long line, long column);
-    void setFileName(const string& fileName);
+    void setFileName(const String& fileName);
     void setFileLength(long length);
     
     Slot2<long,long>     slotForSetLineAndColumn;
-    Slot1<const string&> slotForSetFileName;
+    Slot1<const String&> slotForSetFileName;
     Slot1<long>          slotForSetFileLength;
 
     
@@ -67,7 +67,7 @@ private:
     void drawLineAndColumn();
     
     Position position;
-    string fileName;
+    String fileName;
     long fileLength;
     long lengthPos;
     

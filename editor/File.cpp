@@ -33,12 +33,12 @@
 #include "FileException.h"
 
 using namespace LucED;
-using std::string;
+
 
 void File::loadInto(ByteBuffer& buffer)
 {
     struct stat stat_st;
-    int fd = open(name.c_str(), O_RDONLY);
+    int fd = open(name.toCString(), O_RDONLY);
     long len;
     byte *ptr;
 
@@ -47,37 +47,37 @@ void File::loadInto(ByteBuffer& buffer)
         len = stat_st.st_size;
         ptr = buffer.appendAmount(len);
         if (read(fd, ptr, len) == -1) {
-            throw FileException(string() + "error reading from file '" + name + "': " + strerror(errno));
+            throw FileException(String() << "error reading from file '" << name << "': " << strerror(errno));
         }
         if (close(fd) == -1) {
-            throw FileException(string() + "error closing file '" + name + "' after reading: " + strerror(errno));
+            throw FileException(String() << "error closing file '" << name << "' after reading: " << strerror(errno));
         }
     } else {
-        throw FileException(string() + "error opening file '" + name + "' for reading: " + strerror(errno));
+        throw FileException(String() << "error opening file '" << name << "' for reading: " << strerror(errno));
     }
 }
 
 void File::storeData(ByteBuffer& data)
 {
-    int fd = open(name.c_str(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+    int fd = open(name.toCString(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
     
     if (fd != -1) {
         long length = data.getLength();
         if (write(fd, data.getAmount(0, length), length) == -1) {
-            throw FileException(string() + "error writing to file '" + name + "': " + strerror(errno));
+            throw FileException(String() << "error writing to file '" << name << "': " << strerror(errno));
         }
         if (close(fd) == -1) {
-            throw FileException(string() + "error closing file '" + name + "' after writing: " + strerror(errno));
+            throw FileException(String() << "error closing file '" << name << "' after writing: " << strerror(errno));
         }
     } else {
-        throw FileException(string() + "error opening file '" + name + "' for writing: " + strerror(errno));
+        throw FileException(String() << "error opening file '" << name << "' for writing: " << strerror(errno));
     }
 }
 
-string File::getAbsoluteFileName() const
+String File::getAbsoluteFileName() const
 {
-    string buffer;
-    if (name.length() > 0 && name[0] == '/') {
+    String buffer;
+    if (name.getLength() > 0 && name[0] == '/') {
         buffer = name;
     } else {
         ByteArray cwd;
@@ -88,33 +88,33 @@ string File::getAbsoluteFileName() const
                 continue;
             }
         } while (false);
-        buffer = string(cwd.toCStr()) + "/" + name;
+        buffer = String() << cwd.toCStr() << "/" << name;
     }
     Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./");
     MemArray<int> ovec(r.getOvecSize());
 
-    while (r.findMatch(buffer.c_str(), buffer.length(), 0, Regex::MatchOptions(), ovec)) {
-        buffer.erase(ovec[0], ovec[1] - ovec[0]);
+    while (r.findMatch(buffer.toCString(), buffer.getLength(), 0, Regex::MatchOptions(), ovec)) {
+        buffer.removeAmount(ovec[0], ovec[1] - ovec[0]);
     }
     return buffer;
 }
 
-string File::getBaseName() const
+String File::getBaseName() const
 {
-    int i = name.length();
+    int i = name.getLength();
     while (i > 0 && name[i-1] != '/') {
         i -= 1;
     }
-    return name.substr(i);
+    return name.getTail(i);
 }
 
-string File::getDirName() const
+String File::getDirName() const
 {
-    string absoluteName = getAbsoluteFileName();
+    String absoluteName = getAbsoluteFileName();
 
-    int i = absoluteName.length();
+    int i = absoluteName.getLength();
     while (i > 0 && absoluteName[i-1] != '/') {
         i -= 1;
     }
-    return absoluteName.substr(0, i);
+    return absoluteName.getSubstring(0, i);
 }

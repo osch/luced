@@ -27,7 +27,7 @@
 namespace LucED
 {
 
-using std::string;
+
 
 class LuaFunctionArguments
 {
@@ -84,12 +84,12 @@ public:
         return *this;
     }
 
-    LuaFunctionArguments& operator<<(const string& arg)
+    LuaFunctionArguments& operator<<(const String& arg)
     {
     #ifdef DEBUG
         checkStack();
     #endif
-        lua_pushlstring(LuaObject::L, arg.c_str(), arg.length());
+        lua_pushlstring(LuaObject::L, arg.toCString(), arg.getLength());
         ++numberArguments;
         if (numberArguments % 10 == 0) {
             lua_checkstack(LuaObject::L, 20);

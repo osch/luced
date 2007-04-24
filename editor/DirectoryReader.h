@@ -35,9 +35,9 @@ namespace LucED {
 class DirectoryReader : NonCopyable
 {
 public:
-    DirectoryReader(const string& path) {
+    DirectoryReader(const String& path) {
         this->path = path;
-        dir = opendir(path.c_str());
+        dir = opendir(path.toCString());
         dirent = NULL;
     }
     
@@ -58,7 +58,7 @@ public:
         }
         return dirent != NULL;
     }
-    string getName() {
+    String getName() {
         if (dirent != NULL) {
             return dirent->d_name;
         } else {
@@ -70,14 +70,14 @@ public:
             return false;
         } else {
             if (!wasStat) {
-                stat((path + "/" + dirent->d_name).c_str(), &statInfo);
+                stat((String() << path << "/" << dirent->d_name).toCString(), &statInfo);
                 wasStat = true;
             }
             return S_ISREG(statInfo.st_mode);
         }
     }
 private:
-    string path;
+    String path;
     DIR* dir;
     struct dirent* dirent;
     bool wasStat;

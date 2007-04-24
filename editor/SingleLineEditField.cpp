@@ -25,18 +25,22 @@
 
 using namespace LucED;
 
-SingleLineEditField::SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr languageMode)
+SingleLineEditField::SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr languageMode, TextData::Ptr textData)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
-      hasFocus(false),
+      hasFocusFlag(false),
       adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
-      heightOffset(0)
+      heightOffset(0),
+      cursorStaysHidden(false)
 {
     addToXEventMask(ExposureMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
+    if (textData.isInvalid()) {
+        textData = TextData::create();
+    }
     editorWidget = SingleLineEditorWidget::create(
                        this, GlobalConfig::getInstance()->getTextStyles(), 
-                       HilitedText::create(TextData::create(), languageMode));
+                       HilitedText::create(textData, languageMode));
     editorWidget->setDesiredMeasuresInChars(5,  1, 
                                             20, 1, 
                                             40,  1);
@@ -93,7 +97,7 @@ void SingleLineEditField::draw()
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
     int ud = heightOffset;
     int ld = (adjustment == VerticalAdjustment::CENTER) ? heightOffset : 0;
-    if (hasFocus) {
+    if (hasFocusFlag) {
         drawActiveSunkenFrame(  guiSpacing, ud + guiSpacing, getPosition().w - guiSpacing, getPosition().h - ud - ld - guiSpacing);
     } else {
         drawInactiveSunkenFrame(guiSpacing, ud + guiSpacing, getPosition().w - guiSpacing, getPosition().h - ud - ld - guiSpacing);
@@ -159,21 +163,25 @@ void SingleLineEditField::requestFocusFor(GuiWidget* w)
 
 void SingleLineEditField::treatFocusIn()
 {
-    hasFocus = true;
+    hasFocusFlag = true;
+    cursorStaysHidden = false;
     draw();
     editorWidget->treatFocusIn();
+    if (editFieldGroup.isValid()) {
+        editFieldGroup->invokeAllCursorFocusLostExceptFor(this);
+    }
 }
 
 void SingleLineEditField::treatFocusOut()
 {
-    hasFocus = false;
+    hasFocusFlag = false;
     draw();
     editorWidget->treatFocusOut();
 }
 
 void SingleLineEditField::notifyAboutHotKeyEventForOtherWidget()
 {
-    if (hasFocus && editorWidget->isCursorBlinking()) {
+    if (hasFocusFlag && editorWidget->isCursorBlinking()) {
         editorWidget->startCursorBlinking(); // redraw Cursor while Hotkey for other widget
     }
 }

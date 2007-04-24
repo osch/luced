@@ -22,7 +22,7 @@
 #ifndef EDITORSERVER_H
 #define EDITORSERVER_H
 
-#include <string>
+#include "String.h"
 
 #include "HeapObject.h"
 #include "SingletonInstance.h"
@@ -32,7 +32,7 @@
 namespace LucED
 {
 
-using std::string;
+
 
 class EditorServer : public HeapObject
 {
@@ -44,7 +44,7 @@ public:
     
     ~EditorServer();
     
-    void startWithCommandline(HeapObjectArray<string>::Ptr commandline);
+    void startWithCommandline(HeapObjectArray<String>::Ptr commandline);
     
 private:
     friend class SingletonInstance<EditorServer>;
@@ -56,7 +56,7 @@ private:
     
     void processEventForServerProperty(XEvent* event);
     void processEventForCommandProperty(XEvent* event);
-    void processCommandline(HeapObjectArray<string>::Ptr commandline);
+    void processCommandline(HeapObjectArray<String>::Ptr commandline);
 
     bool isStarted;
     GuiRootProperty serverProperty;

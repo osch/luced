@@ -22,8 +22,7 @@
 #ifndef TEXTDATA_H
 #define TEXTDATA_H
 
-#include <string>
-
+#include "String.h"
 #include "HeapObject.h"
 #include "MemBuffer.h"
 #include "ByteArray.h"
@@ -35,7 +34,7 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class TextData : public HeapObject
 {
@@ -151,8 +150,8 @@ public:
         return TextData::Ptr(new TextData());
     }
 
-    void loadFile(const string& filename);
-    void setFileName(const string& filename);
+    void loadFile(const String& filename);
+    void setFileName(const String& filename);
     void save();
 
     long getLength() const {
@@ -171,6 +170,12 @@ public:
 
     byte* getAmount(long pos, long amount) {
         return buffer.getAmount(pos, amount);
+    }
+    String getSubstring(long pos, long amount) {
+        return String((const char*) getAmount(pos, amount), amount);
+    }
+    String getAsString() {
+        return getSubstring(0, getLength());
     }
 
     const byte& operator[](long pos) const {
@@ -238,6 +243,10 @@ private:
 public:
     long insertAtMark(MarkHandle m, const byte* buffer, long length);
 
+    long insertAtMark(MarkHandle m, const String& chars) {
+        return insertAtMark(m, (const byte*) chars.toCString(), chars.getLength());
+    }
+
     long insertAtMark(MarkHandle m, byte c) {
         return insertAtMark(m, &c, 1);
     }
@@ -267,7 +276,7 @@ public:
     }
     void setInsertFilterCallback(Callback2<const byte**, long*> filterCallback);
     void registerUpdateListener(UpdateCallback updateCallback);
-    void registerFileNameListener(Callback1<const string&> fileNameCallback);
+    void registerFileNameListener(Callback1<const String&> fileNameCallback);
     void registerLengthListener(Callback1<long> lengthCallback);
     void registerModifiedFlagListener(Callback1<bool> modifiedFlagCallback);
     
@@ -290,7 +299,7 @@ public:
         return marks[mark.index].line;
     }
     
-    string getFileName() const {
+    String getFileName() const {
         return fileName;
     }
     
@@ -331,13 +340,13 @@ private:
         long beginLineNumber, long changedLineNumberAmount);
         
     Callback1Container<UpdateInfo> updateListeners;
-    Callback1Container<const string&> fileNameListeners;
+    Callback1Container<const String&> fileNameListeners;
     Callback1Container<long> lengthListeners;
     Callback1Container<bool> changedModifiedFlagListeners;
     
     Callback2<const byte**, long*> filterCallback;
     
-    string fileName;
+    String fileName;
     long oldLength;
     bool modifiedFlag;
     int viewCounter;

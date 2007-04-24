@@ -22,7 +22,7 @@
 #ifndef SEARCHHISTORY_H
 #define SEARCHHISTORY_H
 
-#include <string>
+#include "String.h"
 
 #include "HeapObject.h"
 #include "ObjectArray.h"
@@ -45,13 +45,13 @@ public:
               ignoreCaseFlag(false)
         {}
 
-        std::string getFindString()    const { return findString; }
-        std::string getReplaceString() const { return replaceString; }
+        String getFindString()    const { return findString; }
+        String getReplaceString() const { return replaceString; }
 
-        void setReplaceString(std::string replaceString) {
+        void setReplaceString(String replaceString) {
             this->replaceString = replaceString;
         }
-        void setFindString(std::string findString) {
+        void setFindString(String findString) {
             this->findString = findString;
         }
         
@@ -75,8 +75,8 @@ public:
         }
 
     private:
-        std::string findString;
-        std::string replaceString;
+        String findString;
+        String replaceString;
         bool wholeWordFlag;
         bool regexFlag;
         bool ignoreCaseFlag;

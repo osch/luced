@@ -32,7 +32,7 @@ LanguageMode::Ptr LanguageMode::create(LuaObject config)
 }
 
 
-LanguageMode::LanguageMode(const string& name, Regex regex)
+LanguageMode::LanguageMode(const String& name, Regex regex)
         : name(name), regex(regex)
 {}
 
@@ -50,20 +50,20 @@ LanguageMode::LanguageMode(LuaObject config)
     o = config["fileNameRegex"];
     if (o.isValid()) {
         if (!o.isString()) {
-            throw ConfigException("languageMode '" + name + "' has invalid element 'fileNameRegex'");
+            throw ConfigException(String() << "languageMode '" << name << "' has invalid element 'fileNameRegex'");
         }
         try {
             regex = Regex(o.toString());
         } catch (RegexException& ex) {
-            throw ConfigException("languageMode '" + name + "' has invalid element 'fileNameRegex': "
-                    + ex.getMessage());
+            throw ConfigException(String() << "languageMode '" << name << "' has invalid element 'fileNameRegex': "
+                    << ex.getMessage());
         }
     }
 
     o = config["approximateUnknownHiliting"];
     if (o.isValid()) {
         if (!o.isBoolean()) {
-            throw ConfigException("languageMode '" + name + "' has invalid element 'approximateUnknownHiliting'");
+            throw ConfigException(String() << "languageMode '" << name << "' has invalid element 'approximateUnknownHiliting'");
         }
         approximateUnknownHilitingFlag = o.toBoolean();
     }
@@ -71,7 +71,7 @@ LanguageMode::LanguageMode(LuaObject config)
     o = config["approximateUnknownHilitingReparseRange"];
     if (o.isValid()) {
         if (!o.isNumber()) {
-            throw ConfigException("languageMode '" + name + "' has invalid element 'approximateUnknownHilitingReparseRange'");
+            throw ConfigException(String() << "languageMode '" << name << "' has invalid element 'approximateUnknownHilitingReparseRange'");
         }
         approximateUnknownHilitingReparseRange = (long) o.toNumber();
     }
@@ -90,7 +90,7 @@ LanguageModes::LanguageModes()
 {
 }
 
-void LanguageModes::append(const string& name)
+void LanguageModes::append(const String& name)
 {
     modes.append(LanguageMode::create(name));
     nameToIndexMap.set(name, modes.getLength() - 1);
@@ -106,14 +106,14 @@ void LanguageModes::append(LuaObject config)
     }
 }
 
-LanguageMode::Ptr LanguageModes::getLanguageModeForFile(const string& fileName)
+LanguageMode::Ptr LanguageModes::getLanguageModeForFile(const String& fileName)
 {
     for (int i = 0; i < modes.getLength(); ++i)
     {
         Regex re = modes[i]->getRegex();
         if (re.isValid()) {
-            bool matched = re.findMatch(fileName.c_str(), fileName.length(), 0, Regex::MatchOptions(), ovector);
-            if (matched && ovector[0] == 0 && ovector[1] == fileName.length()) {
+            bool matched = re.findMatch(fileName.toCString(), fileName.getLength(), 0, Regex::MatchOptions(), ovector);
+            if (matched && ovector[0] == 0 && ovector[1] == fileName.getLength()) {
                 return modes[i];
             }
         }

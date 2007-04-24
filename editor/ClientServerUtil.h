@@ -22,7 +22,7 @@
 #ifndef CLIENTSERVERUTIL_H
 #define CLIENTSERVERUTIL_H
 
-#include <string>
+#include "String.h"
 
 #include "GuiRootProperty.h"
 #include "HeapObjectArray.h"
@@ -30,7 +30,7 @@
 namespace LucED
 {
 
-using std::string;
+
 
 class ClientServerUtil
 {
@@ -39,9 +39,9 @@ public:
     
     static GuiRootProperty getDefaultServerCommandProperty();
     
-    static string quoteCommandline(HeapObjectArray<string>::Ptr commandline);
+    static String quoteCommandline(HeapObjectArray<String>::Ptr commandline);
 
-    static HeapObjectArray<string>::Ptr unquoteCommandline(const string& commandline);
+    static HeapObjectArray<String>::Ptr unquoteCommandline(const String& commandline);
 };
 
 } // namespace LucED

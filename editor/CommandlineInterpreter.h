@@ -22,22 +22,21 @@
 #ifndef COMMANDLINEINTERPRETER_H
 #define COMMANDLINEINTERPRETER_H
 
-#include <string>
-
+#include "String.h"
+#include "File.h"
 #include "HeapObjectArray.h"
 #include "CommandlineException.h"
-#include "File.h"
 
 namespace LucED
 {
 
-using std::string;
+
 
 template<class Actor> class CommandlineInterpreter
 {
 public:
 
-    typedef HeapObjectArray<string> Commandline;
+    typedef HeapObjectArray<String> Commandline;
 
     void doCommandline(Commandline::Ptr commandline)
     {
@@ -45,7 +44,7 @@ public:
         
         for (int i = 0; i < argc; ++i)
         {
-            string  fileName;
+            String  fileName;
             int     numberOfWindowsForThisFile = 1;
             
             while (i < argc && commandline->get(i)[0] == '-' && commandline->get(i)[1] != '-')
@@ -60,7 +59,7 @@ public:
                         throw CommandlineException("Command option -w needs additional argument.");
                     }
                     
-                    numberOfWindowsForThisFile = atoi(commandline->get(i).c_str());
+                    numberOfWindowsForThisFile = commandline->get(i).toInt();
                     
                     if (numberOfWindowsForThisFile < 1) {
                         throw CommandlineException("Command option -w needs additional argument number >= 1.");
@@ -68,7 +67,7 @@ public:
                 }
                 else
                 {
-                    throw CommandlineException(string() + "Unknown command option '" + commandline->get(i) + "'.");
+                    throw CommandlineException(String() << "Unknown command option '" << commandline->get(i) << "'.");
                 }
                 i += 1;
             }
@@ -78,7 +77,7 @@ public:
                 // Parameter is a filename
 
                 if (commandline->get(i)[0] == '-') {
-                    fileName = commandline->get(i).substr(1);  // "--fname" means filename == "-fname"
+                    fileName = commandline->get(i).getTail(1);  // "--fname" means filename == "-fname"
                 } else {
                     fileName = commandline->get(i);
                 }

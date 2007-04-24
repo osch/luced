@@ -30,7 +30,7 @@ template<class T> class OwningPtr : private HeapObjectRefManipulator
 {
 public:
     
-    OwningPtr(T *ptr = NULL) : ptr(ptr) {
+    explicit OwningPtr(T *ptr = NULL) : ptr(ptr) {
         if (ptr != NULL) {
             obtainInitialOwnership(ptr);
         }

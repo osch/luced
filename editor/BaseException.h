@@ -23,18 +23,18 @@
 #define BASEEXCEPTION_H
 
 #include <exception>
-#include <string>
+#include "String.h"
 
 namespace LucED
 {
 
 using std::exception;
-using std::string;
+
 
 class BaseException : public exception
 {
 public:
-    string getMessage() const {
+    String getMessage() const {
         return message;
     }
     virtual ~BaseException() throw() {}
@@ -42,11 +42,11 @@ public:
     virtual const char *what() = 0;
 
 protected:
-    BaseException(const string& message)
+    BaseException(const String& message)
         : message(message)
     {}
 private:
-    string message;
+    String message;
 };
 
 } // namespace LucED

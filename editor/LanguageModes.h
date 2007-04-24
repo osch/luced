@@ -22,7 +22,7 @@
 #ifndef LANGUAGEMODES_H
 #define LANGUAGEMODES_H
 
-#include <string>
+#include "String.h"
 
 #include "HeapObject.h"
 #include "ObjectArray.h"
@@ -34,7 +34,7 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class LuaObject;
 
@@ -43,12 +43,12 @@ class LanguageMode : public HeapObject
 public:
     typedef OwningPtr<LanguageMode> Ptr;
 
-    static Ptr create(const string& name, Regex regex = Regex()) {
+    static Ptr create(const String& name, Regex regex = Regex()) {
         return Ptr(new LanguageMode(name, regex));
     }
     static Ptr create(LuaObject config);
         
-    string getName() const {
+    String getName() const {
         return name;
     }
     Regex getRegex() const {
@@ -67,10 +67,10 @@ public:
 private:
     friend class LanguageModes;
 
-    LanguageMode(const string& name, Regex regex = Regex());
+    LanguageMode(const String& name, Regex regex = Regex());
     LanguageMode(LuaObject config);
     
-    string name;
+    String name;
     Regex regex;
     bool approximateUnknownHilitingFlag;
     long approximateUnknownHilitingReparseRange;
@@ -85,10 +85,10 @@ public:
         return Ptr(new LanguageModes());
     }
     
-    void append(const string& name);
+    void append(const String& name);
     void append(LuaObject config);
     
-    LanguageMode::Ptr getLanguageModeForFile(const string& fileName);
+    LanguageMode::Ptr getLanguageModeForFile(const String& fileName);
     LanguageMode::Ptr getDefaultLanguageMode();
     
 private:
@@ -97,7 +97,7 @@ private:
     LanguageMode::Ptr defaultLanguageMode;
     ObjectArray<LanguageMode::Ptr> modes;
     MemArray<int> ovector;
-    HashMap<string,int> nameToIndexMap;
+    HashMap<String,int> nameToIndexMap;
 };
 
 } // namespace LucED

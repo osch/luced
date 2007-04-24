@@ -26,15 +26,15 @@
 
 using namespace LucED;
 
-TextStyle::TextStyle(const string& fontName, const string& colorName)
+TextStyle::TextStyle(const String& fontName, const String& colorName)
 {
     XCharStruct *min_bounds;
     XCharStruct *max_bounds;
     XColor xcolor1_st, xcolor2_st;
     
-    this->font = XLoadQueryFont(GuiRoot::getInstance()->getDisplay(), fontName.c_str());
+    this->font = XLoadQueryFont(GuiRoot::getInstance()->getDisplay(), fontName.toCString());
     if (font == NULL) {
-        throw ConfigException("invalid font name: " + fontName);
+        throw ConfigException(String() << "invalid font name: " << fontName);
     }
 
     this->color = GuiRoot::getInstance()->getGuiColor(colorName);

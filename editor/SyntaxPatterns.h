@@ -36,9 +36,9 @@ class LuaObject;
 
 struct SubPatternDescriptor
 {
-    SubPatternDescriptor(string subPatternName, int style) : subPatternName(subPatternName), style(style)
+    SubPatternDescriptor(String subPatternName, int style) : subPatternName(subPatternName), style(style)
     {}
-    string subPatternName;
+    String subPatternName;
     int style;
 };
 
@@ -66,10 +66,10 @@ struct SyntaxPattern
 
     int getMatchedChild(const MemArray<int>& ovector);
 
-    string name;
+    String name;
     int style;
-    string beginPattern;
-    string endPattern;
+    String beginPattern;
+    String endPattern;
     bool hasEndPattern;
     int  maxBeginBytesExtend;
     int  maxEndBytesExtend;
@@ -89,7 +89,7 @@ class SyntaxPatterns : public HeapObject
 {
 public:
     typedef OwningPtr<SyntaxPatterns> Ptr;
-    typedef HeapHashMap<string,int> NameToIndexMap;
+    typedef HeapHashMap<String,int> NameToIndexMap;
     
     static Ptr create(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap);
 

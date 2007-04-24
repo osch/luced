@@ -22,7 +22,7 @@
 #ifndef EDITORCLIENT_H
 #define EDITORCLIENT_H
 
-#include <string>
+#include "String.h"
 
 #include "HeapObject.h"
 #include "SingletonInstance.h"
@@ -32,7 +32,7 @@
 namespace LucED
 {
 
-using std::string;
+
 
 class EditorClient : public HeapObject
 {
@@ -43,7 +43,7 @@ public:
     
     ~EditorClient();
 
-    void startWithCommandline(HeapObjectArray<string>::Ptr commandline);
+    void startWithCommandline(HeapObjectArray<String>::Ptr commandline);
     
 private:
     friend class SingletonInstance<EditorClient>;

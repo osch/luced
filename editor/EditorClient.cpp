@@ -72,14 +72,14 @@ namespace // anonymous namespace
     class DoNothingActor
     {
     public:
-        void openFile(int numberOfWindows, const string& fileName)
+        void openFile(int numberOfWindows, const String& fileName)
         {}
     };
 
 } // anonymous namespace
 
 
-void EditorClient::startWithCommandline(HeapObjectArray<string>::Ptr commandline)
+void EditorClient::startWithCommandline(HeapObjectArray<String>::Ptr commandline)
 {
     isStarted = true;
     wasCommandSet = false;

@@ -22,7 +22,7 @@
 #ifndef GLOBALCONFIG_H
 #define GLOBALCONFIG_H
 
-#include <string>
+#include "String.h"
 
 #include "HeapObject.h"
 #include "TextStyle.h"
@@ -33,16 +33,16 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class GlobalConfig : public HeapObject
 {
 public:
-    typedef HeapHashMap<string,int> NameToIndexMap;
+    typedef HeapHashMap<String,int> NameToIndexMap;
     
     static GlobalConfig* getInstance();
     
-    void readConfig(const string& configPath);
+    void readConfig(const String& configPath);
     
     bool getUseKeyPressRepeater() {
         return useKeyPressRepeater;
@@ -65,25 +65,25 @@ public:
     long getDoubleClickMilliSecs() {
         return doubleClickMilliSecs;
     }
-    string getGuiColor01() {
+    String getGuiColor01() {
         return guiColor01;
     }
-    string getGuiColor02() {
+    String getGuiColor02() {
         return guiColor02;
     }
-    string getGuiColor03() {
+    String getGuiColor03() {
         return guiColor03;
     }
-    string getGuiColor04() {
+    String getGuiColor04() {
         return guiColor04;
     }
-    string getGuiColor05() {
+    String getGuiColor05() {
         return guiColor05;
     }
-    string getGuiFont() {
+    String getGuiFont() {
         return guiFont;
     }
-    string getGuiFontColor() {
+    String getGuiFontColor() {
         return guiFontColor;
     }
     int getInitialWindowWidth() {
@@ -116,15 +116,15 @@ public:
         return textStyleNameToIndexMap;
     }
     
-    bool hasSyntaxPatternsFor(const string& languageMode) {
+    bool hasSyntaxPatternsFor(const String& languageMode) {
         NameToIndexMap::Value foundIndex = languageModeToSyntaxIndex->get(languageMode);
         return foundIndex.isValid();
     }
     
-    SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(const string& languageMode);
+    SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(const String& languageMode);
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode);
-    SyntaxPatterns::Ptr getSyntaxPatternsForFileName(const string& fileName);
-    LanguageMode::Ptr   getLanguageModeForFileName(const string& fileName);
+    SyntaxPatterns::Ptr getSyntaxPatternsForFileName(const String& fileName);
+    LanguageMode::Ptr   getLanguageModeForFileName(const String& fileName);
     LanguageMode::Ptr   getDefaultLanguageMode();
 
 private:
@@ -142,13 +142,13 @@ private:
     long scrollBarRepeatNextMicroSecs;
     long doubleClickMilliSecs;
     
-    string guiColor01;
-    string guiColor02;
-    string guiColor03;
-    string guiColor04;
-    string guiColor05;
-    string guiFont;
-    string guiFontColor;
+    String guiColor01;
+    String guiColor02;
+    String guiColor03;
+    String guiColor04;
+    String guiColor05;
+    String guiFont;
+    String guiFontColor;
     
     int initialWindowWidth;
     int initialWindowHeight;

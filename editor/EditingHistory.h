@@ -22,7 +22,7 @@
 #ifndef EDITINGHISTORY_H
 #define EDITINGHISTORY_H
 
-#include <string.h>
+#include "String.h"
 
 #include "HeapObject.h"
 #include "OwningPtr.h"

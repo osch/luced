@@ -23,7 +23,8 @@
 #define HASHMAP_H
 
 #include <ext/hash_map>
-#include <string>
+
+#include "String.h"
 
 namespace LucED {
 
@@ -32,16 +33,16 @@ using std::hash_map;
 #else
 using __gnu_cxx::hash_map;
 #endif
-using std::string;
+
 
 template<class T> class HashFunction;
 
-template<> class HashFunction<string>
+template<> class HashFunction<String>
 {
 public:
-    size_t operator()(const string& key) const {
+    size_t operator()(const String& key) const {
         size_t rslt = 0;
-        for (int i = 0; i < key.length(); ++i) {
+        for (int i = 0; i < key.getLength(); ++i) {
             rslt = 5 * rslt + key[i];
         }
         return rslt;

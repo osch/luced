@@ -22,7 +22,7 @@
 #ifndef FINDUTIL_H
 #define FINDUTIL_H
 
-#include <string>
+#include "String.h"
 #include <pcre.h>
 
 #include "TextData.h"
@@ -32,11 +32,12 @@
 #include "NonCopyable.h"
 #include "LuaStoredObject.h"
 #include "LuaException.h"
+#include "Regex.h"
 
 namespace LucED
 {
 
-using std::string;
+
 
 class FindUtil : public NonCopyable
 {
@@ -51,25 +52,31 @@ public:
           textPosition(0),
           textData(NULL),
           wasError(false),
-          luaException("")
+          luaException(""),
+          wasInitialized(false)
     {}
 
     void setSearchForwardFlag(bool flag) {
+        wasInitialized = false;
         searchForwardFlag = flag;
     }
     bool isSearchingForward() const {
         return searchForwardFlag;
     }
     void setIgnoreCaseFlag(bool flag) {
+        wasInitialized = false;
         ignoreCaseFlag = flag;
     }
     void setRegexFlag(bool flag) {
+        wasInitialized = false;
         regexFlag = flag;
     }
     void setWholeWordFlag(bool flag) {
+        wasInitialized = false;
         wholeWordFlag = flag;
     }
-    void setSearchString(const string& searchString) {
+    void setSearchString(const String& searchString) {
+        wasInitialized = false;
         this->searchString = searchString;
     }
     void setTextPosition(long pos) {
@@ -78,7 +85,9 @@ public:
     void setTextData(TextData* textData) {
         this->textData = textData;
     }
-    
+
+    bool doesMatch();
+        
     void findNext();
     
     bool wasFound() const {
@@ -95,9 +104,13 @@ public:
         ASSERT(wasFoundFlag);
         return ovector[1];
     }
+
+    static String quoteRegexCharacters(const String& s);
     
 private:
     static int pcreCalloutFunction(void* self, pcre_callout_block*);
+
+    void initialize();
     
     bool searchForwardFlag;
     bool ignoreCaseFlag;
@@ -107,7 +120,7 @@ private:
     long textPosition;
     WeakPtr<TextData> textData;
     
-    string searchString;
+    String searchString;
     MemArray<int> ovector;
     
     struct CalloutObject
@@ -120,6 +133,11 @@ private:
     ObjectArray<CalloutObject> calloutObjects;
     bool wasError;
     LuaException luaException;
+    
+    bool wasInitialized;
+
+    MemArray<int> expressionPositions;
+    Regex regex;
 };
 
 } // namespace LucED

@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FINDPANEL_H
-#define FINDPANEL_H
+#ifndef REPLACEPANEL_H
+#define REPLACEPANEL_H
 
 #include "String.h"
 
@@ -34,46 +34,47 @@
 #include "Regex.h"
 #include "types.h"
 #include "FindUtil.h"
+#include "EditFieldGroup.h"
+#include "FindPanel.h"
 
 namespace LucED {
 
 
 
-class FindPanel : public DialogPanel
+class ReplacePanel : public  DialogPanel,
+                     private FindPanelAccess
 {
 public:
-    typedef OwningPtr<FindPanel> Ptr;
+    typedef OwningPtr<ReplacePanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker,
-                                                                         Callback1<DialogPanel*>        panelInvoker)
+    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
+                      Callback1<MessageBoxParameter> messageBoxInvoker,
+                      Callback1<DialogPanel*>        panelInvoker)
     {
-        return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker));
+        return Ptr(new ReplacePanel(parent, editorWidget, findPanel, messageBoxInvoker, panelInvoker));
     }
     
     virtual void treatFocusIn();
+    virtual void treatFocusOut();
     
     void setDefaultDirection(Direction::Type direction) {
         ASSERT(direction == Direction::UP || direction == Direction::DOWN);
         defaultDirection = direction;
         findPrevButton->setAsDefaultButton(direction != Direction::DOWN);
         findNextButton->setAsDefaultButton(direction == Direction::DOWN);
+        replacePrevButton->setAsDefaultButton(false);
+        replaceNextButton->setAsDefaultButton(false);
     }
     
-    void findAgainForward();
-    void findAgainBackward();
-
-    void findSelectionForward();
-    void findSelectionBackward();
-
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);
     
     virtual void show();
+    virtual void hide();
     
 private:
-    friend class FindPanelAccess;
-    
-    FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker,
-                                                                 Callback1<DialogPanel*>        panelInvoker);
+    ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
+                 Callback1<MessageBoxParameter> messageBoxInvoker,
+                 Callback1<DialogPanel*>        panelInvoker);
 
     void executeFind(bool isWrapping, FindUtil& f, const Callback0& handleContinueSearchButton);
 
@@ -91,11 +92,17 @@ private:
 
     WeakPtr<TextEditorWidget> e;
 
-    SingleLineEditField::Ptr editField;
+    SingleLineEditField::Ptr findEditField;
+    SingleLineEditField::Ptr replaceEditField;
+    SingleLineEditField::Ptr lastFocusedEditField;
+    
     Button::Ptr findNextButton;
     Button::Ptr findPrevButton;
+    Button::Ptr replaceNextButton;
+    Button::Ptr replacePrevButton;
     Button::Ptr cancelButton;
-    Button::Ptr goBackButton;
+    Button::Ptr replaceSelectionButton;
+    Button::Ptr replaceWindowButton;
     CheckBox::Ptr ignoreCaseCheckBox;
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
@@ -106,17 +113,9 @@ private:
     int historyIndex;
     String selectionSearchString;
     bool selectSearchRegexFlag;
-    TextData::Ptr editFieldTextData;
-};
-
-class FindPanelAccess
-{
-protected:
-    static TextData::Ptr getFindEditFieldTextData(FindPanel* p) {
-        return p->editFieldTextData;
-    }
+    EditFieldGroup::Ptr editFieldGroup;
 };
 
 } // namespace LucED
 
-#endif // FINDPANEL_H
+#endif // REPLACEPANEL_H

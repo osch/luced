@@ -34,7 +34,7 @@ int Regex::pcreCalloutCallback(pcre_callout_block* calloutBlock)
 }
     
     
-Regex::Regex(const string& expr, CreateOptions createOptions)
+Regex::Regex(const String& expr, CreateOptions createOptions)
 {
     pcre_callout = pcreCalloutCallback;
 
@@ -44,7 +44,7 @@ Regex::Regex(const string& expr, CreateOptions createOptions)
     const char *errortext;
     int errorpos;
 
-    re = pcre_compile(expr.c_str(), createOptions.getOptions(), &errortext, &errorpos, Regex::pcreCharTable);
+    re = pcre_compile(expr.toCString(), createOptions.getOptions(), &errortext, &errorpos, Regex::pcreCharTable);
     if (re == NULL) {
         throw RegexException(errortext, errorpos);
     }
@@ -102,12 +102,12 @@ Regex::~Regex()
 }
 
 
-int Regex::getStringNumber(const string& substringName) const
+int Regex::getStringNumber(const String& substringName) const
 {
     ASSERT(re != NULL);
-    int rslt = pcre_get_stringnumber(re, substringName.c_str());
+    int rslt = pcre_get_stringnumber(re, substringName.toCString());
     if (rslt == PCRE_ERROR_NOSUBSTRING) {
-        throw RegexException("named substring '" + substringName + "' not found");
+        throw RegexException(String() << "named substring '" << substringName << "' not found");
     }
     return rslt;
 }
@@ -117,7 +117,7 @@ int Regex::getStringNumber(const ByteArray& substringName) const
     ASSERT(re != NULL);
     int rslt = pcre_get_stringnumber(re, substringName.toCStr());
     if (rslt == PCRE_ERROR_NOSUBSTRING) {
-        throw RegexException("named substring '" + substringName.toString() + "' not found");
+        throw RegexException(String() << "named substring '" << substringName.toString() << "' not found");
     }
     return rslt;
 }

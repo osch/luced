@@ -22,7 +22,7 @@
 #ifndef CHECKBOX_H
 #define CHECKBOX_H
 
-#include <string>
+#include "String.h"
 
 #include "GuiWidget.h"
 #include "OwningPtr.h"
@@ -31,14 +31,14 @@
 
 namespace LucED {
 
-using std::string;
+
 
 class CheckBox : public GuiWidget
 {
 public:
     typedef OwningPtr<CheckBox> Ptr;
     
-    static Ptr create(GuiWidget* parent, string buttonText) {
+    static Ptr create(GuiWidget* parent, String buttonText) {
         return Ptr(new CheckBox(parent, buttonText));
     }
     
@@ -70,9 +70,9 @@ private:
     void draw();
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
-    CheckBox(GuiWidget* parent, string buttonText);
+    CheckBox(GuiWidget* parent, String buttonText);
     Position position;
-    string buttonText;
+    String buttonText;
     bool isBoxChecked;
     bool isMouseButtonPressed;
     bool isMouseOverButton;

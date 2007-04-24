@@ -233,7 +233,9 @@ public:
     int setDoBackground(bool flag)
     {
         doBackgroundFlag = flag; 
-        if (flag) background = backliteBuffer->getBackground(textPos);
+        if (flag) {
+            background = backliteBuffer->getBackground(textPos);
+        }
     }
 
     int getCharRBearing() const

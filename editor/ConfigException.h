@@ -29,7 +29,7 @@ namespace LucED {
 class ConfigException : public BaseException
 {
 public:
-    ConfigException(string message)
+    ConfigException(String message)
         : BaseException(message)
     {}
     virtual const char *what();

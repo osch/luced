@@ -42,8 +42,8 @@ public:
             keyState(keyState), keySym(keySym)
         {}
 
-        Id(int keyState, string keySym) :
-            keyState(keyState), keySym(XStringToKeysym(keySym.c_str()))
+        Id(int keyState, String keySym) :
+            keyState(keyState), keySym(XStringToKeysym(keySym.toCString()))
         {}
         
         bool operator<(const Id& rhs) const {

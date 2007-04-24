@@ -20,7 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
-#include <string.h>
+#include "String.h"
 
 #include "LabelWidget.h"
 #include "util.h"
@@ -28,14 +28,15 @@
 
 using namespace LucED;
 
-LabelWidget::LabelWidget(GuiWidget* parent, const string& leftText, const string& rightText)
+LabelWidget::LabelWidget(GuiWidget* parent, const String& leftText, const String& rightText)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
       leftText(leftText),
       rightText(rightText),
       adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
-      fakeFocusFlag(false)
+      fakeFocusFlag(false),
+      hasForcedMeasuresFlag(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -55,11 +56,26 @@ void LabelWidget::setPosition(Position newPosition)
     }
 }
 
+void LabelWidget::setDesiredMeasures(Measures m)
+{
+    hasForcedMeasuresFlag = true;
+    forcedMeasures = m;
+}
+
 GuiElement::Measures LabelWidget::getDesiredMeasures()
+{
+    if (hasForcedMeasuresFlag) {
+        return forcedMeasures;
+    } else {
+        return getOwnDesiredMeasures();
+    }
+}
+
+GuiElement::Measures LabelWidget::getOwnDesiredMeasures()
 {
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
     int height = util::maximum(getGuiTextHeight() + guiSpacing, layoutHeight);
-    int width  = getGuiTextStyle()->getTextWidth(leftText.c_str(), leftText.length()) + guiSpacing;
+    int width  = getGuiTextStyle()->getTextWidth(leftText.toCString(), leftText.getLength()) + guiSpacing;
     return Measures(width, height, width, height, width, height);
 }
 
@@ -104,11 +120,11 @@ void LabelWidget::draw()
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
     drawRaisedSurface(0, 0, position.w, position.h);
     if (adjustment == VerticalAdjustment::TOP) {
-        drawGuiText(guiSpacing, guiSpacing, leftText.c_str(), leftText.length());
+        drawGuiText(guiSpacing, guiSpacing, leftText.toCString(), leftText.getLength());
     } else if (adjustment == VerticalAdjustment::BOTTOM) {
-        drawGuiText(guiSpacing, position.h - getGuiTextHeight(), leftText.c_str(), leftText.length());
+        drawGuiText(guiSpacing, position.h - getGuiTextHeight(), leftText.toCString(), leftText.getLength());
     } else {
-        drawGuiText(guiSpacing, (position.h - getGuiTextHeight()) / 2, leftText.c_str(), leftText.length());
+        drawGuiText(guiSpacing, (position.h - getGuiTextHeight()) / 2, leftText.toCString(), leftText.getLength());
     }
 }
 

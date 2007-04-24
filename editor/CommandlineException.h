@@ -29,7 +29,7 @@ namespace LucED {
 class CommandlineException : public BaseException
 {
 public:
-    CommandlineException(const string& message)
+    CommandlineException(const String& message)
         : BaseException(message)
     {}
     virtual const char *what();

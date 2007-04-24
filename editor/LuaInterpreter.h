@@ -22,8 +22,6 @@
 #ifndef LUAINTERPRETER_H
 #define LUAINTERPRETER_H
 
-#include <string>
-
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -41,11 +39,10 @@ extern "C" {
 #include "LuaCFunction.h"
 #include "LuaStoredObject.h"
 #include "LuaObjectList.h"
+#include "String.h"
 
 namespace LucED
 {
-
-using std::string;
 
 class LuaInterpreter : public HeapObject
 {
@@ -61,22 +58,22 @@ public:
     class Result
     {
     public:
-        string        output;
+        String        output;
         LuaObjectList objects;
     };    
-    Result executeFile(string name);
-    Result executeScript(const char* beginScript, long scriptLength, string name = string());
-    Result executeExpression(const char* beginScript, long scriptLength, string name = string());
+    Result executeFile(String name);
+    Result executeScript(const char* beginScript, long scriptLength, String name = String());
+    Result executeExpression(const char* beginScript, long scriptLength, String name = String());
 
-    Result executeExpression(const string& expr, string name = string()) {
-        return executeExpression(expr.c_str(), expr.length(), name);
+    Result executeExpression(const String& expr, String name = String()) {
+        return executeExpression(expr.toCString(), expr.getLength(), name);
     }
-    Result executeScript(string script, string name = string()) {
-        return executeScript(script.c_str(), script.length(), name);
+    Result executeScript(String script, String name = String()) {
+        return executeScript(script.toCString(), script.getLength(), name);
     }
     LuaObject getGlobal(const char* name);
-    LuaObject getGlobal(const string& name) {
-        return getGlobal(name.c_str());
+    LuaObject getGlobal(const String& name) {
+        return getGlobal(name.toCString());
     }
     void setGlobal(const char* name, LuaObject value);
     void clearGlobal(const char* name);
@@ -125,7 +122,7 @@ private:
     StoredObjects::Ptr storedObjects;
     bool isLucedStdoutActive;
     
-    string printBuffer;
+    String printBuffer;
 };
 
 

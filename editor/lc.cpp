@@ -19,7 +19,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include <string>
+#include "String.h"
 
 #include "EventDispatcher.h"
 #include "SingletonKeeper.h"
@@ -30,7 +30,7 @@
 
 using namespace LucED;
 
-using std::string;
+
 
 int main(int argc, char **argv)
 {
@@ -40,10 +40,10 @@ int main(int argc, char **argv)
     {
         SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
         
-        HeapObjectArray<string>::Ptr commandline = HeapObjectArray<string>::create();
+        HeapObjectArray<String>::Ptr commandline = HeapObjectArray<String>::create();
         for (int argIndex = 1; argIndex < argc; ++argIndex)
         {
-            commandline->append(string(argv[argIndex]));
+            commandline->append(String(argv[argIndex]));
         }
 
         EditorClient::getInstance()->startWithCommandline(commandline);
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     }
     catch (CommandlineException& ex)
     {
-        fprintf(stderr, "CommandlineException: %s\n", ex.getMessage().c_str());
+        fprintf(stderr, "CommandlineException: %s\n", ex.getMessage().toCString());
         rc = 1;
     }
 #ifdef DEBUG

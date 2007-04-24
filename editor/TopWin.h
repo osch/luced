@@ -49,8 +49,8 @@ public:
     virtual void treatFocusOut() {}
 
     void setTitle(const char* title);
-    void setTitle(const std::string& title) {
-        setTitle(title.c_str());
+    void setTitle(const String& title) {
+        setTitle(title.toCString());
     }
         
 protected:
