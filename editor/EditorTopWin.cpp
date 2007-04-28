@@ -186,17 +186,17 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping1.set(  ControlMask|ShiftMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelBackward));
     keyMapping1.set(            ControlMask, XK_r,      Callback0(this,      &EditorTopWin::invokeReplacePanelForward));
     keyMapping1.set(  ControlMask|ShiftMask, XK_r,      Callback0(this,      &EditorTopWin::invokeReplacePanelBackward));
-    keyMapping1.set(            ControlMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainForward));
-    keyMapping1.set(  ControlMask|ShiftMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainBackward));
     keyMapping1.set(            ControlMask, XK_w,      Callback0(this,      &EditorTopWin::requestCloseWindow));
     keyMapping1.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
     keyMapping1.set(            ControlMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveKey));
     keyMapping1.set(            ControlMask, XK_n,      Callback0(this,      &EditorTopWin::createEmptyWindow));
-    keyMapping2.set(               Mod1Mask, XK_c,      Callback0(this,      &EditorTopWin::createCloneWindow));
-    keyMapping2.set(               Mod1Mask, XK_l,      Callback0(this,      &EditorTopWin::executeLuaScript));
-    
     keyMapping1.set(            ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionForward));
     keyMapping1.set(  ShiftMask|ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionBackward));
+
+    keyMapping2.set(            ControlMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainForward));
+    keyMapping2.set(  ControlMask|ShiftMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainBackward));
+    keyMapping2.set(               Mod1Mask, XK_c,      Callback0(this,      &EditorTopWin::createCloneWindow));
+    keyMapping2.set(               Mod1Mask, XK_l,      Callback0(this,      &EditorTopWin::executeLuaScript));
 }
 
 EditorTopWin::~EditorTopWin()

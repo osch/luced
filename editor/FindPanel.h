@@ -75,7 +75,7 @@ private:
     FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker,
                                                                  Callback1<DialogPanel*>        panelInvoker);
 
-    void executeFind(bool isWrapping, FindUtil& f, const Callback0& handleContinueSearchButton);
+    void executeFind(bool isWrapping, const Callback0& handleContinueSearchButton);
 
     void handleButtonPressed(Button* button);
 
@@ -85,7 +85,7 @@ private:
     void handleContinueSelectionFindAtBeginningButton();
     void handleContinueSelectionFindAtEndButton();
     
-    void internalFindNext(bool forward, int textPosition, bool wrapping);
+    void internalFindNext(bool wrapping);
     
     void handleModifiedEditField(bool modifiedFlag);
 
@@ -107,6 +107,7 @@ private:
     String selectionSearchString;
     bool selectSearchRegexFlag;
     TextData::Ptr editFieldTextData;
+    FindUtil      findUtil;
 };
 
 class FindPanelAccess

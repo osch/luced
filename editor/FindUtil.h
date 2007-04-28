@@ -104,10 +104,25 @@ public:
         ASSERT(wasFoundFlag);
         return ovector[1];
     }
+    String getSearchString() const {
+        return searchString;
+    }
+    bool getWholeWordFlag() const {
+        return wholeWordFlag;
+    }
+    bool getRegexFlag() const {
+        return regexFlag;
+    }
+    bool getIgnoreCaseFlag() const {
+        return ignoreCaseFlag;
+    }
+    bool getSearchForwardFlag() const {
+        return searchForwardFlag;
+    }
 
     static String quoteRegexCharacters(const String& s);
     
-private:
+protected:
     static int pcreCalloutFunction(void* self, pcre_callout_block*);
 
     void initialize();

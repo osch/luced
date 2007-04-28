@@ -29,7 +29,6 @@
 #include "LabelWidget.h"
 #include "RegexException.h"
 #include "SearchHistory.h"
-#include "FindUtil.h"
 
 using namespace LucED;
 
@@ -176,6 +175,8 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     
     findEditField   ->getTextData()->registerModifiedFlagListener(Callback1<bool>(this, &ReplacePanel::handleModifiedEditField));
     replaceEditField->getTextData()->registerModifiedFlagListener(Callback1<bool>(this, &ReplacePanel::handleModifiedEditField));
+
+    replaceUtil.setTextData(e->getTextData());
 }
 
 void ReplacePanel::treatFocusOut()
@@ -205,48 +206,49 @@ void ReplacePanel::treatFocusIn()
 }
 
 
-void ReplacePanel::executeFind(bool isWrapping, FindUtil& f, const Callback0& handleContinueSearchButton)
+void ReplacePanel::executeFind(bool isWrapping, const Callback0& handleContinueSearchButton)
 {
     try
     {
-        {
+/*        {
             if (e->hasSelectionOwnership()) {
                 e->getBackliteBuffer()->deactivateSelection();
             }
             TextData::TextMark m = e->createNewMarkFromCursor();
-            m.moveToPos(f.getTextPosition());
+            m.moveToPos(replaceUtil.getTextPosition());
             e->moveCursorToTextMarkAndAdjustVisibility(m);
         }
+*/
         GuiRoot::getInstance()->flushDisplay();
 
-        f.findNext();
+        replaceUtil.findNext();
 
-        if (f.wasFound())
+        if (replaceUtil.wasFound())
         {
             TextData::TextMark m = e->createNewMarkFromCursor();
-            m.moveToPos(f.getMatchBeginPos());
+            m.moveToPos(replaceUtil.getMatchBeginPos());
             e->moveCursorToTextMarkAndAdjustVisibility(m);
-            m.moveToPos(f.getMatchEndPos());
+            m.moveToPos(replaceUtil.getMatchEndPos());
             e->moveCursorToTextMarkAndAdjustVisibility(m);
             e->rememberCursorPixX();
             e->requestSelectionOwnership();
-            e->getBackliteBuffer()->activateSelection(f.getMatchBeginPos());
-            e->getBackliteBuffer()->extendSelectionTo(f.getMatchEndPos());
+            e->getBackliteBuffer()->activateSelection(replaceUtil.getMatchBeginPos());
+            e->getBackliteBuffer()->extendSelectionTo(replaceUtil.getMatchEndPos());
 
-            replacePrevButton->setAsDefaultButton(!f.isSearchingForward());
-            replaceNextButton->setAsDefaultButton( f.isSearchingForward());
+            replacePrevButton->setAsDefaultButton(!replaceUtil.isSearchingForward());
+            replaceNextButton->setAsDefaultButton( replaceUtil.isSearchingForward());
             findPrevButton   ->setAsDefaultButton(false);
             findNextButton   ->setAsDefaultButton(false);
         }
         else 
         {
-            findPrevButton->setAsDefaultButton(!f.isSearchingForward());
-            findNextButton->setAsDefaultButton( f.isSearchingForward());
+            findPrevButton->setAsDefaultButton(!replaceUtil.isSearchingForward());
+            findNextButton->setAsDefaultButton( replaceUtil.isSearchingForward());
             replacePrevButton->setAsDefaultButton(false);
             replaceNextButton->setAsDefaultButton(false);
 
             if (!isWrapping) {
-                if (f.isSearchingForward()) {
+                if (replaceUtil.isSearchingForward()) {
                     messageBoxInvoker.call(MessageBoxParameter()
                                            .setTitle("Not found")
                                            .setMessage("Continue search from beginning of file?")
@@ -287,36 +289,25 @@ void ReplacePanel::executeFind(bool isWrapping, FindUtil& f, const Callback0& ha
     }
 }
 
-void ReplacePanel::internalFindNext(bool forward, int textPosition, bool isWrapping)
+void ReplacePanel::internalFindNext(bool isWrapping)
 {
-    String editFieldContent = findEditField->getTextData()->getAsString();
-
-    if (editFieldContent.getLength() <= 0) {
+    if (replaceUtil.getSearchString().getLength() <= 0) {
         return;
     }
 
-    FindUtil f;
-             f.setSearchForwardFlag(forward);
-             f.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
-             f.setRegexFlag        (regularExprCheckBox->isChecked());
-             f.setWholeWordFlag    (wholeWordCheckBox->isChecked());
-             f.setSearchString     (editFieldContent);
-             f.setTextPosition     (textPosition);
-             f.setTextData         (e->getTextData());
-
     SearchHistory::Entry newEntry;
-                         newEntry.setFindString    (editFieldContent);
-                         newEntry.setReplaceString (replaceEditField->getTextData()->getAsString());
-                         newEntry.setWholeWordFlag (wholeWordCheckBox->isChecked());
-                         newEntry.setRegexFlag     (regularExprCheckBox->isChecked());
-                         newEntry.setIgnoreCaseFlag(ignoreCaseCheckBox->isChecked());
+                         newEntry.setFindString    (replaceUtil.getSearchString());
+                         newEntry.setReplaceString (replaceUtil.getReplaceString());
+                         newEntry.setWholeWordFlag (replaceUtil.getWholeWordFlag());
+                         newEntry.setRegexFlag     (replaceUtil.getRegexFlag());
+                         newEntry.setIgnoreCaseFlag(replaceUtil.getIgnoreCaseFlag());
+
     SearchHistory::getInstance()->append(newEntry);
 
-    findEditField   ->getTextData()->setModifiedFlag(false);
-    replaceEditField->getTextData()->setModifiedFlag(false);
+    bool forward = replaceUtil.getSearchForwardFlag();
 
-    executeFind(isWrapping, f, forward ? Callback0(this, &ReplacePanel::handleContinueAtBeginningButton)
-                                       : Callback0(this, &ReplacePanel::handleContinueAtEndButton));
+    executeFind(isWrapping, forward ? Callback0(this, &ReplacePanel::handleContinueAtBeginningButton)
+                                    : Callback0(this, &ReplacePanel::handleContinueAtEndButton));
 }
 
 void ReplacePanel::handleButtonPressed(Button* button)
@@ -328,21 +319,29 @@ void ReplacePanel::handleButtonPressed(Button* button)
     else if (button == findNextButton    || button == findPrevButton
           || button == replaceNextButton || button == replacePrevButton)
     {
-        int   textPosition   = e->getCursorTextPosition();
-        bool  isNextDirectionForward = true;
+        replaceUtil.setTextPosition(e->getCursorTextPosition());
         
+        replaceUtil.setSearchForwardFlag(button == findNextButton || button == replaceNextButton);
+        replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+        replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
+        replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
+        replaceUtil.setSearchString     (findEditField->getTextData()->getAsString());
+
+        findEditField   ->getTextData()->setModifiedFlag(false);
+        replaceEditField->getTextData()->setModifiedFlag(false);
+        
+        historyIndex = -1;
+
         if (button == findNextButton) 
         {
-            isNextDirectionForward = true;
             if (e->getBackliteBuffer()->hasActiveSelection()) {
-                textPosition = e->getBackliteBuffer()->getEndSelectionPos();
+                replaceUtil.setTextPosition(e->getBackliteBuffer()->getEndSelectionPos());
             }
         }
         else if (button == findPrevButton)
         {
-            isNextDirectionForward = false;
             if (e->getBackliteBuffer()->hasActiveSelection()) {
-                textPosition = e->getBackliteBuffer()->getBeginSelectionPos();
+                replaceUtil.setTextPosition(e->getBackliteBuffer()->getBeginSelectionPos());
             }
         }
         else
@@ -354,91 +353,134 @@ void ReplacePanel::handleButtonPressed(Button* button)
             if (e->getBackliteBuffer()->hasActiveSelection()) {
                 spos = e->getBackliteBuffer()->getBeginSelectionPos();
                 epos = e->getBackliteBuffer()->getEndSelectionPos();
+                replaceUtil.setTextPosition(spos);
             } else {
-                spos = textPosition;
-                epos = textPosition;
+                spos = replaceUtil.getTextPosition();
+                epos = replaceUtil.getTextPosition();
             }
-            FindUtil f;
-                     f.setSearchForwardFlag(button == replaceNextButton);
-                     f.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
-                     f.setRegexFlag        (regularExprCheckBox->isChecked());
-                     f.setWholeWordFlag    (wholeWordCheckBox->isChecked());
-                     f.setSearchString     (findEditField->getTextData()->getAsString());
-                     f.setTextPosition     (spos);
-                     f.setTextData         (e->getTextData());
-            if (f.doesMatch()) {
-                ASSERT(f.getMatchBeginPos() == spos);
-                if (f.getMatchEndPos() == epos) {
+            
+            if (replaceUtil.doesMatch()) {
+                ASSERT(replaceUtil.getMatchBeginPos() == spos);
+                if (replaceUtil.getMatchEndPos() == epos) {
                     e->moveCursorToTextPosition(spos);
                     e->removeAtCursor(epos - spos);
                     e->insertAtCursor(replaceEditField->getTextData());
                 }
                 if (button == replaceNextButton) {
-                    textPosition = spos + replaceEditField->getTextData()->getLength();
+                    replaceUtil.setTextPosition(spos + replaceEditField->getTextData()->getLength());
                 } else {
-                    textPosition = spos;
+                    replaceUtil.setTextPosition(spos);
                 }
             } else {
                 if (e->getBackliteBuffer()->hasActiveSelection()) {
                     if (button == replaceNextButton) {
-                        textPosition = e->getBackliteBuffer()->getEndSelectionPos();
+                        replaceUtil.setTextPosition(e->getBackliteBuffer()->getEndSelectionPos());
                     } else {
-                        textPosition = e->getBackliteBuffer()->getBeginSelectionPos();
+                        replaceUtil.setTextPosition(e->getBackliteBuffer()->getBeginSelectionPos());
                     }
                 }
             }
-            isNextDirectionForward = (button == replaceNextButton);
         }
 
-
-        findEditField   ->getTextData()->setModifiedFlag(false);
-        replaceEditField->getTextData()->setModifiedFlag(false);
-        
-        historyIndex = -1;
-
-        internalFindNext(isNextDirectionForward, textPosition, false);
+        internalFindNext(false);
     }
 }
 
 void ReplacePanel::handleContinueSelectionFindAtBeginningButton()
 {
-    FindUtil f;
-             f.setSearchForwardFlag(true);
-             f.setIgnoreCaseFlag   (true);
-             f.setRegexFlag        (selectSearchRegexFlag);
-             f.setWholeWordFlag    (false);
-             f.setSearchString     (selectionSearchString);
-             f.setTextPosition     (0);
-             f.setTextData         (e->getTextData());
-    executeFind(true, f, Callback0(this, &ReplacePanel::handleContinueSelectionFindAtBeginningButton));
+    replaceUtil.setSearchForwardFlag(true);
+    replaceUtil.setIgnoreCaseFlag   (true);
+    replaceUtil.setRegexFlag        (selectSearchRegexFlag);
+    replaceUtil.setWholeWordFlag    (false);
+    replaceUtil.setSearchString     (selectionSearchString);
+    replaceUtil.setTextPosition     (0);
+
+    executeFind(true, Callback0(this, &ReplacePanel::handleContinueSelectionFindAtBeginningButton));
 }
 
 void ReplacePanel::handleContinueAtBeginningButton()
 {
-    internalFindNext(true, 0, true);
+    ASSERT(replaceUtil.getSearchForwardFlag() == true);
+    replaceUtil.setTextPosition(0);
+    internalFindNext(true);
 }
 
 
 void ReplacePanel::handleContinueSelectionFindAtEndButton()
 {
-    FindUtil f;
-             f.setSearchForwardFlag(false);
-             f.setIgnoreCaseFlag   (true);
-             f.setRegexFlag        (selectSearchRegexFlag);
-             f.setWholeWordFlag    (false);
-             f.setSearchString     (selectionSearchString);
-             f.setTextPosition     (e->getTextData()->getLength());
-             f.setTextData         (e->getTextData());
-    executeFind(true, f, Callback0(this, &ReplacePanel::handleContinueSelectionFindAtEndButton));
+    replaceUtil.setSearchForwardFlag(false);
+    replaceUtil.setIgnoreCaseFlag   (true);
+    replaceUtil.setRegexFlag        (selectSearchRegexFlag);
+    replaceUtil.setWholeWordFlag    (false);
+    replaceUtil.setSearchString     (selectionSearchString);
+    replaceUtil.setTextPosition     (e->getTextData()->getLength());
+
+    executeFind(true, Callback0(this, &ReplacePanel::handleContinueSelectionFindAtEndButton));
 }
 
 void ReplacePanel::handleContinueAtEndButton()
 {
-    internalFindNext(false, e->getTextData()->getLength(), true);
+    ASSERT(replaceUtil.getSearchForwardFlag() == false);
+    replaceUtil.setTextPosition(e->getTextData()->getLength());
+    internalFindNext(true);
 }
 
 
     
+void ReplacePanel::findAgainForward()
+{
+    ASSERT(this->isVisible());
+
+    replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+    replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
+    replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
+    replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
+    replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
+    findEditField   ->getTextData()->setModifiedFlag(false);
+    replaceEditField->getTextData()->setModifiedFlag(false);
+    requestCloseFor(this);
+
+    historyIndex = -1;
+
+    int   textPosition   = e->getCursorTextPosition();
+    if (e->getBackliteBuffer()->hasActiveSelection()) {
+        textPosition = e->getBackliteBuffer()->getEndSelectionPos();
+    }
+    
+    replaceUtil.setSearchForwardFlag(true);
+    replaceUtil.setTextPosition(textPosition);
+    
+    internalFindNext(false);
+}
+
+
+void ReplacePanel::findAgainBackward()
+{
+    ASSERT(this->isVisible());
+
+    replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+    replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
+    replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
+    replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
+    replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
+    findEditField   ->getTextData()->setModifiedFlag(false);
+    replaceEditField->getTextData()->setModifiedFlag(false);
+    requestCloseFor(this);
+
+    historyIndex = -1;
+
+    int   textPosition   = e->getCursorTextPosition();
+    if (e->getBackliteBuffer()->hasActiveSelection()) {
+        textPosition = e->getBackliteBuffer()->getBeginSelectionPos();
+    }
+
+    replaceUtil.setSearchForwardFlag(false);
+    replaceUtil.setTextPosition(textPosition);
+    
+    internalFindNext(false);
+}
+
+
 GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *event)
 {
     bool processed = false;
@@ -557,6 +599,17 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
         }
         processed = true;
     }
+    else if (KeyMapping::Id(ControlMask, XK_g) == pressedKey)
+    {
+        findAgainForward();
+        processed = true;
+    }
+    else if (KeyMapping::Id(ShiftMask|ControlMask, XK_g) == pressedKey)
+    {
+        findAgainBackward();
+        processed = true;
+    }
+    
     if (!processed) {
         return DialogPanel::processKeyboardEvent(event);
     } else {
