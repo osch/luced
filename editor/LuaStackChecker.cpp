@@ -19,6 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <stdio.h>
+
 #include "LuaStackChecker.h"
 
 using namespace LucED;
@@ -29,44 +31,58 @@ SingletonInstance<LuaStackChecker> LuaStackChecker::instance;
 
 
 
-int LuaStackChecker::getHighestStackIndexForGeneration(int generation) const
-{
-    ASSERT(generation <= newestGeneration);
-    return highestStackIndices[generation - generationOffset];
-}
-
-
-
 int LuaStackChecker::registerAndGetGeneration(int stackIndex)
 {
-    ASSERT(highestStackIndices[newestGeneration - generationOffset] < stackIndex);
+    ASSERT(highestStackIndexForGeneration(newestGeneration) < stackIndex);
+
+#if 0
+    for (int i = generationOffset; i <= newestGeneration; ++i) {
+        if (highestStackIndexForGeneration(i) >= stackIndex) {
+            truncateGenerationsAtStackIndex(stackIndex);
+            break;
+        }
+    }
+#else    
+    for (int i = generationOffset; i <= newestGeneration; ++i) {
+        ASSERT(highestStackIndexForGeneration(i) < stackIndex);
+    }
+#endif
+
+    highestStackIndexForGeneration(newestGeneration) = stackIndex;
     
-    highestStackIndices[newestGeneration - generationOffset] = stackIndex;
+    if (lowestStackIndexForGeneration(newestGeneration) == 0) {
+        lowestStackIndexForGeneration(newestGeneration) = stackIndex;
+    }
 
     return newestGeneration;
 }
 
 
 
-void LuaStackChecker::truncateGenerationAtStackIndex(int generation, int stackIndex)
+void LuaStackChecker::truncateGenerationsAtStackIndex(int stackIndex)
 {
-    ASSERT(generation >= generationOffset);
+    for (int i = generationOffset; i <= newestGeneration; ++i)
+    {
+        if (highestStackIndexForGeneration(i) > stackIndex - 1) {
+            highestStackIndexForGeneration(i) = stackIndex - 1;
+        }
+    }
 
+    generations.appendAmount(1);
     newestGeneration += 1;
 
-
-    highestStackIndices.append(0);
-    ASSERT(highestStackIndices.getLength() - 1 == (newestGeneration - generationOffset));
-
-    if (stackIndex - 1 < highestStackIndices[generation - generationOffset]) {
-        highestStackIndices[generation - generationOffset] = stackIndex - 1;
-    }
-
-    while (highestStackIndices.getLength() > 1 && highestStackIndices[0] == 0)
+    while (generations.getLength() > 1 && (generations[0].highest < generations[0].lowest || generations[0].lowest == 0))
     {
         generationOffset += 1;
-        highestStackIndices.removeAmount(0, 1);
+        generations.removeAmount(0, 1);
     }
+}
+
+void LuaStackChecker::truncateGenerationAtStackIndex(int generation, int stackIndex)
+{
+    ASSERT(generation <= newestGeneration);
+    
+    truncateGenerationsAtStackIndex(stackIndex);
 }
 
 #endif // DEBUG

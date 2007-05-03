@@ -40,12 +40,11 @@ public:
         if (refCounter == 1) {
             ASSERT(numberArguments == 0);
             lua_pushnil(LuaObject::L); // placeholder for function
+            isOnStack = true;
         }
     #ifdef DEBUG
         if (refCounter == 1) {
-            newestStackGeneration = LuaStackChecker::getInstance()->getNewestGeneration();
-            highestStackIndex     = LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(newestStackGeneration);
-            startStackIndex       = lua_gettop(LuaObject::L) - 1;
+            startStackIndex  = lua_gettop(LuaObject::L);
         } else {
             checkStack();
         }
@@ -62,13 +61,13 @@ public:
 
     ~LuaFunctionArguments() {
         --refCounter;
-        if (refCounter == 0 && numberArguments > 0) {
+        if (refCounter == 0 && isOnStack) {
             #ifdef DEBUG
-                ASSERT(newestStackGeneration == LuaStackChecker::getInstance()->getNewestGeneration());
-                ASSERT(highestStackIndex     == LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(newestStackGeneration));
+                LuaStackChecker::getInstance()->truncateGenerationsAtStackIndex(startStackIndex);
             #endif
             lua_pop(LuaObject::L, numberArguments + 1);
             numberArguments = 0;
+            isOnStack = false;
         }
     }
     LuaFunctionArguments& operator<<(const LuaObject& arg)
@@ -106,15 +105,14 @@ private:
 
 #ifdef DEBUG
     void checkStack() const {
-        ASSERT(startStackIndex + 1 + numberArguments == lua_gettop(LuaObject::L));
-        ASSERT(newestStackGeneration == LuaStackChecker::getInstance()->getNewestGeneration());
-        ASSERT(highestStackIndex     == LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(newestStackGeneration));
+        ASSERT(startStackIndex + numberArguments == lua_gettop(LuaObject::L));
+        ASSERT(LuaStackChecker::getInstance()->getHighestStackIndexForNewestGeneration() < startStackIndex);
+        ASSERT(LuaStackChecker::getInstance()->getHighestStackIndex() <= startStackIndex + numberArguments);
     }
-    static int  newestStackGeneration;
-    static int  highestStackIndex;
     static int  startStackIndex;
 #endif
     static int numberArguments;
+    static bool isOnStack;
     static int refCounter;
 };
 

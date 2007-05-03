@@ -585,6 +585,7 @@ void FindPanel::show()
     DialogPanel::show();
     if (editField->getTextData()->getModifiedFlag() == false) {
         editField->getTextData()->clear();
+        editField->getTextData()->setModifiedFlag(false);
         historyIndex = -1;
     }
 }

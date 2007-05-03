@@ -75,9 +75,12 @@ public:
         ASSERT(0 <= i && i < getLength());
         return s[i];
     }
-    String getSubstring(int pos, int length) {
+    String getSubstring(int pos, int length) const {
         ASSERT(0 <= length);
-        ASSERT(0 <= pos && pos + length <= getLength());
+        ASSERT(0 <= pos && pos <= getLength());
+        if (pos + length > getLength()) {
+            length = getLength() - pos;
+        }
         return s.substr(pos, length);
     }
     String& append(const String& rhs) {
@@ -119,6 +122,32 @@ public:
     
     int toInt() const {
         return atoi(s.c_str());
+    }
+    
+    bool isInt() const {
+        int i = 0;
+        int n = getLength();
+        if (n == 0) {
+            return false;
+        }
+        if (s[i] == '-' && i + 1 < n) {
+            ++i;
+        }
+        for (; i < n; ++i) {
+            if (!isdigit(s[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    bool isHex() const {
+        for (int i = 0, n = getLength(); i < n; ++i) {
+            if (!isxdigit(s[i])) {
+                return false;
+            }
+        }
+        return true;
     }
     
     bool contains(char c) const {

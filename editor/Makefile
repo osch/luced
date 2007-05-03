@@ -45,24 +45,24 @@ include sandbox.mk
 LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_LUA_OPTS) $(LINK_EXTRA_OPTS)
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 
-                 
-MODULES = EditorTopWin           EventDispatcher     GuiRoot            GuiWidget \
-          HeapMem                HilitingBase        KeyPressRepeater   ScrollBar \
-          FindUtil               TextData            TextEditorWidget   TextStyle \
-          TextWidget             TopWin              HilitedText        SyntaxPatterns \
-          HilitingBuffer         LuaException        File               Regex \
-          LuaObject              LuaInterpreter      ConfigException    GlobalConfig \
-          LanguageModes          RegexException      BackliteBuffer     Clipboard \
-          SelectionOwner         PasteDataReceiver   StatusLine         GuiLayoutRow \
-          Button                 GuiLayoutColumn     GuiLayoutWidget    LuaStoredObject \
-          GotoLinePanel          SingletonKeeper     TopWinList         TopWinOwner \
-          DialogWin              GuiLayoutSpacer     MultiLineEditorWidget \
-          SingleLineEditorWidget StandardEditActions HeapObject         LuaStackChecker \
-          SingleLineEditField    LabelWidget         DialogPanel        PanelDialogWin \
-          FindPanel              CheckBox            MessageBox         SearchHistory \
-          FileException          EditorServer        ClientServerUtil   EditorClient  \
-          CommandlineException   ReplacePanel        LuaFunctionArguments
-          
+ 
+MODULES = EditorTopWin            EventDispatcher        GuiRoot                GuiWidget \
+          HeapMem                 HilitingBase           KeyPressRepeater       ScrollBar \
+          FindUtil                TextData               TextEditorWidget       TextStyle \
+          TextWidget              TopWin                 HilitedText            SyntaxPatterns \
+          HilitingBuffer          LuaException           File                   Regex \
+          LuaObject               LuaInterpreter         ConfigException        GlobalConfig \
+          LanguageModes           RegexException         BackliteBuffer         Clipboard \
+          SelectionOwner          PasteDataReceiver      StatusLine             GuiLayoutRow \
+          Button                  GuiLayoutColumn        GuiLayoutWidget        LuaStoredObject \
+          GotoLinePanel           SingletonKeeper        TopWinList             TopWinOwner \
+          DialogWin               GuiLayoutSpacer        MultiLineEditorWidget  SubstitutionException \
+          SingleLineEditorWidget  StandardEditActions    HeapObject             LuaStackChecker \
+          SingleLineEditField     LabelWidget            DialogPanel            PanelDialogWin \
+          FindPanel               CheckBox               MessageBox             SearchHistory \
+          FileException           EditorServer           ClientServerUtil       EditorClient  \
+          CommandlineException    ReplacePanel           LuaFunctionArguments   ReplaceUtil             
+
 
 LIB_MBRS = $(patsubst %, $(BUILD_DIR)/libluced.a(%.o), $(MODULES))
 LIB_OBJS = $(patsubst %, $(BUILD_DIR)/%.o,             $(MODULES))

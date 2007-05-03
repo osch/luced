@@ -74,6 +74,7 @@ public:
     }
         
     LuaObject(const LuaObject& rhs) {
+        ASSERT(rhs.stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(rhs.stackGeneration));
         lua_pushvalue(L, rhs.stackIndex);
         stackIndex = lua_gettop(L);
     #ifdef DEBUG
@@ -95,6 +96,8 @@ public:
     LuaObject(LuaCFunction<ImplFunction> f);
 
     LuaObject& operator=(const LuaObject& rhs) {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
+        ASSERT(rhs.stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(rhs.stackGeneration));
         lua_pushvalue(L, rhs.stackIndex);
         lua_replace(L, stackIndex);
         return *this;
@@ -152,19 +155,24 @@ public:
     }
     
     bool toBoolean() const {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
         return lua_toboolean(L, stackIndex);
     }
     bool isTrue() const {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
         return lua_toboolean(L, stackIndex);
     }
     bool isFalse() const {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
         return !lua_toboolean(L, stackIndex);
     }
 
     double toNumber() const {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
         return lua_tonumber(L, stackIndex);
     }
     String toString() const {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
         size_t len;
         const char* ptr = lua_tolstring(L, stackIndex, &len);
         if (ptr != NULL) {
@@ -183,6 +191,7 @@ public:
         return !(*this == rhs);
     }
     bool operator==(const char* rhs) const {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
         int rhsLength = strlen(rhs);
         return isString()
             && rhsLength == lua_strlen(L, stackIndex)
@@ -193,6 +202,7 @@ public:
     }
     
     bool operator==(const String& rhs) const {
+        ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
         return isString() 
             && rhs.getLength() == lua_strlen(L, stackIndex)
             && memcmp(lua_tostring(L, stackIndex), rhs.toCString(), rhs.getLength()) == 0;
@@ -464,7 +474,7 @@ LuaObject::LuaObject(LuaCFunction<ImplFunction>)
 
 inline LuaObject LuaObject::call(const LuaFunctionArguments& args)
 {
-#ifdef DEBGUG
+#ifdef DEBUG
     args.checkStack();
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
 #endif
@@ -474,6 +484,7 @@ inline LuaObject LuaObject::call(const LuaFunctionArguments& args)
     lua_replace(L, -args.getLength() - 2);
 
     int error = lua_pcall(L, args.getLength(), 1, 0);
+    args.isOnStack = false;
     args.numberArguments = 0;
 
     if (error != 0)

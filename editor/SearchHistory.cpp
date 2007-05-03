@@ -40,18 +40,19 @@ SearchHistory::SearchHistory()
 
 void SearchHistory::append(const Entry& newEntry)
 {
-    String findString = newEntry.getFindString();
-    String replaceString = newEntry.getReplaceString();
-    if (findString == "" && replaceString == "") {
+    if (newEntry.getFindString() == "" && newEntry.getReplaceString() == "") {
         return;
     }
     bool wasAppended = false;
 
     Entry& last = entries.getLast();
-    if (last.getFindString() == "" || last.getFindString() == findString)
+
+    if (last.getFindString() == "" || last.getFindString() == newEntry.getFindString())
     {
-        if (last.getReplaceString() == "" || last.getReplaceString() == replaceString) {
-            last = newEntry;
+        if (!last.hasReplaceString() || !newEntry.hasReplaceString()
+          || last.getReplaceString() == newEntry.getReplaceString())
+        {
+            last.takeValues(newEntry);
             wasAppended = true;
         }
     }

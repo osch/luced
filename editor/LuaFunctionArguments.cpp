@@ -24,12 +24,11 @@
 using namespace LucED;
 
 #ifdef DEBUG
-int  LuaFunctionArguments::newestStackGeneration = 0;
-int  LuaFunctionArguments::highestStackIndex     = 0;
-int  LuaFunctionArguments::startStackIndex       = 0;
+int  LuaFunctionArguments::startStackIndex = 0;
 #endif
 
-int LuaFunctionArguments::numberArguments = 0;
-int LuaFunctionArguments::refCounter      = 0;
+bool LuaFunctionArguments::isOnStack = false;
+int  LuaFunctionArguments::numberArguments = 0;
+int  LuaFunctionArguments::refCounter      = 0;
 
 

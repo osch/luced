@@ -42,13 +42,27 @@ public:
         Entry()
             : wholeWordFlag(false),
               regexFlag(false),
-              ignoreCaseFlag(false)
+              ignoreCaseFlag(false),
+              hasReplaceStringFlag(false)
         {}
+        
+        void takeValues(const Entry& rhs) {
+            findString     = rhs.findString;
+            if (!hasReplaceStringFlag) {
+                hasReplaceStringFlag = rhs.hasReplaceStringFlag;
+                replaceString        = rhs.replaceString;
+            }
+            wholeWordFlag  = rhs.wholeWordFlag;
+            regexFlag      = rhs.regexFlag;
+            ignoreCaseFlag = rhs.ignoreCaseFlag;
+        }
 
         String getFindString()    const { return findString; }
         String getReplaceString() const { return replaceString; }
+        bool   hasReplaceString() const { return hasReplaceStringFlag; }
 
         void setReplaceString(String replaceString) {
+            this->hasReplaceStringFlag = true;
             this->replaceString = replaceString;
         }
         void setFindString(String findString) {
@@ -80,6 +94,7 @@ public:
         bool wholeWordFlag;
         bool regexFlag;
         bool ignoreCaseFlag;
+        bool hasReplaceStringFlag;
     };
 
     void append(const Entry& newEntry);

@@ -22,6 +22,8 @@
 #ifndef LUA_STACK_CHECKER_HPP
 #define LUA_STACK_CHECKER_HPP
 
+#include <limits.h>
+
 #include "SingletonInstance.h"
 #include "MemArray.h"
 
@@ -38,15 +40,39 @@ public:
         return instance.getPtr();
     }
     
-    int getHighestStackIndexForGeneration(int generation) const;
+    int getHighestStackIndexForGeneration(int generation)
+    {
+        if (generation < generationOffset) {
+            return 0;
+        } else {
+            return highestStackIndexForGeneration(generation);
+        }
+    }
+    
+    int getNewestGeneration() {
+        return newestGeneration;
+    }
+
+    int getHighestStackIndexForNewestGeneration() {
+        return getHighestStackIndexForGeneration(getNewestGeneration());
+    }
+
+    int getHighestStackIndex()
+    {
+        int rslt = 0;
+        for (int i = newestGeneration; i >= generationOffset; --i) {
+            if (rslt < highestStackIndexForGeneration(i)) {
+                rslt = highestStackIndexForGeneration(i);
+            }
+        }
+        return rslt;
+    }
     
     int registerAndGetGeneration(int stackIndex);
     
     void truncateGenerationAtStackIndex(int generation, int stackIndex);
 
-    int getNewestGeneration() {
-        return newestGeneration;
-    }
+    void truncateGenerationsAtStackIndex(int stackIndex);
 
 private:
     friend class SingletonInstance<LuaStackChecker>;
@@ -57,12 +83,39 @@ private:
         : newestGeneration(0),
           generationOffset(0)
     {
-        highestStackIndices.append(0);
+        generations.appendAmount(1);
     }
+    
+    int& highestStackIndexForGeneration(int generation)
+    {
+        ASSERT(generationOffset <= generation && generation <= newestGeneration);
+
+        ASSERT(generations.getLength() - 1 == (newestGeneration - generationOffset));
         
+        return generations[generation - generationOffset].highest;
+    }
+
+    int& lowestStackIndexForGeneration(int generation)
+    {
+        ASSERT(generationOffset <= generation && generation <= newestGeneration);
+
+        ASSERT(generations.getLength() - 1 == (newestGeneration - generationOffset));
+        
+        return generations[generation - generationOffset].lowest;
+    }
+            
     int newestGeneration;
     int generationOffset;
-    MemArray<int> highestStackIndices;
+    
+    struct Generation
+    {
+        Generation()
+            : lowest(0), highest(0)
+        {}
+        int lowest;
+        int highest;
+    };
+    ObjectArray<Generation> generations;
 };
 #endif // DEBUG
 

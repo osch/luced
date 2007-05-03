@@ -37,7 +37,7 @@ public:
     String getReplaceString() const {
         return replaceString;
     }
-    
+    String getSubstitutedString();
 private:
     String replaceString;
 };

@@ -29,6 +29,7 @@
 #include "LabelWidget.h"
 #include "RegexException.h"
 #include "SearchHistory.h"
+#include "SubstitutionException.h"
 
 using namespace LucED;
 
@@ -312,77 +313,94 @@ void ReplacePanel::internalFindNext(bool isWrapping)
 
 void ReplacePanel::handleButtonPressed(Button* button)
 {
-    if (button == cancelButton)
+    try
     {
-        requestCloseFor(this);
-    }
-    else if (button == findNextButton    || button == findPrevButton
-          || button == replaceNextButton || button == replacePrevButton)
-    {
-        replaceUtil.setTextPosition(e->getCursorTextPosition());
-        
-        replaceUtil.setSearchForwardFlag(button == findNextButton || button == replaceNextButton);
-        replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
-        replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
-        replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
-        replaceUtil.setSearchString     (findEditField->getTextData()->getAsString());
-
-        findEditField   ->getTextData()->setModifiedFlag(false);
-        replaceEditField->getTextData()->setModifiedFlag(false);
-        
-        historyIndex = -1;
-
-        if (button == findNextButton) 
+        if (button == cancelButton)
         {
-            if (e->getBackliteBuffer()->hasActiveSelection()) {
-                replaceUtil.setTextPosition(e->getBackliteBuffer()->getEndSelectionPos());
-            }
+            requestCloseFor(this);
         }
-        else if (button == findPrevButton)
+        else if (button == findNextButton    || button == findPrevButton
+              || button == replaceNextButton || button == replacePrevButton)
         {
-            if (e->getBackliteBuffer()->hasActiveSelection()) {
-                replaceUtil.setTextPosition(e->getBackliteBuffer()->getBeginSelectionPos());
-            }
-        }
-        else
-        {
-            ASSERT(button == replaceNextButton || button == replacePrevButton);
-            
-            long spos, epos;
-            
-            if (e->getBackliteBuffer()->hasActiveSelection()) {
-                spos = e->getBackliteBuffer()->getBeginSelectionPos();
-                epos = e->getBackliteBuffer()->getEndSelectionPos();
-                replaceUtil.setTextPosition(spos);
-            } else {
-                spos = replaceUtil.getTextPosition();
-                epos = replaceUtil.getTextPosition();
-            }
-            
-            if (replaceUtil.doesMatch()) {
-                ASSERT(replaceUtil.getMatchBeginPos() == spos);
-                if (replaceUtil.getMatchEndPos() == epos) {
-                    e->moveCursorToTextPosition(spos);
-                    e->removeAtCursor(epos - spos);
-                    e->insertAtCursor(replaceEditField->getTextData());
-                }
-                if (button == replaceNextButton) {
-                    replaceUtil.setTextPosition(spos + replaceEditField->getTextData()->getLength());
-                } else {
-                    replaceUtil.setTextPosition(spos);
-                }
-            } else {
+            replaceUtil.setTextPosition(e->getCursorTextPosition());
+
+            replaceUtil.setSearchForwardFlag(button == findNextButton || button == replaceNextButton);
+            replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+            replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
+            replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
+            replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
+            replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
+
+            findEditField   ->getTextData()->setModifiedFlag(false);
+            replaceEditField->getTextData()->setModifiedFlag(false);
+
+            historyIndex = -1;
+
+            if (button == findNextButton) 
+            {
                 if (e->getBackliteBuffer()->hasActiveSelection()) {
+                    replaceUtil.setTextPosition(e->getBackliteBuffer()->getEndSelectionPos());
+                }
+            }
+            else if (button == findPrevButton)
+            {
+                if (e->getBackliteBuffer()->hasActiveSelection()) {
+                    replaceUtil.setTextPosition(e->getBackliteBuffer()->getBeginSelectionPos());
+                }
+            }
+            else
+            {
+                ASSERT(button == replaceNextButton || button == replacePrevButton);
+
+                long spos, epos;
+
+                if (e->getBackliteBuffer()->hasActiveSelection()) {
+                    spos = e->getBackliteBuffer()->getBeginSelectionPos();
+                    epos = e->getBackliteBuffer()->getEndSelectionPos();
+                    replaceUtil.setTextPosition(spos);
+                } else {
+                    spos = replaceUtil.getTextPosition();
+                    epos = replaceUtil.getTextPosition();
+                }
+
+                if (replaceUtil.doesMatch()) {
+                    ASSERT(replaceUtil.getMatchBeginPos() == spos);
+                    if (replaceUtil.getMatchEndPos() == epos) {
+                        String substitutedString = replaceUtil.getSubstitutedString();
+                        e->moveCursorToTextPosition(spos);
+                        e->removeAtCursor(epos - spos);
+                        e->insertAtCursor(substitutedString);
+                    }
                     if (button == replaceNextButton) {
-                        replaceUtil.setTextPosition(e->getBackliteBuffer()->getEndSelectionPos());
+                        replaceUtil.setTextPosition(epos);
                     } else {
-                        replaceUtil.setTextPosition(e->getBackliteBuffer()->getBeginSelectionPos());
+                        replaceUtil.setTextPosition(spos);
+                    }
+                } else {
+                    if (e->getBackliteBuffer()->hasActiveSelection()) {
+                        if (button == replaceNextButton) {
+                            replaceUtil.setTextPosition(e->getBackliteBuffer()->getEndSelectionPos());
+                        } else {
+                            replaceUtil.setTextPosition(e->getBackliteBuffer()->getBeginSelectionPos());
+                        }
                     }
                 }
             }
-        }
 
-        internalFindNext(false);
+            internalFindNext(false);
+        }
+    }
+    catch (SubstitutionException& ex)
+    {
+        int position = ex.getPosition();
+        if (position >= 0) {
+            replaceEditField->setCursorPosition(position);
+            setFocus(replaceEditField);
+        }
+        panelInvoker.call(this);
+        messageBoxInvoker.call(MessageBoxParameter()
+                               .setTitle("Replace Error")
+                               .setMessage(String() << "Error within replace string: " << ex.getMessage()));
     }
 }
 
@@ -632,8 +650,6 @@ void ReplacePanel::show()
     replacePrevButton->setAsDefaultButton(false);
     replaceNextButton->setAsDefaultButton(false);
 
-    DialogPanel::show();
-
     if (   findEditField->getTextData()->getModifiedFlag() == false
      && replaceEditField->getTextData()->getModifiedFlag() == false)
     {
@@ -641,6 +657,8 @@ void ReplacePanel::show()
         replaceEditField->getTextData()->clear();
         historyIndex = -1;
     }
+
+    DialogPanel::show();
 }
 
 void ReplacePanel::handleModifiedEditField(bool modifiedFlag)

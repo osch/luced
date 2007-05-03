@@ -53,30 +53,30 @@ public:
           textData(NULL),
           wasError(false),
           luaException(""),
-          wasInitialized(false)
+          wasInitializedFlag(false)
     {}
 
     void setSearchForwardFlag(bool flag) {
-        wasInitialized = false;
+        wasInitializedFlag = false;
         searchForwardFlag = flag;
     }
     bool isSearchingForward() const {
         return searchForwardFlag;
     }
     void setIgnoreCaseFlag(bool flag) {
-        wasInitialized = false;
+        wasInitializedFlag = false;
         ignoreCaseFlag = flag;
     }
     void setRegexFlag(bool flag) {
-        wasInitialized = false;
+        wasInitializedFlag = false;
         regexFlag = flag;
     }
     void setWholeWordFlag(bool flag) {
-        wasInitialized = false;
+        wasInitializedFlag = false;
         wholeWordFlag = flag;
     }
     void setSearchString(const String& searchString) {
-        wasInitialized = false;
+        wasInitializedFlag = false;
         this->searchString = searchString;
     }
     void setTextPosition(long pos) {
@@ -122,10 +122,118 @@ public:
 
     static String quoteRegexCharacters(const String& s);
     
+    int getCapturedSubpatternBeginPos(int patternNumber) {
+        if (patternNumber > regex.getNumberOfCapturingSubpatterns()) {
+            return -1;
+        } else {
+            return ovector[patternNumber * 2 + 0];
+        }
+    }
+
+    int getCapturedSubpatternLength(int patternNumber) {
+        if (patternNumber > regex.getNumberOfCapturingSubpatterns()) {
+            return -1;
+        } else {
+            return ovector[patternNumber * 2 + 1] - ovector[patternNumber * 2 + 0];
+        }
+    }
+    
 protected:
+    TextData* getTextData() {
+        return textData;
+    }
+    
+    class PreparsedCallout : public HeapObject
+    {
+    public:
+        typedef OwningPtr<PreparsedCallout> Ptr;
+        
+        static Ptr parse(const String& expression, int startPosition) {
+            return Ptr(new PreparsedCallout(expression, startPosition));
+        }
+        
+        LuaObject getLuaObject() const {
+            return luaObject->retrieve();
+        }
+        
+        LuaStoredObject::Ptr getStoredLuaObject() const {
+            return luaObject;
+        }
+        
+        int getNumberOfArguments() const {
+            return arguments.getLength();
+        }
+        
+        String getArgument(int i) const {
+            return arguments[i];
+        }
+        
+        int getArgumentPosition(int i) {
+            return positions[i];
+        }
+        
+        int getStartPosition() const {
+            return startPosition;
+        }
+        
+        int getLastPosition() const {
+            return lastPosition;
+        }
+        
+    private:
+        PreparsedCallout(const String& expression, int startPosition);
+        
+        LuaStoredObject::Ptr luaObject;
+        ObjectArray<String>  arguments;
+        MemArray<int>        positions;
+        int                  startPosition;
+        int                  lastPosition;
+    };
+    
+    class CalloutObject : public HeapObject
+    {
+    public:
+        typedef OwningPtr<CalloutObject> Ptr;
+
+        LuaObject getCallableObject() const {
+            return luaObject->retrieve();
+        }
+        
+        int getNumberOfArguments() const {
+            return args.getLength();
+        }
+        
+        int getCaptureIndexForArgument(int i) const {
+            return args[i];
+        }
+        
+    private:
+        friend class FindUtil;
+        
+        static Ptr create(LuaStoredObject::Ptr luaObject) {
+            return Ptr(new CalloutObject(luaObject));
+        }
+        
+        CalloutObject(LuaStoredObject::Ptr luaObject) : luaObject(luaObject)
+        {}
+        LuaStoredObject::Ptr luaObject;
+        MemArray<int>        args;
+    };
+    
+    void initialize();
+
+    bool wasInitialized() const {
+        return wasInitializedFlag;
+    }
+    
+    CalloutObject::Ptr buildCalloutObject(PreparsedCallout::Ptr preparsed);
+    
+private:
     static int pcreCalloutFunction(void* self, pcre_callout_block*);
 
-    void initialize();
+    LuaObject evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
+                              long startMatch, long pos, int lastCaptured, int topCaptured);
+
     
     bool searchForwardFlag;
     bool ignoreCaseFlag;
@@ -138,18 +246,11 @@ protected:
     String searchString;
     MemArray<int> ovector;
     
-    struct CalloutObject
-    {
-        CalloutObject(LuaStoredObject::Ptr luaObject) : luaObject(luaObject)
-        {}
-        LuaStoredObject::Ptr luaObject;
-        MemArray<int>        args;
-    };
-    ObjectArray<CalloutObject> calloutObjects;
+    ObjectArray<CalloutObject::Ptr> calloutObjects;
     bool wasError;
     LuaException luaException;
     
-    bool wasInitialized;
+    bool wasInitializedFlag;
 
     MemArray<int> expressionPositions;
     Regex regex;
