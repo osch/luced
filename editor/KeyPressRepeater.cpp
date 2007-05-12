@@ -40,7 +40,7 @@ bool KeyPressRepeater::isInstanceValid()
 }
 
 KeyPressRepeater::KeyPressRepeater()
-    : slotForRepeatTimer(this, &KeyPressRepeater::processRepeatingEvent)
+    : eventRepeatingCallback(this, &KeyPressRepeater::processRepeatingEvent)
 {
     isRepeatingFlag = false;
 }
@@ -71,7 +71,7 @@ void KeyPressRepeater::repeatEvent(const XEvent *event)
     }
     this->event = *event;
     isRepeatingFlag = true;
-    EventDispatcher::getInstance()->registerTimerCallback(when, slotForRepeatTimer);
+    EventDispatcher::getInstance()->registerTimerCallback(when, eventRepeatingCallback);
 }
 
 

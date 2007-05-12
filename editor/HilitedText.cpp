@@ -34,17 +34,16 @@ using namespace LucED;
 HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
         : processingEndBeforeRestartIterator(createNewIterator()),
           processingEndBeforeRestartFlag(false),
-          slotForTextDataUpdateTreatment(this, &HilitedText::treatTextDataUpdate),
-          slotForFlushPendingUpdates(this, &HilitedText::flushPendingUpdates),
           textData(textData),
           rememberedLastProcessingRestartedIterator(createNewIterator()),
           languageMode(languageMode),
           startNextProcessIterator(createNewIterator()),
           tryToBeLastBreakIterator(createNewIterator()),
-          processHandlerSlot(this, &HilitedText::process, &HilitedText::needsProcessing)
+          processHandler(ProcessHandler::create(this, &HilitedText::process, &HilitedText::needsProcessing))
 {
-    textData->registerUpdateListener(slotForTextDataUpdateTreatment);
-    EventDispatcher::getInstance()->registerUpdateSource(slotForFlushPendingUpdates);
+    textData                      ->registerUpdateListener(Callback1<TextData::UpdateInfo>(this, &HilitedText::treatTextDataUpdate));
+    EventDispatcher::getInstance()->registerUpdateSource  (Callback0                      (this, &HilitedText::flushPendingUpdates));
+
     this->beginChangedPos = 0;
     this->endChangedPos = 0;
     this->processingEndBeforeRestartFlag = false;
@@ -59,7 +58,7 @@ HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
     if (syntaxPatterns.isValid()) {
         this->ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
-    EventDispatcher::getInstance()->registerProcess(processHandlerSlot);
+    EventDispatcher::getInstance()->registerProcess(processHandler);
 }
 
 

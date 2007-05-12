@@ -23,7 +23,7 @@
 #define KEYPRESSREPEATER_H
 
 #include "HeapObject.h"
-#include "Slot.h"
+#include "Callback.h"
 #include "EventDispatcher.h"
 #include "TimeVal.h"
 #include "SingletonInstance.h"
@@ -52,7 +52,7 @@ private:
     KeyPressRepeater();
     void processRepeatingEvent();
 
-    Slot0 slotForRepeatTimer;
+    Callback0 eventRepeatingCallback;
     XEvent event;
     int repeatCount;
     bool isRepeatingFlag;

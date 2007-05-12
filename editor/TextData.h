@@ -27,7 +27,6 @@
 #include "MemBuffer.h"
 #include "ByteArray.h"
 #include "ObjectArray.h"
-#include "Slot.h"
 #include "CallbackContainer.h"
 #include "OwningPtr.h"
 #include "EditingHistory.h"
@@ -176,6 +175,11 @@ public:
     }
     String getAsString() {
         return getSubstring(0, getLength());
+    }
+    
+    void setToString(const String& newContent) {
+        clear();
+        insertAtMark(createNewMark(), newContent);
     }
 
     const byte& operator[](long pos) const {
@@ -332,8 +336,6 @@ private:
     long changedAmount;
     long oldEndChangedPos;
     ObjectArray<TextMarkData> marks;
-
-    Slot0 slotForFlushPendingUpdates;
 
     void updateMarks(
         long beginChangedPos, long oldEndChangedPos, long changedAmount,

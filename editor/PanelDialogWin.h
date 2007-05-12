@@ -27,7 +27,6 @@
 #include "Button.h"
 #include "GuiLayoutColumn.h"
 #include "DialogWin.h"
-#include "Slot.h"
 #include "SingleLineEditField.h"
 #include "DialogPanel.h"
 

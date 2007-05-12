@@ -22,7 +22,6 @@
 #ifndef SINGLELINEEDITORWIDGET_H
 #define SINGLELINEEDITORWIDGET_H
 
-#include "Slot.h"
 #include "ByteArray.h"
 #include "StandardEditActions.h"
 #include "TextEditorWidget.h"
@@ -51,7 +50,6 @@ protected:
 private:
     void filterInsert(const byte** buffer, long* length);
     
-    Slot2<const byte**, long*> slotForInsertFilter;
     ByteArray filterBuffer;
     StandardEditActions::Ptr standardActions;
 };

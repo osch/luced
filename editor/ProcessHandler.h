@@ -79,60 +79,64 @@ private:
 };
 
 
-template<class T> class ProcessHandlerImpl : public AbstractProcessHandler
+
+class ProcessHandler
 {
 public:
-    static Ptr create(T* objectPtr, int (T::*methodProcess)(int), bool (T::*methodNeedsProcess)()) {
-        return Ptr(new ProcessHandlerImpl(objectPtr, methodProcess, methodNeedsProcess));
-    }
-    
-    virtual void disable() {
-        objectPtr = NULL;
-    }
-    virtual bool isEnabled() {
-        return objectPtr != NULL;
-    }
-    virtual bool needsProcessing() {
-        if (objectPtr != NULL) {
-            return (objectPtr->*methodNeedsProcess)();
-        } else {
-            return false;
-        }
-    }
-protected:
-    virtual int process(int requestedProcessingAmount) {
-        return (objectPtr->*methodProcess)(requestedProcessingAmount);
-    }
+    typedef OwningPtr<AbstractProcessHandler> Ptr;
+
+
 private:
     
-    ProcessHandlerImpl(T* objectPtr, int (T::*methodProcess)(int), bool (T::*methodNeedsProcess)())
-        : objectPtr(objectPtr), methodProcess(methodProcess), methodNeedsProcess(methodNeedsProcess)
-    {}
-    
-    T* objectPtr;
-    int (T::*methodProcess)(int);
-    bool (T::*methodNeedsProcess)();
-};
+    template
+    <
+        class T
+    >
+    class ProcessHandlerImpl : public AbstractProcessHandler
+    {
+    public:
+        static Ptr create(T* objectPtr, int (T::*methodProcess)(int), bool (T::*methodNeedsProcess)()) {
+            return Ptr(new ProcessHandlerImpl(objectPtr, methodProcess, methodNeedsProcess));
+        }
+
+        virtual void disable() {
+            objectPtr = NULL;
+        }
+        virtual bool isEnabled() {
+            return objectPtr != NULL;
+        }
+        virtual bool needsProcessing() {
+            if (objectPtr != NULL) {
+                return (objectPtr->*methodNeedsProcess)();
+            } else {
+                return false;
+            }
+        }
+    protected:
+        virtual int process(int requestedProcessingAmount) {
+            return (objectPtr->*methodProcess)(requestedProcessingAmount);
+        }
+    private:
+
+        ProcessHandlerImpl(T* objectPtr, int (T::*methodProcess)(int), bool (T::*methodNeedsProcess)())
+            : objectPtr(objectPtr), methodProcess(methodProcess), methodNeedsProcess(methodNeedsProcess)
+        {}
+
+        WeakPtr<T> objectPtr;
+        int (T::*methodProcess)(int);
+        bool (T::*methodNeedsProcess)();
+    };
 
 
-class ProcessHandler : public AbstractProcessHandler::Ptr
-{
-public:
-    ProcessHandler() {}
-protected:
-    template<class T> ProcessHandler(T* objectPtr, int (T::*methodProcess)(int), bool (T::*methodNeedsProcess)())
-        : AbstractProcessHandler::Ptr(ProcessHandlerImpl<T>::create(objectPtr, methodProcess, methodNeedsProcess))
-    {}
-};
+public:    
 
-class ProcessHandlerSlot : public ProcessHandler
-{
-public:
-    template<class T> ProcessHandlerSlot(T* objectPtr, int (T::*methodProcess)(int), bool (T::*methodNeedsProcess)())
-        : ProcessHandler(objectPtr, methodProcess, methodNeedsProcess) {}
-
-    ~ProcessHandlerSlot() {
-        (*this)->disable();
+    template
+    <
+        class T
+    >
+    static Ptr create(T* objectPtr, int (T::*methodProcess)(int), bool (T::*methodNeedsProcess)())
+    {
+        return ProcessHandlerImpl<T>::create(objectPtr, methodProcess, methodNeedsProcess);
     }
 };
 

@@ -30,9 +30,6 @@ using namespace LucED;
 StatusLine::StatusLine(GuiWidget* parent)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
-      slotForSetLineAndColumn(this, &StatusLine::setLineAndColumn),
-      slotForSetFileName(     this, &StatusLine::setFileName),
-      slotForSetFileLength(   this, &StatusLine::setFileLength),
       lengthPos(0), line(0), column(0), lineAndColumnWidth(0)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);

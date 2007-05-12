@@ -26,7 +26,6 @@
 
 #include "GuiWidget.h"
 #include "Callback.h"
-#include "Slot.h"
 #include "OwningPtr.h"
 
 namespace LucED {
@@ -51,11 +50,6 @@ public:
     void setLineAndColumn(long line, long column);
     void setFileName(const String& fileName);
     void setFileLength(long length);
-    
-    Slot2<long,long>     slotForSetLineAndColumn;
-    Slot1<const String&> slotForSetFileName;
-    Slot1<long>          slotForSetFileLength;
-
     
 private:
 

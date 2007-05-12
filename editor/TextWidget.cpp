@@ -102,18 +102,13 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
 
       position(0, 0, 1, 1),
       textData(hilitedText->getTextData()),
-      slotForCursorBlinking(this, &TextWidget::blinkCursor),
-      slotForVerticalScrollBarChangedValue(this, &TextWidget::setTopLineNumber),
-      slotForHorizontalScrollBarChangedValue(this, &TextWidget::internSetLeftPix),
+      cursorBlinkCallback(this, &TextWidget::blinkCursor),
       textStyles(textStyles),
       hilitingBuffer(HilitingBuffer::create(hilitedText)),
       backliteBuffer(BackliteBuffer::create(textData)),
       lineInfos(),
       topMarkId(textData->createNewMark()),
       cursorMarkId(textData->createNewMark()),
-      slotForTextDataUpdateTreatment(this, &TextWidget::treatTextDataUpdate),
-      slotForFlushPendingUpdates(this, &TextWidget::flushPendingUpdates),
-      slotForHilitingUpdateTreatment(this, &TextWidget::treatHilitingUpdate),
       minWidthChars(10),
       minHeightChars(1),
       bestWidthChars(80),
@@ -160,11 +155,12 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
     setBitGravity(NorthWestGravity);
             
     textData->flushPendingUpdates();
-    textData->registerUpdateListener(slotForTextDataUpdateTreatment);
+    textData->registerUpdateListener(Callback1<TextData::UpdateInfo>(this, &TextWidget::treatTextDataUpdate));
     
-    EventDispatcher::getInstance()->registerUpdateSource(slotForFlushPendingUpdates);
-    hilitingBuffer->registerUpdateListener(slotForHilitingUpdateTreatment);
-    backliteBuffer->registerUpdateListener(slotForHilitingUpdateTreatment);
+    EventDispatcher::getInstance()->registerUpdateSource(Callback0(this, &TextWidget::flushPendingUpdates));
+
+    hilitingBuffer->registerUpdateListener(Callback1<HilitingBuffer::UpdateInfo>(this, &TextWidget::treatHilitingUpdate));
+    backliteBuffer->registerUpdateListener(Callback1<HilitingBuffer::UpdateInfo>(this, &TextWidget::treatHilitingUpdate));
     
     redrawRegion = XCreateRegion();
     
@@ -1524,7 +1520,7 @@ void TextWidget::blinkCursor()
             
             cursorNextBlinkTime = now;
             cursorNextBlinkTime.addMicroSecs(400000);
-            EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, slotForCursorBlinking);
+            EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
 
         } else { 
         }
@@ -1582,7 +1578,7 @@ void TextWidget::startCursorBlinking()
     cursorNextBlinkTime.setToCurrentTime().addMicroSecs(400000);
 
     cursorIsBlinking = true;
-    EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, slotForCursorBlinking);
+    EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
 }
 
 void TextWidget::moveCursorToTextPosition(long pos)

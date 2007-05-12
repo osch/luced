@@ -61,10 +61,6 @@ public:
         keyMapping.set(keyState, keySym, Callback0(object, method));
     }
     
-    
-    Slot1<ScrollStep::Type> slotForScrollStepV;
-    Slot1<ScrollStep::Type> slotForScrollStepH;
-
     bool scrollUp();
     bool scrollDown();
     void scrollLeft();
@@ -73,6 +69,9 @@ public:
     void scrollPageDown();
     void scrollPageLeft();
     void scrollPageRight();
+
+    void handleScrollStepV(ScrollStep::Type scrollStep);
+    void handleScrollStepH(ScrollStep::Type scrollStep);
 
     void showMousePointer() {
         TextWidget::showMousePointer();
@@ -96,9 +95,6 @@ private:
 
     void setNewMousePositionForMovingSelection(int x, int y);
     
-    void handleScrollStepV(ScrollStep::Type scrollStep);
-    void handleScrollStepH(ScrollStep::Type scrollStep);
-
     bool hasFocusFlag;
     KeyMapping keyMapping;
     long rememberedCursorPixX;
@@ -107,7 +103,7 @@ private:
     int movingSelectionX;
     int movingSelectionY;
     bool isMovingSelectionScrolling;
-    Slot0 slotForScrollRepeating;
+    Callback0 scrollRepeatCallback;
     void handleScrollRepeating();
     
     bool cursorChangesDisabled;

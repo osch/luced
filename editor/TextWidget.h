@@ -24,7 +24,6 @@
 
 #include "GuiWidget.h"
 #include "TextData.h"
-#include "Slot.h"
 #include "LineInfo.h"
 #include "TextStyle.h"
 #include "TimeVal.h"
@@ -168,9 +167,6 @@ public:
     void hideCursor();
     void showCursor();
 
-    Slot1<long> slotForVerticalScrollBarChangedValue;
-    Slot1<long> slotForHorizontalScrollBarChangedValue;
-    
     void registerLineAndColumnListener(const Callback2<long,long>& listener);
     void notifyAboutHotKeyEventForOtherWidget();
         
@@ -203,16 +199,13 @@ private:
     void applyTextStyle(int styleIndex);
     void internSetLeftPix(long leftPix);
 
-    Slot0 slotForCursorBlinking;
+    Callback0 cursorBlinkCallback;
     void blinkCursor();
 
-    Slot1<TextData::UpdateInfo> slotForTextDataUpdateTreatment;
     void treatTextDataUpdate(TextData::UpdateInfo update);
 
-    Slot0 slotForFlushPendingUpdates;
     void flushPendingUpdates();
     
-    Slot1<HilitingBuffer::UpdateInfo> slotForHilitingUpdateTreatment;
     void treatHilitingUpdate(HilitingBuffer::UpdateInfo update);
     
     void drawCursor(long cursorPos);

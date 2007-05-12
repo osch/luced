@@ -23,7 +23,7 @@
 #define CALLBACKCONTAINER_H
 
 #include "ObjectArray.h"
-#include "Slot.h"
+#include "Callback.h"
 
 namespace LucED {
 

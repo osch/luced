@@ -128,19 +128,19 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     
     textData->registerModifiedFlagListener(Callback1<bool>(this, &EditorTopWin::handleChangedModifiedFlag));
     
-    textData->registerFileNameListener(statusLine->slotForSetFileName);
-    textData->registerFileNameListener(Callback1<const String&>(this, &EditorTopWin::handleNewFileName));
-    textData->registerLengthListener(statusLine->slotForSetFileLength);
-    textEditor->registerLineAndColumnListener(statusLine->slotForSetLineAndColumn);
+    textData->registerFileNameListener       (Callback1<const String&>   (statusLine, &StatusLine  ::setFileName));
+    textData->registerFileNameListener       (Callback1<const String&>   (this,       &EditorTopWin::handleNewFileName));
+    textData->registerLengthListener         (Callback1<long>            (statusLine, &StatusLine  ::setFileLength));
+    textEditor->registerLineAndColumnListener(Callback2<long,long>       (statusLine, &StatusLine  ::setLineAndColumn));
     
-    scrollBarV->setChangedValueCallback(textEditor->slotForVerticalScrollBarChangedValue);
-    scrollBarH->setChangedValueCallback(textEditor->slotForHorizontalScrollBarChangedValue);
+    scrollBarV->setChangedValueCallback      (Callback1<long>            (textEditor, &TextWidget::setTopLineNumber));
+    scrollBarH->setChangedValueCallback      (Callback1<long>            (textEditor, &TextWidget::setLeftPix));
 
-    scrollBarV->setScrollStepCallback(textEditor->slotForScrollStepV);
-    scrollBarH->setScrollStepCallback(textEditor->slotForScrollStepH);
+    scrollBarV->setScrollStepCallback        (Callback1<ScrollStep::Type>(textEditor, &TextEditorWidget::handleScrollStepV));
+    scrollBarH->setScrollStepCallback        (Callback1<ScrollStep::Type>(textEditor, &TextEditorWidget::handleScrollStepH));
 
-    textEditor->setScrollBarVerticalValueRangeChangedCallback(  scrollBarV->slotForSetValueRange);
-    textEditor->setScrollBarHorizontalValueRangeChangedCallback(scrollBarH->slotForSetValueRange);
+    textEditor->setScrollBarVerticalValueRangeChangedCallback  (Callback3<long,long,long>(scrollBarV, &ScrollBar::setValueRange));
+    textEditor->setScrollBarHorizontalValueRangeChangedCallback(Callback3<long,long,long>(scrollBarH, &ScrollBar::setValueRange));
     
     textEditor->setDesiredMeasuresInChars(
             GlobalConfig::getInstance()->getInitialWindowWidth(),

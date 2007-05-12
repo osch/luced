@@ -53,9 +53,6 @@ ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
       isV(orientation == Orientation::VERTICAL),
-      slotForSetValue(this, &ScrollBar::setValue),
-      slotForSetValueRange(this, &ScrollBar::setValueRange),
-      slotForScrollStepRepeating(this, &ScrollBar::handleScrollStepRepeating),
       hilitedPart(NONE)
 {
     totalValue = 0;
@@ -141,7 +138,7 @@ GuiElement::ProcessingResult ScrollBar::processEvent(const XEvent *event)
                     if (isButtonPressedForScrollStep) {
                         EventDispatcher::getInstance()->registerTimerCallback(0, 
                                 GlobalConfig::getInstance()->getScrollBarRepeatFirstMicroSecs(),
-                                slotForScrollStepRepeating);
+                                Callback0(this, &ScrollBar::handleScrollStepRepeating));
                     }
                     return EVENT_PROCESSED;
                 }
@@ -650,7 +647,7 @@ void ScrollBar::handleScrollStepRepeating()
         scrollStepCallback.call(scrollStep);
         EventDispatcher::getInstance()->registerTimerCallback(0, 
                 GlobalConfig::getInstance()->getScrollBarRepeatNextMicroSecs(), 
-                slotForScrollStepRepeating);
+                Callback0(this, &ScrollBar::handleScrollStepRepeating));
     }
 }
 

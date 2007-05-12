@@ -449,6 +449,10 @@ void ReplacePanel::findAgainForward()
 {
     ASSERT(this->isVisible());
 
+    if (findEditField->getTextData()->getLength() == 0) {
+        return;
+    }
+
     replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
     replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
     replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
@@ -475,6 +479,10 @@ void ReplacePanel::findAgainForward()
 void ReplacePanel::findAgainBackward()
 {
     ASSERT(this->isVisible());
+
+    if (findEditField->getTextData()->getLength() == 0) {
+        return;
+    }
 
     replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
     replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
@@ -536,14 +544,12 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
             if (lastFindString != findFieldContent || lastReplaceString != replaceFieldContent)
             {
                 TextData* textData = findEditField->getTextData();
-                textData->clear();
-                textData->insertAtMark(textData->createNewMark(), lastFindString);
+                textData->setToString(lastFindString);
                 textData->clearHistory();
                 textData->setModifiedFlag(false);
 
                 textData = replaceEditField->getTextData();
-                textData->clear();
-                textData->insertAtMark(textData->createNewMark(), lastReplaceString);
+                textData->setToString(lastReplaceString);
                 textData->clearHistory();
                 textData->setModifiedFlag(false);
                 
@@ -590,14 +596,12 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
                 if (nextFindString != findFieldContent || nextReplaceString != replaceFieldContent)
                 {
                     TextData* textData = findEditField->getTextData();
-                    textData->clear();
-                    textData->insertAtMark(textData->createNewMark(), nextFindString);
+                    textData->setToString(nextFindString);
                     textData->clearHistory();
                     textData->setModifiedFlag(false);
                 
                     textData = replaceEditField->getTextData();
-                    textData->clear();
-                    textData->insertAtMark(textData->createNewMark(), nextReplaceString);
+                    textData->setToString(nextReplaceString);
                     textData->clearHistory();
                     textData->setModifiedFlag(false);
                     

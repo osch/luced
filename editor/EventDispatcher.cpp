@@ -178,7 +178,7 @@ void EventDispatcher::doEventLoop()
                         if (diffTime > 100 * 1000) {
                             diffTime = 100 * 1000;
                         }
-                        ProcessHandler h = processes[p];
+                        ProcessHandler::Ptr h = processes[p];
                         processes.remove(p);
                         processes.append(h);
                         h->execute(diffTime);
@@ -201,7 +201,7 @@ void EventDispatcher::doEventLoop()
                 }
             } else {
                 if (hasWaitingProcess) {
-                    ProcessHandler h = processes[p];
+                    ProcessHandler::Ptr h = processes[p];
                     processes.remove(p);
                     processes.append(h);
                     h->execute(100 * 1000);
@@ -243,23 +243,23 @@ void EventDispatcher::invokeAllUpdateCallbacks()
     updateCallbacks.invokeAllCallbacks();
 }
 
-void EventDispatcher::registerProcess(ProcessHandler process)
+void EventDispatcher::registerProcess(ProcessHandler::Ptr process)
 {
     processes.append(process);
     if (process->needsProcessing()) {process->execute(100 * 1000); process->getMicroSecs();}
 }
 
-ProcessHandler EventDispatcher::getNextWaitingProcess()
+ProcessHandler::Ptr EventDispatcher::getNextWaitingProcess()
 {
     for (int i = 0; i < processes.getLength(); ++i) {
         if (processes[i]->needsProcessing()) {
-            ProcessHandler rslt = processes[i];
+            ProcessHandler::Ptr rslt = processes[i];
             processes.remove(i);
             processes.append(rslt);
             return rslt;
         }
     }
-    return ProcessHandler();
+    return ProcessHandler::Ptr();
 }
 
 void EventDispatcher::deregisterAllUpdateSourceCallbacksFor(WeakPtr<HeapObject> callbackObject)

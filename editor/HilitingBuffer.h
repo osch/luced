@@ -87,11 +87,9 @@ private:
 
 
     void treatHilitingUpdate(HilitedText::UpdateInfo update);
-    Slot1<HilitedText::UpdateInfo> slotForHilitingUpdateTreatment;
-    
+
     void treatTextDataUpdate(TextData::UpdateInfo update);
-    Slot1<TextData::UpdateInfo> slotForTextDataUpdateTreatment;
-    
+
     HilitedText::Ptr hiliting;
     HilitedText::Iterator iterator;
     TextData::Ptr textData;

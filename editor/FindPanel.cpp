@@ -198,11 +198,13 @@ void FindPanel::executeFind(bool isWrapping, const Callback0& handleContinueSear
     }
     catch (RegexException& ex)
     {
+        panelInvoker.call(this);
+
+        editField->getTextData()->setToString(findUtil.getSearchString());
         int position = ex.getPosition();
         if (position >= 0) {
             editField->setCursorPosition(position);
         }
-        panelInvoker.call(this);
         messageBoxInvoker.call(MessageBoxParameter()
                                .setTitle("Regex Error")
                                .setMessage(String() << "Error within regular expression: " << ex.getMessage()));
@@ -210,6 +212,9 @@ void FindPanel::executeFind(bool isWrapping, const Callback0& handleContinueSear
     catch (LuaException& ex)
     {
         panelInvoker.call(this);
+
+        editField->getTextData()->setToString(findUtil.getSearchString());
+
         messageBoxInvoker.call(MessageBoxParameter()
                                .setTitle("Lua Error")
                                .setMessage(ex.getMessage()));
@@ -393,6 +398,9 @@ void FindPanel::handleContinueAtEndButton()
 
 void FindPanel::findAgainForward()
 {
+    if (this->isVisible() && editField->getTextData()->getLength() == 0) {
+        return;
+    }
     if (this->isVisible()) {
         findUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
         findUtil.setRegexFlag        (regularExprCheckBox->isChecked());
@@ -429,6 +437,10 @@ void FindPanel::findAgainForward()
 
 void FindPanel::findAgainBackward()
 {
+    if (this->isVisible() && editField->getTextData()->getLength() == 0) {
+        return;
+    }
+
     if (this->isVisible()) {
         findUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
         findUtil.setRegexFlag        (regularExprCheckBox->isChecked());
@@ -497,8 +509,7 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
             SearchHistory::Entry entry = history->getEntry(h);
             String lastFindString = entry.getFindString();
             if (lastFindString != editFieldContent) {
-                textData->clear();
-                textData->insertAtMark(textData->createNewMark(), lastFindString);
+                textData->setToString(lastFindString);
                 textData->clearHistory();
                 textData->setModifiedFlag(false);
                 historyIndex = h;
@@ -541,8 +552,7 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
                 SearchHistory::Entry entry = history->getEntry(h);
                 String nextFindString = entry.getFindString();
                 if (nextFindString != editFieldContent) {
-                    textData->clear();
-                    textData->insertAtMark(textData->createNewMark(), nextFindString);
+                    textData->setToString(nextFindString);
                     textData->clearHistory();
                     textData->setModifiedFlag(false);
                     historyIndex = h;

@@ -24,7 +24,6 @@
 
 #include "HilitingBase.h"
 #include "TextData.h"
-#include "Slot.h"
 #include "SyntaxPatterns.h"
 #include "CallbackContainer.h"
 #include "ProcessHandler.h"
@@ -86,7 +85,6 @@ private:
             const ByteArray& stack);
 
     void treatTextDataUpdate(TextData::UpdateInfo);
-    Slot1<TextData::UpdateInfo> slotForTextDataUpdateTreatment;
 
     void gotoReparseStart(long textPos, IteratorHandle iterator);
     bool fillWithBreaks(IteratorHandle iterator, 
@@ -94,7 +92,6 @@ private:
             long *lastFillEnd, ByteArray& patternStack);
             
     void flushPendingUpdatesIntern();
-    Slot0 slotForFlushPendingUpdates;
     
     Iterator rememberedLastProcessingRestartedIterator;
     Iterator processingEndBeforeRestartIterator;
@@ -114,7 +111,7 @@ private:
     ByteArray patternStack;
     Callback1Container<UpdateInfo> updateListeners;
     
-    ProcessHandlerSlot processHandlerSlot;
+    ProcessHandler::Ptr processHandler;
     
     MemArray<int> ovector;
     

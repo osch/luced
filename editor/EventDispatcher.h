@@ -71,7 +71,7 @@ public:
         doQuit = true;
     }
     
-    void registerProcess(ProcessHandler process);
+    void registerProcess(ProcessHandler::Ptr process);
 
     void registerEventReceiverForRootProperty(GuiRootProperty property,
                                               Callback1<XEvent*> callback);
@@ -104,7 +104,7 @@ private:
     
     void invokeAllUpdateCallbacks();
     
-    ProcessHandler getNextWaitingProcess();
+    ProcessHandler::Ptr getNextWaitingProcess();
     
     typedef HashMap<Window, GuiWidget*> WidgetMap;
     WidgetMap widgetMap;
@@ -117,7 +117,7 @@ private:
 
     Callback0Container updateCallbacks;
     
-    ObjectArray<ProcessHandler> processes;
+    ObjectArray<ProcessHandler::Ptr> processes;
     
     typedef HashMap< GuiRootProperty, Callback1<XEvent*> > RootPropertiesMap;
     RootPropertiesMap rootPropertyListeners;

@@ -28,8 +28,7 @@ using namespace std;
 using namespace LucED;
 
 TextData::TextData() 
-        : slotForFlushPendingUpdates(this, &TextData::flushPendingUpdates),
-          modifiedFlag(false),
+        : modifiedFlag(false),
           viewCounter(0),
           hasHistoryFlag(false)
 {
@@ -38,7 +37,7 @@ TextData::TextData()
     changedAmount = 0;
     oldEndChangedPos = 0;
     oldLength = 0;
-    EventDispatcher::getInstance()->registerUpdateSource(slotForFlushPendingUpdates);
+    EventDispatcher::getInstance()->registerUpdateSource(Callback0(this, &TextData::flushPendingUpdates));
 }
 
 void TextData::loadFile(const String& filename)

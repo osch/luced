@@ -288,15 +288,15 @@ template<class A1> class Callback1
 public:
     Callback1() {}
 
-    template<class T> Callback1(T* objectPtr, void (T::*methodPtr)(A1)) {
+    template<class T, class S> Callback1(T* objectPtr, void (S::*methodPtr)(A1)) {
         this->callback = CallbackInternal::CallbackImpl1<T, A1>::create(objectPtr, methodPtr);
     }
 
-    template<class T> Callback1(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1)) {
+    template<class T, class S> Callback1(WeakPtr<T> objectPtr, void (S::*methodPtr)(A1)) {
         this->callback = CallbackInternal::CallbackImpl1<T, A1>::create(objectPtr.getRawPtr(), methodPtr);
     }
 
-    template<class T> Callback1(OwningPtr<T> objectPtr, void (T::*methodPtr)(A1)) {
+    template<class T, class S> Callback1(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1)) {
         this->callback = CallbackInternal::CallbackImpl1<T, A1>::create(objectPtr.getRawPtr(), methodPtr);
     }
 
@@ -331,15 +331,15 @@ template<class A1, class A2> class Callback2
 public:
     Callback2() {}
 
-    template<class T> Callback2(T* objectPtr, void (T::*methodPtr)(A1,A2)) {
+    template<class T, class S> Callback2(T* objectPtr, void (S::*methodPtr)(A1,A2)) {
         this->callback = CallbackInternal::CallbackImpl2<T, A1, A2>::create(objectPtr, methodPtr);
     }
 
-    template<class T> Callback2(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1,A2)) {
+    template<class T, class S> Callback2(WeakPtr<T> objectPtr, void (S::*methodPtr)(A1,A2)) {
         this->callback = CallbackInternal::CallbackImpl2<T, A1, A2>::create(objectPtr.getRawPtr(), methodPtr);
     }
 
-    template<class T> Callback2(OwningPtr<T> objectPtr, void (T::*methodPtr)(A1,A2)) {
+    template<class T, class S> Callback2(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1,A2)) {
         this->callback = CallbackInternal::CallbackImpl2<T, A1, A2>::create(objectPtr.getRawPtr(), methodPtr);
     }
 
@@ -373,15 +373,15 @@ template<class A1, class A2, class A3> class Callback3
 public:
     Callback3() {}
 
-    template<class T> Callback3(T* objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
+    template<class T, class S> Callback3(T* objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
         this->callback = CallbackInternal::CallbackImpl3<T, A1, A2, A3>::create(objectPtr, methodPtr);
     }
 
-    template<class T> Callback3(WeakPtr<T> objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
+    template<class T, class S> Callback3(WeakPtr<T> objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
         this->callback = CallbackInternal::CallbackImpl3<T, A1, A2, A3>::create(objectPtr.getRawPtr(), methodPtr);
     }
 
-    template<class T> Callback3(OwningPtr<T> objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
+    template<class T, class S> Callback3(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
         this->callback = CallbackInternal::CallbackImpl3<T, A1, A2, A3>::create(objectPtr.getRawPtr(), methodPtr);
     }
 

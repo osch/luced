@@ -24,7 +24,6 @@
 
 #include "GuiWidget.h"
 #include "Callback.h"
-#include "Slot.h"
 #include "types.h"
 #include "OwningPtr.h"
 
@@ -56,10 +55,6 @@ public:
     void setValue(long value);
     void setValueRange(long totalValue, long heightValue, long value);
 
-    Slot1<long> slotForSetValue;
-    Slot3<long,long,long> slotForSetValueRange;
-
-    
 private:
 
     enum HilitedPart { TOP_ARROW, SCROLLER, BOTTOM_ARROW, NONE };
@@ -105,7 +100,6 @@ private:
     
     bool isButtonPressedForScrollStep;
     ScrollStep::Type scrollStep;
-    Slot0 slotForScrollStepRepeating;
     void handleScrollStepRepeating();
     HilitedPart hilitedPart;
 };

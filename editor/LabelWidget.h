@@ -27,7 +27,6 @@
 #include "types.h"
 #include "GuiWidget.h"
 #include "Callback.h"
-#include "Slot.h"
 #include "OwningPtr.h"
 
 namespace LucED {

@@ -36,9 +36,7 @@ TextEditorWidget::TextEditorWidget(GuiWidget *parent,
         SelectionOwner(this),
         PasteDataReceiver(this),
         rememberedCursorPixX(0),
-        slotForScrollStepV(this, &TextEditorWidget::handleScrollStepV),
-        slotForScrollStepH(this, &TextEditorWidget::handleScrollStepH),
-        slotForScrollRepeating(this, &TextEditorWidget::handleScrollRepeating),
+        scrollRepeatCallback(this, &TextEditorWidget::handleScrollRepeating),
         hasMovingSelection(false),
         cursorChangesDisabled(false),
         buttonPressedCounter(0)
@@ -430,7 +428,7 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                 isMovingSelectionScrolling = true;
                 EventDispatcher::getInstance()->registerTimerCallback(0, 
                         calculateScrollTime(-y, getLineHeight()),
-                        slotForScrollRepeating);
+                        scrollRepeatCallback);
             }
         } else if (y > getHeightPix()) {
             if (!isMovingSelectionScrolling) {
@@ -438,7 +436,7 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                 isMovingSelectionScrolling = true;
                 EventDispatcher::getInstance()->registerTimerCallback(0, 
                         calculateScrollTime(y - getHeightPix(), getLineHeight()),
-                        slotForScrollRepeating);
+                        scrollRepeatCallback);
             }
         } else if (x < 0 ) {
             if (!isMovingSelectionScrolling) {
@@ -446,7 +444,7 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                 isMovingSelectionScrolling = true;
                 EventDispatcher::getInstance()->registerTimerCallback(0, 
                         calculateScrollTime(-x, getLineHeight()),
-                        slotForScrollRepeating);
+                        scrollRepeatCallback);
             }
         } else if (x > getPixWidth() && !getTextData()->isEndOfLine(newCursorPos)) {
             if (!isMovingSelectionScrolling) {
@@ -454,7 +452,7 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                 isMovingSelectionScrolling = true;
                 EventDispatcher::getInstance()->registerTimerCallback(0, 
                         calculateScrollTime(x - getPixWidth(), getLineHeight()),
-                        slotForScrollRepeating);
+                        scrollRepeatCallback);
             }
         } else {
             isMovingSelectionScrolling = false;
@@ -506,22 +504,22 @@ void TextEditorWidget::handleScrollRepeating()
             scrollUp();
             EventDispatcher::getInstance()->registerTimerCallback(0, 
                     calculateScrollTime(-movingSelectionY, getLineHeight()),
-                    slotForScrollRepeating);
+                    scrollRepeatCallback);
         } else if (movingSelectionY > getHeightPix()) {
             scrollDown();
             EventDispatcher::getInstance()->registerTimerCallback(0, 
                     calculateScrollTime(movingSelectionY - getHeightPix(), getLineHeight()),
-                    slotForScrollRepeating);
+                    scrollRepeatCallback);
         } else if (movingSelectionX < 0 ) {
             scrollLeft();
             EventDispatcher::getInstance()->registerTimerCallback(0, 
                     calculateScrollTime(-movingSelectionX, getLineHeight()),
-                    slotForScrollRepeating);
+                    scrollRepeatCallback);
         } else if (movingSelectionX > getPixWidth() && !getTextData()->isEndOfLine(newCursorPos)) {
             scrollRight();
             EventDispatcher::getInstance()->registerTimerCallback(0, 
                     calculateScrollTime(movingSelectionX - getPixWidth(), getLineHeight()),
-                    slotForScrollRepeating);
+                    scrollRepeatCallback);
         } else {
             isMovingSelectionScrolling = false;
         }
