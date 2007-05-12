@@ -19,13 +19,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "SyntaxPatterns.h"
-#include "ByteArray.h"
-#include "ConfigException.h"
-#include "HeapHashMap.h"
-#include "util.h"
-#include "LuaObject.h"
-#include "LuaIterator.h"
+#include "SyntaxPatterns.hpp"
+#include "ByteArray.hpp"
+#include "ConfigException.hpp"
+#include "HeapHashMap.hpp"
+#include "util.hpp"
+#include "LuaObject.hpp"
+#include "LuaIterator.hpp"
 
 using namespace LucED;
 

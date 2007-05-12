@@ -19,9 +19,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "GuiLayoutSpacer.h"
-#include "GuiLayoutColumn.h"
-#include "GuiLayoutRow.h"
+#include "GuiLayoutSpacer.hpp"
+#include "GuiLayoutColumn.hpp"
+#include "GuiLayoutRow.hpp"
 
 using namespace LucED;
 

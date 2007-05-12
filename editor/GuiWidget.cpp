@@ -21,12 +21,12 @@
 
 #include <X11/Xatom.h>
 
-#include "util.h"
-#include "GuiRoot.h"
-#include "GuiWidget.h"
-#include "EventDispatcher.h"
-#include "GlobalConfig.h"
-#include "SingletonInstance.h"
+#include "util.hpp"
+#include "GuiRoot.hpp"
+#include "GuiWidget.hpp"
+#include "EventDispatcher.hpp"
+#include "GlobalConfig.hpp"
+#include "SingletonInstance.hpp"
 
 using namespace LucED;
 

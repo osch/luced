@@ -21,10 +21,10 @@
 
 #include <X11/keysym.h>
 
-#include "CheckBox.h"
-#include "GuiRoot.h"
-#include "TopWin.h"
-#include "GlobalConfig.h"
+#include "CheckBox.hpp"
+#include "GuiRoot.hpp"
+#include "TopWin.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 

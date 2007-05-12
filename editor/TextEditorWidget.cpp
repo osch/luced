@@ -21,11 +21,11 @@
 
 #include <ctype.h>
 
-#include "TextEditorWidget.h"
-#include "util.h"
-#include "EventDispatcher.h"
-#include "GlobalConfig.h"
-#include "Clipboard.h"
+#include "TextEditorWidget.hpp"
+#include "util.hpp"
+#include "EventDispatcher.hpp"
+#include "GlobalConfig.hpp"
+#include "Clipboard.hpp"
 
 using namespace LucED;
 

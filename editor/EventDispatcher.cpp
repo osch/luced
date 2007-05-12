@@ -26,8 +26,8 @@
 #include <unistd.h>
 #include <X11/Xatom.h>
 
-#include "EventDispatcher.h"
-#include "GuiRoot.h"
+#include "EventDispatcher.hpp"
+#include "GuiRoot.hpp"
 
 using namespace LucED;
 

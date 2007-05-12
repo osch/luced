@@ -20,10 +20,10 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
-#include "String.h"
+#include "String.hpp"
 
-#include "StatusLine.h"
-#include "util.h"
+#include "StatusLine.hpp"
+#include "util.hpp"
 
 using namespace LucED;
 

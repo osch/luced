@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "util.h"
-#include "HilitingBuffer.h"
+#include "util.hpp"
+#include "HilitingBuffer.hpp"
 
 using namespace LucED;
 

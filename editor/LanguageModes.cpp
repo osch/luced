@@ -19,10 +19,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "LanguageModes.h"
-#include "ConfigException.h"
-#include "RegexException.h"
-#include "LuaObject.h"
+#include "LanguageModes.hpp"
+#include "ConfigException.hpp"
+#include "RegexException.hpp"
+#include "LuaObject.hpp"
 
 using namespace LucED;
 

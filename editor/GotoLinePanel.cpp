@@ -19,12 +19,12 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "GotoLinePanel.h"
-#include "GuiLayoutColumn.h"
-#include "GuiLayoutRow.h"
-#include "GlobalConfig.h"
-#include "GuiLayoutSpacer.h"
-#include "LabelWidget.h"
+#include "GotoLinePanel.hpp"
+#include "GuiLayoutColumn.hpp"
+#include "GuiLayoutRow.hpp"
+#include "GlobalConfig.hpp"
+#include "GuiLayoutSpacer.hpp"
+#include "LabelWidget.hpp"
 
 using namespace LucED;
 

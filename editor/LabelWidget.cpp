@@ -20,11 +20,11 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
-#include "String.h"
+#include "String.hpp"
 
-#include "LabelWidget.h"
-#include "util.h"
-#include "GlobalConfig.h"
+#include "LabelWidget.hpp"
+#include "util.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 

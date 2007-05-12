@@ -19,10 +19,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "FindUtil.h"
-#include "MemArray.h"
-#include "LuaInterpreter.h"
-#include "RegexException.h"
+#include "FindUtil.hpp"
+#include "MemArray.hpp"
+#include "LuaInterpreter.hpp"
+#include "RegexException.hpp"
 
 using namespace LucED;
 

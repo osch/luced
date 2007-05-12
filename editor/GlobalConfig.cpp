@@ -21,12 +21,12 @@
 
 #include <locale.h>
 
-#include "GlobalConfig.h"
-#include "ConfigException.h"
-#include "DirectoryReader.h"
-#include "RegexException.h"
-#include "LuaInterpreter.h"
-#include "LuaObject.h"
+#include "GlobalConfig.hpp"
+#include "ConfigException.hpp"
+#include "DirectoryReader.hpp"
+#include "RegexException.hpp"
+#include "LuaInterpreter.hpp"
+#include "LuaObject.hpp"
 
 using namespace LucED;
 

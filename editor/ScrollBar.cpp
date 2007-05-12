@@ -19,11 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "ScrollBar.h"
-#include "GuiRoot.h"
-#include "util.h"
-#include "EventDispatcher.h"
-#include "GlobalConfig.h"
+#include "ScrollBar.hpp"
+#include "GuiRoot.hpp"
+#include "util.hpp"
+#include "EventDispatcher.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 

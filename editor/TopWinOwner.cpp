@@ -19,9 +19,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "TopWinOwner.h"
-#include "TopWin.h"
-#include "EventDispatcher.h"
+#include "TopWinOwner.hpp"
+#include "TopWin.hpp"
+#include "EventDispatcher.hpp"
 
 using namespace LucED;
 

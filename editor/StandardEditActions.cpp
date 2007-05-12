@@ -23,9 +23,9 @@
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
 
-#include "Clipboard.h"
-#include "StandardEditActions.h"
-#include "FindUtil.h"
+#include "Clipboard.hpp"
+#include "StandardEditActions.hpp"
+#include "FindUtil.hpp"
 
 using namespace LucED;
 

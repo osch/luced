@@ -21,11 +21,11 @@
 
 #include <X11/keysym.h>
 
-#include "util.h"
-#include "Callback.h"
-#include "DialogPanel.h"
-#include "Button.h"
-#include "GlobalConfig.h"
+#include "util.hpp"
+#include "Callback.hpp"
+#include "DialogPanel.hpp"
+#include "Button.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 

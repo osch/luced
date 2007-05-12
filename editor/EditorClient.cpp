@@ -19,11 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "EditorClient.h"
-#include "GuiRootProperty.h"
-#include "ClientServerUtil.h"
-#include "CommandlineInterpreter.h"
-#include "EventDispatcher.h"
+#include "EditorClient.hpp"
+#include "GuiRootProperty.hpp"
+#include "ClientServerUtil.hpp"
+#include "CommandlineInterpreter.hpp"
+#include "EventDispatcher.hpp"
 
 using namespace LucED;
 

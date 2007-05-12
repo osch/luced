@@ -19,18 +19,18 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "String.h"
+#include "String.hpp"
 
-#include "EventDispatcher.h"
-#include "SyntaxPatterns.h"
-#include "LuaException.h"
-#include "GlobalConfig.h"
-#include "ConfigException.h"
-#include "SingletonKeeper.h"
-#include "EditorServer.h"
-#include "HeapObjectArray.h"
-#include "CommandlineException.h"
-#include "FileException.h"
+#include "EventDispatcher.hpp"
+#include "SyntaxPatterns.hpp"
+#include "LuaException.hpp"
+#include "GlobalConfig.hpp"
+#include "ConfigException.hpp"
+#include "SingletonKeeper.hpp"
+#include "EditorServer.hpp"
+#include "HeapObjectArray.hpp"
+#include "CommandlineException.hpp"
+#include "FileException.hpp"
 
 using namespace LucED;
 

@@ -20,9 +20,9 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 
-#include "TextData.h"
-#include "EventDispatcher.h"
-#include "File.h"
+#include "TextData.hpp"
+#include "EventDispatcher.hpp"
+#include "File.hpp"
 
 using namespace std;
 using namespace LucED;

@@ -21,8 +21,8 @@
 
 #include <X11/keysym.h>
 
-#include "KeyPressRepeater.h"
-#include "GlobalConfig.h"
+#include "KeyPressRepeater.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 

@@ -19,9 +19,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "debug.h"
-#include "Regex.h"
-#include "RegexException.h"
+#include "debug.hpp"
+#include "Regex.hpp"
+#include "RegexException.hpp"
 
 using namespace LucED;
 

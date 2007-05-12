@@ -19,11 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "util.h"
-#include "GuiRoot.h"
-#include "SelectionOwner.h"
-#include "EventDispatcher.h"
-#include "GlobalConfig.h"
+#include "util.hpp"
+#include "GuiRoot.hpp"
+#include "SelectionOwner.hpp"
+#include "EventDispatcher.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 

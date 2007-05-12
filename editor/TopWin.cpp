@@ -21,10 +21,10 @@
 
 #include <X11/xpm.h>
 
-#include "TopWin.h"
-#include "KeyPressRepeater.h"
-#include "GlobalConfig.h"
-#include "SingletonInstance.h"
+#include "TopWin.hpp"
+#include "KeyPressRepeater.hpp"
+#include "GlobalConfig.hpp"
+#include "SingletonInstance.hpp"
 
 using namespace LucED;
 

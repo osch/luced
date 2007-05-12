@@ -19,10 +19,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "EventDispatcher.h"
-#include "TopWinList.h"
-#include "Clipboard.h"
-#include "GlobalConfig.h"
+#include "EventDispatcher.hpp"
+#include "TopWinList.hpp"
+#include "Clipboard.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 

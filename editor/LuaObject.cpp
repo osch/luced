@@ -19,9 +19,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "LuaObject.h"
-#include "LuaException.h"
-#include "LuaObjectList.h"
+#include "LuaObject.hpp"
+#include "LuaException.hpp"
+#include "LuaObjectList.hpp"
 
 using namespace LucED;
 

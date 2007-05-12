@@ -19,11 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "util.h"
-#include "GuiLayoutRow.h"
-#include "OwningPtr.h"
-#include "GuiLayouter.h"
-#include "GuiLayoutSpacer.h"
+#include "util.hpp"
+#include "GuiLayoutRow.hpp"
+#include "OwningPtr.hpp"
+#include "GuiLayouter.hpp"
+#include "GuiLayoutSpacer.hpp"
 
 using namespace LucED;
 

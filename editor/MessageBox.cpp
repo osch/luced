@@ -19,13 +19,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "MessageBox.h"
-#include "GlobalConfig.h"
-#include "GuiLayoutRow.h"
-#include "GuiLayoutSpacer.h"
-#include "GlobalConfig.h"
-#include "LabelWidget.h"
-#include "Callback.h"
+#include "MessageBox.hpp"
+#include "GlobalConfig.hpp"
+#include "GuiLayoutRow.hpp"
+#include "GuiLayoutSpacer.hpp"
+#include "GlobalConfig.hpp"
+#include "LabelWidget.hpp"
+#include "Callback.hpp"
 
 using namespace LucED;
 

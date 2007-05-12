@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-#include "LuaStackChecker.h"
+#include "LuaStackChecker.hpp"
 
 using namespace LucED;
 

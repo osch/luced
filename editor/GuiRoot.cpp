@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "GuiRoot.h"
-#include "GlobalConfig.h"
+#include "GuiRoot.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 

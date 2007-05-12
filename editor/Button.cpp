@@ -21,10 +21,10 @@
 
 #include <X11/keysym.h>
 
-#include "Button.h"
-#include "GuiRoot.h"
-#include "TopWin.h"
-#include "GlobalConfig.h"
+#include "Button.hpp"
+#include "GuiRoot.hpp"
+#include "TopWin.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 

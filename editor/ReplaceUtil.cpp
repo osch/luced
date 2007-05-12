@@ -19,9 +19,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "ReplaceUtil.h"
-#include "SubstitutionException.h"
-#include "RegexException.h"
+#include "ReplaceUtil.hpp"
+#include "SubstitutionException.hpp"
+#include "RegexException.hpp"
 
 using namespace LucED;
 

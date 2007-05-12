@@ -19,10 +19,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "util.h"
-#include "HilitedText.h"
-#include "EventDispatcher.h"
-#include "GlobalConfig.h"
+#include "util.hpp"
+#include "HilitedText.hpp"
+#include "EventDispatcher.hpp"
+#include "GlobalConfig.hpp"
 
 //#define processAmountUnit (10 * breakPointDistance)  // TODO: muss größer sein als das größte vorkommende Pattern
 //#define processAmountUnit 500  // TODO: muss größer sein als das größte vorkommende Pattern

@@ -1,5 +1,5 @@
 sandbox.mk
-sandbox_options.h
+sandbox_options.hpp
 build
 luced
 test.cpp

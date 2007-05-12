@@ -21,15 +21,15 @@
 
 #include <X11/keysym.h>
 
-#include "ReplacePanel.h"
-#include "GuiLayoutColumn.h"
-#include "GuiLayoutRow.h"
-#include "GlobalConfig.h"
-#include "GuiLayoutSpacer.h"
-#include "LabelWidget.h"
-#include "RegexException.h"
-#include "SearchHistory.h"
-#include "SubstitutionException.h"
+#include "ReplacePanel.hpp"
+#include "GuiLayoutColumn.hpp"
+#include "GuiLayoutRow.hpp"
+#include "GlobalConfig.hpp"
+#include "GuiLayoutSpacer.hpp"
+#include "LabelWidget.hpp"
+#include "RegexException.hpp"
+#include "SearchHistory.hpp"
+#include "SubstitutionException.hpp"
 
 using namespace LucED;
 

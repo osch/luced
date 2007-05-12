@@ -19,14 +19,14 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "String.h"
+#include "String.hpp"
 
-#include "EventDispatcher.h"
-#include "SingletonKeeper.h"
-#include "GuiRootProperty.h"
-#include "EditorClient.h"
-#include "CommandlineException.h"
-#include "HeapObjectArray.h"
+#include "EventDispatcher.hpp"
+#include "SingletonKeeper.hpp"
+#include "GuiRootProperty.hpp"
+#include "EditorClient.hpp"
+#include "CommandlineException.hpp"
+#include "HeapObjectArray.hpp"
 
 using namespace LucED;
 

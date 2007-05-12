@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "GuiLayoutWidget.h"
-#include "GuiRoot.h"
+#include "GuiLayoutWidget.hpp"
+#include "GuiRoot.hpp"
 
 using namespace LucED;
 

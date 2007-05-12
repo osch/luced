@@ -21,10 +21,10 @@
 
 #include <X11/cursorfont.h>
 
-#include "TextWidget.h"
-#include "util.h"
-#include "TimeVal.h"
-#include "EventDispatcher.h"
+#include "TextWidget.hpp"
+#include "util.hpp"
+#include "TimeVal.hpp"
+#include "EventDispatcher.hpp"
 
 #define CURSOR_WIDTH 2
 

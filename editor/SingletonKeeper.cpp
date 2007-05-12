@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "WeakPtr.h"
-#include "SingletonKeeper.h"
+#include "WeakPtr.hpp"
+#include "SingletonKeeper.hpp"
 
 using namespace LucED;
 

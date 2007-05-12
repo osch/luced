@@ -22,19 +22,19 @@
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
 
-#include "util.h"
-#include "EditorTopWin.h"
-#include "GlobalConfig.h"
-#include "GuiLayoutWidget.h"
-#include "GuiLayoutColumn.h"
-#include "GuiLayoutRow.h"
-#include "GuiLayoutSpacer.h"
-#include "Callback.h"
-#include "WeakPtr.h"
-#include "File.h"
-#include "FileException.h"
-#include "LuaInterpreter.h"
-#include "LuaException.h"
+#include "util.hpp"
+#include "EditorTopWin.hpp"
+#include "GlobalConfig.hpp"
+#include "GuiLayoutWidget.hpp"
+#include "GuiLayoutColumn.hpp"
+#include "GuiLayoutRow.hpp"
+#include "GuiLayoutSpacer.hpp"
+#include "Callback.hpp"
+#include "WeakPtr.hpp"
+#include "File.hpp"
+#include "FileException.hpp"
+#include "LuaInterpreter.hpp"
+#include "LuaException.hpp"
 
 using namespace LucED;
 

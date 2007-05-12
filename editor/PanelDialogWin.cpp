@@ -19,14 +19,14 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "PanelDialogWin.h"
-#include "GlobalConfig.h"
-#include "GuiLayoutRow.h"
-#include "GuiLayoutSpacer.h"
-#include "TextData.h"
-#include "GlobalConfig.h"
-#include "LabelWidget.h"
-#include "DialogPanel.h"
+#include "PanelDialogWin.hpp"
+#include "GlobalConfig.hpp"
+#include "GuiLayoutRow.hpp"
+#include "GuiLayoutSpacer.hpp"
+#include "TextData.hpp"
+#include "GlobalConfig.hpp"
+#include "LabelWidget.hpp"
+#include "DialogPanel.hpp"
 
 using namespace LucED;
 

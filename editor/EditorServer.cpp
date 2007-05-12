@@ -21,16 +21,16 @@
 
 #include <stdio.h>
 
-#include "String.h"
+#include "String.hpp"
 
-#include "EditorServer.h"
-#include "EventDispatcher.h"
-#include "ClientServerUtil.h"
-#include "CommandlineInterpreter.h"
-#include "TextStyle.h"
-#include "GlobalConfig.h"
-#include "EditorTopWin.h"
-#include "HeapObjectArray.h"
+#include "EditorServer.hpp"
+#include "EventDispatcher.hpp"
+#include "ClientServerUtil.hpp"
+#include "CommandlineInterpreter.hpp"
+#include "TextStyle.hpp"
+#include "GlobalConfig.hpp"
+#include "EditorTopWin.hpp"
+#include "HeapObjectArray.hpp"
 
 using namespace LucED;
 

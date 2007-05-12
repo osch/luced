@@ -100,6 +100,9 @@ clean:
 # gar nicht mehr compiliert wird:
 %.h: ;
 
+%.hpp: ;
+
+
 # bei folgenden Goals keine Dependencies inkludieren:
 IGNOREDEPS_GOALS := clean 
 

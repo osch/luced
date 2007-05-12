@@ -25,14 +25,14 @@ extern "C" {
 #include <lualib.h>
 }
 
-#include "LuaInterpreter.h"
-#include "File.h"
-#include "ByteBuffer.h"
-#include "LuaException.h"
-#include "LuaObject.h"
-#include "LuaStoredObject.h"
-#include "LuaStackChecker.h"
-#include "NonCopyable.h"
+#include "LuaInterpreter.hpp"
+#include "File.hpp"
+#include "ByteBuffer.hpp"
+#include "LuaException.hpp"
+#include "LuaObject.hpp"
+#include "LuaStoredObject.hpp"
+#include "LuaStackChecker.hpp"
+#include "NonCopyable.hpp"
 
 using namespace LucED;
 

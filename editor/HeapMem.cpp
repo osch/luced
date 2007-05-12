@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-#include "HeapMem.h"
+#include "HeapMem.hpp"
 
 using namespace LucED;
 

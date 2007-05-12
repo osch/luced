@@ -21,11 +21,11 @@
 
 #include <limits.h>
 
-#include "util.h"
-#include "GuiLayoutColumn.h"
-#include "GuiLayoutSpacer.h"
-#include "OwningPtr.h"
-#include "GuiLayouter.h"
+#include "util.hpp"
+#include "GuiLayoutColumn.hpp"
+#include "GuiLayoutSpacer.hpp"
+#include "OwningPtr.hpp"
+#include "GuiLayouter.hpp"
 
 using namespace LucED;
 

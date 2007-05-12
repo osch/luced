@@ -27,10 +27,10 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "File.h"
-#include "ByteArray.h"
-#include "Regex.h"
-#include "FileException.h"
+#include "File.hpp"
+#include "ByteArray.hpp"
+#include "Regex.hpp"
+#include "FileException.hpp"
 
 using namespace LucED;
 

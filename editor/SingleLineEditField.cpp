@@ -19,9 +19,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "SingleLineEditField.h"
-#include "GlobalConfig.h"
-#include "util.h"
+#include "SingleLineEditField.hpp"
+#include "GlobalConfig.hpp"
+#include "util.hpp"
 
 using namespace LucED;
 

@@ -19,7 +19,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "SingleLineEditorWidget.h"
+#include "SingleLineEditorWidget.hpp"
 
 using namespace LucED;
 

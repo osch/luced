@@ -19,11 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "GuiRoot.h"
-#include "PasteDataReceiver.h"
-#include "Clipboard.h"
-#include "SelectionOwner.h"
-#include "EventDispatcher.h"
+#include "GuiRoot.hpp"
+#include "PasteDataReceiver.hpp"
+#include "Clipboard.hpp"
+#include "SelectionOwner.hpp"
+#include "EventDispatcher.hpp"
 
 using namespace LucED;
 

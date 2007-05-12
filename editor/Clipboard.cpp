@@ -21,10 +21,10 @@
 
 #include <X11/Xatom.h>
 
-#include "util.h"
-#include "Clipboard.h"
-#include "EventDispatcher.h"
-#include "TopWinList.h"
+#include "util.hpp"
+#include "Clipboard.hpp"
+#include "EventDispatcher.hpp"
+#include "TopWinList.hpp"
 
 using namespace LucED;
 

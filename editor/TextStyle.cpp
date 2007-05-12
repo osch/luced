@@ -19,9 +19,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "TextStyle.h"
-#include "GuiRoot.h"
-#include "ConfigException.h"
+#include "TextStyle.hpp"
+#include "GuiRoot.hpp"
+#include "ConfigException.hpp"
 
 
 using namespace LucED;
