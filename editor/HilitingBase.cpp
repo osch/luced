@@ -147,7 +147,7 @@ void HilitingBase::deleteBreaks(IteratorHandle startIter, IteratorHandle endIter
                     I->breakIndex -= breakCount;
                 } else if (I->breakIndex >= startBreak) {
                     I->breakIndex = startBreak;
-                    I->textStartPos = textEnd;
+                    I->textStartPos = textEnd; // because former start break is now former end break
                 }
             }
         }
@@ -172,25 +172,62 @@ void HilitingBase::treatTextDataUpdate(IteratorHandle processingRestartedIterato
         do {
             incIterator(iterator);
         } while (!isEndOfBreaks(iterator) && getBreakStartPos(iterator) < oldEndChangedPos);
+
+        ASSERT(isEndOfBreaks(iterator) || getBreakStartPos(iterator) >= oldEndChangedPos);
         deleteBreaks(processingRestartedIterator, iterator);
+        ASSERT(isEndOfBreaks(iterator) || getBreakStartPos(iterator) >= oldEndChangedPos);
         
         ASSERT(isEndOfBreaks(processingRestartedIterator) 
-                || getBreakStartPos(processingRestartedIterator) >= oldEndChangedPos);
-        decIterator(processingRestartedIterator);
-        ASSERT(getBreakEndPos(processingRestartedIterator) <= beginChangedPos);
-         
-        if (!isLastBreak(processingRestartedIterator)) {
-            getBreakData(processingRestartedIterator)->nextStartOffset += changedAmount;
-        }
-        long breakIndex = getIteratorData(processingRestartedIterator)->breakIndex + 1;
+                || getBreakStartPos(processingRestartedIterator) >= oldEndChangedPos); // because former start break is now former end break
         
-        ASSERT(getBreakData(processingRestartedIterator)->nextStartOffset >= 0);
+        bool wasEndOfBreaksGreaterOrEqualThanOldEndChangedPos 
+                = (getBreakStartPos(processingRestartedIterator) >= oldEndChangedPos);
+        
+//ASSERTvalid();
 
-        for (int i = 0; i < iterators.getLength(); ++i) {
-            IteratorData* I = iterators.getPtr(i);
-            if (I->inUseCounter > 0 && I->breakIndex > 0) {
-                if (I->breakIndex >= breakIndex) {
-                    I->textStartPos += changedAmount;
+        if (wasEndOfBreaksGreaterOrEqualThanOldEndChangedPos)
+        {
+            decIterator(processingRestartedIterator);
+            ASSERT(getBreakEndPos(processingRestartedIterator) <= beginChangedPos);
+
+            getBreakData(processingRestartedIterator)->nextStartOffset += changedAmount;
+
+            long breakIndex = getIteratorData(processingRestartedIterator)->breakIndex + 1;
+
+            ASSERT(getBreakData(processingRestartedIterator)->nextStartOffset >= 0);
+
+            for (int i = 0; i < iterators.getLength(); ++i) {
+                IteratorData* I = iterators.getPtr(i);
+                if (I->inUseCounter > 0 && I->breakIndex > 0) {
+                    if (I->breakIndex >= breakIndex) {
+                        ASSERT(I->textStartPos >= oldEndChangedPos);
+                        I->textStartPos += changedAmount;
+                    }
+                }
+            }
+        }
+        else
+        {
+            decIterator(processingRestartedIterator);
+            ASSERT(isLastBreak(processingRestartedIterator));
+
+            ASSERT(getBreakEndPos(processingRestartedIterator) <= beginChangedPos);
+
+            getBreakData(processingRestartedIterator)->nextStartOffset = 0;
+
+            long textStartPosForIteratorsAtEndOfBreaks = getBreakStartPos(processingRestartedIterator);
+
+            long breakIndex = getIteratorData(processingRestartedIterator)->breakIndex + 1;
+
+            ASSERT(getBreakData(processingRestartedIterator)->nextStartOffset >= 0);
+
+            for (int i = 0; i < iterators.getLength(); ++i) {
+                IteratorData* I = iterators.getPtr(i);
+                if (I->inUseCounter > 0 && I->breakIndex > 0) {
+                    if (I->breakIndex >= breakIndex) {
+                        ASSERT(I->breakIndex == breaks.getLength());
+                        I->textStartPos = textStartPosForIteratorsAtEndOfBreaks;
+                    }
                 }
             }
         }

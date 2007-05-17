@@ -207,6 +207,7 @@ public:
     void decIterator(IteratorHandle iterator) {
         IteratorData *I   = getIteratorData(iterator);
         ASSERT(0 < I->breakIndex);
+        ASSERT(getIteratorData(iterator)->textStartPos >= 0);
         I->stackStartPos -= breaks[I->breakIndex - 1].stackLength;
         I->textStartPos  -= breaks[I->breakIndex - 1].nextStartOffset;
         I->breakIndex    -= 1;
