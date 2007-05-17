@@ -249,14 +249,21 @@ void ScrollBar::hiliteScrollBarPartAtMousePosition(int mouseX, int mouseY)
     if (0 <= x && x < w)
     {
         if ((y >= this->scrollY + arrowLength) 
-                && (y < this->scrollY + arrowLength + this->scrollHeight)) {
-            newPart = SCROLLER;
+                && (y < this->scrollY + arrowLength + this->scrollHeight))
+        {
+            if (value > 0 || value + heightValue < totalValue) {
+                newPart = SCROLLER;
+            }
         }
         else if (0 <= y && y < arrowLength) {
-            newPart = TOP_ARROW;
+            if (value > 0) {
+                newPart = TOP_ARROW;
+            }
         }
         else if (h - arrowLength <= y && y < h) {
-            newPart = BOTTOM_ARROW;
+            if (value + heightValue < totalValue) {
+                newPart = BOTTOM_ARROW;
+            }
         }
         else if (arrowLength <= y && y < this->scrollY + arrowLength) {
         }
