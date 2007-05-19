@@ -19,6 +19,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <limits.h>
 
 #include "TextData.hpp"
 #include "EventDispatcher.hpp"
@@ -203,10 +204,13 @@ inline long TextData::internalInsertAtMark(MarkHandle m, const byte* insertBuffe
 
 long TextData::undo(MarkHandle m)
 {
-    long totalLength = 0;
+    long spos = LONG_MAX;
+    long epos = 0;
     
     if (hasHistory())
     {
+        bool first = true;
+        
         do
         {
             switch (history->getPreviousActionType())
@@ -217,6 +221,14 @@ long TextData::undo(MarkHandle m)
                     moveMarkToPos(m, pos);
                     history->undoInsertAction(buffer.getAmount(pos, length));
                     internalRemoveAtMark(m, length);
+                    if (spos > pos) {
+                        spos = pos;
+                    }
+                    if (epos < pos + length) {
+                        epos = pos;
+                    } else {
+                        epos -= length;
+                    }
                     break;
                 }
                 case EditingHistory::ACTION_DELETE: {
@@ -225,7 +237,15 @@ long TextData::undo(MarkHandle m)
                     moveMarkToPos(m, pos);
                     internalInsertAtMark(m,  history->getContentForUndoDeleteAction(), length);
                     history->undoDeleteAction();
-                    totalLength += length;
+
+                    if (spos > pos) {
+                        spos = pos;
+                    }
+                    if (epos < pos + length) {
+                        epos = pos + length;
+                    } else {
+                        epos += length;
+                    }
                     break;
                 }
                 case EditingHistory::ACTION_NONE: {
@@ -240,12 +260,18 @@ long TextData::undo(MarkHandle m)
             changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
         }
     }
-    return totalLength;
+    if (epos >= spos) {
+        moveMarkToPos(m, spos);
+        return epos - spos;
+    } else {
+        return 0;
+    }
 }
 
 long TextData::redo(MarkHandle m)
 {
-    long totalLength = 0;
+    long spos = LONG_MAX;
+    long epos = 0;
         
     if (hasHistory())
     {
@@ -259,7 +285,15 @@ long TextData::redo(MarkHandle m)
                     moveMarkToPos(m, pos);
                     internalInsertAtMark(m, history->getContentForRedoInsertAction(), length);
                     history->redoInsertAction();
-                    totalLength += length;
+
+                    if (spos > pos) {
+                        spos = pos;
+                    }
+                    if (epos < pos + length) {
+                        epos = pos + length;
+                    } else {
+                        epos += length;
+                    }
                     break;
                 }
                 case EditingHistory::ACTION_DELETE: {
@@ -268,6 +302,15 @@ long TextData::redo(MarkHandle m)
                     moveMarkToPos(m, pos);
                     history->redoDeleteAction(buffer.getAmount(pos, length), length);
                     internalRemoveAtMark(m, length);
+
+                    if (spos > pos) {
+                        spos = pos;
+                    }
+                    if (epos < pos + length) {
+                        epos = pos;
+                    } else {
+                        epos -= length;
+                    }
                     break;
                 }
                 case EditingHistory::ACTION_NONE: {
@@ -282,7 +325,12 @@ long TextData::redo(MarkHandle m)
             changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
         }
     }
-    return totalLength;
+    if (epos >= spos) {
+        moveMarkToPos(m, spos);
+        return epos - spos;
+    } else {
+        return 0;
+    }
 }
 
 long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)

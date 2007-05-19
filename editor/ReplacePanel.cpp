@@ -389,6 +389,60 @@ void ReplacePanel::handleButtonPressed(Button* button)
 
             internalFindNext(false);
         }
+        else if (button == replaceSelectionButton && e->getBackliteBuffer()->hasActiveSelection())
+        {
+            long spos = e->getBackliteBuffer()->getBeginSelectionPos();
+            long epos = e->getBackliteBuffer()->getEndSelectionPos();
+
+            replaceUtil.setSearchForwardFlag(true);
+            replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+            replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
+            replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
+            replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
+            replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
+
+            findEditField   ->getTextData()->setModifiedFlag(false);
+            replaceEditField->getTextData()->setModifiedFlag(false);
+
+            historyIndex = -1;
+
+            SearchHistory::Entry newEntry;
+                                 newEntry.setFindString    (replaceUtil.getSearchString());
+                                 newEntry.setReplaceString (replaceUtil.getReplaceString());
+                                 newEntry.setWholeWordFlag (replaceUtil.getWholeWordFlag());
+                                 newEntry.setRegexFlag     (replaceUtil.getRegexFlag());
+                                 newEntry.setIgnoreCaseFlag(replaceUtil.getIgnoreCaseFlag());
+
+            SearchHistory::getInstance()->append(newEntry);
+
+            TextData::TextMark textMark = e->createNewMarkFromCursor();
+            textMark.moveToPos(spos);
+            TextData* textData = e->getTextData();
+            
+            replaceUtil.setTextPosition(textMark.getPos());
+
+            while (textMark.getPos() < epos)
+            {
+                if (replaceUtil.doesMatch() && replaceUtil.getMatchEndPos() <= epos)
+                {
+                    String substitutedString = replaceUtil.getSubstitutedString();
+                    textData->insertAtMark(textMark, substitutedString);
+
+                    textMark.moveToPos(textMark.getPos() + substitutedString.getLength());
+
+                    textData->removeAtMark(textMark, replaceUtil.getMatchLength());
+
+                    epos += substitutedString.getLength() - replaceUtil.getMatchLength();
+
+                }
+                else
+                {
+                    textMark.moveToPos(textMark.getPos() + 1);
+                }
+                replaceUtil.setTextPosition(textMark.getPos());
+            }
+            ASSERT(e->getBackliteBuffer()->hasActiveSelection());
+        }
     }
     catch (SubstitutionException& ex)
     {

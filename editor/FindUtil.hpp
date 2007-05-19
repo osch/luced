@@ -104,6 +104,10 @@ public:
         ASSERT(wasFoundFlag);
         return ovector[1];
     }
+    long getMatchLength() const {
+        ASSERT(wasFoundFlag);
+        return ovector[1] - ovector[0];
+    }
     String getSearchString() const {
         return searchString;
     }
