@@ -54,6 +54,9 @@ public:
         return Ptr(new ReplacePanel(parent, editorWidget, findPanel, messageBoxInvoker, panelInvoker));
     }
     
+    void replaceAgainForward();
+    void replaceAgainBackward();
+    
     virtual void treatFocusIn();
     virtual void treatFocusOut();
     

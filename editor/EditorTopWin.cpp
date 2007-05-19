@@ -193,8 +193,12 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping1.set(            ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionForward));
     keyMapping1.set(  ShiftMask|ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionBackward));
 
+    keyMapping1.set(            ControlMask, XK_t,      Callback0(replacePanel, &ReplacePanel::replaceAgainForward));
+    keyMapping1.set(  ControlMask|ShiftMask, XK_t,      Callback0(replacePanel, &ReplacePanel::replaceAgainBackward));
+
     keyMapping2.set(            ControlMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainForward));
     keyMapping2.set(  ControlMask|ShiftMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainBackward));
+
     keyMapping2.set(               Mod1Mask, XK_c,      Callback0(this,      &EditorTopWin::createCloneWindow));
     keyMapping2.set(               Mod1Mask, XK_l,      Callback0(this,      &EditorTopWin::executeLuaScript));
 }
