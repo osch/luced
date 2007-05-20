@@ -185,7 +185,7 @@ private:
     void appendToOutBuf(LineInfo *li, long pos,
             int c, int background, int style, int *print, long *pixelPos, int* lastBackground, int* lastStyle, 
             int* lastStyleBegin, long* lastStylePixBegin);
-    void redrawChanged();
+    void redrawChanged(long spos, long epos);
     void redraw();
     void drawPartialArea(int minY, int maxY, int x1, int x2);
     void drawArea(int minY, int maxY);

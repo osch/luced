@@ -182,7 +182,7 @@ void TextWidget::treatHilitingUpdate(HilitingBuffer::UpdateInfo update)
     
     if (update.endPos >= getTopLeftTextPosition() && update.beginPos < this->endPos)
     {
-        redrawChanged();
+        redrawChanged(update.beginPos, update.endPos);
         totalPixWidth = 0;
         calcTotalPixWidth();
         updateHorizontalScrollBar = true;
@@ -915,7 +915,7 @@ void TextWidget::drawArea(int minY, int maxY)
     endPos = pos;
 }
 
-void TextWidget::redrawChanged()
+void TextWidget::redrawChanged(long spos, long epos)
 {
     int minY = 0;
     int maxY = position.h;
@@ -923,21 +923,24 @@ void TextWidget::redrawChanged()
     int line = 0;
     long pos = getTopLeftTextPosition();
     long oldpos;
-    
+
     unclip();
-        
+
     if (lineInfos.getLength() > 0) {
         do {
             LineInfo *li = lineInfos.getPtr(line);
 
-            if (li->valid) {
+            if (li->valid && li->beginOfLinePos == pos) {
+                
+                if (li->startPos <= epos && li->endPos >= spos) // ">=" because line info for zero length lines should also be checked because of selection backliting
+                {
+                    tempLineInfo = *li;
+                    fillLineInfo(pos, li);
 
-                tempLineInfo = *li;
-                fillLineInfo(pos, li);
-
-                if (tempLineInfo.isDifferentOnScreenThan(*li)) {
-                    if (y + lineHeight > minY && y < maxY) {
-                        printLine(li, y);
+                    if (tempLineInfo.isDifferentOnScreenThan(*li)) {
+                        if (y + lineHeight > minY && y < maxY) {
+                            printLine(li, y);
+                        }
                     }
                 }
             } else {
@@ -1763,13 +1766,18 @@ void TextWidget::processAllExposureEvents()
     }
 }
 
-static inline void adjustLineInfoPosition(long *pos, long beginChangedPos, long oldEndChangedPos, long changedAmount)
+static inline bool adjustLineInfoPosition(long *pos, long beginChangedPos, long oldEndChangedPos, long changedAmount)
 {
     ASSERT(0 <= *pos);
     ASSERT(*pos <= beginChangedPos || *pos >= oldEndChangedPos);
 
     if (*pos >= oldEndChangedPos) {
         *pos += changedAmount;
+        return true;
+    } else if (*pos < beginChangedPos) {
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -1792,20 +1800,25 @@ void TextWidget::treatTextDataUpdate(TextData::UpdateInfo u)
         }
     }
 
-    if (redraw) {
-        redrawChanged();
-    } else {
-        for (int i = 0; i < lineInfos.getLength(); ++i) {
-            LineInfo *li = lineInfos.getPtr(i);
-            if (li->valid) {
-                adjustLineInfoPosition(&li->beginOfLinePos, u.beginChangedPos, u.oldEndChangedPos, u.changedAmount);
-                adjustLineInfoPosition(&li->endOfLinePos,   u.beginChangedPos, u.oldEndChangedPos, u.changedAmount);
+    for (int i = 0; i < lineInfos.getLength(); ++i) {
+        LineInfo *li = lineInfos.getPtr(i);
+        if (li->valid)
+        {
+            if (adjustLineInfoPosition(&li->beginOfLinePos, u.beginChangedPos, u.oldEndChangedPos, u.changedAmount)
+             && adjustLineInfoPosition(&li->endOfLinePos,   u.beginChangedPos, u.oldEndChangedPos, u.changedAmount))
+            {
                 if (li->startPos != -1) {
                     adjustLineInfoPosition(&li->startPos, u.beginChangedPos, u.oldEndChangedPos, u.changedAmount);
                     adjustLineInfoPosition(&li->endPos,   u.beginChangedPos, u.oldEndChangedPos, u.changedAmount);
                 }
+            } else {
+                li->valid = false;
             }
         }
+    }
+
+    if (redraw) {
+        redrawChanged(u.beginChangedPos, u.oldEndChangedPos);
     }
     updateVerticalScrollBar = true;
     totalPixWidth = 0;
