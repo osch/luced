@@ -389,10 +389,20 @@ void ReplacePanel::handleButtonPressed(Button* button)
 
             internalFindNext(false);
         }
-        else if (button == replaceSelectionButton && e->getBackliteBuffer()->hasActiveSelection())
+        else if ((button == replaceSelectionButton && e->getBackliteBuffer()->hasActiveSelection())
+               || button == replaceWindowButton)
         {
-            long spos = e->getBackliteBuffer()->getBeginSelectionPos();
-            long epos = e->getBackliteBuffer()->getEndSelectionPos();
+            TextData* textData = e->getTextData();
+            long spos;
+            long epos;
+            
+            if (button == replaceSelectionButton) {
+                spos = e->getBackliteBuffer()->getBeginSelectionPos();
+                epos = e->getBackliteBuffer()->getEndSelectionPos();
+            } else {
+                spos = 0;
+                epos = textData->getLength();
+            }
 
             replaceUtil.setSearchForwardFlag(true);
             replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
@@ -417,7 +427,6 @@ void ReplacePanel::handleButtonPressed(Button* button)
 
             TextData::TextMark textMark = e->createNewMarkFromCursor();
             textMark.moveToPos(spos);
-            TextData* textData = e->getTextData();
             
             replaceUtil.setTextPosition(textMark.getPos());
 
@@ -441,7 +450,6 @@ void ReplacePanel::handleButtonPressed(Button* button)
                 }
                 replaceUtil.setTextPosition(textMark.getPos());
             }
-            ASSERT(e->getBackliteBuffer()->hasActiveSelection());
         }
     }
     catch (SubstitutionException& ex)
