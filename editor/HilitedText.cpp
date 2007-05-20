@@ -224,8 +224,12 @@ void HilitedText::registerUpdateListener(const Callback1<UpdateInfo>& updateCall
     updateListeners.registerCallback(updateCallback);
 }
 
-void HilitedText::flushPendingUpdatesIntern()
+void HilitedText::flushPendingUpdates()
 {
+    if (this->endChangedPos == 0) {
+        return;
+    }
+    
     // todo: überdenken!!
     ASSERT(this->beginChangedPos <= this->endChangedPos);
     if (this->beginChangedPos < this->endChangedPos) {

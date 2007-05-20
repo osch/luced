@@ -58,12 +58,6 @@ public:
     
     void registerUpdateListener(const Callback1<UpdateInfo>& updateCallback);
 
-    void flushPendingUpdates() {
-        if (this->endChangedPos != 0) {
-            flushPendingUpdatesIntern();
-        }
-    }
-    
     SyntaxPatterns::Ptr getSyntaxPatterns() {
         return syntaxPatterns;
     }
@@ -91,7 +85,7 @@ private:
             long fillStart, long fillEnd,
             long *lastFillEnd, ByteArray& patternStack);
             
-    void flushPendingUpdatesIntern();
+    void flushPendingUpdates();
     
     Iterator rememberedLastProcessingRestartedIterator;
     Iterator processingEndBeforeRestartIterator;
