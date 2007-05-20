@@ -1769,7 +1769,6 @@ void TextWidget::processAllExposureEvents()
 static inline bool adjustLineInfoPosition(long *pos, long beginChangedPos, long oldEndChangedPos, long changedAmount)
 {
     ASSERT(0 <= *pos);
-    ASSERT(*pos <= beginChangedPos || *pos >= oldEndChangedPos);
 
     if (*pos >= oldEndChangedPos) {
         *pos += changedAmount;
