@@ -61,7 +61,8 @@ MODULES = EditorTopWin            EventDispatcher        GuiRoot                
           SingleLineEditField     LabelWidget            DialogPanel            PanelDialogWin \
           FindPanel               CheckBox               MessageBox             SearchHistory \
           FileException           EditorServer           ClientServerUtil       EditorClient  \
-          CommandlineException    ReplacePanel           LuaFunctionArguments   ReplaceUtil             
+          CommandlineException    ReplacePanel           LuaFunctionArguments   ReplaceUtil   \
+          GuiElement          
 
 
 LIB_MBRS = $(patsubst %, $(BUILD_DIR)/libluced.a(%.o), $(MODULES))

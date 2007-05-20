@@ -57,26 +57,8 @@ public:
                   maxWidth(maxWidth),   maxHeight(maxHeight),
                   incrWidth(incrWidth), incrHeight(incrHeight)
         {}
-        void maximize(const Measures& rhs) {
-            if (bestWidth < rhs.bestWidth) {
-                bestWidth = rhs.bestWidth;
-            }
-            if (bestHeight < rhs.bestHeight) {
-                bestHeight = rhs.bestHeight;
-            }
-            if (minWidth < rhs.minWidth) {
-                minWidth = rhs.minWidth;
-            }
-            if (minHeight < rhs.minHeight) {
-                minHeight = rhs.minHeight;
-            }
-            if (maxWidth < rhs.maxWidth) {
-                maxWidth = rhs.maxWidth;
-            }
-            if (maxHeight < rhs.maxHeight) {
-                maxHeight = rhs.maxHeight;
-            }
-        }
+        void maximize(const Measures& rhs);
+        
         int bestWidth;
         int bestHeight;
         int minWidth;
