@@ -93,6 +93,9 @@ public:
         void moveToPos(long pos) {
             textData->moveMarkToPos(*this, pos);
         }
+        void moveForwardToPos(long nextPos) {
+            textData->moveMarkForwardToPos(*this, nextPos);
+        }
         long getPos() {
             return textData->getTextPositionOfMark(*this);
         }
@@ -172,6 +175,11 @@ public:
     }
     String getSubstring(long pos, long amount) {
         return String((const char*) getAmount(pos, amount), amount);
+    }
+    String getSubstring(const MarkHandle& beginMark, const MarkHandle& endMark) {
+        long amount = getTextPositionOfMark(endMark) - getTextPositionOfMark(beginMark);
+        ASSERT(0 <= amount);
+        return String((const char*) getAmount(getTextPositionOfMark(beginMark), amount), amount);
     }
     String getAsString() {
         return getSubstring(0, getLength());
@@ -271,6 +279,24 @@ public:
     void moveMarkToPrevLineBegin(MarkHandle m);
     void moveMarkToPos(MarkHandle m, long pos);
     void moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark);
+
+    void moveMarkForwardToPos(MarkHandle m, long pos) {
+        TextMarkData& mark = marks[m.index];
+        ASSERT(mark.pos <= pos);
+        long markPos  = mark.pos;
+        long markLine = mark.line;
+        while (markPos < pos) {
+            if (isEndOfLine(markPos)) {
+                markPos += getLengthOfLineEnding(markPos);
+                markLine += 1;
+            } else {
+                markPos += 1;
+            }
+        }
+        mark.pos    = markPos;
+        mark.line   = markLine;
+        mark.column = pos - getThisLineBegin(pos);
+    }
     
     void incMark(MarkHandle m) {
         moveMarkToPos(m, marks[m.index].pos + 1);
@@ -324,6 +350,10 @@ public:
     }
     
     void setHistorySeparator();
+    
+    EditingHistory::SectionHolder::Ptr getHistorySectionHolder() {
+        return history->getSectionHolder();
+    }
     
 private:
 

@@ -86,6 +86,12 @@ public:
     bool hasOwningReferences() const {
         return strongCounter >= 1;
     }
+    int getWeakCounter() const {
+        return weakCounter;
+    }
+    int getOwningCounter() const {
+        return strongCounter;
+    }
 };
 
 class HeapObject : NonCopyable

@@ -42,6 +42,8 @@ public:
         return Ptr(new Button(parent, buttonText));
     }
     
+    void setButtonText(String buttonText);
+    
     int getStandardHeight();
 
     void setButtonPressedCallback(const Callback1<Button*>& callback) {

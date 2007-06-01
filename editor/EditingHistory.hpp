@@ -36,6 +36,21 @@ class EditingHistory : public HeapObject
 {
 public:
     typedef OwningPtr<EditingHistory> Ptr;
+    
+    class SectionHolder : public HeapObject
+    {
+    public:
+        typedef OwningPtr<SectionHolder> Ptr;
+    private:
+        friend class EditingHistory;
+        
+        static Ptr create() {
+            return Ptr(new SectionHolder());
+        }
+        
+        SectionHolder()
+        {}
+    };
 
     enum ActionType {
         ACTION_NONE,
@@ -150,13 +165,13 @@ public:
     }
     
     void setSectionMarkOnHistoryTop() {
-        if (actions.getLength() > 0) {
+        if (actions.getLength() > 0 && sectionHolder.getRefCounter() <= 1) {
             actions[actions.getLength() - 1].flags.set(FLAG_SECTION_MARK);
         }
     }
 
     void setSectionMarkOnPreviousAction() {
-        if (nextActionIndex > 0) {
+        if (nextActionIndex > 0 && sectionHolder.getRefCounter() <= 1) {
             actions[nextActionIndex - 1].flags.set(FLAG_SECTION_MARK);
         }
     }
@@ -321,6 +336,13 @@ public:
         actions.clear();
         historyData.clear();
     }
+    
+    SectionHolder::Ptr getSectionHolder() {
+        if (!sectionHolder.isValid()) {
+            sectionHolder = SectionHolder::create();
+        }
+        return sectionHolder;
+    }
 
 private:
 
@@ -335,6 +357,7 @@ private:
     long              nextActionIndex;
     long              historyDataIndex;
     long              savedActionIndex;
+    SectionHolder::Ptr sectionHolder;
 };
 
 } // namespace LucED

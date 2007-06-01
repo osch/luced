@@ -121,6 +121,7 @@ private:
     bool selectSearchRegexFlag;
     EditFieldGroup::Ptr editFieldGroup;
     ReplaceUtil         replaceUtil;
+    String rememberedSelection;
 };
 
 } // namespace LucED

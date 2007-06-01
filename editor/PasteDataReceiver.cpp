@@ -49,7 +49,9 @@ void PasteDataReceiver::requestSelectionPasting()
             ByteArray buffer;
             buffer.append(data, length); // make copy, because data* could become invalid, if
                                          // paste is going into the same buffer
+            notifyAboutBeginOfPastingData();
             notifyAboutReceivedPasteData(buffer.getPtr(0), buffer.getLength());
+            notifyAboutEndOfPastingData();
         }
         endSelectionDataRequest(selectionOwner);
         isReceivingPasteDataFlag = false;
@@ -72,7 +74,9 @@ void PasteDataReceiver::requestClipboardPasting()
     if (Clipboard::getInstance()->hasClipboardOwnership()) {
         const ByteArray& clipboardBuffer = Clipboard::getInstance()->getClipboardBuffer();
         if (clipboardBuffer.getLength() > 0) {
+            notifyAboutBeginOfPastingData();
             notifyAboutReceivedPasteData(clipboardBuffer.getPtr(0), clipboardBuffer.getLength());
+            notifyAboutEndOfPastingData();
         }
         isReceivingPasteDataFlag = false;
     } else {

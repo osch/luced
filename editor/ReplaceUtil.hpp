@@ -38,6 +38,9 @@ public:
         return replaceString;
     }
     String getSubstitutedString();
+    
+    bool replaceAllBetween(long spos, long epos);
+    
 private:
     String replaceString;
 };

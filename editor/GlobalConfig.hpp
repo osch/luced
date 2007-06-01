@@ -121,6 +121,10 @@ public:
         return foundIndex.isValid();
     }
     
+    long getMaxRegexAssertionLength() const {
+        return maxRegexAssertionLength;
+    }
+    
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(const String& languageMode);
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode);
     SyntaxPatterns::Ptr getSyntaxPatternsForFileName(const String& fileName);
@@ -166,6 +170,7 @@ private:
     int guiSpacing;
     bool editorPanelOnTop;
     bool keepRunningIfOwningClipboard;
+    long maxRegexAssertionLength;
 };
 
 } // namespace LucED

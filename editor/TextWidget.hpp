@@ -31,6 +31,7 @@
 #include "BackliteBuffer.hpp"
 #include "CallbackContainer.hpp"
 #include "OwningPtr.hpp"
+#include "GuiColor.hpp"
 
 namespace LucED {
 
@@ -171,7 +172,8 @@ public:
     void notifyAboutHotKeyEventForOtherWidget();
         
 private:
-
+    
+    GuiColor getColorForBackground(byte background);
     
     void internalShowMousePointer();
     void internalHideMousePointer();
@@ -255,6 +257,8 @@ private:
     int border;
     VerticalAdjustment::Type adjustment;
     bool isMousePointerHidden;
+    GuiColor primarySelectionColor;
+    GuiColor secondarySelectionColor;
 };
 
 } // namespace LucED

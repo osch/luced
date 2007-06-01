@@ -88,13 +88,15 @@ void TextEditorWidget::adjustCursorVisibility()
     }
     long pixX = getCursorPixX();
     int spaceWidth = getTextStyles()->get(0)->getSpaceWidth();
-    
     if (pixX < getLeftPix() + spaceWidth) {
         setLeftPix(pixX - spaceWidth);
-    } else if (pixX > getRightPix() - spaceWidth) {
-        long newLeftPix = spaceWidth 
-                * util::roundedUpDiv(pixX - (getRightPix() - getLeftPix()) + spaceWidth, spaceWidth);
-        setLeftPix(newLeftPix);
+    } else {
+        long rightPix = getRightPix();
+        if (rightPix - spaceWidth > 0 && pixX > rightPix - spaceWidth) {
+            long newLeftPix = spaceWidth 
+                    * util::roundedUpDiv(pixX - (rightPix - getLeftPix()) + spaceWidth, spaceWidth);
+            setLeftPix(newLeftPix);
+        }
     }
 }
 
@@ -115,24 +117,32 @@ void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long lengt
     if (length > 0) {
         length = insertAtCursor(data, length);
         moveCursorToTextPosition(getCursorTextPosition() + length);
+        getBackliteBuffer()->makeSelectionToSecondarySelection();
+        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
     }
 }
 
 void TextEditorWidget::notifyAboutLostSelectionOwnership()
 {
-    getBackliteBuffer()->deactivateSelection();
+    if (getBackliteBuffer()->isSelectionPrimary()) {
+        getBackliteBuffer()->deactivateSelection();
+    }
 }
 
 void TextEditorWidget::notifyAboutBeginOfPastingData()
 {
     disableCursorChanges();
+    getBackliteBuffer()->activateSelection(getCursorTextPosition());
+    getBackliteBuffer()->makeSelectionToSecondarySelection();
 }
 
 void TextEditorWidget::notifyAboutEndOfPastingData()
 {
     if (cursorChangesDisabled) {
         enableCursorChanges();
-    }    
+    }
+    getBackliteBuffer()->makeSelectionToSecondarySelection();
+    getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
     assureCursorVisible();
     rememberedCursorPixX = getCursorPixX();
 }
@@ -460,6 +470,13 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
     }
 }
 
+void TextEditorWidget::releaseSelectionOwnership()
+{
+    if (getBackliteBuffer()->hasActiveSelection()) {
+        getBackliteBuffer()->deactivateSelection();
+    }
+    SelectionOwner::releaseSelectionOwnership();
+}
 
 long  TextEditorWidget::initSelectionDataRequest()
 {
@@ -544,6 +561,8 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
         if (len > 0) {
             if (!cursorChangesDisabled)
             {
+                EditingHistory::SectionHolder::Ptr historySectionHolder = getTextData()->getHistorySectionHolder();
+                
                 hideCursor();
                 if (hasSelectionOwnership()) {
                     long selBegin = getBackliteBuffer()->getBeginSelectionPos();
@@ -551,6 +570,8 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
                     moveCursorToTextPosition(selBegin);
                     removeAtCursor(selLength);
                     releaseSelectionOwnership();
+                } else if (getBackliteBuffer()->hasActiveSelection()) {
+                    getBackliteBuffer()->deactivateSelection();
                 }
                 long insertedLength = insertAtCursor(buffer[0]);
                 moveCursorToTextPosition(getCursorTextPosition() + insertedLength);
@@ -601,6 +622,17 @@ void TextEditorWidget::treatFocusIn()
     }
     showMousePointer();
     hasFocusFlag = true;
+
+    if (getBackliteBuffer()->hasActiveSelection()) {
+        getBackliteBuffer()->turnOffSelectionPersistence();
+#if 0
+        if (requestSelectionOwnership()) {
+            getBackliteBuffer()->makeSecondarySelectionToPrimarySelection();
+        } else {
+            getBackliteBuffer()->deactivateSelection();
+        }
+#endif
+    }
 }
 
 
@@ -610,6 +642,11 @@ void TextEditorWidget::treatFocusOut()
     stopCursorBlinking();
     showMousePointer();
     hasFocusFlag = false;
+
+    if (getBackliteBuffer()->hasActiveSelection()) {
+        getBackliteBuffer()->turnOnSelectionPersistence();
+    }
+
 }
 
 void TextEditorWidget::showCursor()

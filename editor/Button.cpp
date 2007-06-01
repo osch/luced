@@ -45,7 +45,22 @@ Button::Button(GuiWidget* parent, String buttonText)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
+    setButtonText(buttonText);
+}
+
+void Button::setButtonText(String buttonText)
+{
+    if (hasHotKey) {
+        String keySymString;
+        keySymString.appendLowerChar(hotKeyChar);
+        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(Mod1Mask, keySymString), this);
+        hasHotKey = false;
+    }
     int p1 = buttonText.findFirstOf(']', 1);
+    
+    String oldButtonText = this->buttonText;
+    char oldHotkeyChar   = this->hotKeyChar;
+    
     if (p1 != -1) {
         hotKeyChar = buttonText[p1 - 1];
         this->buttonText = String() << buttonText.getSubstring(0, p1) << buttonText.getTail(p1 + 1);
@@ -59,8 +74,11 @@ Button::Button(GuiWidget* parent, String buttonText)
     } else {
         this->buttonText = buttonText;
     }
+    if (isVisible() && (oldButtonText != this->buttonText
+                     || oldHotkeyChar != this->hotKeyChar)) {
+        drawButton();
+    }
 }
-
 
 int Button::getStandardHeight()
 {

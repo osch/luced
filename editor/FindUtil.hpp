@@ -43,18 +43,7 @@ class FindUtil : public NonCopyable
 {
 public:
 
-    FindUtil()
-        : searchForwardFlag(true),
-          ignoreCaseFlag(false),
-          regexFlag(false),
-          wholeWordFlag(false),
-          wasFoundFlag(false),
-          textPosition(0),
-          textData(NULL),
-          wasError(false),
-          luaException(""),
-          wasInitializedFlag(false)
-    {}
+    FindUtil();
 
     void setSearchForwardFlag(bool flag) {
         wasInitializedFlag = false;
@@ -81,6 +70,9 @@ public:
     }
     void setTextPosition(long pos) {
         textPosition = pos;
+    }
+    void setMaximalEndOfMatchPosition(long epos) {
+        maximalEndOfMatchPosition = epos;
     }
     void setTextData(TextData* textData) {
         this->textData = textData;
@@ -245,6 +237,7 @@ private:
     bool wholeWordFlag;  
     bool wasFoundFlag;
     long textPosition;
+    long maximalEndOfMatchPosition;
     WeakPtr<TextData> textData;
     
     String searchString;
@@ -258,6 +251,8 @@ private:
 
     MemArray<int> expressionPositions;
     Regex regex;
+
+    long maxRegexAssertionLength;
 };
 
 } // namespace LucED

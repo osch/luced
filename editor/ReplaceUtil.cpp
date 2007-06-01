@@ -163,3 +163,53 @@ String ReplaceUtil::getSubstitutedString()
     }
 }
 
+bool ReplaceUtil::replaceAllBetween(long spos, long epos)
+{
+    TextData* textData = getTextData();
+    TextData::TextMark textMark = textData->createNewMark();
+    textMark.moveToPos(spos);
+
+    FindUtil::setTextPosition(textMark.getPos());
+    FindUtil::setMaximalEndOfMatchPosition(epos);
+    
+    bool wasAnythingReplaced = false;
+    
+    try
+    {
+        while (textMark.getPos() < epos)
+        {
+            FindUtil::findNext();
+            if (FindUtil::wasFound())
+            {
+                wasAnythingReplaced = true;
+                
+                textMark.moveForwardToPos(FindUtil::getTextPosition());
+
+                String substitutedString = getSubstitutedString();
+                textData->insertAtMark(textMark, substitutedString);
+
+                textMark.moveForwardToPos(textMark.getPos() + substitutedString.getLength());
+
+                textData->removeAtMark(textMark, FindUtil::getMatchLength());
+
+                epos += substitutedString.getLength() - FindUtil::getMatchLength();
+
+                FindUtil::setTextPosition(textMark.getPos());
+                FindUtil::setMaximalEndOfMatchPosition(epos);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        FindUtil::setMaximalEndOfMatchPosition(-1);
+    } catch (...) {
+        FindUtil::setMaximalEndOfMatchPosition(-1);
+        throw;
+    }
+    
+    return wasAnythingReplaced;
+}
+
+

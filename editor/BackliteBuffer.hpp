@@ -44,11 +44,24 @@ public:
         if (!hasSelection) {
             return 0;
         } else {
-            return (beginSelection.getPos() <= textPos && textPos < endSelection.getPos()) ? 1 : 0;
+            if (beginSelection.getPos() <= textPos && textPos < endSelection.getPos()) {
+                return isSecondarySelection ? 2 : 1;
+            } else {
+                return 0;
+            }
         }
     }
     void activateSelection(long textPos);
     void deactivateSelection();
+    void makeSelectionToSecondarySelection();
+    void turnOnSelectionPersistence();
+    void turnOffSelectionPersistence();
+    void makeSecondarySelectionToPrimarySelection();
+
+    bool isSelectionPrimary() const {
+        return !isSecondarySelection;
+    }
+
     void extendSelectionTo(long textPos);
     bool hasActiveSelection() {
         return hasSelection;
@@ -60,9 +73,21 @@ public:
         ASSERT(hasSelection);
         return beginSelection.getPos();
     }
+    TextData::TextMark createMarkToBeginOfSelection() const {
+        ASSERT(hasSelection);
+        return textData->createNewMark(beginSelection);
+    }
+    TextData::TextMark createMarkToEndOfSelection() const {
+        ASSERT(hasSelection);
+        return textData->createNewMark(endSelection);
+    }
     long getEndSelectionPos() {
         ASSERT(hasSelection);
         return endSelection.getPos();
+    }
+    long getSelectionLength() {
+        ASSERT(hasSelection);
+        return endSelection.getPos() - beginSelection.getPos();
     }
     long getSelectionAnchorPos() {
         ASSERT(hasSelection);
@@ -98,6 +123,8 @@ private:
     bool isSelectionAnchorAtBegin;
     TextData::TextMark beginSelection;
     TextData::TextMark endSelection;
+    bool isSecondarySelection;
+    bool isSelectionPersistent;
 };
 
 } // namespace LucED

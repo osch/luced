@@ -58,7 +58,8 @@ GlobalConfig::GlobalConfig()
           buttonInnerSpacing(2),
           guiSpacing(2),
           editorPanelOnTop(false),
-          keepRunningIfOwningClipboard(false)
+          keepRunningIfOwningClipboard(false),
+          maxRegexAssertionLength(3000)
 {
     setlocale(LC_CTYPE, "");
 }
@@ -271,6 +272,14 @@ void GlobalConfig::readConfig(const String& configPath)
                 throw ConfigException("invalid keepRunningIfOwningClipboard");
             }
             this->keepRunningIfOwningClipboard = o.toBoolean();
+        }
+        
+        o = globalConfig["maxRegexAssertionLength"];
+        if (o.isValid()) {
+            if (!o.isNumber()) {
+                throw ConfigException("invalid maxRegexAssertionLength");
+            }
+            this->maxRegexAssertionLength = (long) o.toNumber();
         }
 
     }

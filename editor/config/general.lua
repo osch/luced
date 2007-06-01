@@ -47,7 +47,9 @@ globalConfig = {
           guiSpacing = 2,
           editorPanelOnTop = false,
           
-          keepRunningIfOwningClipboard = false
+          keepRunningIfOwningClipboard = false,
+          
+          maxRegexAssertionLength = 3000,
 }
 
 

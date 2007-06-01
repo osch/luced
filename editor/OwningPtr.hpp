@@ -121,6 +121,15 @@ public:
         return this->ptr == ptr;
     }
     
+    int getRefCounter() const {
+        if (isInvalid()) {
+            return 0;
+        } else {
+            return HeapObjectRefManipulator::getHeapObjectCounters(ptr)->getWeakCounter()
+                 + HeapObjectRefManipulator::getHeapObjectCounters(ptr)->getOwningCounter();
+        }
+    }
+    
 private:
     
     T *ptr;

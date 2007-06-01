@@ -98,9 +98,9 @@ SingletonInstance<TextWidgetSingletonData> TextWidgetSingletonData::instance;
  */
 TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border)
 
-    : GuiWidget(parent, 0, 0, 1, 1, border),
+    : GuiWidget(parent, 0, 0, textStyles->get(0)->getSpaceWidth()*200, textStyles->get(0)->getLineHeight(), border),
 
-      position(0, 0, 1, 1),
+      position(GuiWidget::getPosition()),
       textData(hilitedText->getTextData()),
       cursorBlinkCallback(this, &TextWidget::blinkCursor),
       textStyles(textStyles),
@@ -117,7 +117,10 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       maxHeightChars(INT_MAX),
       border(border),
       adjustment(VerticalAdjustment::TOP),
-      isMousePointerHidden(false)
+      isMousePointerHidden(false),
+      
+      primarySelectionColor(getGuiRoot()->getGreyColor()),
+      secondarySelectionColor(getGuiRoot()->getGuiColor("lavender"))
 {
     totalPixWidth = 0;
     leftPix = 0;
@@ -140,7 +143,7 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
     lineHeight  = textStyles->get(0)->getLineHeight();
     lineAscent  = textStyles->get(0)->getLineAscent();
 
-    visibleLines = 1 / lineHeight; // not rounded;
+    visibleLines = position.h / lineHeight; // not rounded;
 
     lineInfos.setLength(ROUNDED_UP_DIV(position.h, lineHeight));
 
@@ -510,6 +513,18 @@ inline int TextWidget::calcVisiblePixX(LineInfo *li, long pos)
     return x;
 }
 
+inline GuiColor TextWidget::getColorForBackground(byte background)
+{
+    switch (background)
+    {
+        case 0:  return getGuiRoot()->getWhiteColor();
+        case 1:  return primarySelectionColor;
+        case 2:  return secondarySelectionColor;
+        default: ASSERT(false);
+                 return getGuiRoot()->getWhiteColor();
+    }
+}
+
 
 inline void TextWidget::clearLine(LineInfo *li, int y)
 {
@@ -545,11 +560,7 @@ inline void TextWidget::clearLine(LineInfo *li, int y)
 
             if (background != accBackground) {
                 if (accBackground != -1) {
-                    if (accBackground == 0) {
-                        XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
-                    } else {
-                        XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
-                    }
+                    XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(accBackground));
                     XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
                             -li->leftPixOffset + accX, y, x - accX, lineHeight);
                 }
@@ -561,31 +572,19 @@ inline void TextWidget::clearLine(LineInfo *li, int y)
         }
     }
     if (accBackground != -1) {
-        if (accBackground == 0) {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
-        } else {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
-        }
+        XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(accBackground));
         if (accBackground == li->backgroundToEnd) {
             XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
                     -li->leftPixOffset + accX, y, position.w - (-li->leftPixOffset + accX), lineHeight);
         } else {
             XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
                     -li->leftPixOffset + accX, y, x - accX, lineHeight);
-            if (li->backgroundToEnd == 0) {
-                XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
-            } else {
-                XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
-            }
+            XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
             XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
                     -li->leftPixOffset + x, y, position.w - (-li->leftPixOffset + x), lineHeight);
         }
     } else {
-        if (li->backgroundToEnd == 0) {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
-        } else {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
-        }
+        XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
         XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
                 -li->leftPixOffset + x, y, position.w - (-li->leftPixOffset + x), lineHeight);
     }
@@ -652,11 +651,7 @@ inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
 
             if (background != accBackground) {
                 if (accBackground != -1) {
-                    if (accBackground == 0) {
-                        XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
-                    } else {
-                        XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
-                    }
+                    XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(accBackground));
                     int useX1 = accX;
                     int useX2 = x;
                     if (useX1 < x2 && useX2 >= x1) {
@@ -672,11 +667,7 @@ inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
         }
     }
     if (accBackground != -1) {
-        if (accBackground == 0) {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
-        } else {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
-        }
+        XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(accBackground));
         if (accBackground == li->backgroundToEnd) {
             int useX1 = accX;
             int useX2 = position.w;
@@ -691,11 +682,7 @@ inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
                 XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
                         useX1, y, useX2 - useX1, lineHeight);
             }
-            if (li->backgroundToEnd == 0) {
-                XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
-            } else {
-                XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
-            }
+            XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
             useX1 = x;
             useX2 = position.w;
             if (useX1 < x2 && useX2 >= x1) {
@@ -704,11 +691,7 @@ inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
             }
         }
     } else {
-        if (li->backgroundToEnd == 0) {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
-        } else {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
-        }
+        XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
         int useX1 = x;
         int useX2 = position.w;
         if (useX1 < x2 && useX2 >= x1) {
@@ -932,7 +915,7 @@ void TextWidget::redrawChanged(long spos, long epos)
 
             if (li->valid && li->beginOfLinePos == pos) {
                 
-                if (li->startPos <= epos && li->endPos >= spos) // ">=" because line info for zero length lines should also be checked because of selection backliting
+                if (li->beginOfLinePos <= epos && li->endOfLinePos >= spos) // ">=" because line info for zero length lines should also be checked because of selection backliting
                 {
                     tempLineInfo = *li;
                     fillLineInfo(pos, li);
@@ -1359,7 +1342,8 @@ void TextWidget::setPosition(Position newPosition)
 
         int cursorLine = getCursorLineNumber();
         int cursorPixX = getCursorPixX();
-        bool cursorWasVisible = false;
+        bool cursorWasInVisibleArea = false;
+        bool cursorShouldBeInVisibleArea = false;
         int oldCursorLinesToTop;
         int oldCursorLinesToBottom;
         int oldCursorPixXToLeft;
@@ -1367,7 +1351,8 @@ void TextWidget::setPosition(Position newPosition)
         
         if (cursorLine >= oldTopLineNumber && cursorLine < oldTopLineNumber + getNumberOfVisibleLines()) {
             if (cursorPixX >= getLeftPix() && cursorPixX < getRightPix()) {
-                cursorWasVisible = true;
+                cursorWasInVisibleArea      = true;
+                cursorShouldBeInVisibleArea = true;
                 oldCursorLinesToTop = cursorLine - oldTopLineNumber;
                 oldCursorLinesToBottom = oldTopLineNumber + getNumberOfVisibleLines() - cursorLine;
                 oldCursorPixXToLeft = cursorPixX - getLeftPix();
@@ -1424,7 +1409,7 @@ void TextWidget::setPosition(Position newPosition)
                 newTopLine = 0;
         }
         
-        if (cursorWasVisible)
+        if (cursorShouldBeInVisibleArea)
         {
             if (cursorLine < newTopLine) {
                 newTopLine = cursorLine;

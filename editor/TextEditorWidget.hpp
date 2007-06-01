@@ -80,6 +80,9 @@ public:
         TextWidget::hideMousePointer();
         addToXEventMask(PointerMotionMask);
     }
+
+    virtual void releaseSelectionOwnership();
+
 protected:
     TextEditorWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth);
 
