@@ -52,6 +52,8 @@ GlobalConfig::GlobalConfig()
           guiColor05("grey90"),
           guiFont("-*-helvetica-medium-r-*-*-*-120-75-75-*-*-*-*"),
           guiFontColor("black"),
+          primarySelectionColor("grey"),
+          pseudoSelectionColor("rgb:f0/f0/ff"), // was lavender
           initialWindowWidth(80),
           initialWindowHeight(25),
           x11SelectionChunkLength(20000),
@@ -216,6 +218,21 @@ void GlobalConfig::readConfig(const String& configPath)
                 throw ConfigException("invalid guiFontColor");
             }
             this->guiFontColor = o.toString();
+        }
+
+        o = globalConfig["primarySelectionColor"];
+        if (o.isValid()) {
+            if (!o.isString()) {
+                throw ConfigException("invalid primarySelectionColor");
+            }
+            this->primarySelectionColor = o.toString();
+        }
+        o = globalConfig["pseudoSelectionColor"];
+        if (o.isValid()) {
+            if (!o.isString()) {
+                throw ConfigException("invalid pseudoSelectionColor");
+            }
+            this->pseudoSelectionColor = o.toString();
         }
 
         o = globalConfig["initialWindowWidth"];

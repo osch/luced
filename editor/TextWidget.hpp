@@ -101,6 +101,8 @@ public:
     long getCursorColumn() const {
         return textData->getColumnNumberOfMark(cursorMarkId);
     }
+    long getOpticalCursorColumn() const;
+    
     int getNumberOfVisibleLines() const {
         return visibleLines;
     }
@@ -225,6 +227,7 @@ private:
 
     TextData::TextMark topMarkId; // first column of the first displayed textline
     TextData::TextMark cursorMarkId;
+    long opticalCursorColumn;
 
     long visibleLines;
     int lineHeight;

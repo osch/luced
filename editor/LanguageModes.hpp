@@ -63,6 +63,12 @@ public:
     int getHilitingBreakPointDistance() {
         return hilitingBreakPointDistance;
     }
+    int getHardTabWidth() const {
+        return hardTabWidth;
+    }
+    int getSoftTabWidth() const {
+        return softTabWidth;
+    }
     
 private:
     friend class LanguageModes;
@@ -75,6 +81,8 @@ private:
     bool approximateUnknownHilitingFlag;
     long approximateUnknownHilitingReparseRange;
     int hilitingBreakPointDistance;
+    int hardTabWidth;
+    int softTabWidth;
 };
 
 class LanguageModes : public HeapObject

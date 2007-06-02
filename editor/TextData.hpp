@@ -126,6 +126,9 @@ public:
         bool isValid() {
             return textData != NULL;
         }
+        bool isAtBeginOfLine() {
+            return textData->isBeginOfLine(getPos());
+        }
     private:
         friend class TextData;
         TextMark(TextData *textData, long index) {
@@ -345,14 +348,29 @@ public:
     void clearHistory();
     
     void activateHistory() {
-        history = EditingHistory::create();
-        hasHistoryFlag = true;
+        if (!hasHistory()) {
+          history = EditingHistory::create();
+          hasHistoryFlag = true;
+        }
     }
     
     void setHistorySeparator();
     
+    EditingHistory::SectionHolder::Ptr createHistorySection() {
+        if (hasHistory()) {
+            setHistorySeparator();
+            return history->getSectionHolder();
+        } else {
+            return EditingHistory::SectionHolder::Ptr();
+        }
+    }
+    
     EditingHistory::SectionHolder::Ptr getHistorySectionHolder() {
-        return history->getSectionHolder();
+        if (hasHistory()) {
+            return history->getSectionHolder();
+        } else {
+            return EditingHistory::SectionHolder::Ptr();
+        }
     }
     
 private:

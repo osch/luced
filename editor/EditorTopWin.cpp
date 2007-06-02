@@ -242,7 +242,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
 
     if (m.isValid())
     {
-        if (event->type == KeyPress) {
+        if (event->type == KeyPress && !IsModifierKey(XLookupKeysym((XKeyEvent*)&event->xkey, 0))) {
             textEditor->hideMousePointer();
         }
 

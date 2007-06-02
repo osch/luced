@@ -277,10 +277,11 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
 
                         long newCursorPos = getTextPosFromPixXY(x, y);
                         moveCursorToTextPosition(newCursorPos);
+                        getTextData()->setHistorySeparator();
                         requestSelectionPasting();
-                        if (hasSelectionOwnership()) {
+                        /*if (hasSelectionOwnership()) {
                             releaseSelectionOwnership();
-                        }
+                        }*/
                     }
                     assureCursorVisible();
                     rememberedCursorPixX = getCursorPixX();
@@ -546,7 +547,8 @@ void TextEditorWidget::handleScrollRepeating()
 
 GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent *event)
 {
-    if (hasFocusFlag && event->type == KeyPress) {
+    if (hasFocusFlag && event->type == KeyPress && !IsModifierKey(XLookupKeysym((XKeyEvent*)&event->xkey, 0)))
+    {
         hideMousePointer();
     }
     

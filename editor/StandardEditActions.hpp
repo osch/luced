@@ -87,6 +87,10 @@ public:
     void undo();
     void redo();
     void selectWord();
+    void tabForward();
+    void gotoMatchingBracket();
+    void shiftBlockLeft();
+    void shiftBlockRight();
     
 private:
     StandardEditActions(TextEditorWidget *editWidget);

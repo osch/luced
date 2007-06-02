@@ -83,6 +83,27 @@ LanguageMode::LanguageMode(LuaObject config)
         }
         this->hilitingBreakPointDistance = (int) o.toNumber();
     }
+    
+    o = config["hardTabWidth"];
+    if (o.isValid()) {
+        if (!o.isNumber()) {
+            throw ConfigException("invalid hardTabWidth");
+        }
+        this->hardTabWidth = (int) o.toNumber();
+        if (this->hardTabWidth < 1) {
+            throw ConfigException("invalid hardTabWidth");
+        }
+    }
+    
+    o = config["softTabWidth"];
+    if (o.isValid()) {
+        if (!o.isNumber()) {
+            throw ConfigException("invalid softTabWidth");
+        }
+        this->softTabWidth = (int) o.toNumber();
+    }
+    
+    
 }
 
 LanguageModes::LanguageModes()

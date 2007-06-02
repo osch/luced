@@ -38,6 +38,8 @@ globalConfig = {
           guiColor05 = "grey90",
           guiFont      = "-*-helvetica-medium-r-*-*-*-120-75-75-*-*-*-*",
           guiFontColor = "black",
+          primarySelectionColor = "grey",
+          pseudoSelectionColor  = "rgb:f0/f0/ff",
           
           initialWindowWidth  = 100,    -- size in characters
           initialWindowHeight =  45,    -- size in characters
@@ -90,6 +92,8 @@ languageModes = {
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 4,
     },
     
     {
@@ -98,6 +102,8 @@ languageModes = {
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 4,
     },
     
 }

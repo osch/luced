@@ -86,6 +86,12 @@ public:
     String getGuiFontColor() {
         return guiFontColor;
     }
+    String getPrimarySelectionColor() {
+        return primarySelectionColor;
+    }
+    String getPseudoSelectionColor() {
+        return pseudoSelectionColor;
+    }
     int getInitialWindowWidth() {
         return initialWindowWidth;
     }
@@ -153,6 +159,8 @@ private:
     String guiColor05;
     String guiFont;
     String guiFontColor;
+    String primarySelectionColor;
+    String pseudoSelectionColor;
     
     int initialWindowWidth;
     int initialWindowHeight;

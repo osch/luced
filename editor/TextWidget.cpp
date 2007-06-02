@@ -25,6 +25,7 @@
 #include "util.hpp"
 #include "TimeVal.hpp"
 #include "EventDispatcher.hpp"
+#include "GlobalConfig.hpp"
 
 #define CURSOR_WIDTH 2
 
@@ -109,6 +110,7 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       lineInfos(),
       topMarkId(textData->createNewMark()),
       cursorMarkId(textData->createNewMark()),
+      opticalCursorColumn(0),
       minWidthChars(10),
       minHeightChars(1),
       bestWidthChars(80),
@@ -119,8 +121,8 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       adjustment(VerticalAdjustment::TOP),
       isMousePointerHidden(false),
       
-      primarySelectionColor(getGuiRoot()->getGreyColor()),
-      secondarySelectionColor(getGuiRoot()->getGuiColor("lavender"))
+      primarySelectionColor(  getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPrimarySelectionColor())),
+      secondarySelectionColor(getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPseudoSelectionColor()))
 {
     totalPixWidth = 0;
     leftPix = 0;
@@ -215,7 +217,7 @@ public:
           styleIndex(hilitingBuffer->getTextStyle(textPos)),
           style(textStyles->get(styleIndex)),
           spaceWidth(textStyles->get(0)->getSpaceWidth()),
-          tabWidth(8 * textStyles->get(0)->getSpaceWidth()),
+          tabWidth(hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth()),
           charWidth(isEndOfLineFlag ? 0 : style->getCharWidth(c)),
           doBackgroundFlag(true),
           background(backliteBuffer->getBackground(textPos))
@@ -502,7 +504,7 @@ inline int TextWidget::calcVisiblePixX(LineInfo *li, long pos)
         unsigned char c = textData->getChar(p);
         int style = li->styles[i];
         if (c == '\t') {
-            int tabWidth = 8 * textStyles->get(0)->getSpaceWidth();
+            int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
             long totalX = leftPix + x;
             totalX = (totalX / tabWidth + 1) * tabWidth;
             x = totalX - leftPix;
@@ -1044,7 +1046,7 @@ long TextWidget::getCursorPixX()
     for (long p = lineBegin; p < cursorPos; ++p) {
         unsigned char c = textData->getChar(p);
         if (c == '\t') {
-            int tabWidth = 8 * textStyles->get(0)->getSpaceWidth();
+            int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
             x = (x / tabWidth + 1) * tabWidth;
         } else {
             int style = hilitingBuffer->getTextStyle(p);
@@ -1169,7 +1171,7 @@ long TextWidget::getTextPosForPixX(long pixX, long beginOfLinePos)
         int c = textData->getChar(p);
         ox = x;
         if (c == '\t') {
-            long tabWidth = 8 * textStyles->get(0)->getSpaceWidth();
+            long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
             x = (x / tabWidth + 1) * tabWidth;
         } else {
             x += textStyles->get(hilitingBuffer->getTextStyle(p))->getCharWidth(c);
@@ -1235,7 +1237,7 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
             const TextStyle* style = textStyles->get(li->styles[i]);
             byte c = textData->getChar(li->startPos + i);
             if (c == '\t') {
-                long tabWidth = 8 * textStyles->get(0)->getSpaceWidth();
+                long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
                 nextX = (x / tabWidth + 1) * tabWidth;
             } else {
                 nextX += style->getCharWidth(c);
@@ -1810,6 +1812,23 @@ void TextWidget::treatTextDataUpdate(TextData::UpdateInfo u)
     updateHorizontalScrollBar = true;
 }
 
+
+long TextWidget::getOpticalCursorColumn() const
+{
+    const long cursorPos    = getCursorTextPosition();
+    const long hardTabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth();
+    long       opticalCursorColumn = 0;
+    for (long p = cursorPos - getCursorColumn(); p < cursorPos; ++p) {
+        if (textData->getChar(p) == '\t') {
+            opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
+        } else {
+            ++opticalCursorColumn;
+        }
+    }
+    return opticalCursorColumn;
+}
+
+
 void TextWidget::flushPendingUpdates()
 {
     if (updateVerticalScrollBar) {
@@ -1825,7 +1844,7 @@ void TextWidget::flushPendingUpdates()
                     position.w, leftPix);
         updateHorizontalScrollBar = false;
     }
-    lineAndColumnListeners.invokeAllCallbacks(getCursorLineNumber(), getCursorColumn());
+    lineAndColumnListeners.invokeAllCallbacks(getCursorLineNumber(), getOpticalCursorColumn());
 }
 
 void TextWidget::setDesiredMeasuresInChars(int minWidth, int minHeight, 
