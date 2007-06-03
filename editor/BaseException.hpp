@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef BASEEXCEPTION_H
-#define BASEEXCEPTION_H
+#ifndef BASE_EXCEPTION_HPP
+#define BASE_EXCEPTION_HPP
 
 #include <exception>
 #include "String.hpp"
@@ -41,14 +41,14 @@ public:
 
     virtual const char *what() = 0;
 
-protected:
     BaseException(const String& message)
         : message(message)
     {}
+
 private:
     String message;
 };
 
 } // namespace LucED
 
-#endif // BASEEXCEPTION_H
+#endif // BASE_EXCEPTION_HPP

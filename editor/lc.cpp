@@ -53,8 +53,13 @@ int main(int argc, char **argv)
     }
     catch (CommandlineException& ex)
     {
-        fprintf(stderr, "CommandlineException: %s\n", ex.getMessage().toCString());
+        fprintf(stderr, "[%s]: CommandlineException: %s\n", argv[0], ex.getMessage().toCString());
         rc = 1;
+    }
+    catch (BaseException& ex)
+    {
+        fprintf(stderr, "[%s]: Severe Error: %s\n", argv[0], ex.getMessage().toCString());
+        rc = 16;
     }
 #ifdef DEBUG
     HeapObjectChecker::assertAllCleared();

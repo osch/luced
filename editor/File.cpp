@@ -34,6 +34,18 @@
 
 using namespace LucED;
 
+File::File(const String& path, const String& fileName)
+{
+    if (path.getLength() > 0 && path[path.getLength() - 1] != '/'
+     && fileName.getLength() > 0 && fileName[0] != '/') 
+    {
+        name << path << "/" << fileName;
+    } else {
+        name << path << fileName;
+    }
+}
+
+
 
 void File::loadInto(ByteBuffer& buffer)
 {
@@ -118,3 +130,11 @@ String File::getDirName() const
     }
     return absoluteName.getSubstring(0, i);
 }
+
+bool File::exists() const
+{
+    struct stat statData;
+    int rc = stat(getAbsoluteFileName().toCString(), &statData);
+    return rc == 0;
+}
+

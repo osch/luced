@@ -33,13 +33,20 @@ LanguageMode::Ptr LanguageMode::create(LuaObject config)
 
 
 LanguageMode::LanguageMode(const String& name, Regex regex)
-        : name(name), regex(regex)
+    : name(name), regex(regex),
+      approximateUnknownHilitingFlag(true),
+      approximateUnknownHilitingReparseRange(2000),
+      hilitingBreakPointDistance(50),
+      hardTabWidth(8),
+      softTabWidth(-1)
 {}
 
 LanguageMode::LanguageMode(LuaObject config)
     : approximateUnknownHilitingFlag(true),
       approximateUnknownHilitingReparseRange(2000),
-      hilitingBreakPointDistance(50)
+      hilitingBreakPointDistance(50),
+      hardTabWidth(8),
+      softTabWidth(-1)
 {
     LuaObject o = config["name"];
     if (!o.isString()) {

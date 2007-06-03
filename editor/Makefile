@@ -48,9 +48,9 @@ LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_LUA_OPTS) $(LINK_EX
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 
  
-SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget \
+SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget              SystemException \
                 TextEditorWidget        TextStyle              KeyPressRepeater       ScrollBar \
-                                        LuaException           TopWin                 \
+                System                  LuaException           TopWin                 \
                 LuaObject               LuaInterpreter         ConfigException        GlobalConfig \
                 LanguageModes           RegexException         StatusLine             \
                 Button                  GuiLayoutWidget        LuaStoredObject \

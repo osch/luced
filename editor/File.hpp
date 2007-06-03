@@ -35,6 +35,8 @@ class File : public NonCopyable
 {
 public:
 
+    File(const String& path, const String& fileName);
+    
     File(const String& fileName)
         : name(fileName)
     {}
@@ -49,8 +51,10 @@ public:
     
     void storeData(ByteBuffer& data);
     
+    bool exists() const;
+    
 private:
-    const String name;
+   String name;
 };
 
 } // namespace LucED

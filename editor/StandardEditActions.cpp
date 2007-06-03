@@ -1040,6 +1040,8 @@ void StandardEditActions::pasteFromClipboard()
 {
     if (!e->areCursorChangesDisabled())
     {
+        EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->createHistorySection();
+
         if (e->hasSelectionOwnership()) {
             long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
             long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
@@ -1050,7 +1052,6 @@ void StandardEditActions::pasteFromClipboard()
         if (e->getBackliteBuffer()->hasActiveSelection()) {
             e->getBackliteBuffer()->deactivateSelection();
         }
-        e->getTextData()->setHistorySeparator();
         e->requestClipboardPasting();
     }
     e->assureCursorVisible();

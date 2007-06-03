@@ -27,6 +27,8 @@
 #include "RegexException.hpp"
 #include "LuaInterpreter.hpp"
 #include "LuaObject.hpp"
+#include "System.hpp"
+#include "File.hpp"
 
 using namespace LucED;
 
@@ -99,10 +101,17 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode()
     return languageModes->getDefaultLanguageMode();
 }
 
-void GlobalConfig::readConfig(const String& configPath)
+void GlobalConfig::readConfig()
 {
+    String configDirectory = ".luced";
+    
+    if (!File(configDirectory).exists()) {
+        String homeDirectory = System::getInstance()->getHomeDirectory();
+        configDirectory = File(homeDirectory, ".luced").getAbsoluteFileName();
+    }
+    
     LuaInterpreter* lua = LuaInterpreter::getInstance();
-    lua->executeFile(String() << configPath << "/general.lua");
+    lua->executeFile(File(configDirectory, "general.lua").getAbsoluteFileName());
     
     // globalConfig
     
@@ -370,14 +379,16 @@ void GlobalConfig::readConfig(const String& configPath)
     
     languageModeToSyntaxIndex = NameToIndexMap::create();
     
-    DirectoryReader dirReader(String() << configPath << "/syntaxpatterns");
+    String syntaxPatternDirectory = File(configDirectory, "syntaxpatterns").getAbsoluteFileName();
+    
+    DirectoryReader dirReader(syntaxPatternDirectory);
     for (int i = 0; dirReader.next();) {
         if (dirReader.isFile()) {
             String name = dirReader.getName();
             if (name.getLength() > 4 && name.getSubstring(name.getLength() - 4, 4) == ".lua") {
                 name = name.getSubstring(0, name.getLength() - 4);
                 lua->clearGlobal("syntaxpatterns");
-                lua->executeFile(String() << configPath << "/syntaxpatterns/" << name << ".lua");
+                lua->executeFile(File(syntaxPatternDirectory, String() << name << ".lua").getAbsoluteFileName());
                 languageModeToSyntaxIndex->set(name, i);
                 LuaObject sp = lua->getGlobal("syntaxPatterns");
                 if (!sp.isTable()) {

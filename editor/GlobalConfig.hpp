@@ -42,7 +42,7 @@ public:
     
     static GlobalConfig* getInstance();
     
-    void readConfig(const String& configPath);
+    void readConfig();
     
     bool getUseKeyPressRepeater() {
         return useKeyPressRepeater;

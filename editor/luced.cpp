@@ -49,7 +49,7 @@ int main(int argc, char **argv)
             commandline->append(String(argv[argIndex]));
         }
 
-        GlobalConfig::getInstance()->readConfig("./config");
+        GlobalConfig::getInstance()->readConfig();
 
         EditorServer::getInstance()->startWithCommandline(commandline);
 
@@ -58,23 +58,28 @@ int main(int argc, char **argv)
     }
     catch (CommandlineException& ex)
     {
-        fprintf(stderr, "CommandlineException: %s\n", ex.getMessage().toCString());
+        fprintf(stderr, "[%s]: CommandlineException: %s\n", argv[0], ex.getMessage().toCString());
         rc = 1;
     }
     catch (LuaException& ex)
     {
-        fprintf(stderr, "LuaException: %s\n", ex.getMessage().toCString());
+        fprintf(stderr, "[%s]: LuaException: %s\n",    argv[0], ex.getMessage().toCString());
         rc = 1;
     }
     catch (ConfigException& ex)
     {
-        fprintf(stderr, "ConfigException: %s\n", ex.getMessage().toCString());
+        fprintf(stderr, "[%s]: ConfigException: %s\n", argv[0], ex.getMessage().toCString());
         rc = 1;
     }
     catch (FileException& ex)
     {
-        fprintf(stderr, "FileException: %s\n", ex.getMessage().toCString());
+        fprintf(stderr, "[%s]: FileException: %s\n",   argv[0], ex.getMessage().toCString());
         rc = 8;
+    }
+    catch (BaseException& ex)
+    {
+        fprintf(stderr, "[%s]: Severe Error: %s\n",    argv[0], ex.getMessage().toCString());
+        rc = 16;
     }
 #ifdef DEBUG
     HeapObjectChecker::assertAllCleared();
