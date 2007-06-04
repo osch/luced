@@ -40,6 +40,14 @@ public:
         return homeDirectory;
     }
     
+    String getUserName() const {
+        return userName;
+    }
+    
+    String getHostName() const {
+        return hostName;
+    }
+    
 private:
     friend class SingletonInstance<System>;
     static SingletonInstance<System> instance;
@@ -47,6 +55,8 @@ private:
     System();
 
     String homeDirectory;
+    String userName;
+    String hostName;
 };
 
 

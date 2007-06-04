@@ -52,7 +52,8 @@ public:
     void setTitle(const String& title) {
         setTitle(title.toCString());
     }
-        
+    virtual void raise();
+    
 protected:
     TopWin();
     

@@ -31,6 +31,7 @@
 #include "GlobalConfig.hpp"
 #include "EditorTopWin.hpp"
 #include "HeapObjectArray.hpp"
+#include "TopWinList.hpp"
 
 using namespace LucED;
 
@@ -67,16 +68,16 @@ void EditorServer::processEventForServerProperty(XEvent* event)
 {
     if (event->xproperty.state == PropertyDelete)
     {
-        printf(" *********** Event: delete\n");
+//        printf(" *********** Event: delete\n");
         serverProperty.setValue("running");
     }
     else if (event->xproperty.state == PropertyNewValue)
     {
-        printf(" *********** Event: newValue\n");
+//        printf(" *********** Event: newValue\n");
     }
     else
     {
-        printf(" *********** Event: unknown\n");
+//        printf(" *********** Event: unknown\n");
     }
 }
 
@@ -84,19 +85,19 @@ void EditorServer::processEventForCommandProperty(XEvent* event)
 {
     if (event->xproperty.state == PropertyDelete)
     {
-        printf(" *********** Event: command delete\n");
+//        printf(" *********** Event: command delete\n");
     }
     else if (event->xproperty.state == PropertyNewValue)
     {
         String commandline = commandProperty.getValueAndRemove();
-        printf(" *********** Event: command newValue <%s>\n", commandline.toCString());
+//        printf(" *********** Event: command newValue <%s>\n", commandline.toCString());
         if (commandline.getLength() > 0) {
             processCommandline(ClientServerUtil::unquoteCommandline(commandline));
         }
     }
     else
     {
-        printf(" *********** Event: command unknown\n");
+//        printf(" *********** Event: command unknown\n");
     }
 }
 
@@ -112,15 +113,44 @@ namespace // anonymous namespace
 
         void openFile(int numberOfWindows, const String& fileName)
         {
-            LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
-            TextData::Ptr     textData     = TextData::create();
-            HilitedText::Ptr  hilitedText  = HilitedText::create(textData, languageMode);
-
-            textData->loadFile(fileName);
-
-            for (int i = 0; i < numberOfWindows; ++i)
+            if (numberOfWindows <= 0)
             {
-                EditorTopWin::Ptr win = EditorTopWin::create(textStyles, hilitedText);
+                numberOfWindows = 1;
+            }
+            int numberOfRaisedWindows = 0;
+
+            TopWinList* topWins = TopWinList::getInstance();
+
+            EditorTopWin::Ptr lastTopWin = NULL;
+
+            for (int w = 0; w < topWins->getNumberOfTopWins() && numberOfRaisedWindows < numberOfWindows; ++w)
+            {
+                EditorTopWin* topWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(w));
+                if (topWin != NULL && topWin->getFileName() == fileName) {
+                    topWin->raise();
+                    numberOfRaisedWindows += 1;
+                    lastTopWin = topWin;
+                }
+            }
+            
+            if (lastTopWin.isInvalid() && numberOfRaisedWindows < numberOfWindows)
+            {
+                LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
+                TextData::Ptr     textData     = TextData::create();
+                HilitedText::Ptr  hilitedText  = HilitedText::create(textData, languageMode);
+
+                textData->loadFile(fileName);
+
+                lastTopWin = EditorTopWin::create(textStyles, hilitedText);
+                openedWindows->append(lastTopWin);
+                
+                numberOfRaisedWindows += 1;
+            }
+
+            for (int i = numberOfRaisedWindows; i < numberOfWindows; ++i)
+            {
+                EditorTopWin::Ptr win = EditorTopWin::create(lastTopWin->getTextStyles(),
+                                                             lastTopWin->getHilitedText());
                 openedWindows->append(win);
             }
         }

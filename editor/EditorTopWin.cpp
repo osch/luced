@@ -624,3 +624,8 @@ void EditorTopWin::executeLuaScript()
     }
 }
 
+String EditorTopWin::getFileName() const
+{
+    return textEditor->getTextData()->getFileName();
+}
+

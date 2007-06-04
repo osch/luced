@@ -20,19 +20,22 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "ClientServerUtil.hpp"
+#include "System.hpp"
 
 using namespace LucED;
 
 
 GuiRootProperty ClientServerUtil::getDefaultServerRunningProperty()
 {
-    return GuiRootProperty("LUCED_SERVER_");
+    System* sys = System::getInstance();
+    return GuiRootProperty(String() << "LUCED_SERVER_HOST_" << sys->getHostName() << "_USER_" << sys->getUserName());
 }
 
 
 GuiRootProperty ClientServerUtil::getDefaultServerCommandProperty()
 {
-    return GuiRootProperty("LUCED_COMMAND_");
+    System* sys = System::getInstance();
+    return GuiRootProperty(String() << "LUCED_COMMAND_HOST" << sys->getHostName() << "_USER_" << sys->getUserName());
 }
 
 String ClientServerUtil::quoteCommandline(HeapObjectArray<String>::Ptr commandline)

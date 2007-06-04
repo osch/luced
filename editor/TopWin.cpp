@@ -325,4 +325,9 @@ void TopWin::requestCloseWindow()
 }
 
 
+void TopWin::raise()
+{
+    XRaiseWindow(getGuiRoot()->getDisplay(), this->getWid());
+    this->requestFocus();
+}
 

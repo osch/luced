@@ -22,10 +22,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/utsname.h>
 #include <pwd.h>
 
 #include "System.hpp"
-#include "BaseException.hpp"
 #include "SystemException.hpp"
 
 using namespace LucED;
@@ -34,17 +34,46 @@ SingletonInstance<System> System::instance;
 
 System::System()
 {
-    const char* ptr = getenv("HOME");
+    struct passwd* passwdEntry = getpwuid(getuid());
+
+    const char* homeVarPtr = getenv("HOME");
     
-    if (ptr == NULL)
+    if (homeVarPtr == NULL)
     {
-       struct passwd* passwdEntry = getpwuid(getuid());
-       if (passwdEntry != NULL && passwdEntry->pw_dir[0] != '\0') {
-          ptr = passwdEntry->pw_dir;
-       } else {
-          throw SystemException("system call getpwuid() failed");
-       }
+        if (passwdEntry == NULL || passwdEntry->pw_dir[0] == '\0') {
+            throw SystemException("environment var HOME not set and system call getpwuid() failed");
+        }
+        homeDirectory = passwdEntry->pw_dir;
+    } else {
+        homeDirectory = homeVarPtr;
     }
-    homeDirectory = ptr;
+    
+    
+    if (passwdEntry == NULL || passwdEntry->pw_name[0] == '\0')
+    {
+        const char* userVarPtr = getenv("USER");
+
+        if (userVarPtr == NULL) {
+            userVarPtr = getenv("LOGNAME");
+        }
+        if (userVarPtr == NULL) {
+            throw SystemException("environment vars USER and LOGNAME not set and system call getpwuid() failed");
+        }
+        userName = userVarPtr;
+    } else {
+        userName = passwdEntry->pw_name;
+    }
+    
+    struct utsname utsNameData;
+    if (uname(&utsNameData) < 0)
+    {
+        const char* hostNameVarPtr = getenv("HOSTNAME");
+        if (hostNameVarPtr == NULL) {
+            throw SystemException("environment var HOSTNAME not set and system call uname() failed");
+        }
+        hostName = hostNameVarPtr;
+    } else {
+        hostName = utsNameData.nodename;
+    }
 }
 

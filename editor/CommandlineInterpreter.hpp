@@ -45,7 +45,7 @@ public:
         for (int i = 0; i < argc; ++i)
         {
             String  fileName;
-            int     numberOfWindowsForThisFile = 1;
+            int     numberOfWindowsForThisFile = -1;
             
             while (i < argc && commandline->get(i)[0] == '-' && commandline->get(i)[1] != '-')
             {

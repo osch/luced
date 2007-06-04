@@ -78,6 +78,16 @@ public:
 
     virtual void requestCloseWindow();
     
+    String getFileName() const;
+    
+    TextStyles::Ptr getTextStyles() {
+        return textEditor->getTextStyles();
+    }
+
+    HilitedText::Ptr getHilitedText() {
+        return textEditor->getHilitedText();
+    }
+
 private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
     void saveAndClose();
