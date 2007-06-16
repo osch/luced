@@ -20,6 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include <locale.h>
+#include <limits.h>
 
 #include "GlobalConfig.hpp"
 #include "ConfigException.hpp"
@@ -266,6 +267,9 @@ void GlobalConfig::readConfig()
                 throw ConfigException("invalid x11SelectionChunkLength");
             }
             this->x11SelectionChunkLength = (int) o.toNumber();
+            if (x11SelectionChunkLength <= 0) {
+                x11SelectionChunkLength = LONG_MAX;
+            }
         }
 
         o = globalConfig["buttonInnerSpacing"];

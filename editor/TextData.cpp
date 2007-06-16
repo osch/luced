@@ -403,18 +403,21 @@ void TextData::setModifiedFlag(bool newFlag)
 
 void TextData::removeAtMark(MarkHandle m, long amount)
 {
-    TextMarkData& mark = marks[m.index];
+    if (amount > 0)
+    {
+        TextMarkData& mark = marks[m.index];
 
-    if (hasHistory()) {
-        history->rememberDeleteAction(mark.pos, 
-                                      amount, 
-                                      buffer.getAmount(mark.pos, amount));
-    }
-    internalRemoveAtMark(m, amount);
+        if (hasHistory()) {
+            history->rememberDeleteAction(mark.pos, 
+                                          amount, 
+                                          buffer.getAmount(mark.pos, amount));
+        }
+        internalRemoveAtMark(m, amount);
 
-    if (modifiedFlag == false) {
-        modifiedFlag = true;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        if (modifiedFlag == false) {
+            modifiedFlag = true;
+            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        }
     }
 }
 
@@ -603,9 +606,12 @@ void TextData::moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark)
     }
 }
 
+extern bool doAbort;
 
 void TextData::flushPendingUpdatesIntern()
 {
+if (doAbort) abort();
+
     ASSERT(changedAmount != 0 || oldEndChangedPos != 0);
     
     if (hasHistory()) {
@@ -652,6 +658,13 @@ void TextData::setHistorySeparator()
 {
     if (hasHistory()) {
         history->setSectionMarkOnPreviousAction();
-        history->setMergeStopMarkOnPreviousAction();
+        history->setMergeStopMarkOnPreviousAction(true);
+    }
+}
+
+void TextData::setMergableHistorySeparator()
+{
+    if (hasHistory()) {
+        history->setSectionMarkOnPreviousAction();
     }
 }

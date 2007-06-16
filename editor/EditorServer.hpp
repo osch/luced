@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef EDITORSERVER_H
-#define EDITORSERVER_H
+#ifndef EDITOR_SERVER_HPP
+#define EDITOR_SERVER_HPP
 
 #include "String.hpp"
 
@@ -28,11 +28,11 @@
 #include "SingletonInstance.hpp"
 #include "GuiRootProperty.hpp"
 #include "HeapObjectArray.hpp"
+#include "MessageBox.hpp"
+#include "EditorTopWin.hpp"
 
 namespace LucED
 {
-
-
 
 class EditorServer : public HeapObject
 {
@@ -65,4 +65,4 @@ private:
 
 } // namespace LucED
 
-#endif // EDITORSERVER_H
+#endif // EDITOR_SERVER_HPP

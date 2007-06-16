@@ -34,12 +34,14 @@
 #include "Regex.hpp"
 #include "types.hpp"
 #include "FindUtil.hpp"
+#include "PasteDataReceiver.hpp"
 
 namespace LucED {
 
 
 
-class FindPanel : public DialogPanel
+class FindPanel : public DialogPanel,
+                  public PasteDataReceiver
 {
 public:
     typedef OwningPtr<FindPanel> Ptr;
@@ -66,6 +68,7 @@ public:
     void findSelectionBackward();
 
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent *event);
     
     virtual void show();
     
@@ -89,6 +92,10 @@ private:
     
     void handleModifiedEditField(bool modifiedFlag);
 
+    virtual void notifyAboutBeginOfPastingData();
+    virtual void notifyAboutReceivedPasteData(const byte* data, long length);
+    virtual void notifyAboutEndOfPastingData();
+
     WeakPtr<TextEditorWidget> e;
 
     SingleLineEditField::Ptr editField;
@@ -96,7 +103,7 @@ private:
     Button::Ptr findPrevButton;
     Button::Ptr cancelButton;
     Button::Ptr goBackButton;
-    CheckBox::Ptr ignoreCaseCheckBox;
+    CheckBox::Ptr caseSensitiveCheckBox;
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
     Callback1<MessageBoxParameter> messageBoxInvoker;
@@ -105,6 +112,7 @@ private:
     Direction::Type defaultDirection;
     int historyIndex;
     String selectionSearchString;
+    bool   selectionSearchForwardFlag;
     bool selectSearchRegexFlag;
     TextData::Ptr editFieldTextData;
     FindUtil      findUtil;

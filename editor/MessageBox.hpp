@@ -28,6 +28,7 @@
 #include "GuiLayoutColumn.hpp"
 #include "DialogWin.hpp"
 #include "PanelDialogWin.hpp"
+#include "TopWinList.hpp"
 
 namespace LucED {
 
@@ -57,15 +58,26 @@ public:
         return *this;
     }
     
+    MessageBoxParameter& setCancelButton(String buttonLabel, const Callback0& callback) {
+        cancelButtonLabel = buttonLabel;
+        cancelButtonCallback = callback;
+        return *this;
+    }
+    
 private:
     friend class MessageBox;
+
     String title;
     String message;
+
     String defaultButtonLabel;
     Callback0   defaultButtonCallback;
+
     String alternativeButtonLabel;
     Callback0   alternativeButtonCallback;
+
     String cancelButtonLabel;
+    Callback0   cancelButtonCallback;
 };
 
 class MessageBox : public PanelDialogWin
@@ -73,15 +85,26 @@ class MessageBox : public PanelDialogWin
 public:
     typedef WeakPtr<MessageBox> Ptr;
     
-    static MessageBox::Ptr create(TopWin* referingWindow, 
-                                  MessageBoxParameter p) {
-        return transferOwnershipTo(
-                new MessageBox(referingWindow, p),
-                referingWindow);
+    static MessageBox::Ptr create(TopWin* referingWindow, MessageBoxParameter p)
+    {
+        return transferOwnershipTo(new MessageBox(referingWindow, p),
+                                   referingWindow);
+    }
+    
+    static MessageBox::Ptr create(MessageBoxParameter p)
+    {
+        return transferOwnershipTo(new MessageBox(NULL, p),
+                                   TopWinList::getInstance());
+    }
+    
+    void closeWithoutAnyButtonActions() {
+        PanelDialogWin::requestCloseWindow();
     }
     
 private:
     MessageBox(TopWin* referingWindow, MessageBoxParameter p);
+    
+    virtual void requestCloseWindow();
     
     void handleButtonPressed(Button* button);
 
@@ -90,6 +113,7 @@ private:
     Button::Ptr button3;
     Callback0 defaultButtonCallback;
     Callback0 alternativeButtonCallback;
+    Callback0 cancelButtonCallback;
 };
 
 } // namespace LucED

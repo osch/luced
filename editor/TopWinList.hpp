@@ -19,24 +19,25 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TOPWINLIST_H
-#define TOPWINLIST_H
+#ifndef TOP_WIN_LIST_HPP
+#define TOP_WIN_LIST_HPP
 
 #include "HeapObject.hpp"
-#include "SingletonInstance.hpp"
-#include "OwningPtr.hpp"
+#include "WeakPtr.hpp"
 #include "TopWin.hpp"
+#include "TopWinOwner.hpp"
+#include "RunningComponent.hpp"
 
 namespace LucED {
 
 class TopWin;
 
-class TopWinList : public TopWinOwner
+class TopWinList : public TopWinOwner,
+                   public RunningComponent
 {
 public:
-    static TopWinList* getInstance() {
-        return instance.getPtr();
-    }
+    static TopWinList* getInstance();
+    
     virtual void requestCloseChildWindow(TopWin *topWin);
 
     int getNumberOfTopWins() const {
@@ -48,12 +49,11 @@ public:
     }
 
 private:
-    friend class SingletonInstance<TopWinList>;
-    static SingletonInstance<TopWinList> instance;
+    static LucED::WeakPtr<TopWinList> instance;
   
     TopWinList() {}
 };
 
 } // namespace LucED
 
-#endif // TOPWINLIST_H
+#endif // TOP_WIN_LIST_HPP

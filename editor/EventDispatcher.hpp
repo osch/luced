@@ -34,6 +34,7 @@
 #include "HashMap.hpp"
 #include "SingletonInstance.hpp"
 #include "GuiRootProperty.hpp"
+#include "RunningComponent.hpp"
 
 namespace LucED {
 
@@ -75,6 +76,10 @@ public:
 
     void registerEventReceiverForRootProperty(GuiRootProperty property,
                                               Callback1<XEvent*> callback);
+
+    void registerRunningComponent(RunningComponent::OwningPtr runningComponent);
+    
+    void deregisterRunningComponent(RunningComponent* runningComponent);
     
 private:
     friend class SingletonInstance<EventDispatcher>;
@@ -123,6 +128,10 @@ private:
     RootPropertiesMap rootPropertyListeners;
     bool hasRootPropertyListeners;
     Window rootWid;
+    
+    
+    ObjectArray<RunningComponent::OwningPtr> runningComponents;
+    ObjectArray<RunningComponent::WeakPtr>   stoppingComponents;
 };
 
 

@@ -22,8 +22,8 @@
 globalConfig = {
 
           useKeyPressRepeater = true,
-          keyPressRepeatFirstMilliSecs = 300,
-          keyPressRepeatNextMilliSecs  =  16.67,
+          keyPressRepeatFirstMilliSecs = 200,
+          keyPressRepeatNextMilliSecs  =  21,
 
           scrollBarWidth = 12+2,
           scrollBarRepeatFirstMilliSecs = 300,
@@ -44,7 +44,7 @@ globalConfig = {
           initialWindowWidth  = 100,    -- size in characters
           initialWindowHeight =  45,    -- size in characters
           
-          x11SelectionChunkLength = 20000,
+          x11SelectionChunkLength = 200000,
           buttonInnerSpacing = 2,
           guiSpacing = 2,
           editorPanelOnTop = false,
@@ -88,7 +88,7 @@ languageModes = {
 
     { 
       name            = "cplusplus",
-      fileNameRegex   = [[.*\.cpp|.*\.h|.*\.c]],
+      fileNameRegex   = [[.*\.[ch]pp|.*\.h|.*\.c]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,

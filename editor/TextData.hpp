@@ -355,6 +355,7 @@ public:
     }
     
     void setHistorySeparator();
+    void setMergableHistorySeparator();
     
     EditingHistory::SectionHolder::Ptr createHistorySection() {
         if (hasHistory()) {

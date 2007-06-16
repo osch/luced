@@ -86,11 +86,14 @@ public:
     void selectionCursorPageUp();
     void undo();
     void redo();
-    void selectWord();
+    void selectWordForward();
+    void selectWordBackward();
     void tabForward();
     void gotoMatchingBracket();
     void shiftBlockLeft();
     void shiftBlockRight();
+    void findNextStructureElement();
+    void findPrevStructureElement();
     
 private:
     StandardEditActions(TextEditorWidget *editWidget);

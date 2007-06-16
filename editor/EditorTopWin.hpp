@@ -87,6 +87,10 @@ public:
     HilitedText::Ptr getHilitedText() {
         return textEditor->getHilitedText();
     }
+    
+    void setModalMessageBox(const MessageBoxParameter& messageBoxParameter);
+    void closeModalMessageBox();
+    
 
 private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
@@ -121,6 +125,10 @@ private:
     
     WeakPtr<DialogPanel> invokedPanel;
     MessageBox::Ptr messageBox;
+
+    MessageBox::Ptr     modalMessageBox;
+    bool                hasModalMessageBox;
+    MessageBoxParameter modalMessageBoxParameter;
 };
 
 } // namespace LucED

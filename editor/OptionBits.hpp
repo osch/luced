@@ -51,6 +51,9 @@ public:
     void set(B bit) {
         bits |= bit;
     }
+    void clear(B bit) {
+        bits &= ~bit;
+    }
 private:
     T bits;
 };

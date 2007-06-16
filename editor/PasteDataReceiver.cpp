@@ -46,14 +46,16 @@ void PasteDataReceiver::requestSelectionPasting()
         long length = initSelectionDataRequest(selectionOwner);
         if (length > 0) {
             const byte* data = getSelectionDataChunk(selectionOwner, 0, length);
+            endSelectionDataRequest(selectionOwner);
             ByteArray buffer;
             buffer.append(data, length); // make copy, because data* could become invalid, if
                                          // paste is going into the same buffer
             notifyAboutBeginOfPastingData();
             notifyAboutReceivedPasteData(buffer.getPtr(0), buffer.getLength());
             notifyAboutEndOfPastingData();
+        } else {
+            endSelectionDataRequest(selectionOwner);
         }
-        endSelectionDataRequest(selectionOwner);
         isReceivingPasteDataFlag = false;
     } else {
         XDeleteProperty(display, getGuiWidgetWid(baseWidget), XA_PRIMARY);

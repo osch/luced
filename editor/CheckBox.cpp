@@ -106,8 +106,8 @@ void CheckBox::draw()
                 position.w - 2*BUTTON_OUTER_BORDER - guiSpacing, position.h - 2*BUTTON_OUTER_BORDER - guiSpacing, GuiRoot::getInstance()->getGuiColor03());
 
         int bx = BUTTON_OUTER_BORDER + guiSpacing + 3;
-        int by = y + 2;
-        int bw = getGuiTextStyle()->getLineHeight() - 2;
+        int by = y + 1; // +2
+        int bw = getGuiTextStyle()->getLineHeight() - 1; // -2
         drawPressedBox(bx, by, bw, bw, color);
         if (isBoxChecked) {
             int cx = bx + 3;

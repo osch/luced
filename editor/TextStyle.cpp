@@ -41,20 +41,20 @@ TextStyle::TextStyle(const String& fontName, const String& colorName)
 
     min_bounds = &(this->font->min_bounds);
     max_bounds = &(this->font->max_bounds);
-    this->lineHeight  = max_bounds->ascent + max_bounds->descent;
-    this->lineAscent  = max_bounds->ascent; // -1 ?!?!?
-    this->lineDescent = max_bounds->descent;
 
     if (this->font->min_byte1 != 0 || this->font->max_byte1 != 0) {
         fprintf(stderr, "komischer Font\n");
         exit(1);
     }
+    int myMaxAscent = 0;        
+    int myMaxDescent = 0;
+    
     if (this->font->per_char == NULL) {
         int i;
         short width    = this->font->max_bounds.width;
         short lbearing = this->font->max_bounds.lbearing;
         short rbearing = this->font->max_bounds.rbearing;
-        printf("no per char\n");
+//        printf("no per char\n");
         if (lbearing > 0)
             lbearing = 0;
         if (rbearing < width) 
@@ -72,7 +72,7 @@ TextStyle::TextStyle(const String& fontName, const String& colorName)
         short unknown_rbearing;
         if (font->default_char < font->min_char_or_byte2
                 || font->default_char > font->max_char_or_byte2) {
-            printf("unknown not printed\n");
+//            printf("unknown not printed\n");
             unknown_width    = 0;
             unknown_lbearing = 0;
             unknown_rbearing = 0;
@@ -101,7 +101,12 @@ TextStyle::TextStyle(const String& fontName, const String& colorName)
                 short rbearing;
 
                 XTextExtents(this->font, &c, 1, &direction, &ascent, &descent, &xcharstr);
-
+                if (ascent > myMaxAscent) {
+                    myMaxAscent = ascent;
+                }
+                if (descent > myMaxDescent) {
+                    myMaxDescent = descent;
+                }
                 width    = xcharstr.width;
                 lbearing = xcharstr.lbearing;
                 rbearing = xcharstr.rbearing;
@@ -114,7 +119,19 @@ TextStyle::TextStyle(const String& fontName, const String& colorName)
                 this->charRBearings[i] = rbearing;
             }
         }
-    } 
+    }
+    this->lineAscent  = max_bounds->ascent; // -1 ?!?!?
+    this->lineDescent = max_bounds->descent;
+    if (myMaxDescent > 0 && myMaxDescent < this->lineDescent) {
+        this->lineDescent = myMaxDescent;
+    }
+    if (myMaxAscent > 0 && myMaxAscent < this->lineAscent) {
+        this->lineAscent = myMaxAscent;
+    }
+    this->lineHeight  = this->lineAscent + this->lineDescent;
+
+//printf("######## ascent  %d %d %d    (%s)\n", font->ascent,  max_bounds->ascent, myMaxAscent, fontName.toCString());
+//printf("######## descent %d %d\n", font->descent, max_bounds->descent);
     this->spaceWidth = this->charWidths[(unsigned char)' '];
 }
 

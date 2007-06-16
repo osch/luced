@@ -49,6 +49,9 @@ protected:
     
     TopWin* getLastFocusedOwnedTopWin() const { return lastFocusedOwnedTopWin; }
 
+protected:
+    virtual void appendOwnedTopWin(OwningPtr<TopWin> topWin);
+
 private:
     friend class TopWinOwnerAccessForTopWin;
     virtual void reportFocusOwnership(TopWin *topWin);
@@ -64,11 +67,11 @@ private:
 class TopWinOwnerAccessForTopWin : NonCopyable
 {
 protected:
-    static void reportFocusOwnershipToTopWinOwner(TopWin* topWin, TopWinOwner *owner) {
+    static void reportFocusOwnershipToTopWinOwner(TopWin* topWin, TopWinOwner* owner) {
         owner->reportFocusOwnership(topWin);
     }
-    static void appendTopWinToTopWinOwner(OwningPtr<TopWin> topWin, TopWinOwner *owner) {
-        owner->ownedTopWins.append(topWin);
+    static void appendTopWinToTopWinOwner(OwningPtr<TopWin> topWin, TopWinOwner* owner) {
+        owner->appendOwnedTopWin(topWin);
     }
 };
 

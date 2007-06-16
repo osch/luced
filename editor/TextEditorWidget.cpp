@@ -31,8 +31,11 @@
 using namespace LucED;
 
 
-TextEditorWidget::TextEditorWidget(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth)
+TextEditorWidget::TextEditorWidget(GuiWidget*       parent, 
+                                   TextStyles::Ptr  textStyles, 
+                                   HilitedText::Ptr hilitedText, 
+                                   int              borderWidth)
+                                   
       : TextWidget(parent, textStyles, hilitedText, borderWidth),
         SelectionOwner(this),
         PasteDataReceiver(this),
@@ -40,7 +43,9 @@ TextEditorWidget::TextEditorWidget(GuiWidget *parent,
         scrollRepeatCallback(this, &TextEditorWidget::handleScrollRepeating),
         hasMovingSelection(false),
         cursorChangesDisabled(false),
-        buttonPressedCounter(0)
+        buttonPressedCounter(0),
+        lastActionId(ACTION_UNSPECIFIED),
+        currentActionId(ACTION_UNSPECIFIED)
 {
     hasFocusFlag = false;
     addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
@@ -51,6 +56,25 @@ TextEditorWidget::TextEditorWidget(GuiWidget *parent,
 bool TextEditorWidget::isWordCharacter(unsigned char c)
 {
     return c == '_' || isalnum(c);
+}
+
+bool TextEditorWidget::isCursorVisible()
+{
+    if (  (getCursorLineNumber() < getTopLineNumber())
+       || (getCursorLineNumber() >= getTopLineNumber() + getNumberOfVisibleLines()))
+    {
+        return false;
+    }
+    long pixX = getCursorPixX();
+    int spaceWidth = getTextStyles()->get(0)->getSpaceWidth();
+    
+    if (  pixX > 0
+       && (   (pixX < getLeftPix() + spaceWidth)
+           || (pixX > getRightPix() - spaceWidth)))
+    {
+        return false;
+    }
+    return true;
 }
 
 void TextEditorWidget::assureCursorVisible()
@@ -113,16 +137,6 @@ void TextEditorWidget::moveCursorToTextPositionAndAdjustVisibility(int position)
     adjustCursorVisibility();
 }
 
-void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long length)
-{
-    if (length > 0) {
-        length = insertAtCursor(data, length);
-        moveCursorToTextPosition(getCursorTextPosition() + length);
-        getBackliteBuffer()->makeSelectionToSecondarySelection();
-        getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
-    }
-}
-
 void TextEditorWidget::notifyAboutLostSelectionOwnership()
 {
     if (getBackliteBuffer()->isSelectionPrimary()) {
@@ -133,8 +147,35 @@ void TextEditorWidget::notifyAboutLostSelectionOwnership()
 void TextEditorWidget::notifyAboutBeginOfPastingData()
 {
     disableCursorChanges();
-    getBackliteBuffer()->activateSelection(getCursorTextPosition());
-    getBackliteBuffer()->makeSelectionToSecondarySelection();
+    
+    if (!beginPastingTextMark.isValid()) {
+        beginPastingTextMark = createNewMarkFromCursor();
+        pastingTextMark      = createNewMarkFromCursor();
+    } else {
+        pastingTextMark      = getTextData()->createNewMark(beginPastingTextMark);
+    }
+//    getBackliteBuffer()->activateSelection(pastingTextMark.getPos());
+//    getBackliteBuffer()->makeSelectionToSecondarySelection();
+}
+
+void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long length)
+{
+    if (length > 0) {
+        bool first =  (pastingTextMark.getPos() == beginPastingTextMark.getPos());
+        
+        getTextData()->insertAtMark(pastingTextMark, data, length);
+        pastingTextMark.moveToPos(pastingTextMark.getPos() + length);
+        
+        if (!first) {
+            if (!getBackliteBuffer()->hasActiveSelection()
+              || getBackliteBuffer()->getBeginSelectionPos() != beginPastingTextMark.getPos())
+            {
+                getBackliteBuffer()->activateSelection(beginPastingTextMark.getPos());
+            }
+            getBackliteBuffer()->makeSelectionToSecondarySelection();
+            getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
+        }
+    }
 }
 
 void TextEditorWidget::notifyAboutEndOfPastingData()
@@ -142,10 +183,24 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
     if (cursorChangesDisabled) {
         enableCursorChanges();
     }
+
+    releaseSelectionOwnershipButKeepPseudoSelection();
+
+    if (!getBackliteBuffer()->hasActiveSelection()
+      || getBackliteBuffer()->getBeginSelectionPos() != beginPastingTextMark.getPos())
+    {
+        getBackliteBuffer()->activateSelection(beginPastingTextMark.getPos());
+    }
     getBackliteBuffer()->makeSelectionToSecondarySelection();
-    getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
+    getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
+
+    moveCursorToTextMark(pastingTextMark);
     assureCursorVisible();
+
     rememberedCursorPixX = getCursorPixX();
+    getTextData()->setHistorySeparator();
+
+    pastingTextMark = TextData::TextMark();
 }
 
 
@@ -278,8 +333,11 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
 
                         long newCursorPos = getTextPosFromPixXY(x, y);
                         moveCursorToTextPosition(newCursorPos);
-                        getTextData()->setHistorySeparator();
-                        requestSelectionPasting();
+                        EditingHistory::SectionHolder::Ptr historySectionHolder = getTextData()->createHistorySection();
+                        
+                        requestSelectionPasting(createNewMarkFromCursor());
+                        currentActionId = ACTION_UNSPECIFIED;
+                        
                         /*if (hasSelectionOwnership()) {
                             releaseSelectionOwnership();
                         }*/
@@ -480,6 +538,16 @@ void TextEditorWidget::releaseSelectionOwnership()
     SelectionOwner::releaseSelectionOwnership();
 }
 
+void TextEditorWidget::releaseSelectionOwnershipButKeepPseudoSelection()
+{
+    if (getBackliteBuffer()->hasActiveSelection()) {
+        getBackliteBuffer()->makeSelectionToSecondarySelection();
+    }
+    if (hasSelectionOwnership()) {
+        SelectionOwner::releaseSelectionOwnership();
+    }
+}
+
 long  TextEditorWidget::initSelectionDataRequest()
 {
     ASSERT(getBackliteBuffer()->hasActiveSelection());
@@ -553,31 +621,56 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
         hideMousePointer();
     }
     
+    lastActionId = currentActionId;
+    currentActionId = ACTION_UNSPECIFIED;
+    
     unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
     Callback0 m = keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-    if (m.isValid()) {
+
+    if (m.isValid())
+    {
         m.call();
         return EVENT_PROCESSED;
-    } else {
+    }
+    else
+    {
+        currentActionId = ACTION_KEYBOARD_INPUT;
+        
         char buffer[100];
         int len = XLookupString(&((XEvent*)event)->xkey, buffer, 100, NULL, NULL);
         if (len > 0) {
             if (!cursorChangesDisabled)
             {
+                getTextData()->setMergableHistorySeparator();
                 EditingHistory::SectionHolder::Ptr historySectionHolder = getTextData()->getHistorySectionHolder();
                 
                 hideCursor();
-                if (hasSelectionOwnership()) {
+                if (hasSelectionOwnership())
+                {
                     long selBegin = getBackliteBuffer()->getBeginSelectionPos();
                     long selLength = getBackliteBuffer()->getEndSelectionPos() - selBegin;
                     moveCursorToTextPosition(selBegin);
                     removeAtCursor(selLength);
                     releaseSelectionOwnership();
-                } else if (getBackliteBuffer()->hasActiveSelection()) {
-                    getBackliteBuffer()->deactivateSelection();
+                }
+                else if (getBackliteBuffer()->hasActiveSelection())
+                {
+                    if (   (lastActionId != ACTION_KEYBOARD_INPUT && lastActionId != ACTION_TABULATOR)
+                        || getCursorTextPosition() != getBackliteBuffer()->getEndSelectionPos())
+                    {
+                        getBackliteBuffer()->deactivateSelection();
+                    }
+                }
+                if (!getBackliteBuffer()->hasActiveSelection())
+                {
+                    getBackliteBuffer()->activateSelection(getCursorTextPosition());
+                    getBackliteBuffer()->makeSelectionToSecondarySelection();
                 }
                 long insertedLength = insertAtCursor(buffer[0]);
                 moveCursorToTextPosition(getCursorTextPosition() + insertedLength);
+
+                getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
+
                 if (getCursorLineNumber() < getTopLineNumber()) {
                     setTopLineNumber(getCursorLineNumber());
                 } else if ((getCursorLineNumber() - getTopLineNumber() + 1) * getLineHeight() > getHeightPix()) {
@@ -772,3 +865,14 @@ void TextEditorWidget::scrollPageRight()
     long newLeft = this->getLeftPix() + this->getTextStyles()->get(0)->getSpaceWidth() * (columns/2);
     this->setLeftPix(newLeft);
 }
+
+TextEditorWidget::ActionId TextEditorWidget::getLastAction() const
+{
+    return lastActionId;
+}
+
+void TextEditorWidget::setCurrentAction(TextEditorWidget::ActionId actionId)
+{
+    this->currentActionId = actionId;
+}
+

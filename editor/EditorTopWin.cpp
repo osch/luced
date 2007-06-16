@@ -77,7 +77,8 @@ private:
 
 EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
-      flagForSetSizeHintAtFirstShow(true)
+      flagForSetSizeHintAtFirstShow(true),
+      hasModalMessageBox(false)
 {
     addToXEventMask(ButtonPressMask);
     
@@ -159,7 +160,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     }
     else
     {
-        setSizeHints(width, height, m.incrWidth, m.incrHeight);
+        setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
         setSize(width, height);
         rootElement->setPosition(Position(0, 0, width, height));
     }
@@ -302,10 +303,19 @@ GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent *event)
 
 void EditorTopWin::treatFocusIn()
 {
-    if (invokedPanel.isValid()) {
-        invokedPanel->treatFocusIn();
+    if (hasModalMessageBox) {
+        if (modalMessageBox.isInvalid()) {
+            modalMessageBox = MessageBox::create(this, modalMessageBoxParameter);
+            modalMessageBox->show();
+        }
+        textEditor->disableCursorChanges();
+        modalMessageBox->raise();
     } else {
-        textEditor->treatFocusIn();
+        if (invokedPanel.isValid()) {
+            invokedPanel->treatFocusIn();
+        } else {
+            textEditor->treatFocusIn();
+        }
     }
 }
 
@@ -316,6 +326,30 @@ void EditorTopWin::treatFocusOut()
         invokedPanel->treatFocusOut();
     } else {
         textEditor->treatFocusOut();
+    }
+}
+
+void EditorTopWin::setModalMessageBox(const MessageBoxParameter& messageBoxParameter)
+{
+    this->hasModalMessageBox = true;
+    this->modalMessageBoxParameter = messageBoxParameter;
+    if (modalMessageBox.isValid()) {
+        modalMessageBox->hide();
+        modalMessageBox->closeWithoutAnyButtonActions();
+        modalMessageBox = MessageBox::create(this, modalMessageBoxParameter);
+        modalMessageBox->show();
+    }
+}
+
+void EditorTopWin::closeModalMessageBox()
+{
+    if (hasModalMessageBox) {
+        hasModalMessageBox = false;
+        textEditor->enableCursorChanges();
+        if (modalMessageBox.isValid()) {
+            modalMessageBox->hide();
+            modalMessageBox->closeWithoutAnyButtonActions();
+        }
     }
 }
 
@@ -547,7 +581,9 @@ void EditorTopWin::executeLuaScript()
             LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeScript((const char*) textEditor->getTextData()->getAmount(selBegin, selLength),
                                                                                                selLength);
             String output = scriptResult.output;
-            textEditor->getTextData()->setHistorySeparator();
+            
+            EditingHistory::SectionHolder::Ptr historySectionHolder = textEditor->getTextData()->createHistorySection();
+            
             textEditor->hideCursor();
             textEditor->moveCursorToTextPosition(selBegin + selLength);
             if (output.getLength() > 0) {
@@ -561,7 +597,6 @@ void EditorTopWin::executeLuaScript()
             } else {
                 textEditor->releaseSelectionOwnership();
             }
-            textEditor->getTextData()->setHistorySeparator();
             textEditor->assureCursorVisible();
             textEditor->rememberCursorPixX();
             textEditor->showCursor();
@@ -604,12 +639,13 @@ void EditorTopWin::executeLuaScript()
                 }
                 if (output.getLength() > 0) 
                 {
+                    EditingHistory::SectionHolder::Ptr historySectionHolder = textEditor->getTextData()->createHistorySection();
+                    
                     textEditor->hideCursor();
                     textEditor->moveCursorToTextPosition(spos);
                     textEditor->removeAtCursor(cursorPos - spos);
                     textEditor->insertAtCursor((const byte*) output.toCString(), output.getLength());
                     textEditor->moveCursorToTextPosition(spos + output.getLength());
-                    textEditor->getTextData()->setHistorySeparator();
                     textEditor->assureCursorVisible();
                     textEditor->rememberCursorPixX();
                     textEditor->showCursor();

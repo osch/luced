@@ -109,7 +109,7 @@ private:
     Button::Ptr cancelButton;
     Button::Ptr replaceSelectionButton;
     Button::Ptr replaceWindowButton;
-    CheckBox::Ptr ignoreCaseCheckBox;
+    CheckBox::Ptr caseSensitiveCheckBox;
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
     Callback1<MessageBoxParameter> messageBoxInvoker;

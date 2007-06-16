@@ -176,9 +176,13 @@ public:
         }
     }
     
-    void setMergeStopMarkOnPreviousAction() {
+    void setMergeStopMarkOnPreviousAction(bool flag = true) {
         if (nextActionIndex > 0) {
-            actions[nextActionIndex - 1].flags.set(FLAG_MERGE_STOP);
+            if (flag) {
+                actions[nextActionIndex - 1].flags.set(FLAG_MERGE_STOP);
+            } else {
+                actions[nextActionIndex - 1].flags.clear(FLAG_MERGE_STOP);
+            }
         }
     }
 

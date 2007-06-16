@@ -29,10 +29,16 @@ namespace LucED {
 class FileException : public BaseException
 {
 public:
-    FileException(String message)
-        : BaseException(message)
+    FileException(int errnum, String message)
+        : errnum(errnum),
+          BaseException(message)
     {}
+    int getErrno() const {
+        return errnum;
+    }
     virtual const char *what();
+private:
+    int errnum;
 };
 
 } // namespace LucED

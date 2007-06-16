@@ -19,33 +19,27 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "EventDispatcher.hpp"
-#include "TopWinList.hpp"
+#ifndef RUNNING_COMPONENT_HPP
+#define RUNNING_COMPONENT_HPP
 
-using namespace LucED;
+#include "HeapObject.hpp"
+#include "WeakPtr.hpp"
+#include "OwningPtr.hpp"
 
-WeakPtr<TopWinList> TopWinList::instance;
-
-TopWinList* TopWinList::getInstance()
+namespace LucED
 {
-    if (instance.isInvalid()) {
-        LucED::OwningPtr<TopWinList> p = LucED::OwningPtr<TopWinList>(new TopWinList());
-        EventDispatcher::getInstance()->registerRunningComponent(p);
-        instance = p;
-    }
-    return instance;
-}
 
-
-void TopWinList::requestCloseChildWindow(TopWin *topWin)
+class RunningComponent : public virtual HeapObject
 {
-    TopWinOwner::requestCloseChildWindow(topWin);
+public:
+    typedef OwningPtr<RunningComponent> OwningPtr;
+    typedef WeakPtr  <RunningComponent> WeakPtr;
     
-    if (getNumberOfChildWindows() == 0)
-    {
-        EventDispatcher::getInstance()->deregisterRunningComponent(this);
-        instance.invalidate();
-    }
-}
+protected:
+    RunningComponent()
+    {}
+};
 
+} // namespace LucED
 
+#endif // RUNNING_COMPONENT_HPP

@@ -57,6 +57,13 @@ public:
         timeval.tv_usec = 0;
     }
     
+    long getSeconds() const {
+        return timeval.tv_sec;
+    }
+    long getMicroSeconds() const {
+        return timeval.tv_usec;
+    }
+    
     long getMicroSecsBefore(const TimeVal &t) const
     {
         return diffMicroSecs(*this, t);

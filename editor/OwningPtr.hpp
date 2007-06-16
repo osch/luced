@@ -109,10 +109,6 @@ public:
         return ptr == rhs.ptr;
     }
     
-    bool operator==(const T* ptr) const {
-        return this->ptr == ptr;
-    }
-    
     template<class S> bool operator==(const OwningPtr<S>& rhs) const {
         return ptr == rhs.getRawPtr();
     }

@@ -229,6 +229,31 @@ void EventDispatcher::doEventLoop()
                 timers.push(nextTimer); // nextTimer was not executed -> queue it again
             }
         }
+        
+        if (stoppingComponents.getLength() > 0)
+        {
+            for (int i = 0; i < stoppingComponents.getLength(); ++i)
+            {
+                if (stoppingComponents[i].isValid())
+                {
+                    for (int j = 0; j < runningComponents.getLength();)
+                    {
+                        if (runningComponents[j].isInvalid()) {
+                            runningComponents.remove(j);
+                        } else if (runningComponents[j] == stoppingComponents[i]) {
+                            runningComponents.remove(j);
+                        } else {
+                            ++j;
+                        }
+                    }
+                }
+            }
+            stoppingComponents.clear();
+            
+            if (runningComponents.getLength() == 0) {
+                requestProgramTermination();
+            }
+        }
     }
     doQuit = false;
 }
@@ -280,5 +305,17 @@ void EventDispatcher::registerEventReceiverForRootProperty(GuiRootProperty prope
     rootPropertyListeners.set(property, callback);
 }
 
+
+
+void EventDispatcher::registerRunningComponent(RunningComponent::OwningPtr runningComponent)
+{
+    runningComponents.append(runningComponent);
+}
+
+
+void EventDispatcher::deregisterRunningComponent(RunningComponent* runningComponent)
+{
+    stoppingComponents.append(runningComponent);
+}
 
 

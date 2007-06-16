@@ -37,6 +37,18 @@ class TextEditorWidget : public TextWidget, public SelectionOwner, public PasteD
 public:
     typedef void (EditActionFunction)(TextEditorWidget *);
 
+    enum ActionId
+    {
+        ACTION_UNSPECIFIED,
+        ACTION_TABULATOR,
+        ACTION_NEWLINE,
+        ACTION_KEYBOARD_INPUT,
+    };
+
+    ActionId getLastAction() const;
+    void setCurrentAction(ActionId action);
+    
+    bool isCursorVisible();
     void assureCursorVisible();
     void moveCursorToTextMarkAndAdjustVisibility(TextData::MarkHandle m);
     void moveCursorToTextPositionAndAdjustVisibility(int position);
@@ -82,6 +94,17 @@ public:
     }
 
     virtual void releaseSelectionOwnership();
+    void releaseSelectionOwnershipButKeepPseudoSelection();
+    
+    void requestClipboardPasting(const TextData::TextMark& m) {
+        beginPastingTextMark = getTextData()->createNewMark(m);
+        PasteDataReceiver::requestClipboardPasting();
+    }
+
+    void requestSelectionPasting(const TextData::TextMark& m) {
+        beginPastingTextMark = getTextData()->createNewMark(m);
+        PasteDataReceiver::requestSelectionPasting();
+    }
 
 protected:
     TextEditorWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth);
@@ -114,6 +137,10 @@ private:
     Time lastButtonPressedTime;
     int buttonPressedCounter;
     bool wasDoubleClick;
+    ActionId lastActionId;
+    ActionId currentActionId;
+    TextData::TextMark beginPastingTextMark;
+    TextData::TextMark pastingTextMark;
 };
 
 } // namespace LucED

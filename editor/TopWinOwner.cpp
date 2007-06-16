@@ -63,4 +63,8 @@ void TopWinOwner::closePendingChilds()
     EventDispatcher::getInstance()->deregisterAllUpdateSourceCallbacksFor(this);
 }
 
+void TopWinOwner::appendOwnedTopWin(OwningPtr<TopWin> topWin)
+{
+    ownedTopWins.append(topWin);
+}
 

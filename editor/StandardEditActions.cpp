@@ -201,8 +201,9 @@ void StandardEditActions::cursorWordRight()
         long len = e->getTextData()->getLength();
 
         long pos = cursorPos;
+
+#if 0        
         bool gotoEndOfWordFlag = true;
-        
         if ((pos == 0 || !e->isWordCharacter(e->getTextData()->getChar(pos - 1)))
           && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
             gotoEndOfWordFlag = false;
@@ -215,6 +216,19 @@ void StandardEditActions::cursorWordRight()
                 ++pos;
             }
         }
+#else
+        if (pos < len) {
+            ++pos;
+            if (pos > 0) {
+                while (pos < len 
+                  && !(  !e->isWordCharacter(e->getTextData()->getChar(pos - 1))
+                       && e->isWordCharacter(e->getTextData()->getChar(pos))))
+                {
+                    ++pos;
+                }
+            }
+        }
+#endif
         e->moveCursorToTextPosition(pos);
     }
     e->assureCursorVisible();
@@ -449,8 +463,9 @@ void StandardEditActions::selectionCursorWordRight()
         }
         long pos = cursorPos;
         long len = e->getTextData()->getLength();
+
+#if 0
         bool gotoEndOfWordFlag = true;
-        
         if ((pos == 0 || !e->isWordCharacter(e->getTextData()->getChar(pos - 1)))
           && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
             gotoEndOfWordFlag = false;
@@ -463,6 +478,19 @@ void StandardEditActions::selectionCursorWordRight()
                 ++pos;
             }
         }
+#else
+        if (pos < len) {
+            ++pos;
+            if (pos > 0) {
+                while (pos < len 
+                  && !(  !e->isWordCharacter(e->getTextData()->getChar(pos - 1))
+                       && e->isWordCharacter(e->getTextData()->getChar(pos))))
+                {
+                    ++pos;
+                }
+            }
+        }
+#endif
         e->moveCursorToTextPosition(pos);
         e->getBackliteBuffer()->extendSelectionTo(e->getCursorTextPosition());
     }
@@ -830,6 +858,10 @@ void StandardEditActions::newLine()
 {
     if (!e->areCursorChangesDisabled())
     {
+        e->setCurrentAction(TextEditorWidget::ACTION_NEWLINE);
+        
+        EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+
         if (e->hasSelectionOwnership()) {
             long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
             long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
@@ -867,6 +899,7 @@ void StandardEditActions::tabForward()
 {
     if (!e->areCursorChangesDisabled())
     {
+        e->getTextData()->setMergableHistorySeparator();
         EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->getHistorySectionHolder();
         
         if (e->hasSelectionOwnership()) {
@@ -876,7 +909,12 @@ void StandardEditActions::tabForward()
             e->removeAtCursor(selLength);
             e->releaseSelectionOwnership();
         } else if (e->getBackliteBuffer()->hasActiveSelection()) {
-            e->getBackliteBuffer()->deactivateSelection();
+            if (   (   e->getLastAction() != TextEditorWidget::ACTION_KEYBOARD_INPUT 
+                    && e->getLastAction() != TextEditorWidget::ACTION_TABULATOR)
+                || e->getCursorTextPosition() != e->getBackliteBuffer()->getEndSelectionPos())
+            {
+                e->getBackliteBuffer()->deactivateSelection();
+            }
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
         ByteArray whiteSpace;
@@ -897,6 +935,10 @@ void StandardEditActions::tabForward()
         e->hideCursor();
         e->insertAtCursor(whiteSpace);
         e->moveCursorToTextPosition(e->getCursorTextPosition() + whiteSpace.getLength());
+        e->setCurrentAction(TextEditorWidget::ACTION_TABULATOR);
+        if (e->getBackliteBuffer()->hasActiveSelection()) {
+            e->getBackliteBuffer()->extendSelectionTo(e->getCursorTextPosition());
+        }
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
@@ -909,32 +951,50 @@ void StandardEditActions::backSpace()
 {
     if (!e->areCursorChangesDisabled())
     {
-        EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->getHistorySectionHolder();
 
         e->hideCursor();
-        if (e->hasSelectionOwnership()) {
-            long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
-            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            e->moveCursorToTextPosition(selBegin);
-            e->removeAtCursor(selLength);
-            e->releaseSelectionOwnership();
-        } else {
-            if (e->getBackliteBuffer()->hasActiveSelection()) {
+        if (e->hasSelectionOwnership())
+        {
+            {
+                EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+
+                long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
+                long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+                e->moveCursorToTextPosition(selBegin);
+                e->removeAtCursor(selLength);
+                e->releaseSelectionOwnership();
+            }
+            e->getTextData()->setHistorySeparator();
+        }
+        else
+        {
+            e->getTextData()->setMergableHistorySeparator();
+            EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->getHistorySectionHolder();
+
+            const long cursorPos = e->getCursorTextPosition(); 
+
+            if (    (   e->getLastAction() != TextEditorWidget::ACTION_KEYBOARD_INPUT 
+                     && e->getLastAction() != TextEditorWidget::ACTION_TABULATOR)
+                 && e->getBackliteBuffer()->hasActiveSelection())
+            {
                 e->getBackliteBuffer()->deactivateSelection();
             }
-            const long cursorPos = e->getCursorTextPosition(); 
+            e->setCurrentAction(TextEditorWidget::ACTION_KEYBOARD_INPUT);
+
             
             if (cursorPos > 0)
             {
                 long softTabWidth = e->getLanguageMode()->getSoftTabWidth();
                 long amountToBeRemoved;
                 
-                if (softTabWidth <= 0)
+                if (softTabWidth <= 0 || (   e->getLastAction() != TextEditorWidget::ACTION_TABULATOR
+                                          && e->getLastAction() != TextEditorWidget::ACTION_NEWLINE))
                 {
                     amountToBeRemoved = 1;
                 }
                 else 
                 {
+#if 0
                     TextData* textData = e->getTextData();
                     bool wasAllSpace = true;
                     for (long p = cursorPos - e->getCursorColumn(); p < cursorPos; ++p) {
@@ -952,6 +1012,24 @@ void StandardEditActions::backSpace()
                     } else {
                         amountToBeRemoved = 1;
                     }
+#else
+                    TextData* textData = e->getTextData();
+                    long p             = cursorPos;
+                    long opticalColumn = e->getOpticalCursorColumn();
+                    
+                    while (p - 1 >= 0 && textData->getChar(p - 1) == ' ') {
+                        p             -= 1;
+                        opticalColumn -= 1;
+                        if ((opticalColumn / softTabWidth) * softTabWidth == opticalColumn) {
+                            break;
+                        }
+                    }
+                    if (p == cursorPos && p > 0) {
+                        p -= 1;
+                    }
+                    amountToBeRemoved = cursorPos - p;
+                    e->setCurrentAction(TextEditorWidget::ACTION_TABULATOR);
+#endif
                 }
                 e->moveCursorToTextPosition(cursorPos - amountToBeRemoved);
                 e->removeAtCursor(amountToBeRemoved);
@@ -969,13 +1047,24 @@ void StandardEditActions::deleteKey()
     if (!e->areCursorChangesDisabled())
     {
         e->hideCursor();
-        if (e->hasSelectionOwnership()) {
-            long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
-            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            e->moveCursorToTextPosition(selBegin);
-            e->removeAtCursor(selLength);
-            e->releaseSelectionOwnership();
-        } else {
+        if (e->hasSelectionOwnership()) 
+        {
+            {
+                EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+
+                long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
+                long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+                e->moveCursorToTextPosition(selBegin);
+                e->removeAtCursor(selLength);
+                e->releaseSelectionOwnership();
+            }
+            e->getTextData()->setHistorySeparator();
+        }
+        else
+        {
+            e->getTextData()->setMergableHistorySeparator();
+            EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->getHistorySectionHolder();
+            
             if (e->getBackliteBuffer()->hasActiveSelection()) {
                 e->getBackliteBuffer()->deactivateSelection();
             }
@@ -992,6 +1081,8 @@ void StandardEditActions::copyToClipboard()
 {
     if (!e->areCursorChangesDisabled())
     {
+        EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+
         if (e->hasSelectionOwnership() && e->getBackliteBuffer()->hasActiveSelection()) {
             long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
             long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
@@ -1006,13 +1097,19 @@ void StandardEditActions::cutToClipboard()
 {
     if (!e->areCursorChangesDisabled())
     {
-        if (e->getBackliteBuffer()->hasActiveSelection() && e->getBackliteBuffer()->isSelectionPrimary()) {
-            long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
-            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            Clipboard::getInstance()->copyToClipboard(e->getTextData()->getAmount(selBegin, selLength), selLength);
-            e->moveCursorToTextPosition(selBegin);
-            e->removeAtCursor(selLength);
-            e->releaseSelectionOwnership();
+        if (e->getBackliteBuffer()->hasActiveSelection() && e->getBackliteBuffer()->isSelectionPrimary())
+        {
+            {
+                EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+
+                long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
+                long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+                Clipboard::getInstance()->copyToClipboard(e->getTextData()->getAmount(selBegin, selLength), selLength);
+                e->moveCursorToTextPosition(selBegin);
+                e->removeAtCursor(selLength);
+                e->releaseSelectionOwnership();
+            }
+            e->getTextData()->setHistorySeparator();
         }
     }
 }
@@ -1035,24 +1132,30 @@ void StandardEditActions::selectAll()
 }
 
 
+bool doAbort = false;
 
 void StandardEditActions::pasteFromClipboard()
 {
     if (!e->areCursorChangesDisabled())
     {
+//doAbort = true;        
         EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->createHistorySection();
 
+        TextData::TextMark m;
+
         if (e->hasSelectionOwnership()) {
-            long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
-            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
-            e->moveCursorToTextPosition(selBegin);
-            e->removeAtCursor(selLength);
-            e->releaseSelectionOwnership();
+            m = e->getBackliteBuffer()->createMarkToBeginOfSelection();
+            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - m.getPos();
+            e->getTextData()->removeAtMark(m, selLength);
+//            e->releaseSelectionOwnership();
+        } else {
+            m = e->createNewMarkFromCursor();
         }
-        if (e->getBackliteBuffer()->hasActiveSelection()) {
-            e->getBackliteBuffer()->deactivateSelection();
-        }
-        e->requestClipboardPasting();
+//        if (e->getBackliteBuffer()->hasActiveSelection()) {
+//            e->getBackliteBuffer()->deactivateSelection();
+//        }
+        e->requestClipboardPasting(m);
+//doAbort = false;        
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
@@ -1114,7 +1217,7 @@ void StandardEditActions::redo()
 }
 
 
-void StandardEditActions::selectWord()
+void StandardEditActions::selectWordForward()
 {
     if (!e->areCursorChangesDisabled())
     {
@@ -1123,26 +1226,164 @@ void StandardEditActions::selectWord()
         long spos = cursorPos;
         long epos = cursorPos;
 
-        while (epos < len
-               && e->isWordCharacter(e->getTextData()->getChar(epos)))
-        {
-            ++epos;
+        bool hadSelectionOwnership = false;
+
+        if (e->hasSelectionOwnership()) {
+            hadSelectionOwnership = true;
+            spos = e->getBackliteBuffer()->getBeginSelectionPos();
+            epos = e->getBackliteBuffer()->getEndSelectionPos();
         }
-        
-        while (spos > 0
-               && e->isWordCharacter(e->getTextData()->getChar(spos - 1)))
-        {
-            --spos;
+        else {
+            while (spos - 1 >= 0
+                   && e->isWordCharacter(e->getTextData()->getChar(spos - 1)))
+            {
+                --spos;
+            }
+        }
+        bool cursorVisible = e->isCursorVisible();
+        if (epos == cursorPos && cursorVisible) {
+            if (epos == spos) {
+                while (epos < len
+                       && !e->isWordCharacter(e->getTextData()->getChar(epos)))
+                {
+                    ++epos;
+                }
+            }
+            while (epos < len
+                   && e->isWordCharacter(e->getTextData()->getChar(epos)))
+            {
+                ++epos;
+            }
         }
 
+        
         if (!e->hasSelectionOwnership()) {
+            hadSelectionOwnership = false;
             e->requestSelectionOwnership();
+            e->getBackliteBuffer()->activateSelection(spos);
         }
-        e->getBackliteBuffer()->activateSelection(spos);
+        e->getBackliteBuffer()->setAnchorToBeginOfSelection();
+        
+        if (hadSelectionOwnership && epos == cursorPos && epos < len && cursorVisible)
+        {
+            epos += 1;
+            while (epos < len
+                   && !e->isWordCharacter(e->getTextData()->getChar(epos)))
+            {
+                ++epos;
+            }
+            while (epos < len
+                   && e->isWordCharacter(e->getTextData()->getChar(epos)))
+            {
+                ++epos;
+            }
+        }
         e->getBackliteBuffer()->extendSelectionTo(epos);
+        e->moveCursorToTextPosition(epos);
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
+}
+
+void StandardEditActions::selectWordBackward()
+{
+    if (!e->areCursorChangesDisabled())
+    {
+        long len  = e->getTextData()->getLength();
+        long cursorPos = e->getCursorTextPosition();
+        long spos = cursorPos;
+        long epos = cursorPos;
+
+        if (e->hasSelectionOwnership()) {
+            spos = e->getBackliteBuffer()->getBeginSelectionPos();
+            epos = e->getBackliteBuffer()->getEndSelectionPos();
+        }
+        else {
+            while (epos < len
+                   && e->isWordCharacter(e->getTextData()->getChar(epos)))
+            {
+                ++epos;
+            }
+        }
+        bool cursorVisible = e->isCursorVisible();
+        if (spos == cursorPos && cursorVisible) {
+            while (spos - 1 >= 0
+                   && e->isWordCharacter(e->getTextData()->getChar(spos - 1)))
+            {
+                --spos;
+            }
+        }
+
+        bool hadSelectionOwnership = true;
+
+        if (!e->hasSelectionOwnership()) {
+            hadSelectionOwnership = false;
+            e->requestSelectionOwnership();
+            e->getBackliteBuffer()->activateSelection(epos);
+        }
+        e->getBackliteBuffer()->setAnchorToBeginOfSelection();
+        
+        if (hadSelectionOwnership && epos == cursorPos && epos > 0 && cursorVisible)
+        {
+            while (epos - 1 >= 0
+                   && e->isWordCharacter(e->getTextData()->getChar(epos - 1)))
+            {
+                --epos;
+            }
+            while (epos - 1 >= 0
+                   && !e->isWordCharacter(e->getTextData()->getChar(epos - 1)))
+            {
+                --epos;
+            }
+        }
+        e->getBackliteBuffer()->extendSelectionTo(epos);
+        e->moveCursorToTextPosition(epos);
+    }
+    e->assureCursorVisible();
+    e->rememberCursorPixX();
+}
+
+
+void StandardEditActions::findNextStructureElement()
+{
+//    long cursorPos = e->getCursorTextPosition();
+//    
+//    FindUtil findUtil;
+//    findUtil.setTextData                 (e->getTextData());
+//    findUtil.setTextPosition             (cursorPos);
+//    findUtil.setSearchString             ("\b(if|do|function|repeat|then|while|elseif|else)\b");
+//    findUtil.setRegexFlag                (true);
+//    findUtil.setWholeWordFlag            (false);
+//    findUtil.setIgnoreCaseFlag           (false);
+//    findUtil.setSearchForwardFlag        (false);
+//    
+//    findUtil.findNext();
+//    
+//    if (findUtil.wasFound() && findUtil.getMatchEndPos() >= cursorPos)
+//    {
+//        int counter = 1;
+//        while (counter > 0)
+//        {
+//            if (counter == 1) {
+//                findUtil.setSearchString("\b(if|do|function|repeat|then|while|elseif|else|end|until)\b");
+//            } else {
+//                findUtil.setSearchString("\b(if|do|function|repeat|end|until)\b");
+//            }
+//            if (!findUtil.wasFound()) {
+//                break;
+//            }
+//            
+//        }
+//    }
+//    else
+//    {
+//        findUtil.setSearchString         ("\b(end|until)\b");
+//    }
+}
+
+
+void StandardEditActions::findPrevStructureElement()
+{
 }
 
 
@@ -1196,7 +1437,8 @@ void StandardEditActions::registerSingleLineEditActionsToEditWidget()
     e->setEditAction(          ControlMask, XK_z,         this, &StandardEditActions::undo);
     e->setEditAction(ShiftMask|ControlMask, XK_z,         this, &StandardEditActions::redo);
 
-    e->setEditAction(          ControlMask, XK_space,     this, &StandardEditActions::selectWord);
+    e->setEditAction(          ControlMask, XK_space,     this, &StandardEditActions::selectWordForward);
+    e->setEditAction(ShiftMask|ControlMask, XK_space,     this, &StandardEditActions::selectWordBackward);
     e->setEditAction(          ControlMask, XK_m,         this, &StandardEditActions::gotoMatchingBracket);
     
     e->setEditAction(                    0, XK_Tab,       this, &StandardEditActions::tabForward);
@@ -1243,5 +1485,8 @@ void StandardEditActions::registerMultiLineEditActionsToEditWidget()
 
     e->setEditAction(          ControlMask, XK_9,         this, &StandardEditActions::shiftBlockLeft);
     e->setEditAction(          ControlMask, XK_0,         this, &StandardEditActions::shiftBlockRight);
+
+    e->setEditAction(             Mod1Mask, XK_m,         this, &StandardEditActions::findNextStructureElement);
+    e->setEditAction(   ShiftMask|Mod1Mask, XK_m,         this, &StandardEditActions::findPrevStructureElement);
 }
 

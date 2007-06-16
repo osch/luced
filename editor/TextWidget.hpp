@@ -197,7 +197,7 @@ private:
     void printPartialLine(LineInfo *li, int y, int x1, int x2);
     void printPartialLineWithoutCursor(LineInfo *li, int y, int x1, int x2);
     void printLine(LineInfo *li, int y);
-    void printLineWithoutCursor(LineInfo *li, int y);
+    void printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi);
     void clearLine(LineInfo *li, int y);
     void clearPartialLine(LineInfo *li, int y, int x1, int x2);
     void applyTextStyle(int styleIndex);

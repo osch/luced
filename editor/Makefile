@@ -61,7 +61,7 @@ SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget        
                 FindPanel               CheckBox               MessageBox             SearchHistory \
                 FileException           EditorServer           ClientServerUtil       EditorClient  \
                 CommandlineException    ReplacePanel           LuaFunctionArguments   GuiElement \
-                SelectionOwner          PasteDataReceiver      Clipboard \
+                SelectionOwner          PasteDataReceiver      Clipboard              FileOpener
 		
                          
 

@@ -59,13 +59,13 @@ void File::loadInto(ByteBuffer& buffer)
         len = stat_st.st_size;
         ptr = buffer.appendAmount(len);
         if (read(fd, ptr, len) == -1) {
-            throw FileException(String() << "error reading from file '" << name << "': " << strerror(errno));
+            throw FileException(errno, String() << "error reading from file '" << name << "': " << strerror(errno));
         }
         if (close(fd) == -1) {
-            throw FileException(String() << "error closing file '" << name << "' after reading: " << strerror(errno));
+            throw FileException(errno, String() << "error closing file '" << name << "' after reading: " << strerror(errno));
         }
     } else {
-        throw FileException(String() << "error opening file '" << name << "' for reading: " << strerror(errno));
+        throw FileException(errno, String() << "error opening file '" << name << "' for reading: " << strerror(errno));
     }
 }
 
@@ -76,13 +76,13 @@ void File::storeData(ByteBuffer& data)
     if (fd != -1) {
         long length = data.getLength();
         if (write(fd, data.getAmount(0, length), length) == -1) {
-            throw FileException(String() << "error writing to file '" << name << "': " << strerror(errno));
+            throw FileException(errno, String() << "error writing to file '" << name << "': " << strerror(errno));
         }
         if (close(fd) == -1) {
-            throw FileException(String() << "error closing file '" << name << "' after writing: " << strerror(errno));
+            throw FileException(errno, String() << "error closing file '" << name << "' after writing: " << strerror(errno));
         }
     } else {
-        throw FileException(String() << "error opening file '" << name << "' for writing: " << strerror(errno));
+        throw FileException(errno, String() << "error opening file '" << name << "' for writing: " << strerror(errno));
     }
 }
 

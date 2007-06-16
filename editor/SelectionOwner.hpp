@@ -51,7 +51,7 @@ protected:
     GuiElement::ProcessingResult processSelectionOwnerEvent(const XEvent *event);
     
     virtual void notifyAboutLostSelectionOwnership() {}
-
+    virtual void notifyAboutObtainedSelectionOwnership() {}
     
 private:
 

@@ -29,6 +29,7 @@
 #include <sstream>
 
 #include "debug.hpp"
+#include "types.hpp"
 
 namespace LucED
 {
@@ -97,6 +98,10 @@ public:
     }
     String& append(const char* rhs, int length) {
         s.append(rhs, length);
+        return *this;
+    }
+    String& append(const byte* rhs, int length) {
+        s.append((const char*)rhs, length);
         return *this;
     }
     String& append(char c) {
@@ -181,7 +186,7 @@ public:
         removeAmount(pos, getLength() - pos);
     }
     String getTail(int pos) const {
-        ASSERT(0 <= pos && pos < getLength());
+        ASSERT(0 <= pos && pos <= getLength());
         return s.substr(pos);
     }
     int findFirstOf(char c, int startPos = 0) const {
@@ -192,6 +197,10 @@ public:
         } else {
             return rslt;
         }
+    }
+    
+    void clear() {
+        s.clear();
     }
 
 private:

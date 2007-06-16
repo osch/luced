@@ -33,7 +33,7 @@
 
 using namespace LucED;
 
-static const char* const REPLACE_IN_SELECTION_BUTTON_TEXT = "Replace in S]election";
+static const char* const REPLACE_IN_SELECTION_BUTTON_TEXT = "All in S]election";
 
 ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel, 
                            Callback1<MessageBoxParameter> messageBoxInvoker,
@@ -48,14 +48,12 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
 {
     GuiLayoutColumn::Ptr  c0 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr  c1 = GuiLayoutColumn::create();
-    GuiLayoutColumn::Ptr  c2 = GuiLayoutColumn::create();
     GuiLayoutRow::Ptr     r0 = GuiLayoutRow::create();
     GuiLayoutRow::Ptr     r1 = GuiLayoutRow::create();
     GuiLayoutRow::Ptr     r2 = GuiLayoutRow::create();
     GuiLayoutRow::Ptr     r3 = GuiLayoutRow::create();
     GuiLayoutRow::Ptr     r4 = GuiLayoutRow::create();
     GuiLayoutRow::Ptr     r5 = GuiLayoutRow::create();
-    GuiLayoutRow::Ptr     r6 = GuiLayoutRow::create();
     GuiLayoutRow::Ptr     r7 = GuiLayoutRow::create();
     GuiLayoutSpacerFrame::Ptr frame0 = GuiLayoutSpacerFrame::create(c0, 0);
     setRootElement(frame0);
@@ -73,20 +71,20 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     replaceEditField->setDesiredWidthInChars(5, 10, INT_MAX);
     replaceEditField->setToEditFieldGroup(editFieldGroup);
 
-    findNextButton         = Button::create(this, "Find N]ext");
-    findPrevButton         = Button::create(this, "Find P]revious");
-    replaceNextButton      = Button::create(this, "Replace & Nex]t");
-    replacePrevButton      = Button::create(this, "Replace & Pre]v");
-    replaceSelectionButton = Button::create(this, REPLACE_IN_SELECTION_BUTTON_TEXT);
-    replaceWindowButton    = Button::create(this, "Replace in W]indow");
-    cancelButton = Button::create(this, "C]lose");
+    findNextButton          = Button::create     (this, "Find N]ext");
+    findPrevButton          = Button::create     (this, "Find P]revious");
+    replaceNextButton       = Button::create     (this, "Replace & Nex]t");
+    replacePrevButton       = Button::create     (this, "Replace & Pre]v");
+    replaceSelectionButton  = Button::create     (this, REPLACE_IN_SELECTION_BUTTON_TEXT);
+    replaceWindowButton     = Button::create     (this, "All in W]indow");
+    cancelButton            = Button::create     (this, "Cl]ose");
     LabelWidget::Ptr label0 = LabelWidget::create(this, "Find:");
     LabelWidget::Ptr label1 = LabelWidget::create(this, "Replace:");
     
     
-    ignoreCaseCheckBox  = CheckBox::create(this, "I]gnore Case");
-    wholeWordCheckBox   = CheckBox::create(this, "Wh]ole Word");
-    regularExprCheckBox = CheckBox::create(this, "R]egular Expression");
+    caseSensitiveCheckBox   = CheckBox::create   (this, "C]ase Sensitive");
+    wholeWordCheckBox       = CheckBox::create   (this, "Wh]ole Word");
+    regularExprCheckBox     = CheckBox::create   (this, "R]egular Expression");
     
     label0   ->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
     label1   ->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
@@ -113,8 +111,8 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     findPrevButton        ->setNextFocusWidget(findNextButton);
     findNextButton        ->setNextFocusWidget(replacePrevButton);
     replacePrevButton     ->setNextFocusWidget(replaceNextButton);
-    replaceNextButton     ->setNextFocusWidget(ignoreCaseCheckBox);
-    ignoreCaseCheckBox    ->setNextFocusWidget(wholeWordCheckBox);
+    replaceNextButton     ->setNextFocusWidget(caseSensitiveCheckBox);
+    caseSensitiveCheckBox ->setNextFocusWidget(wholeWordCheckBox);
     wholeWordCheckBox     ->setNextFocusWidget(regularExprCheckBox);
     regularExprCheckBox   ->setNextFocusWidget(replaceSelectionButton);
     replaceSelectionButton->setNextFocusWidget(replaceWindowButton);
@@ -123,20 +121,29 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
 
     setFocus(findEditField);
 
-    c0->addElement(r0);
-    r0->addElement(label0);
-    r0->addElement(findEditField);
-    r0->addElement(findPrevButton);
-    r0->addElement(findNextButton);
+    Measures buttonMeasures;
+             buttonMeasures.maximize(findPrevButton   ->getDesiredMeasures());
+             buttonMeasures.maximize(findNextButton   ->getDesiredMeasures());
+             buttonMeasures.maximize(replacePrevButton->getDesiredMeasures());
+             buttonMeasures.maximize(replaceNextButton->getDesiredMeasures());
 
-    c0->addElement(r5);
+    c0->addElement(r0);
+    r0->addElement(c1);
+    
+    c1->addElement(r4);
+    r4->addElement(label0);
+    r4->addElement(findEditField);
+    r4->addElement(findPrevButton);
+    r4->addElement(findNextButton);
+
+    c1->addElement(r5);
     r5->addElement(label1);
     r5->addElement(replaceEditField);
     r5->addElement(replacePrevButton);
     r5->addElement(replaceNextButton);
 
-    c0->addElement(r3);
-    r3->addElement(ignoreCaseCheckBox);
+    c1->addElement(r3);
+    r3->addElement(caseSensitiveCheckBox);
     r3->addElement(wholeWordCheckBox);
     r3->addElement(regularExprCheckBox);
     r3->addSpacer();
@@ -144,15 +151,9 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     r3->addElement(replaceWindowButton);
     r3->addElement(cancelButton);
     
-    ignoreCaseCheckBox->setChecked(true);
+    caseSensitiveCheckBox->setChecked(false);
     
     findNextButton->setAsDefaultButton();
-
-    Measures buttonMeasures;
-             buttonMeasures.maximize(findPrevButton   ->getDesiredMeasures());
-             buttonMeasures.maximize(findNextButton   ->getDesiredMeasures());
-             buttonMeasures.maximize(replacePrevButton->getDesiredMeasures());
-             buttonMeasures.maximize(replaceNextButton->getDesiredMeasures());
 
     findPrevButton   ->setDesiredMeasures(buttonMeasures);
     findNextButton   ->setDesiredMeasures(buttonMeasures);
@@ -170,7 +171,7 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     replaceSelectionButton->show();
     replaceWindowButton   ->show();
     cancelButton          ->show();
-    ignoreCaseCheckBox    ->show();
+    caseSensitiveCheckBox ->show();
     regularExprCheckBox   ->show();
     wholeWordCheckBox     ->show();
     
@@ -325,7 +326,7 @@ void ReplacePanel::handleButtonPressed(Button* button)
             replaceUtil.setTextPosition(e->getCursorTextPosition());
 
             replaceUtil.setSearchForwardFlag(button == findNextButton || button == replaceNextButton);
-            replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+            replaceUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
             replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
             replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
             replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
@@ -426,7 +427,7 @@ void ReplacePanel::handleButtonPressed(Button* button)
                     rememberedSelection = e->getTextData()->getSubstring(spos, epos - spos);
                 }
                 replaceUtil.setSearchForwardFlag(true);
-                replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+                replaceUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
                 replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
                 replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
                 replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
@@ -518,7 +519,7 @@ void ReplacePanel::findAgainForward()
         return;
     }
 
-    replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+    replaceUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
     replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
     replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
     replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
@@ -549,7 +550,7 @@ void ReplacePanel::findAgainBackward()
         return;
     }
 
-    replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+    replaceUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
     replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
     replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
     replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
@@ -579,7 +580,7 @@ void ReplacePanel::replaceAgainForward()
     }
 
     if (this->isVisible()) {
-        replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+        replaceUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
         replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
         replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
         replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
@@ -643,7 +644,7 @@ void ReplacePanel::replaceAgainBackward()
     }
 
     if (this->isVisible()) {
-        replaceUtil.setIgnoreCaseFlag   (ignoreCaseCheckBox->isChecked());
+        replaceUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
         replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
         replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
         replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
@@ -718,7 +719,7 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
                                  newEntry.setReplaceString (replaceEditField->getTextData()->getAsString());
                                  newEntry.setWholeWordFlag (wholeWordCheckBox->isChecked());
                                  newEntry.setRegexFlag     (regularExprCheckBox->isChecked());
-                                 newEntry.setIgnoreCaseFlag(ignoreCaseCheckBox->isChecked());
+                                 newEntry.setIgnoreCaseFlag(!caseSensitiveCheckBox->isChecked());
 
             history->append(newEntry);
         }
@@ -749,7 +750,7 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
                 historyIndex = h;
                 wholeWordCheckBox->setChecked(entry.getWholeWordFlag());
                 regularExprCheckBox->setChecked(entry.getRegexFlag());
-                ignoreCaseCheckBox->setChecked(entry.getIgnoreCaseFlag());
+                caseSensitiveCheckBox->setChecked(!entry.getIgnoreCaseFlag());
                 break;
             }
             --h;
@@ -769,7 +770,7 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
                                  newEntry.setReplaceString (replaceEditField->getTextData()->getAsString());
                                  newEntry.setWholeWordFlag (wholeWordCheckBox->isChecked());
                                  newEntry.setRegexFlag     (regularExprCheckBox->isChecked());
-                                 newEntry.setIgnoreCaseFlag(ignoreCaseCheckBox->isChecked());
+                                 newEntry.setIgnoreCaseFlag(!caseSensitiveCheckBox->isChecked());
 
             history->append(newEntry);
 
@@ -802,7 +803,7 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
                     found = true;
                     wholeWordCheckBox->setChecked(entry.getWholeWordFlag());
                     regularExprCheckBox->setChecked(entry.getRegexFlag());
-                    ignoreCaseCheckBox->setChecked(entry.getIgnoreCaseFlag());
+                    caseSensitiveCheckBox->setChecked(!entry.getIgnoreCaseFlag());
                     break;
                 }
             }
@@ -810,6 +811,9 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
                 historyIndex = -1;
                    findEditField->getTextData()->clear();
                 replaceEditField->getTextData()->clear();
+                caseSensitiveCheckBox->setChecked(false);
+                regularExprCheckBox->setChecked(false);
+                wholeWordCheckBox->setChecked(false);
             }
         }
         processed = true;
@@ -883,6 +887,9 @@ void ReplacePanel::show()
         findEditField   ->getTextData()->clear();
         replaceEditField->getTextData()->clear();
         historyIndex = -1;
+        caseSensitiveCheckBox->setChecked(false);
+        regularExprCheckBox->setChecked(false);
+        wholeWordCheckBox->setChecked(false);
     }
     DialogPanel::show();
 }

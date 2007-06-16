@@ -28,6 +28,7 @@
 #include "SelectionOwner.hpp"
 #include "SingletonInstance.hpp"
 #include "PasteDataReceiver.hpp"
+#include "ProgramRunningKeeper.hpp"
 
 namespace LucED {
 
@@ -67,6 +68,7 @@ private:
     virtual const byte* getSelectionDataChunk(long pos, long length);
     virtual void  endSelectionDataRequest();
     virtual void notifyAboutLostSelectionOwnership();
+    virtual void notifyAboutObtainedSelectionOwnership();
 
     virtual void notifyAboutReceivedPasteData(const byte* data, long length);
     virtual void notifyAboutEndOfPastingData();
@@ -83,6 +85,8 @@ private:
     long alreadySentPos;
     Window multiPartTargetWid;
     Atom   multiPartTargetProp;
+
+    ProgramRunningKeeper programRunningKeeper;
 };
 
 } // namespace LucED

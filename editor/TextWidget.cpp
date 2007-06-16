@@ -539,93 +539,9 @@ inline void TextWidget::clearLine(LineInfo *li, int y)
 }*/
 ///////////////////
 
-    ByteArray& buf                    = li->outBuf;
-    MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
-    byte *ptr, *end;
-    long x = 0;
-    long accX = 0;
-    int  accBackground = -1;
-    
-    if (buf.getLength() > 0) {
-
-        ptr = buf.getPtr(0);
-        end = ptr + buf.getLength();
-
-        for (int i = 0, n = fragments.getLength(); i < n; ++i)
-        {
-            ASSERT(ptr < end);
-            
-            int background = fragments[i].background;
-            int styleIndex = fragments[i].styleIndex;
-            int len        = fragments[i].numberBytes;
-            int pixWidth   = fragments[i].pixWidth;
-
-            if (background != accBackground) {
-                if (accBackground != -1) {
-                    XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(accBackground));
-                    XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                            -li->leftPixOffset + accX, y, x - accX, lineHeight);
-                }
-                accBackground = background;
-                accX = x;
-            }
-            ptr += len;
-            x += pixWidth;
-        }
-    }
-    if (accBackground != -1) {
-        XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(accBackground));
-        if (accBackground == li->backgroundToEnd) {
-            XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                    -li->leftPixOffset + accX, y, position.w - (-li->leftPixOffset + accX), lineHeight);
-        } else {
-            XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                    -li->leftPixOffset + accX, y, x - accX, lineHeight);
-            XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
-            XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                    -li->leftPixOffset + x, y, position.w - (-li->leftPixOffset + x), lineHeight);
-        }
-    } else {
-        XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
-        XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                -li->leftPixOffset + x, y, position.w - (-li->leftPixOffset + x), lineHeight);
-    }
 
 }
 
-
-inline void TextWidget::printLineWithoutCursor(LineInfo *li, int y)
-{
-    ByteArray& buf = li->outBuf;
-    MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
-    byte *ptr, *end;
-    long x = 0;
-    
-    if (buf.getLength() > 0) {
-
-        ptr = buf.getPtr(0);
-        end = ptr + buf.getLength();
-
-        for (int i = 0, n = fragments.getLength(); i < n; ++i)
-        {
-            ASSERT(ptr < end);
-            
-            int background = fragments[i].background;
-            int styleIndex = fragments[i].styleIndex;
-            int len        = fragments[i].numberBytes;
-            int pixWidth   = fragments[i].pixWidth;
-
-            if (len > 0 && *ptr != '\t') {
-                applyTextStyle(styleIndex);
-                XDrawString(getDisplay(), getWid(), 
-                        textWidget_gcid, -li->leftPixOffset + x, y + lineAscent, (char*) ptr, len);
-                //printf("print <%.*s> \n", len, ptr);
-            }
-            ptr += len;
-            x += pixWidth;
-        }
-    }
-}
 
 
 inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
@@ -800,28 +716,240 @@ inline void TextWidget::printPartialLine(LineInfo *li, int y, int x1, int x2)
 
 inline void TextWidget::printLine(LineInfo *li, int y)
 {
-    long cursorPos = getCursorTextPosition();
-    
-    clearLine(li, y);
+    long cursorPos      = getCursorTextPosition();
+    bool considerCursor = false;
+    int  cursorX;
     
     if (cursorVisible && (li->startPos <= cursorPos  && cursorPos <= li->endPos)) {
-        
         // cursor visible in this line
-    
-        int cursorX = calcVisiblePixX(li, cursorPos);
-        
-        if (cursorIsActive) {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getBlackColor());
-        } else {
-            XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
-        }
-        XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                cursorX, y, CURSOR_WIDTH, lineHeight);
-        
+        considerCursor = true;
+        cursorX = calcVisiblePixX(li, cursorPos);
     }
-    printLineWithoutCursor(li, y);
+
+    ByteArray& buf                    = li->outBuf;
+    MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
+    byte *ptr, *end;
+    long x = 0;
+    long lastBackgroundX = 0;
+    int leftPixOffset = li->leftPixOffset;
+    
+    if (buf.getLength() > 0)
+    {
+        ptr = buf.getPtr(0);
+        end = ptr + buf.getLength();
+
+        for (int i = 0, n = fragments.getLength(); i < n; ++i)
+        {
+            ASSERT(ptr < end);
+            
+            int background = fragments[i].background;
+            int styleIndex = fragments[i].styleIndex;
+            int len        = fragments[i].numberBytes;
+            int pixWidth   = fragments[i].pixWidth;
+
+            int tx1 = -leftPixOffset + x;
+            int tx2 = tx1 + pixWidth;
+
+            int bx1 = -leftPixOffset + lastBackgroundX;
+            int bx2 = tx2;
+
+            XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(background));
+            XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
+                    bx1, y, bx2 - bx1, lineHeight);
+            
+            lastBackgroundX = x + pixWidth;
+            
+            if (len > 0 && *ptr != '\t' ) 
+            {
+                const TextStyle* style = textStyles->get(styleIndex);
+                int txCorrection = - style->getCharWidth(ptr[len - 1]) + style->getCharRBearing(ptr[len - 1]);
+                
+                if (txCorrection > 0)
+                {
+                    if (i + 1 < n) {
+                        XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(fragments[i + 1].background));
+                    } else {
+                        XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
+                    }
+                    XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
+                            tx2, y, txCorrection, lineHeight);
+                    lastBackgroundX += txCorrection;
+                    bx2 += txCorrection;
+                }
+            }
+
+            if (considerCursor && cursorX < bx2 && cursorX + CURSOR_WIDTH > bx1) {
+                if (cursorIsActive) {
+                    XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getBlackColor());
+                } else {
+                    XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
+                }
+                int cx1 = util::maximum(cursorX, bx1);
+                int cx2 = util::minimum(cursorX + CURSOR_WIDTH, bx2);
+                XFillRectangle(getDisplay(), getWid(), textWidget_gcid,     // DrawCursor
+                        cx1, y, cx2 - cx1, lineHeight);
+            }
+
+            if (len > 0 && *ptr != '\t') {
+                applyTextStyle(styleIndex);
+                XDrawString(getDisplay(), getWid(), 
+                        textWidget_gcid, -leftPixOffset + x, y + lineAscent, (char*) ptr, len);
+                //printf("print <%.*s> \n", len, ptr);
+            }
+            ptr += len;
+            x += pixWidth;
+        }
+    }
+    {
+        int bx1 = -leftPixOffset + lastBackgroundX;
+        int bx2 = position.w;
+        XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
+        XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
+                bx1, y, bx2 - bx1, lineHeight);
+
+        if (considerCursor && cursorX < bx2 && cursorX + CURSOR_WIDTH > bx1) {
+            if (cursorIsActive) {
+                XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getBlackColor());
+            } else {
+                XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
+            }
+            int cx1 = util::maximum(cursorX, bx1);
+            int cx2 = util::minimum(cursorX + CURSOR_WIDTH, bx2);
+            XFillRectangle(getDisplay(), getWid(), textWidget_gcid,     // DrawCursor
+                    cx1, y, cx2 - cx1, lineHeight);
+        }
+    }
 }
 
+void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
+{
+    ByteArray& newBuf                              = newLi->outBuf;
+    ByteArray& oldBuf                              = oldLi->outBuf;
+    
+    long newBufLength = newBuf.getLength();
+    long oldBufLength = oldBuf.getLength();
+    
+    MemArray<LineInfo::FragmentInfo>& newFragments = newLi->fragments;
+    MemArray<LineInfo::FragmentInfo>& oldFragments = oldLi->fragments;
+
+    if (oldBufLength == 0 || newBufLength == 0) {
+        printLine(newLi, y);
+        return;
+    }
+    
+    bool newEnd = false;
+    bool oldEnd = false;
+
+    int newFragmentIndex = 0;
+    int newFragmentCount = newFragments.getLength();
+    
+    int oldFragmentIndex = 0;
+    int oldFragmentCount = oldFragments.getLength();
+    
+
+    int newLeftPixOffset = newLi->leftPixOffset;
+    int oldLeftPixOffset = oldLi->leftPixOffset;
+    
+    long newX = -newLeftPixOffset;
+    long oldX = -oldLeftPixOffset;
+
+    long xMin = -1;
+    long xMax = -1;
+    
+    long newBufIndex = 0;
+    long oldBufIndex = 0;
+    
+    /////
+    
+    int newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberBytes;
+    int oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberBytes;
+
+    int newStyleIndex = newFragments[newFragmentIndex].styleIndex;
+    int oldStyleIndex = oldFragments[oldFragmentIndex].styleIndex;
+
+    int newBackground   = newFragments[newFragmentIndex].background;
+    int oldBackground   = oldFragments[oldFragmentIndex].background;
+
+    const TextStyle* newStyle = textStyles->get(newStyleIndex);
+    const TextStyle* oldStyle = textStyles->get(oldStyleIndex);
+
+    do
+    {
+        byte newChar = newBuf[newBufIndex];
+        byte oldChar = oldBuf[oldBufIndex];
+        
+        int  newCharWidth = newStyle->getCharWidth(newChar);
+        int  oldCharWidth = oldStyle->getCharWidth(oldChar);
+        
+        int  newCharRBearing = newStyle->getCharRBearing(newChar);
+        int  oldCharRBearing = oldStyle->getCharRBearing(oldChar);
+        
+        int  newCharLBearing = newStyle->getCharLBearing(newChar);
+        int  oldCharLBearing = oldStyle->getCharLBearing(oldChar);
+        
+    
+        if (   newX != oldX
+            || newChar != oldChar
+            || newStyleIndex != oldStyleIndex
+            || newBackground != oldBackground)
+        {
+            if (xMin == -1) {
+                xMin = util::minimum(newX + newCharLBearing, oldX + oldCharLBearing);
+                if (xMin < 0) xMin = 0;
+            }
+            xMax = util::maximum(newX + newCharRBearing, oldX + oldCharRBearing);
+        }
+
+        newX += newCharWidth;
+        oldX += oldCharWidth;
+        
+        newBufIndex += 1;
+        oldBufIndex += 1;
+        
+        if (newBufIndex >= newFragmentMaxBufIndex) {
+            newFragmentIndex += 1;
+            if (newFragmentIndex < newFragmentCount)
+            {
+                newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberBytes;
+                newStyleIndex          = newFragments[newFragmentIndex].styleIndex;
+                newBackground          = newFragments[newFragmentIndex].background;
+                newStyle               = textStyles->get(newStyleIndex);
+            } else {
+                newEnd = true;
+            }
+        }        
+        if (oldBufIndex >= oldFragmentMaxBufIndex) {
+            oldFragmentIndex += 1;
+            if (oldFragmentIndex < oldFragmentCount)
+            {
+                oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberBytes;
+                oldStyleIndex          = oldFragments[oldFragmentIndex].styleIndex;
+                oldBackground          = oldFragments[oldFragmentIndex].background;
+                oldStyle               = textStyles->get(oldStyleIndex);
+            } else {
+                oldEnd = true;
+            }
+        }
+        if (newEnd || oldEnd) {
+            if (xMin == -1) {
+                xMin = util::minimum(newX + newCharLBearing, oldX + oldCharLBearing);
+                if (xMin < 0) xMin = 0;
+                xMax = position.w;
+            }
+        }        
+    }
+    while (!newEnd && !oldEnd);
+    
+    if (newEnd && oldEnd && newLi->backgroundToEnd == oldLi->backgroundToEnd) {
+        clip(xMin, y, xMax - xMin, lineHeight);
+        printPartialLine(newLi, y, xMin, xMax);
+        unclip();
+    } else {
+        clip(xMin, y, position.w - xMin, lineHeight);
+        printPartialLine(newLi, y, xMin, position.w);
+        unclip();
+    }
+}
 
 void TextWidget::drawPartialArea(int minY, int maxY, int x1, int x2)
 {
@@ -924,7 +1052,8 @@ void TextWidget::redrawChanged(long spos, long epos)
 
                     if (tempLineInfo.isDifferentOnScreenThan(*li)) {
                         if (y + lineHeight > minY && y < maxY) {
-                            printLine(li, y);
+                            //printLine(li, y);
+                            printChangedPartOfLine(li, y, &tempLineInfo);
                         }
                     }
                 }
@@ -1520,14 +1649,17 @@ void TextWidget::blinkCursor()
 void TextWidget::setCursorActive()
 {
     cursorIsActive = true;
+    cursorVisible = true;
     drawCursor(getCursorTextPosition());
 }
 
 void TextWidget::setCursorInactive()
 {
     cursorIsActive = false;
+    cursorVisible = true;
     drawCursor(getCursorTextPosition());
 }
+
 
 void TextWidget::hideCursor()
 {

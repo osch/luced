@@ -36,8 +36,8 @@ public:
     }
     virtual Measures getDesiredMeasures() {
         return Measures(
-                minWidth == INT_MAX ?  0 : minWidth, 0, 
-                maxWidth, INT_MAX, 
+                minWidth == INT_MAX ?  0 : minWidth,      0, 
+                maxWidth,                                 0, 
                 maxWidth == INT_MAX ? INT_MAX : maxWidth, 0);
     }
     virtual void setPosition(Position p) {}

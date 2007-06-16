@@ -85,6 +85,7 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
     }
     if (button3.isValid()) {
         button3->setButtonPressedCallback(buttonCallback);
+        cancelButtonCallback = p.cancelButtonCallback;
     }
 
     label0->show();
@@ -116,18 +117,27 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
 void MessageBox::handleButtonPressed(Button* button)
 {
     if (button == button1 && defaultButtonCallback.isValid()) {
-            requestCloseWindow();
+            PanelDialogWin::requestCloseWindow();
             defaultButtonCallback.call();
     } else {
-        if ((button == button1 && button3.isInvalid()) 
-         || (button == button3 && button3.isValid()))
-        {
-            requestCloseWindow();
+        if (button == button1 && button3.isInvalid()) {
+            PanelDialogWin::requestCloseWindow();
+        }
+        else if (button == button3 && button3.isValid()) {
+            PanelDialogWin::requestCloseWindow();
+            cancelButtonCallback.call();
         }
         else if (button == button2) {
-            requestCloseWindow();
+            PanelDialogWin::requestCloseWindow();
             alternativeButtonCallback.call();
         }
     }
 }
+
+void MessageBox::requestCloseWindow()
+{
+    PanelDialogWin::requestCloseWindow();
+    cancelButtonCallback.call();
+}
+
 

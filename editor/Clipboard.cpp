@@ -23,8 +23,8 @@
 
 #include "util.hpp"
 #include "Clipboard.hpp"
-#include "EventDispatcher.hpp"
-#include "TopWinList.hpp"
+#include "GlobalConfig.hpp"
+
 
 using namespace LucED;
 
@@ -99,15 +99,20 @@ const byte* Clipboard::getSelectionDataChunk(long pos, long length)
 }
 
 
-void  Clipboard::endSelectionDataRequest()
+void Clipboard::endSelectionDataRequest()
 {
 }
 
-void  Clipboard::notifyAboutLostSelectionOwnership()
+void Clipboard::notifyAboutObtainedSelectionOwnership()
 {
-    if (TopWinList::getInstance()->getNumberOfTopWins() == 0) {
-        EventDispatcher::getInstance()->requestProgramTermination();
+    if (GlobalConfig::getInstance()->shouldKeepRunningIfOwningClipboard() ) {
+        programRunningKeeper.keepProgramRunning();
     }
+}
+
+void Clipboard::notifyAboutLostSelectionOwnership()
+{
+    programRunningKeeper.doNotKeepProgramRunning();
 }
 
 void Clipboard::notifyAboutBeginOfPastingData()

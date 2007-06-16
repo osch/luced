@@ -74,6 +74,9 @@ bool SelectionOwner::requestSelectionOwnership()
             }
             primarySelectionOwner = this;
         }
+        if (hasRequestedSelectionOwnership) {
+            notifyAboutObtainedSelectionOwnership();
+        }
     }
     return hasRequestedSelectionOwnership;
 }
@@ -165,6 +168,7 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                         ASSERT(EventDispatcher::getInstance()->isForeignWidget(multiPartTargetWid));
                         
                         EventDispatcher::getInstance()->registerEventReceiverForForeignWidget(createEventRegistration(baseWidget, multiPartTargetWid));
+                        endSelectionDataRequest();
                     }
                 } else {
                     e.property = 0;
@@ -181,6 +185,10 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
         {
             if (sendingMultiPart && event->xproperty.state == PropertyDelete)
             {
+                if (alreadySentPos == 0) {
+                    selectionDataLength = initSelectionDataRequest();
+                }
+
                 if (alreadySentPos >= selectionDataLength)
                 {
                     // multi-part finished

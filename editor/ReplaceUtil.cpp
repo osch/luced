@@ -181,21 +181,24 @@ bool ReplaceUtil::replaceAllBetween(long spos, long epos)
             FindUtil::findNext();
             if (FindUtil::wasFound())
             {
-                wasAnythingReplaced = true;
-                
                 textMark.moveForwardToPos(FindUtil::getTextPosition());
+                
+                if (FindUtil::getTextPosition() < epos)
+                {
+                    wasAnythingReplaced = true;
 
-                String substitutedString = getSubstitutedString();
-                textData->insertAtMark(textMark, substitutedString);
+                    String substitutedString = getSubstitutedString();
+                    textData->insertAtMark(textMark, substitutedString);
 
-                textMark.moveForwardToPos(textMark.getPos() + substitutedString.getLength());
+                    textMark.moveForwardToPos(textMark.getPos() + substitutedString.getLength());
 
-                textData->removeAtMark(textMark, FindUtil::getMatchLength());
+                    textData->removeAtMark(textMark, FindUtil::getMatchLength());
 
-                epos += substitutedString.getLength() - FindUtil::getMatchLength();
+                    epos += substitutedString.getLength() - FindUtil::getMatchLength();
 
-                FindUtil::setTextPosition(textMark.getPos());
-                FindUtil::setMaximalEndOfMatchPosition(epos);
+                    FindUtil::setTextPosition(textMark.getPos());
+                    FindUtil::setMaximalEndOfMatchPosition(epos);
+                }
             }
             else
             {

@@ -19,7 +19,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include <stdio.h>
 
 #include "String.hpp"
 
@@ -32,6 +31,9 @@
 #include "EditorTopWin.hpp"
 #include "HeapObjectArray.hpp"
 #include "TopWinList.hpp"
+#include "FileException.hpp"
+#include "FileOpener.hpp"
+
 
 using namespace LucED;
 
@@ -103,80 +105,45 @@ void EditorServer::processEventForCommandProperty(XEvent* event)
 
 namespace // anonymous namespace
 {
+
+
     class Actor
     {
     public:
         Actor()
-            : openedWindows(HeapObjectArray<TopWin::Ptr>::create()),
-              textStyles(GlobalConfig::getInstance()->getTextStyles())
+            : numberAndFileList(HeapObjectArray<FileOpener::NumberAndFileName>::create())
         {}
 
         void openFile(int numberOfWindows, const String& fileName)
         {
-            if (numberOfWindows <= 0)
-            {
-                numberOfWindows = 1;
-            }
-            int numberOfRaisedWindows = 0;
-
-            TopWinList* topWins = TopWinList::getInstance();
-
-            EditorTopWin::Ptr lastTopWin = NULL;
-
-            for (int w = 0; w < topWins->getNumberOfTopWins() && numberOfRaisedWindows < numberOfWindows; ++w)
-            {
-                EditorTopWin* topWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(w));
-                if (topWin != NULL && topWin->getFileName() == fileName) {
-                    topWin->raise();
-                    numberOfRaisedWindows += 1;
-                    lastTopWin = topWin;
-                }
-            }
-            
-            if (lastTopWin.isInvalid() && numberOfRaisedWindows < numberOfWindows)
-            {
-                LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
-                TextData::Ptr     textData     = TextData::create();
-                HilitedText::Ptr  hilitedText  = HilitedText::create(textData, languageMode);
-
-                textData->loadFile(fileName);
-
-                lastTopWin = EditorTopWin::create(textStyles, hilitedText);
-                openedWindows->append(lastTopWin);
-                
-                numberOfRaisedWindows += 1;
-            }
-
-            for (int i = numberOfRaisedWindows; i < numberOfWindows; ++i)
-            {
-                EditorTopWin::Ptr win = EditorTopWin::create(lastTopWin->getTextStyles(),
-                                                             lastTopWin->getHilitedText());
-                openedWindows->append(win);
-            }
+            numberAndFileList->append(FileOpener::NumberAndFileName(numberOfWindows, fileName));
         }
+        
 
-        void showAllOpenedWindows()
-        {
-            for (int i = 0; i < openedWindows->getLength(); ++i) {
-                openedWindows->get(i)->show();
-            }
+        HeapObjectArray<FileOpener::NumberAndFileName>::Ptr getNumberAndFileList() {
+            return numberAndFileList;
         }
-
+        
     private:
+        HeapObjectArray<FileOpener::NumberAndFileName>::Ptr numberAndFileList;
+        
         HeapObjectArray<TopWin::Ptr>::Ptr openedWindows;
-        TextStyles::Ptr                   textStyles;
     };
 
 } // anonymous namespace
+
+
 
 void EditorServer::processCommandline(HeapObjectArray<String>::Ptr commandline)
 {
     ASSERT(isStarted);
 
-    if (commandline->getLength() > 0) {
+    if (commandline->getLength() > 0)
+    {
         CommandlineInterpreter<Actor> commandInterpreter;
         commandInterpreter.doCommandline(commandline);
-        commandInterpreter.getActor().showAllOpenedWindows();
+
+        FileOpener::start(commandInterpreter.getActor().getNumberAndFileList());
     }
 }
 
