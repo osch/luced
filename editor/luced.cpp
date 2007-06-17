@@ -44,43 +44,36 @@ int main(int argc, char **argv)
         SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
         
         HeapObjectArray<String>::Ptr commandline = HeapObjectArray<String>::create();
+
         for (int argIndex = 1; argIndex < argc; ++argIndex)
         {
             commandline->append(String(argv[argIndex]));
         }
 
-        GlobalConfig::getInstance()->readConfig();
+        try
+        {
+            GlobalConfig::getInstance()->readConfig();
 
-        EditorServer::getInstance()->startWithCommandline(commandline);
+            EditorServer::getInstance()->startWithCommandline(commandline);
+        }
+        catch (ConfigException& ex)
+        {
+            EditorServer::getInstance()->startWithCommandlineAndErrorList(commandline, ex.getErrorList());
+        }
 
         EventDispatcher::getInstance()->doEventLoop();
-        
     }
     catch (CommandlineException& ex)
     {
         fprintf(stderr, "[%s]: CommandlineException: %s\n", argv[0], ex.getMessage().toCString());
         rc = 1;
     }
-    catch (LuaException& ex)
-    {
-        fprintf(stderr, "[%s]: LuaException: %s\n",    argv[0], ex.getMessage().toCString());
-        rc = 1;
-    }
-    catch (ConfigException& ex)
-    {
-        fprintf(stderr, "[%s]: ConfigException: %s\n", argv[0], ex.getMessage().toCString());
-        rc = 1;
-    }
-    catch (FileException& ex)
-    {
-        fprintf(stderr, "[%s]: FileException: %s\n",   argv[0], ex.getMessage().toCString());
-        rc = 8;
-    }
     catch (BaseException& ex)
     {
         fprintf(stderr, "[%s]: Severe Error: %s\n",    argv[0], ex.getMessage().toCString());
         rc = 16;
     }
+
 #ifdef DEBUG
     HeapObjectChecker::assertAllCleared();
 #endif

@@ -44,6 +44,7 @@ HilitingBuffer::HilitingBuffer(HilitedText::Ptr hiliting)
     maxDistance(calculateMaxDistance(hiliting))
     
 {
+    hiliting->registerSyntaxPatternsChangedCallback(Callback1<SyntaxPatterns::Ptr>(this, &HilitingBuffer::treatSyntaxPatternsUpdate));
     textData = hiliting->getTextData();
     if (syntaxPatterns.isValid()) {
         ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
@@ -52,6 +53,18 @@ HilitingBuffer::HilitingBuffer(HilitedText::Ptr hiliting)
     textData->registerUpdateListener(Callback1<TextData   ::UpdateInfo>(this, &HilitingBuffer::treatTextDataUpdate));
 }
 
+
+void HilitingBuffer::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns)
+{
+    syntaxPatterns = newSyntaxPatterns;
+    maxDistance = calculateMaxDistance(hiliting);
+    if (syntaxPatterns.isValid()) {
+        ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
+    }
+    styleBuffer.clear();
+    patternStack.clear();
+    updateListeners.invokeAllCallbacks(UpdateInfo(0, textData->getLength()));
+}
 
 void HilitingBuffer::treatHilitingUpdate(HilitedText::UpdateInfo update)
 {

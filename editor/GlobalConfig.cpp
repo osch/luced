@@ -70,27 +70,38 @@ GlobalConfig::GlobalConfig()
 }
 
 
-SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String& languageMode) {
+SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String& languageMode,
+                                                                   Callback1<SyntaxPatterns::Ptr> changeCallback)
+{
     NameToIndexMap::Value foundIndex = languageModeToSyntaxIndex->get(languageMode);
-    if (foundIndex.isValid()) {
+    if (foundIndex.isValid())
+    {
+        if (changeCallback.isValid()) {
+            syntaxPatternCallbackContainers[foundIndex.get()].registerCallback(changeCallback);
+        }
         return allSyntaxPatterns.get(foundIndex.get());
     } else {
         return SyntaxPatterns::Ptr();
     }
 }
 
-SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode) {
+SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode,
+                                                                   Callback1<SyntaxPatterns::Ptr> changeCallback)
+{
     if (languageMode.isValid()) {
-        return getSyntaxPatternsForLanguageMode(languageMode->getName());
+        return getSyntaxPatternsForLanguageMode(languageMode->getName(), changeCallback);
     } else {
         return SyntaxPatterns::Ptr();
     }
 }
     
-SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForFileName(const String& fileName)
+SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForFileName(const String& fileName,
+                                                               Callback1<SyntaxPatterns::Ptr> changeCallback)
 {
-    return getSyntaxPatternsForLanguageMode(languageModes->getLanguageModeForFile(fileName)->getName());
+    return getSyntaxPatternsForLanguageMode(languageModes->getLanguageModeForFile(fileName)->getName(),
+                                            changeCallback);
 }
+
 
 LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const String& fileName)
 {
@@ -104,315 +115,368 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode()
 
 void GlobalConfig::readConfig()
 {
+    ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::create();
+    
     String configDirectory = ".luced";
     
     if (!File(configDirectory).exists()) {
         String homeDirectory = System::getInstance()->getHomeDirectory();
         configDirectory = File(homeDirectory, ".luced").getAbsoluteFileName();
     }
-    
-    LuaInterpreter* lua = LuaInterpreter::getInstance();
-    lua->executeFile(File(configDirectory, "general.lua").getAbsoluteFileName());
-    
-    // globalConfig
-    
-    LuaObject globalConfig = lua->getGlobal("globalConfig");
-    
-    if (globalConfig.isValid())
-    {
-        if (!globalConfig.isTable()) {
-            throw ConfigException("invalid globalConfig");
-        }
 
-        LuaObject o = globalConfig["useKeyPressRepeater"];
-        if (o.isValid()) {
-            if (!o.isBoolean()) {
-                throw ConfigException("invalid useKeyPressRepeater");
-            }
-            this->useKeyPressRepeater = o.toBoolean();
-        }
-
-        o = globalConfig["keyPressRepeatFirstMilliSecs"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid keyPressRepeatFirstMilliSecs");
-            }
-            this->keyPressRepeatFirstMicroSecs = (long) (o.toNumber() * 1000);
-        }
-
-        o = globalConfig["keyPressRepeatNextMilliSecs"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid keyPressRepeatNextMilliSecs");
-            }
-            this->keyPressRepeatNextMicroSecs = (long) (o.toNumber() * 1000);
-        }
-
-        o = globalConfig["scrollBarWidth"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid scrollBarWidth");
-            }
-            this->scrollBarWidth = (int) o.toNumber();
-        }
-
-        o = globalConfig["scrollBarRepeatFirstMilliSecs"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid scrollBarRepeatFirstMilliSecs");
-            }
-            this->scrollBarRepeatFirstMicroSecs = (long) (o.toNumber() * 1000);
-        }
-
-        o = globalConfig["scrollBarRepeatNextMilliSecs"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid scrollBarRepeatNextMilliSecs");
-            }
-            this->scrollBarRepeatNextMicroSecs = (long) (o.toNumber() * 1000);
-        }
-
-        o = globalConfig["doubleClickMilliSecs"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid doubleClickMilliSecs");
-            }
-            this->doubleClickMilliSecs = (long) o.toNumber();
-        }
-
-        o = globalConfig["guiColor01"];
-        if (o.isValid()) {
-            if (!o.isString()) {
-                throw ConfigException("invalid guiColor01");
-            }
-            this->guiColor01 = o.toString();
-        }
-        o = globalConfig["guiColor02"];
-        if (o.isValid()) {
-            if (!o.isString()) {
-                throw ConfigException("invalid guiColor02");
-            }
-            this->guiColor02 = o.toString();
-        }
-        o = globalConfig["guiColor03"];
-        if (o.isValid()) {
-            if (!o.isString()) {
-                throw ConfigException("invalid guiColor03");
-            }
-            this->guiColor03 = o.toString();
-        }
-        o = globalConfig["guiColor04"];
-        if (o.isValid()) {
-            if (!o.isString()) {
-                throw ConfigException("invalid guiColor04");
-            }
-            this->guiColor04 = o.toString();
-        }
-        o = globalConfig["guiColor05"];
-        if (o.isValid()) {
-            if (!o.isString()) {
-                throw ConfigException("invalid guiColor05");
-            }
-            this->guiColor05 = o.toString();
-        }
-        o = globalConfig["guiFont"];
-        if (o.isValid()) {
-            if (!o.isString()) {
-                throw ConfigException("invalid guiFont");
-            }
-            this->guiFont = o.toString();
-        }
-        o = globalConfig["guiFontColor"];
-        if (o.isValid()) {
-            if (!o.isString()) {
-                throw ConfigException("invalid guiFontColor");
-            }
-            this->guiFontColor = o.toString();
-        }
-
-        o = globalConfig["primarySelectionColor"];
-        if (o.isValid()) {
-            if (!o.isString()) {
-                throw ConfigException("invalid primarySelectionColor");
-            }
-            this->primarySelectionColor = o.toString();
-        }
-        o = globalConfig["pseudoSelectionColor"];
-        if (o.isValid()) {
-            if (!o.isString()) {
-                throw ConfigException("invalid pseudoSelectionColor");
-            }
-            this->pseudoSelectionColor = o.toString();
-        }
-
-        o = globalConfig["initialWindowWidth"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid initialWindowWidth");
-            }
-            this->initialWindowWidth = (int) o.toNumber();
-        }
-
-        o = globalConfig["initialWindowHeight"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid initialWindowHeight");
-            }
-            this->initialWindowHeight = (int) o.toNumber();
-        }
-        
-        o = globalConfig["x11SelectionChunkLength"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid x11SelectionChunkLength");
-            }
-            this->x11SelectionChunkLength = (int) o.toNumber();
-            if (x11SelectionChunkLength <= 0) {
-                x11SelectionChunkLength = LONG_MAX;
-            }
-        }
-
-        o = globalConfig["buttonInnerSpacing"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid buttonInnerSpacing");
-            }
-            this->buttonInnerSpacing = (int) o.toNumber();
-        }
-
-        o = globalConfig["guiSpacing"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid guiSpacing");
-            }
-            this->guiSpacing = (int) o.toNumber();
-        }
-
-        o = globalConfig["editorPanelOnTop"];
-        if (o.isValid()) {
-            if (!o.isBoolean()) {
-                throw ConfigException("invalid editorPanelOnTop");
-            }
-            this->editorPanelOnTop = o.toBoolean();
-        }
-
-        o = globalConfig["keepRunningIfOwningClipboard"];
-        if (o.isValid()) {
-            if (!o.isBoolean()) {
-                throw ConfigException("invalid keepRunningIfOwningClipboard");
-            }
-            this->keepRunningIfOwningClipboard = o.toBoolean();
-        }
-        
-        o = globalConfig["maxRegexAssertionLength"];
-        if (o.isValid()) {
-            if (!o.isNumber()) {
-                throw ConfigException("invalid maxRegexAssertionLength");
-            }
-            this->maxRegexAssertionLength = (long) o.toNumber();
-        }
-
-    }
-
-
-    // textStyles
-
-    LuaObject ts = lua->getGlobal("textStyles");
-    if (!ts.isTable()) {
-        throw ConfigException("invalid textstyles");
-    }
-    textStyles = TextStyles::create();
-    
-    textStyleNameToIndexMap = NameToIndexMap::create();
-
-    LuaObject o;
-    for (int i = 0; o = ts[i + 1], o.isValid(); ++i) {
-        LuaObject n = o["name"];
-        if (!n.isString()) {
-            throw ConfigException("textstyle has invalid name");
-        }
-        String name = n.toString();
-        if (i == 0 && name != "default") {
-            throw ConfigException("first textstyle must be named 'default'");
-        }
-        if (textStyleNameToIndexMap->hasKey(name)) {
-            throw ConfigException(String() << "duplicate textstyle '" << name << "'");
-        }
-
-        textStyleNameToIndexMap->set(name, i);
-        
-        LuaObject f = o["font"];
-        if (!f.isString()) {
-            throw ConfigException(String() << "invalid font in textstyle '" << name << "'");
-        }
-        String fontname = f.toString();
-        LuaObject c = o["color"];
-        if (!c.isString()) {
-            throw ConfigException(String() << "invalid color in textstyle '" << name << "'");
-        }
-        String colorname = c.toString();
-        textStyles->appendNewStyle(fontname, colorname);
-    }
-    if (textStyles->getLength() == 0) {
-        throw ConfigException("missing textstyles");
-    }
-    
-    // LanguageModes
-    
-    languageModes = LanguageModes::create();
     NameToIndexMap::Ptr languageModeToIndex = NameToIndexMap::create();
     
-    LuaObject lm = lua->getGlobal("languageModes");
-    if (lm.isValid())
+    LuaInterpreter* lua = LuaInterpreter::getInstance();
+
+    String configFileName = File(configDirectory, "general.lua").getAbsoluteFileName();
+
+    try
     {
-        if (!lm.isTable()) {
-            throw ConfigException("invalid languageModes");
-        }
-        for (int i = 0; o = lm[i+1], o.isValid(); ++i)
+        lua->executeFile(configFileName);
+
+        // globalConfig
+
+        LuaObject globalConfig = lua->getGlobal("globalConfig");
+
+        if (globalConfig.isValid())
         {
+            if (!globalConfig.isTable()) {
+                throw ConfigException("invalid globalConfig");
+            }
+
+            LuaObject o = globalConfig["useKeyPressRepeater"];
+            if (o.isValid()) {
+                if (!o.isBoolean()) {
+                    throw ConfigException("invalid useKeyPressRepeater");
+                }
+                this->useKeyPressRepeater = o.toBoolean();
+            }
+
+            o = globalConfig["keyPressRepeatFirstMilliSecs"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid keyPressRepeatFirstMilliSecs");
+                }
+                this->keyPressRepeatFirstMicroSecs = (long) (o.toNumber() * 1000);
+            }
+
+            o = globalConfig["keyPressRepeatNextMilliSecs"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid keyPressRepeatNextMilliSecs");
+                }
+                this->keyPressRepeatNextMicroSecs = (long) (o.toNumber() * 1000);
+            }
+
+            o = globalConfig["scrollBarWidth"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid scrollBarWidth");
+                }
+                this->scrollBarWidth = (int) o.toNumber();
+            }
+
+            o = globalConfig["scrollBarRepeatFirstMilliSecs"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid scrollBarRepeatFirstMilliSecs");
+                }
+                this->scrollBarRepeatFirstMicroSecs = (long) (o.toNumber() * 1000);
+            }
+
+            o = globalConfig["scrollBarRepeatNextMilliSecs"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid scrollBarRepeatNextMilliSecs");
+                }
+                this->scrollBarRepeatNextMicroSecs = (long) (o.toNumber() * 1000);
+            }
+
+            o = globalConfig["doubleClickMilliSecs"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid doubleClickMilliSecs");
+                }
+                this->doubleClickMilliSecs = (long) o.toNumber();
+            }
+
+            o = globalConfig["guiColor01"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException("invalid guiColor01");
+                }
+                this->guiColor01 = o.toString();
+            }
+            o = globalConfig["guiColor02"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException("invalid guiColor02");
+                }
+                this->guiColor02 = o.toString();
+            }
+            o = globalConfig["guiColor03"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException("invalid guiColor03");
+                }
+                this->guiColor03 = o.toString();
+            }
+            o = globalConfig["guiColor04"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException("invalid guiColor04");
+                }
+                this->guiColor04 = o.toString();
+            }
+            o = globalConfig["guiColor05"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException("invalid guiColor05");
+                }
+                this->guiColor05 = o.toString();
+            }
+            o = globalConfig["guiFont"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException("invalid guiFont");
+                }
+                this->guiFont = o.toString();
+            }
+            o = globalConfig["guiFontColor"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException("invalid guiFontColor");
+                }
+                this->guiFontColor = o.toString();
+            }
+
+            o = globalConfig["primarySelectionColor"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException("invalid primarySelectionColor");
+                }
+                this->primarySelectionColor = o.toString();
+            }
+            o = globalConfig["pseudoSelectionColor"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException("invalid pseudoSelectionColor");
+                }
+                this->pseudoSelectionColor = o.toString();
+            }
+
+            o = globalConfig["initialWindowWidth"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid initialWindowWidth");
+                }
+                this->initialWindowWidth = (int) o.toNumber();
+            }
+
+            o = globalConfig["initialWindowHeight"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid initialWindowHeight");
+                }
+                this->initialWindowHeight = (int) o.toNumber();
+            }
+
+            o = globalConfig["x11SelectionChunkLength"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid x11SelectionChunkLength");
+                }
+                this->x11SelectionChunkLength = (int) o.toNumber();
+                if (x11SelectionChunkLength <= 0) {
+                    x11SelectionChunkLength = LONG_MAX;
+                }
+            }
+
+            o = globalConfig["buttonInnerSpacing"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid buttonInnerSpacing");
+                }
+                this->buttonInnerSpacing = (int) o.toNumber();
+            }
+
+            o = globalConfig["guiSpacing"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid guiSpacing");
+                }
+                this->guiSpacing = (int) o.toNumber();
+            }
+
+            o = globalConfig["editorPanelOnTop"];
+            if (o.isValid()) {
+                if (!o.isBoolean()) {
+                    throw ConfigException("invalid editorPanelOnTop");
+                }
+                this->editorPanelOnTop = o.toBoolean();
+            }
+
+            o = globalConfig["keepRunningIfOwningClipboard"];
+            if (o.isValid()) {
+                if (!o.isBoolean()) {
+                    throw ConfigException("invalid keepRunningIfOwningClipboard");
+                }
+                this->keepRunningIfOwningClipboard = o.toBoolean();
+            }
+
+            o = globalConfig["maxRegexAssertionLength"];
+            if (o.isValid()) {
+                if (!o.isNumber()) {
+                    throw ConfigException("invalid maxRegexAssertionLength");
+                }
+                this->maxRegexAssertionLength = (long) o.toNumber();
+            }
+
+        }
+
+
+        // textStyles
+
+        LuaObject ts = lua->getGlobal("textStyles");
+        if (!ts.isTable()) {
+            throw ConfigException("invalid textstyles");
+        }
+        textStyles = TextStyles::create();
+
+        textStyleNameToIndexMap = NameToIndexMap::create();
+
+        LuaObject o;
+        for (int i = 0; o = ts[i + 1], o.isValid(); ++i) {
             LuaObject n = o["name"];
             if (!n.isString()) {
-                throw ConfigException("invalid or missing element 'name' in languageMode");
+                throw ConfigException("textstyle has invalid name");
             }
-            languageModeToIndex->set(n.toString(), i);
-            languageModes->append(o);
+            String name = n.toString();
+            if (i == 0 && name != "default") {
+                throw ConfigException("first textstyle must be named 'default'");
+            }
+            if (textStyleNameToIndexMap->hasKey(name)) {
+                throw ConfigException(String() << "duplicate textstyle '" << name << "'");
+            }
+
+            textStyleNameToIndexMap->set(name, i);
+
+            LuaObject f = o["font"];
+            if (!f.isString()) {
+                throw ConfigException(String() << "invalid font in textstyle '" << name << "'");
+            }
+            String fontname = f.toString();
+            LuaObject c = o["color"];
+            if (!c.isString()) {
+                throw ConfigException(String() << "invalid color in textstyle '" << name << "'");
+            }
+            String colorname = c.toString();
+            textStyles->appendNewStyle(fontname, colorname);
         }
+        if (textStyles->getLength() == 0) {
+            throw ConfigException("missing textstyles");
+        }
+
+        // LanguageModes
+
+        languageModes = LanguageModes::create();
+
+        LuaObject lm = lua->getGlobal("languageModes");
+        if (lm.isValid())
+        {
+            if (!lm.isTable()) {
+                throw ConfigException("invalid languageModes");
+            }
+            for (int i = 0; o = lm[i+1], o.isValid(); ++i)
+            {
+                LuaObject n = o["name"];
+                if (!n.isString()) {
+                    throw ConfigException("invalid or missing element 'name' in languageMode");
+                }
+                languageModeToIndex->set(n.toString(), i);
+                languageModes->append(o);
+            }
+        }
+    }
+    catch (BaseException& ex) {
+        errorList->appendNew(configFileName, ex.getMessage());
     }
 
     // SyntaxPatterns
     
-    languageModeToSyntaxIndex = NameToIndexMap::create();
+    languageModeToSyntaxIndex   = NameToIndexMap::create();
+    configFileNameToSyntaxIndex = NameToIndexMap::create();
     
     String syntaxPatternDirectory = File(configDirectory, "syntaxpatterns").getAbsoluteFileName();
     
     DirectoryReader dirReader(syntaxPatternDirectory);
     for (int i = 0; dirReader.next();) {
         if (dirReader.isFile()) {
-            String name = dirReader.getName();
-            if (name.getLength() > 4 && name.getSubstring(name.getLength() - 4, 4) == ".lua") {
-                name = name.getSubstring(0, name.getLength() - 4);
-                lua->clearGlobal("syntaxpatterns");
-                lua->executeFile(File(syntaxPatternDirectory, String() << name << ".lua").getAbsoluteFileName());
-                languageModeToSyntaxIndex->set(name, i);
-                LuaObject sp = lua->getGlobal("syntaxPatterns");
-                if (!sp.isTable()) {
-                    throw ConfigException(String() << "Syntaxpattern '" << name << "' has invalid 'syntaxpatterns' element");
-                }
-                try {
-                    allSyntaxPatterns.append(
-                            SyntaxPatterns::create(sp, textStyleNameToIndexMap));
-                } catch (RegexException& ex) {
-                    throw ConfigException(String() << "syntaxpatterns for language mode '" << name << "' have invalid regex: "
-                            << ex.getMessage());
-                }
+            String fileName = dirReader.getName();
+            if (fileName.endsWith(".lua")) {
+                String name = fileName.getSubstring(0, fileName.getLength() - 4);
+                configFileName = File(syntaxPatternDirectory, String() << name << ".lua").getAbsoluteFileName();
+
+                languageModeToSyntaxIndex  ->set(name, i);
+                configFileNameToSyntaxIndex->set(configFileName, i);
+                syntaxPatternCallbackContainers.appendNew();
+
                 if (!languageModeToIndex->hasKey(name)) {
                     languageModes->append(name);
+                }
+
+                try
+                {
+                    LuaInterpreter::Result luaRslt = lua->executeFile(configFileName);
+
+                    if (luaRslt.objects.getLength() <= 0 || !luaRslt.objects[0].isTable()) {
+                        throw ConfigException(String() << "Syntaxpattern '" << name << "' returns invalid element");
+                    }
+                    LuaObject sp = luaRslt.objects[0];
+                    
+                    try
+                    {
+                        allSyntaxPatterns.append(SyntaxPatterns::create(sp, textStyleNameToIndexMap));
+                    }
+                    catch (RegexException& ex) {
+                        throw ConfigException(String() << "syntaxpatterns for language mode '" << name << "' have invalid regex: "
+                                << ex.getMessage());
+                    }
+                }
+                catch (BaseException& ex)
+                {
+                    errorList->appendNew(configFileName, ex.getMessage());
+                    allSyntaxPatterns.append(SyntaxPatterns::Ptr());
                 }
                 ++i;
             }
         }
     }
-    lua->clearGlobal("syntaxPatterns");
-    
+    if (errorList->getLength() > 0)
+    {
+        throw ConfigException(errorList);
+    }
 }
 
+void GlobalConfig::notifyAboutNewFileContent(String absoluteFileName)
+{
+    NameToIndexMap::Value foundIndex = configFileNameToSyntaxIndex->get(absoluteFileName);
+    if (foundIndex.isValid())
+    {
+        LuaInterpreter::Result luaRslt = LuaInterpreter::getInstance()->executeFile(absoluteFileName);
+
+        if (luaRslt.objects.getLength() <= 0 || !luaRslt.objects[0].isTable()) {
+            throw ConfigException(String() << "Syntaxpattern '" << absoluteFileName << "' returns invalid element");
+        }
+        LuaObject sp = luaRslt.objects[0];
+        SyntaxPatterns::Ptr newPatterns;
+        try {
+            newPatterns = SyntaxPatterns::create(sp, textStyleNameToIndexMap);
+        } catch (RegexException& ex) {
+            throw ConfigException(String() << "syntaxpatterns for language mode '" << absoluteFileName << "' have invalid regex: "
+                    << ex.getMessage());
+        }
+        allSyntaxPatterns              [foundIndex.get()] = newPatterns;
+        syntaxPatternCallbackContainers[foundIndex.get()].invokeAllCallbacks(newPatterns);
+    }
+}

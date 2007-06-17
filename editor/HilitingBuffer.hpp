@@ -90,6 +90,8 @@ private:
 
     void treatTextDataUpdate(TextData::UpdateInfo update);
 
+    void treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns);
+
     HilitedText::Ptr hiliting;
     HilitedText::Iterator iterator;
     TextData::Ptr textData;
@@ -103,7 +105,7 @@ private:
     Callback1Container<UpdateInfo> updateListeners;
     MemArray<int> ovector;
 
-    const int maxDistance;
+    int maxDistance;
 };
 
 } // namespace LucED

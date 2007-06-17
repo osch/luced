@@ -36,38 +36,6 @@ SyntaxPatterns::Ptr SyntaxPatterns::create(LuaObject config, NameToIndexMap::Con
 }
 
 
-//TextStyles::Ptr     SyntaxPatterns::preliminaryStaticTextStyles;
-//
-//#define TEXTSTYLE_NORMAL 0
-//#define TEXTSTYLE_COMMENT 1
-//#define TEXTSTYLE_PREPROC 2
-//#define TEXTSTYLE_KEYWORD 3
-//#define TEXTSTYLE_TYPE    4
-//
-//TextStyles::Ptr SyntaxPatterns::getPreliminaryStaticTextStyles()
-//{
-//    if (!preliminaryStaticTextStyles.isValid()) 
-//    {
-//        static const char *normal_font = "-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*";
-//        static const char *italic_font = "-*-courier-medium-o-*-*-*-120-75-75-*-*-*-*";
-//        static const char *bold_font   = "-*-courier-bold-r-*-*-*-120-75-75-*-*-*-*";
-//
-//        preliminaryStaticTextStyles = TextStyles::create();
-//
-//        preliminaryStaticTextStyles->appendNewStyle(normal_font, "black");
-//        preliminaryStaticTextStyles->appendNewStyle(italic_font, "grey20");
-//        preliminaryStaticTextStyles->appendNewStyle(normal_font, "RoyalBlue4");
-//        preliminaryStaticTextStyles->appendNewStyle(bold_font,   "black");
-//        preliminaryStaticTextStyles->appendNewStyle(bold_font,   "brown");
-//        preliminaryStaticTextStyles->appendNewStyle(normal_font, "darkGreen");
-//        preliminaryStaticTextStyles->appendNewStyle(bold_font,   "darkGreen");
-//        
-//    }
-//    return preliminaryStaticTextStyles;
-//}
-//
-//
-
 typedef HeapHashMap<String,int> NameToIndexMap;
 
 static void fillChildPatterns(SyntaxPattern *sp, LuaObject actPattern, NameToIndexMap::Ptr nameToIndexMap)

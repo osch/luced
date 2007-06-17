@@ -30,6 +30,7 @@
 #include "HeapObjectArray.hpp"
 #include "MessageBox.hpp"
 #include "EditorTopWin.hpp"
+#include "ConfigException.hpp"
 
 namespace LucED
 {
@@ -44,7 +45,13 @@ public:
     
     ~EditorServer();
     
-    void startWithCommandline(HeapObjectArray<String>::Ptr commandline);
+    void startWithCommandlineAndErrorList(HeapObjectArray<String>::Ptr    commandline,
+                                          ConfigException::ErrorList::Ptr errorList);
+    
+    void startWithCommandline(HeapObjectArray<String>::Ptr commandLine)
+    {
+        startWithCommandlineAndErrorList(commandLine, ConfigException::ErrorList::Ptr());
+    }
     
 private:
     friend class SingletonInstance<EditorServer>;

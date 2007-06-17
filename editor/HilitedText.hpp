@@ -62,6 +62,10 @@ public:
         return syntaxPatterns;
     }
 
+    void registerSyntaxPatternsChangedCallback(Callback1<SyntaxPatterns::Ptr> syntaxPatternsChangeCallback) {
+        syntaxPatternCallbacks.registerCallback(syntaxPatternsChangeCallback);
+    }
+
     LanguageMode::Ptr getLanguageMode() {
         return languageMode;
     }
@@ -79,6 +83,8 @@ private:
             const ByteArray& stack);
 
     void treatTextDataUpdate(TextData::UpdateInfo);
+    
+    void treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns);
 
     void gotoReparseStart(long textPos, IteratorHandle iterator);
     bool fillWithBreaks(IteratorHandle iterator, 
@@ -89,11 +95,11 @@ private:
     
     Iterator rememberedLastProcessingRestartedIterator;
     Iterator processingEndBeforeRestartIterator;
+    Iterator startNextProcessIterator;
+    Iterator tryToBeLastBreakIterator;
     bool     processingEndBeforeRestartFlag;
     bool     needsProcessingFlag;
     
-    Iterator startNextProcessIterator;
-    Iterator tryToBeLastBreakIterator;
 
     TextData::Ptr textData;
     LanguageMode::Ptr languageMode;
@@ -110,6 +116,8 @@ private:
     MemArray<int> ovector;
     
     int breakPointDistance;
+    
+    Callback1Container<SyntaxPatterns::Ptr> syntaxPatternCallbacks;
 };
 
 } // namespace LucED

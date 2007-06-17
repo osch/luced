@@ -165,6 +165,10 @@ public:
         }
         return *this;
     }
+    
+    ObjectArray<T>& appendNew() {
+        return appendAmount(1);
+    }
     template<class T1> 
     ObjectArray<T>& appendNew(const T1& t1) {
         long pos = getLength();

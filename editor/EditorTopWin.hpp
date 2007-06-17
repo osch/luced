@@ -90,6 +90,8 @@ public:
     
     void setModalMessageBox(const MessageBoxParameter& messageBoxParameter);
     void closeModalMessageBox();
+
+    void invokeMessageBox(MessageBoxParameter p);
     
 
 private:
@@ -100,7 +102,6 @@ private:
     void handleEscapeKey();
     void handleSaveKey();
     void invokePanel(DialogPanel* panel);
-    void invokeMessageBox(MessageBoxParameter p);
     void createEmptyWindow();
     void createCloneWindow();
     void executeLuaScript();

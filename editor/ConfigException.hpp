@@ -19,22 +19,58 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CONFIGEXCEPTION_H
-#define CONFIGEXCEPTION_H
+#ifndef CONFIG_EXCEPTION_HPP
+#define CONFIG_EXCEPTION_HPP
 
 #include "BaseException.hpp"
+#include "HeapObjectArray.hpp"
 
 namespace LucED {
 
 class ConfigException : public BaseException
 {
 public:
-    ConfigException(String message)
+    class Error
+    {
+    public:
+        Error(const String& configFileName, const String& message)
+            : configFileName(configFileName),
+              message(message)
+        {}
+        String getConfigFileName() const {
+            return configFileName;
+        }
+        String getMessage() const {
+            return message;
+        }
+    private:
+        String configFileName;
+        String message;
+    };
+    typedef HeapObjectArray<Error> ErrorList;
+    
+    ConfigException(const String& message)
         : BaseException(message)
     {}
+
+    ConfigException(ErrorList::Ptr errorList)
+        : BaseException("Error within config files."),
+          errorList(errorList)
+    {}
+
+    virtual ~ConfigException() throw()
+    {}
+    
     virtual const char *what();
+
+    ErrorList::Ptr getErrorList() {
+        return errorList;
+    }
+    
+private:
+    ErrorList::Ptr errorList;
 };
 
 } // namespace LucED
 
-#endif // CONFIGEXCEPTION_H
+#endif // CONFIG_EXCEPTION_HPP

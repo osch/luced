@@ -66,6 +66,16 @@ public:
         listeners.append(callback);
     }
 
+    void deregisterAllCallbacksFor(HeapObject* callbackObject) {
+        for (int i = 0; i < listeners.getLength();) {
+            if (listeners[i].getObjectPtr() == callbackObject) {
+                listeners.remove(i);
+            } else {
+                ++i;
+            }
+        }
+    }
+
     void invokeAllCallbacks(T argument) {
         for (long i = 0; i < listeners.getLength();) {
             if (!listeners[i].isValid()) {
@@ -86,6 +96,16 @@ template<class S, class T> class Callback2Container
 public:
     void registerCallback(const Callback2<S,T>& callback) {
         listeners.append(callback);
+    }
+
+    void deregisterAllCallbacksFor(HeapObject* callbackObject) {
+        for (int i = 0; i < listeners.getLength();) {
+            if (listeners[i].getObjectPtr() == callbackObject) {
+                listeners.remove(i);
+            } else {
+                ++i;
+            }
+        }
     }
 
     void invokeAllCallbacks(S argument1, T argument2) {

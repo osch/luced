@@ -104,12 +104,14 @@ void TopWin::requestFocus()
 
 GuiElement::ProcessingResult TopWin::processEvent(const XEvent *event)
 {
-    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
+    if (GuiWidget::processEvent(event) == EVENT_PROCESSED)
+    {
         return EVENT_PROCESSED;
-    } else {
-        
-        switch (event->type) {
-
+    } 
+    else
+    {
+        switch (event->type)
+        {
             case MapNotify: {
                 if (event->xmap.window == getWid()) {
                     mapped = true;
@@ -117,6 +119,8 @@ GuiElement::ProcessingResult TopWin::processEvent(const XEvent *event)
                         XSetInputFocus(getDisplay(), getWid(), RevertToNone, CurrentTime);
                         requestFocusAfterMapped = false;
                     }
+                    notifyAboutBeingMapped();
+                    mappingNotifyCallbacks.invokeAllCallbacks(true);
                     return EVENT_PROCESSED;
                 } else {
                     return NOT_PROCESSED;
@@ -126,6 +130,8 @@ GuiElement::ProcessingResult TopWin::processEvent(const XEvent *event)
             case UnmapNotify: {
                 if (event->xunmap.window == getWid()) {
                     mapped = false;
+                    notifyAboutBeingUnmapped();
+                    mappingNotifyCallbacks.invokeAllCallbacks(false);
                     return EVENT_PROCESSED;
                 } else {
                     return NOT_PROCESSED;

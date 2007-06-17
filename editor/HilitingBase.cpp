@@ -38,6 +38,30 @@ HilitingBase::HilitingBase()
     iterators[0].inUseCounter = 0;
 }
 
+void HilitingBase::clear()
+{
+    breaks.clear();
+    stack.clear();
+
+    stack.append('\0');
+    
+    BreakData* first = breaks.appendAmount(1);
+    first->nextStartOffset = 0;
+    first->breakLength = 0;
+    first->type = Break_NULL;
+    first->stackLength = 1;
+
+    for (int i = 0; i < iterators.getLength(); ++i)
+    {
+        if (iterators[i].inUseCounter > 0)
+        {
+            iterators[i].breakIndex = 0;
+            iterators[i].stackStartPos = 0;
+            iterators[i].textStartPos = 0;
+        }
+    }
+}
+
 HilitingBase::Iterator HilitingBase::createNewIterator()
 {
     long i;

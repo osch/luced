@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SYNTAXPATTERNS_H
-#define SYNTAXPATTERNS_H
+#ifndef SYNTAX_PATTERNS_HPP
+#define SYNTAX_PATTERNS_HPP
 
 #include "TextStyle.hpp"
 #include "HeapObject.hpp"
@@ -93,19 +93,17 @@ public:
     
     static Ptr create(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap);
 
-    static TextStyles::Ptr getPreliminaryStaticTextStyles();
-    
     SyntaxPattern* get(int i) {
         return allPatterns.getPtr(i);
     }
-    SyntaxPattern *getChildPattern(SyntaxPattern *parent, int childId)
+    SyntaxPattern* getChildPattern(SyntaxPattern* parent, int childId)
     {
-        ChildPatternDescriptor *cdescr = parent->childList.getPtr(childId);
+        ChildPatternDescriptor* cdescr = parent->childList.getPtr(childId);
         return get(cdescr->id);
     }
-    int getChildPatternId(SyntaxPattern *parent, int childId)
+    int getChildPatternId(SyntaxPattern* parent, int childId)
     {
-        ChildPatternDescriptor *cdescr = parent->childList.getPtr(childId);
+        ChildPatternDescriptor* cdescr = parent->childList.getPtr(childId);
         return cdescr->id;
     }
     int getMaxOvecSize() const {
@@ -134,4 +132,4 @@ private:
 
 } // namespace LucED
 
-#endif // SYNTAXPATTERNS_H
+#endif // SYNTAX_PATTERNS_HPP

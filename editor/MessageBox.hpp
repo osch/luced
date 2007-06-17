@@ -97,14 +97,11 @@ public:
                                    TopWinList::getInstance());
     }
     
-    void closeWithoutAnyButtonActions() {
-        PanelDialogWin::requestCloseWindow();
-    }
-    
+    virtual void requestCloseWindow();
+
 private:
     MessageBox(TopWin* referingWindow, MessageBoxParameter p);
     
-    virtual void requestCloseWindow();
     
     void handleButtonPressed(Button* button);
 
@@ -114,6 +111,7 @@ private:
     Callback0 defaultButtonCallback;
     Callback0 alternativeButtonCallback;
     Callback0 cancelButtonCallback;
+    bool wasClosed;
 };
 
 } // namespace LucED

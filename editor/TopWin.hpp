@@ -29,6 +29,7 @@
 #include "OwningPtr.hpp"
 #include "ObjectArray.hpp"
 #include "TopWinOwner.hpp"
+#include "CallbackContainer.hpp"
 
 namespace LucED {
 
@@ -54,6 +55,14 @@ public:
     }
     virtual void raise();
     
+    bool isMapped() const {
+        return mapped;
+    }
+
+    void registerMappingNotifyCallback(const Callback1<bool>& mappingNotifyCallback) {
+        mappingNotifyCallbacks.registerCallback(mappingNotifyCallback);
+    }
+    
 protected:
     TopWin();
     
@@ -63,6 +72,12 @@ protected:
     template<class T> static WeakPtr<T> transferOwnershipTo(T *topWin, TopWinOwner* owner);
     template<class T> static WeakPtr<T> transferOwnershipTo(T *topWin, TopWin::Ptr owner);
     
+    virtual void notifyAboutBeingMapped()
+    {}
+    
+    virtual void notifyAboutBeingUnmapped()
+    {}
+    
 private:
     void setWindowManagerHints();
     
@@ -71,6 +86,8 @@ private:
     TopWinOwner* owner;
     bool mapped;
     bool requestFocusAfterMapped;
+    
+    Callback1Container<bool> mappingNotifyCallbacks;
 };
 
 

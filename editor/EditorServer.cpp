@@ -33,7 +33,7 @@
 #include "TopWinList.hpp"
 #include "FileException.hpp"
 #include "FileOpener.hpp"
-
+#include "ConfigErrorHandler.hpp"
 
 using namespace LucED;
 
@@ -48,7 +48,8 @@ EditorServer::~EditorServer()
     }
 }
 
-void EditorServer::startWithCommandline(HeapObjectArray<String>::Ptr commandline)
+void EditorServer::startWithCommandlineAndErrorList(HeapObjectArray<String>::Ptr    commandline,
+                                                    ConfigException::ErrorList::Ptr errorList)
 {
     serverProperty = GuiRootProperty(ClientServerUtil::getDefaultServerRunningProperty());
     serverProperty.setValue("running");
@@ -63,6 +64,11 @@ void EditorServer::startWithCommandline(HeapObjectArray<String>::Ptr commandline
                                                             Callback1<XEvent*>(this, &EditorServer::processEventForCommandProperty));
     isStarted = true;
     processCommandline(commandline);
+    
+    if (errorList.isValid() && errorList->getLength() > 0)
+    {
+        ConfigErrorHandler::start(errorList);
+    }
 }
 
 

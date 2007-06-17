@@ -30,7 +30,8 @@
 using namespace LucED;
 
 MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
-    : PanelDialogWin(referingWindow)
+    : PanelDialogWin(referingWindow),
+      wasClosed(false)
 {
     if (p.defaultButtonLabel == "") {
         button1 = Button::create(this, "O]K");
@@ -116,20 +117,28 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
 
 void MessageBox::handleButtonPressed(Button* button)
 {
-    if (button == button1 && defaultButtonCallback.isValid()) {
-            PanelDialogWin::requestCloseWindow();
-            defaultButtonCallback.call();
-    } else {
-        if (button == button1 && button3.isInvalid()) {
-            PanelDialogWin::requestCloseWindow();
-        }
-        else if (button == button3 && button3.isValid()) {
-            PanelDialogWin::requestCloseWindow();
-            cancelButtonCallback.call();
-        }
-        else if (button == button2) {
-            PanelDialogWin::requestCloseWindow();
-            alternativeButtonCallback.call();
+    if (!wasClosed)
+    {
+
+        if (button == button1 && defaultButtonCallback.isValid()) {
+                PanelDialogWin::requestCloseWindow();
+                wasClosed = true;
+                defaultButtonCallback.call();
+        } else {
+            if (button == button1 && button3.isInvalid()) {
+                PanelDialogWin::requestCloseWindow();
+                wasClosed = true;
+            }
+            else if (button == button3 && button3.isValid()) {
+                PanelDialogWin::requestCloseWindow();
+                wasClosed = true;
+                cancelButtonCallback.call();
+            }
+            else if (button == button2) {
+                PanelDialogWin::requestCloseWindow();
+                wasClosed = true;
+                alternativeButtonCallback.call();
+            }
         }
     }
 }
@@ -137,7 +146,10 @@ void MessageBox::handleButtonPressed(Button* button)
 void MessageBox::requestCloseWindow()
 {
     PanelDialogWin::requestCloseWindow();
-    cancelButtonCallback.call();
+    if (!wasClosed) {
+        cancelButtonCallback.call();
+        wasClosed = true;
+    }
 }
 
 

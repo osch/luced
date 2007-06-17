@@ -24,6 +24,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <string>
 #include <sstream>
@@ -162,6 +163,15 @@ public:
             }
         }
         return false;
+    }
+    
+    bool endsWith(const char* str) const {
+        long len = strlen(str);
+        if (getLength() < len) {
+            return false;
+        } else {
+            return memcmp(toCString() + getLength() - len, str, len) == 0;
+        }
     }
     
     template<class T> String& operator<<(const T& rhs) {

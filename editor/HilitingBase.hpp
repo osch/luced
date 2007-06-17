@@ -242,7 +242,9 @@ public:
     
 protected:
     HilitingBase();
-
+    
+    void clear();
+    
 private:
 
     void insertBreaks(IteratorHandle iterator, long startPos, long breakLength, BreakType type,

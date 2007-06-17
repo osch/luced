@@ -31,6 +31,7 @@
 
 using namespace LucED;
 
+
 HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
         : processingEndBeforeRestartIterator(createNewIterator()),
           processingEndBeforeRestartFlag(false),
@@ -48,7 +49,8 @@ HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
     this->endChangedPos = 0;
     this->processingEndBeforeRestartFlag = false;
     this->needsProcessingFlag = false;
-    this->syntaxPatterns = GlobalConfig::getInstance()->getSyntaxPatternsForLanguageMode(languageMode);
+    this->syntaxPatterns = GlobalConfig::getInstance()->getSyntaxPatternsForLanguageMode(languageMode,
+                                                                                         Callback1<SyntaxPatterns::Ptr>(this, &HilitedText::treatSyntaxPatternsUpdate));
     if (languageMode.isValid()) {
         this->breakPointDistance = languageMode->getHilitingBreakPointDistance();
     } else {
@@ -62,9 +64,26 @@ HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
 }
 
 
+void HilitedText::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns)
+{
+    this->syntaxPatterns = newSyntaxPatterns;
+    if (syntaxPatterns.isValid()) {
+        this->ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
+    }
+    HilitingBase::clear();
+
+    this->beginChangedPos = 0;
+    this->endChangedPos = 0;
+    this->processingEndBeforeRestartFlag = false;
+    this->needsProcessingFlag = true;
+    
+    syntaxPatternCallbacks.invokeAllCallbacks(newSyntaxPatterns);
+}
+
+
 bool HilitedText::setBreak(IteratorHandle iterator, 
-        long startPos1, long startPos, long endPos, BreakType type, 
-        const ByteArray& parsingStack)
+                           long startPos1, long startPos, long endPos, BreakType type, 
+                           const ByteArray& parsingStack)
 {
     ASSERT(!isFirstBreak(iterator));
     ASSERT(startPos1 == startPos 

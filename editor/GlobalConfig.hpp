@@ -30,6 +30,8 @@
 #include "SyntaxPatterns.hpp"
 #include "LanguageModes.hpp"
 #include "SingletonInstance.hpp"
+#include "Callback.hpp"
+#include "CallbackContainer.hpp"
 
 namespace LucED {
 
@@ -131,11 +133,19 @@ public:
         return maxRegexAssertionLength;
     }
     
-    SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(const String& languageMode);
-    SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode);
-    SyntaxPatterns::Ptr getSyntaxPatternsForFileName(const String& fileName);
+    SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(const String& languageMode,
+                                                         Callback1<SyntaxPatterns::Ptr> changeCallback);
+
+    SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode, 
+                                                         Callback1<SyntaxPatterns::Ptr> changeCallback);
+
+    SyntaxPatterns::Ptr getSyntaxPatternsForFileName    (const String& fileName,
+                                                         Callback1<SyntaxPatterns::Ptr> changeCallback);
+
     LanguageMode::Ptr   getLanguageModeForFileName(const String& fileName);
     LanguageMode::Ptr   getDefaultLanguageMode();
+
+    void notifyAboutNewFileContent(String absoluteFileName);
 
 private:
     friend class SingletonInstance<GlobalConfig>;
@@ -171,7 +181,11 @@ private:
     ObjectArray<SyntaxPatterns::Ptr> allSyntaxPatterns;
     NameToIndexMap::Ptr languageModeToSyntaxIndex;
     
+    NameToIndexMap::Ptr configFileNameToSyntaxIndex;
+    
     LanguageModes::Ptr languageModes;
+    
+    ObjectArray< Callback1Container<SyntaxPatterns::Ptr> > syntaxPatternCallbackContainers;
     
     long x11SelectionChunkLength;
     int buttonInnerSpacing;

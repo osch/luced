@@ -35,6 +35,7 @@
 #include "FileException.hpp"
 #include "LuaInterpreter.hpp"
 #include "LuaException.hpp"
+#include "ConfigException.hpp"
 
 using namespace LucED;
 
@@ -207,6 +208,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 EditorTopWin::~EditorTopWin()
 {
     ViewCounterTextDataAccess::decViewCounter(textEditor->getTextData());
+    closeModalMessageBox();
 }
 
 void EditorTopWin::show()
@@ -335,7 +337,7 @@ void EditorTopWin::setModalMessageBox(const MessageBoxParameter& messageBoxParam
     this->modalMessageBoxParameter = messageBoxParameter;
     if (modalMessageBox.isValid()) {
         modalMessageBox->hide();
-        modalMessageBox->closeWithoutAnyButtonActions();
+        modalMessageBox->requestCloseWindow();
         modalMessageBox = MessageBox::create(this, modalMessageBoxParameter);
         modalMessageBox->show();
     }
@@ -348,13 +350,18 @@ void EditorTopWin::closeModalMessageBox()
         textEditor->enableCursorChanges();
         if (modalMessageBox.isValid()) {
             modalMessageBox->hide();
-            modalMessageBox->closeWithoutAnyButtonActions();
+            modalMessageBox->requestCloseWindow();
         }
     }
 }
 
 void EditorTopWin::requestCloseChildWindow(TopWin *topWin)
 {
+    if (hasModalMessageBox && topWin == modalMessageBox)
+    {
+        hasModalMessageBox = false;
+        textEditor->enableCursorChanges();
+    }
     TopWinOwner::requestCloseChildWindow(topWin);
 }
 
@@ -488,8 +495,15 @@ void EditorTopWin::handleSaveKey()
 {
     try {
         textEditor->getTextData()->save();
+        GlobalConfig::getInstance()->notifyAboutNewFileContent(textEditor->getTextData()->getFileName());
     } catch (FileException& ex) {
-        invokeMessageBox(MessageBoxParameter().setTitle("Error")
+        invokeMessageBox(MessageBoxParameter().setTitle("File Error")
+                                              .setMessage(ex.getMessage()));
+    } catch (LuaException& ex) {
+        invokeMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                              .setMessage(ex.getMessage()));
+    } catch (ConfigException& ex) {
+        invokeMessageBox(MessageBoxParameter().setTitle("Config Error")
                                               .setMessage(ex.getMessage()));
     }
 }
@@ -498,9 +512,16 @@ void EditorTopWin::saveAndClose()
 {
     try {
         textEditor->getTextData()->save();
+        GlobalConfig::getInstance()->notifyAboutNewFileContent(textEditor->getTextData()->getFileName());
         requestCloseWindow();
     } catch (FileException& ex) {
-        invokeMessageBox(MessageBoxParameter().setTitle("Error")
+        invokeMessageBox(MessageBoxParameter().setTitle("File Error")
+                                              .setMessage(ex.getMessage()));
+    } catch (LuaException& ex) {
+        invokeMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                              .setMessage(ex.getMessage()));
+    } catch (ConfigException& ex) {
+        invokeMessageBox(MessageBoxParameter().setTitle("Config Error")
                                               .setMessage(ex.getMessage()));
     }
 }

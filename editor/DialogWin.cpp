@@ -30,10 +30,12 @@ using namespace LucED;
 
 DialogWin::DialogWin(TopWin* referingWindow)
     : wasNeverShown(true),
-      referingWindow(referingWindow)
+      referingWindow(referingWindow),
+      shouldBeMapped(false)
 {
     if (referingWindow != NULL) {
         XSetTransientForHint(getDisplay(), getWid(), referingWindow->getWid());
+        referingWindow->registerMappingNotifyCallback(Callback1<bool>(this, &DialogWin::notifyAboutReferingWindowMapping));
     }
     setBackgroundColor(getGuiRoot()->getGuiColor03());
     keyMapping.set(            0, XK_Escape,   Callback0(this, &DialogWin::requestCloseWindow));
@@ -44,7 +46,7 @@ void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
     this->rootElement = rootElement;
 }
 
-void DialogWin::show()
+void DialogWin::prepareSizeHints()
 {
     if (rootElement.isValid()) {
         Measures m = rootElement->getDesiredMeasures();
@@ -64,8 +66,30 @@ void DialogWin::show()
         }
         wasNeverShown = false;
     }
-    TopWin::show();
 }
+
+void DialogWin::show()
+{
+    if (referingWindow.isValid() && !referingWindow->isMapped())
+    {
+        shouldBeMapped = true;
+    }
+    else
+    {
+        prepareSizeHints();
+        TopWin::show();
+    }
+}
+
+void DialogWin::notifyAboutReferingWindowMapping(bool isReferingWindowMapped)
+{
+    if (isReferingWindowMapped && !this->isVisible() && shouldBeMapped)
+    {
+        prepareSizeHints();
+        TopWin::show();
+    }
+}
+
 
 void DialogWin::treatNewWindowPosition(Position newPosition)
 {
@@ -93,5 +117,17 @@ GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const XEvent *event
     return processed ? EVENT_PROCESSED : NOT_PROCESSED;
 }
 
+
+
+void DialogWin::setReferingWindowForPositionHintsOnly(TopWin* referingWindow)
+{
+    ASSERT(!this->referingWindow.isValid());
+    
+    if (referingWindow != NULL)
+    {
+        this->referingWindow = referingWindow;
+        referingWindow->registerMappingNotifyCallback(Callback1<bool>(this, &DialogWin::notifyAboutReferingWindowMapping));
+    }
+}
 
 

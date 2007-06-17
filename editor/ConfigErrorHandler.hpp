@@ -19,50 +19,44 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef DIALOGWIN_H
-#define DIALOGWIN_H
+#ifndef CONFIG_ERROR_HANDLER_HPP
+#define CONFIG_ERROR_HANDLER_HPP
 
-#include "TopWin.hpp"
-#include "KeyMapping.hpp"
+#include "HeapObject.hpp"
 #include "HeapObjectArray.hpp"
-#include "WeakPtrQueue.hpp"
+#include "RunningComponent.hpp"
+#include "EventDispatcher.hpp"
+#include "OwningPtr.hpp"
+#include "ConfigException.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-
-class DialogWin : public TopWin
+class ConfigErrorHandler : public RunningComponent
 {
 public:
-    typedef WeakPtr<DialogWin> Ptr;
+    typedef LucED::OwningPtr<ConfigErrorHandler> OwningPtr;
+    typedef LucED::WeakPtr  <ConfigErrorHandler> WeakPtr;
 
-    virtual void treatNewWindowPosition(Position newPosition);
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    static WeakPtr start(ConfigException::ErrorList::Ptr errorList) {
+        OwningPtr ptr(new ConfigErrorHandler(errorList));
+        EventDispatcher::getInstance()->registerRunningComponent(ptr);
+        ptr->startMessageBox();
+        return ptr;
+    }
 
-    virtual void show();
-    
-    void setReferingWindowForPositionHintsOnly(TopWin* referingWindow);
-
-protected:
-    DialogWin(TopWin* referingWindow);
-    
-    void setRootElement(OwningPtr<GuiElement> rootElement);
-    GuiElement* getRootElement() {return rootElement.getRawPtr();}
-    
-    
 private:
-    void prepareSizeHints();
+    ConfigErrorHandler(ConfigException::ErrorList::Ptr errorList)
+        : errorList(errorList)
+    {}
     
-    void notifyAboutReferingWindowMapping(bool isReferingWindowMapped);
-
-    OwningPtr<GuiElement> rootElement;
-    bool wasNeverShown;
-    WeakPtr<TopWin> referingWindow;
+    void startMessageBox();
+    void handleOpenFilesButton();
+    void handleAbortButton();
     
-    KeyMapping keyMapping;
-    
-    bool shouldBeMapped;
+    ConfigException::ErrorList::Ptr errorList;
 };
 
 } // namespace LucED
 
-#endif // DIALOGWIN_H
+#endif // CONFIG_ERROR_HANDLER_HPP
