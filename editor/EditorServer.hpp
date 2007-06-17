@@ -63,7 +63,8 @@ private:
     
     void processEventForServerProperty(XEvent* event);
     void processEventForCommandProperty(XEvent* event);
-    void processCommandline(HeapObjectArray<String>::Ptr commandline);
+    void processCommandline(HeapObjectArray<String>::Ptr    commandline, 
+                            ConfigException::ErrorList::Ptr errorList    = ConfigException::ErrorList::Ptr());
 
     bool isStarted;
     GuiRootProperty serverProperty;

@@ -62,7 +62,7 @@ void FileOpener::handleAbortButton()
     }
     numberAndFileList.invalidate();
     isWaitingForMessageBox = false;
-    EventDispatcher::getInstance()->deregisterRunningComponent(this);
+    openConfigFiles();
 }
 
 
@@ -158,7 +158,68 @@ void FileOpener::openFiles()
     }
     if ((numberAndFileList.isInvalid() || numberAndFileList->getLength() == 0) && !isWaitingForMessageBox) {
         numberAndFileList.invalidate();
-        EventDispatcher::getInstance()->deregisterRunningComponent(this);
+        openConfigFiles();
     }
 }
 
+
+void FileOpener::openConfigFiles()
+{
+    if (configErrorList.isValid() && configErrorList->getLength() > 0)
+    {
+        TextStyles::Ptr  textStyles = GlobalConfig::getInstance()->getTextStyles();
+        TopWinList*      topWins    = TopWinList::getInstance();
+
+        for (int i = 0; i < configErrorList->getLength(); ++i)
+        {
+            String fileName = configErrorList->get(i).getConfigFileName();
+
+            EditorTopWin::Ptr editorWin;        
+
+            if (topWins != NULL)
+            {
+                for (int w = 0; w < topWins->getNumberOfTopWins(); ++w)
+                {
+                    EditorTopWin* topWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(w));
+                    if (topWin != NULL && topWin->getFileName() == fileName) {
+                        topWin->raise();
+                        editorWin = topWin;
+                    }
+                }
+            }
+
+            MessageBoxParameter p;
+
+            if (editorWin.isValid())
+            {
+                p.setTitle("Config Error")
+                 .setMessage(configErrorList->get(i).getMessage());
+            }
+            else
+            {
+                LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
+                TextData::Ptr     textData     = TextData::create();
+                HilitedText::Ptr  hilitedText  = HilitedText::create(textData, languageMode);
+
+                try
+                {
+                    textData->loadFile(fileName);
+
+                    p.setTitle("Config Error")
+                     .setMessage(configErrorList->get(i).getMessage());
+                }
+                catch (FileException& ex)
+                {
+                    textData->setFileName(fileName);
+
+                    p.setTitle("Error opening file")
+                     .setMessage(ex.getMessage());
+                }
+                editorWin = EditorTopWin::create(textStyles, hilitedText);
+                editorWin->show();
+            }
+            editorWin->invokeMessageBox(p);
+        }
+    }
+    EventDispatcher::getInstance()->deregisterRunningComponent(this);
+}

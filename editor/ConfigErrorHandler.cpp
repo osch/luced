@@ -53,7 +53,7 @@ void ConfigErrorHandler::startMessageBox()
         {
             messageBox = MessageBox::create(MessageBoxParameter()
                                              .setTitle("Error in config file")
-                                             .setMessage(String () << "Error within config file '" << errorList->get(0).getConfigFileName() << "'")
+                                             .setMessage(String () << "Error within LucED config file '" << errorList->get(0).getConfigFileName() << "'")
                                              .setDefaultButton    ("E]dit config file",    Callback0(this, &ConfigErrorHandler::handleOpenFilesButton))
                                              .setCancelButton     ("C]ancel",              Callback0(this, &ConfigErrorHandler::handleAbortButton)));
         }
@@ -61,7 +61,7 @@ void ConfigErrorHandler::startMessageBox()
         {
             messageBox = MessageBox::create(MessageBoxParameter()
                                              .setTitle("Error in config files")
-                                             .setMessage("There are some errors within config files.")
+                                             .setMessage("There are some errors within LucED config files.")
                                              .setDefaultButton    ("E]dit config files",   Callback0(this, &ConfigErrorHandler::handleOpenFilesButton))
                                              .setCancelButton     ("C]ancel",              Callback0(this, &ConfigErrorHandler::handleAbortButton)));
         }
@@ -75,65 +75,19 @@ void ConfigErrorHandler::startMessageBox()
 
 void ConfigErrorHandler::handleAbortButton()
 {
+    if (fileOpenerParameters.isValid() && fileOpenerParameters->getLength() > 0)
+    {
+        FileOpener::start(fileOpenerParameters);
+    }
     EventDispatcher::getInstance()->deregisterRunningComponent(this);
 }
 
 
 void ConfigErrorHandler::handleOpenFilesButton()
 {
-    TextStyles::Ptr  textStyles = GlobalConfig::getInstance()->getTextStyles();
-    TopWinList*      topWins    = TopWinList::getInstance();
-
-    for (int i = 0; i < errorList->getLength(); ++i)
-    {
-        String fileName = errorList->get(i).getConfigFileName();
-        
-        EditorTopWin::Ptr editorWin;        
-
-        if (topWins != NULL)
-        {
-            for (int w = 0; w < topWins->getNumberOfTopWins(); ++w)
-            {
-                EditorTopWin* topWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(w));
-                if (topWin != NULL && topWin->getFileName() == fileName) {
-                    topWin->raise();
-                    editorWin = topWin;
-                }
-            }
-        }
-        
-        MessageBoxParameter p;
-
-        if (editorWin.isValid())
-        {
-            p.setTitle("Config Error")
-             .setMessage(errorList->get(i).getMessage());
-        }
-        else
-        {
-            LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
-            TextData::Ptr     textData     = TextData::create();
-            HilitedText::Ptr  hilitedText  = HilitedText::create(textData, languageMode);
-
-            try
-            {
-                textData->loadFile(fileName);
-
-                p.setTitle("Config Error")
-                 .setMessage(errorList->get(i).getMessage());
-            }
-            catch (FileException& ex)
-            {
-                textData->setFileName(fileName);
-
-                p.setTitle("Error opening file")
-                 .setMessage(ex.getMessage());
-            }
-            editorWin = EditorTopWin::create(textStyles, hilitedText);
-            editorWin->show();
-        }
-        editorWin->invokeMessageBox(p);
-    }
+    FileOpener::start(fileOpenerParameters, errorList);
     EventDispatcher::getInstance()->deregisterRunningComponent(this);
 }
+
+
 

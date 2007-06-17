@@ -63,12 +63,7 @@ void EditorServer::startWithCommandlineAndErrorList(HeapObjectArray<String>::Ptr
                      ->registerEventReceiverForRootProperty(commandProperty, 
                                                             Callback1<XEvent*>(this, &EditorServer::processEventForCommandProperty));
     isStarted = true;
-    processCommandline(commandline);
-    
-    if (errorList.isValid() && errorList->getLength() > 0)
-    {
-        ConfigErrorHandler::start(errorList);
-    }
+    processCommandline(commandline, errorList);
 }
 
 
@@ -140,7 +135,8 @@ namespace // anonymous namespace
 
 
 
-void EditorServer::processCommandline(HeapObjectArray<String>::Ptr commandline)
+void EditorServer::processCommandline(HeapObjectArray<String>::Ptr commandline,
+                                      ConfigException::ErrorList::Ptr errorList)
 {
     ASSERT(isStarted);
 
@@ -149,7 +145,14 @@ void EditorServer::processCommandline(HeapObjectArray<String>::Ptr commandline)
         CommandlineInterpreter<Actor> commandInterpreter;
         commandInterpreter.doCommandline(commandline);
 
-        FileOpener::start(commandInterpreter.getActor().getNumberAndFileList());
+        if (errorList.isValid() && errorList->getLength() > 0)
+        {
+            ConfigErrorHandler::start(errorList, commandInterpreter.getActor().getNumberAndFileList());
+        }
+        else
+        {
+            FileOpener::start(commandInterpreter.getActor().getNumberAndFileList());
+        }
     }
 }
 

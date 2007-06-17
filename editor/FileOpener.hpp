@@ -29,6 +29,7 @@
 #include "EventDispatcher.hpp"
 #include "OwningPtr.hpp"
 #include "EditorTopWin.hpp"
+#include "ConfigException.hpp"
 
 namespace LucED
 {
@@ -48,8 +49,12 @@ public:
         String fileName;
     };
 
-    static WeakPtr start(HeapObjectArray<NumberAndFileName>::Ptr numberAndFileList) {
-        OwningPtr ptr(new FileOpener(numberAndFileList));
+    typedef HeapObjectArray<NumberAndFileName> ParameterList;
+
+    static WeakPtr start(ParameterList::Ptr              numberAndFileList,
+                         ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::Ptr())
+    {
+        OwningPtr ptr(new FileOpener(numberAndFileList, errorList));
         EventDispatcher::getInstance()->registerRunningComponent(ptr);
         ptr->openFiles();
         return ptr;
@@ -58,18 +63,25 @@ public:
 private:
     friend class EditorServer;
 
-    FileOpener(HeapObjectArray<NumberAndFileName>::Ptr numberAndFileList)
+    FileOpener(ParameterList::Ptr              numberAndFileList,
+               ConfigException::ErrorList::Ptr errorList)
+
         : isWaitingForMessageBox(false),
           numberAndFileList(numberAndFileList),
+          configErrorList(errorList),
           numberOfRaisedWindows(0)
     {}
     void handleSkipFileButton();
     void handleCreateFileButton();
     void handleAbortButton();
     void openFiles();
+    void openConfigFiles();
 
     bool isWaitingForMessageBox;
-    HeapObjectArray<NumberAndFileName>::Ptr numberAndFileList;
+    
+    ParameterList::Ptr numberAndFileList;
+    ConfigException::ErrorList::Ptr configErrorList;
+    
     EditorTopWin::Ptr lastTopWin;
     int numberOfRaisedWindows;
     String lastErrorMessage;

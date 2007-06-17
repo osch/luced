@@ -28,6 +28,7 @@
 #include "EventDispatcher.hpp"
 #include "OwningPtr.hpp"
 #include "ConfigException.hpp"
+#include "FileOpener.hpp"
 
 namespace LucED
 {
@@ -38,16 +39,20 @@ public:
     typedef LucED::OwningPtr<ConfigErrorHandler> OwningPtr;
     typedef LucED::WeakPtr  <ConfigErrorHandler> WeakPtr;
 
-    static WeakPtr start(ConfigException::ErrorList::Ptr errorList) {
-        OwningPtr ptr(new ConfigErrorHandler(errorList));
+    static WeakPtr start(ConfigException::ErrorList::Ptr errorList,
+                         FileOpener::ParameterList::Ptr  fileOpenerParameters)
+    {
+        OwningPtr ptr(new ConfigErrorHandler(errorList, fileOpenerParameters));
         EventDispatcher::getInstance()->registerRunningComponent(ptr);
         ptr->startMessageBox();
         return ptr;
     }
 
 private:
-    ConfigErrorHandler(ConfigException::ErrorList::Ptr errorList)
-        : errorList(errorList)
+    ConfigErrorHandler(ConfigException::ErrorList::Ptr errorList,
+                       FileOpener::ParameterList::Ptr  fileOpenerParameters)
+        : errorList(errorList),
+          fileOpenerParameters(fileOpenerParameters)
     {}
     
     void startMessageBox();
@@ -55,6 +60,7 @@ private:
     void handleAbortButton();
     
     ConfigException::ErrorList::Ptr errorList;
+    FileOpener::ParameterList::Ptr  fileOpenerParameters;
 };
 
 } // namespace LucED
