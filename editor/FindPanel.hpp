@@ -81,6 +81,7 @@ private:
     void executeFind(bool isWrapping, const Callback0& handleContinueSearchButton);
 
     void handleButtonPressed(Button* button);
+    void handleButtonDefaultKey(Button* button);
 
     void handleContinueAtBeginningButton();
     void handleContinueAtEndButton();

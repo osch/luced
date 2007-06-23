@@ -206,7 +206,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
         
         bool matched = sp->re.findMatch((const char*) textData->getAmount(searchStartPos, extendedSearchEndPos - searchStartPos), 
                 extendedSearchEndPos - searchStartPos, 0,
-                /*PCRE_NOTEMPTY |*/ additionalOptions, ovector);
+                additionalOptions /*| Regex::NOTEMPTY*/, ovector);
 
         if (matched) {
             // something matched

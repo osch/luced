@@ -51,9 +51,13 @@ public:
         pressedCallback0.disable();
     }
     
-    void setButtonPressedCallback(const Callback0 callback) {
+    void setButtonPressedCallback(const Callback0& callback) {
         pressedCallback0 = callback;
         pressedCallback1.disable();
+    }
+    
+    void setButtonDefaultKeyCallback(const Callback1<Button*>& callback) {
+        buttonDefaultKeyCallback = callback;
     }
     
     virtual void treatFocusIn();
@@ -76,9 +80,9 @@ public:
     
     void setAsDefaultButton(bool isDefault = true);
     
-    void emulateButtonPress();
     
 private:
+    void emulateButtonPress(bool isDefaultKey);
     void drawButton();
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
@@ -90,6 +94,7 @@ private:
     bool isMouseOverButton;
     Callback1<Button*> pressedCallback1;
     Callback0          pressedCallback0;
+    Callback1<Button*> buttonDefaultKeyCallback;
 
     bool isDefaultButton;
     bool isExplicitDefaultButton;

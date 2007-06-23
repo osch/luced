@@ -20,12 +20,12 @@
 -------------------------------------------------------------------------------------
 
 
-return
-{
 
+local patterns = 
+{
 	root = {
         	style = "default",
-                childPatterns = {"comment1", "string1", "string2", "string3", "keyword"},
+                childPatterns = {"string1", "string2"},
         },
         
         comment1 = {
@@ -39,11 +39,16 @@ return
         
         keyword = {
         	style = "keyword",
-                pattern     = [[\+|\-|\*|\/|\%|\^|\#|\=\=|\~\=|\<\=|\>\=|\<|\>|\=|\(|\)|\{|\}|]]..
-                              [[\[|\]|\;|\:|\,|\.|\.\.|\.\.\.|\blocal\b|\btrue\b|\bfalse\b|\band\b|]]..
-                              [[\bbreak\b|\bdo\b|\belse\b|\belseif\b|\bend\b|\bfalse\b|\bfor\b|]]..
-                              [[\bfunction\b|\bif\b|\bin\b|\blocal\b|\bnil\b|\bnot\b|\bor\b|\brepeat\b|]]..
-                              [[\breturn\b|\bthen\b|\btrue\b|\buntil\b|\bwhile]],
+                pattern     = [[
+                                \+|\-|\*|\/|\%|\^|\#|\=\=|\~\=|\<\=|\>\=|\<|\>|\=|\(|\)|\{|\}|
+                                \[|\]|\;|\:|\,|\.|\.\.|\.\.\.
+
+                                |\b(?> local   |true  |false  |and    |false  |for    |
+                                       break   |do    |else   |elseif |end    |or     |
+                                       function|if    |in     |local  |nil    |not    |
+                                       return  |then  |true   |until  |while  |repeat
+                                 )\b
+                              ]],
                 maxExtend   = 10,
         },
 
@@ -69,16 +74,6 @@ return
                 endSubstyles     = {stringEnd2   = "keyword"},
         },
 
-        string3 = {
-        	style = "string",
-                beginPattern     = [[(?P<stringBegin3>\[\[)]],
-                endPattern       =  "(?P<stringEnd3>\\]\\])",
-                maxBeginExtend   = 2,
-                maxEndExtend     = 2,
-                beginSubstyles   = {stringBegin3 = "keyword"},
-                endSubstyles     = {stringEnd3   = "keyword"},
-        },
- 
         stringescape = {
         	style = "boldstring",
                 pattern          = [[\\\d{1,3}|\\.|\\\n]],
@@ -86,3 +81,30 @@ return
         },
         
 }
+
+local append = table.insert
+local format = string.format
+local rep    = string.rep
+
+local maxNumberOfEqualSigns = 20
+local rootChildPatterns     = patterns.root.childPatterns
+
+for i = 0, maxNumberOfEqualSigns do
+    local patternName = format("bracketString%d", i)
+    local equalSigns  = rep("=", i)
+    append(rootChildPatterns, patternName)
+    patterns[patternName] = {
+                                style = "string",
+                                beginPattern     = format([[(?P<%sBegin>\[%s\[)]], patternName, equalSigns),
+                                endPattern       = format([[(?P<%sEnd>\]%s\])]],   patternName, equalSigns),
+                                maxBeginExtend   = 2 + i,
+                                maxEndExtend     = 2 + i,
+                                beginSubstyles   = { [format("%sBegin", patternName)] = "keyword" },
+                                endSubstyles     = { [format("%sEnd",   patternName)] = "keyword"},
+                            }
+end
+
+append(rootChildPatterns, "comment1")
+append(rootChildPatterns, "keyword")
+
+return patterns

@@ -47,6 +47,7 @@ public:
         NOTBOL = PCRE_NOTBOL,
         NOTEOL = PCRE_NOTEOL,
         ANCHORED = PCRE_ANCHORED,
+        NOTEMPTY = PCRE_NOTEMPTY
     };
     typedef OptionBits<MatchOption> MatchOptions;
 
@@ -83,7 +84,9 @@ public:
                 ovector.getPtr(0), ovector.getLength()) > 0;
     }
     
-    bool findMatch(void* object, int (*calloutFunctionX)(void*,pcre_callout_block*),
+    typedef int CalloutFunction(void*, pcre_callout_block*);
+    
+    bool findMatch(void* object, CalloutFunction* calloutFunctionX,
                    const char *subject, int length, int startoffset,
                    MatchOptions matchOptions, MemArray<int>& ovector)
     {
@@ -109,7 +112,7 @@ private:
     struct CalloutData
     {
         void* object;
-        int (*calloutFunction)(void*,pcre_callout_block*);
+        CalloutFunction* calloutFunction;
     };
     static int pcreCalloutCallback(pcre_callout_block*);
     static const unsigned char* pcreCharTable;

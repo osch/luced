@@ -130,6 +130,10 @@ void GlobalConfig::readConfig()
 
     String configFileName = File(configDirectory, "general.lua").getAbsoluteFileName();
 
+    languageModes           = LanguageModes::create();
+    textStyles              = TextStyles::create();
+    textStyleNameToIndexMap = NameToIndexMap::create();
+
     try
     {
         lua->executeFile(configFileName);
@@ -341,9 +345,6 @@ void GlobalConfig::readConfig()
         if (!ts.isTable()) {
             throw ConfigException("invalid textstyles");
         }
-        textStyles = TextStyles::create();
-
-        textStyleNameToIndexMap = NameToIndexMap::create();
 
         LuaObject o;
         for (int i = 0; o = ts[i + 1], o.isValid(); ++i) {
@@ -373,13 +374,8 @@ void GlobalConfig::readConfig()
             String colorname = c.toString();
             textStyles->appendNewStyle(fontname, colorname);
         }
-        if (textStyles->getLength() == 0) {
-            throw ConfigException("missing textstyles");
-        }
 
         // LanguageModes
-
-        languageModes = LanguageModes::create();
 
         LuaObject lm = lua->getGlobal("languageModes");
         if (lm.isValid())
@@ -400,6 +396,14 @@ void GlobalConfig::readConfig()
     }
     catch (BaseException& ex) {
         errorList->appendNew(configFileName, ex.getMessage());
+        if (textStyles->getLength() == 0) {
+            textStyles->appendNewStyle("-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", "black");
+        }
+    }
+
+    if (textStyles->getLength() == 0) {
+        textStyles->appendNewStyle("-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", "black");
+        errorList->appendNew(configFileName, "missing textstyles");
     }
 
     // SyntaxPatterns

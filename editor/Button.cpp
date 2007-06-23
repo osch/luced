@@ -335,7 +335,7 @@ GuiElement::ProcessingResult Button::processKeyboardEvent(const XEvent *event)
     bool processed = false;
     KeyMapping::Id pressedKey(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
     if (KeyMapping::Id(0, XK_space) == pressedKey) {
-        emulateButtonPress();
+        emulateButtonPress(false);
         processed = true;
     }
     return processed ? EVENT_PROCESSED : NOT_PROCESSED;
@@ -402,7 +402,7 @@ void Button::treatFocusOut()
 }
 
 
-void Button::emulateButtonPress()
+void Button::emulateButtonPress(bool isDefaultKey)
 {
     bool oldIsButtonPressed = isButtonPressed;
     isButtonPressed = true;
@@ -414,7 +414,9 @@ void Button::emulateButtonPress()
     isButtonPressed = oldIsButtonPressed;
     drawButton();
     XFlush(getDisplay()); waitShort();
-    if (pressedCallback0.isValid()) {
+    if (isDefaultKey && buttonDefaultKeyCallback.isValid()) {
+        buttonDefaultKeyCallback.call(this);
+    } else if (pressedCallback0.isValid()) {
         pressedCallback0.call();
     } else {
         pressedCallback1.call(this);
@@ -423,7 +425,8 @@ void Button::emulateButtonPress()
 
 void Button::treatHotKeyEvent(const KeyMapping::Id& id)
 {
-    emulateButtonPress();
+    emulateButtonPress(id == KeyMapping::Id(0, XK_Return)
+                    || id == KeyMapping::Id(0, XK_KP_Enter));
 }
 
 void Button::setAsDefaultButton(bool isDefault)

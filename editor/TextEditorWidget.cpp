@@ -262,6 +262,8 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                             }
                         } else if (hasSelectionOwnership()) {
                             releaseSelectionOwnership();
+                        } else if (getBackliteBuffer()->hasActiveSelection()) {
+                            getBackliteBuffer()->deactivateSelection();
                         }
 
                         if (wasDoubleClick)
@@ -321,6 +323,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                         this->hasMovingSelection = true;
                         this->isMovingSelectionScrolling = false;
                         lastButtonPressedTime = event->xbutton.time;
+                        currentActionId = ACTION_UNSPECIFIED;
                     }
                     return EVENT_PROCESSED;
                 }
@@ -374,6 +377,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                     if (hasMovingSelection) {
                         hasMovingSelection = false;
                         isMovingSelectionScrolling = false;
+                        currentActionId = ACTION_UNSPECIFIED;
                         return EVENT_PROCESSED;
                     }
                 }
@@ -393,6 +397,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                     int x = event->xmotion.x;
                     int y = event->xmotion.y;
                     setNewMousePositionForMovingSelection(x, y);
+                    currentActionId = ACTION_UNSPECIFIED;
                     return EVENT_PROCESSED;
                 } else {
                     removeFromXEventMask(PointerMotionMask);
@@ -621,26 +626,28 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
         hideMousePointer();
     }
     
-    lastActionId = currentActionId;
-    currentActionId = ACTION_UNSPECIFIED;
-    
     unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
     Callback0 m = keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
 
     if (m.isValid())
     {
+        lastActionId = currentActionId;
+        currentActionId = ACTION_UNSPECIFIED;
+    
         m.call();
         return EVENT_PROCESSED;
     }
     else
     {
-        currentActionId = ACTION_KEYBOARD_INPUT;
         
         char buffer[100];
         int len = XLookupString(&((XEvent*)event)->xkey, buffer, 100, NULL, NULL);
         if (len > 0) {
             if (!cursorChangesDisabled)
             {
+                lastActionId = currentActionId;
+                currentActionId = ACTION_KEYBOARD_INPUT;
+                
                 getTextData()->setMergableHistorySeparator();
                 EditingHistory::SectionHolder::Ptr historySectionHolder = getTextData()->getHistorySectionHolder();
                 

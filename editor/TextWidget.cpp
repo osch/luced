@@ -873,21 +873,36 @@ void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
     const TextStyle* newStyle = textStyles->get(newStyleIndex);
     const TextStyle* oldStyle = textStyles->get(oldStyleIndex);
 
+    int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
+    
     do
     {
         byte newChar = newBuf[newBufIndex];
         byte oldChar = oldBuf[oldBufIndex];
         
-        int  newCharWidth = newStyle->getCharWidth(newChar);
-        int  oldCharWidth = oldStyle->getCharWidth(oldChar);
-        
-        int  newCharRBearing = newStyle->getCharRBearing(newChar);
-        int  oldCharRBearing = oldStyle->getCharRBearing(oldChar);
-        
         int  newCharLBearing = newStyle->getCharLBearing(newChar);
-        int  oldCharLBearing = oldStyle->getCharLBearing(oldChar);
+        int  newCharWidth;
+        int  newCharRBearing;
+        if (newChar == '\t') {
+            newCharWidth    = ((newX / tabWidth) + 1) * tabWidth - newX;
+            newCharRBearing = newCharWidth;
+        } else {
+            newCharWidth    = newStyle->getCharWidth(newChar);
+            newCharRBearing = newStyle->getCharRBearing(newChar);
+        }
         
-    
+        int  oldCharLBearing = oldStyle->getCharLBearing(oldChar);
+        int  oldCharWidth;
+        int  oldCharRBearing;
+        if (oldChar == '\t') {
+            oldCharWidth    = ((oldX / tabWidth) + 1) * tabWidth - oldX;
+            oldCharRBearing = oldCharWidth;
+        } else {
+            oldCharWidth    = oldStyle->getCharWidth(oldChar);
+            oldCharRBearing = oldStyle->getCharRBearing(oldChar);
+        }
+        
+        
         if (   newX != oldX
             || newChar != oldChar
             || newStyleIndex != oldStyleIndex
@@ -900,8 +915,6 @@ void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
             xMax = util::maximum(newX + newCharRBearing, oldX + oldCharRBearing);
         }
 
-        newX += newCharWidth;
-        oldX += oldCharWidth;
         
         newBufIndex += 1;
         oldBufIndex += 1;
@@ -936,7 +949,10 @@ void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
                 if (xMin < 0) xMin = 0;
                 xMax = position.w;
             }
-        }        
+        } else {
+            newX += newCharWidth;
+            oldX += oldCharWidth;
+        }
     }
     while (!newEnd && !oldEnd);
     

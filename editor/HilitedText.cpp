@@ -296,7 +296,7 @@ int HilitedText::process(int requestedProcessingAmount)
         }
         bool matched = sp->re.findMatch( (const char*) textData->getAmount(pos, extendedSearchEndPos - pos), 
                 extendedSearchEndPos - pos, 0,
-                /*PCRE_NOTEMPTY |*/ additionalOptions, ovector);
+                additionalOptions /*| Regex::NOTEMPTY*/, ovector);
 
         if (matched)
         {

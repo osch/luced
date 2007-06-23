@@ -151,7 +151,7 @@ String FindUtil::quoteRegexCharacters(const String& s)
         switch (c) {
             case '\\': case '^': case '$': case '.': case '[': case ']':
             case '(':  case ')': case '?': case '*': case '+': case '{':
-            case '}':  case '-': { rslt << '\\' << c; break; }
+            case '}':  case '-': case '|': { rslt << '\\' << c; break; }
             
             case '\n':           { rslt << '\\' << 'n'; break; }
             
@@ -336,7 +336,7 @@ void FindUtil::initialize()
     else {
         for (int i = 0, n = searchString.getLength(); i < n; ++i) {
             switch (searchString[i]) {
-                case '\\': case '^': case '$': case '.': case '[': case ']':
+                case '\\': case '^': case '$': case '.': case '[': case ']': case '|':
                 case '(':  case ')': case '?': case '*': case '+': case '{':
                 case '}':  case '-': searchPattern.append('\\'); expressionPositions.append(i);
             }

@@ -25,10 +25,101 @@ return
 
 	root = {
         	style = "default",
-                childPatterns = {"comment1", "comment2", "preprop", "for", "if", "operator", "return", 
-                                 "curlelse", "case", "catch", "decl", "standalonesemicolon", "string", "normal"},
+
+                childPatterns = {
+                                 "string",    "char",            "comment1",          "comment2",     "preprop",      "template",     "newcast",
+                                 "oldcast",   "namespace",       "class",             "keywords",     "typekeywords", "decl",      
+                                 "operators"  
+                                },
         },
         
+        keywords = {
+        	style = "keyword",
+                pattern          = [[
+                                       \b(?> true   |false  |this    |static    |inline   |typedef  |if       |using     |class    |else
+                                            |do     |for    |return  |try       |catch    |public   |private  |protected |virtual  |while
+                                            |switch |case   |break   |continue  |template |typename |struct   |explicit  |mutable  |throw
+                                       )\b
+                                   ]],
+                maxExtend        = 15,
+        }, 
+        operators = {
+        	style = "keyword",
+                pattern          = [=[ [\-<>()/!:,;+*{}\\\[\]&%|] ]=],
+                maxExtend        = 15,
+        }, 
+        typekeywords = {
+        	style = "type",
+                pattern          = [[\b(?:const|unsigned|signed)\b]],
+                maxExtend        = 15,
+        }, 
+        namespace = {
+        	style = "default",
+                beginPattern     = [[(?P<namespaceBegin>\bnamespace\b)]],
+                endPattern       = [[(?P<namespaceEnd>[;{}():])]],
+                maxBeginExtend   = 15,
+                maxEndExtend     = 1,
+                beginSubstyles   = {namespaceBegin = "keyword"},
+                endSubstyles     = {namespaceEnd   = "keyword"},
+                childPatterns    = {},
+        },
+        newcast = {
+        	style = "type",
+                beginPattern     = [[(?P<newcastBegin>\b(?>(?>reinterpret_cast|const_cast|static_cast|dynamic_cast)\s*<))]],
+                endPattern       = [[(?P<newcastEnd>[;{}()>])]],
+                maxBeginExtend   = 15,
+                maxEndExtend     = 1,
+                beginSubstyles   = {newcastBegin = "keyword"},
+                endSubstyles     = {newcastEnd   = "keyword"},
+                childPatterns    = {"template2", "templateKeywords", "keywords", "decl"},
+        },
+        oldcast = {
+        	style = "type",
+                pattern          = [[(?P<oldcastBegin>\()(?> 
+                                                             [^()]*[*&][*&\s]* 
+                                                           | (?>(?>int|char|unsigned|signed|const|long|short|double|float|void|\s*)*)
+                                                          )(?P<oldcastEnd>\))]],
+                maxExtend        = 80,
+                substyles        = { oldcastBegin = "keyword", oldcastEnd = "keyword" },
+        },
+        template = {
+        	style = "type",
+                beginPattern     = [[(?P<templateBegin>\b(?>template\s*<))]],
+                endPattern       = [[(?P<templateEnd>[;{}()>])]],
+                maxBeginExtend   = 15,
+                maxEndExtend     = 1,
+                beginSubstyles   = {templateBegin = "keyword"},
+                endSubstyles     = {templateEnd   = "keyword"},
+                childPatterns    = {"template2", "templateKeywords", "keywords", "decl"},
+        },
+        template2 = {
+        	style = "type",
+                beginPattern     = [[(?P<templateBegin><)]],
+                endPattern       = [[(?P<templateEnd>[>]|(?=[{}()]))]],
+                maxBeginExtend   = 15,
+                maxEndExtend     = 1,
+                childPatterns    = {"template2"},
+        },
+        templateKeywords = {
+        	style = "keyword",
+                pattern          = [=[ [,] ]=],
+                maxExtend        = 1,
+        }, 
+        class = {
+        	style = "type",
+                beginPattern     = [[(?P<classBegin>\bclass|struct|enum\b)]],
+                endPattern       = [[(?P<classEnd>[;{}()])]],
+                maxBeginExtend   = 15,
+                maxEndExtend     = 1,
+                beginSubstyles   = {classBegin = "keyword"},
+                endSubstyles     = {classEnd   = "keyword"},
+                childPatterns    = {"keywords", "classoperators"},
+        },
+        classoperators = {
+        	style = "keyword",
+                pattern          = [=[ [():] ]=],
+                maxExtend        = 15,
+        }, 
         comment1 = {
         	style = "comment",
                 beginPattern     = [[//]],
@@ -44,7 +135,6 @@ return
                 endPattern       = [[\*/]],
                 maxBeginExtend   = 2,
                 maxEndExtend     = 2,
-                childPatterns    = {"comment2"},
         },
         
         preprop = {
@@ -71,17 +161,6 @@ return
                 maxExtend        = 2,
         },
 
-        ["if"] = {
-        	style = "default",
-                beginPattern     = [[\b(?P<ifBegin1>(?:if|while|switch)\b(?>\s*)\()]],
-                endPattern       = [[(?P<ifEnd1>\)|\{|\})]],
-                maxBeginExtend   = 7,
-                maxEndExtend     = 1,
-                childPatterns    = {"paren", "comment1", "comment2", "operator"},
-                beginSubstyles   = {ifBegin1 = "keyword"},
-                endSubstyles     = {ifEnd1   = "keyword"},
-        },
-        
         paren = {
         	style = "default",
                 beginPattern     = [[(?P<parenBegin1>\()]],
@@ -95,140 +174,52 @@ return
         
         operator = {
         	style = "keyword",
-                pattern          = [[\+|\*|\[|\]|\<|\>|\-|\!|\=]],
+                pattern          = [=[ [+*\[\]<>\-\?:!&] ]=],
                 maxExtend        = 4,
         }, 
         
-        ["return"] = {
-        	style = "default",
-                beginPattern     = [[(?P<returnKW>return|throw)]],
-                endPattern       = [[(?P<returnEnd>;)]],
-                maxBeginExtend   = 10,
-                maxEndExtend     = 0,
-                childPatterns    = {"paren"},
-                beginSubstyles   = {returnKW  = "keyword"},
-                endSubstyles     = {returnEnd = "keyword"},
-        },
-        
-        curlelse = {
-        	style = "keyword",
-                pattern          = [[\{|\}|\b(?:if|else|do|break|typedef|static|inline|try|using|namespace)\b]],
-                maxExtend        = 10,
-        },
-        
-        catch = {
-        	style = "default",
-                beginPattern     = [[(?P<catchBegin>\bcatch)]],
-                endPattern       = [[(?=^[\t\ ]*\#|=|\{|\})]],
-                maxBeginExtend   = 7,
-                maxEndExtend     = 20,
-                childPatterns    = {"comment1", "comment2", "catchparen"},
-                beginSubstyles   = {catchBegin = "keyword"},
-                endSubstyles     = {},
-        },
-        
-        catchparen = {
-        	style = "default",
-                beginPattern     = [[(?P<catchParenBegin>\()]],
-                endPattern       = [[(?P<catchParenEnd>\))]],
-                maxBeginExtend   = 1,
-                maxEndExtend     = 1,
-                childPatterns    = {"comment1", "comment2", "catchparen", "declinparen"},
-                beginSubstyles   = {catchParenBegin = "keyword"},
-                endSubstyles     = {catchParenEnd   = "keyword"},
-        },
-        
-        case = {
-        	style = "default",
-                beginPattern     = [[(?P<caseBegin>\bcase)\s]],
-                endPattern       = [[(?P<caseEnd>\:|\;|\{|\})]],
-                maxBeginExtend   = 10,
-                maxEndExtend     = 0,
-                childPatterns    = {"paren", "comment1", "comment2", "operator"},
-                beginSubstyles   = {caseBegin = "keyword"},
-                endSubstyles     = {caseEnd   = "keyword"},
-        },
-        
         decl = {
         	style = "default",
-                beginPattern     = [[(?P<declType>\b(?:(?:const|unsigned|struct)(?>\s+))*\b(?>(?:\w|::)+)\b(?>\s*)(?!;|,))]]..
-                                   [[(?!\(|\[|\=|\-|\+|\||\.|\:)]],
-                endPattern       = [[(?P<declEnd>;|\{|\})|(?=^[\t\ ]*\#|=)]],
-                maxBeginExtend   = 40,
+                beginPattern     =    [[
+                                        (?P<declType>(?>\b(?>const|unsigned|struct)\b(?>\s+))*
+                                                     (?>(?>\:\:)?\b[A-Za-z_](?:\w|\s*::(?>\s*(?>(?>template|const)\s*)*))*)
+                                                     (?>(?> \s | \b(?>const|unsigned|struct)\b )*)
+                                                     (?P<templparm><((?>[^<\->;{}]*)|(?P>templparm))*>(?>\s*::\s*\w*(?P>templparm)?)?)?
+                                                     
+                                                     (?>(?>\s*)(?<=\s)[&*]+(?=\S)
+                                                       |(?>\s*)(?<=\s)[&*]+(?=\s*\n)
+                                                       |(?>\s*)(?<=\S)[&*]+(?=\s)
+                                                       |(?>\s*))
+                                                     (?>\s*)
+                                        )
+                                        (?! [%*&?<>;(),\[\]!=\-+/|.:}] )
+                                      ]],
+                                   
+                endPattern       = [[(?=[\[;,{()}]|\b(?:for|while|do)\b)|(?=^[\t\ ]*\#|[=)])]],
+                maxBeginExtend   = 200,
                 maxEndExtend     = 5,
-                childPatterns    = {"comment1", "comment2", "declparen"},
+                childPatterns    = {"comment1", "comment2", "typekeywords", "operatorInDecl"},
                 beginSubstyles   = {declType = "type"},
-                endSubstyles     = {declEnd  = "keyword"},
-        },
-        
-        declinparen = {
-        	style = "default",
-                beginPattern     = [[(?P<declType>\b(?:(?:const|unsigned|struct)(?>\s+))*\b(?>(?:\w|::)+)\b(?>\s*))]]..
-                                   [[(?!\(|\[|\=|\-|\+|\||\.|\:)]],
-                endPattern       = [[(?P<declEnd>;|,|\{|\})|(?=^[\t\ ]*\#)|(?=\))]],
-                maxBeginExtend   = 40,
-                maxEndExtend     = 5,
-                childPatterns    = {"comment1", "comment2", "declparenparen"},
-                beginSubstyles   = {declType = "type"},
-                endSubstyles     = {declEnd  = "keyword"},
-        },
-
-        declparen = {
-        	style = "default",
-                beginPattern     = [[(?P<declparenbegin>\()]],
-                endPattern       = [[(?P<declparenend>\))|(?=^[\t\ ]*\#)|(?=\{|\}|;)]],
-                maxBeginExtend   = 1,
-                maxEndExtend     = 1,
-                childPatterns    = {"comment1", "comment2", "declinparen", "declparen"},
-                beginSubstyles   = { declparenbegin = "keyword"},
-                endSubstyles     = { declparenend = "keyword"},
-        },
-        
-        declparenparen = {
-        	style = "default",
-                beginPattern     = [[\(]],
-                endPattern       = [[\)|(?=^[\t\ ]*\#)|(?=\{|\}|;)]],
-                maxBeginExtend   = 1,
-                maxEndExtend     = 1,
-                childPatterns    = {"comment1", "comment2", "declparenparen"},
-                beginSubstyles   = {},
                 endSubstyles     = {},
         },
         
-        standalonesemicolon = {
-        	style            = "keyword",
-                pattern          = [[;]],
-                maxExtend        = 1,
+        operatorInDecl = {
+        	style = "keyword",
+                pattern          = [=[ [:] ]=],
+                maxExtend        = 4,
+        }, 
+
+        char = {
+        	style = "string",
+                beginPattern     = [[(?P<charBegin>')]],
+                endPattern       = [[(?P<charEnd>')|\n]],
+                maxBeginExtend   = 1,
+                maxEndExtend     = 1,
+                childPatterns    = {"stringescape"},
+                beginSubstyles   = {charBegin = "boldstring"},
+                endSubstyles     = {charEnd   = "boldstring"},
         },
 
-        normal = {
-        	style = "default",
-        
-                beginPattern     = [[\S]],
-                endPattern       = [[(?P<normalEnd>;|\{|\})|(?=^[\t\ ]*\#)]],
-                maxBeginExtend   = 1,
-                maxEndExtend     = 5,
-                childPatterns    = {"paren", "operator", "comment1", "comment2", "string"},
-                endSubstyles     = {normalEnd = "keyword"},
-        },
-        
-        ["for"] = {
-        	style = "default",
-                beginPattern     = [[\b(?P<forBegin1>for\b(?>\s*)\()]],
-                endPattern       = [[(?P<forEnd1>\)|\{|\})]],
-                maxBeginExtend   = 7,
-                maxEndExtend     = 1,
-                childPatterns    = {"paren", "comment1", "comment2", "operator", "forOperator"},
-                beginSubstyles   = {forBegin1 = "keyword"},
-                endSubstyles     = {forEnd1   = "keyword"},
-        },
-        
-        forOperator = {
-        	style            = "keyword",
-                pattern          = [[\+|\*|\[|\]|\<|\>|\-|\!|\=|\;]],
-                maxExtend        = 4,
-        },
-        
         string = {
         	style = "string",
                 beginPattern     = [[(?P<stringBegin>")]],

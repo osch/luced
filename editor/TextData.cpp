@@ -317,7 +317,7 @@ long TextData::redo(MarkHandle m)
                     break;
                 }
             }
-        } while (!history->isPreviousActionSectionSeperator());
+        } while (!history->isLastAction() && !history->isPreviousActionSectionSeperator());
 
         bool newModifiedFlag = !history->isPreviousActionSavedState();
         if (newModifiedFlag != modifiedFlag) {

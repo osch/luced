@@ -39,7 +39,7 @@ globalConfig = {
           guiFont      = "-*-helvetica-medium-r-*-*-*-120-75-75-*-*-*-*",
           guiFontColor = "black",
           primarySelectionColor = "grey",
-          pseudoSelectionColor  = "rgb:f0/f0/ff",
+          pseudoSelectionColor  = "rgb:ed/ed/ed",
           
           initialWindowWidth  = 100,    -- size in characters
           initialWindowHeight =  45,    -- size in characters
@@ -88,7 +88,7 @@ languageModes = {
 
     { 
       name            = "cplusplus",
-      fileNameRegex   = [[.*\.[ch]pp|.*\.h|.*\.c]],
+      fileNameRegex   = [[^.*\.(cpp|hpp|c|h|cc|hh)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,

@@ -77,9 +77,15 @@ FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback
     label0   ->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
     editField->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
  
-    Callback1<Button*> buttonCallback(this, &FindPanel::handleButtonPressed);
+    Callback1<Button*> buttonCallback          (this, &FindPanel::handleButtonPressed);
+    Callback1<Button*> buttonDefaultKeyCallback(this, &FindPanel::handleButtonDefaultKey);
+    
     findNextButton->setButtonPressedCallback(buttonCallback);
     findPrevButton->setButtonPressedCallback(buttonCallback);
+
+    findNextButton->setButtonDefaultKeyCallback(buttonDefaultKeyCallback);
+    findPrevButton->setButtonDefaultKeyCallback(buttonDefaultKeyCallback);
+
     //goBackButton->setButtonPressedCallback(buttonCallback);
     cancelButton->setButtonPressedCallback(buttonCallback);
     
@@ -314,6 +320,15 @@ void FindPanel::handleButtonPressed(Button* button)
         internalFindNext(false);
     }
 }
+
+void FindPanel::handleButtonDefaultKey(Button* button)
+{
+    if (button == findNextButton || button == findPrevButton) {
+        requestCloseFor(this);
+    }
+    handleButtonPressed(button);
+}
+
 
 void FindPanel::handleContinueSelectionFindAtBeginningButton()
 {
