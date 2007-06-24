@@ -27,21 +27,46 @@ return
         	style = "default",
 
                 childPatterns = {
-                                 "string",    "char",            "comment1",          "comment2",     "preprop",      "template",     "newcast",
-                                 "oldcast",   "namespace",       "class",             "keywords",     "typekeywords", "decl",      
-                                 "operators"  
+                                 "emlualine", "emluaexpr",
+                                 "string",    "char",         "comment1",         "comment2",     "preprop",      "template",     
+                                 "sizeof",
+                                 "newcast",   "oldcast",      "namespace",        "class",        "keywords",     "typekeywords", 
+                                 "decl",      "operators"  
                                 },
         },
         
         keywords = {
         	style = "keyword",
                 pattern          = [[
-                                       \b(?> true   |false  |this    |static    |inline   |typedef  |if       |using     |class    |else
-                                            |do     |for    |return  |try       |catch    |public   |private  |protected |virtual  |while
-                                            |switch |case   |break   |continue  |template |typename |struct   |explicit  |mutable  |throw
+                                       \b(?> true   |false    |this    |static    |inline   |typedef  |if       |using     |class    |else
+                                            |do     |for      |return  |try       |catch    |public   |private  |protected |virtual  |while
+                                            |switch |case     |break   |continue  |template |typename |struct   |explicit  |mutable  |throw
+                                            |new    |operator |sizeof  |extern    |friend   |delete
                                        )\b
                                    ]],
                 maxExtend        = 15,
+        }, 
+        emlualine = {
+        	style = "regex",
+                beginPattern     = [[^@]],
+                endPattern       = [[\n]],
+                maxBeginExtend   = 1,
+                maxEndExtend     = 1,
+        }, 
+        emluaexpr = {
+        	style = "regex",
+                beginPattern     = [[@\(]],
+                endPattern       = [[\)|$]],
+                maxBeginExtend   = 2,
+                maxEndExtend     = 1,
+                childPatterns    = { "emluaexpr2" },
+        }, 
+        emluaexpr2 = {
+        	style = "regex",
+                beginPattern     = [[\(]],
+                endPattern       = [[\)|$]],
+                maxBeginExtend   = 1,
+                maxEndExtend     = 1,
         }, 
         operators = {
         	style = "keyword",
@@ -90,7 +115,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {templateBegin = "keyword"},
                 endSubstyles     = {templateEnd   = "keyword"},
-                childPatterns    = {"template2", "templateKeywords", "keywords", "decl"},
+                childPatterns    = {"comment1", "comment2", "emlualine", "emluaexpr", "template2", "templateKeywords", "keywords", "decl"},
         },
         template2 = {
         	style = "type",
@@ -113,7 +138,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {classBegin = "keyword"},
                 endSubstyles     = {classEnd   = "keyword"},
-                childPatterns    = {"keywords", "classoperators"},
+                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "keywords", "classoperators"},
         },
         classoperators = {
         	style = "keyword",
@@ -126,7 +151,7 @@ return
                 endPattern       = [[\n]],
                 maxBeginExtend   = 2,
                 maxEndExtend     = 1,
-                childPatterns    = {},
+                childPatterns    = { "emlualine", "emluaexpr" },
         },
         
         comment2 = {
@@ -135,6 +160,7 @@ return
                 endPattern       = [[\*/]],
                 maxBeginExtend   = 2,
                 maxEndExtend     = 2,
+                childPatterns    = { "emlualine", "emluaexpr" },
         },
         
         preprop = {
@@ -143,7 +169,7 @@ return
                 endPattern       = [[\n]],
                 maxBeginExtend   = 200,
                 maxEndExtend     = 1,
-                childPatterns    = {"comment1inpreprop", "comment2", "prepropescape"},
+                childPatterns    = {"emlualine", "emluaexpr", "comment1inpreprop", "comment2", "prepropescape"},
         },
         
         comment1inpreprop = {
@@ -152,7 +178,7 @@ return
                 endPattern       = [[(?=\n)]],
                 maxBeginExtend   = 2,
                 maxEndExtend     = 1,
-                childPatterns    = {},
+                childPatterns    = { "emlualine", "emluaexpr" },
         },
         
         prepropescape = {
@@ -161,17 +187,6 @@ return
                 maxExtend        = 2,
         },
 
-        paren = {
-        	style = "default",
-                beginPattern     = [[(?P<parenBegin1>\()]],
-                endPattern       = [[(?P<parenEnd1>(?:\)|\{|\}))]],
-                maxBeginExtend   = 1,
-                maxEndExtend     = 1,
-                childPatterns    = {"paren", "comment1", "comment2", "operator", "string"},
-                beginSubstyles   = {parenBegin1 = "keyword"},
-                endSubstyles     = {parenEnd1  = "keyword"},
-        },
-        
         operator = {
         	style = "keyword",
                 pattern          = [=[ [+*\[\]<>\-\?:!&] ]=],
@@ -182,7 +197,7 @@ return
         	style = "default",
                 beginPattern     =    [[
                                         (?P<declType>(?>\b(?>const|unsigned|struct)\b(?>\s+))*
-                                                     (?>(?>\:\:)?\b[A-Za-z_](?:\w|\s*::(?>\s*(?>(?>template|const)\s*)*))*)
+                                                     (?>(?>\:\:)?\b[A-Za-z_](?:\w|\s*::(?>\s*(?>(?>typename|struct|signed|unsigned|template|const)\s*)*))*)
                                                      (?>(?> \s | \b(?>const|unsigned|struct)\b )*)
                                                      (?P<templparm><((?>[^<\->;{}]*)|(?P>templparm))*>(?>\s*::\s*\w*(?P>templparm)?)?)?
                                                      
@@ -192,21 +207,21 @@ return
                                                        |(?>\s*))
                                                      (?>\s*)
                                         )
-                                        (?! [%*&?<>;(),\[\]!=\-+/|.:}] )
+                                        (?! [~%*&?<>;(),\[\]!=\-+/|.:}] )
                                       ]],
                                    
-                endPattern       = [[(?=[\[;,{()}]|\b(?:for|while|do)\b)|(?=^[\t\ ]*\#|[=)])]],
+                endPattern       = [[(?=[@\[;,{()}]|\b(?:for|while|do)\b)|(?=^[\t\ ]*\#|[=)])]],
                 maxBeginExtend   = 200,
                 maxEndExtend     = 5,
-                childPatterns    = {"comment1", "comment2", "typekeywords", "operatorInDecl"},
-                beginSubstyles   = {declType = "type"},
+                childPatterns    = { "comment1", "comment2", "typekeywords", "operatorInDecl"},
+                beginSubstyles   = { declType = "type" }, --emluaInType = "regex" },
                 endSubstyles     = {},
         },
         
         operatorInDecl = {
         	style = "keyword",
-                pattern          = [=[ [:] ]=],
-                maxExtend        = 4,
+                pattern          = [[ [:] | (?>operator(?>\s*)(?>[<>+\-*=]|->|==|!=|<<|>>|\[\])) ]],
+                maxExtend        = 20,
         }, 
 
         char = {
@@ -226,7 +241,7 @@ return
                 endPattern       = [[(?P<stringEnd>")|\n]],
                 maxBeginExtend   = 1,
                 maxEndExtend     = 1,
-                childPatterns    = {"stringescape"},
+                childPatterns    = { "emlualine", "emluaexpr", "stringescape"},
                 beginSubstyles   = {stringBegin = "boldstring"},
                 endSubstyles     = {stringEnd   = "boldstring"},
         },
@@ -235,5 +250,16 @@ return
         	style = "boldstring",
                 pattern          = [[\\\d{1,3}|\\x[a-fA-F0-9]{1,2}|\\.|\\\n]],
                 maxExtend        = 2,
+        },
+        
+        sizeof = {
+        	style = "type",
+                beginPattern     = [[(?P<sizeofBegin>\bsizeof\s*\()]],
+                endPattern       = [=[(?P<sizeofEnd>[);])]=],
+                maxBeginExtend   = 100,
+                maxEndExtend     = 1,
+                childPatterns    = { "emlualine", "emluaexpr"},
+                beginSubstyles   = {sizeofBegin = "keyword"},
+                endSubstyles     = {sizeofEnd   = "keyword"},
         },
 }

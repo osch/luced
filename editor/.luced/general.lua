@@ -69,6 +69,9 @@ textStyles = {
     {name="type",       font=bold_font,   color="brown"},
     {name="string",     font=normal_font, color="darkGreen"},
     {name="boldstring", font=bold_font,   color="darkGreen"},
+    {name="regex",      font=bold_font,   color="#009944"},
+    {name="textKey",    font=bold_font,   color="VioletRed4"},
+    {name="textKey1",   font=normal_font, color="VioletRed4"},
 }
 
 ------
@@ -88,7 +91,7 @@ languageModes = {
 
     { 
       name            = "cplusplus",
-      fileNameRegex   = [[^.*\.(cpp|hpp|c|h|cc|hh)$]],
+      fileNameRegex   = [[^.*\.(?:cpp|hpp|cxx|hxx|c|h|cc|hh)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
@@ -106,4 +109,13 @@ languageModes = {
       softTabWidth = 4,
     },
     
+    {
+      name            = "makefile",
+      fileNameRegex   =  [[^.*/Makefile$]],
+      approximateUnknownHiliting = true,
+      approximateUnknownHilitingReparseRange = 2000,
+      hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 0,
+    },
 }
