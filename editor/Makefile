@@ -62,7 +62,7 @@ SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget        
                 FileException           EditorServer           ClientServerUtil       EditorClient  \
                 CommandlineException    ReplacePanel           LuaFunctionArguments   GuiElement \
                 SelectionOwner          PasteDataReceiver      Clipboard              FileOpener \
-                ConfigErrorHandler
+                ConfigErrorHandler      WindowCloser  
 		
                          
 

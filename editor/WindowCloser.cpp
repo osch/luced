@@ -1,0 +1,94 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+#include "WindowCloser.hpp"
+#include "TopWinList.hpp"
+
+using namespace LucED;
+
+
+void WindowCloser::handleSaveFileButton()
+{
+    if (referingTopWin.isValid())
+    {
+        referingTopWin->saveAndClose();
+    }
+    closeWindows();
+}
+
+
+void WindowCloser::handleDiscardButton()
+{
+    if (referingTopWin.isValid())
+    {
+        referingTopWin->requestCloseWindowAndDiscardChanges();
+    }
+    closeWindows();
+}
+
+
+void WindowCloser::handleCancelButton()
+{
+    EventDispatcher::getInstance()->deregisterRunningComponent(this);
+}
+
+
+void WindowCloser::closeWindows()
+{
+    TopWinList* topWins = TopWinList::getInstance();
+
+    // Request to close all EditorTopWins:
+
+    while (0 < topWins->getNumberOfTopWins())
+    {
+        EditorTopWin* editorTopWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(0));
+
+        if (editorTopWin != NULL)
+        {
+            if (editorTopWin->hasUnsavedData())
+            {
+                editorTopWin->raise();
+                editorTopWin->invokeMessageBox(MessageBoxParameter()
+                                               .setTitle("Unsaved Data")
+                                               .setMessage(String() << "File '" << editorTopWin->getFileName() << "' has unsaved data.")
+                                               .setDefaultButton    ("S]ave",     Callback0(this, &WindowCloser::handleSaveFileButton))
+                                               .setAlternativeButton("D]iscard",  Callback0(this, &WindowCloser::handleDiscardButton))
+                                               .setCancelButton     ("C]ancel",   Callback0(this, &WindowCloser::handleCancelButton)));
+                this->referingTopWin = editorTopWin;
+                break;
+            }
+            else
+            {
+                editorTopWin->requestCloseWindow();
+            }
+        }
+        else
+        {
+            topWins->getTopWin(0)->requestCloseWindow();
+        }
+    }
+    
+    if (topWins->getNumberOfTopWins() == 0)
+    {
+        EventDispatcher::getInstance()->deregisterRunningComponent(this);
+    }    
+}
+

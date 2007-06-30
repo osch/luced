@@ -67,10 +67,11 @@ return
                 endPattern       = [[\)|$]],
                 maxBeginExtend   = 1,
                 maxEndExtend     = 1,
+                childPatterns    = { "emluaexpr2" },
         }, 
         operators = {
         	style = "keyword",
-                pattern          = [=[ [\-<>()/!:,;+*{}\\\[\]&%|] ]=],
+                pattern          = [=[ [?\-<>()/!:,;+*{}\\\[\]&%|] ]=],
                 maxExtend        = 15,
         }, 
         typekeywords = {
@@ -86,7 +87,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {namespaceBegin = "keyword"},
                 endSubstyles     = {namespaceEnd   = "keyword"},
-                childPatterns    = {},
+                childPatterns    = { "comment1", "comment2", "emluaexpr", "emlualine" },
         },
         newcast = {
         	style = "type",
@@ -132,11 +133,11 @@ return
         }, 
         class = {
         	style = "type",
-                beginPattern     = [[(?P<classBegin>\bclass|struct|enum\b)]],
+                beginPattern     = [[(?P<classBegin>\bclass|struct|enum\b)(?P<classBegin2>(?>(?:[^\s;{}:]*\s+)*(?=[^\s;{}:])))]],
                 endPattern       = [[(?P<classEnd>[;{}()])]],
-                maxBeginExtend   = 15,
+                maxBeginExtend   = 100,
                 maxEndExtend     = 1,
-                beginSubstyles   = {classBegin = "keyword"},
+                beginSubstyles   = {classBegin = "keyword", classBegin2 = "default"},
                 endSubstyles     = {classEnd   = "keyword"},
                 childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "keywords", "classoperators"},
         },
@@ -207,7 +208,7 @@ return
                                                        |(?>\s*))
                                                      (?>\s*)
                                         )
-                                        (?! [~%*&?<>;(),\[\]!=\-+/|.:}] )
+                                        (?! ["@~%*&?<>;(),\[\]!=\-+/|.:}] )
                                       ]],
                                    
                 endPattern       = [[(?=[@\[;,{()}]|\b(?:for|while|do)\b)|(?=^[\t\ ]*\#|[=)])]],
@@ -220,8 +221,8 @@ return
         
         operatorInDecl = {
         	style = "keyword",
-                pattern          = [[ [:] | (?>operator(?>\s*)(?>[<>+\-*=]|->|==|!=|<<|>>|\[\])) ]],
-                maxExtend        = 20,
+                pattern          = [[ [:] | (?>operator(?>\s*)(?>->|==|!=|<<|>>|\[\]|[<>+\-*=])) ]],
+                maxExtend        = 100,
         }, 
 
         char = {

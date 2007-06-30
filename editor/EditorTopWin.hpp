@@ -93,11 +93,15 @@ public:
 
     void invokeMessageBox(MessageBoxParameter p);
     
+    bool hasUnsavedData() const {
+        return textEditor->getTextData()->getModifiedFlag();
+    }
+
+    void requestCloseWindowAndDiscardChanges();
+    void saveAndClose();
 
 private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
-    void saveAndClose();
-    void requestCloseWindowAndDiscardChanges();
 
     void handleEscapeKey();
     void handleSaveKey();
@@ -105,6 +109,8 @@ private:
     void createEmptyWindow();
     void createCloneWindow();
     void executeLuaScript();
+    
+    void requestProgramQuit();
     
     void handleNewFileName(const String& fileName);
     void handleChangedModifiedFlag(bool modifiedFlag);

@@ -72,6 +72,7 @@ textStyles = {
     {name="regex",      font=bold_font,   color="#009944"},
     {name="textKey",    font=bold_font,   color="VioletRed4"},
     {name="textKey1",   font=normal_font, color="VioletRed4"},
+    {name="command",    font=normal_font, color="darkgoldenrod4"},
 }
 
 ------
@@ -91,7 +92,7 @@ languageModes = {
 
     { 
       name            = "cplusplus",
-      fileNameRegex   = [[^.*\.(?:cpp|hpp|cxx|hxx|c|h|cc|hh)$]],
+      fileNameRegex   = [[^.*\.(?:cpp|hpp|cxx|hxx|c|h|cc|hh)(?:\.emlua)?$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,

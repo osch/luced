@@ -26,13 +26,14 @@ return
 	root = {
         	style = "default",
                 childPatterns = {"comment", "assignment", "define", "keywords", 
+                                 "command", 
                                  "specialDependenyLine", "dependenyLine", "varSubst1", "varSubst2", "varSubst3" },
         },
 
         comment = {
         	style = "comment",
-                beginPattern     = [=[ [#] ]=],
-                endPattern       = [[\n]],
+                beginPattern     = [=[ (?>\s*) [#] ]=],
+                endPattern       = [[ $ ]],
                 maxBeginExtend   = 1,
                 maxEndExtend     = 1,
                 childPatterns    = { "backslashInComment", "continuation" },
@@ -44,14 +45,36 @@ return
                 maxExtend = 2,
         },
         
-        define = {
-        	style = "preproc",
-                beginPattern     = [[^(?P<defineBegin>[ ]*define\b) ]],
-                endPattern       = [[\n]],
-                maxBeginExtend   = 100,
+        command = {
+        	style = "command",
+                beginPattern     = [[^ \t ]],
+                endPattern       = [[ $ ]],
+                maxBeginExtend   = 1,
                 maxEndExtend     = 1,
-                beginSubstyles   = {defineBegin = "keyword"},
-                childPatterns    = {"backslashInAssignment", "continuation", "comment"},
+                childPatterns    = {"backslashInCommand", "continuation", "varSubst1", "varSubst2", "varSubst3"},
+        }, 
+        
+        backslashInCommand = {
+                style = "command",
+                pattern = [[ \\ \\ ]],
+                maxExtend = 2,
+        },
+
+        define = {
+        	style = "command",
+                beginPattern     = [[^(?P<defineBegin>[ ]*define\b)(?P<defineIdent>[^\n]*$) ]],
+                endPattern       = [[\n(?P<defineEnd>[ ]*endef\b)]],
+                maxBeginExtend   = 100,
+                maxEndExtend     = 100,
+                beginSubstyles   = { defineBegin = "keyword", defineIdent="preproc" },
+                endSubstyles     = { defineEnd = "keyword" },
+                childPatterns    = {"backslashInNormal", "continuation", "varSubst1", "varSubst2", "varSubst3"},
+        },
+        
+        backslashInNormal = {
+                style = "default",
+                pattern = [[ \\ \\ ]],
+                maxExtend = 2,
         },
         
         assignment = {

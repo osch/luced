@@ -36,6 +36,7 @@
 #include "LuaInterpreter.hpp"
 #include "LuaException.hpp"
 #include "ConfigException.hpp"
+#include "WindowCloser.hpp"
 
 using namespace LucED;
 
@@ -183,6 +184,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
                                   Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox),
                                   Callback1<DialogPanel*>       (this, &EditorTopWin::invokePanel));
 
+    keyMapping1.set(            ControlMask, XK_q,      Callback0(this,      &EditorTopWin::requestProgramQuit));
     keyMapping1.set(            ControlMask, XK_l,      Callback0(this,      &EditorTopWin::invokeGotoLinePanel));
     keyMapping1.set(            ControlMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelForward));
     keyMapping1.set(  ControlMask|ShiftMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelBackward));
@@ -684,5 +686,10 @@ void EditorTopWin::executeLuaScript()
 String EditorTopWin::getFileName() const
 {
     return textEditor->getTextData()->getFileName();
+}
+
+void EditorTopWin::requestProgramQuit()
+{
+    WindowCloser::start();
 }
 

@@ -43,7 +43,7 @@ local patterns =
                                 \+|\-|\*|\/|\%|\^|\#|\=\=|\~\=|\<\=|\>\=|\<|\>|\=|\(|\)|\{|\}|
                                 \[|\]|\;|\:|\,|\.|\.\.|\.\.\.
 
-                                |\b(?> local   |true  |false  |and    |false  |for    |
+                                |\b(?: local   |true  |false  |and    |false  |for    |
                                        break   |do    |else   |elseif |end    |or     |
                                        function|if    |in     |local  |nil    |not    |
                                        return  |then  |true   |until  |while  |repeat

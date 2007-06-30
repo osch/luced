@@ -884,7 +884,7 @@ void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
         int  newCharWidth;
         int  newCharRBearing;
         if (newChar == '\t') {
-            newCharWidth    = ((newX / tabWidth) + 1) * tabWidth - newX;
+            newCharWidth    = (((newX + leftPix) / tabWidth) + 1) * tabWidth - (newX + leftPix);
             newCharRBearing = newCharWidth;
         } else {
             newCharWidth    = newStyle->getCharWidth(newChar);
@@ -895,7 +895,7 @@ void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
         int  oldCharWidth;
         int  oldCharRBearing;
         if (oldChar == '\t') {
-            oldCharWidth    = ((oldX / tabWidth) + 1) * tabWidth - oldX;
+            oldCharWidth    = (((oldX + leftPix) / tabWidth) + 1) * tabWidth - (oldX + leftPix);
             oldCharRBearing = oldCharWidth;
         } else {
             oldCharWidth    = oldStyle->getCharWidth(oldChar);
