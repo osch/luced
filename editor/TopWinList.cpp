@@ -26,18 +26,30 @@ using namespace LucED;
 
 WeakPtr<TopWinList> TopWinList::instance;
 
+
+namespace // anonymous namespace
+{
+
+
+} // anonymous namespace
+
 TopWinList* TopWinList::getInstance()
 {
-    if (instance.isInvalid()) {
+    if (instance.isInvalid())
+    {
         LucED::OwningPtr<TopWinList> p = LucED::OwningPtr<TopWinList>(new TopWinList());
+                                     p->emptyChecker = EmptyChecker::create(p);
+
         EventDispatcher::getInstance()->registerRunningComponent(p);
+        EventDispatcher::getInstance()->registerUpdateSource(Callback0(p->emptyChecker, &EmptyChecker::check));
+
         instance = p;
     }
     return instance;
 }
 
 
-void TopWinList::requestCloseChildWindow(TopWin *topWin)
+void TopWinList::requestCloseChildWindow(TopWin* topWin)
 {
     TopWinOwner::requestCloseChildWindow(topWin);
     
@@ -48,4 +60,21 @@ void TopWinList::requestCloseChildWindow(TopWin *topWin)
     }
 }
 
+
+void TopWinList::EmptyChecker::check()
+{
+    if (topWinList.isValid()) {
+        topWinList->checkIfEmpty();
+    }
+}
+
+void TopWinList::checkIfEmpty()
+{
+    if (getNumberOfChildWindows() == 0)
+    {
+        EventDispatcher::getInstance()->deregisterRunningComponent(this);
+        instance.invalidate();
+    }
+    emptyChecker.invalidate();
+}
 

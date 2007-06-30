@@ -250,6 +250,10 @@ public:
         pos -= getLengthOfPrevLineEnding(pos);
         return getThisLineBegin(pos);
     }
+    
+    int getViewCounter() const {
+        return viewCounter;
+    }
 
 private:
     long internalInsertAtMark(MarkHandle m, const byte* buffer, long length);

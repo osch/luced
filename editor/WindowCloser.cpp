@@ -55,11 +55,11 @@ void WindowCloser::closeWindows()
 {
     TopWinList* topWins = TopWinList::getInstance();
 
-    // Request to close all EditorTopWins:
-
     while (0 < topWins->getNumberOfTopWins())
     {
-        EditorTopWin* editorTopWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(0));
+        TopWin* topWin = topWins->getTopWin(topWins->getNumberOfTopWins() - 1);
+        
+        EditorTopWin* editorTopWin = dynamic_cast<EditorTopWin*>(topWin);
 
         if (editorTopWin != NULL)
         {
@@ -82,7 +82,7 @@ void WindowCloser::closeWindows()
         }
         else
         {
-            topWins->getTopWin(0)->requestCloseWindow();
+            topWin->requestCloseWindow();
         }
     }
     

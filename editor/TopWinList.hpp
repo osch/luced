@@ -50,8 +50,30 @@ public:
 
 private:
     static LucED::WeakPtr<TopWinList> instance;
+
+    class EmptyChecker : public HeapObject
+    {
+    public:
+        typedef LucED::OwningPtr<EmptyChecker> Ptr;
+
+        static Ptr create(TopWinList* list) {
+            return Ptr(new EmptyChecker(list));
+        }
+
+        void check();
+        
+    private:
+        EmptyChecker(TopWinList* list)
+            : topWinList(list)
+        {}
+        LucED::WeakPtr<TopWinList> topWinList;
+    };
   
     TopWinList() {}
+
+    void checkIfEmpty();
+    
+    EmptyChecker::Ptr emptyChecker;
 };
 
 } // namespace LucED
