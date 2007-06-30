@@ -25,6 +25,9 @@
 using namespace LucED;
 
 
+WindowCloser::WeakPtr WindowCloser::instance;
+
+
 void WindowCloser::handleSaveFileButton()
 {
     if (referingTopWin.isValid())

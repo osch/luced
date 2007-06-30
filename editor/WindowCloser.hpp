@@ -38,10 +38,16 @@ public:
 
     static WeakPtr start()
     {
-        OwningPtr ptr(new WindowCloser());
-        EventDispatcher::getInstance()->registerRunningComponent(ptr);
-        ptr->closeWindows();
-        return ptr;
+        if (instance.isValid()) {
+            instance->closeWindows();
+            return instance;
+        } else {
+            OwningPtr ptr(new WindowCloser());
+            EventDispatcher::getInstance()->registerRunningComponent(ptr);
+            instance = ptr;
+            ptr->closeWindows();
+            return ptr;
+        }
     }
     
 private:
@@ -55,6 +61,8 @@ private:
     void handleDiscardButton();
     void handleCancelButton();
     
+    static WeakPtr    instance;
+
     EditorTopWin::Ptr referingTopWin;
 };
 
