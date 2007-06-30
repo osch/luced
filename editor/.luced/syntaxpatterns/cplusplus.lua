@@ -41,7 +41,7 @@ return
                                        \b(?> true   |false    |this    |static    |inline   |typedef  |if       |using     |class    |else
                                             |do     |for      |return  |try       |catch    |public   |private  |protected |virtual  |while
                                             |switch |case     |break   |continue  |template |typename |struct   |explicit  |mutable  |throw
-                                            |new    |operator |sizeof  |extern    |friend   |delete
+                                            |new    |operator |sizeof  |extern    |friend   |delete   |volatile
                                        )\b
                                    ]],
                 maxExtend        = 15,
