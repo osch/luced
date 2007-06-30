@@ -39,6 +39,7 @@ static int myX11ErrorHandler(Display *display, XErrorEvent *errorEvent)
 }
 
 GuiRoot::GuiRoot()
+    : wasKeyboardModeModified(false)
 {
     XSetErrorHandler(myX11ErrorHandler);
 
@@ -85,7 +86,7 @@ GuiRoot::GuiRoot()
 
 GuiRoot::~GuiRoot()
 {
-    if (originalKeyboardModeWasAutoRepeat) {
+    if (wasKeyboardModeModified && originalKeyboardModeWasAutoRepeat) {
         XAutoRepeatOn(display);
     }
     XFlush(display);
@@ -103,18 +104,20 @@ GuiColor GuiRoot::getGuiColor(const String& colorName)
 
 void GuiRoot::setKeyboardAutoRepeatOn()
 {
+    wasKeyboardModeModified = !originalKeyboardModeWasAutoRepeat;
     XAutoRepeatOn(display);
 }
 
 
 void GuiRoot::setKeyboardAutoRepeatOff()
 {
+    wasKeyboardModeModified = originalKeyboardModeWasAutoRepeat;
     XAutoRepeatOff(display);
 }
 
 void GuiRoot::setKeyboardAutoRepeatOriginal()
 {
-    if (originalKeyboardModeWasAutoRepeat) {
+    if (wasKeyboardModeModified && originalKeyboardModeWasAutoRepeat) {
        XAutoRepeatOn(display);
     }
 }

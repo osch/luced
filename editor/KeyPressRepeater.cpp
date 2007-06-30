@@ -29,15 +29,6 @@ using namespace LucED;
 SingletonInstance<KeyPressRepeater> KeyPressRepeater::instance;
 
 
-KeyPressRepeater* KeyPressRepeater::getInstance()
-{
-    return instance.getPtr();
-}
-
-bool KeyPressRepeater::isInstanceValid()
-{
-    return instance.isValid();
-}
 
 KeyPressRepeater::KeyPressRepeater()
     : eventRepeatingCallback(this, &KeyPressRepeater::processRepeatingEvent)
@@ -117,11 +108,11 @@ bool KeyPressRepeater::addKeyModifier(const XEvent *event)
     }
 }
 
-bool KeyPressRepeater::removeKeyModifier(const XEvent *event)
+bool KeyPressRepeater::removeKeyModifier(const XEvent* event)
 {
     if (IsModifierKey(XLookupKeysym((XKeyEvent*)&event->xkey, 0)))
     {
-        XModifierKeymap *map = XGetModifierMapping(GuiRoot::getInstance()->getDisplay());
+        XModifierKeymap* map = XGetModifierMapping(GuiRoot::getInstance()->getDisplay());
     
         bool found = false;
         unsigned int keyCode = event->xkey.keycode;

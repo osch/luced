@@ -34,9 +34,12 @@ class KeyPressRepeater : public HeapObject
 {
 public:
     
-    static KeyPressRepeater* getInstance();
-    static bool isInstanceValid();
-    
+    static KeyPressRepeater* getInstance() {
+        return instance.getPtr();
+    }
+    static bool isInstanceValid() {
+        return instance.isValid();
+    }
     void repeatEvent(const XEvent *event);
     void reset();
     
@@ -47,6 +50,7 @@ public:
     
 private:
     friend class SingletonInstance<KeyPressRepeater>;
+
     static SingletonInstance<KeyPressRepeater> instance;
     
     KeyPressRepeater();

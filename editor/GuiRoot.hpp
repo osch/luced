@@ -90,6 +90,7 @@ private:
     Screen *screen;
     Window rootWid;
     bool originalKeyboardModeWasAutoRepeat;
+    bool wasKeyboardModeModified;
 
     GuiColor blackColor;
     GuiColor whiteColor;
