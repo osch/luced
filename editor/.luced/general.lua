@@ -39,7 +39,7 @@ globalConfig = {
           guiFont      = "-*-helvetica-medium-r-*-*-*-120-75-75-*-*-*-*",
           guiFontColor = "black",
           primarySelectionColor = "grey",
-          pseudoSelectionColor  = "rgb:ed/ed/ed",
+          pseudoSelectionColor  = "rgb:f1/f1/f1",
           
           initialWindowWidth  = 100,    -- size in characters
           initialWindowHeight =  45,    -- size in characters

@@ -60,10 +60,8 @@ private:
     friend class SingletonInstance<EditorServer>;
     static SingletonInstance<EditorServer> instance;
   
-    EditorServer()
-        : isStarted(false)
-    {}
-    
+    EditorServer();
+
     void processEventForServerProperty(XEvent* event);
     void processEventForCommandProperty(XEvent* event);
     void processCommandline(HeapObjectArray<String>::Ptr    commandline, 

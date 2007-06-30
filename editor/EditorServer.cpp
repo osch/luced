@@ -40,6 +40,13 @@ using namespace LucED;
 
 SingletonInstance<EditorServer> EditorServer::instance;
 
+EditorServer::EditorServer()
+    : isStarted(false)
+{
+    GuiRoot::getInstance();         // assure that GuiRoot         instance lives longer than EditorServer
+    EventDispatcher::getInstance(); // assure that EventDispatcher instance lives longer than EditorServer
+}
+
 EditorServer::~EditorServer()
 {
     if (isStarted) {

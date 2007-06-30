@@ -101,9 +101,11 @@ void EditorClient::startWithCommandline(HeapObjectArray<String>::Ptr commandline
             EventDispatcher::getInstance()
                      ->registerEventReceiverForRootProperty(commandProperty, 
                                                             Callback1<XEvent*>(this, &EditorClient::processEventForCommandProperty));
+
             EventDispatcher::getInstance()->registerTimerCallback(
                     Seconds(3), MicroSeconds(0),
                     Callback0(this, &EditorClient::waitingForServerFailed));
+
         }
     }
     
