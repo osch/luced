@@ -262,6 +262,7 @@ private:
     bool isMousePointerHidden;
     GuiColor primarySelectionColor;
     GuiColor secondarySelectionColor;
+    GC textWidget_gcid;
 };
 
 } // namespace LucED

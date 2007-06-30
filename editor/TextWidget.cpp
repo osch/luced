@@ -31,9 +31,6 @@
 
 using namespace LucED;
 
-static bool textWidgetInitialized = false;
-static GC textWidget_gcid;
-
 static inline unsigned int calculateWidthOrHeightWithoutBorder(unsigned int totalWidth, int border)
 {
     unsigned int rslt = totalWidth - 2 * border;
@@ -50,7 +47,8 @@ public:
     static TextWidgetSingletonData* getInstance() { return instance.getPtr(); }
 
     Cursor getEmptyMouseCursor() { return emptyMouseCursor; }
-    Cursor getTextMouseCursor() { return textMouseCursor; }
+    Cursor getTextMouseCursor()  { return textMouseCursor; }
+    GC     getGcId()             { return textWidget_gcid; }
 
 private:
     friend class SingletonInstance<TextWidgetSingletonData>;
@@ -72,18 +70,26 @@ private:
         XFreePixmap(GuiRoot::getInstance()->getDisplay(), emptyPixmap);
 
         textMouseCursor = XCreateFontCursor(GuiRoot::getInstance()->getDisplay(), XC_xterm);
+
+        textWidget_gcid = XCreateGC(GuiRoot::getInstance()->getDisplay(), 
+                                    GuiRoot::getInstance()->getRootWid(), 0, NULL);
+                                    
+        XSetGraphicsExposures(GuiRoot::getInstance()->getDisplay(), textWidget_gcid, True);
     }
     
     ~TextWidgetSingletonData()
     {
-        XFreeCursor(GuiRoot::getInstance()->getDisplay(), emptyMouseCursor);
-        XFreeCursor(GuiRoot::getInstance()->getDisplay(), textMouseCursor);
+        Display* display = GuiRoot::getInstance()->getDisplay();
+        XFreeCursor(display, emptyMouseCursor);
+        XFreeCursor(display, textMouseCursor);
+        XFreeGC    (display, textWidget_gcid);
     }
     
     static SingletonInstance<TextWidgetSingletonData> instance;
 
     Cursor emptyMouseCursor;
     Cursor textMouseCursor;
+    GC textWidget_gcid;
 };
 
 } // namespace LucED
@@ -122,7 +128,8 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       isMousePointerHidden(false),
       
       primarySelectionColor(  getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPrimarySelectionColor())),
-      secondarySelectionColor(getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPseudoSelectionColor()))
+      secondarySelectionColor(getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPseudoSelectionColor())),
+      textWidget_gcid(TextWidgetSingletonData::getInstance()->getGcId())
 {
     totalPixWidth = 0;
     leftPix = 0;
@@ -132,12 +139,6 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
     cursorIsActive = false;
     updateVerticalScrollBar = false;
     updateHorizontalScrollBar = false;
-
-    if (!textWidgetInitialized) {
-        textWidgetInitialized = true;
-        textWidget_gcid = XCreateGC(getDisplay(), getRootWid(), 0, NULL);
-        XSetGraphicsExposures(getDisplay(), textWidget_gcid, True);
-    }
 
     setBackgroundColor(getGuiRoot()->getWhiteColor());
     setBorderColor(getGuiRoot()->getWhiteColor());

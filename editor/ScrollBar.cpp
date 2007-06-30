@@ -28,32 +28,59 @@
 using namespace LucED;
 
 
-static GC scrollBar_gcid;
-static bool scrollBarInitialized = false;
-
-
-void ScrollBar::initStatically()
+namespace LucED
 {
-    Display* display = getDisplay();
-    GuiRoot* guiRoot = getGuiRoot();
 
-    scrollBar_gcid = XCreateGC(display, guiRoot->getRootWid(), 0, NULL);
+class ScrollBarSingletonData : public HeapObject
+{
+public:
+    static ScrollBarSingletonData* getInstance() { return instance.getPtr(); }
 
-    XSetForeground(display, scrollBar_gcid, guiRoot->getBlackColor());
-    XSetBackground(display, scrollBar_gcid, guiRoot->getGreyColor());
+    GC     getGcId()             { return scrollBar_gcid; }
 
-    XSetLineAttributes(display, scrollBar_gcid, 0, 
-        LineSolid, CapProjecting, JoinMiter);
+private:
+    friend class SingletonInstance<ScrollBarSingletonData>;
+    
+    ScrollBarSingletonData()
+    {
+        Display* display = GuiRoot::getInstance()->getDisplay();
+        GuiRoot* guiRoot = GuiRoot::getInstance();
+    
+        scrollBar_gcid = XCreateGC(display, guiRoot->getRootWid(), 0, NULL);
+    
+        XSetForeground(display, scrollBar_gcid, guiRoot->getBlackColor());
+        XSetBackground(display, scrollBar_gcid, guiRoot->getGreyColor());
+    
+        XSetLineAttributes(display, scrollBar_gcid, 0, 
+            LineSolid, CapProjecting, JoinMiter);
+    
+        XSetGraphicsExposures(display, scrollBar_gcid, True);
+    }
+    
+    ~ScrollBarSingletonData()
+    {
+        XFreeGC(GuiRoot::getInstance()->getDisplay(), scrollBar_gcid);
+    }
+    
+    static SingletonInstance<ScrollBarSingletonData> instance;
 
-    XSetGraphicsExposures(display, scrollBar_gcid, True);
-}
+    GC scrollBar_gcid;
+};
+
+} // namespace LucED
+
+
+SingletonInstance<ScrollBarSingletonData> ScrollBarSingletonData::instance;
+
+
 
 
 ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
       isV(orientation == Orientation::VERTICAL),
-      hilitedPart(NONE)
+      hilitedPart(NONE),
+      scrollBar_gcid(ScrollBarSingletonData::getInstance()->getGcId())
 {
     totalValue = 0;
     originalTotalValue = 0;
@@ -65,10 +92,6 @@ ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     calculateValuesFromPosition();
 
-    if (!scrollBarInitialized) {
-        initStatically();
-        scrollBarInitialized = true;
-    }
     setBackgroundColor(getGuiRoot()->getGuiColor02());
  }
 

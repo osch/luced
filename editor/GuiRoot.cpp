@@ -87,8 +87,8 @@ GuiRoot::~GuiRoot()
 {
     if (originalKeyboardModeWasAutoRepeat) {
         XAutoRepeatOn(display);
-        XFlush(display);
     }
+    XFlush(display);
     XCloseDisplay(display);
 }
 

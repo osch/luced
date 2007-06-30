@@ -66,7 +66,6 @@ private:
     long calcScrollY();
     long calcHighestScrollY();
     long calcValue();
-    void initStatically();
     
     void drawUpButton();
     void drawPressedUpButton();
@@ -102,6 +101,7 @@ private:
     ScrollStep::Type scrollStep;
     void handleScrollStepRepeating();
     HilitedPart hilitedPart;
+    GC scrollBar_gcid;
 };
 
 

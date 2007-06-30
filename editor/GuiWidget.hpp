@@ -190,6 +190,7 @@ private:
     WeakPtr<GuiWidget> nextFocusWidget;
     WeakPtr<GuiWidget> prevFocusWidget;
     bool visible;
+    GC gcid;
 };
 
 class GuiWidgetAccessForEventProcessors
