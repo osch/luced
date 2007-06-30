@@ -26,6 +26,8 @@
 #include <sys/select.h>
 
 #include "debug.hpp"
+#include "Seconds.hpp"
+#include "MicroSeconds.hpp"
 
 namespace LucED {
 
@@ -38,17 +40,17 @@ public:
     /**
      * Time t2 should be later than t1.
      */
-    static long diffMicroSecs(const TimeVal& t1, const TimeVal& t2)
+    static MicroSeconds diffMicroSecs(const TimeVal& t1, const TimeVal& t2)
     {
         ASSERT(0 <= t1.timeval.tv_usec && t1.timeval.tv_usec < 1000000);
         ASSERT(0 <= t2.timeval.tv_usec && t2.timeval.tv_usec < 1000000);
         ASSERT(t2.isLaterThan(t1));
         
         if (t1.timeval.tv_sec == t2.timeval.tv_sec) {
-            return t2.timeval.tv_usec - t1.timeval.tv_usec;
+            return MicroSeconds(t2.timeval.tv_usec - t1.timeval.tv_usec);
         } else {
-            return (t2.timeval.tv_sec - 1 - t1.timeval.tv_sec) * 1000000
-                    + (t2.timeval.tv_usec + (1000000 - t1.timeval.tv_usec));
+            return MicroSeconds((t2.timeval.tv_sec - 1 - t1.timeval.tv_sec) * 1000000
+                              + (t2.timeval.tv_usec + (1000000 - t1.timeval.tv_usec)));
         }
     }
     
@@ -89,7 +91,7 @@ public:
         return timeval.tv_sec == 0 && timeval.tv_usec == 0;
     }
     
-    TimeVal& addMicroSecs(long usec)
+    TimeVal& add(MicroSeconds usec)
     {
         long diff;
         long sec;
@@ -98,7 +100,7 @@ public:
 
         if (usec >= 1000000) {
             sec  = usec / 1000000;
-            usec = usec - sec * 1000000;
+            usec = MicroSeconds(usec - sec * 1000000);
         } else {
             sec = 0;
         }
@@ -113,9 +115,9 @@ public:
         return *this;
     }
 
-    TimeVal& addSecs(long sec, long usec = 0)
+    TimeVal& add(Seconds sec, MicroSeconds usec = MicroSeconds(0))
     {
-        addMicroSecs(usec);
+        add(usec);
         timeval.tv_sec += sec;
         return *this;
     }

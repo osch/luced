@@ -72,7 +72,7 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
                 
 
-PRG_MODULES  := luced lc
+PRG_MODULES  := luced
 
 MODULES = $(FAST_MODULES) $(SLOW_MODULES)
 
@@ -85,12 +85,9 @@ SLOW_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,             $(SLOW_MODULES))
 .PHONY:        default clean
 .INTERMEDIATE: $(LIB_OBJS)
 
-default: luced lc
+default: luced
 
 luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
-	$(LINK_RUN)
-
-lc: $(BUILD_DIR)/lc.o $(BUILD_DIR)/libluced.a
 	$(LINK_RUN)
 
 

@@ -19,47 +19,36 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLETONINSTANCE_H
-#define SINGLETONINSTANCE_H
+#ifndef COMMANDLINE_HPP
+#define COMMANDLINE_HPP
 
-#include "debug.hpp"
-#include "WeakPtr.hpp"
-#include "SingletonKeeper.hpp"
-#include "OwningPtr.hpp"
+#include "HeapObjectArray.hpp"
+#include "String.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-template<class T> class SingletonInstance : NonCopyable
+class Commandline : public HeapObjectArray<String>
 {
 public:
 
-    SingletonInstance() : wasInstantiatedCounter(0) {}
-
-    T* getPtr()
-    {
-        long singletonKeeperGeneration = SingletonKeeper::getInstance()->getGenerationCounter();
-        
-        if (wasInstantiatedCounter < singletonKeeperGeneration)
-        {
-            instancePtr = SingletonKeeper::getInstance()->add(OwningPtr<T>(new T()));
-            wasInstantiatedCounter = singletonKeeperGeneration;
-        } 
-        else 
-        {
-            ASSERT(instancePtr.isValid());
-        }
-        return instancePtr.getRawPtr();
+    typedef OwningPtr<Commandline> Ptr;
+    
+    static Ptr create(int argc, char** argv) {
+        return Ptr(new Commandline(argc, argv));
     }
-
-    bool isValid() const {
-        return (wasInstantiatedCounter > 0) && instancePtr.isValid();
-    }
-
+    
 private:
-    long wasInstantiatedCounter;
-    WeakPtr<T> instancePtr;
+
+    Commandline(int argc, char** argv)
+    {
+        for (int i = 1; i < argc; ++i) {
+            this->append(String(argv[i]));
+        }
+    }
 };
 
 } // namespace LucED
 
-#endif // SINGLETONINSTANCE_H
+#endif // COMMANDLINE_HPP
+

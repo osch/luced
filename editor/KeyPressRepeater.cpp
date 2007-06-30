@@ -65,9 +65,9 @@ void KeyPressRepeater::repeatEvent(const XEvent *event)
 {
     when.setToCurrentTime();
     if (repeatCount == 0 || !isRepeatingEvent(event)) {
-        when.addMicroSecs(GlobalConfig::getInstance()->getKeyPressRepeatFirstMicroSecs());
+        when.add(GlobalConfig::getInstance()->getKeyPressRepeatFirstMicroSecs());
     } else {
-        when.addMicroSecs(GlobalConfig::getInstance()->getKeyPressRepeatNextMicroSecs());
+        when.add(GlobalConfig::getInstance()->getKeyPressRepeatNextMicroSecs());
     }
     this->event = *event;
     isRepeatingFlag = true;

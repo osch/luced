@@ -19,63 +19,94 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <sys/types.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+
 #include "String.hpp"
 
 #include "EventDispatcher.hpp"
-#include "SyntaxPatterns.hpp"
-#include "LuaException.hpp"
-#include "GlobalConfig.hpp"
-#include "ConfigException.hpp"
 #include "SingletonKeeper.hpp"
+#include "GuiRootProperty.hpp"
+#include "EditorClient.hpp"
 #include "EditorServer.hpp"
-#include "HeapObjectArray.hpp"
+#include "Commandline.hpp"
 #include "CommandlineException.hpp"
-#include "FileException.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 
-
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     int rc = 0;
     
     try
     {
-        SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
+        bool wasServerFound = false;
+        {
+            SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
+            Commandline::Ptr     commandline     = Commandline::create(argc, argv);
+            EditorClient::Ptr    editorClient    = EditorClient::getInstance();
+            
+            editorClient->startWithCommandline(Commandline::create(argc, argv));
+
+            EventDispatcher::getInstance()->doEventLoop();
+            
+            wasServerFound = editorClient->wasServerFound();
+        }
+        #ifdef DEBUG
+            HeapObjectChecker::assertAllCleared();
+        #endif
         
-        HeapObjectArray<String>::Ptr commandline = HeapObjectArray<String>::create();
-
-        for (int argIndex = 1; argIndex < argc; ++argIndex)
+        if (!wasServerFound) // start new server
         {
-            commandline->append(String(argv[argIndex]));
-        }
+            pid_t pid = fork();
+            
+            if (pid == 0) // we are child process: the new server
+            {
+                SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
+                Commandline::Ptr     commandline     = Commandline::create(argc, argv);
+                EditorServer::Ptr    editorServer    = EditorServer::getInstance();
 
-        try
-        {
-            GlobalConfig::getInstance()->readConfig();
+                try
+                {
+                    GlobalConfig::getInstance()->readConfig();
 
-            EditorServer::getInstance()->startWithCommandline(commandline);
-        }
-        catch (ConfigException& ex)
-        {
-            EditorServer::getInstance()->startWithCommandlineAndErrorList(commandline, ex.getErrorList());
-        }
+                    editorServer->startWithCommandline(commandline);
+                }
+                catch (ConfigException& ex)
+                {
+                    editorServer->startWithCommandlineAndErrorList(commandline, ex.getErrorList());
+                }
 
-        EventDispatcher::getInstance()->doEventLoop();
+                EventDispatcher::getInstance()->doEventLoop();
+            }
+            else if (pid < 0)
+            {
+                fprintf(stderr, "[%s]: Could not fork process: %s\n", argv[0], strerror(errno));
+                rc = 32;
+            }
+
+            #ifdef DEBUG
+                HeapObjectChecker::assertAllCleared();
+            #endif
+        }
     }
     catch (CommandlineException& ex)
     {
-        fprintf(stderr, "[%s]: CommandlineException: %s\n", argv[0], ex.getMessage().toCString());
+        fprintf(stderr, "[%s]: Commandline Error: %s\n", argv[0], ex.getMessage().toCString());
         rc = 1;
     }
     catch (BaseException& ex)
     {
-        fprintf(stderr, "[%s]: Severe Error: %s\n",    argv[0], ex.getMessage().toCString());
+        fprintf(stderr, "[%s]: Severe Error: %s\n", argv[0], ex.getMessage().toCString());
         rc = 16;
     }
 
-#ifdef DEBUG
-    HeapObjectChecker::assertAllCleared();
-#endif
+    #ifdef DEBUG
+        HeapObjectChecker::assertAllCleared();
+    #endif
+
     return rc;
 }

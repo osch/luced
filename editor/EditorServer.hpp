@@ -31,6 +31,7 @@
 #include "MessageBox.hpp"
 #include "EditorTopWin.hpp"
 #include "ConfigException.hpp"
+#include "WeakPtr.hpp"
 
 namespace LucED
 {
@@ -38,6 +39,8 @@ namespace LucED
 class EditorServer : public HeapObject
 {
 public:
+
+    typedef WeakPtr<EditorServer> Ptr;
     
     static EditorServer* getInstance() {
         return instance.getPtr();

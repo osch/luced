@@ -63,7 +63,7 @@ void PasteDataReceiver::requestSelectionPasting()
         isMultiPartPastingFlag = false;
         isReceivingPasteDataFlag = true;
         notifyAboutBeginOfPastingData();
-        EventDispatcher::getInstance()->registerTimerCallback(3, 0, 
+        EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
                                                               Callback0(this, 
                                                                         &PasteDataReceiver::handleTimerEvent));
         lastPasteEventTime.setToCurrentTime();
@@ -88,7 +88,7 @@ void PasteDataReceiver::requestClipboardPasting()
         isMultiPartPastingFlag = false;
         isReceivingPasteDataFlag = true;
         notifyAboutBeginOfPastingData();
-        EventDispatcher::getInstance()->registerTimerCallback(3, 0, 
+        EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
                                                               Callback0(this, 
                                                                         &PasteDataReceiver::handleTimerEvent));
         lastPasteEventTime.setToCurrentTime();
@@ -237,7 +237,7 @@ void PasteDataReceiver::handleTimerEvent()
     {
         TimeVal t1, t2;
         t1 = lastPasteEventTime;
-        t1.addSecs(3);
+        t1.add(Seconds(3));
         t2.setToCurrentTime();
 
         if (t2.isLaterThan(t1)) {
@@ -245,7 +245,7 @@ void PasteDataReceiver::handleTimerEvent()
             isMultiPartPastingFlag = false;
             isReceivingPasteDataFlag = false;
         } else {
-            EventDispatcher::getInstance()->registerTimerCallback(3, 0, 
+            EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
                     Callback0(this, &PasteDataReceiver::handleTimerEvent));
         }
     }

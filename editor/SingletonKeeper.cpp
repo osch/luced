@@ -24,13 +24,15 @@
 
 using namespace LucED;
 
-static WeakPtr<SingletonKeeper> instance;
+WeakPtr<SingletonKeeper> SingletonKeeper::instance;
+long                     SingletonKeeper::generationCounter = 0;
 
 SingletonKeeper::Ptr SingletonKeeper::create()
 {
     ASSERT(instance.isInvalid());
     Ptr rslt(new SingletonKeeper());
     instance = rslt;
+    ++generationCounter;
     return rslt;
 }
 

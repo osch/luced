@@ -31,14 +31,11 @@ SingletonInstance<EditorClient> EditorClient::instance;
 
 EditorClient::EditorClient()
     : isStarted(false),
-      wasCommandSet(false)
+      wasCommandSet(false),
+      wasServerFoundFlag(false)
 {
-    serverProperty = GuiRootProperty(ClientServerUtil::getDefaultServerRunningProperty());
+    serverProperty  = GuiRootProperty(ClientServerUtil::getDefaultServerRunningProperty());
     commandProperty = GuiRootProperty(ClientServerUtil::getDefaultServerCommandProperty());
-
-    EventDispatcher::getInstance()
-                     ->registerEventReceiverForRootProperty(commandProperty, 
-                                                            Callback1<XEvent*>(this, &EditorClient::processEventForCommandProperty));
 }
 
 EditorClient::~EditorClient()
@@ -60,10 +57,17 @@ void EditorClient::processEventForCommandProperty(XEvent* event)
     if (event->xproperty.state == PropertyDelete)
     {
         EventDispatcher::getInstance()->requestProgramTermination();
+        wasServerFoundFlag = true;
     }
     else if (event->xproperty.state == PropertyNewValue)
     {
     }
+}
+
+void EditorClient::waitingForServerFailed()
+{
+        EventDispatcher::getInstance()->requestProgramTermination();
+        wasServerFoundFlag = false;
 }
 
 
@@ -93,13 +97,19 @@ void EditorClient::startWithCommandline(HeapObjectArray<String>::Ptr commandline
         {
             commandProperty.setValue(ClientServerUtil::quoteCommandline(commandline));
             wasCommandSet = true;
+
+            EventDispatcher::getInstance()
+                     ->registerEventReceiverForRootProperty(commandProperty, 
+                                                            Callback1<XEvent*>(this, &EditorClient::processEventForCommandProperty));
+            EventDispatcher::getInstance()->registerTimerCallback(
+                    Seconds(3), MicroSeconds(0),
+                    Callback0(this, &EditorClient::waitingForServerFailed));
         }
     }
     
     if (!wasCommandSet)
     {
         EventDispatcher::getInstance()->requestProgramTermination();
+        wasServerFoundFlag = false;
     }
 }
-
-

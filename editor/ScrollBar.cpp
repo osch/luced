@@ -136,7 +136,7 @@ GuiElement::ProcessingResult ScrollBar::processEvent(const XEvent *event)
                         scrollStepCallback.call(scrollStep = ScrollStep::PAGE_DOWN);
                     }
                     if (isButtonPressedForScrollStep) {
-                        EventDispatcher::getInstance()->registerTimerCallback(0, 
+                        EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                                 GlobalConfig::getInstance()->getScrollBarRepeatFirstMicroSecs(),
                                 Callback0(this, &ScrollBar::handleScrollStepRepeating));
                     }
@@ -652,7 +652,7 @@ void ScrollBar::handleScrollStepRepeating()
     if (isButtonPressedForScrollStep)
     {
         scrollStepCallback.call(scrollStep);
-        EventDispatcher::getInstance()->registerTimerCallback(0, 
+        EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                 GlobalConfig::getInstance()->getScrollBarRepeatNextMicroSecs(), 
                 Callback0(this, &ScrollBar::handleScrollStepRepeating));
     }

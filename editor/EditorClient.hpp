@@ -28,15 +28,16 @@
 #include "SingletonInstance.hpp"
 #include "GuiRootProperty.hpp"
 #include "HeapObjectArray.hpp"
+#include "WeakPtr.hpp"
 
 namespace LucED
 {
 
-
-
 class EditorClient : public HeapObject
 {
 public:
+    typedef WeakPtr<EditorClient> Ptr;
+    
     static EditorClient* getInstance() {
         return instance.getPtr();
     }
@@ -45,6 +46,10 @@ public:
 
     void startWithCommandline(HeapObjectArray<String>::Ptr commandline);
     
+    bool wasServerFound() const {
+        return wasServerFoundFlag;
+    }
+
 private:
     friend class SingletonInstance<EditorClient>;
     static SingletonInstance<EditorClient> instance;
@@ -52,9 +57,11 @@ private:
     EditorClient();
 
     void processEventForCommandProperty(XEvent* event);
+    void waitingForServerFailed();
     
     bool isStarted;
     bool wasCommandSet;
+    bool wasServerFoundFlag;
     GuiRootProperty serverProperty;
     GuiRootProperty commandProperty;
 };

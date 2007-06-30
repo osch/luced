@@ -184,7 +184,7 @@ void EventDispatcher::doEventLoop()
                         h->execute(diffTime);
                         
                         now.setToCurrentTime();
-                        if (now.addMicroSecs(100 * 1000).isLaterThan(nextTimer.when)) {
+                        if (now.add(MicroSeconds(100 * 1000)).isLaterThan(nextTimer.when)) {
                             remainingTime.setToRemainingTimeUntil(nextTimer.when);
                             rslt = LucED::select(x11FileDescriptor + 1, &readfds, NULL, NULL, &remainingTime);
                             wasSelectInvoked = true;

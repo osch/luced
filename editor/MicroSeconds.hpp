@@ -19,47 +19,31 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLETONINSTANCE_H
-#define SINGLETONINSTANCE_H
+#ifndef MICRO_SECONDS_HPP
+#define MICRO_SECONDS_HPP
 
-#include "debug.hpp"
-#include "WeakPtr.hpp"
-#include "SingletonKeeper.hpp"
-#include "OwningPtr.hpp"
+namespace LucED
+{
 
-namespace LucED {
-
-template<class T> class SingletonInstance : NonCopyable
+class MicroSeconds
 {
 public:
 
-    SingletonInstance() : wasInstantiatedCounter(0) {}
+    MicroSeconds()
+        : microSeconds(0)
+    {}
+    
+    explicit MicroSeconds(long microSeconds)
+        : microSeconds(microSeconds)
+    {}
 
-    T* getPtr()
-    {
-        long singletonKeeperGeneration = SingletonKeeper::getInstance()->getGenerationCounter();
-        
-        if (wasInstantiatedCounter < singletonKeeperGeneration)
-        {
-            instancePtr = SingletonKeeper::getInstance()->add(OwningPtr<T>(new T()));
-            wasInstantiatedCounter = singletonKeeperGeneration;
-        } 
-        else 
-        {
-            ASSERT(instancePtr.isValid());
-        }
-        return instancePtr.getRawPtr();
+    operator long() const {
+        return microSeconds;
     }
-
-    bool isValid() const {
-        return (wasInstantiatedCounter > 0) && instancePtr.isValid();
-    }
-
 private:
-    long wasInstantiatedCounter;
-    WeakPtr<T> instancePtr;
+    long microSeconds;
 };
 
 } // namespace LucED
 
-#endif // SINGLETONINSTANCE_H
+#endif // MICRO_SECONDS_HPP

@@ -32,6 +32,7 @@
 #include "SingletonInstance.hpp"
 #include "Callback.hpp"
 #include "CallbackContainer.hpp"
+#include "MicroSeconds.hpp"
 
 namespace LucED {
 
@@ -49,19 +50,19 @@ public:
     bool getUseKeyPressRepeater() {
         return useKeyPressRepeater;
     }
-    long getKeyPressRepeatFirstMicroSecs() {
+    MicroSeconds getKeyPressRepeatFirstMicroSecs() {
         return keyPressRepeatFirstMicroSecs;
     }
-    long getKeyPressRepeatNextMicroSecs() {
+    MicroSeconds getKeyPressRepeatNextMicroSecs() {
         return keyPressRepeatNextMicroSecs;
     }
     int getScrollBarWidth() {
         return scrollBarWidth;
     }
-    long getScrollBarRepeatFirstMicroSecs() {
+    MicroSeconds getScrollBarRepeatFirstMicroSecs() {
         return scrollBarRepeatFirstMicroSecs;
     }
-    long getScrollBarRepeatNextMicroSecs() {
+    MicroSeconds getScrollBarRepeatNextMicroSecs() {
         return scrollBarRepeatNextMicroSecs;
     }
     long getDoubleClickMilliSecs() {
@@ -153,14 +154,14 @@ private:
     
     GlobalConfig();
     
-    bool useKeyPressRepeater;
-    long keyPressRepeatFirstMicroSecs;
-    long keyPressRepeatNextMicroSecs;
+    bool         useKeyPressRepeater;
+    MicroSeconds keyPressRepeatFirstMicroSecs;
+    MicroSeconds keyPressRepeatNextMicroSecs;
     
-    int  scrollBarWidth;
-    long scrollBarRepeatFirstMicroSecs;
-    long scrollBarRepeatNextMicroSecs;
-    long doubleClickMilliSecs;
+    int          scrollBarWidth;
+    MicroSeconds scrollBarRepeatFirstMicroSecs;
+    MicroSeconds scrollBarRepeatNextMicroSecs;
+    long         doubleClickMilliSecs;
     
     String guiColor01;
     String guiColor02;

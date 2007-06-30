@@ -204,13 +204,13 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
 }
 
 
-static inline long calculateScrollTime(int diffPix, int lineHeight)
+static inline MicroSeconds calculateScrollTime(int diffPix, int lineHeight)
 {
     long microSecs = GlobalConfig::getInstance()->getScrollBarRepeatNextMicroSecs();
     long rslt = microSecs - (microSecs * diffPix)/(10*lineHeight);
     if (rslt < microSecs/10) 
         rslt = microSecs/10;
-    return rslt;
+    return MicroSeconds(rslt);
 }
 
 GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
@@ -501,7 +501,7 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
             if (!isMovingSelectionScrolling) {
                 scrollUp();
                 isMovingSelectionScrolling = true;
-                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                         calculateScrollTime(-y, getLineHeight()),
                         scrollRepeatCallback);
             }
@@ -509,7 +509,7 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
             if (!isMovingSelectionScrolling) {
                 scrollDown();
                 isMovingSelectionScrolling = true;
-                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                         calculateScrollTime(y - getHeightPix(), getLineHeight()),
                         scrollRepeatCallback);
             }
@@ -517,7 +517,7 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
             if (!isMovingSelectionScrolling) {
                 scrollLeft();
                 isMovingSelectionScrolling = true;
-                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                         calculateScrollTime(-x, getLineHeight()),
                         scrollRepeatCallback);
             }
@@ -525,7 +525,7 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
             if (!isMovingSelectionScrolling) {
                 scrollRight();
                 isMovingSelectionScrolling = true;
-                EventDispatcher::getInstance()->registerTimerCallback(0, 
+                EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                         calculateScrollTime(x - getPixWidth(), getLineHeight()),
                         scrollRepeatCallback);
             }
@@ -594,22 +594,22 @@ void TextEditorWidget::handleScrollRepeating()
         }
         if (movingSelectionY < 0 ) {
             scrollUp();
-            EventDispatcher::getInstance()->registerTimerCallback(0, 
+            EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                     calculateScrollTime(-movingSelectionY, getLineHeight()),
                     scrollRepeatCallback);
         } else if (movingSelectionY > getHeightPix()) {
             scrollDown();
-            EventDispatcher::getInstance()->registerTimerCallback(0, 
+            EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                     calculateScrollTime(movingSelectionY - getHeightPix(), getLineHeight()),
                     scrollRepeatCallback);
         } else if (movingSelectionX < 0 ) {
             scrollLeft();
-            EventDispatcher::getInstance()->registerTimerCallback(0, 
+            EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                     calculateScrollTime(-movingSelectionX, getLineHeight()),
                     scrollRepeatCallback);
         } else if (movingSelectionX > getPixWidth() && !getTextData()->isEndOfLine(newCursorPos)) {
             scrollRight();
-            EventDispatcher::getInstance()->registerTimerCallback(0, 
+            EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                     calculateScrollTime(movingSelectionX - getPixWidth(), getLineHeight()),
                     scrollRepeatCallback);
         } else {

@@ -35,6 +35,8 @@
 #include "SingletonInstance.hpp"
 #include "GuiRootProperty.hpp"
 #include "RunningComponent.hpp"
+#include "Seconds.hpp"
+#include "MicroSeconds.hpp"
 
 namespace LucED {
 
@@ -60,9 +62,9 @@ public:
     void registerTimerCallback(const TimeVal& when, const TimerCallback& callback) {
         timers.push(TimerRegistration(when, callback));
     }
-    void registerTimerCallback(long secs, long usecs, const TimerCallback& callback) {
+    void registerTimerCallback(Seconds secs, MicroSeconds usecs, const TimerCallback& callback) {
         TimeVal when;
-        when.setToCurrentTime().addSecs(secs, usecs);
+        when.setToCurrentTime().add(secs, usecs);
         registerTimerCallback(when, callback);
     }
 

@@ -19,47 +19,31 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLETONINSTANCE_H
-#define SINGLETONINSTANCE_H
+#ifndef SECONDS_HPP
+#define SECONDS_HPP
 
-#include "debug.hpp"
-#include "WeakPtr.hpp"
-#include "SingletonKeeper.hpp"
-#include "OwningPtr.hpp"
+namespace LucED
+{
 
-namespace LucED {
-
-template<class T> class SingletonInstance : NonCopyable
+class Seconds
 {
 public:
 
-    SingletonInstance() : wasInstantiatedCounter(0) {}
+    Seconds()
+        : seconds(0)
+    {}
 
-    T* getPtr()
-    {
-        long singletonKeeperGeneration = SingletonKeeper::getInstance()->getGenerationCounter();
-        
-        if (wasInstantiatedCounter < singletonKeeperGeneration)
-        {
-            instancePtr = SingletonKeeper::getInstance()->add(OwningPtr<T>(new T()));
-            wasInstantiatedCounter = singletonKeeperGeneration;
-        } 
-        else 
-        {
-            ASSERT(instancePtr.isValid());
-        }
-        return instancePtr.getRawPtr();
+    explicit Seconds(long seconds)
+        : seconds(seconds)
+    {}
+
+    operator long() const {
+        return seconds;
     }
-
-    bool isValid() const {
-        return (wasInstantiatedCounter > 0) && instancePtr.isValid();
-    }
-
 private:
-    long wasInstantiatedCounter;
-    WeakPtr<T> instancePtr;
+    long seconds;
 };
 
 } // namespace LucED
 
-#endif // SINGLETONINSTANCE_H
+#endif // SECONDS_HPP

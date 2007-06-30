@@ -1654,7 +1654,7 @@ void TextWidget::blinkCursor()
             drawCursor(getCursorTextPosition());
             
             cursorNextBlinkTime = now;
-            cursorNextBlinkTime.addMicroSecs(400000);
+            cursorNextBlinkTime.add(MicroSeconds(400000));
             EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
 
         } else { 
@@ -1713,7 +1713,7 @@ void TextWidget::startCursorBlinking()
         drawCursor(getCursorTextPosition());
     }
 
-    cursorNextBlinkTime.setToCurrentTime().addMicroSecs(400000);
+    cursorNextBlinkTime.setToCurrentTime().add(MicroSeconds(400000));
 
     cursorIsBlinking = true;
     EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);

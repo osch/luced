@@ -161,7 +161,7 @@ void GlobalConfig::readConfig()
                 if (!o.isNumber()) {
                     throw ConfigException("invalid keyPressRepeatFirstMilliSecs");
                 }
-                this->keyPressRepeatFirstMicroSecs = (long) (o.toNumber() * 1000);
+                this->keyPressRepeatFirstMicroSecs = MicroSeconds((long) (o.toNumber() * 1000));
             }
 
             o = globalConfig["keyPressRepeatNextMilliSecs"];
@@ -169,7 +169,7 @@ void GlobalConfig::readConfig()
                 if (!o.isNumber()) {
                     throw ConfigException("invalid keyPressRepeatNextMilliSecs");
                 }
-                this->keyPressRepeatNextMicroSecs = (long) (o.toNumber() * 1000);
+                this->keyPressRepeatNextMicroSecs = MicroSeconds((long) (o.toNumber() * 1000));
             }
 
             o = globalConfig["scrollBarWidth"];
@@ -185,7 +185,7 @@ void GlobalConfig::readConfig()
                 if (!o.isNumber()) {
                     throw ConfigException("invalid scrollBarRepeatFirstMilliSecs");
                 }
-                this->scrollBarRepeatFirstMicroSecs = (long) (o.toNumber() * 1000);
+                this->scrollBarRepeatFirstMicroSecs = MicroSeconds((long) (o.toNumber() * 1000));
             }
 
             o = globalConfig["scrollBarRepeatNextMilliSecs"];
@@ -193,7 +193,7 @@ void GlobalConfig::readConfig()
                 if (!o.isNumber()) {
                     throw ConfigException("invalid scrollBarRepeatNextMilliSecs");
                 }
-                this->scrollBarRepeatNextMicroSecs = (long) (o.toNumber() * 1000);
+                this->scrollBarRepeatNextMicroSecs = MicroSeconds((long) (o.toNumber() * 1000));
             }
 
             o = globalConfig["doubleClickMilliSecs"];

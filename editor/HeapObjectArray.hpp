@@ -75,7 +75,7 @@ public:
         at(i) = value;
     }
 
-private:
+protected:
 
     HeapObjectArray() {}
 

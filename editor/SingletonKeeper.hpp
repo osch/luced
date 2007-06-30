@@ -34,8 +34,7 @@ class SingletonKeeper : public HeapObject
 public:
     typedef OwningPtr<SingletonKeeper>     Ptr;
     
-    static Ptr create();
-    
+    static Ptr              create();
     static SingletonKeeper* getInstance();
     
     template<class T> WeakPtr<T> add(OwningPtr<T> singletonPtr) {
@@ -43,10 +42,17 @@ public:
         return singletonPtr;
     }
     
+    long getGenerationCounter() const {
+        return generationCounter;
+    }
+    
 private:
     SingletonKeeper() {}
 
     ObjectArray< OwningPtr<HeapObject> > singletons;
+    
+    static WeakPtr<SingletonKeeper> instance;
+    static long generationCounter;
 };
 
 
