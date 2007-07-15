@@ -31,7 +31,8 @@ using namespace LucED;
 TextData::TextData() 
         : modifiedFlag(false),
           viewCounter(0),
-          hasHistoryFlag(false)
+          hasHistoryFlag(false),
+          isReadOnlyFlag(false)
 {
     numberLines = 1;
     beginChangedPos = 0;
@@ -43,7 +44,9 @@ TextData::TextData()
 
 void TextData::loadFile(const String& filename)
 {
-    File(filename).loadInto(buffer);
+    File file(filename);
+
+    file.loadInto(buffer);
     long len = buffer.getLength();
     byte *ptr = buffer.getTotalAmount();
 
@@ -55,13 +58,16 @@ void TextData::loadFile(const String& filename)
     this->beginChangedPos = 0;
     this->changedAmount = len;
     this->oldEndChangedPos = 0;
-    this->fileName = File(filename).getAbsoluteFileName();
+    this->fileName = file.getAbsoluteFileName();
     fileNameListeners.invokeAllCallbacks(this->fileName);
 
     if (modifiedFlag == true) {
         modifiedFlag = false;
         changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
     }
+    File::Info info = file.getInfo();
+    lastModifiedTimeValSinceEpoche = info.getLastModifiedTimeValSinceEpoche();
+    isReadOnlyFlag = !info.isWritable();
 }
 
 void TextData::setFileName(const String& filename)

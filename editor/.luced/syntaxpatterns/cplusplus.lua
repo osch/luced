@@ -27,11 +27,11 @@ return
         	style = "default",
 
                 childPatterns = {
-                                 "emlualine", "emluaexpr",
-                                 "string",    "char",         "comment1",         "comment2",     "preprop",      "template",     
+                                 "emlualine",    "emluaexpr",
+                                 "string",       "char",         "comment1",         "comment2",     "preprop",      "template",     
                                  "sizeof",
-                                 "newcast",   "oldcast",      "namespace",        "class",        "keywords",     "typekeywords", 
-                                 "decl",      "operators"  
+                                 "newcast",      "oldcast",      "namespace",        "struct1", "struct2",      "class",        "keywords",
+                                 "typekeywords", "decl",      "operators"  
                                 },
         },
         
@@ -102,7 +102,7 @@ return
         oldcast = {
         	style = "type",
                 pattern          = [[(?P<oldcastBegin>\()(?> 
-                                                             [^()]*[*&][*&\s]* 
+                                                             [^()=]*[*&][*&\s]* 
                                                            | (?>(?>int|char|unsigned|signed|const|long|short|double|float|void|\s*)*)
                                                           )(?P<oldcastEnd>\))]],
                 maxExtend        = 80,
@@ -133,12 +133,32 @@ return
         }, 
         class = {
         	style = "type",
-                beginPattern     = [[(?P<classBegin>\bclass|struct|enum\b)(?P<classBegin2>(?>(?:[^\s;{}:]*\s+)*(?=[^\s;{}:])))]],
+                beginPattern     = [[(?P<classBegin>\b(?>class|enum)\b)(?P<classBegin2>(?>(?>[^\s;{}:]*\s+)*(?=[^\s;{}:])))]],
                 endPattern       = [[(?P<classEnd>[;{}()])]],
                 maxBeginExtend   = 100,
                 maxEndExtend     = 1,
                 beginSubstyles   = {classBegin = "keyword", classBegin2 = "default"},
                 endSubstyles     = {classEnd   = "keyword"},
+                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "keywords", "classoperators"},
+        },
+        struct1 = {
+        	style = "comment",
+                beginPattern     = [[(?P<structBegin>\bstruct\b)(?P<structBegin2>(?>[^\s;{}:]+)(?!;))]],
+                endPattern       = [[(?P<structEnd>[;{}()])]],
+                maxBeginExtend   = 100,
+                maxEndExtend     = 1,
+                beginSubstyles   = {structBegin = "keyword", structBegin2 = "type"},
+                endSubstyles     = {structEnd   = "keyword"},
+                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "keywords", "classoperators"},
+        },
+        struct2 = {
+        	style = "type",
+                beginPattern     = [[(?P<struct2Begin>\bstruct\b)(?P<struct2Begin2>(?:(?>[^/\s;{}:]*\s+)*))(?>[^/\s;{}:]+\s*)(?=[{}:])]],
+                endPattern       = [[(?P<struct2End>[;{}()])]],
+                maxBeginExtend   = 100,
+                maxEndExtend     = 1,
+                beginSubstyles   = {struct2Begin = "keyword", struct2Begin2 = "default"},
+                endSubstyles     = {struct2End   = "keyword"},
                 childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "keywords", "classoperators"},
         },
         classoperators = {
@@ -211,7 +231,7 @@ return
                                         (?! ["@~%*&?<>;(),\[\]!=\-+/|.:}] )
                                       ]],
                                    
-                endPattern       = [[(?=[@\[;,{()}]|\b(?:for|while|do)\b)|(?=^[\t\ ]*\#|[=)])]],
+                endPattern       = [[(?=[@\[;,{()}>]|\b(?:for|while|do)\b)|(?=^[\t\ ]*\#|[=)])]],
                 maxBeginExtend   = 200,
                 maxEndExtend     = 5,
                 childPatterns    = { "comment1", "comment2", "typekeywords", "operatorInDecl"},

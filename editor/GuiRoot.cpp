@@ -24,6 +24,7 @@
 
 #include "GuiRoot.hpp"
 #include "GlobalConfig.hpp"
+#include "SystemException.hpp"
 
 using namespace LucED;
 
@@ -44,6 +45,9 @@ GuiRoot::GuiRoot()
     XSetErrorHandler(myX11ErrorHandler);
 
     display = XOpenDisplay(NULL);
+    if (display == NULL) {
+        throw SystemException("Can't open display.");
+    }
     screenId = XDefaultScreen(display);
     screen = XScreenOfDisplay(display, screenId);
     rootWid = XRootWindow(display, screenId);

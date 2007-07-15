@@ -37,6 +37,7 @@
 #include "LuaException.hpp"
 #include "ConfigException.hpp"
 #include "WindowCloser.hpp"
+#include "System.hpp"
 
 using namespace LucED;
 
@@ -474,23 +475,34 @@ void EditorTopWin::invokeMessageBox(MessageBoxParameter p)
 void EditorTopWin::handleNewFileName(const String& fileName)
 {
     File file(fileName);
+    String title = file.getBaseName();
     
-    if (textEditor->getTextData()->getModifiedFlag() == false) {
-        setTitle(String() << file.getBaseName() << " - " << file.getDirName());
-    } else {
-        setTitle(String() << file.getBaseName() << " (modified) - " << file.getDirName());
+    if (textEditor->getTextData()->getModifiedFlag() == true)
+    {
+        title << " (modified)";
     }
+    else if (textEditor->getTextData()->isReadOnly())
+    {
+        title << " (read only)";
+    }
+    title << " - ";
+    title << file.getDirName() << " [" << System::getInstance()->getHostName() << "]";
+    setTitle(title);
 }
 
 void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
 {
     File file(textEditor->getTextData()->getFileName());
     
-    if (modifiedFlag == false) {
-        setTitle(String() << file.getBaseName() << " - " << file.getDirName());
-    } else {
-        setTitle(String() << file.getBaseName() << " (modified) - " << file.getDirName());
+    String title = file.getBaseName();
+    if (modifiedFlag == true) {
+        title << " (modified)";
+    } else if (textEditor->getTextData()->isReadOnly()) {
+        title << " (read only)";
     }
+    title << " - ";
+    title << file.getDirName() << " [" << System::getInstance()->getHostName() << "]";
+    setTitle(title);
 }
 
 void EditorTopWin::handleSaveKey()

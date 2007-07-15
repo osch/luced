@@ -528,8 +528,10 @@ void StandardEditActions::shiftBlockLeft()
             }
             mark.moveToNextLineBegin();
         }
+        e->assureSelectionVisible();
+    } else {
+        e->assureCursorVisible();
     }
-    e->assureCursorVisible();
     e->rememberCursorPixX();
 }
 
@@ -554,8 +556,10 @@ void StandardEditActions::shiftBlockRight()
             endPos += 1;
             mark.moveToNextLineBegin();
         }
+        e->assureSelectionVisible();
+    } else {
+        e->assureCursorVisible();
     }
-    e->assureCursorVisible();
     e->rememberCursorPixX();
 }
 
@@ -1185,8 +1189,11 @@ void StandardEditActions::undo()
                 e->getBackliteBuffer()->deactivateSelection();
             }
         }
+        e->adjustCursorVisibility();
     }
-    e->assureCursorVisible();
+    else {
+        e->assureCursorVisible();
+    }
     e->rememberCursorPixX();
     e->showCursor();
 }
@@ -1211,8 +1218,11 @@ void StandardEditActions::redo()
                 e->releaseSelectionOwnership();
             }
         }
+        e->adjustCursorVisibility();
     }
-    e->assureCursorVisible();
+    else {
+        e->assureCursorVisible();
+    }
     e->rememberCursorPixX();
 }
 
@@ -1221,65 +1231,77 @@ void StandardEditActions::selectWordForward()
 {
     if (!e->areCursorChangesDisabled())
     {
-        long len  = e->getTextData()->getLength();
+        TextData*       textData       = e->getTextData();
+        BackliteBuffer* backliteBuffer = e->getBackliteBuffer();
+        
+        long len  = textData->getLength();
         long cursorPos = e->getCursorTextPosition();
         long spos = cursorPos;
         long epos = cursorPos;
-
-        bool hadSelectionOwnership = false;
-
-        if (e->hasSelectionOwnership()) {
-            hadSelectionOwnership = true;
-            spos = e->getBackliteBuffer()->getBeginSelectionPos();
-            epos = e->getBackliteBuffer()->getEndSelectionPos();
-        }
-        else {
+        
+        bool extended = false;
+        
+        if (e->hasSelectionOwnership())
+        {
+            spos = backliteBuffer->getBeginSelectionPos();
+            epos = backliteBuffer->getEndSelectionPos();
+            
+            const long spos0 = spos;
+            
             while (spos - 1 >= 0
-                   && e->isWordCharacter(e->getTextData()->getChar(spos - 1)))
+                   && e->isWordCharacter(textData->getChar(spos - 1)))
             {
                 --spos;
             }
-        }
-        bool cursorVisible = e->isCursorVisible();
-        if (epos == cursorPos && cursorVisible) {
-            if (epos == spos) {
+
+            if (spos == spos0)
+            {
                 while (epos < len
-                       && !e->isWordCharacter(e->getTextData()->getChar(epos)))
+                       && !e->isWordCharacter(textData->getChar(epos)))
                 {
                     ++epos;
                 }
             }
             while (epos < len
-                   && e->isWordCharacter(e->getTextData()->getChar(epos)))
+                   && e->isWordCharacter(textData->getChar(epos)))
             {
                 ++epos;
             }
+            extended = true;
         }
-
-        
-        if (!e->hasSelectionOwnership()) {
-            hadSelectionOwnership = false;
-            e->requestSelectionOwnership();
-            e->getBackliteBuffer()->activateSelection(spos);
-        }
-        e->getBackliteBuffer()->setAnchorToBeginOfSelection();
-        
-        if (hadSelectionOwnership && epos == cursorPos && epos < len && cursorVisible)
+        else
         {
-            epos += 1;
-            while (epos < len
-                   && !e->isWordCharacter(e->getTextData()->getChar(epos)))
+            e->requestSelectionOwnership();
+            spos = cursorPos;
+            epos = cursorPos;
+
+            while (spos - 1 >= 0
+                   && e->isWordCharacter(textData->getChar(spos - 1)))
             {
-                ++epos;
+                --spos;
             }
             while (epos < len
-                   && e->isWordCharacter(e->getTextData()->getChar(epos)))
+                   && e->isWordCharacter(textData->getChar(epos)))
             {
                 ++epos;
             }
         }
-        e->getBackliteBuffer()->extendSelectionTo(epos);
-        e->moveCursorToTextPosition(epos);
+        
+        if (!backliteBuffer->hasActiveSelection()) {
+            backliteBuffer->activateSelection(spos);
+        } else {
+            backliteBuffer->makeSecondarySelectionToPrimarySelection();
+            if (backliteBuffer->getBeginSelectionPos() != spos)
+            {
+                backliteBuffer->setAnchorToEndOfSelection();
+                backliteBuffer->extendSelectionTo(spos);
+            }
+        }
+        backliteBuffer->setAnchorToBeginOfSelection();
+        backliteBuffer->extendSelectionTo(epos);
+        if (extended) {
+            e->moveCursorToTextPosition(epos);
+        }
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
@@ -1289,55 +1311,35 @@ void StandardEditActions::selectWordBackward()
 {
     if (!e->areCursorChangesDisabled())
     {
-        long len  = e->getTextData()->getLength();
+        TextData*       textData       = e->getTextData();
+        BackliteBuffer* backliteBuffer = e->getBackliteBuffer();
+
+        long len  = textData->getLength();
         long cursorPos = e->getCursorTextPosition();
         long spos = cursorPos;
         long epos = cursorPos;
 
         if (e->hasSelectionOwnership()) {
-            spos = e->getBackliteBuffer()->getBeginSelectionPos();
-            epos = e->getBackliteBuffer()->getEndSelectionPos();
-        }
-        else {
-            while (epos < len
-                   && e->isWordCharacter(e->getTextData()->getChar(epos)))
-            {
-                ++epos;
-            }
-        }
-        bool cursorVisible = e->isCursorVisible();
-        if (spos == cursorPos && cursorVisible) {
-            while (spos - 1 >= 0
-                   && e->isWordCharacter(e->getTextData()->getChar(spos - 1)))
-            {
-                --spos;
-            }
-        }
-
-        bool hadSelectionOwnership = true;
-
-        if (!e->hasSelectionOwnership()) {
-            hadSelectionOwnership = false;
-            e->requestSelectionOwnership();
-            e->getBackliteBuffer()->activateSelection(epos);
-        }
-        e->getBackliteBuffer()->setAnchorToBeginOfSelection();
+            backliteBuffer->setAnchorToBeginOfSelection();
+            spos = backliteBuffer->getBeginSelectionPos();
+            epos = backliteBuffer->getEndSelectionPos();
         
-        if (hadSelectionOwnership && epos == cursorPos && epos > 0 && cursorVisible)
-        {
             while (epos - 1 >= 0
-                   && e->isWordCharacter(e->getTextData()->getChar(epos - 1)))
+                   && e->isWordCharacter(textData->getChar(epos - 1)))
             {
                 --epos;
             }
             while (epos - 1 >= 0
-                   && !e->isWordCharacter(e->getTextData()->getChar(epos - 1)))
+                   && !e->isWordCharacter(textData->getChar(epos - 1)))
             {
                 --epos;
+            }
+            if (epos > spos)
+            {
+                backliteBuffer->extendSelectionTo(epos);
+                e->moveCursorToTextPosition(epos);
             }
         }
-        e->getBackliteBuffer()->extendSelectionTo(epos);
-        e->moveCursorToTextPosition(epos);
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();

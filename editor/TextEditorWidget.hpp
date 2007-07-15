@@ -50,6 +50,7 @@ public:
     
     bool isCursorVisible();
     void assureCursorVisible();
+    void assureSelectionVisible();
     void moveCursorToTextMarkAndAdjustVisibility(TextData::MarkHandle m);
     void moveCursorToTextPositionAndAdjustVisibility(int position);
     void adjustCursorVisibility();

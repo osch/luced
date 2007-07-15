@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TIMEVAL_H
-#define TIMEVAL_H
+#ifndef TIMEVAL_HPP
+#define TIMEVAL_HPP
 
 #include <sys/time.h>
 #include <sys/select.h>
@@ -59,18 +59,23 @@ public:
         timeval.tv_usec = 0;
     }
     
-    long getSeconds() const {
-        return timeval.tv_sec;
-    }
-    long getMicroSeconds() const {
-        return timeval.tv_usec;
+    TimeVal(Seconds seconds, MicroSeconds microSeconds) {
+        timeval.tv_sec = seconds;
+        timeval.tv_usec = microSeconds;
     }
     
-    long getMicroSecsBefore(const TimeVal &t) const
+    Seconds getSeconds() const {
+        return Seconds(timeval.tv_sec);
+    }
+    MicroSeconds getMicroSeconds() const {
+        return MicroSeconds(timeval.tv_usec);
+    }
+    
+    MicroSeconds getMicroSecsBefore(const TimeVal &t) const
     {
         return diffMicroSecs(*this, t);
     }
-    long getMicroSecsAfter(const TimeVal &t) const
+    MicroSeconds getMicroSecsAfter(const TimeVal &t) const
     {
         return diffMicroSecs(t, *this);
     }
@@ -171,5 +176,5 @@ inline int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, T
 
 } // namespace LucED
 
-#endif // TIMEVAL_H
+#endif // TIMEVAL_HPP
 

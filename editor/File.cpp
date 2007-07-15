@@ -26,7 +26,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
+#include "options.hpp"
 #include "File.hpp"
 #include "ByteArray.hpp"
 #include "Regex.hpp"
@@ -49,14 +51,16 @@ File::File(const String& path, const String& fileName)
 
 void File::loadInto(ByteBuffer& buffer)
 {
-    struct stat stat_st;
+    struct stat statData;
     int fd = open(name.toCString(), O_RDONLY);
     long len;
     byte *ptr;
 
     if (fd != -1) {
-        fstat(fd, &stat_st);
-        len = stat_st.st_size;
+        if (fstat(fd, &statData) == -1) {
+            throw FileException(errno, String() << "error accessing file '" << name << "': " << strerror(errno));
+        }
+        len = statData.st_size;
         ptr = buffer.appendAmount(len);
         if (read(fd, ptr, len) == -1) {
             throw FileException(errno, String() << "error reading from file '" << name << "': " << strerror(errno));
@@ -134,7 +138,47 @@ String File::getDirName() const
 bool File::exists() const
 {
     struct stat statData;
-    int rc = stat(getAbsoluteFileName().toCString(), &statData);
-    return rc == 0;
+    String      fileName = getAbsoluteFileName();
+
+    int rc = stat(fileName.toCString(), &statData);
+    
+    if (rc == -1 && errno == ENOENT) {
+        return false;
+    }
+    else if (rc == 0) {
+        return true;
+    }
+    else {
+        throw FileException(errno, String() << "error accessing file '" << fileName << "': " << strerror(errno));
+    }
+}
+
+File::Info File::getInfo() const
+{
+    struct stat statData;
+    String      fileName = getAbsoluteFileName();
+
+    if (stat(fileName.toCString(), &statData) == 0)
+    {
+        Info rslt;
+        rslt.isFileFlag                  = S_ISREG(statData.st_mode);
+        rslt.isDirectoryFlag             = S_ISDIR(statData.st_mode);
+#if defined(STAT_HAS_ST_MTIM_TV_NSEC)
+        rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
+                                                      MicroSeconds(statData.st_mtim.tv_nsec / 1000));
+#elif defined(STAT_HAS_ST_MTIMENSE)
+        rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
+                                                      MicroSeconds(statData.st_mtimensec / 1000));
+#else
+        rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
+                                                      MicroSeconds(0));
+#endif
+        rslt.isWritableFlag = (::access(getAbsoluteFileName().toCString(), W_OK) == 0);    
+        return rslt;
+    }
+    else
+    {
+        throw FileException(errno, String() << "error accessing file '" << fileName << "': " << strerror(errno));
+    }
 }
 

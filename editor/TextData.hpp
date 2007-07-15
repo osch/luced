@@ -30,6 +30,7 @@
 #include "CallbackContainer.hpp"
 #include "OwningPtr.hpp"
 #include "EditingHistory.hpp"
+#include "TimeVal.hpp"
 
 namespace LucED {
 
@@ -377,6 +378,14 @@ public:
             return EditingHistory::SectionHolder::Ptr();
         }
     }
+
+    TimeVal getLastModifiedTimeValSinceEpoche() const {
+        return lastModifiedTimeValSinceEpoche;
+    }
+    
+    bool isReadOnly() const {
+        return isReadOnlyFlag;
+    }
     
 private:
 
@@ -407,6 +416,8 @@ private:
     int viewCounter;
     bool hasHistoryFlag;
     EditingHistory::Ptr history;
+    TimeVal lastModifiedTimeValSinceEpoche;
+    bool isReadOnlyFlag;
 };
 
 

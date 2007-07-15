@@ -26,9 +26,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
+#include <string.h>
 
 #include "NonCopyable.hpp"
 #include "ObjectArray.hpp"
+#include "FileException.hpp"
 
 namespace LucED {
 
@@ -70,7 +73,10 @@ public:
             return false;
         } else {
             if (!wasStat) {
-                stat((String() << path << "/" << dirent->d_name).toCString(), &statInfo);
+                String fileName = String() << path << "/" << dirent->d_name;
+                if (stat(fileName.toCString(), &statInfo) == -1) {
+                    throw FileException(errno, String() << "error accessing file '" << fileName << "': " << strerror(errno));
+                }
                 wasStat = true;
             }
             return S_ISREG(statInfo.st_mode);

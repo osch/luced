@@ -28,10 +28,12 @@
 
 namespace LucED {
 
-#ifdef HASH_MAP_UNDER_STD
+#if defined(HASH_MAP_UNDER_STD)
 using std::hash_map;
-#else
+#elif defined(HASH_MAP_UNDER_GNU_CXX)
 using __gnu_cxx::hash_map;
+#else
+#error Needs hash_map implementation
 #endif
 
 

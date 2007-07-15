@@ -100,7 +100,7 @@ int main(int argc, char** argv)
     }
     catch (BaseException& ex)
     {
-        fprintf(stderr, "[%s]: Severe Error: %s\n", argv[0], ex.getMessage().toCString());
+        fprintf(stderr, "[%s]: Error: %s\n", argv[0], ex.getMessage().toCString());
         rc = 16;
     }
 

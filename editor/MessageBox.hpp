@@ -64,6 +64,11 @@ public:
         return *this;
     }
     
+    MessageBoxParameter& setCloseCallback(const Callback0& callback) {
+        closeCallback= callback;
+        return *this;
+    }
+    
 private:
     friend class MessageBox;
 
@@ -78,6 +83,8 @@ private:
 
     String cancelButtonLabel;
     Callback0   cancelButtonCallback;
+    
+    Callback0   closeCallback;
 };
 
 class MessageBox : public PanelDialogWin
@@ -111,6 +118,7 @@ private:
     Callback0 defaultButtonCallback;
     Callback0 alternativeButtonCallback;
     Callback0 cancelButtonCallback;
+    Callback0 closeCallback;
     bool wasClosed;
 };
 

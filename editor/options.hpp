@@ -19,8 +19,14 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-//#define DEBUG
-//#define HASH_MAP_UNDER_STD
+
+#define  STAT_HAS_ST_MTIM_TV_NSEC
+#undef   STAT_HAS_ST_MTIMENSE
+
+#define  HASH_MAP_UNDER_GNU_CXX
+#undef   HASH_MAP_UNDER_STD
+
+#undef   DEBUG
 
 #include "sandbox_options.hpp"
 

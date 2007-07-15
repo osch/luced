@@ -109,35 +109,36 @@ void FileOpener::openFiles()
                 {
                     textData->loadFile(fileName);
                 }
-                catch (FileException& ex) {
-                    if (ex.getErrno() == ENOENT)
+                catch (FileException& ex)
+                {
+                    isWaitingForMessageBox = true;
+                    lastErrorMessage = ex.getMessage();
+                    textData->setFileName(fileName);
+                    lastTopWin = EditorTopWin::create(textStyles, hilitedText);
+
+                    MessageBoxParameter p;
+                    
+                    if (numberAndFileList->getLength() > 1)
                     {
-                        isWaitingForMessageBox = true;
-                        lastErrorMessage = ex.getMessage();
-                        textData->setFileName(fileName);
-                        lastTopWin = EditorTopWin::create(textStyles, hilitedText);
-
-                        MessageBoxParameter p;
-
-                        if (numberAndFileList->getLength() > 1) {
-                                            p.setTitle("Error opening files")
-                                             .setMessage(ex.getMessage())
-                                             .setDefaultButton    ("C]reate this file",     Callback0(this, &FileOpener::handleCreateFileButton))
-                                             .setAlternativeButton("A]bort all next files", Callback0(this, &FileOpener::handleAbortButton))
-                                             .setCancelButton     ("S]kip to next file",    Callback0(this, &FileOpener::handleSkipFileButton));
-
-                        } else {
-                                            p.setTitle("Error opening file")
-                                             .setMessage(ex.getMessage())
-                                             .setDefaultButton    ("C]reate this file",     Callback0(this, &FileOpener::handleCreateFileButton))
-                                             .setCancelButton     ("Ca]ncel", Callback0(this, &FileOpener::handleAbortButton));
+                                        p.setTitle("Error opening files")
+                                         .setMessage(ex.getMessage())
+                                         .setAlternativeButton("A]bort all next files", Callback0(this, &FileOpener::handleAbortButton))
+                                         .setCancelButton     ("S]kip to next file",    Callback0(this, &FileOpener::handleSkipFileButton));
+                        if (ex.getErrno() == ENOENT) {
+                                        p.setDefaultButton    ("C]reate this file",     Callback0(this, &FileOpener::handleCreateFileButton));
                         }
-                        lastTopWin->setModalMessageBox(p);
-                        lastTopWin->show();
-                        return;
-                    } else {
-                        throw;
+                    } 
+                    else {
+                                        p.setTitle("Error opening file")
+                                         .setMessage(ex.getMessage())
+                                         .setCancelButton     ("Ca]ncel", Callback0(this, &FileOpener::handleAbortButton));
+                        if (ex.getErrno() == ENOENT) {
+                                        p.setDefaultButton    ("C]reate this file",     Callback0(this, &FileOpener::handleCreateFileButton));
+                        }
                     }
+                    lastTopWin->setModalMessageBox(p);
+                    lastTopWin->show();
+                    return;
                 }
 
                 lastTopWin = EditorTopWin::create(textStyles, hilitedText);

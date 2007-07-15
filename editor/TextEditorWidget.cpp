@@ -96,6 +96,26 @@ void TextEditorWidget::assureCursorVisible()
     }
 }
 
+void TextEditorWidget::assureSelectionVisible()
+{
+    if (getBackliteBuffer()->getEndSelectionLine() <= getTopLineNumber() + 1)
+    {
+        int newTopLineNumber = getBackliteBuffer()->getEndSelectionLine() - getNumberOfVisibleLines() / 3;
+        if (newTopLineNumber < 0) {
+            newTopLineNumber = 0;
+        }
+        setTopLineNumber(newTopLineNumber);
+    }
+    else if (getBackliteBuffer()->getBeginSelectionLine() >= getTopLineNumber() + getNumberOfVisibleLines()  - 1)
+    {
+        int newTopLineNumber = getBackliteBuffer()->getBeginSelectionLine() + getNumberOfVisibleLines() / 3 - getNumberOfVisibleLines();
+        if (newTopLineNumber > getTextData()->getNumberOfLines() - getNumberOfVisibleLines()) {
+            newTopLineNumber = getTextData()->getNumberOfLines() - getNumberOfVisibleLines();
+        }
+        setTopLineNumber(newTopLineNumber);
+    }
+}
+
 void TextEditorWidget::adjustCursorVisibility()
 {
     if (getCursorLineNumber() < getTopLineNumber()) {

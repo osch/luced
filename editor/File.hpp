@@ -19,13 +19,16 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FILE_H
-#define FILE_H
+#ifndef FILE_HPP
+#define FILE_HPP
 
 #include "String.hpp"
 
 #include "NonCopyable.hpp"
 #include "ByteBuffer.hpp"
+#include "TimeVal.hpp"
+#include "Seconds.hpp"
+#include "MicroSeconds.hpp"
 
 namespace LucED {
 
@@ -35,6 +38,29 @@ class File : public NonCopyable
 {
 public:
 
+    class Info
+    {
+    public:
+        bool isFile() const {
+            return isFileFlag;
+        }
+        bool isDirectory() const {
+            return isDirectoryFlag;
+        }
+        bool isWritable() const {
+            return isWritableFlag;
+        }
+        TimeVal getLastModifiedTimeValSinceEpoche() const {
+            return lastModifiedTimeValSinceEpoche;
+        }
+    private:
+        friend class File;
+        bool         isFileFlag;
+        bool         isDirectoryFlag;
+        bool         isWritableFlag;
+        TimeVal      lastModifiedTimeValSinceEpoche;
+    };
+    
     File(const String& path, const String& fileName);
     
     File(const String& fileName)
@@ -53,11 +79,13 @@ public:
     
     bool exists() const;
     
+    Info getInfo() const;
+    
 private:
    String name;
 };
 
 } // namespace LucED
 
-#endif // FILE_H
+#endif // FILE_HPP
 
