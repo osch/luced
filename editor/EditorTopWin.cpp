@@ -133,6 +133,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     textData->registerModifiedFlagListener(Callback1<bool>(this, &EditorTopWin::handleChangedModifiedFlag));
     
     textData->registerFileNameListener       (Callback1<const String&>   (statusLine, &StatusLine  ::setFileName));
+    textData->registerReadOnlyListener       (Callback1<bool>            (this,       &EditorTopWin::handleChangedReadOnlyFlag));
     textData->registerFileNameListener       (Callback1<const String&>   (this,       &EditorTopWin::handleNewFileName));
     textData->registerLengthListener         (Callback1<long>            (statusLine, &StatusLine  ::setFileLength));
     textEditor->registerLineAndColumnListener(Callback2<long,long>       (statusLine, &StatusLine  ::setLineAndColumn));
@@ -322,6 +323,7 @@ void EditorTopWin::treatFocusIn()
             textEditor->treatFocusIn();
         }
     }
+    textEditor->getTextData()->checkAndTriggerReadOnlyCallbacks();
 }
 
 
@@ -472,30 +474,12 @@ void EditorTopWin::invokeMessageBox(MessageBoxParameter p)
     messageBox->requestFocus();
 }
 
-void EditorTopWin::handleNewFileName(const String& fileName)
-{
-    File file(fileName);
-    String title = file.getBaseName();
-    
-    if (textEditor->getTextData()->getModifiedFlag() == true)
-    {
-        title << " (modified)";
-    }
-    else if (textEditor->getTextData()->isReadOnly())
-    {
-        title << " (read only)";
-    }
-    title << " - ";
-    title << file.getDirName() << " [" << System::getInstance()->getHostName() << "]";
-    setTitle(title);
-}
-
-void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
+void EditorTopWin::setWindowTitle()
 {
     File file(textEditor->getTextData()->getFileName());
     
     String title = file.getBaseName();
-    if (modifiedFlag == true) {
+    if (textEditor->getTextData()->getModifiedFlag() == true) {
         title << " (modified)";
     } else if (textEditor->getTextData()->isReadOnly()) {
         title << " (read only)";
@@ -503,6 +487,21 @@ void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
     title << " - ";
     title << file.getDirName() << " [" << System::getInstance()->getHostName() << "]";
     setTitle(title);
+}
+
+void EditorTopWin::handleNewFileName(const String& fileName)
+{
+    setWindowTitle();
+}
+
+void EditorTopWin::handleChangedReadOnlyFlag(bool readOnlyFlag)
+{
+    setWindowTitle();
+}
+
+void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
+{
+    setWindowTitle();
 }
 
 void EditorTopWin::handleSaveKey()

@@ -213,7 +213,7 @@ GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
                 bool mustDraw = false;
                 XEvent newEvent;
 
-                XFlush(getDisplay());
+                XSync(getDisplay(), False);
                 if (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask|PointerMotionMask, &newEvent) == True) {
                     event = &newEvent;
                     while (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask|PointerMotionMask, &newEvent) == True);

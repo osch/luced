@@ -315,6 +315,7 @@ public:
     void setInsertFilterCallback(Callback2<const byte**, long*> filterCallback);
     void registerUpdateListener(UpdateCallback updateCallback);
     void registerFileNameListener(Callback1<const String&> fileNameCallback);
+    void registerReadOnlyListener(Callback1<bool> readOnlyCallback);
     void registerLengthListener(Callback1<long> lengthCallback);
     void registerModifiedFlagListener(Callback1<bool> modifiedFlagCallback);
     
@@ -387,6 +388,8 @@ public:
         return isReadOnlyFlag;
     }
     
+    void checkAndTriggerReadOnlyCallbacks();
+    
 private:
 
     friend class ViewCounterTextDataAccess;
@@ -405,6 +408,7 @@ private:
         
     Callback1Container<UpdateInfo> updateListeners;
     Callback1Container<const String&> fileNameListeners;
+    Callback1Container<bool> readOnlyListeners;
     Callback1Container<long> lengthListeners;
     Callback1Container<bool> changedModifiedFlagListeners;
     

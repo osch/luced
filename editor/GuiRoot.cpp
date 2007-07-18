@@ -93,7 +93,7 @@ GuiRoot::~GuiRoot()
     if (wasKeyboardModeModified && originalKeyboardModeWasAutoRepeat) {
         XAutoRepeatOn(display);
     }
-    XFlush(display);
+    XSync(display, False);
     XCloseDisplay(display);
 }
 

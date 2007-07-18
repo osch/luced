@@ -51,7 +51,7 @@ public:
     }
         
     void flushDisplay() const {
-        XFlush(getDisplay());
+        XSync(getDisplay(), False);
     }
     
     Display* getDisplay() const {

@@ -246,7 +246,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                     }
                     isButtonPressed = false;
                     drawButton();
-                    XFlush(getDisplay());
+                    XSync(getDisplay(), False);
                     int x = event->xbutton.x;
                     int y = event->xbutton.y;
                     if (isMouseInsideButtonArea(x, y)) {
@@ -265,7 +265,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                 bool mustDraw = false;
                 XEvent newEvent;
 
-                XFlush(getDisplay());
+                XSync(getDisplay(), False);
                 if (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask|PointerMotionMask, &newEvent) == True) {
                     event = &newEvent;
                     while (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask|PointerMotionMask, &newEvent) == True);
@@ -407,13 +407,13 @@ void Button::emulateButtonPress(bool isDefaultKey)
     bool oldIsButtonPressed = isButtonPressed;
     isButtonPressed = true;
     drawButton();
-    XFlush(getDisplay()); waitShort();
+    XSync(getDisplay(), False); waitShort();
     isButtonPressed = false;
     drawButton();
-    XFlush(getDisplay()); waitShort();
+    XSync(getDisplay(), False); waitShort();
     isButtonPressed = oldIsButtonPressed;
     drawButton();
-    XFlush(getDisplay()); waitShort();
+    XSync(getDisplay(), False); waitShort();
     if (isDefaultKey && buttonDefaultKeyCallback.isValid()) {
         buttonDefaultKeyCallback.call(this);
     } else if (pressedCallback0.isValid()) {

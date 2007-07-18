@@ -67,7 +67,27 @@ void TextData::loadFile(const String& filename)
     }
     File::Info info = file.getInfo();
     lastModifiedTimeValSinceEpoche = info.getLastModifiedTimeValSinceEpoche();
-    isReadOnlyFlag = !info.isWritable();
+
+    if (isReadOnlyFlag != !info.isWritable()) {
+        isReadOnlyFlag = !info.isWritable();
+        readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
+    }
+}
+
+void TextData::checkAndTriggerReadOnlyCallbacks()
+{
+    File file(this->fileName);
+    File::Info info = file.getInfo();
+    
+    if (info.exists())
+    {
+        lastModifiedTimeValSinceEpoche = info.getLastModifiedTimeValSinceEpoche();
+    
+        if (isReadOnlyFlag != !info.isWritable()) {
+            isReadOnlyFlag = !info.isWritable();
+            readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
+        }
+    }
 }
 
 void TextData::setFileName(const String& filename)
@@ -174,166 +194,183 @@ void TextData::setInsertFilterCallback(Callback2<const byte**, long*> filterCall
 
 inline long TextData::internalInsertAtMark(MarkHandle m, const byte* insertBuffer, long length)
 {
-    if (length > 0)
+    if (!isReadOnlyFlag || modifiedFlag)
     {
-        int lineCounter = 0;
-        for (int i = 0; i < length; ++i) {
-            if (insertBuffer[i] == '\n') {
-                ++lineCounter;
+        if (length > 0)
+        {
+            int lineCounter = 0;
+            for (int i = 0; i < length; ++i) {
+                if (insertBuffer[i] == '\n') {
+                    ++lineCounter;
+                }
             }
-        }
-
-        TextMarkData& mark = marks[m.index];
-        long lineNumber = mark.line;
-        long pos = mark.pos;
-
-        buffer.insert(pos, insertBuffer, length);
-
-        if (pos < this->beginChangedPos) {
-            this->beginChangedPos = pos;
-            this->changedAmount  += length;
-            if (pos > this->oldEndChangedPos) {
-                this->oldEndChangedPos = pos;
+    
+            TextMarkData& mark = marks[m.index];
+            long lineNumber = mark.line;
+            long pos = mark.pos;
+    
+            buffer.insert(pos, insertBuffer, length);
+    
+            if (pos < this->beginChangedPos) {
+                this->beginChangedPos = pos;
+                this->changedAmount  += length;
+                if (pos > this->oldEndChangedPos) {
+                    this->oldEndChangedPos = pos;
+                }
+            } else if (pos < this->oldEndChangedPos + this->changedAmount) {
+                this->changedAmount  += length;
+            } else {
+                this->oldEndChangedPos += pos - (this->oldEndChangedPos + this->changedAmount);
+                this->changedAmount  += length;
             }
-        } else if (pos < this->oldEndChangedPos + this->changedAmount) {
-            this->changedAmount  += length;
-        } else {
-            this->oldEndChangedPos += pos - (this->oldEndChangedPos + this->changedAmount);
-            this->changedAmount  += length;
+            this->numberLines += lineCounter;
+            updateMarks(pos, pos, length, lineNumber, lineCounter);
         }
-        this->numberLines += lineCounter;
-        updateMarks(pos, pos, length, lineNumber, lineCounter);
+        return length;
     }
-
-    return length;
+    else {
+        return 0;
+    }
 }
+
 
 long TextData::undo(MarkHandle m)
 {
-    long spos = LONG_MAX;
-    long epos = 0;
-    
-    if (hasHistory())
+    if (!isReadOnlyFlag || modifiedFlag)
     {
-        bool first = true;
+        long spos = LONG_MAX;
+        long epos = 0;
         
-        do
+        if (hasHistory())
         {
-            switch (history->getPreviousActionType())
+            bool first = true;
+            
+            do
             {
-                case EditingHistory::ACTION_INSERT: {
-                    long pos               = history->getPreviousActionTextPos();
-                    long length            = history->getPreviousActionLength();
-                    moveMarkToPos(m, pos);
-                    history->undoInsertAction(buffer.getAmount(pos, length));
-                    internalRemoveAtMark(m, length);
-                    if (spos > pos) {
-                        spos = pos;
+                switch (history->getPreviousActionType())
+                {
+                    case EditingHistory::ACTION_INSERT: {
+                        long pos               = history->getPreviousActionTextPos();
+                        long length            = history->getPreviousActionLength();
+                        moveMarkToPos(m, pos);
+                        history->undoInsertAction(buffer.getAmount(pos, length));
+                        internalRemoveAtMark(m, length);
+                        if (spos > pos) {
+                            spos = pos;
+                        }
+                        if (epos < pos + length) {
+                            epos = pos;
+                        } else {
+                            epos -= length;
+                        }
+                        break;
                     }
-                    if (epos < pos + length) {
-                        epos = pos;
-                    } else {
-                        epos -= length;
+                    case EditingHistory::ACTION_DELETE: {
+                        long pos               = history->getPreviousActionTextPos();
+                        long length            = history->getPreviousActionLength();
+                        moveMarkToPos(m, pos);
+                        internalInsertAtMark(m,  history->getContentForUndoDeleteAction(), length);
+                        history->undoDeleteAction();
+    
+                        if (spos > pos) {
+                            spos = pos;
+                        }
+                        if (epos < pos + length) {
+                            epos = pos + length;
+                        } else {
+                            epos += length;
+                        }
+                        break;
                     }
-                    break;
+                    case EditingHistory::ACTION_NONE: {
+                        break;
+                    }
                 }
-                case EditingHistory::ACTION_DELETE: {
-                    long pos               = history->getPreviousActionTextPos();
-                    long length            = history->getPreviousActionLength();
-                    moveMarkToPos(m, pos);
-                    internalInsertAtMark(m,  history->getContentForUndoDeleteAction(), length);
-                    history->undoDeleteAction();
-
-                    if (spos > pos) {
-                        spos = pos;
-                    }
-                    if (epos < pos + length) {
-                        epos = pos + length;
-                    } else {
-                        epos += length;
-                    }
-                    break;
-                }
-                case EditingHistory::ACTION_NONE: {
-                    break;
-                }
+            } while (!history->isPreviousActionSectionSeperator());
+    
+            bool newModifiedFlag = !history->isPreviousActionSavedState();
+            if (newModifiedFlag != modifiedFlag) {
+                modifiedFlag = newModifiedFlag;
+                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
             }
-        } while (!history->isPreviousActionSectionSeperator());
-
-        bool newModifiedFlag = !history->isPreviousActionSavedState();
-        if (newModifiedFlag != modifiedFlag) {
-            modifiedFlag = newModifiedFlag;
-            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        }
+        if (epos >= spos) {
+            moveMarkToPos(m, spos);
+            return epos - spos;
+        } else {
+            return 0;
         }
     }
-    if (epos >= spos) {
-        moveMarkToPos(m, spos);
-        return epos - spos;
-    } else {
+    else {
         return 0;
     }
 }
 
 long TextData::redo(MarkHandle m)
 {
-    long spos = LONG_MAX;
-    long epos = 0;
-        
-    if (hasHistory())
+    if (!isReadOnlyFlag || modifiedFlag)
     {
-        do
+        long spos = LONG_MAX;
+        long epos = 0;
+            
+        if (hasHistory())
         {
-            switch (history->getNextActionType())
+            do
             {
-                case EditingHistory::ACTION_INSERT: {
-                    long pos               = history->getNextActionTextPos();
-                    long length            = history->getNextActionLength();
-                    moveMarkToPos(m, pos);
-                    internalInsertAtMark(m, history->getContentForRedoInsertAction(), length);
-                    history->redoInsertAction();
-
-                    if (spos > pos) {
-                        spos = pos;
+                switch (history->getNextActionType())
+                {
+                    case EditingHistory::ACTION_INSERT: {
+                        long pos               = history->getNextActionTextPos();
+                        long length            = history->getNextActionLength();
+                        moveMarkToPos(m, pos);
+                        internalInsertAtMark(m, history->getContentForRedoInsertAction(), length);
+                        history->redoInsertAction();
+    
+                        if (spos > pos) {
+                            spos = pos;
+                        }
+                        if (epos < pos + length) {
+                            epos = pos + length;
+                        } else {
+                            epos += length;
+                        }
+                        break;
                     }
-                    if (epos < pos + length) {
-                        epos = pos + length;
-                    } else {
-                        epos += length;
+                    case EditingHistory::ACTION_DELETE: {
+                        long pos               = history->getNextActionTextPos();
+                        long length            = history->getNextActionLength();
+                        moveMarkToPos(m, pos);
+                        history->redoDeleteAction(buffer.getAmount(pos, length), length);
+                        internalRemoveAtMark(m, length);
+    
+                        if (spos > pos) {
+                            spos = pos;
+                        }
+                        if (epos < pos + length) {
+                            epos = pos;
+                        } else {
+                            epos -= length;
+                        }
+                        break;
                     }
-                    break;
+                    case EditingHistory::ACTION_NONE: {
+                        break;
+                    }
                 }
-                case EditingHistory::ACTION_DELETE: {
-                    long pos               = history->getNextActionTextPos();
-                    long length            = history->getNextActionLength();
-                    moveMarkToPos(m, pos);
-                    history->redoDeleteAction(buffer.getAmount(pos, length), length);
-                    internalRemoveAtMark(m, length);
-
-                    if (spos > pos) {
-                        spos = pos;
-                    }
-                    if (epos < pos + length) {
-                        epos = pos;
-                    } else {
-                        epos -= length;
-                    }
-                    break;
-                }
-                case EditingHistory::ACTION_NONE: {
-                    break;
-                }
+            } while (!history->isLastAction() && !history->isPreviousActionSectionSeperator());
+    
+            bool newModifiedFlag = !history->isPreviousActionSavedState();
+            if (newModifiedFlag != modifiedFlag) {
+                modifiedFlag = newModifiedFlag;
+                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
             }
-        } while (!history->isLastAction() && !history->isPreviousActionSectionSeperator());
-
-        bool newModifiedFlag = !history->isPreviousActionSavedState();
-        if (newModifiedFlag != modifiedFlag) {
-            modifiedFlag = newModifiedFlag;
-            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
         }
-    }
-    if (epos >= spos) {
-        moveMarkToPos(m, spos);
-        return epos - spos;
+        if (epos >= spos) {
+            moveMarkToPos(m, spos);
+            return epos - spos;
+        } else {
+            return 0;
+        }
     } else {
         return 0;
     }
@@ -341,24 +378,30 @@ long TextData::redo(MarkHandle m)
 
 long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
 {
-    if (filterCallback.isValid()) {
-        filterCallback.call(&insertBuffer, &length);
-    }
-    if (length > 0)
+    if (!isReadOnlyFlag || modifiedFlag)
     {
-        if (hasHistory()) {
-            TextMarkData& mark = marks[m.index];
-            long pos = mark.pos;
-            history->rememberInsertAction(pos, length);
+        if (filterCallback.isValid()) {
+            filterCallback.call(&insertBuffer, &length);
         }
-        internalInsertAtMark(m, insertBuffer, length);
-
-        if (modifiedFlag == false) {
-            modifiedFlag = true;
-            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        if (length > 0)
+        {
+            if (hasHistory()) {
+                TextMarkData& mark = marks[m.index];
+                long pos = mark.pos;
+                history->rememberInsertAction(pos, length);
+            }
+            internalInsertAtMark(m, insertBuffer, length);
+    
+            if (modifiedFlag == false) {
+                modifiedFlag = true;
+                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+            }
         }
+        return length;
     }
-    return length;
+    else {
+        return 0;
+    }
 }
 
 
@@ -366,35 +409,38 @@ long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
 
 inline void TextData::internalRemoveAtMark(MarkHandle m, long amount)
 {
-    TextMarkData& mark = marks[m.index];
-    long lineNumber = mark.line;
-    long pos = mark.pos;
-    
-    int lineCounter = 0;
-    for (int p = mark.pos, i = 0; i < amount; ++i) {
-        if (buffer[p + i] == '\n') {
-            ++lineCounter;
+    if (!isReadOnlyFlag || modifiedFlag)
+    {
+        TextMarkData& mark = marks[m.index];
+        long lineNumber = mark.line;
+        long pos = mark.pos;
+        
+        int lineCounter = 0;
+        for (int p = mark.pos, i = 0; i < amount; ++i) {
+            if (buffer[p + i] == '\n') {
+                ++lineCounter;
+            }
         }
-    }
-
-    buffer.removeAmount(mark.pos, amount);
     
-    long newEndChangedPos = this->oldEndChangedPos + this->changedAmount;
-    if (newEndChangedPos < pos + amount) {
-        newEndChangedPos = pos + amount;
-        this->oldEndChangedPos = newEndChangedPos - this->changedAmount;
-    }
-    this->changedAmount -= amount;
+        buffer.removeAmount(mark.pos, amount);
+        
+        long newEndChangedPos = this->oldEndChangedPos + this->changedAmount;
+        if (newEndChangedPos < pos + amount) {
+            newEndChangedPos = pos + amount;
+            this->oldEndChangedPos = newEndChangedPos - this->changedAmount;
+        }
+        this->changedAmount -= amount;
+        
+        if (pos < this->beginChangedPos) {
+            this->beginChangedPos = pos;
+        }
+        this->numberLines -= lineCounter;
+        updateMarks(pos, pos + amount, -amount, lineNumber, -lineCounter);
     
-    if (pos < this->beginChangedPos) {
-        this->beginChangedPos = pos;
-    }
-    this->numberLines -= lineCounter;
-    updateMarks(pos, pos + amount, -amount, lineNumber, -lineCounter);
-
-    if (modifiedFlag == false) {
-        modifiedFlag = true;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        if (modifiedFlag == false) {
+            modifiedFlag = true;
+            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        }
     }
 }
 
@@ -409,20 +455,23 @@ void TextData::setModifiedFlag(bool newFlag)
 
 void TextData::removeAtMark(MarkHandle m, long amount)
 {
-    if (amount > 0)
+    if (!isReadOnlyFlag || modifiedFlag)
     {
-        TextMarkData& mark = marks[m.index];
-
-        if (hasHistory()) {
-            history->rememberDeleteAction(mark.pos, 
-                                          amount, 
-                                          buffer.getAmount(mark.pos, amount));
-        }
-        internalRemoveAtMark(m, amount);
-
-        if (modifiedFlag == false) {
-            modifiedFlag = true;
-            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+        if (amount > 0)
+        {
+            TextMarkData& mark = marks[m.index];
+    
+            if (hasHistory()) {
+                history->rememberDeleteAction(mark.pos, 
+                                              amount, 
+                                              buffer.getAmount(mark.pos, amount));
+            }
+            internalRemoveAtMark(m, amount);
+    
+            if (modifiedFlag == false) {
+                modifiedFlag = true;
+                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+            }
         }
     }
 }
@@ -646,6 +695,12 @@ void TextData::registerFileNameListener(Callback1<const String&> fileNameCallbac
 {
     fileNameListeners.registerCallback(fileNameCallback);
     fileNameCallback.call(fileName);
+}
+
+void TextData::registerReadOnlyListener(Callback1<bool> readOnlyCallback)
+{
+    readOnlyListeners.registerCallback(readOnlyCallback);
+    readOnlyCallback.call(isReadOnlyFlag);
 }
 
 void TextData::registerLengthListener(Callback1<long> lengthCallback)

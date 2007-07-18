@@ -173,7 +173,14 @@ File::Info File::getInfo() const
         rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
                                                       MicroSeconds(0));
 #endif
-        rslt.isWritableFlag = (::access(getAbsoluteFileName().toCString(), W_OK) == 0);    
+        rslt.isWritableFlag = (::access(getAbsoluteFileName().toCString(), W_OK) == 0);
+        rslt.existsFlag = true;
+        return rslt;
+    }
+    else if (errno == ENOENT)
+    {
+        Info rslt;
+        rslt.existsFlag = false;
         return rslt;
     }
     else

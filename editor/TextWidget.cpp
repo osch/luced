@@ -1894,7 +1894,7 @@ GuiElement::ProcessingResult TextWidget::processEvent(const XEvent *event)
 
 void TextWidget::processAllExposureEvents()
 {
-    XFlush(getDisplay());
+    XSync(getDisplay(), False);
     XEvent newEvent;
     while (XCheckWindowEvent(getDisplay(), getWid(), ExposureMask, &newEvent) == True)
     {

@@ -408,7 +408,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                 showMousePointer();
                 if (hasMovingSelection) {
                     XEvent newEvent;
-                    XFlush(getDisplay());
+                    XSync(getDisplay(), False);
                     if (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask, &newEvent) == True) {
                         event = &newEvent;
                         while (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask, &newEvent) == True);

@@ -42,22 +42,30 @@ public:
     {
     public:
         bool isFile() const {
+            ASSERT(existsFlag);
             return isFileFlag;
         }
         bool isDirectory() const {
+            ASSERT(existsFlag);
             return isDirectoryFlag;
         }
         bool isWritable() const {
+            ASSERT(existsFlag);
             return isWritableFlag;
         }
         TimeVal getLastModifiedTimeValSinceEpoche() const {
+            ASSERT(existsFlag);
             return lastModifiedTimeValSinceEpoche;
+        }
+        bool exists() const {
+            return existsFlag;
         }
     private:
         friend class File;
         bool         isFileFlag;
         bool         isDirectoryFlag;
         bool         isWritableFlag;
+        bool         existsFlag;
         TimeVal      lastModifiedTimeValSinceEpoche;
     };
     

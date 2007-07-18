@@ -142,14 +142,15 @@ void EventDispatcher::doEventLoop()
             processEvent(&event);
         } else 
         {
+            XFlush(display);
+            //XSync(display, False); <-- not this here!
+
             TimerRegistration nextTimer = getNextTimer();
 
             FD_ZERO(&readfds);
             FD_ZERO(&exceptfds);
             FD_SET(x11FileDescriptor, &readfds);
             FD_SET(x11FileDescriptor, &exceptfds);
-            XFlush(display);
-            //XSync (XGlobal_display, False);
 
             int p = 0;
             bool hasWaitingProcess = false;
