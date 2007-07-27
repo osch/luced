@@ -323,9 +323,34 @@ void EditorTopWin::treatFocusIn()
             textEditor->treatFocusIn();
         }
     }
-    textEditor->getTextData()->checkAndTriggerReadOnlyCallbacks();
+    TextData* textData = textEditor->getTextData();
+    
+    textData->checkFileInfo();
+
+    if (   textData->wasFileModifiedOnDisk() 
+        && textData->getIgnoreModifiedOnDiskFlag() == false)
+    {
+        invokeMessageBox(MessageBoxParameter().setTitle("File Modified")
+                                              .setMessage(String() << "File '" 
+                                                                   << textData->getFileName()
+                                                                   << "' was modified on disk.")
+                                              .setDefaultButton(    "R]eload", Callback0(this, &EditorTopWin::reloadFile))
+                                              .setCancelButton (    "C]ancel", Callback0(this, &EditorTopWin::doNotReloadFile))
+                                              );
+    }
 }
 
+
+void EditorTopWin::reloadFile()
+{
+    TextData* textData = textEditor->getTextData();
+    textData->reloadFile();
+}
+
+void EditorTopWin::doNotReloadFile()
+{
+    textEditor->getTextData()->setIgnoreModifiedOnDiskFlag(true);
+}
 
 void EditorTopWin::treatFocusOut()
 {
@@ -479,10 +504,14 @@ void EditorTopWin::setWindowTitle()
     File file(textEditor->getTextData()->getFileName());
     
     String title = file.getBaseName();
-    if (textEditor->getTextData()->getModifiedFlag() == true) {
-        title << " (modified)";
+    if (textEditor->getTextData()->getModifiedFlag() == true
+     && textEditor->getTextData()->isReadOnly())
+    {
+        title << " (read only, modified)";
     } else if (textEditor->getTextData()->isReadOnly()) {
         title << " (read only)";
+    } else if (textEditor->getTextData()->getModifiedFlag() == true) {
+        title << " (modified)";
     }
     title << " - ";
     title << file.getDirName() << " [" << System::getInstance()->getHostName() << "]";

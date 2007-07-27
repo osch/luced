@@ -501,7 +501,8 @@ void StandardEditActions::selectionCursorWordRight()
 
 void StandardEditActions::shiftBlockLeft()
 {
-    if (!e->areCursorChangesDisabled() && e->getBackliteBuffer()->hasActiveSelection())
+    if (!e->areCursorChangesDisabled() && e->getBackliteBuffer()->hasActiveSelection()
+        && !e->isReadOnly())
     {
         TextData* textData                                = e->getTextData();
         EditingHistory::SectionHolder::Ptr historySection = textData->createHistorySection();
@@ -537,7 +538,8 @@ void StandardEditActions::shiftBlockLeft()
 
 void StandardEditActions::shiftBlockRight()
 {
-    if (!e->areCursorChangesDisabled() && e->getBackliteBuffer()->hasActiveSelection())
+    if (!e->areCursorChangesDisabled() && e->getBackliteBuffer()->hasActiveSelection()
+        && !e->isReadOnly())
     {
         TextData* textData                                = e->getTextData();
         EditingHistory::SectionHolder::Ptr historySection = textData->createHistorySection();
@@ -860,7 +862,7 @@ void StandardEditActions::scrollPageRight()
 
 void StandardEditActions::newLine()
 {
-    if (!e->areCursorChangesDisabled())
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
         e->setCurrentAction(TextEditorWidget::ACTION_NEWLINE);
         
@@ -901,7 +903,7 @@ void StandardEditActions::newLine()
 
 void StandardEditActions::tabForward()
 {
-    if (!e->areCursorChangesDisabled())
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
         e->getTextData()->setMergableHistorySeparator();
         EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->getHistorySectionHolder();
@@ -953,7 +955,7 @@ void StandardEditActions::tabForward()
 
 void StandardEditActions::backSpace()
 {
-    if (!e->areCursorChangesDisabled())
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
 
         e->hideCursor();
@@ -1048,7 +1050,7 @@ void StandardEditActions::backSpace()
 
 void StandardEditActions::deleteKey()
 {
-    if (!e->areCursorChangesDisabled())
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
         e->hideCursor();
         if (e->hasSelectionOwnership()) 
@@ -1099,7 +1101,7 @@ void StandardEditActions::copyToClipboard()
 
 void StandardEditActions::cutToClipboard()
 {
-    if (!e->areCursorChangesDisabled())
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
         if (e->getBackliteBuffer()->hasActiveSelection() && e->getBackliteBuffer()->isSelectionPrimary())
         {
@@ -1136,13 +1138,10 @@ void StandardEditActions::selectAll()
 }
 
 
-bool doAbort = false;
-
 void StandardEditActions::pasteFromClipboard()
 {
-    if (!e->areCursorChangesDisabled())
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
-//doAbort = true;        
         EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->createHistorySection();
 
         TextData::TextMark m;
@@ -1159,7 +1158,6 @@ void StandardEditActions::pasteFromClipboard()
 //            e->getBackliteBuffer()->deactivateSelection();
 //        }
         e->requestClipboardPasting(m);
-//doAbort = false;        
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
@@ -1167,7 +1165,7 @@ void StandardEditActions::pasteFromClipboard()
 
 void StandardEditActions::undo()
 {
-    if (!e->areCursorChangesDisabled())
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
         e->hideCursor();
         TextData::TextMark mark = e->createNewMarkFromCursor();
@@ -1200,7 +1198,7 @@ void StandardEditActions::undo()
 
 void StandardEditActions::redo()
 {
-    if (!e->areCursorChangesDisabled())
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
         TextData::TextMark mark = e->createNewMarkFromCursor();
         long length = e->getTextData()->redo(mark);

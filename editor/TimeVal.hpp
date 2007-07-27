@@ -44,7 +44,7 @@ public:
     {
         ASSERT(0 <= t1.timeval.tv_usec && t1.timeval.tv_usec < 1000000);
         ASSERT(0 <= t2.timeval.tv_usec && t2.timeval.tv_usec < 1000000);
-        ASSERT(t2.isLaterThan(t1));
+        ASSERT(t2.isLaterOrEqualThan(t1));
         
         if (t1.timeval.tv_sec == t2.timeval.tv_sec) {
             return MicroSeconds(t2.timeval.tv_usec - t1.timeval.tv_usec);
@@ -80,7 +80,18 @@ public:
         return diffMicroSecs(t, *this);
     }
     
-    bool isLaterThan(const TimeVal &t) const
+    bool isLaterThan(const TimeVal& t) const
+    {
+        if (timeval.tv_sec > t.timeval.tv_sec) {
+            return true;
+        }
+        if (timeval.tv_sec == t.timeval.tv_sec) {
+            return timeval.tv_usec > t.timeval.tv_usec;
+        }
+        return false;
+    }
+    
+    bool isLaterOrEqualThan(const TimeVal& t) const
     {
         if (timeval.tv_sec > t.timeval.tv_sec) {
             return true;
@@ -142,7 +153,7 @@ public:
 
         ASSERT(0 <= current.timeval.tv_usec && current.timeval.tv_usec < 1000000);
 
-        if (current.isLaterThan(t)) {
+        if (current.isLaterOrEqualThan(t)) {
             timeval.tv_sec = 0;
             timeval.tv_usec = 0;
         } else {

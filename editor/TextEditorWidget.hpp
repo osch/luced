@@ -93,6 +93,10 @@ public:
         TextWidget::hideMousePointer();
         addToXEventMask(PointerMotionMask);
     }
+    
+    bool isReadOnly() {
+        return getTextData()->isReadOnly();
+    }
 
     virtual void releaseSelectionOwnership();
     void releaseSelectionOwnershipButKeepPseudoSelection();

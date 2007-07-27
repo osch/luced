@@ -116,6 +116,9 @@ private:
     void handleChangedModifiedFlag(bool modifiedFlag);
     void handleChangedReadOnlyFlag(bool readOnlyFlag);
     
+    void reloadFile();
+    void doNotReloadFile();
+    
     void setWindowTitle();
     
     MultiLineEditorWidget::Ptr textEditor;

@@ -32,7 +32,9 @@ TextData::TextData()
         : modifiedFlag(false),
           viewCounter(0),
           hasHistoryFlag(false),
-          isReadOnlyFlag(false)
+          isReadOnlyFlag(false),
+          modifiedOnDiskFlag(false),
+          ignoreModifiedOnDiskFlag(false)
 {
     numberLines = 1;
     beginChangedPos = 0;
@@ -48,7 +50,7 @@ void TextData::loadFile(const String& filename)
 
     file.loadInto(buffer);
     long len = buffer.getLength();
-    byte *ptr = buffer.getTotalAmount();
+    byte* ptr = buffer.getTotalAmount();
 
     for (long i = 0; i < len; ++i) {
         if (ptr[i] == '\n') {
@@ -65,27 +67,113 @@ void TextData::loadFile(const String& filename)
         modifiedFlag = false;
         changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
     }
-    File::Info info = file.getInfo();
-    lastModifiedTimeValSinceEpoche = info.getLastModifiedTimeValSinceEpoche();
+    this->fileInfo = file.getInfo();
+    this->modifiedOnDiskFlag = false;
+    this->ignoreModifiedOnDiskFlag = false;
 
-    if (isReadOnlyFlag != !info.isWritable()) {
-        isReadOnlyFlag = !info.isWritable();
+    if (isReadOnlyFlag != !fileInfo.isWritable()) {
+        isReadOnlyFlag = !fileInfo.isWritable();
         readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
     }
 }
 
-void TextData::checkAndTriggerReadOnlyCallbacks()
+
+namespace
+{
+    struct LineAndColumn
+    {
+        LineAndColumn()
+            : line(0), column(0)
+        {}
+        LineAndColumn(long line, long column)
+            : line(line), column(column)
+        {}
+        long line;
+        long column;
+    };
+}
+
+void TextData::reloadFile()
 {
     File file(this->fileName);
-    File::Info info = file.getInfo();
+
+    long oldLength = getLength();
+    long oldNumberLines = this->numberLines;
+
+    ObjectArray<LineAndColumn> oldMarkPositions;
+
+    for (long i = 0; i < marks.getLength(); ++i) {
+        if (marks[i].inUseCounter > 0) {
+            oldMarkPositions.append(LineAndColumn(marks[i].line,
+                                                  marks[i].column));
+        } else {
+            oldMarkPositions.append(LineAndColumn(0, 0));
+        }
+    }
     
-    if (info.exists())
+    buffer.clear();
+    file.loadInto(buffer);
+    long len = buffer.getLength();
+    byte* ptr = buffer.getTotalAmount();
+
+    this->numberLines = 1;
+    for (long i = 0; i < len; ++i) {
+        if (ptr[i] == '\n') {
+            ++this->numberLines;
+        }
+    }
+    this->beginChangedPos = 0;
+    this->changedAmount = len - oldLength;
+    this->oldEndChangedPos = oldLength;
+    
+    updateMarks(0, oldLength, len - oldLength,           // long beginChangedPos, long oldEndChangedPos, long changedAmount,
+                0, this->numberLines - oldNumberLines);  // long beginLineNumber, long changedLineNumberAmount)
+
+    for (long i = 0; i < marks.getLength(); ++i) {
+        if (marks[i].inUseCounter > 0) {
+            moveMarkToLineAndColumn(MarkHandle(i), oldMarkPositions[i].line,
+                                                   oldMarkPositions[i].column);
+        }
+    }
+    if (modifiedFlag == true) {
+        modifiedFlag = false;
+        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
+    }
+    this->fileInfo = file.getInfo();
+    this->modifiedOnDiskFlag = false;
+    this->ignoreModifiedOnDiskFlag = false;
+
+    if (isReadOnlyFlag != !fileInfo.isWritable()) {
+        isReadOnlyFlag = !fileInfo.isWritable();
+        readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
+    }
+}
+
+void TextData::checkFileInfo()
+{
+    TimeVal lastModifiedTimeValSinceEpoche;
+    bool fileExisted = false;
+    
+    if (fileInfo.exists())
     {
-        lastModifiedTimeValSinceEpoche = info.getLastModifiedTimeValSinceEpoche();
+        fileExisted = true;
+        lastModifiedTimeValSinceEpoche = fileInfo.getLastModifiedTimeValSinceEpoche();
+    }
+
+    File file(this->fileName);
+    this->fileInfo = file.getInfo();
     
-        if (isReadOnlyFlag != !info.isWritable()) {
-            isReadOnlyFlag = !info.isWritable();
+    if (fileInfo.exists())
+    {
+        if (isReadOnlyFlag != !fileInfo.isWritable()) {
+            isReadOnlyFlag = !fileInfo.isWritable();
             readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
+        }
+        
+        if (fileExisted 
+         && fileInfo.getLastModifiedTimeValSinceEpoche().isLaterThan(lastModifiedTimeValSinceEpoche))
+        {
+            modifiedOnDiskFlag = true;
         }
     }
 }
@@ -98,7 +186,9 @@ void TextData::setFileName(const String& filename)
 
 void TextData::save()
 {
-    File(fileName).storeData(buffer);
+    File file(fileName);
+    
+    file.storeData(buffer);
 
     if (hasHistory()) {
         history->setPreviousActionToSavedState();
@@ -107,6 +197,9 @@ void TextData::save()
         modifiedFlag = false;
         changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
     }
+    this->modifiedOnDiskFlag = false;
+    this->ignoreModifiedOnDiskFlag = false;
+    this->fileInfo = file.getInfo();
 }
 
 TextData::TextMark TextData::createNewMark() {
@@ -149,7 +242,6 @@ void TextData::updateMarks(
     bool beginColCalculated = false;
     long beginColumns = 0, endColumns = 0;
     
-    ASSERT(changedAmount != 0);
     ASSERT(beginChangedPos <= oldEndChangedPos);
     ASSERT(beginChangedPos <= oldEndChangedPos + changedAmount);
 
@@ -194,7 +286,7 @@ void TextData::setInsertFilterCallback(Callback2<const byte**, long*> filterCall
 
 inline long TextData::internalInsertAtMark(MarkHandle m, const byte* insertBuffer, long length)
 {
-    if (!isReadOnlyFlag || modifiedFlag)
+    if (!isReadOnlyFlag)
     {
         if (length > 0)
         {
@@ -236,7 +328,7 @@ inline long TextData::internalInsertAtMark(MarkHandle m, const byte* insertBuffe
 
 long TextData::undo(MarkHandle m)
 {
-    if (!isReadOnlyFlag || modifiedFlag)
+    if (!isReadOnlyFlag)
     {
         long spos = LONG_MAX;
         long epos = 0;
@@ -308,7 +400,7 @@ long TextData::undo(MarkHandle m)
 
 long TextData::redo(MarkHandle m)
 {
-    if (!isReadOnlyFlag || modifiedFlag)
+    if (!isReadOnlyFlag)
     {
         long spos = LONG_MAX;
         long epos = 0;
@@ -378,7 +470,7 @@ long TextData::redo(MarkHandle m)
 
 long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
 {
-    if (!isReadOnlyFlag || modifiedFlag)
+    if (!isReadOnlyFlag)
     {
         if (filterCallback.isValid()) {
             filterCallback.call(&insertBuffer, &length);
@@ -409,7 +501,7 @@ long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
 
 inline void TextData::internalRemoveAtMark(MarkHandle m, long amount)
 {
-    if (!isReadOnlyFlag || modifiedFlag)
+    if (!isReadOnlyFlag)
     {
         TextMarkData& mark = marks[m.index];
         long lineNumber = mark.line;
@@ -455,7 +547,7 @@ void TextData::setModifiedFlag(bool newFlag)
 
 void TextData::removeAtMark(MarkHandle m, long amount)
 {
-    if (!isReadOnlyFlag || modifiedFlag)
+    if (!isReadOnlyFlag)
     {
         if (amount > 0)
         {
@@ -661,12 +753,8 @@ void TextData::moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark)
     }
 }
 
-extern bool doAbort;
-
 void TextData::flushPendingUpdatesIntern()
 {
-if (doAbort) abort();
-
     ASSERT(changedAmount != 0 || oldEndChangedPos != 0);
     
     if (hasHistory()) {

@@ -349,7 +349,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                 }
                 else if (event->xbutton.button == Button2)
                 {
-                    if (!cursorChangesDisabled)
+                    if (!cursorChangesDisabled && !isReadOnly())
                     {
                         int x = event->xbutton.x;
                         int y = event->xbutton.y;
@@ -663,7 +663,7 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
         char buffer[100];
         int len = XLookupString(&((XEvent*)event)->xkey, buffer, 100, NULL, NULL);
         if (len > 0) {
-            if (!cursorChangesDisabled)
+            if (!cursorChangesDisabled && !isReadOnly())
             {
                 lastActionId = currentActionId;
                 currentActionId = ACTION_KEYBOARD_INPUT;

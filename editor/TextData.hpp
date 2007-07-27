@@ -31,6 +31,7 @@
 #include "OwningPtr.hpp"
 #include "EditingHistory.hpp"
 #include "TimeVal.hpp"
+#include "File.hpp"
 
 namespace LucED {
 
@@ -58,6 +59,10 @@ public:
     {
     protected:
         friend class TextData;
+        explicit MarkHandle() : index(0)
+        {}
+        explicit MarkHandle(long index) : index(index)
+        {}
         long index;
     };
 
@@ -157,6 +162,7 @@ public:
     }
 
     void loadFile(const String& filename);
+    void reloadFile();
     void setFileName(const String& filename);
     void save();
 
@@ -380,15 +386,27 @@ public:
         }
     }
 
-    TimeVal getLastModifiedTimeValSinceEpoche() const {
-        return lastModifiedTimeValSinceEpoche;
+    bool wasFileModifiedOnDisk() const {
+        return modifiedOnDiskFlag;
+    }
+    
+    bool getIgnoreModifiedOnDiskFlag() const {
+        return ignoreModifiedOnDiskFlag;
+    }
+    
+    void setIgnoreModifiedOnDiskFlag(bool newValue) {
+        this->ignoreModifiedOnDiskFlag = newValue;
     }
     
     bool isReadOnly() const {
         return isReadOnlyFlag;
     }
     
-    void checkAndTriggerReadOnlyCallbacks();
+    const File::Info& getLastFileInfo() {
+        return fileInfo;
+    }
+    
+    void checkFileInfo();
     
 private:
 
@@ -420,8 +438,10 @@ private:
     int viewCounter;
     bool hasHistoryFlag;
     EditingHistory::Ptr history;
-    TimeVal lastModifiedTimeValSinceEpoche;
     bool isReadOnlyFlag;
+    bool modifiedOnDiskFlag;
+    bool ignoreModifiedOnDiskFlag;
+    File::Info fileInfo;
 };
 
 

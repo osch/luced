@@ -49,7 +49,7 @@ int main(int argc, char** argv)
             Commandline::Ptr     commandline     = Commandline::create(argc, argv);
             EditorClient::Ptr    editorClient    = EditorClient::getInstance();
             
-            editorClient->startWithCommandline(Commandline::create(argc, argv));
+            editorClient->startWithCommandline(commandline);
 
             EventDispatcher::getInstance()->doEventLoop();
             
