@@ -41,6 +41,12 @@ public:
     class Info
     {
     public:
+        Info()
+            : isFileFlag(false),
+              isDirectoryFlag(false),
+              isWritableFlag(false),
+              existsFlag(false)
+        {}
         bool isFile() const {
             ASSERT(existsFlag);
             return isFileFlag;

@@ -37,6 +37,7 @@
 #include "FindPanel.hpp"
 #include "ReplacePanel.hpp"
 #include "MessageBox.hpp"
+#include "SaveAsPanel.hpp"
 
 namespace LucED {
 
@@ -70,6 +71,7 @@ public:
     virtual void requestCloseChildWindow(TopWin *topWin);
 
     void invokeGotoLinePanel();
+    void invokeSaveAsPanel(const Callback0& saveCallback);
     void invokeFindPanelBackward();
     void invokeFindPanelForward();
 
@@ -99,12 +101,18 @@ public:
 
     void requestCloseWindowAndDiscardChanges();
     void saveAndClose();
+    bool isClosing() const {
+        return isClosingFlag;
+    }
+    
+    bool checkForFileModifications();
 
 private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
 
     void handleEscapeKey();
     void handleSaveKey();
+    void handleSaveAsKey();
     void invokePanel(DialogPanel* panel);
     void createEmptyWindow();
     void createCloneWindow();
@@ -142,6 +150,10 @@ private:
     MessageBox::Ptr     modalMessageBox;
     bool                hasModalMessageBox;
     MessageBoxParameter modalMessageBoxParameter;
+    
+    SaveAsPanel::Ptr    saveAsPanel;
+    
+    bool isClosingFlag;
 };
 
 } // namespace LucED

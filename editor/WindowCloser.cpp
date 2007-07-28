@@ -33,8 +33,14 @@ void WindowCloser::handleSaveFileButton()
     if (referingTopWin.isValid())
     {
         referingTopWin->saveAndClose();
+        if (referingTopWin->isClosing()) {
+            closeWindows();
+        } else {
+            EventDispatcher::getInstance()->deregisterRunningComponent(this);
+        }
+    } else {
+        closeWindows();
     }
-    closeWindows();
 }
 
 

@@ -34,7 +34,8 @@ TextData::TextData()
           hasHistoryFlag(false),
           isReadOnlyFlag(false),
           modifiedOnDiskFlag(false),
-          ignoreModifiedOnDiskFlag(false)
+          ignoreModifiedOnDiskFlag(false),
+          fileNamePseudoFlag(false)
 {
     numberLines = 1;
     beginChangedPos = 0;
@@ -178,14 +179,25 @@ void TextData::checkFileInfo()
     }
 }
 
-void TextData::setFileName(const String& filename)
+void TextData::setRealFileName(const String& filename)
 {
+    this->fileNamePseudoFlag = false;
+    this->fileName = File(filename).getAbsoluteFileName();
+    fileNameListeners.invokeAllCallbacks(this->fileName);
+    checkFileInfo();
+}
+
+void TextData::setPseudoFileName(const String& filename)
+{
+    this->fileNamePseudoFlag = true;
     this->fileName = File(filename).getAbsoluteFileName();
     fileNameListeners.invokeAllCallbacks(this->fileName);
 }
 
 void TextData::save()
 {
+    ASSERT(!fileNamePseudoFlag);
+
     File file(fileName);
     
     file.storeData(buffer);

@@ -113,7 +113,7 @@ void FileOpener::openFiles()
                 {
                     isWaitingForMessageBox = true;
                     lastErrorMessage = ex.getMessage();
-                    textData->setFileName(fileName);
+                    textData->setRealFileName(fileName);
                     lastTopWin = EditorTopWin::create(textStyles, hilitedText);
 
                     MessageBoxParameter p;
@@ -211,7 +211,7 @@ void FileOpener::openConfigFiles()
                 }
                 catch (FileException& ex)
                 {
-                    textData->setFileName(fileName);
+                    textData->setRealFileName(fileName);
 
                     p.setTitle("Error opening file")
                      .setMessage(ex.getMessage());

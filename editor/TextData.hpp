@@ -163,7 +163,8 @@ public:
 
     void loadFile(const String& filename);
     void reloadFile();
-    void setFileName(const String& filename);
+    void setRealFileName(const String& filename);
+    void setPseudoFileName(const String& filename);
     void save();
 
     long getLength() const {
@@ -348,6 +349,10 @@ public:
         return fileName;
     }
     
+    bool isFileNamePseudo() const {
+        return fileNamePseudoFlag;
+    }
+    
     bool getModifiedFlag() const {
         return modifiedFlag;
     }
@@ -390,12 +395,24 @@ public:
         return modifiedOnDiskFlag;
     }
     
-    bool getIgnoreModifiedOnDiskFlag() const {
+    bool wasFileModifiedOnDiskSinceLastIgnore() const {
+        if (ignoreModifiedOnDiskFlag == true && fileInfo.exists()) {
+            return fileInfo.getLastModifiedTimeValSinceEpoche()
+                           .isLaterThan(ignoreModifiedOnDiskTime);
+        } else {
+            return false;
+        }
+    }
+    
+    bool hasModifiedOnDiskFlagBeenIgnored() const {
         return ignoreModifiedOnDiskFlag;
     }
     
     void setIgnoreModifiedOnDiskFlag(bool newValue) {
         this->ignoreModifiedOnDiskFlag = newValue;
+        if (newValue == true) {
+            ignoreModifiedOnDiskTime.setToCurrentTime();
+        }
     }
     
     bool isReadOnly() const {
@@ -441,7 +458,10 @@ private:
     bool isReadOnlyFlag;
     bool modifiedOnDiskFlag;
     bool ignoreModifiedOnDiskFlag;
+    TimeVal ignoreModifiedOnDiskTime;
     File::Info fileInfo;
+    
+    bool fileNamePseudoFlag;
 };
 
 

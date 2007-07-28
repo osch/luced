@@ -81,7 +81,8 @@ private:
 EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
       flagForSetSizeHintAtFirstShow(true),
-      hasModalMessageBox(false)
+      hasModalMessageBox(false),
+      isClosingFlag(false)
 {
     addToXEventMask(ButtonPressMask);
     
@@ -195,6 +196,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping1.set(            ControlMask, XK_w,      Callback0(this,      &EditorTopWin::requestCloseWindow));
     keyMapping1.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
     keyMapping1.set(            ControlMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveKey));
+    keyMapping1.set(  ControlMask|ShiftMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveAsKey));
     keyMapping1.set(            ControlMask, XK_n,      Callback0(this,      &EditorTopWin::createEmptyWindow));
     keyMapping1.set(            ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionForward));
     keyMapping1.set(  ShiftMask|ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionBackward));
@@ -323,12 +325,17 @@ void EditorTopWin::treatFocusIn()
             textEditor->treatFocusIn();
         }
     }
+    checkForFileModifications();
+}
+
+bool EditorTopWin::checkForFileModifications()
+{
     TextData* textData = textEditor->getTextData();
-    
     textData->checkFileInfo();
 
     if (   textData->wasFileModifiedOnDisk() 
-        && textData->getIgnoreModifiedOnDiskFlag() == false)
+        && (  !textData->hasModifiedOnDiskFlagBeenIgnored()
+            || textData->wasFileModifiedOnDiskSinceLastIgnore()))
     {
         invokeMessageBox(MessageBoxParameter().setTitle("File Modified")
                                               .setMessage(String() << "File '" 
@@ -337,6 +344,10 @@ void EditorTopWin::treatFocusIn()
                                               .setDefaultButton(    "R]eload", Callback0(this, &EditorTopWin::reloadFile))
                                               .setCancelButton (    "C]ancel", Callback0(this, &EditorTopWin::doNotReloadFile))
                                               );
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
@@ -401,6 +412,21 @@ void EditorTopWin::invokeGotoLinePanel()
         gotoLinePanel = GotoLinePanel::create(this, textEditor);
     }
     invokePanel(gotoLinePanel);
+}
+
+void EditorTopWin::invokeSaveAsPanel(const Callback0& saveCallback)
+{
+    if (saveAsPanel.isInvalid()) {
+        saveAsPanel = SaveAsPanel::create(this, textEditor);
+    }
+    TextData* textData = textEditor->getTextData();
+    if (textData->isFileNamePseudo()) {
+        saveAsPanel->setEditFieldContent(File(textData->getFileName()).getDirName());
+    } else {
+        saveAsPanel->setEditFieldContent(File(textData->getFileName()).getAbsoluteFileName());
+    }
+    saveAsPanel->setSaveCallback(saveCallback);
+    invokePanel(saveAsPanel);
 }
 
 
@@ -536,8 +562,13 @@ void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
 void EditorTopWin::handleSaveKey()
 {
     try {
-        textEditor->getTextData()->save();
-        GlobalConfig::getInstance()->notifyAboutNewFileContent(textEditor->getTextData()->getFileName());
+        if (textEditor->getTextData()->isFileNamePseudo()) {
+            invokeSaveAsPanel(Callback0(this, &EditorTopWin::handleSaveKey));
+        }
+        else {
+            textEditor->getTextData()->save();
+            GlobalConfig::getInstance()->notifyAboutNewFileContent(textEditor->getTextData()->getFileName());
+        }
     } catch (FileException& ex) {
         invokeMessageBox(MessageBoxParameter().setTitle("File Error")
                                               .setMessage(ex.getMessage()));
@@ -550,12 +581,22 @@ void EditorTopWin::handleSaveKey()
     }
 }
 
+void EditorTopWin::handleSaveAsKey()
+{
+    invokeSaveAsPanel(Callback0(this, &EditorTopWin::handleSaveKey));
+}
+
 void EditorTopWin::saveAndClose()
 {
     try {
-        textEditor->getTextData()->save();
-        GlobalConfig::getInstance()->notifyAboutNewFileContent(textEditor->getTextData()->getFileName());
-        requestCloseWindow();
+        if (textEditor->getTextData()->isFileNamePseudo()) {
+            invokeSaveAsPanel(Callback0(this, &EditorTopWin::saveAndClose));
+        }
+        else {
+            textEditor->getTextData()->save();
+            GlobalConfig::getInstance()->notifyAboutNewFileContent(textEditor->getTextData()->getFileName());
+            requestCloseWindow();
+        }
     } catch (FileException& ex) {
         invokeMessageBox(MessageBoxParameter().setTitle("File Error")
                                               .setMessage(ex.getMessage()));
@@ -585,6 +626,7 @@ void EditorTopWin::requestCloseWindow()
     else
     {
         TopWin::requestCloseWindow();
+        isClosingFlag = true;
     }
 }
 
@@ -600,7 +642,7 @@ void EditorTopWin::createEmptyWindow()
 
     String untitledFileName = File(String() << textEditor->getTextData()->getFileName()).getDirName() << "/Untitled";
     TextData::Ptr     emptyTextData     = TextData::create();
-                      emptyTextData->setFileName(untitledFileName);
+                      emptyTextData->setPseudoFileName(untitledFileName);
 
     HilitedText::Ptr  hilitedText  = HilitedText::create(emptyTextData, languageMode);
 
