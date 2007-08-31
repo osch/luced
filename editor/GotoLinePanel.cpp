@@ -71,6 +71,8 @@ GotoLinePanel::GotoLinePanel(GuiWidget* parent, TextEditorWidget* editorWidget)
 
     editField->getTextData()->setInsertFilterCallback(
         Callback2<const byte**,long*>(this, &GotoLinePanel::filterInsert));
+
+    label0->setMiddleMouseButtonCallback(Callback0(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
 void GotoLinePanel::treatFocusIn()

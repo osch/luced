@@ -179,6 +179,9 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     replaceEditField->getTextData()->registerModifiedFlagListener(Callback1<bool>(this, &ReplacePanel::handleModifiedEditField));
 
     replaceUtil.setTextData(e->getTextData());
+
+    label0->setMiddleMouseButtonCallback(Callback0(findEditField,    &SingleLineEditField::replaceTextWithPrimarySelection));
+    label1->setMiddleMouseButtonCallback(Callback0(replaceEditField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
 void ReplacePanel::treatFocusOut()

@@ -286,6 +286,7 @@ public:
 
     void removeAtMark(MarkHandle m, long amount);
     void clear();
+    void reset();
     
     void moveMarkToLineAndColumn(MarkHandle m, long line, long column);
     void moveMarkToBeginOfLine(MarkHandle m);
@@ -397,8 +398,8 @@ public:
     
     bool wasFileModifiedOnDiskSinceLastIgnore() const {
         if (ignoreModifiedOnDiskFlag == true && fileInfo.exists()) {
-            return fileInfo.getLastModifiedTimeValSinceEpoche()
-                           .isLaterThan(ignoreModifiedOnDiskTime);
+            return !fileInfo.getLastModifiedTimeValSinceEpoche()
+                            .isEqualTo(ignoreModifiedOnDiskTime);
         } else {
             return false;
         }

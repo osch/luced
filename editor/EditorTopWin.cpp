@@ -419,12 +419,6 @@ void EditorTopWin::invokeSaveAsPanel(const Callback0& saveCallback)
     if (saveAsPanel.isInvalid()) {
         saveAsPanel = SaveAsPanel::create(this, textEditor);
     }
-    TextData* textData = textEditor->getTextData();
-    if (textData->isFileNamePseudo()) {
-        saveAsPanel->setEditFieldContent(File(textData->getFileName()).getDirName());
-    } else {
-        saveAsPanel->setEditFieldContent(File(textData->getFileName()).getAbsoluteFileName());
-    }
     saveAsPanel->setSaveCallback(saveCallback);
     invokePanel(saveAsPanel);
 }

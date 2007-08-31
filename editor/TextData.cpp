@@ -580,6 +580,13 @@ void TextData::removeAtMark(MarkHandle m, long amount)
     }
 }
 
+void TextData::clear()
+{
+    TextMark m = createNewMark();
+    removeAtMark(m, getLength());
+}
+
+
 void TextData::clearHistory()
 {
     if (hasHistory()) {
@@ -587,8 +594,7 @@ void TextData::clearHistory()
     }
 }
 
-
-void TextData::clear()
+void TextData::reset()
 {
     int oldLength = getLength();
     if (oldLength > 0) {

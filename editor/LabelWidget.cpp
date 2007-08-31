@@ -100,6 +100,9 @@ GuiElement::ProcessingResult LabelWidget::processEvent(const XEvent *event)
             }
 
             case ButtonPress: {
+                if (event->xbutton.button == Button2) {
+                    middleMouseButtonCallback.call();
+                }
                 break;
             }
 

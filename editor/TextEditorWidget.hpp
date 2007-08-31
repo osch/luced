@@ -111,6 +111,8 @@ public:
         PasteDataReceiver::requestSelectionPasting();
     }
 
+    void replaceTextWithPrimarySelection();
+
 protected:
     TextEditorWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth);
 
@@ -146,6 +148,7 @@ private:
     ActionId currentActionId;
     TextData::TextMark beginPastingTextMark;
     TextData::TextMark pastingTextMark;
+    EditingHistory::SectionHolder::Ptr historySectionHolder;
 };
 
 } // namespace LucED

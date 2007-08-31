@@ -61,6 +61,10 @@ public:
         this->fakeFocusFlag = fakeFocusFlag;
     }
     
+    void setMiddleMouseButtonCallback(Callback0 middleMouseButtonCallback) {
+        this->middleMouseButtonCallback = middleMouseButtonCallback;
+    }
+    
 private:
 
     LabelWidget(GuiWidget* parent, const String& leftText, const String& rightText);
@@ -75,6 +79,7 @@ private:
     bool fakeFocusFlag;
     bool hasForcedMeasuresFlag;
     Measures forcedMeasures;
+    Callback0 middleMouseButtonCallback;
 };
 
 

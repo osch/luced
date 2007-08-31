@@ -40,10 +40,7 @@ public:
     
     virtual void treatFocusIn();
     
-    void setEditFieldContent(const String& content) {
-        editField->getTextData()->setToString(content);
-        editField->setCursorPosition(content.getLength());
-    }
+    virtual void show();
     
     void setSaveCallback(const Callback0& saveCallback) {
         this->saveCallback = saveCallback;

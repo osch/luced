@@ -44,7 +44,8 @@ HilitingBuffer::HilitingBuffer(HilitedText::Ptr hiliting)
     maxDistance(calculateMaxDistance(hiliting))
     
 {
-    hiliting->registerSyntaxPatternsChangedCallback(Callback1<SyntaxPatterns::Ptr>(this, &HilitingBuffer::treatSyntaxPatternsUpdate));
+    hiliting->registerHilitingChangedCallback(Callback1<HilitedText*>(this, &HilitingBuffer::treatChangedHiliting));
+
     textData = hiliting->getTextData();
     if (syntaxPatterns.isValid()) {
         ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
@@ -54,9 +55,14 @@ HilitingBuffer::HilitingBuffer(HilitedText::Ptr hiliting)
 }
 
 
-void HilitingBuffer::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns)
+void HilitingBuffer::treatChangedHiliting(HilitedText* changedHiliting)
 {
-    syntaxPatterns = newSyntaxPatterns;
+    ASSERT(changedHiliting == hiliting);
+    ASSERT(hiliting->getTextData() == textData);
+    
+    syntaxPatterns = hiliting->getSyntaxPatterns();
+    languageMode   = hiliting->getLanguageMode();
+
     maxDistance = calculateMaxDistance(hiliting);
     if (syntaxPatterns.isValid()) {
         ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
@@ -65,6 +71,7 @@ void HilitingBuffer::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatt
     patternStack.clear();
     updateListeners.invokeAllCallbacks(UpdateInfo(0, textData->getLength()));
 }
+
 
 void HilitingBuffer::treatHilitingUpdate(HilitedText::UpdateInfo update)
 {

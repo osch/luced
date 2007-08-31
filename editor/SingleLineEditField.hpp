@@ -77,6 +77,11 @@ public:
         this->editFieldGroup = editFieldGroup;
         editFieldGroup->registerCursorFocusLostHandler(Callback0(this, &SingleLineEditField::hideCursor));
     }
+    
+    void replaceTextWithPrimarySelection() {
+        editorWidget->replaceTextWithPrimarySelection();
+    }
+
 
     virtual ProcessingResult processEvent(const XEvent *event);
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);

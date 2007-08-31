@@ -90,7 +90,7 @@ private:
 
     void treatTextDataUpdate(TextData::UpdateInfo update);
 
-    void treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns);
+    void treatChangedHiliting(HilitedText* changedHiliting);
 
     HilitedText::Ptr hiliting;
     HilitedText::Iterator iterator;

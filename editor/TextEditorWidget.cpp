@@ -221,6 +221,8 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
     getTextData()->setHistorySeparator();
 
     pastingTextMark = TextData::TextMark();
+
+    historySectionHolder.invalidate();
 }
 
 
@@ -428,6 +430,29 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
         return propagateEventToParentWidget(event);
     }
 }
+
+void TextEditorWidget::replaceTextWithPrimarySelection()
+{
+    if (!cursorChangesDisabled && !isReadOnly())
+    {
+        TextData* textData = getTextData();
+        
+        historySectionHolder = textData->createHistorySection();
+        //textData->setHistorySeparator();
+        
+        textData->clear();
+        
+        requestSelectionPasting(createNewMarkFromCursor());
+        currentActionId = ACTION_UNSPECIFIED;
+        
+        /*if (hasSelectionOwnership()) {
+            releaseSelectionOwnership();
+        }*/
+    }
+    assureCursorVisible();
+    rememberedCursorPixX = getCursorPixX();
+}
+
 
 void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
 {

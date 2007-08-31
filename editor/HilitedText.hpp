@@ -62,14 +62,16 @@ public:
         return syntaxPatterns;
     }
 
-    void registerSyntaxPatternsChangedCallback(Callback1<SyntaxPatterns::Ptr> syntaxPatternsChangeCallback) {
-        syntaxPatternCallbacks.registerCallback(syntaxPatternsChangeCallback);
+    void registerHilitingChangedCallback(Callback1<HilitedText*> hilitingChangeCallback) {
+        hilitingChangedCallbacks.registerCallback(hilitingChangeCallback);
     }
 
     LanguageMode::Ptr getLanguageMode() {
         return languageMode;
     }
 
+    void setLanguageMode(LanguageMode::Ptr languageMode);
+    
     TextData::Ptr getTextData() {
         return textData;
     }
@@ -116,8 +118,10 @@ private:
     MemArray<int> ovector;
     
     int breakPointDistance;
-    
-    Callback1Container<SyntaxPatterns::Ptr> syntaxPatternCallbacks;
+
+    Callback1Container<HilitedText*> hilitingChangedCallbacks;    
+
+    Callback1<SyntaxPatterns::Ptr> syntaxPatternUpdateCallback;
 };
 
 } // namespace LucED

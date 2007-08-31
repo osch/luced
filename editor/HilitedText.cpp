@@ -49,8 +49,10 @@ HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
     this->endChangedPos = 0;
     this->processingEndBeforeRestartFlag = false;
     this->needsProcessingFlag = false;
-    this->syntaxPatterns = GlobalConfig::getInstance()->getSyntaxPatternsForLanguageMode(languageMode,
-                                                                                         Callback1<SyntaxPatterns::Ptr>(this, &HilitedText::treatSyntaxPatternsUpdate));
+
+    this->syntaxPatternUpdateCallback = Callback1<SyntaxPatterns::Ptr>(this, &HilitedText::treatSyntaxPatternsUpdate);
+    this->syntaxPatterns = GlobalConfig::getInstance()->getSyntaxPatternsForLanguageMode(this->languageMode,
+                                                                                         this->syntaxPatternUpdateCallback);
     if (languageMode.isValid()) {
         this->breakPointDistance = languageMode->getHilitingBreakPointDistance();
     } else {
@@ -61,6 +63,25 @@ HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
         this->ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
     EventDispatcher::getInstance()->registerProcess(processHandler);
+}
+
+
+void HilitedText::setLanguageMode(LanguageMode::Ptr languageMode)
+{
+    if (languageMode != this->languageMode)
+    {
+        this->languageMode = languageMode;
+        if (languageMode.isValid()) {
+            this->breakPointDistance = languageMode->getHilitingBreakPointDistance();
+        } else {
+            this->breakPointDistance = 50;
+        }
+        this->syntaxPatternUpdateCallback.disable();
+        this->syntaxPatternUpdateCallback = Callback1<SyntaxPatterns::Ptr>(this, &HilitedText::treatSyntaxPatternsUpdate);
+
+        treatSyntaxPatternsUpdate(GlobalConfig::getInstance()->getSyntaxPatternsForLanguageMode(this->languageMode,
+                                                                                                this->syntaxPatternUpdateCallback));
+    }
 }
 
 
@@ -77,7 +98,7 @@ void HilitedText::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPattern
     this->processingEndBeforeRestartFlag = false;
     this->needsProcessingFlag = true;
     
-    syntaxPatternCallbacks.invokeAllCallbacks(newSyntaxPatterns);
+    hilitingChangedCallbacks.invokeAllCallbacks(this);
 }
 
 

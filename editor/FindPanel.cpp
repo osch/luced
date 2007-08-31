@@ -150,6 +150,8 @@ FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback
     editField->getTextData()->registerModifiedFlagListener(Callback1<bool>(this, &FindPanel::handleModifiedEditField));
     
     findUtil.setTextData(e->getTextData());
+
+    label0->setMiddleMouseButtonCallback(Callback0(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
 void FindPanel::treatFocusIn()

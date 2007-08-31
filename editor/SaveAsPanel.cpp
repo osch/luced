@@ -69,6 +69,7 @@ SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget)
     setFocus(editField);
     saveButton->setAsDefaultButton();
 
+    label0->setMiddleMouseButtonCallback(Callback0(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
 
@@ -79,12 +80,19 @@ void SaveAsPanel::treatFocusIn()
 }
 
 
-
 void SaveAsPanel::handleButtonPressed(Button* button)
 {
     if (button == saveButton)
     {
-        editorWidget->getTextData()->setRealFileName(editField->getTextData()->getAsString());
+        String newFileName = editField->getTextData()->getAsString();
+        if (editorWidget->getTextData()->getFileName() != newFileName)
+        {
+            LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(newFileName);
+            if (languageMode != editorWidget->getHilitedText()->getLanguageMode()) {
+                editorWidget->getHilitedText()->setLanguageMode(languageMode);
+            }
+        }
+        editorWidget->getTextData()->setRealFileName(newFileName);
         requestCloseFor(this);
         saveCallback.call();
     }
@@ -93,4 +101,20 @@ void SaveAsPanel::handleButtonPressed(Button* button)
     }
 }
 
+
+void SaveAsPanel::show()
+{
+    TextData* textData = editorWidget->getTextData();
+    String newContent;
+    if (textData->isFileNamePseudo()) {
+        newContent = File(textData->getFileName()).getDirName();
+    } else {
+        newContent = File(textData->getFileName()).getAbsoluteFileName();
+    }
+    editField->getTextData()->setToString(newContent);
+    editField->getTextData()->clearHistory();
+    editField->setCursorPosition(newContent.getLength());
+
+    DialogPanel::show();
+}
 

@@ -80,6 +80,17 @@ public:
         return diffMicroSecs(t, *this);
     }
     
+    bool isEqualTo(const TimeVal& t) const
+    {
+        if (timeval.tv_sec != t.timeval.tv_sec) {
+            return false;
+        }
+        if (timeval.tv_usec != t.timeval.tv_usec) {
+            return false;
+        }
+        return true;
+    }
+    
     bool isLaterThan(const TimeVal& t) const
     {
         if (timeval.tv_sec > t.timeval.tv_sec) {
