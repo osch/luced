@@ -44,6 +44,12 @@ public:
         ACTION_NEWLINE,
         ACTION_KEYBOARD_INPUT,
     };
+    
+    enum PasteParameter
+    {
+        CURSOR_TO_BEGIN_OF_PASTED_DATA,
+        CURSOR_TO_END_OF_PASTED_DATA,
+    };
 
     ActionId getLastAction() const;
     void setCurrentAction(ActionId action);
@@ -101,13 +107,19 @@ public:
     virtual void releaseSelectionOwnership();
     void releaseSelectionOwnershipButKeepPseudoSelection();
     
-    void requestClipboardPasting(const TextData::TextMark& m) {
+    void requestClipboardPasting(const TextData::TextMark& m, 
+                                 PasteParameter p = CURSOR_TO_END_OF_PASTED_DATA)
+    {
         beginPastingTextMark = getTextData()->createNewMark(m);
+        pasteParameter = p;
         PasteDataReceiver::requestClipboardPasting();
     }
 
-    void requestSelectionPasting(const TextData::TextMark& m) {
+    void requestSelectionPasting(const TextData::TextMark& m,
+                                 PasteParameter p = CURSOR_TO_END_OF_PASTED_DATA)
+    {
         beginPastingTextMark = getTextData()->createNewMark(m);
+        pasteParameter = p;
         PasteDataReceiver::requestSelectionPasting();
     }
 
@@ -149,6 +161,7 @@ private:
     TextData::TextMark beginPastingTextMark;
     TextData::TextMark pastingTextMark;
     EditingHistory::SectionHolder::Ptr historySectionHolder;
+    PasteParameter pasteParameter;
 };
 
 } // namespace LucED

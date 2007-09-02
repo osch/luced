@@ -860,7 +860,64 @@ void StandardEditActions::scrollPageRight()
 }
 
 
-void StandardEditActions::newLine()
+void StandardEditActions::insertNewLineAutoIndent()
+{
+    newLineAutoIndent(true);
+}
+void StandardEditActions::appendNewLineAutoIndent()
+{
+    newLineAutoIndent(false);
+}
+
+void StandardEditActions::newLineAutoIndent(bool insert)
+{
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
+    {
+        e->setCurrentAction(TextEditorWidget::ACTION_NEWLINE);
+        
+        EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+
+        if (e->hasSelectionOwnership()) {
+            long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
+            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+            e->moveCursorToTextPosition(selBegin);
+            if (insert) {
+                e->removeAtCursor(selLength);
+            }
+            e->releaseSelectionOwnership();
+        } else if (e->getBackliteBuffer()->hasActiveSelection()) {
+            e->getBackliteBuffer()->deactivateSelection();
+        }
+        TextData::TextMark mark = e->createNewMarkFromCursor();
+        ByteArray whiteSpace;
+        whiteSpace.append('\n');
+
+        e->hideCursor();
+        if (!insert) {
+            mark.moveToEndOfLine();
+            e->moveCursorToTextMark(mark);
+        }
+
+        mark.moveToBeginOfLine();
+        while (!mark.isEndOfText() && mark.getPos() < e->getCursorTextPosition()) {
+            byte c = mark.getChar();
+            if (c == ' ' || c == '\t') {
+                whiteSpace.append(c);
+            } else {
+                break;
+            }
+            mark.inc();
+        }
+
+        e->insertAtCursor(whiteSpace);
+        e->moveCursorToTextPosition(e->getCursorTextPosition() + whiteSpace.getLength());
+    }
+    e->assureCursorVisible();
+    e->rememberCursorPixX();
+    e->showCursor();
+}
+
+void StandardEditActions::newLineFixedColumnIndent(bool forward)
 {
     if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
@@ -878,28 +935,57 @@ void StandardEditActions::newLine()
             e->getBackliteBuffer()->deactivateSelection();
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
+
+        const long opticalCursorColumn = e->getOpticalCursorColumn();
+
         ByteArray whiteSpace;
         whiteSpace.append('\n');
+
+        long currentOpticalColumn = 0;
+        long hardTabWidth = e->getLanguageMode()->getHardTabWidth();
 
         mark.moveToBeginOfLine();
         while (!mark.isEndOfText() && mark.getPos() < e->getCursorTextPosition()) {
             byte c = mark.getChar();
             if (c == ' ' || c == '\t') {
                 whiteSpace.append(c);
+                if (c == '\t') {
+                    currentOpticalColumn = ((currentOpticalColumn / hardTabWidth) + 1) * hardTabWidth;
+                } else {
+                    currentOpticalColumn += 1;
+                }
             } else {
                 break;
             }
             mark.inc();
         }
+        while (currentOpticalColumn < opticalCursorColumn) {
+            whiteSpace.append(' ');
+            ++currentOpticalColumn;
+        }
 
         e->hideCursor();
         e->insertAtCursor(whiteSpace);
-        e->moveCursorToTextPosition(e->getCursorTextPosition() + whiteSpace.getLength());
+
+        if (forward) {
+            e->moveCursorToTextPosition(e->getCursorTextPosition() + whiteSpace.getLength());
+        }
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
     e->showCursor();
 }
+
+void StandardEditActions::newLineFixedColumnIndentForward()
+{
+    newLineFixedColumnIndent(true);
+}
+
+void StandardEditActions::newLineFixedColumnIndentBackward()
+{
+    newLineFixedColumnIndent(false);
+}
+
 
 void StandardEditActions::tabForward()
 {
@@ -1138,7 +1224,7 @@ void StandardEditActions::selectAll()
 }
 
 
-void StandardEditActions::pasteFromClipboard()
+void StandardEditActions::pasteFromClipboardForward()
 {
     if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
@@ -1157,7 +1243,32 @@ void StandardEditActions::pasteFromClipboard()
 //        if (e->getBackliteBuffer()->hasActiveSelection()) {
 //            e->getBackliteBuffer()->deactivateSelection();
 //        }
-        e->requestClipboardPasting(m);
+        e->requestClipboardPasting(m, TextEditorWidget::CURSOR_TO_END_OF_PASTED_DATA);
+    }
+    e->assureCursorVisible();
+    e->rememberCursorPixX();
+}
+
+void StandardEditActions::pasteFromClipboardBackward()
+{
+    if (!e->areCursorChangesDisabled() && !e->isReadOnly())
+    {
+        EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->createHistorySection();
+
+        TextData::TextMark m;
+
+        if (e->hasSelectionOwnership()) {
+            m = e->getBackliteBuffer()->createMarkToBeginOfSelection();
+            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - m.getPos();
+            e->getTextData()->removeAtMark(m, selLength);
+//            e->releaseSelectionOwnership();
+        } else {
+            m = e->createNewMarkFromCursor();
+        }
+//        if (e->getBackliteBuffer()->hasActiveSelection()) {
+//            e->getBackliteBuffer()->deactivateSelection();
+//        }
+        e->requestClipboardPasting(m, TextEditorWidget::CURSOR_TO_BEGIN_OF_PASTED_DATA);
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
@@ -1417,7 +1528,8 @@ void StandardEditActions::registerSingleLineEditActionsToEditWidget()
 
     e->setEditAction(          ControlMask, XK_c,         this, &StandardEditActions::copyToClipboard);
     e->setEditAction(          ControlMask, XK_x,         this, &StandardEditActions::cutToClipboard);
-    e->setEditAction(          ControlMask, XK_v,         this, &StandardEditActions::pasteFromClipboard);
+    e->setEditAction(          ControlMask, XK_v,         this, &StandardEditActions::pasteFromClipboardForward);
+    e->setEditAction(ShiftMask|ControlMask, XK_v,         this, &StandardEditActions::pasteFromClipboardBackward);
     e->setEditAction(          ControlMask, XK_a,         this, &StandardEditActions::selectAll);
 
     e->setEditAction(            ShiftMask, XK_Left,      this, &StandardEditActions::selectionCursorLeft);
@@ -1467,8 +1579,17 @@ void StandardEditActions::registerMultiLineEditActionsToEditWidget()
     e->setEditAction( ControlMask|Mod1Mask, XK_KP_Down,   this, &StandardEditActions::scrollDown);
     e->setEditAction( ControlMask|Mod1Mask, XK_KP_Up,     this, &StandardEditActions::scrollUp);
 
-    e->setEditAction(                    0, XK_Return,    this, &StandardEditActions::newLine);
-    e->setEditAction(                    0, XK_KP_Enter,  this, &StandardEditActions::newLine);
+    e->setEditAction(                    0, XK_Return,    this, &StandardEditActions::insertNewLineAutoIndent);
+    e->setEditAction(                    0, XK_KP_Enter,  this, &StandardEditActions::insertNewLineAutoIndent);
+
+    e->setEditAction(             Mod1Mask, XK_Return,    this, &StandardEditActions::appendNewLineAutoIndent);
+    e->setEditAction(             Mod1Mask, XK_KP_Enter,  this, &StandardEditActions::appendNewLineAutoIndent);
+
+    e->setEditAction(          ControlMask, XK_Return,    this, &StandardEditActions::newLineFixedColumnIndentForward);
+    e->setEditAction(          ControlMask, XK_KP_Enter,  this, &StandardEditActions::newLineFixedColumnIndentForward);
+
+    e->setEditAction(ControlMask|ShiftMask, XK_Return,    this, &StandardEditActions::newLineFixedColumnIndentBackward);
+    e->setEditAction(ControlMask|ShiftMask, XK_KP_Enter,  this, &StandardEditActions::newLineFixedColumnIndentBackward);
 
     e->setEditAction(            ShiftMask, XK_Down,      this, &StandardEditActions::selectionCursorDown);
     e->setEditAction(            ShiftMask, XK_Up,        this, &StandardEditActions::selectionCursorUp);

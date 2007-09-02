@@ -45,7 +45,8 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
         cursorChangesDisabled(false),
         buttonPressedCounter(0),
         lastActionId(ACTION_UNSPECIFIED),
-        currentActionId(ACTION_UNSPECIFIED)
+        currentActionId(ACTION_UNSPECIFIED),
+        pasteParameter(CURSOR_TO_END_OF_PASTED_DATA)
 {
     hasFocusFlag = false;
     addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
@@ -214,7 +215,9 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
     getBackliteBuffer()->makeSelectionToSecondarySelection();
     getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
 
-    moveCursorToTextMark(pastingTextMark);
+    if (pasteParameter == CURSOR_TO_END_OF_PASTED_DATA) {
+        moveCursorToTextMark(pastingTextMark);
+    }
     assureCursorVisible();
 
     rememberedCursorPixX = getCursorPixX();
@@ -223,6 +226,8 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
     pastingTextMark = TextData::TextMark();
 
     historySectionHolder.invalidate();
+    
+    pasteParameter = CURSOR_TO_END_OF_PASTED_DATA;
 }
 
 

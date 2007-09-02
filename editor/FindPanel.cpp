@@ -181,9 +181,17 @@ void FindPanel::executeFind(bool isWrapping, const Callback0& handleContinueSear
         if (findUtil.wasFound())
         {
             TextData::TextMark m = e->createNewMarkFromCursor();
-            m.moveToPos(findUtil.getMatchBeginPos());
+            if (findUtil.isSearchingForward()) {
+                m.moveToPos(findUtil.getMatchBeginPos());
+            } else {
+                m.moveToPos(findUtil.getMatchEndPos());
+            }
             e->moveCursorToTextMarkAndAdjustVisibility(m);
-            m.moveToPos(findUtil.getMatchEndPos());
+            if (findUtil.isSearchingForward()) {
+                m.moveToPos(findUtil.getMatchEndPos());
+            } else {
+                m.moveToPos(findUtil.getMatchBeginPos());
+            }
             e->moveCursorToTextMarkAndAdjustVisibility(m);
             e->rememberCursorPixX();
             e->requestSelectionOwnership();

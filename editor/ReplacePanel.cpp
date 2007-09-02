@@ -231,9 +231,17 @@ void ReplacePanel::executeFind(bool isWrapping, const Callback0& handleContinueS
         if (replaceUtil.wasFound())
         {
             TextData::TextMark m = e->createNewMarkFromCursor();
-            m.moveToPos(replaceUtil.getMatchBeginPos());
+            if (replaceUtil.isSearchingForward()) {
+                m.moveToPos(replaceUtil.getMatchBeginPos());
+            } else {
+                m.moveToPos(replaceUtil.getMatchEndPos());
+            }
             e->moveCursorToTextMarkAndAdjustVisibility(m);
-            m.moveToPos(replaceUtil.getMatchEndPos());
+            if (replaceUtil.isSearchingForward()) {
+                m.moveToPos(replaceUtil.getMatchEndPos());
+            } else {
+                m.moveToPos(replaceUtil.getMatchBeginPos());
+            }
             e->moveCursorToTextMarkAndAdjustVisibility(m);
             e->rememberCursorPixX();
             e->requestSelectionOwnership();
@@ -598,10 +606,16 @@ void ReplacePanel::replaceAgainForward()
         if (history->getEntryCount() >= 1) {
             SearchHistory::Entry entry = history->getEntry(history->getEntryCount() - 1);
 
+            if (!entry.hasReplaceString())
+            {
+                return;
+            }
+
             replaceUtil.setIgnoreCaseFlag   (entry.getIgnoreCaseFlag());
             replaceUtil.setRegexFlag        (entry.getRegexFlag());
             replaceUtil.setWholeWordFlag    (entry.getWholeWordFlag());
             replaceUtil.setSearchString     (entry.getFindString());
+            replaceUtil.setReplaceString    (entry.getReplaceString());
         }
     }
 
@@ -629,14 +643,17 @@ void ReplacePanel::replaceAgainForward()
             textData->removeAtMark(textMark, replaceUtil.getMatchLength());
 
             epos += substitutedString.getLength() - replaceUtil.getMatchLength();
+
+            e->moveCursorToTextPosition(epos);
+            e->assureCursorVisible();
         }
-        textPosition = epos;
+//        textPosition = epos;
     }
 
-    replaceUtil.setSearchForwardFlag(true);
-    replaceUtil.setTextPosition(textPosition);
+//    replaceUtil.setSearchForwardFlag(true);
+//    replaceUtil.setTextPosition(textPosition);
 
-    internalFindNext(false);
+//    internalFindNext(false);
 }
 
 
@@ -662,10 +679,15 @@ void ReplacePanel::replaceAgainBackward()
         if (history->getEntryCount() >= 1) {
             SearchHistory::Entry entry = history->getEntry(history->getEntryCount() - 1);
 
+            if (!entry.hasReplaceString())
+            {
+                return;
+            }
             replaceUtil.setIgnoreCaseFlag   (entry.getIgnoreCaseFlag());
             replaceUtil.setRegexFlag        (entry.getRegexFlag());
             replaceUtil.setWholeWordFlag    (entry.getWholeWordFlag());
             replaceUtil.setSearchString     (entry.getFindString());
+            replaceUtil.setReplaceString    (entry.getReplaceString());
         }
     }
 
@@ -693,14 +715,16 @@ void ReplacePanel::replaceAgainBackward()
             textData->removeAtMark(textMark, replaceUtil.getMatchLength());
 
             epos += substitutedString.getLength() - replaceUtil.getMatchLength();
+            
+            e->moveCursorToTextPosition(spos);
+            e->assureCursorVisible();
         }
-        textPosition = spos;
+//        textPosition = spos;
     }
 
-    replaceUtil.setSearchForwardFlag(false);
-    replaceUtil.setTextPosition(textPosition);
-
-    internalFindNext(false);
+//    replaceUtil.setSearchForwardFlag(false);
+//    replaceUtil.setTextPosition(textPosition);
+//    internalFindNext(false);
 }
 
 

@@ -63,12 +63,16 @@ public:
     void scrollPageRight();
     void cursorBeginOfText();
     void cursorEndOfText();
-    void newLine();
+    void insertNewLineAutoIndent();
+    void appendNewLineAutoIndent();
+    void newLineFixedColumnIndentForward();
+    void newLineFixedColumnIndentBackward();
     void backSpace();
     void deleteKey();
     void copyToClipboard();
     void cutToClipboard();
-    void pasteFromClipboard();
+    void pasteFromClipboardForward();
+    void pasteFromClipboardBackward();
     void selectAll();
     void selectionCursorLeft();
     void selectionCursorRight();
@@ -100,6 +104,9 @@ private:
     
     void registerSingleLineEditActionsToEditWidget();
     void registerMultiLineEditActionsToEditWidget();
+
+    void newLineFixedColumnIndent(bool forward);
+    void newLineAutoIndent(bool insert);
 
     WeakPtr<TextEditorWidget> e;
 };
