@@ -42,6 +42,7 @@ return
                                             |do     |for      |return  |try       |catch    |public   |private  |protected |virtual  |while
                                             |switch |case     |break   |continue  |template |typename |struct   |explicit  |mutable  |throw
                                             |new    |operator |sizeof  |extern    |friend   |delete   |volatile
+                                            |default
                                        )\b
                                    ]],
                 maxExtend        = 15,
@@ -220,7 +221,7 @@ return
                                         (?P<declType>(?>\b(?>const|unsigned|struct)\b(?>\s+))*
                                                      (?>(?>\:\:)?\b[A-Za-z_](?:\w|\s*::(?>\s*(?>(?>typename|struct|signed|unsigned|template|const)\s*)*))*)
                                                      (?>(?> \s | \b(?>const|unsigned|struct)\b )*)
-                                                     (?P<templparm><((?>[^<\->;{}]*)|(?P>templparm))*>(?>\s*::\s*\w*(?P>templparm)?)?)?
+                                                     (?P<templparm><((?>[^<\->;|{}]*)|(?P>templparm))*>(?>\s*::\s*\w*(?P>templparm)?)?)?
                                                      
                                                      (?>(?>\s*)(?<=\s)[&*]+(?=\S)
                                                        |(?>\s*)(?<=\s)[&*]+(?=\s*\n)

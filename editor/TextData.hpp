@@ -135,6 +135,9 @@ public:
         bool isAtBeginOfLine() {
             return textData->isBeginOfLine(getPos());
         }
+        bool isAtEndOfLine() {
+            return textData->isEndOfLine(*this);
+        }
     private:
         friend class TextData;
         TextMark(TextData *textData, long index) {
@@ -319,6 +322,9 @@ public:
     }
     bool isEndOfText(MarkHandle m) {
         return marks[m.index].pos == buffer.getLength();
+    }
+    bool isEndOfLine(MarkHandle m) {
+        return isEndOfLine(marks[m.index].pos);
     }
     void setInsertFilterCallback(Callback2<const byte**, long*> filterCallback);
     void registerUpdateListener(UpdateCallback updateCallback);

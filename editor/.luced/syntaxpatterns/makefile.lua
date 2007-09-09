@@ -47,7 +47,7 @@ return
         
         command = {
         	style = "command",
-                beginPattern     = [[^ \t ]],
+                beginPattern     = [[^ [\t>] ]],
                 endPattern       = [[ $ ]],
                 maxBeginExtend   = 1,
                 maxEndExtend     = 1,
@@ -101,7 +101,7 @@ return
 
         keywords = {
                 style = "keyword",
-                pattern      = [[ \b(?> include | ifeq | ifneq | define | endef | endif )\b ]],
+                pattern      = [[ \b(?> include | ifeq | ifdef | ifndef| else | ifneq | define | endef | endif )\b ]],
                 maxExtend    = 20,
         },
         
@@ -137,7 +137,7 @@ return
             endPattern       = [[ \) | (?=\n) ]],
             maxBeginExtend   = 2,
             maxEndExtend     = 1,
-            childPatterns    = {"varSubst1", "varSubst2", "backslashInAssignment", "continuation"},
+            childPatterns    = {"varSubst1", "varSubst2", "varSubst4", "varSubst5", "backslashInAssignment", "continuation"},
         },
 
         varSubst2 = {
@@ -146,13 +146,31 @@ return
             endPattern       = [[ \} | (?=\n) ]],
             maxBeginExtend   = 2,
             maxEndExtend     = 1,
-            childPatterns    = {"varSubst1", "varSubst2", "backslashInAssignment", "continuation"},
+            childPatterns    = {"varSubst1", "varSubst2", "varSubst4", "varSubst5", "backslashInAssignment", "continuation"},
         },
 
         varSubst3 = {
             style = "preproc",
             pattern     = [[ \$. ]],
             maxExtend   = 2,
+        },
+
+        varSubst4 = {
+            style = "preproc",
+            beginPattern     = [[ \( ]],
+            endPattern       = [[ \) | (?=\n) ]],
+            maxBeginExtend   = 1,
+            maxEndExtend     = 1,
+            childPatterns    = {"varSubst1", "varSubst2", "varSubst4", "varSubst5", "backslashInAssignment", "continuation"},
+        },
+
+        varSubst5 = {
+            style = "preproc",
+            beginPattern     = [[ \{ ]],
+            endPattern       = [[ \} | (?=\n) ]],
+            maxBeginExtend   = 1,
+            maxEndExtend     = 1,
+            childPatterns    = {"varSubst1", "varSubst2", "varSubst4", "varSubst5", "backslashInAssignment", "continuation"},
         },
 
 }
