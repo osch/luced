@@ -216,6 +216,8 @@ private:
     
     void processAllExposureEvents();
     
+    void treatConfigUpdate();
+    
     TimeVal cursorNextBlinkTime;
     
     Position position;
@@ -250,6 +252,8 @@ private:
     Region redrawRegion; // collects Rectangles for redraw events
     
     Callback2Container<long,long> lineAndColumnListeners;
+    long lastLineOfLineAndColumnListeners;
+    long lastColumnOfLineAndColumnListeners;
     
     int minWidthChars;
     int minHeightChars;

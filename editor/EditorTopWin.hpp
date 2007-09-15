@@ -110,6 +110,8 @@ public:
 private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
 
+    void treatConfigUpdate();
+
     void handleEscapeKey();
     void handleSaveKey();
     void handleSaveAsKey();

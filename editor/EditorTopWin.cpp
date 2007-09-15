@@ -209,6 +209,9 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 
     keyMapping2.set(               Mod1Mask, XK_c,      Callback0(this,      &EditorTopWin::createCloneWindow));
     keyMapping2.set(               Mod1Mask, XK_l,      Callback0(this,      &EditorTopWin::executeLuaScript));
+
+    
+    GlobalConfig::getInstance()->registerConfigChangedCallback(Callback0(this, &EditorTopWin::treatConfigUpdate));
 }
 
 EditorTopWin::~EditorTopWin()
@@ -216,6 +219,23 @@ EditorTopWin::~EditorTopWin()
     ViewCounterTextDataAccess::decViewCounter(textEditor->getTextData());
     closeModalMessageBox();
 }
+
+void EditorTopWin::treatConfigUpdate()
+{
+    TextData* textData = textEditor->getTextData();
+
+    LanguageMode::Ptr newLanguageMode;
+
+    if (textData->isFileNamePseudo())
+    {
+        newLanguageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
+    }
+    else {
+        newLanguageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(textData->getFileName());
+    }
+    textEditor->getHilitedText()->setLanguageMode(newLanguageMode);
+}
+
 
 void EditorTopWin::show()
 {
@@ -534,7 +554,7 @@ void EditorTopWin::setWindowTitle()
         title << " (modified)";
     }
     title << " - ";
-    title << file.getDirName() << " [" << System::getInstance()->getHostName() << "]";
+    title << file.getDirName() << "/ [" << System::getInstance()->getHostName() << "]";
     setTitle(title);
 }
 

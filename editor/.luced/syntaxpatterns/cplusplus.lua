@@ -28,7 +28,7 @@ return
 
                 childPatterns = {
                                  "emlualine",    "emluaexpr",
-                                 "string",       "char",         "comment1",         "comment2",     "preprop",      "template",     
+                                 "string",       "char",         "comment1",         "comment2",     "comment3", "preprop",      "template",     
                                  "sizeof",
                                  "newcast",      "oldcast",      "namespace",        "struct1", "struct2",      "class",        "keywords",
                                  "typekeywords", "decl",      "operators"  
@@ -183,6 +183,25 @@ return
                 maxBeginExtend   = 2,
                 maxEndExtend     = 2,
                 childPatterns    = { "emlualine", "emluaexpr" },
+        },
+        
+        comment3 = {
+        	style = "comment",
+                beginPattern     = [[(?P<comment3Begin>^\s*\#\s*if\s+0)]],
+                endPattern       = [[(?P<comment3End>^\s*\#\s*endif)]],
+                maxBeginExtend   = 200,
+                maxEndExtend     = 200,
+                beginSubstyles   = {comment3Begin = "preproc"},
+                endSubstyles     = {comment3End   = "preproc"},
+                childPatterns    = { "comment1", "comment2", "comment3a" },
+        },
+        comment3a = {
+        	style = "comment",
+                beginPattern     = [[^\s*\#\s*if]],
+                endPattern       = [[^\s*\#\s*endif]],
+                maxBeginExtend   = 200,
+                maxEndExtend     = 200,
+                childPatterns    = { "comment1", "comment2", "comment3a" },
         },
         
         preprop = {

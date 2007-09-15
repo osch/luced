@@ -148,12 +148,18 @@ public:
 
     void notifyAboutNewFileContent(String absoluteFileName);
 
+    void registerConfigChangedCallback(const Callback0& callback) {
+        configChangedCallbackContainer.registerCallback(callback);
+    }
+
 private:
     friend class SingletonInstance<GlobalConfig>;
     static SingletonInstance<GlobalConfig> instance;
     
     GlobalConfig();
-    
+
+    SyntaxPatterns::Ptr loadSyntaxPatterns(const String& absoluteFileName);
+
     bool         useKeyPressRepeater;
     MicroSeconds keyPressRepeatFirstMicroSecs;
     MicroSeconds keyPressRepeatNextMicroSecs;
@@ -187,6 +193,7 @@ private:
     LanguageModes::Ptr languageModes;
     
     ObjectArray< Callback1Container<SyntaxPatterns::Ptr> > syntaxPatternCallbackContainers;
+    Callback0Container configChangedCallbackContainer;
     
     long x11SelectionChunkLength;
     int buttonInnerSpacing;
@@ -194,6 +201,10 @@ private:
     bool editorPanelOnTop;
     bool keepRunningIfOwningClipboard;
     long maxRegexAssertionLength;
+    
+    String generalConfigFileName;
+    String syntaxPatternDirectory;
+    NameToIndexMap::Ptr languageModeToIndex;
 };
 
 } // namespace LucED

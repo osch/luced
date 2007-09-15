@@ -44,7 +44,7 @@ public:
     GeneralCallbackBase() {}
     virtual ~GeneralCallbackBase() {}
     virtual void disable() = 0;
-    virtual bool isEnabled() = 0;
+    virtual bool isEnabled() const = 0;
 };
 
 class CallbackBase0 : public GeneralCallbackBase
@@ -53,7 +53,7 @@ public:
     typedef OwningPtr<CallbackBase0> Ptr;
 
     virtual ~CallbackBase0() {}
-    virtual void call() = 0;
+    virtual void call() const = 0;
     virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
 };
 
@@ -66,14 +66,14 @@ public:
 
     virtual ~CallbackImpl0() {}
 
-    virtual void call() {
+    virtual void call() const {
         if (objectPtr.isValid())
             (objectPtr->*methodPtr)();
     }
     void disable() {
         objectPtr.invalidate();
     }
-    bool isEnabled() {
+    bool isEnabled() const {
         return objectPtr.isValid();
     }
     virtual WeakPtr<HeapObject> getObjectPtr() const {
@@ -98,7 +98,7 @@ public:
     typedef OwningPtr< CallbackBase1<A1> > Ptr;
 
     virtual ~CallbackBase1() {}
-    virtual void call(A1) = 0;
+    virtual void call(A1) const = 0;
     virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
 };
 
@@ -113,14 +113,14 @@ public:
 
     virtual ~CallbackImpl1() {}
 
-    virtual void call(A1 a) {
+    virtual void call(A1 a) const {
         if (objectPtr.isValid())
             (objectPtr->*methodPtr)(a);
     }
     void disable() {
         objectPtr.invalidate();
     }
-    bool isEnabled() {
+    bool isEnabled() const {
         return objectPtr.isValid();
     }
     virtual WeakPtr<HeapObject> getObjectPtr() const {
@@ -145,7 +145,7 @@ public:
     typedef OwningPtr< CallbackBase2<A1,A2> > Ptr;
 
     virtual ~CallbackBase2() {}
-    virtual void call(A1, A2) = 0;
+    virtual void call(A1, A2) const = 0;
     virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
 };
 
@@ -160,14 +160,14 @@ public:
 
     virtual ~CallbackImpl2() {}
 
-    virtual void call(A1 a1, A2 a2) {
+    virtual void call(A1 a1, A2 a2) const {
         if (objectPtr.isValid())
             (objectPtr->*methodPtr)(a1, a2);
     }
     void disable() {
         objectPtr.invalidate();
     }
-    bool isEnabled() {
+    bool isEnabled() const {
         return objectPtr.isValid();
     }
     virtual WeakPtr<HeapObject> getObjectPtr() const {
@@ -191,7 +191,7 @@ public:
     typedef OwningPtr< CallbackBase3<A1,A2,A3> > Ptr;
 
     virtual ~CallbackBase3() {}
-    virtual void call(A1, A2, A3) = 0;
+    virtual void call(A1, A2, A3) const = 0;
     virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
 };
 
@@ -206,14 +206,14 @@ public:
 
     virtual ~CallbackImpl3() {}
 
-    virtual void call(A1 a1, A2 a2, A3 a3) {
+    virtual void call(A1 a1, A2 a2, A3 a3) const {
         if (objectPtr.isValid())
             (objectPtr->*methodPtr)(a1, a2, a3);
     }
     void disable() {
         objectPtr.invalidate();
     }
-    bool isEnabled() {
+    bool isEnabled() const {
         return objectPtr.isValid();
     }
     virtual WeakPtr<HeapObject> getObjectPtr() const {
@@ -254,14 +254,14 @@ public:
     }
 
 public:
-    void call() {
+    void call() const {
         if (isValid())
             callback->call();
     }
-    bool isValid() {
+    bool isValid() const {
         return callback.isValid() && callback->isEnabled();
     }
-    bool isInvalid() {
+    bool isInvalid() const {
         return !isValid();
     }
     void disable() {
@@ -301,14 +301,14 @@ public:
     }
 
 public:
-    void call(A1 a) {
+    void call(A1 a) const {
         if (isValid())
             callback->call(a);
     }
-    bool isValid() {
+    bool isValid() const {
         return callback.isValid() && callback->isEnabled();
     }
-    bool isInvalid() {
+    bool isInvalid() const {
         return !isValid();
     }
     void disable() {
@@ -344,14 +344,14 @@ public:
     }
 
 public:
-    void call(A1 a1, A2 a2) {
+    void call(A1 a1, A2 a2) const {
         if (isValid())
             callback->call(a1, a2);
     }
-    bool isValid() {
+    bool isValid() const {
         return callback.isValid() && callback->isEnabled();
     }
-    bool isInvalid() {
+    bool isInvalid() const {
         return !isValid();
     }
     void disable() {
@@ -386,14 +386,14 @@ public:
     }
 
 public:
-    void call(A1 a1, A2 a2, A3 a3) {
+    void call(A1 a1, A2 a2, A3 a3) const {
         if (isValid())
             callback->call(a1, a2, a3);
     }
-    bool isValid() {
+    bool isValid() const {
         return callback.isValid() && callback->isEnabled();
     }
-    bool isInvalid() {
+    bool isInvalid() const {
         return !isValid();
     }
     void disable() {

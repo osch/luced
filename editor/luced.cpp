@@ -87,7 +87,6 @@ int main(int argc, char** argv)
                 fprintf(stderr, "[%s]: Could not fork process: %s\n", argv[0], strerror(errno));
                 rc = 32;
             }
-
             #ifdef DEBUG
                 HeapObjectChecker::assertAllCleared();
             #endif

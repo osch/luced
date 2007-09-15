@@ -117,6 +117,8 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       topMarkId(textData->createNewMark()),
       cursorMarkId(textData->createNewMark()),
       opticalCursorColumn(0),
+      lastLineOfLineAndColumnListeners(0),
+      lastColumnOfLineAndColumnListeners(0),
       minWidthChars(10),
       minHeightChars(1),
       bestWidthChars(80),
@@ -171,6 +173,8 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
     redrawRegion = XCreateRegion();
     
     XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
+
+    GlobalConfig::getInstance()->registerConfigChangedCallback(Callback0(this, &TextWidget::treatConfigUpdate));
 }
 
 TextWidget::~TextWidget()
@@ -178,7 +182,14 @@ TextWidget::~TextWidget()
     XDestroyRegion(redrawRegion);
 }
 
-void TextWidget::registerLineAndColumnListener(const Callback2<long,long>& listener) {
+void TextWidget::treatConfigUpdate()
+{
+    lineInfos.setAllInvalid();
+}
+
+void TextWidget::registerLineAndColumnListener(const Callback2<long,long>& listener)
+{
+    listener.call(lastLineOfLineAndColumnListeners, lastColumnOfLineAndColumnListeners);
     lineAndColumnListeners.registerCallback(listener);
 }
 
@@ -1993,7 +2004,14 @@ void TextWidget::flushPendingUpdates()
                     position.w, leftPix);
         updateHorizontalScrollBar = false;
     }
-    lineAndColumnListeners.invokeAllCallbacks(getCursorLineNumber(), getOpticalCursorColumn());
+    long newLine = getCursorLineNumber();
+    long newColumn = getOpticalCursorColumn();
+    if (newLine != lastLineOfLineAndColumnListeners || newColumn != lastColumnOfLineAndColumnListeners)
+    {
+        lastLineOfLineAndColumnListeners = newLine;
+        lastColumnOfLineAndColumnListeners = newColumn;
+        lineAndColumnListeners.invokeAllCallbacks(newLine, newColumn);
+    }
 }
 
 void TextWidget::setDesiredMeasuresInChars(int minWidth, int minHeight, 

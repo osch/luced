@@ -86,8 +86,10 @@ EventDispatcher::TimerRegistration EventDispatcher::getNextTimer()
 }
 
 
-void EventDispatcher::processEvent(XEvent *event)
+bool EventDispatcher::processEvent(XEvent *event)
 {
+    bool hasSomethingDone = false;
+    
     if (event->type == MappingNotify) {
         if (event->xmapping.request == MappingKeyboard
                 || event->xmapping.request == MappingModifier) {
@@ -103,6 +105,7 @@ void EventDispatcher::processEvent(XEvent *event)
                 Callback1<XEvent*> callback = foundListener.get();
                 if (callback.isValid()) {
                     callback.call(event);
+                    hasSomethingDone = true;
                 } else {
                     rootPropertyListeners.remove(property);
                 }
@@ -113,14 +116,17 @@ void EventDispatcher::processEvent(XEvent *event)
             WidgetMap::Value foundWidget = widgetMap.get(event->xany.window);
             if (foundWidget.isValid()) {
                 foundWidget.get()->processEvent(event);
+                hasSomethingDone = true;
             } else {
                 foundWidget = foreignWidgetListeners.get(event->xany.window);
                 if (foundWidget.isValid()){
                     foundWidget.get()->processEvent(event);
+                    hasSomethingDone = true;
                 }   
             }
         }
     }
+    return hasSomethingDone;
 }
 
 void EventDispatcher::doEventLoop()
@@ -132,14 +138,18 @@ void EventDispatcher::doEventLoop()
     Display*           display = GuiRoot::getInstance()->getDisplay();
     XEvent             event;
     
+    bool hasSomethingDone = true;
+    
     while (!doQuit)
     {
-        
-        invokeAllUpdateCallbacks();
+        if (hasSomethingDone) {
+            invokeAllUpdateCallbacks();
+            hasSomethingDone = false;   
+        }
 
         if (XEventsQueued(display, QueuedAfterFlush) > 0) {
             XNextEvent(display, &event);
-            processEvent(&event);
+            hasSomethingDone = processEvent(&event);
         } else 
         {
             XFlush(display);
@@ -183,6 +193,7 @@ void EventDispatcher::doEventLoop()
                         processes.remove(p);
                         processes.append(h);
                         h->execute(diffTime);
+                        hasSomethingDone = true;
                         
                         now.setToCurrentTime();
                         if (now.add(MicroSeconds(100 * 1000)).isLaterThan(nextTimer.when)) {
@@ -206,6 +217,7 @@ void EventDispatcher::doEventLoop()
                     processes.remove(p);
                     processes.append(h);
                     h->execute(100 * 1000);
+                    hasSomethingDone = true;
                 } else {
                     rslt = LucED::select(x11FileDescriptor + 1, &readfds, NULL, NULL, NULL);
                     wasSelectInvoked = true;
@@ -214,7 +226,7 @@ void EventDispatcher::doEventLoop()
             if (wasSelectInvoked) {
                 if (rslt > 0) {
                     XNextEvent(display, &event);
-                    processEvent(&event);
+                    hasSomethingDone = processEvent(&event);
                 } else {
                     if (nextTimer.isValid()) {
                         TimeVal now; 
@@ -254,6 +266,7 @@ void EventDispatcher::doEventLoop()
             if (runningComponents.getLength() == 0) {
                 requestProgramTermination();
             }
+            hasSomethingDone = true;
         }
     }
     doQuit = false;

@@ -99,6 +99,14 @@ public:
     LanguageMode::Ptr getLanguageModeForFile(const String& fileName);
     LanguageMode::Ptr getDefaultLanguageMode();
     
+    int getLength() const {
+        return modes.getLength();
+    }
+    
+    LanguageMode::Ptr get(int i) const {
+        return modes[i];
+    }
+    
 private:
     LanguageModes();
 

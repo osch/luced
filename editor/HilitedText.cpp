@@ -84,7 +84,6 @@ void HilitedText::setLanguageMode(LanguageMode::Ptr languageMode)
     }
 }
 
-
 void HilitedText::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns)
 {
     this->syntaxPatterns = newSyntaxPatterns;
@@ -96,7 +95,7 @@ void HilitedText::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPattern
     this->beginChangedPos = 0;
     this->endChangedPos = 0;
     this->processingEndBeforeRestartFlag = false;
-    this->needsProcessingFlag = true;
+    this->needsProcessingFlag = newSyntaxPatterns.isValid();
     
     hilitingChangedCallbacks.invokeAllCallbacks(this);
 }
@@ -282,6 +281,7 @@ void HilitedText::flushPendingUpdates()
 int HilitedText::process(int requestedProcessingAmount)
 {
     if (!syntaxPatterns.isValid()) {
+        needsProcessingFlag =  false;
         return 0;
     }
     ASSERT(!isEndOfBreaks(startNextProcessIterator));

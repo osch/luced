@@ -132,7 +132,7 @@ String File::getDirName() const
     while (i > 0 && absoluteName[i-1] != '/') {
         i -= 1;
     }
-    return absoluteName.getSubstring(0, i);
+    return absoluteName.getSubstring(0, i - 1);
 }
 
 bool File::exists() const

@@ -109,7 +109,7 @@ languageModes = {
       hardTabWidth = 8,
       softTabWidth = 4,
     },
-    
+
     {
       name            = "makefile",
       fileNameRegex   =  [[^.*/(Makefile|.*\.h?mk)$]],

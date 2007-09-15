@@ -68,7 +68,7 @@ public:
         registerTimerCallback(when, callback);
     }
 
-    void processEvent(XEvent *event);
+    bool processEvent(XEvent *event);
     void doEventLoop();
     void requestProgramTermination() {
         doQuit = true;
