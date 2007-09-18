@@ -233,6 +233,7 @@ void EventDispatcher::doEventLoop()
                         now.setToCurrentTime();
                         if (now.isLaterThan(nextTimer.when)) {
                             nextTimer.callback.call();
+                            hasSomethingDone = true;
                             wasTimerInvoked = true;
                         }
                     }
