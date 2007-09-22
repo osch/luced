@@ -19,46 +19,16 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SAVE_AS_PANEL_HPP
-#define SAVE_AS_PANEL_HPP
+#ifndef EMPTY_CLASS_HPP
+#define EMPTY_CLASS_HPP
 
-#include "DialogPanel.hpp"
-#include "Button.hpp"
-#include "TextEditorWidget.hpp"
-#include "SingleLineEditField.hpp"
-
-namespace LucED {
-
-class SaveAsPanel : public DialogPanel
+namespace LucED
 {
-public:
-    typedef OwningPtr<SaveAsPanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget) {
-        return Ptr(new SaveAsPanel(parent, editorWidget));
-    }
-    
-    virtual void treatFocusIn();
-    
-    virtual void show();
-    
-    void setSaveCallback(Callback<>::Ptr saveCallback) {
-        this->saveCallback = saveCallback;
-    }
-    
-private:
-    SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget);
+class EmptyClass
+{};
 
-    void handleButtonPressed(Button* button);
-
-    Button::Ptr saveButton;
-    Button::Ptr cancelButton;
-    SingleLineEditField::Ptr editField;
-  
-    WeakPtr<TextEditorWidget> editorWidget;
-    Callback<>::Ptr saveCallback;
-};
 
 } // namespace LucED
 
-#endif // SAVE_AS_PANEL_HPP
+#endif // EMPTY_CLASS_HPP

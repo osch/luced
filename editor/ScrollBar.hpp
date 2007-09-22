@@ -40,11 +40,11 @@ public:
         return ScrollBar::Ptr(new ScrollBar(parent, orientation));
     }
 
-    void setChangedValueCallback(const Callback1<long>& callback) {
+    void setChangedValueCallback(Callback<long>::Ptr callback) {
         this->changedValueCallback = callback;
     }
     
-    void setScrollStepCallback(const Callback1<ScrollStep::Type>& callback) {
+    void setScrollStepCallback(Callback<ScrollStep::Type>::Ptr callback) {
         this->scrollStepCallback = callback;
     }
 
@@ -76,8 +76,8 @@ private:
     void hiliteScrollBarPartAtMousePosition(int mouseX, int mouseY);
 
     
-    Callback1<long> changedValueCallback;
-    Callback1<ScrollStep::Type> scrollStepCallback;
+    Callback<long>::Ptr changedValueCallback;
+    Callback<ScrollStep::Type>::Ptr scrollStepCallback;
     
     Position position;
 

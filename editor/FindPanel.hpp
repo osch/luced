@@ -46,8 +46,8 @@ class FindPanel : public DialogPanel,
 public:
     typedef OwningPtr<FindPanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker,
-                                                                         Callback1<DialogPanel*>        panelInvoker)
+    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                                                                         Callback<DialogPanel*>::Ptr        panelInvoker)
     {
         return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker));
     }
@@ -75,10 +75,10 @@ public:
 private:
     friend class FindPanelAccess;
     
-    FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback1<MessageBoxParameter> messageBoxInvoker,
-                                                                 Callback1<DialogPanel*>        panelInvoker);
+    FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                                                                 Callback<DialogPanel*>::Ptr        panelInvoker);
 
-    void executeFind(bool isWrapping, const Callback0& handleContinueSearchButton);
+    void executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearchButton);
 
     void handleButtonPressed(Button* button);
     void handleButtonDefaultKey(Button* button);
@@ -107,8 +107,8 @@ private:
     CheckBox::Ptr caseSensitiveCheckBox;
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
-    Callback1<MessageBoxParameter> messageBoxInvoker;
-    Callback1<DialogPanel*>        panelInvoker;
+    Callback<MessageBoxParameter>::Ptr messageBoxInvoker;
+    Callback<DialogPanel*>::Ptr        panelInvoker;
     Regex regex;
     Direction::Type defaultDirection;
     int historyIndex;

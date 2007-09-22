@@ -131,22 +131,22 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     TextData::Ptr textData = hilitedText->getTextData();
     ViewCounterTextDataAccess::incViewCounter(textData);
     
-    textData->registerModifiedFlagListener(Callback1<bool>(this, &EditorTopWin::handleChangedModifiedFlag));
+    textData->registerModifiedFlagListener(newCallback(this, &EditorTopWin::handleChangedModifiedFlag));
     
-    textData->registerFileNameListener       (Callback1<const String&>   (statusLine, &StatusLine  ::setFileName));
-    textData->registerReadOnlyListener       (Callback1<bool>            (this,       &EditorTopWin::handleChangedReadOnlyFlag));
-    textData->registerFileNameListener       (Callback1<const String&>   (this,       &EditorTopWin::handleNewFileName));
-    textData->registerLengthListener         (Callback1<long>            (statusLine, &StatusLine  ::setFileLength));
-    textEditor->registerLineAndColumnListener(Callback2<long,long>       (statusLine, &StatusLine  ::setLineAndColumn));
+    textData->registerFileNameListener       (newCallback(statusLine, &StatusLine  ::setFileName));
+    textData->registerReadOnlyListener       (newCallback(this,       &EditorTopWin::handleChangedReadOnlyFlag));
+    textData->registerFileNameListener       (newCallback(this,       &EditorTopWin::handleNewFileName));
+    textData->registerLengthListener         (newCallback(statusLine, &StatusLine  ::setFileLength));
+    textEditor->registerLineAndColumnListener(newCallback(statusLine, &StatusLine  ::setLineAndColumn));
     
-    scrollBarV->setChangedValueCallback      (Callback1<long>            (textEditor, &TextWidget::setTopLineNumber));
-    scrollBarH->setChangedValueCallback      (Callback1<long>            (textEditor, &TextWidget::setLeftPix));
+    scrollBarV->setChangedValueCallback      (newCallback(textEditor, &TextWidget::setTopLineNumber));
+    scrollBarH->setChangedValueCallback      (newCallback(textEditor, &TextWidget::setLeftPix));
 
-    scrollBarV->setScrollStepCallback        (Callback1<ScrollStep::Type>(textEditor, &TextEditorWidget::handleScrollStepV));
-    scrollBarH->setScrollStepCallback        (Callback1<ScrollStep::Type>(textEditor, &TextEditorWidget::handleScrollStepH));
+    scrollBarV->setScrollStepCallback        (newCallback(textEditor, &TextEditorWidget::handleScrollStepV));
+    scrollBarH->setScrollStepCallback        (newCallback(textEditor, &TextEditorWidget::handleScrollStepH));
 
-    textEditor->setScrollBarVerticalValueRangeChangedCallback  (Callback3<long,long,long>(scrollBarV, &ScrollBar::setValueRange));
-    textEditor->setScrollBarHorizontalValueRangeChangedCallback(Callback3<long,long,long>(scrollBarH, &ScrollBar::setValueRange));
+    textEditor->setScrollBarVerticalValueRangeChangedCallback  (newCallback(scrollBarV, &ScrollBar::setValueRange));
+    textEditor->setScrollBarHorizontalValueRangeChangedCallback(newCallback(scrollBarH, &ScrollBar::setValueRange));
     
     textEditor->setDesiredMeasuresInChars(
             GlobalConfig::getInstance()->getInitialWindowWidth(),
@@ -180,38 +180,38 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     statusLine->show();
 
     findPanel = FindPanel::create(this, textEditor, 
-                                  Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox),
-                                  Callback1<DialogPanel*>       (this, &EditorTopWin::invokePanel));
+                                  newCallback(this, &EditorTopWin::invokeMessageBox),
+                                  newCallback(this, &EditorTopWin::invokePanel));
 
     replacePanel = ReplacePanel::create(this, textEditor, findPanel,
-                                  Callback1<MessageBoxParameter>(this, &EditorTopWin::invokeMessageBox),
-                                  Callback1<DialogPanel*>       (this, &EditorTopWin::invokePanel));
+                                  newCallback(this, &EditorTopWin::invokeMessageBox),
+                                  newCallback(this, &EditorTopWin::invokePanel));
 
-    keyMapping1.set(            ControlMask, XK_q,      Callback0(this,      &EditorTopWin::requestProgramQuit));
-    keyMapping1.set(            ControlMask, XK_l,      Callback0(this,      &EditorTopWin::invokeGotoLinePanel));
-    keyMapping1.set(            ControlMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelForward));
-    keyMapping1.set(  ControlMask|ShiftMask, XK_f,      Callback0(this,      &EditorTopWin::invokeFindPanelBackward));
-    keyMapping1.set(            ControlMask, XK_r,      Callback0(this,      &EditorTopWin::invokeReplacePanelForward));
-    keyMapping1.set(  ControlMask|ShiftMask, XK_r,      Callback0(this,      &EditorTopWin::invokeReplacePanelBackward));
-    keyMapping1.set(            ControlMask, XK_w,      Callback0(this,      &EditorTopWin::requestCloseWindow));
-    keyMapping1.set(                      0, XK_Escape, Callback0(this,      &EditorTopWin::handleEscapeKey));
-    keyMapping1.set(            ControlMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveKey));
-    keyMapping1.set(  ControlMask|ShiftMask, XK_s,      Callback0(this,      &EditorTopWin::handleSaveAsKey));
-    keyMapping1.set(            ControlMask, XK_n,      Callback0(this,      &EditorTopWin::createEmptyWindow));
-    keyMapping1.set(            ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionForward));
-    keyMapping1.set(  ShiftMask|ControlMask, XK_h,      Callback0(findPanel, &FindPanel::findSelectionBackward));
+    keyMapping1.set(            ControlMask, XK_q,      newCallback(this,      &EditorTopWin::requestProgramQuit));
+    keyMapping1.set(            ControlMask, XK_l,      newCallback(this,      &EditorTopWin::invokeGotoLinePanel));
+    keyMapping1.set(            ControlMask, XK_f,      newCallback(this,      &EditorTopWin::invokeFindPanelForward));
+    keyMapping1.set(  ControlMask|ShiftMask, XK_f,      newCallback(this,      &EditorTopWin::invokeFindPanelBackward));
+    keyMapping1.set(            ControlMask, XK_r,      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
+    keyMapping1.set(  ControlMask|ShiftMask, XK_r,      newCallback(this,      &EditorTopWin::invokeReplacePanelBackward));
+    keyMapping1.set(            ControlMask, XK_w,      newCallback(this,      &EditorTopWin::requestCloseWindow));
+    keyMapping1.set(                      0, XK_Escape, newCallback(this,      &EditorTopWin::handleEscapeKey));
+    keyMapping1.set(            ControlMask, XK_s,      newCallback(this,      &EditorTopWin::handleSaveKey));
+    keyMapping1.set(  ControlMask|ShiftMask, XK_s,      newCallback(this,      &EditorTopWin::handleSaveAsKey));
+    keyMapping1.set(            ControlMask, XK_n,      newCallback(this,      &EditorTopWin::createEmptyWindow));
+    keyMapping1.set(            ControlMask, XK_h,      newCallback(findPanel, &FindPanel::findSelectionForward));
+    keyMapping1.set(  ShiftMask|ControlMask, XK_h,      newCallback(findPanel, &FindPanel::findSelectionBackward));
 
-    keyMapping1.set(            ControlMask, XK_t,      Callback0(replacePanel, &ReplacePanel::replaceAgainForward));
-    keyMapping1.set(  ControlMask|ShiftMask, XK_t,      Callback0(replacePanel, &ReplacePanel::replaceAgainBackward));
+    keyMapping1.set(            ControlMask, XK_t,      newCallback(replacePanel, &ReplacePanel::replaceAgainForward));
+    keyMapping1.set(  ControlMask|ShiftMask, XK_t,      newCallback(replacePanel, &ReplacePanel::replaceAgainBackward));
 
-    keyMapping2.set(            ControlMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainForward));
-    keyMapping2.set(  ControlMask|ShiftMask, XK_g,      Callback0(findPanel, &FindPanel::findAgainBackward));
+    keyMapping2.set(            ControlMask, XK_g,      newCallback(findPanel, &FindPanel::findAgainForward));
+    keyMapping2.set(  ControlMask|ShiftMask, XK_g,      newCallback(findPanel, &FindPanel::findAgainBackward));
 
-    keyMapping2.set(               Mod1Mask, XK_c,      Callback0(this,      &EditorTopWin::createCloneWindow));
-    keyMapping2.set(               Mod1Mask, XK_l,      Callback0(this,      &EditorTopWin::executeLuaScript));
+    keyMapping2.set(               Mod1Mask, XK_c,      newCallback(this,      &EditorTopWin::createCloneWindow));
+    keyMapping2.set(               Mod1Mask, XK_l,      newCallback(this,      &EditorTopWin::executeLuaScript));
 
     
-    GlobalConfig::getInstance()->registerConfigChangedCallback(Callback0(this, &EditorTopWin::treatConfigUpdate));
+    GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &EditorTopWin::treatConfigUpdate));
 }
 
 EditorTopWin::~EditorTopWin()
@@ -267,7 +267,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
 {
     ProcessingResult rslt = NOT_PROCESSED;
 
-    Callback0 m = keyMapping1.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    Callback<>::Ptr m = keyMapping1.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
 
     if (m.isValid())
     {
@@ -275,7 +275,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
             textEditor->hideMousePointer();
         }
 
-        m.call();
+        m->call();
         rslt = EVENT_PROCESSED;
     } 
 
@@ -293,7 +293,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
                textEditor->hideMousePointer();
            }
 
-           m.call();
+           m->call();
            rslt = EVENT_PROCESSED;
        } 
        else
@@ -361,8 +361,8 @@ bool EditorTopWin::checkForFileModifications()
                                               .setMessage(String() << "File '" 
                                                                    << textData->getFileName()
                                                                    << "' was modified on disk.")
-                                              .setDefaultButton(    "R]eload", Callback0(this, &EditorTopWin::reloadFile))
-                                              .setCancelButton (    "C]ancel", Callback0(this, &EditorTopWin::doNotReloadFile))
+                                              .setDefaultButton(    "R]eload", newCallback(this, &EditorTopWin::reloadFile))
+                                              .setCancelButton (    "C]ancel", newCallback(this, &EditorTopWin::doNotReloadFile))
                                               );
         return true;
     }
@@ -434,7 +434,7 @@ void EditorTopWin::invokeGotoLinePanel()
     invokePanel(gotoLinePanel);
 }
 
-void EditorTopWin::invokeSaveAsPanel(const Callback0& saveCallback)
+void EditorTopWin::invokeSaveAsPanel(Callback<>::Ptr saveCallback)
 {
     if (saveAsPanel.isInvalid()) {
         saveAsPanel = SaveAsPanel::create(this, textEditor);
@@ -577,7 +577,7 @@ void EditorTopWin::handleSaveKey()
 {
     try {
         if (textEditor->getTextData()->isFileNamePseudo()) {
-            invokeSaveAsPanel(Callback0(this, &EditorTopWin::handleSaveKey));
+            invokeSaveAsPanel(newCallback(this, &EditorTopWin::handleSaveKey));
         }
         else {
             textEditor->getTextData()->save();
@@ -597,14 +597,14 @@ void EditorTopWin::handleSaveKey()
 
 void EditorTopWin::handleSaveAsKey()
 {
-    invokeSaveAsPanel(Callback0(this, &EditorTopWin::handleSaveKey));
+    invokeSaveAsPanel(newCallback(this, &EditorTopWin::handleSaveKey));
 }
 
 void EditorTopWin::saveAndClose()
 {
     try {
         if (textEditor->getTextData()->isFileNamePseudo()) {
-            invokeSaveAsPanel(Callback0(this, &EditorTopWin::saveAndClose));
+            invokeSaveAsPanel(newCallback(this, &EditorTopWin::saveAndClose));
         }
         else {
             textEditor->getTextData()->save();
@@ -633,8 +633,8 @@ void EditorTopWin::requestCloseWindow()
         invokeMessageBox(MessageBoxParameter().setTitle("Save File")
                                               .setMessage(String() << "Save file '" << file.getBaseName() 
                                                                    << "' before closing?")
-                                              .setDefaultButton(    "S]ave",    Callback0(this, &EditorTopWin::saveAndClose))
-                                              .setAlternativeButton("D]iscard", Callback0(this, &EditorTopWin::requestCloseWindowAndDiscardChanges)));
+                                              .setDefaultButton(    "S]ave",    newCallback(this, &EditorTopWin::saveAndClose))
+                                              .setAlternativeButton("D]iscard", newCallback(this, &EditorTopWin::requestCloseWindowAndDiscardChanges)));
         
     }
     else

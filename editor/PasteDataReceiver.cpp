@@ -64,8 +64,8 @@ void PasteDataReceiver::requestSelectionPasting()
         isReceivingPasteDataFlag = true;
         notifyAboutBeginOfPastingData();
         EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
-                                                              Callback0(this, 
-                                                                        &PasteDataReceiver::handleTimerEvent));
+                                                              newCallback(this, 
+                                                                          &PasteDataReceiver::handleTimerEvent));
         lastPasteEventTime.setToCurrentTime();
     }
 }
@@ -89,8 +89,8 @@ void PasteDataReceiver::requestClipboardPasting()
         isReceivingPasteDataFlag = true;
         notifyAboutBeginOfPastingData();
         EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
-                                                              Callback0(this, 
-                                                                        &PasteDataReceiver::handleTimerEvent));
+                                                              newCallback(this, 
+                                                                          &PasteDataReceiver::handleTimerEvent));
         lastPasteEventTime.setToCurrentTime();
     }
 }
@@ -246,7 +246,7 @@ void PasteDataReceiver::handleTimerEvent()
             isReceivingPasteDataFlag = false;
         } else {
             EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
-                    Callback0(this, &PasteDataReceiver::handleTimerEvent));
+                    newCallback(this, &PasteDataReceiver::handleTimerEvent));
         }
     }
 }

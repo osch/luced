@@ -59,7 +59,7 @@ public:
         return mapped;
     }
 
-    void registerMappingNotifyCallback(const Callback1<bool>& mappingNotifyCallback) {
+    void registerMappingNotifyCallback(Callback<bool>::Ptr mappingNotifyCallback) {
         mappingNotifyCallbacks.registerCallback(mappingNotifyCallback);
     }
     
@@ -87,7 +87,7 @@ private:
     bool mapped;
     bool requestFocusAfterMapped;
     
-    Callback1Container<bool> mappingNotifyCallbacks;
+    CallbackContainer<bool> mappingNotifyCallbacks;
 };
 
 

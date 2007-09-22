@@ -135,20 +135,20 @@ public:
     }
     
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(const String& languageMode,
-                                                         Callback1<SyntaxPatterns::Ptr> changeCallback);
+                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback);
 
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode, 
-                                                         Callback1<SyntaxPatterns::Ptr> changeCallback);
+                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback);
 
     SyntaxPatterns::Ptr getSyntaxPatternsForFileName    (const String& fileName,
-                                                         Callback1<SyntaxPatterns::Ptr> changeCallback);
+                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback);
 
     LanguageMode::Ptr   getLanguageModeForFileName(const String& fileName);
     LanguageMode::Ptr   getDefaultLanguageMode();
 
     void notifyAboutNewFileContent(String absoluteFileName);
 
-    void registerConfigChangedCallback(const Callback0& callback) {
+    void registerConfigChangedCallback(Callback<>::Ptr callback) {
         configChangedCallbackContainer.registerCallback(callback);
     }
 
@@ -192,8 +192,8 @@ private:
     
     LanguageModes::Ptr languageModes;
     
-    ObjectArray< Callback1Container<SyntaxPatterns::Ptr> > syntaxPatternCallbackContainers;
-    Callback0Container configChangedCallbackContainer;
+    ObjectArray< CallbackContainer<SyntaxPatterns::Ptr> > syntaxPatternCallbackContainers;
+    CallbackContainer<> configChangedCallbackContainer;
     
     long x11SelectionChunkLength;
     int buttonInnerSpacing;

@@ -1065,11 +1065,13 @@ void StandardEditActions::backSpace()
 
             const long cursorPos = e->getCursorTextPosition(); 
 
-            if (    (   e->getLastAction() != TextEditorWidget::ACTION_KEYBOARD_INPUT 
-                     && e->getLastAction() != TextEditorWidget::ACTION_TABULATOR)
-                 && e->getBackliteBuffer()->hasActiveSelection())
+            if (e->getBackliteBuffer()->hasActiveSelection())
             {
-                e->getBackliteBuffer()->deactivateSelection();
+                if (  (e->getLastAction() != TextEditorWidget::ACTION_KEYBOARD_INPUT && e->getLastAction() != TextEditorWidget::ACTION_TABULATOR)
+                    || e->getCursorTextPosition() != e->getBackliteBuffer()->getEndSelectionPos())
+                {
+                    e->getBackliteBuffer()->deactivateSelection();
+                }
             }
             e->setCurrentAction(TextEditorWidget::ACTION_KEYBOARD_INPUT);
 
@@ -1154,12 +1156,18 @@ void StandardEditActions::deleteKey()
         }
         else
         {
+            if (e->getBackliteBuffer()->hasActiveSelection())
+            {
+                if (   (e->getLastAction() != TextEditorWidget::ACTION_KEYBOARD_INPUT && e->getLastAction() != TextEditorWidget::ACTION_TABULATOR)
+                    || e->getCursorTextPosition() != e->getBackliteBuffer()->getBeginSelectionPos())
+                {
+                    e->getBackliteBuffer()->deactivateSelection();
+                }
+            }
             e->getTextData()->setMergableHistorySeparator();
             EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->getHistorySectionHolder();
-            
-            if (e->getBackliteBuffer()->hasActiveSelection()) {
-                e->getBackliteBuffer()->deactivateSelection();
-            }
+
+            e->setCurrentAction(TextEditorWidget::ACTION_KEYBOARD_INPUT);
             e->removeAtCursor(1);
         }
     }
@@ -1454,6 +1462,42 @@ void StandardEditActions::selectWordBackward()
     e->rememberCursorPixX();
 }
 
+void StandardEditActions::spaceBackward()
+{
+    if (!e->areCursorChangesDisabled())
+    {
+        e->hideCursor();
+        if (e->hasSelectionOwnership())
+        {
+            long selBegin = e->getBackliteBuffer()->getBeginSelectionPos();
+            long selLength = e->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+            e->moveCursorToTextPosition(selBegin);
+            e->removeAtCursor(selLength);
+            e->releaseSelectionOwnership();
+        }
+        else if (e->getBackliteBuffer()->hasActiveSelection())
+        {
+            if (   (e->getLastAction() != TextEditorWidget::ACTION_KEYBOARD_INPUT && e->getLastAction() != TextEditorWidget::ACTION_TABULATOR)
+                || e->getCursorTextPosition() != e->getBackliteBuffer()->getBeginSelectionPos()
+                || e->getBackliteBuffer()->getBeginSelectionPos() == e->getBackliteBuffer()->getEndSelectionPos())
+            {
+                e->getBackliteBuffer()->deactivateSelection();
+            }
+        }
+        e->insertAtCursor(" ");
+        if (!e->getBackliteBuffer()->hasActiveSelection())
+        {     
+            e->getBackliteBuffer()->activateSelection(e->getCursorTextPosition());
+            e->getBackliteBuffer()->extendSelectionTo(e->getCursorTextPosition() + 1);
+            e->getBackliteBuffer()->makeSelectionToSecondarySelection();
+        }
+        e->setCurrentAction(TextEditorWidget::ACTION_KEYBOARD_INPUT);
+    }
+    e->assureCursorVisible();
+    e->rememberCursorPixX();
+    e->showCursor();
+}
+
 
 void StandardEditActions::findNextStructureElement()
 {
@@ -1551,6 +1595,7 @@ void StandardEditActions::registerSingleLineEditActionsToEditWidget()
 
     e->setEditAction(          ControlMask, XK_space,     this, &StandardEditActions::selectWordForward);
     e->setEditAction(ShiftMask|ControlMask, XK_space,     this, &StandardEditActions::selectWordBackward);
+    e->setEditAction(                    0, XK_Insert,    this, &StandardEditActions::spaceBackward);
     e->setEditAction(          ControlMask, XK_m,         this, &StandardEditActions::gotoMatchingBracket);
     
     e->setEditAction(                    0, XK_Tab,       this, &StandardEditActions::tabForward);

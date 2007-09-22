@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef BACKLITEBUFFER_H
-#define BACKLITEBUFFER_H
+#ifndef BACKLITEBUFFER_HPP
+#define BACKLITEBUFFER_HPP
 
 #include "HeapObject.hpp"
 #include "TextData.hpp"
@@ -67,7 +67,7 @@ public:
         return hasSelection;
     }
 
-    void registerUpdateListener(const Callback1<HilitingBuffer::UpdateInfo>& updateCallback);
+    void registerUpdateListener(Callback<HilitingBuffer::UpdateInfo>::Ptr updateCallback);
 
     long getBeginSelectionPos() {
         ASSERT(hasSelection);
@@ -133,7 +133,7 @@ private:
     TextData::Ptr textData;
     ByteArray buffer;
     long startPos;
-    Callback1Container<HilitingBuffer::UpdateInfo> updateListeners;
+    CallbackContainer<HilitingBuffer::UpdateInfo> updateListeners;
 
     bool hasSelection;
     bool isSelectionAnchorAtBegin;
@@ -145,4 +145,4 @@ private:
 
 } // namespace LucED
 
-#endif // BACKLITEBUFFER_H
+#endif // BACKLITEBUFFER_HPP

@@ -54,7 +54,7 @@ SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget)
     row0->addElement(cancelButton);
     row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
     
-    Callback1<Button*> buttonCallback(this, &SaveAsPanel::handleButtonPressed);
+    Callback<Button*>::Ptr buttonCallback = newCallback(this, &SaveAsPanel::handleButtonPressed);
     saveButton->setButtonPressedCallback(buttonCallback);
     cancelButton->setButtonPressedCallback(buttonCallback);
 
@@ -69,7 +69,7 @@ SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget)
     setFocus(editField);
     saveButton->setAsDefaultButton();
 
-    label0->setMiddleMouseButtonCallback(Callback0(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
+    label0->setMiddleMouseButtonCallback(newCallback(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
 
@@ -94,7 +94,7 @@ void SaveAsPanel::handleButtonPressed(Button* button)
         }
         editorWidget->getTextData()->setRealFileName(newFileName);
         requestCloseFor(this);
-        saveCallback.call();
+        saveCallback->call();
     }
     else if (button == cancelButton) {
         requestCloseFor(this);

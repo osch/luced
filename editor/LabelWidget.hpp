@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LABELWIDGET_H
-#define LABELWIDGET_H
+#ifndef LABELWIDGET_HPP
+#define LABELWIDGET_HPP
 
 #include "String.hpp"
 
@@ -61,7 +61,7 @@ public:
         this->fakeFocusFlag = fakeFocusFlag;
     }
     
-    void setMiddleMouseButtonCallback(Callback0 middleMouseButtonCallback) {
+    void setMiddleMouseButtonCallback(Callback<>::Ptr middleMouseButtonCallback) {
         this->middleMouseButtonCallback = middleMouseButtonCallback;
     }
     
@@ -79,11 +79,11 @@ private:
     bool fakeFocusFlag;
     bool hasForcedMeasuresFlag;
     Measures forcedMeasures;
-    Callback0 middleMouseButtonCallback;
+    Callback<>::Ptr middleMouseButtonCallback;
 };
 
 
 } // namespace LucED
 
 
-#endif // LABELWIDGET_H
+#endif // LABELWIDGET_HPP

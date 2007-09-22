@@ -102,9 +102,9 @@ bool EventDispatcher::processEvent(XEvent *event)
             GuiRootProperty property(event->xproperty.atom);
             RootPropertiesMap::Value foundListener = rootPropertyListeners.get(property);
             if (foundListener.isValid()) {
-                Callback1<XEvent*> callback = foundListener.get();
-                if (callback.isValid()) {
-                    callback.call(event);
+                Callback<XEvent*>::Ptr callback = foundListener.get();
+                if (callback->isEnabled()) {
+                    callback->call(event);
                     hasSomethingDone = true;
                 } else {
                     rootPropertyListeners.remove(property);
@@ -232,7 +232,7 @@ void EventDispatcher::doEventLoop()
                         TimeVal now; 
                         now.setToCurrentTime();
                         if (now.isLaterThan(nextTimer.when)) {
-                            nextTimer.callback.call();
+                            nextTimer.callback->call();
                             hasSomethingDone = true;
                             wasTimerInvoked = true;
                         }
@@ -273,7 +273,7 @@ void EventDispatcher::doEventLoop()
     doQuit = false;
 }
 
-void EventDispatcher::registerUpdateSource(const UpdateCallback& updateCallback)
+void EventDispatcher::registerUpdateSource(Callback<>::Ptr updateCallback)
 {
     updateCallbacks.registerCallback(updateCallback);
 }
@@ -309,7 +309,7 @@ void EventDispatcher::deregisterAllUpdateSourceCallbacksFor(WeakPtr<HeapObject> 
 
 
 void EventDispatcher::registerEventReceiverForRootProperty(GuiRootProperty property,
-                                                           Callback1<XEvent*> callback)
+                                                           Callback<XEvent*>::Ptr callback)
 {
     if (!hasRootPropertyListeners) {
         GuiRoot* root = GuiRoot::getInstance();

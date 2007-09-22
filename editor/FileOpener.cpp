@@ -122,18 +122,18 @@ void FileOpener::openFiles()
                     {
                                         p.setTitle("Error opening files")
                                          .setMessage(ex.getMessage())
-                                         .setAlternativeButton("A]bort all next files", Callback0(this, &FileOpener::handleAbortButton))
-                                         .setCancelButton     ("S]kip to next file",    Callback0(this, &FileOpener::handleSkipFileButton));
+                                         .setAlternativeButton("A]bort all next files", newCallback(this, &FileOpener::handleAbortButton))
+                                         .setCancelButton     ("S]kip to next file",    newCallback(this, &FileOpener::handleSkipFileButton));
                         if (ex.getErrno() == ENOENT) {
-                                        p.setDefaultButton    ("C]reate this file",     Callback0(this, &FileOpener::handleCreateFileButton));
+                                        p.setDefaultButton    ("C]reate this file",     newCallback(this, &FileOpener::handleCreateFileButton));
                         }
                     } 
                     else {
                                         p.setTitle("Error opening file")
                                          .setMessage(ex.getMessage())
-                                         .setCancelButton     ("Ca]ncel", Callback0(this, &FileOpener::handleAbortButton));
+                                         .setCancelButton     ("Ca]ncel",               newCallback(this, &FileOpener::handleAbortButton));
                         if (ex.getErrno() == ENOENT) {
-                                        p.setDefaultButton    ("C]reate this file",     Callback0(this, &FileOpener::handleCreateFileButton));
+                                        p.setDefaultButton    ("C]reate this file",     newCallback(this, &FileOpener::handleCreateFileButton));
                         }
                     }
                     lastTopWin->setModalMessageBox(p);

@@ -43,12 +43,12 @@ public:
         this->message = message;
         return *this;
     }
-    MessageBoxParameter& setDefaultButton(String buttonLabel, const Callback0& callback) {
+    MessageBoxParameter& setDefaultButton(String buttonLabel, Callback<>::Ptr callback) {
         defaultButtonLabel = buttonLabel;
         defaultButtonCallback = callback;
         return *this;
     }
-    MessageBoxParameter& setAlternativeButton(String buttonLabel, const Callback0& callback) {
+    MessageBoxParameter& setAlternativeButton(String buttonLabel, Callback<>::Ptr callback) {
         alternativeButtonLabel = buttonLabel;
         alternativeButtonCallback = callback;
         return *this;
@@ -58,13 +58,13 @@ public:
         return *this;
     }
     
-    MessageBoxParameter& setCancelButton(String buttonLabel, const Callback0& callback) {
+    MessageBoxParameter& setCancelButton(String buttonLabel, Callback<>::Ptr callback) {
         cancelButtonLabel = buttonLabel;
         cancelButtonCallback = callback;
         return *this;
     }
     
-    MessageBoxParameter& setCloseCallback(const Callback0& callback) {
+    MessageBoxParameter& setCloseCallback(Callback<>::Ptr callback) {
         closeCallback= callback;
         return *this;
     }
@@ -76,15 +76,15 @@ private:
     String message;
 
     String defaultButtonLabel;
-    Callback0   defaultButtonCallback;
+    Callback<>::Ptr   defaultButtonCallback;
 
     String alternativeButtonLabel;
-    Callback0   alternativeButtonCallback;
+    Callback<>::Ptr   alternativeButtonCallback;
 
     String cancelButtonLabel;
-    Callback0   cancelButtonCallback;
+    Callback<>::Ptr   cancelButtonCallback;
     
-    Callback0   closeCallback;
+    Callback<>::Ptr   closeCallback;
 };
 
 class MessageBox : public PanelDialogWin
@@ -115,10 +115,10 @@ private:
     Button::Ptr button1;
     Button::Ptr button2;
     Button::Ptr button3;
-    Callback0 defaultButtonCallback;
-    Callback0 alternativeButtonCallback;
-    Callback0 cancelButtonCallback;
-    Callback0 closeCallback;
+    Callback<>::Ptr defaultButtonCallback;
+    Callback<>::Ptr alternativeButtonCallback;
+    Callback<>::Ptr cancelButtonCallback;
+    Callback<>::Ptr closeCallback;
     bool wasClosed;
 };
 

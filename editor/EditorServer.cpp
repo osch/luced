@@ -62,13 +62,13 @@ void EditorServer::startWithCommandlineAndErrorList(HeapObjectArray<String>::Ptr
     serverProperty.setValue("running");
     EventDispatcher::getInstance()
                      ->registerEventReceiverForRootProperty(serverProperty, 
-                                                            Callback1<XEvent*>(this, &EditorServer::processEventForServerProperty));
+                                                            newCallback(this, &EditorServer::processEventForServerProperty));
 
     commandProperty = GuiRootProperty(ClientServerUtil::getDefaultServerCommandProperty());
     commandProperty.remove();
     EventDispatcher::getInstance()
                      ->registerEventReceiverForRootProperty(commandProperty, 
-                                                            Callback1<XEvent*>(this, &EditorServer::processEventForCommandProperty));
+                                                            newCallback(this, &EditorServer::processEventForCommandProperty));
     isStarted = true;
     processCommandline(commandline, errorList);
 }

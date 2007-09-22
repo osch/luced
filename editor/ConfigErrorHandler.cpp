@@ -54,16 +54,16 @@ void ConfigErrorHandler::startMessageBox()
             messageBox = MessageBox::create(MessageBoxParameter()
                                              .setTitle("Error in config file")
                                              .setMessage(String () << "Error within LucED config file '" << errorList->get(0).getConfigFileName() << "'")
-                                             .setDefaultButton    ("E]dit config file",    Callback0(this, &ConfigErrorHandler::handleOpenFilesButton))
-                                             .setCancelButton     ("C]ancel",              Callback0(this, &ConfigErrorHandler::handleAbortButton)));
+                                             .setDefaultButton    ("E]dit config file",    newCallback(this, &ConfigErrorHandler::handleOpenFilesButton))
+                                             .setCancelButton     ("C]ancel",              newCallback(this, &ConfigErrorHandler::handleAbortButton)));
         }
         else
         {
             messageBox = MessageBox::create(MessageBoxParameter()
                                              .setTitle("Error in config files")
                                              .setMessage("There are some errors within LucED config files.")
-                                             .setDefaultButton    ("E]dit config files",   Callback0(this, &ConfigErrorHandler::handleOpenFilesButton))
-                                             .setCancelButton     ("C]ancel",              Callback0(this, &ConfigErrorHandler::handleAbortButton)));
+                                             .setDefaultButton    ("E]dit config files",   newCallback(this, &ConfigErrorHandler::handleOpenFilesButton))
+                                             .setCancelButton     ("C]ancel",              newCallback(this, &ConfigErrorHandler::handleAbortButton)));
         }
         messageBox->setReferingWindowForPositionHintsOnly(lastOpenedTopWin);
         messageBox->show();

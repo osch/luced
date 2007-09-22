@@ -42,15 +42,15 @@ HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
           tryToBeLastBreakIterator(createNewIterator()),
           processHandler(ProcessHandler::create(this, &HilitedText::process, &HilitedText::needsProcessing))
 {
-    textData                      ->registerUpdateListener(Callback1<TextData::UpdateInfo>(this, &HilitedText::treatTextDataUpdate));
-    EventDispatcher::getInstance()->registerUpdateSource  (Callback0                      (this, &HilitedText::flushPendingUpdates));
+    textData                      ->registerUpdateListener(newCallback(this, &HilitedText::treatTextDataUpdate));
+    EventDispatcher::getInstance()->registerUpdateSource  (newCallback(this, &HilitedText::flushPendingUpdates));
 
     this->beginChangedPos = 0;
     this->endChangedPos = 0;
     this->processingEndBeforeRestartFlag = false;
     this->needsProcessingFlag = false;
 
-    this->syntaxPatternUpdateCallback = Callback1<SyntaxPatterns::Ptr>(this, &HilitedText::treatSyntaxPatternsUpdate);
+    this->syntaxPatternUpdateCallback = newCallback(this, &HilitedText::treatSyntaxPatternsUpdate);
     this->syntaxPatterns = GlobalConfig::getInstance()->getSyntaxPatternsForLanguageMode(this->languageMode,
                                                                                          this->syntaxPatternUpdateCallback);
     if (languageMode.isValid()) {
@@ -76,8 +76,8 @@ void HilitedText::setLanguageMode(LanguageMode::Ptr languageMode)
         } else {
             this->breakPointDistance = 50;
         }
-        this->syntaxPatternUpdateCallback.disable();
-        this->syntaxPatternUpdateCallback = Callback1<SyntaxPatterns::Ptr>(this, &HilitedText::treatSyntaxPatternsUpdate);
+        this->syntaxPatternUpdateCallback->disable();
+        this->syntaxPatternUpdateCallback = newCallback(this, &HilitedText::treatSyntaxPatternsUpdate);
 
         treatSyntaxPatternsUpdate(GlobalConfig::getInstance()->getSyntaxPatternsForLanguageMode(this->languageMode,
                                                                                                 this->syntaxPatternUpdateCallback));
@@ -258,7 +258,7 @@ void HilitedText::treatTextDataUpdate(TextData::UpdateInfo u)
     ASSERT(!isEndOfBreaks(startNextProcessIterator));
 }
 
-void HilitedText::registerUpdateListener(const Callback1<UpdateInfo>& updateCallback)
+void HilitedText::registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback)
 {
     updateListeners.registerCallback(updateCallback);
 }

@@ -38,17 +38,17 @@ public:
         return Ptr(new EditFieldGroup());
     }
     
-    void registerCursorFocusLostHandler(const Callback0& handleCursorFocusLost) {
+    void registerCursorFocusLostHandler(Callback<>::Ptr handleCursorFocusLost) {
         listeners.append(handleCursorFocusLost);
     }
     
     void invokeAllCursorFocusLostExceptFor(HeapObject* caller) {
         for (int i = 0; i < listeners.getLength();) {
-            if (!listeners[i].isValid()) {
+            if (!listeners[i]->isEnabled()) {
                 listeners.remove(i);
             } else {
-                if (listeners[i].getObjectPtr() != caller) {
-                    listeners[i].call();
+                if (listeners[i]->getObjectPtr() != caller) {
+                    listeners[i]->call();
                 }
                 ++i;
             }
@@ -61,7 +61,7 @@ public:
     }
     
 private:
-    ObjectArray< Callback0 > listeners;
+    ObjectArray< Callback<>::Ptr > listeners;
     WeakPtr<HeapObject> lastFocusObject;
 };
 

@@ -71,7 +71,7 @@ public:
     virtual void requestCloseChildWindow(TopWin *topWin);
 
     void invokeGotoLinePanel();
-    void invokeSaveAsPanel(const Callback0& saveCallback);
+    void invokeSaveAsPanel(Callback<>::Ptr saveCallback);
     void invokeFindPanelBackward();
     void invokeFindPanelForward();
 

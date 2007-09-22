@@ -36,8 +36,8 @@ using namespace LucED;
 static const char* const REPLACE_IN_SELECTION_BUTTON_TEXT = "All in S]election";
 
 ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel, 
-                           Callback1<MessageBoxParameter> messageBoxInvoker,
-                           Callback1<DialogPanel*>        panelInvoker)
+                           Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                           Callback<DialogPanel*>::Ptr        panelInvoker)
     : DialogPanel(parent),
       e(editorWidget),
       messageBoxInvoker(messageBoxInvoker),
@@ -97,7 +97,7 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     label0->setDesiredMeasures(labelMeasures);
     label1->setDesiredMeasures(labelMeasures);
 
-    Callback1<Button*> buttonCallback(this, &ReplacePanel::handleButtonPressed);
+    Callback<Button*>::Ptr buttonCallback = newCallback(this, &ReplacePanel::handleButtonPressed);
     findNextButton        ->setButtonPressedCallback(buttonCallback);
     findPrevButton        ->setButtonPressedCallback(buttonCallback);
     replaceNextButton     ->setButtonPressedCallback(buttonCallback);
@@ -175,13 +175,13 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     regularExprCheckBox   ->show();
     wholeWordCheckBox     ->show();
     
-    findEditField   ->getTextData()->registerModifiedFlagListener(Callback1<bool>(this, &ReplacePanel::handleModifiedEditField));
-    replaceEditField->getTextData()->registerModifiedFlagListener(Callback1<bool>(this, &ReplacePanel::handleModifiedEditField));
+    findEditField   ->getTextData()->registerModifiedFlagListener(newCallback(this, &ReplacePanel::handleModifiedEditField));
+    replaceEditField->getTextData()->registerModifiedFlagListener(newCallback(this, &ReplacePanel::handleModifiedEditField));
 
     replaceUtil.setTextData(e->getTextData());
 
-    label0->setMiddleMouseButtonCallback(Callback0(findEditField,    &SingleLineEditField::replaceTextWithPrimarySelection));
-    label1->setMiddleMouseButtonCallback(Callback0(replaceEditField, &SingleLineEditField::replaceTextWithPrimarySelection));
+    label0->setMiddleMouseButtonCallback(newCallback(findEditField,    &SingleLineEditField::replaceTextWithPrimarySelection));
+    label1->setMiddleMouseButtonCallback(newCallback(replaceEditField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
 void ReplacePanel::treatFocusOut()
@@ -211,7 +211,7 @@ void ReplacePanel::treatFocusIn()
 }
 
 
-void ReplacePanel::executeFind(bool isWrapping, const Callback0& handleContinueSearchButton)
+void ReplacePanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearchButton)
 {
     try
     {
@@ -262,22 +262,22 @@ void ReplacePanel::executeFind(bool isWrapping, const Callback0& handleContinueS
 
             if (!isWrapping) {
                 if (replaceUtil.isSearchingForward()) {
-                    messageBoxInvoker.call(MessageBoxParameter()
-                                           .setTitle("Not found")
-                                           .setMessage("Continue search from beginning of file?")
-                                           .setDefaultButton("C]ontinue", handleContinueSearchButton)
-                                           .setCancelButton("Ca]ncel"));
+                    messageBoxInvoker->call(MessageBoxParameter()
+                                            .setTitle("Not found")
+                                            .setMessage("Continue search from beginning of file?")
+                                            .setDefaultButton("C]ontinue", handleContinueSearchButton)
+                                            .setCancelButton("Ca]ncel"));
                 } else {
-                    messageBoxInvoker.call(MessageBoxParameter()
-                                           .setTitle("Not found")
-                                           .setMessage("Continue search from end of file?")
-                                           .setDefaultButton("C]ontinue", handleContinueSearchButton)
-                                           .setCancelButton("Ca]ncel"));
+                    messageBoxInvoker->call(MessageBoxParameter()
+                                            .setTitle("Not found")
+                                            .setMessage("Continue search from end of file?")
+                                            .setDefaultButton("C]ontinue", handleContinueSearchButton)
+                                            .setCancelButton("Ca]ncel"));
                 }
             } else {
-                    messageBoxInvoker.call(MessageBoxParameter()
-                                           .setTitle("Not found")
-                                           .setMessage("String was not found"));
+                    messageBoxInvoker->call(MessageBoxParameter()
+                                            .setTitle("Not found")
+                                            .setMessage("String was not found"));
             }
         }
     }
@@ -288,17 +288,17 @@ void ReplacePanel::executeFind(bool isWrapping, const Callback0& handleContinueS
             findEditField->setCursorPosition(position);
             setFocus(findEditField);
         }
-        panelInvoker.call(this);
-        messageBoxInvoker.call(MessageBoxParameter()
-                               .setTitle("Regex Error")
-                               .setMessage(String() << "Error within regular expression: " << ex.getMessage()));
+        panelInvoker->call(this);
+        messageBoxInvoker->call(MessageBoxParameter()
+                                .setTitle("Regex Error")
+                                .setMessage(String() << "Error within regular expression: " << ex.getMessage()));
     }
     catch (LuaException& ex)
     {
-        panelInvoker.call(this);
-        messageBoxInvoker.call(MessageBoxParameter()
-                               .setTitle("Lua Error")
-                               .setMessage(ex.getMessage()));
+        panelInvoker->call(this);
+        messageBoxInvoker->call(MessageBoxParameter()
+                                .setTitle("Lua Error")
+                                .setMessage(ex.getMessage()));
     }
 }
 
@@ -319,8 +319,8 @@ void ReplacePanel::internalFindNext(bool isWrapping)
 
     bool forward = replaceUtil.getSearchForwardFlag();
 
-    executeFind(isWrapping, forward ? Callback0(this, &ReplacePanel::handleContinueAtBeginningButton)
-                                    : Callback0(this, &ReplacePanel::handleContinueAtEndButton));
+    executeFind(isWrapping, forward ? newCallback(this, &ReplacePanel::handleContinueAtBeginningButton)
+                                    : newCallback(this, &ReplacePanel::handleContinueAtEndButton));
 }
 
 void ReplacePanel::handleButtonPressed(Button* button)
@@ -474,10 +474,10 @@ void ReplacePanel::handleButtonPressed(Button* button)
             replaceEditField->setCursorPosition(position);
             setFocus(replaceEditField);
         }
-        panelInvoker.call(this);
-        messageBoxInvoker.call(MessageBoxParameter()
-                               .setTitle("Replace Error")
-                               .setMessage(String() << "Error within replace string: " << ex.getMessage()));
+        panelInvoker->call(this);
+        messageBoxInvoker->call(MessageBoxParameter()
+                                .setTitle("Replace Error")
+                                .setMessage(String() << "Error within replace string: " << ex.getMessage()));
     }
 }
 
@@ -490,7 +490,7 @@ void ReplacePanel::handleContinueSelectionFindAtBeginningButton()
     replaceUtil.setSearchString     (selectionSearchString);
     replaceUtil.setTextPosition     (0);
 
-    executeFind(true, Callback0(this, &ReplacePanel::handleContinueSelectionFindAtBeginningButton));
+    executeFind(true, newCallback(this, &ReplacePanel::handleContinueSelectionFindAtBeginningButton));
 }
 
 void ReplacePanel::handleContinueAtBeginningButton()
@@ -510,7 +510,7 @@ void ReplacePanel::handleContinueSelectionFindAtEndButton()
     replaceUtil.setSearchString     (selectionSearchString);
     replaceUtil.setTextPosition     (e->getTextData()->getLength());
 
-    executeFind(true, Callback0(this, &ReplacePanel::handleContinueSelectionFindAtEndButton));
+    executeFind(true, newCallback(this, &ReplacePanel::handleContinueSelectionFindAtEndButton));
 }
 
 void ReplacePanel::handleContinueAtEndButton()

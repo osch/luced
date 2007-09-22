@@ -40,7 +40,7 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
         SelectionOwner(this),
         PasteDataReceiver(this),
         rememberedCursorPixX(0),
-        scrollRepeatCallback(this, &TextEditorWidget::handleScrollRepeating),
+        scrollRepeatCallback(newCallback(this, &TextEditorWidget::handleScrollRepeating)),
         hasMovingSelection(false),
         cursorChangesDisabled(false),
         buttonPressedCounter(0),
@@ -677,14 +677,14 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
     }
     
     unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
-    Callback0 m = keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    Callback<>::Ptr m = keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
 
-    if (m.isValid())
+    if (m->isEnabled())
     {
         lastActionId = currentActionId;
         currentActionId = ACTION_UNSPECIFIED;
     
-        m.call();
+        m->call();
         return EVENT_PROCESSED;
     }
     else

@@ -30,7 +30,7 @@ SingleLineEditorWidget::SingleLineEditorWidget(GuiWidget *parent,
     : TextEditorWidget(parent, textStyles, hilitedText, BORDER_WIDTH),
       standardActions(StandardEditActions::createSingleLineActions(this))
 {
-    getTextData()->setInsertFilterCallback(Callback2<const byte**,long*>(this, &SingleLineEditorWidget::filterInsert));
+    getTextData()->setInsertFilterCallback(newCallback(this, &SingleLineEditorWidget::filterInsert));
 }
 
 

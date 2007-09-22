@@ -39,7 +39,6 @@ class TextWidget : public GuiWidget
 {
 public:
     typedef OwningPtr<TextWidget> Ptr;
-    typedef Callback1<long> ChangedValueCallback;
     
     virtual ~TextWidget();
     
@@ -135,13 +134,13 @@ public:
     long getTopLineNumber() const {
         return textData->getLineNumberOfMark(topMarkId);
     }
-    void setScrollBarVerticalValueRangeChangedCallback(const Callback3<long,long,long>& callback) {
+    void setScrollBarVerticalValueRangeChangedCallback(Callback<long,long,long>::Ptr callback) {
         scrollBarVerticalValueRangeChangedCallback = callback;
-        scrollBarVerticalValueRangeChangedCallback.call(textData->getNumberOfLines(), visibleLines, getTopLineNumber());
+        scrollBarVerticalValueRangeChangedCallback->call(textData->getNumberOfLines(), visibleLines, getTopLineNumber());
     }
-    void setScrollBarHorizontalValueRangeChangedCallback(const Callback3<long,long,long>& callback) {
+    void setScrollBarHorizontalValueRangeChangedCallback(Callback<long,long,long>::Ptr callback) {
         scrollBarHorizontalValueRangeChangedCallback = callback;
-        scrollBarHorizontalValueRangeChangedCallback.call(totalPixWidth, position.w, leftPix);
+        scrollBarHorizontalValueRangeChangedCallback->call(totalPixWidth, position.w, leftPix);
     }
     void setTopLineNumber(long n);
     void setLeftPix(long leftPix);
@@ -170,7 +169,7 @@ public:
     void hideCursor();
     void showCursor();
 
-    void registerLineAndColumnListener(const Callback2<long,long>& listener);
+    void registerLineAndColumnListener(Callback<long,long>::Ptr listener);
     void notifyAboutHotKeyEventForOtherWidget();
         
 private:
@@ -203,7 +202,7 @@ private:
     void applyTextStyle(int styleIndex);
     void internSetLeftPix(long leftPix);
 
-    Callback0 cursorBlinkCallback;
+    Callback<>::Ptr cursorBlinkCallback;
     void blinkCursor();
 
     void treatTextDataUpdate(TextData::UpdateInfo update);
@@ -235,8 +234,8 @@ private:
     int lineHeight;
     int lineAscent;
     LineInfos lineInfos;
-    Callback3<long,long,long> scrollBarVerticalValueRangeChangedCallback;
-    Callback3<long,long,long> scrollBarHorizontalValueRangeChangedCallback;
+    Callback<long,long,long>::Ptr scrollBarVerticalValueRangeChangedCallback;
+    Callback<long,long,long>::Ptr scrollBarHorizontalValueRangeChangedCallback;
     long totalPixWidth;
     long leftPix;
     long endPos;
@@ -251,7 +250,7 @@ private:
 
     Region redrawRegion; // collects Rectangles for redraw events
     
-    Callback2Container<long,long> lineAndColumnListeners;
+    CallbackContainer<long,long> lineAndColumnListeners;
     long lastLineOfLineAndColumnListeners;
     long lastColumnOfLineAndColumnListeners;
     

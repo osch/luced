@@ -31,7 +31,7 @@ SingletonInstance<KeyPressRepeater> KeyPressRepeater::instance;
 
 
 KeyPressRepeater::KeyPressRepeater()
-    : eventRepeatingCallback(this, &KeyPressRepeater::processRepeatingEvent)
+    : eventRepeatingCallback(newCallback(this, &KeyPressRepeater::processRepeatingEvent))
 {
     isRepeatingFlag = false;
 }

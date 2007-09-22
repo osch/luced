@@ -75,7 +75,7 @@ public:
     
     void setToEditFieldGroup(EditFieldGroup::Ptr editFieldGroup) {
         this->editFieldGroup = editFieldGroup;
-        editFieldGroup->registerCursorFocusLostHandler(Callback0(this, &SingleLineEditField::hideCursor));
+        editFieldGroup->registerCursorFocusLostHandler(newCallback(this, &SingleLineEditField::hideCursor));
     }
     
     void replaceTextWithPrimarySelection() {

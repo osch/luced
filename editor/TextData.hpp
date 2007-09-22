@@ -53,7 +53,6 @@ public:
           : beginChangedPos(beginChangedPos), oldEndChangedPos(oldEndChangedPos), changedAmount(changedAmount)
         {}
     };
-    typedef Callback1<UpdateInfo> UpdateCallback;
 
     class MarkHandle
     {
@@ -326,12 +325,12 @@ public:
     bool isEndOfLine(MarkHandle m) {
         return isEndOfLine(marks[m.index].pos);
     }
-    void setInsertFilterCallback(Callback2<const byte**, long*> filterCallback);
-    void registerUpdateListener(UpdateCallback updateCallback);
-    void registerFileNameListener(Callback1<const String&> fileNameCallback);
-    void registerReadOnlyListener(Callback1<bool> readOnlyCallback);
-    void registerLengthListener(Callback1<long> lengthCallback);
-    void registerModifiedFlagListener(Callback1<bool> modifiedFlagCallback);
+    void setInsertFilterCallback(Callback<const byte**, long*>::Ptr filterCallback);
+    void registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback);
+    void registerFileNameListener(Callback<const String&>::Ptr fileNameCallback);
+    void registerReadOnlyListener(Callback<bool>::Ptr readOnlyCallback);
+    void registerLengthListener(Callback<long>::Ptr lengthCallback);
+    void registerModifiedFlagListener(Callback<bool>::Ptr modifiedFlagCallback);
     
     void flushPendingUpdatesIntern();
     void flushPendingUpdates() {
@@ -448,13 +447,13 @@ private:
         long beginChangedPos, long oldEndChangedPos, long changedAmount,
         long beginLineNumber, long changedLineNumberAmount);
         
-    Callback1Container<UpdateInfo> updateListeners;
-    Callback1Container<const String&> fileNameListeners;
-    Callback1Container<bool> readOnlyListeners;
-    Callback1Container<long> lengthListeners;
-    Callback1Container<bool> changedModifiedFlagListeners;
+    CallbackContainer<UpdateInfo> updateListeners;
+    CallbackContainer<const String&> fileNameListeners;
+    CallbackContainer<bool> readOnlyListeners;
+    CallbackContainer<long> lengthListeners;
+    CallbackContainer<bool> changedModifiedFlagListeners;
     
-    Callback2<const byte**, long*> filterCallback;
+    Callback<const byte**, long*>::Ptr filterCallback;
     
     String fileName;
     long oldLength;

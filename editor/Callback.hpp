@@ -19,397 +19,680 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CALLBACK_H
-#define CALLBACK_H
+#ifndef CALLBACK_HPP
+#define CALLBACK_HPP
 
 #include "HeapObject.hpp"
-#include "ObjectArray.hpp"
 #include "OwningPtr.hpp"
 #include "WeakPtr.hpp"
+#include "EmptyClass.hpp"
 
-namespace LucED {
-
-/*
- * Namespace for internal implementation details.
- */
-namespace CallbackInternal {
-
-//////////////////////////////////////////////////////////////////////////////////////////
-
-class GeneralCallbackBase : public HeapObject
+namespace LucED
 {
-public:
-    typedef OwningPtr<GeneralCallbackBase> Ptr;
 
-    GeneralCallbackBase() {}
-    virtual ~GeneralCallbackBase() {}
-    virtual void disable() = 0;
-    virtual bool isEnabled() const = 0;
-};
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CallbackBase0 : public GeneralCallbackBase
+class CallbackBase0 : public HeapObject
 {
 public:
     typedef OwningPtr<CallbackBase0> Ptr;
-
-    virtual ~CallbackBase0() {}
+    
     virtual void call() const = 0;
-    virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
+    virtual HeapObject* getObjectPtr() const = 0;
+    virtual void disable() = 0;
 };
 
-template<class T> class CallbackImpl0 : public CallbackBase0 
+template
+<
+    class T
+>
+class CallbackImpl0 : public CallbackBase0
 {
 public:
-    static Ptr create(T* objectPtr, void (T::*methodPtr)()) {
-        return Ptr(new CallbackImpl0(objectPtr, methodPtr));
+    typedef OwningPtr<CallbackImpl0> Ptr;
+
+    template
+    <
+        class S
+    >
+    static Ptr create(T* objectPtr, void (S::*methodPtr)()) {
+        return Ptr(new CallbackImpl0(objectPtr, methodPtr));  
     }
-
-    virtual ~CallbackImpl0() {}
-
+    
     virtual void call() const {
         if (objectPtr.isValid())
             (objectPtr->*methodPtr)();
     }
-    void disable() {
-        objectPtr.invalidate();
-    }
-    bool isEnabled() const {
-        return objectPtr.isValid();
-    }
-    virtual WeakPtr<HeapObject> getObjectPtr() const {
+
+    virtual HeapObject* getObjectPtr() const {
         return objectPtr;
     }
+    
+    virtual void disable() {
+        objectPtr.invalidate();
+    }
+
 private:
-    WeakPtr<T> objectPtr;
-    void (T::* methodPtr)();
     
     CallbackImpl0(T* objectPtr, void (T::*methodPtr)())
-        : objectPtr(objectPtr), 
+        : objectPtr(objectPtr),
           methodPtr(methodPtr)
     {}
+
+    WeakPtr<T> objectPtr;
+    void (T::* methodPtr)();
 };
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////////////////////////////////////////
 
-template<class A1> class CallbackBase1 : public GeneralCallbackBase
+template
+<
+    class A1
+>
+class CallbackBase1 : public HeapObject
 {
 public:
-    typedef OwningPtr< CallbackBase1<A1> > Ptr;
+    typedef OwningPtr<CallbackBase1> Ptr;
 
-    virtual ~CallbackBase1() {}
-    virtual void call(A1) const = 0;
-    virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
+    virtual void call(A1 a1) const = 0;
+    virtual HeapObject* getObjectPtr() const = 0;
+    virtual void disable() = 0;
 };
 
-template<class T, class A1> class CallbackImpl1 : public CallbackBase1<A1> 
+template
+<
+    class T,
+    class A1
+>
+class CallbackImpl1 : public CallbackBase1<A1>
 {
 public:
-    typedef OwningPtr< CallbackBase1<A1> > Ptr;
+    typedef OwningPtr<CallbackImpl1> Ptr;
 
-    static Ptr create(T* objectPtr, void (T::*methodPtr)(A1)) {
-        return Ptr(new CallbackImpl1(objectPtr, methodPtr));
+    template
+    <
+        class S
+    >
+    static Ptr create(T* objectPtr, void (S::*methodPtr)(A1)) {
+        return Ptr(new CallbackImpl1(objectPtr, methodPtr));  
     }
-
-    virtual ~CallbackImpl1() {}
-
-    virtual void call(A1 a) const {
+    
+    virtual void call(A1 a1) const {
         if (objectPtr.isValid())
-            (objectPtr->*methodPtr)(a);
+            (objectPtr->*methodPtr)(a1);
     }
-    void disable() {
-        objectPtr.invalidate();
-    }
-    bool isEnabled() const {
-        return objectPtr.isValid();
-    }
-    virtual WeakPtr<HeapObject> getObjectPtr() const {
+
+    virtual HeapObject* getObjectPtr() const {
         return objectPtr;
     }
-private:
-    WeakPtr<T> objectPtr;
-    void (T::* methodPtr)(A1);
-    
-    CallbackImpl1(T* objectPtr, void (T::*methodPtr)(A1))
-        : objectPtr(objectPtr), 
-          methodPtr(methodPtr)
-    {}
-};
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-
-template<class A1, class A2> class CallbackBase2 : public GeneralCallbackBase
-{
-public:
-    typedef OwningPtr< CallbackBase2<A1,A2> > Ptr;
-
-    virtual ~CallbackBase2() {}
-    virtual void call(A1, A2) const = 0;
-    virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
-};
-
-template<class T, class A1, class A2> class CallbackImpl2 : public CallbackBase2<A1,A2> 
-{
-public:
-    typedef OwningPtr< CallbackBase2<A1,A2> > Ptr;
-
-    static Ptr create(T* objectPtr, void (T::*methodPtr)(A1,A2)) {
-        return Ptr(new CallbackImpl2(objectPtr, methodPtr));
+    virtual void disable() {
+        objectPtr.invalidate();
     }
 
-    virtual ~CallbackImpl2() {}
+private:
+    
+    CallbackImpl1(T* objectPtr, void (T::*methodPtr)(A1))
+        : objectPtr(objectPtr),
+          methodPtr(methodPtr)
+    {}
 
+    WeakPtr<T> objectPtr;
+    void (T::* methodPtr)(A1);
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class A1,
+    class A2
+>
+class CallbackBase2 : public HeapObject
+{
+public:
+    typedef OwningPtr<CallbackBase2> Ptr;
+
+    virtual void call(A1 a1, A2 a2) const = 0;
+    virtual HeapObject* getObjectPtr() const = 0;
+    virtual void disable() = 0;
+};
+
+
+template
+<
+    class T,
+    class A1,
+    class A2
+>
+class CallbackImpl2 : public CallbackBase2<A1,A2>
+{
+public:
+    typedef OwningPtr<CallbackImpl2> Ptr;
+
+    template
+    <
+        class S
+    >
+    static Ptr create(T* objectPtr, void (S::*methodPtr)(A1, A2)) {
+        return Ptr(new CallbackImpl2(objectPtr, methodPtr));  
+    }
+    
     virtual void call(A1 a1, A2 a2) const {
         if (objectPtr.isValid())
             (objectPtr->*methodPtr)(a1, a2);
     }
-    void disable() {
-        objectPtr.invalidate();
-    }
-    bool isEnabled() const {
-        return objectPtr.isValid();
-    }
-    virtual WeakPtr<HeapObject> getObjectPtr() const {
+
+    virtual HeapObject* getObjectPtr() const {
         return objectPtr;
     }
-private:
-    WeakPtr<T> objectPtr;
-    void (T::* methodPtr)(A1,A2);
-    
-    CallbackImpl2(T* objectPtr, void (T::*methodPtr)(A1,A2))
-        : objectPtr(objectPtr), 
-          methodPtr(methodPtr)
-    {}
-};
 
-//////////////////////////////////////////////////////////////////////////////////////////
-
-template<class A1, class A2, class A3> class CallbackBase3 : public GeneralCallbackBase
-{
-public:
-    typedef OwningPtr< CallbackBase3<A1,A2,A3> > Ptr;
-
-    virtual ~CallbackBase3() {}
-    virtual void call(A1, A2, A3) const = 0;
-    virtual WeakPtr<HeapObject> getObjectPtr() const = 0;
-};
-
-template<class T, class A1, class A2, class A3> class CallbackImpl3 : public CallbackBase3<A1,A2,A3> 
-{
-public:
-    typedef OwningPtr< CallbackBase3<A1,A2,A3> > Ptr;
-
-    static Ptr create(T* objectPtr, void (T::*methodPtr)(A1,A2,A3)) {
-        return Ptr(new CallbackImpl3(objectPtr, methodPtr));
+    virtual void disable() {
+        objectPtr.invalidate();
     }
 
-    virtual ~CallbackImpl3() {}
+private:
+    
+    CallbackImpl2(T* objectPtr, void (T::*methodPtr)(A1, A2))
+        : objectPtr(objectPtr),
+          methodPtr(methodPtr)
+    {}
 
+    WeakPtr<T> objectPtr;
+    void (T::* methodPtr)(A1 a1, A2 a2);
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class A1,
+    class A2,
+    class A3
+>
+class CallbackBase3 : public HeapObject
+{
+public:
+    typedef OwningPtr<CallbackBase3> Ptr;
+
+    virtual void call(A1 a1, A2 a2, A3 a3) const = 0;
+    virtual HeapObject* getObjectPtr() const = 0;
+    virtual void disable() = 0;
+};
+
+
+template
+<
+    class T,
+    class A1,
+    class A2,
+    class A3
+>
+class CallbackImpl3 : public CallbackBase3<A1,A2,A3>
+{
+public:
+    typedef OwningPtr<CallbackImpl3> Ptr;
+
+    template
+    <
+        class S
+    >
+    static Ptr create(T* objectPtr, void (S::*methodPtr)(A1, A2, A3)) {
+        return Ptr(new CallbackImpl3(objectPtr, methodPtr));  
+    }
+    
     virtual void call(A1 a1, A2 a2, A3 a3) const {
         if (objectPtr.isValid())
             (objectPtr->*methodPtr)(a1, a2, a3);
     }
-    void disable() {
-        objectPtr.invalidate();
-    }
-    bool isEnabled() const {
-        return objectPtr.isValid();
-    }
-    virtual WeakPtr<HeapObject> getObjectPtr() const {
+
+    virtual HeapObject* getObjectPtr() const {
         return objectPtr;
     }
+
+    virtual void disable() {
+        objectPtr.invalidate();
+    }
+
 private:
-    WeakPtr<T> objectPtr;
-    void (T::* methodPtr)(A1,A2,A3);
     
-    CallbackImpl3(T* objectPtr, void (T::*methodPtr)(A1,A2,A3))
-        : objectPtr(objectPtr), 
+    CallbackImpl3(T* objectPtr, void (T::*methodPtr)(A1, A2, A3))
+        : objectPtr(objectPtr),
           methodPtr(methodPtr)
     {}
+
+    WeakPtr<T> objectPtr;
+    void (T::* methodPtr)(A1 a1, A2 a2, A3 a3);
 };
 
-} // namespace CallbackInternal
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
+template
+<
+    class A1 = EmptyClass,
+    class A2 = EmptyClass,
+    class A3 = EmptyClass
+>
+class Callback;
 
-/**
- * Callback with 0 Arguments.
- */
-class Callback0
+
+template
+<
+    class Callback
+>
+class CallbackPtr
 {
+private:
+    typedef typename Callback::ImplPtr ImplPtr;
 public:
-    Callback0() {}
+    CallbackPtr()
+    {}
 
-    template<class S, class T> Callback0(OwningPtr<S> objectPtr, void (T::*methodPtr)()) {
-        this->callback = CallbackInternal::CallbackImpl0<T>::create(objectPtr, methodPtr);
+    CallbackPtr(ImplPtr implPtr)
+        : impl(implPtr)
+    {}
+
+    Callback* operator->() const {
+        return &impl;
     }
 
-    template<class S, class T> Callback0(WeakPtr<S> objectPtr, void (T::*methodPtr)()) {
-        this->callback = CallbackInternal::CallbackImpl0<T>::create(objectPtr, methodPtr);
-    }
-
-    template<class S, class T> Callback0(S* objectPtr, void (T::*methodPtr)()) {
-        this->callback = CallbackInternal::CallbackImpl0<T>::create(objectPtr, methodPtr);
-    }
-
-public:
-    void call() const {
-        if (isValid())
-            callback->call();
-    }
     bool isValid() const {
-        return callback.isValid() && callback->isEnabled();
+        return impl.implPtr.isValid();
     }
-    bool isInvalid() const {
-        return !isValid();
+
+    void invalidate() {
+        impl.implPtr.invalidate();
     }
-    void disable() {
-        if (callback.isValid())
-            callback->disable();
-    }
-    WeakPtr<HeapObject> getObjectPtr() const {
-        if (callback.isValid()) {
-            return callback->getObjectPtr();
-        } else {
-            return WeakPtr<HeapObject>();
+
+private:
+    mutable Callback impl;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Class Callback<>
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+>
+class Callback<EmptyClass,EmptyClass,EmptyClass>
+{
+private:
+    typedef CallbackBase0::Ptr ImplPtr;
+public:
+    typedef CallbackPtr<Callback> Ptr;
+    
+    template<class T, class S> static Ptr create(T* objectPtr, void (S::*methodPtr)());
+
+    template<class T, class S> static Ptr create(OwningPtr<T> objectPtr, void (S::*methodPtr)());
+
+    void call() const {
+        if (implPtr.isValid()) {
+            implPtr->call();
         }
     }
-private:
-    CallbackInternal::CallbackBase0::Ptr callback;
-};
-
-
-/**
- * Callback with 1 Arguments.
- */
-template<class A1> class Callback1
-{
-public:
-    Callback1() {}
-
-    template<class T, class S> Callback1(T* objectPtr, void (S::*methodPtr)(A1)) {
-        this->callback = CallbackInternal::CallbackImpl1<T, A1>::create(objectPtr, methodPtr);
+    
+    bool isEnabled() const {
+        return implPtr.isValid() && implPtr->getObjectPtr() != NULL;
     }
-
-    template<class T, class S> Callback1(WeakPtr<T> objectPtr, void (S::*methodPtr)(A1)) {
-        this->callback = CallbackInternal::CallbackImpl1<T, A1>::create(objectPtr.getRawPtr(), methodPtr);
-    }
-
-    template<class T, class S> Callback1(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1)) {
-        this->callback = CallbackInternal::CallbackImpl1<T, A1>::create(objectPtr.getRawPtr(), methodPtr);
-    }
-
-public:
-    void call(A1 a) const {
-        if (isValid())
-            callback->call(a);
-    }
-    bool isValid() const {
-        return callback.isValid() && callback->isEnabled();
-    }
-    bool isInvalid() const {
-        return !isValid();
-    }
+    
     void disable() {
-        if (callback.isValid())
-            callback->disable();
+        if (implPtr.isValid()) {
+            implPtr->disable();
+            implPtr.invalidate();
+        }
     }
-    WeakPtr<HeapObject> getObjectPtr() const {
-        return callback->getObjectPtr();
+    
+    HeapObject* getObjectPtr() const {
+        if (implPtr.isValid()) {
+            return implPtr->getObjectPtr();
+        } else {
+            return NULL;
+        }
     }
+
 private:
-    typename CallbackInternal::CallbackBase1<A1>::Ptr callback;
+    friend class CallbackPtr<Callback>;
+
+    Callback()
+    {}
+    
+    Callback(ImplPtr implPtr)
+        : implPtr(implPtr)
+    {}
+
+    ImplPtr implPtr;
 };
 
 
-/**
- * Callback with 2 Arguments.
- */
-template<class A1, class A2> class Callback2
+
+template
+<
+    class T, class S
+>
+inline Callback<EmptyClass,EmptyClass,EmptyClass>::Ptr Callback<EmptyClass,EmptyClass,EmptyClass>::create(T* objectPtr, void (S::*methodPtr)())
 {
+    return Ptr(CallbackImpl0<T>::create(objectPtr, methodPtr));
+}
+
+
+template
+<
+    class T, class S
+>
+inline Callback<EmptyClass,EmptyClass,EmptyClass>::Ptr Callback<EmptyClass,EmptyClass,EmptyClass>::create(OwningPtr<T> objectPtr, void (S::*methodPtr)())
+{
+    return Ptr(CallbackImpl0<T>::create(objectPtr.getRawPtr(), methodPtr));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Class Callback<A1>
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class A1
+>
+class Callback<A1,EmptyClass,EmptyClass>
+{
+private:
+    typedef typename CallbackBase1<A1>::Ptr ImplPtr;
 public:
-    Callback2() {}
-
-    template<class T, class S> Callback2(T* objectPtr, void (S::*methodPtr)(A1,A2)) {
-        this->callback = CallbackInternal::CallbackImpl2<T, A1, A2>::create(objectPtr, methodPtr);
+    typedef CallbackPtr<Callback> Ptr;
+    
+    template<class T, class S> static Ptr create(T* objectPtr, void (S::*methodPtr)(A1)) {
+        return Ptr(CallbackImpl1<T,A1>::create(objectPtr, methodPtr));
+    }
+    template<class T, class S> static Ptr create(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1)) {
+        return Ptr(CallbackImpl1<T,A1>::create(objectPtr.getRawPtr(), methodPtr));
     }
 
-    template<class T, class S> Callback2(WeakPtr<T> objectPtr, void (S::*methodPtr)(A1,A2)) {
-        this->callback = CallbackInternal::CallbackImpl2<T, A1, A2>::create(objectPtr.getRawPtr(), methodPtr);
+    void call(A1 a1) const {
+        if (implPtr.isValid()) {
+            implPtr->call(a1);
+        }
+    }
+    
+    bool isEnabled() const {
+        return implPtr.isValid() && implPtr->getObjectPtr() != NULL;
+    }
+    
+    void disable() {
+        if (implPtr.isValid()) {
+            implPtr->disable();
+            implPtr.invalidate();
+        }
+    }
+    
+    HeapObject* getObjectPtr() const {
+        if (implPtr.isValid()) {
+            return implPtr->getObjectPtr();
+        } else {
+            return NULL;
+        }
     }
 
-    template<class T, class S> Callback2(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1,A2)) {
-        this->callback = CallbackInternal::CallbackImpl2<T, A1, A2>::create(objectPtr.getRawPtr(), methodPtr);
-    }
+private:
+    friend class CallbackPtr<Callback>;
 
+    Callback()
+    {}
+    
+    Callback(ImplPtr implPtr)
+        : implPtr(implPtr)
+    {}
+
+    ImplPtr implPtr;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Class Callback<A1,A2>
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class A1,
+    class A2
+>
+class Callback<A1,A2,EmptyClass>
+{
+private:
+    typedef typename CallbackBase2<A1,A2>::Ptr ImplPtr;
 public:
+    typedef CallbackPtr<Callback> Ptr;
+    
+    template<class T, class S> static Ptr create(T* objectPtr, void (S::*methodPtr)(A1,A2)) {
+        return Ptr(CallbackImpl2<T,A1,A2>::create(objectPtr, methodPtr));
+    }
+    template<class T, class S> static Ptr create(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1,A2)) {
+        return Ptr(CallbackImpl2<T,A1,A2>::create(objectPtr.getRawPtr(), methodPtr));
+    }
+
     void call(A1 a1, A2 a2) const {
-        if (isValid())
-            callback->call(a1, a2);
+        if (implPtr.isValid()) {
+            implPtr->call(a1, a2);
+        }
     }
-    bool isValid() const {
-        return callback.isValid() && callback->isEnabled();
+    
+    bool isEnabled() const {
+        return implPtr.isValid() && implPtr->getObjectPtr() != NULL;
     }
-    bool isInvalid() const {
-        return !isValid();
-    }
+    
     void disable() {
-        if (callback.isValid())
-            callback->disable();
+        if (implPtr.isValid()) {
+            implPtr->disable();
+            implPtr.invalidate();
+        }
     }
-    WeakPtr<HeapObject> getObjectPtr() const {
-        return callback->getObjectPtr();
+    
+    HeapObject* getObjectPtr() const {
+        if (implPtr.isValid()) {
+            return implPtr->getObjectPtr();
+        } else {
+            return NULL;
+        }
     }
+
 private:
-    typename CallbackInternal::CallbackBase2<A1,A2>::Ptr callback;
+    friend class CallbackPtr<Callback>;
+
+    Callback()
+    {}
+    
+    Callback(ImplPtr implPtr)
+        : implPtr(implPtr)
+    {}
+
+    ImplPtr implPtr;
 };
 
-/**
- * Callback with 3 Arguments.
- */
-template<class A1, class A2, class A3> class Callback3
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Class Callback<A1,A2>
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class A1,
+    class A2,
+    class A3
+>
+class Callback
 {
-public:
-    Callback3() {}
-
-    template<class T, class S> Callback3(T* objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
-        this->callback = CallbackInternal::CallbackImpl3<T, A1, A2, A3>::create(objectPtr, methodPtr);
-    }
-
-    template<class T, class S> Callback3(WeakPtr<T> objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
-        this->callback = CallbackInternal::CallbackImpl3<T, A1, A2, A3>::create(objectPtr.getRawPtr(), methodPtr);
-    }
-
-    template<class T, class S> Callback3(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
-        this->callback = CallbackInternal::CallbackImpl3<T, A1, A2, A3>::create(objectPtr.getRawPtr(), methodPtr);
-    }
-
-public:
-    void call(A1 a1, A2 a2, A3 a3) const {
-        if (isValid())
-            callback->call(a1, a2, a3);
-    }
-    bool isValid() const {
-        return callback.isValid() && callback->isEnabled();
-    }
-    bool isInvalid() const {
-        return !isValid();
-    }
-    void disable() {
-        if (callback.isValid())
-            callback->disable();
-    }
-    WeakPtr<HeapObject> getObjectPtr() const {
-        return callback->getObjectPtr();
-    }
 private:
-    typename CallbackInternal::CallbackBase3<A1,A2,A3>::Ptr callback;
+    typedef typename CallbackBase3<A1,A2,A3>::Ptr ImplPtr;
+public:
+    typedef CallbackPtr<Callback> Ptr;
+    
+    template<class T, class S> static Ptr create(T* objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
+        return Ptr(CallbackImpl3<T,A1,A2,A3>::create(objectPtr, methodPtr));
+    }
+    template<class T, class S> static Ptr create(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
+        return Ptr(CallbackImpl3<T,A1,A2,A3>::create(objectPtr.getRawPtr(), methodPtr));
+    }
+
+    void call(A1 a1, A2 a2, A3 a3) const {
+        if (implPtr.isValid()) {
+            implPtr->call(a1, a2, a3);
+        }
+    }
+    
+    bool isEnabled() const {
+        return implPtr.isValid() && implPtr->getObjectPtr() != NULL;
+    }
+    
+    void disable() {
+        if (implPtr.isValid()) {
+            implPtr->disable();
+            implPtr.invalidate();
+        }
+    }
+    
+    HeapObject* getObjectPtr() const {
+        if (implPtr.isValid()) {
+            return implPtr->getObjectPtr();
+        } else {
+            return NULL;
+        }
+    }
+
+    
+private:
+    friend class CallbackPtr<Callback>;
+    
+    Callback()
+    {}
+    
+    Callback(ImplPtr implPtr)
+        : implPtr(implPtr)
+    {}
+
+    ImplPtr implPtr;
 };
 
-//////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class X,
+    class Y,
+    class Z
+>
+X newCallback(Y objectPtr, Z methodPtr);
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Function newCallback()
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class T, class S
+>
+typename Callback<>::Ptr newCallback(OwningPtr<T> objectPtr, void (S::*methodPtr)()) {
+    return Callback<>::create(objectPtr, methodPtr);
+}
+
+template
+<
+    class T, class S
+>
+typename Callback<>::Ptr newCallback(T* objectPtr, void (S::*methodPtr)()) {
+    return Callback<>::create(objectPtr, methodPtr);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Function newCallback()
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class T, class S,
+    class A1
+>
+typename Callback<A1>::Ptr newCallback(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1)) {
+    return Callback<A1>::create(objectPtr, methodPtr);
+}
+
+template
+<
+    class T, class S,
+    class A1
+>
+typename Callback<A1>::Ptr newCallback(T* objectPtr, void (S::*methodPtr)(A1)) {
+    return Callback<A1>::create(objectPtr, methodPtr);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Function newCallback()
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class T, class S,
+    class A1,
+    class A2
+>
+typename Callback<A1, A2>::Ptr newCallback(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1,A2)) {
+    return Callback<A1, A2>::create(objectPtr, methodPtr);
+}
+
+template
+<
+    class T, class S,
+    class A1,
+    class A2
+>
+typename Callback<A1, A2>::Ptr newCallback(T* objectPtr, void (S::*methodPtr)(A1,A2)) {
+    return Callback<A1, A2>::create(objectPtr, methodPtr);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Function newCallback()
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class T, class S,
+    class A1,
+    class A2,
+    class A3
+>
+typename Callback<A1, A2, A3>::Ptr newCallback(OwningPtr<T> objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
+    return Callback<A1, A2, A3>::create(objectPtr, methodPtr);
+}
+
+template
+<
+    class T, class S,
+    class A1,
+    class A2,
+    class A3
+>
+typename Callback<A1, A2, A3>::Ptr newCallback(T* objectPtr, void (S::*methodPtr)(A1,A2,A3)) {
+    return Callback<A1, A2, A3>::create(objectPtr, methodPtr);
+}
 
 
 } // namespace LucED
 
-#endif // CALLBACK_H
+#endif // CALLBACK_HPP

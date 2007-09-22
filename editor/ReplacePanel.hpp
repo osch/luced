@@ -48,8 +48,8 @@ public:
     typedef OwningPtr<ReplacePanel> Ptr;
 
     static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
-                      Callback1<MessageBoxParameter> messageBoxInvoker,
-                      Callback1<DialogPanel*>        panelInvoker)
+                      Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                      Callback<DialogPanel*>::Ptr        panelInvoker)
     {
         return Ptr(new ReplacePanel(parent, editorWidget, findPanel, messageBoxInvoker, panelInvoker));
     }
@@ -76,10 +76,10 @@ public:
     
 private:
     ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
-                 Callback1<MessageBoxParameter> messageBoxInvoker,
-                 Callback1<DialogPanel*>        panelInvoker);
+                 Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                 Callback<DialogPanel*>::Ptr        panelInvoker);
 
-    void executeFind(bool isWrapping, const Callback0& handleContinueSearchButton);
+    void executeFind(bool isWrapping, Callback<>::Ptr  handleContinueSearchButton);
 
     void handleButtonPressed(Button* button);
 
@@ -112,8 +112,8 @@ private:
     CheckBox::Ptr caseSensitiveCheckBox;
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
-    Callback1<MessageBoxParameter> messageBoxInvoker;
-    Callback1<DialogPanel*>        panelInvoker;
+    Callback<MessageBoxParameter>::Ptr messageBoxInvoker;
+    Callback<DialogPanel*>::Ptr        panelInvoker;
     Regex regex;
     Direction::Type defaultDirection;
     int historyIndex;

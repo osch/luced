@@ -109,7 +109,7 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
 
       position(GuiWidget::getPosition()),
       textData(hilitedText->getTextData()),
-      cursorBlinkCallback(this, &TextWidget::blinkCursor),
+      cursorBlinkCallback(newCallback(this, &TextWidget::blinkCursor)),
       textStyles(textStyles),
       hilitingBuffer(HilitingBuffer::create(hilitedText)),
       backliteBuffer(BackliteBuffer::create(textData)),
@@ -163,18 +163,18 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
     setBitGravity(NorthWestGravity);
             
     textData->flushPendingUpdates();
-    textData->registerUpdateListener(Callback1<TextData::UpdateInfo>(this, &TextWidget::treatTextDataUpdate));
+    textData->registerUpdateListener(newCallback(this, &TextWidget::treatTextDataUpdate));
     
-    EventDispatcher::getInstance()->registerUpdateSource(Callback0(this, &TextWidget::flushPendingUpdates));
+    EventDispatcher::getInstance()->registerUpdateSource(newCallback(this, &TextWidget::flushPendingUpdates));
 
-    hilitingBuffer->registerUpdateListener(Callback1<HilitingBuffer::UpdateInfo>(this, &TextWidget::treatHilitingUpdate));
-    backliteBuffer->registerUpdateListener(Callback1<HilitingBuffer::UpdateInfo>(this, &TextWidget::treatHilitingUpdate));
+    hilitingBuffer->registerUpdateListener(newCallback(this, &TextWidget::treatHilitingUpdate));
+    backliteBuffer->registerUpdateListener(newCallback(this, &TextWidget::treatHilitingUpdate));
     
     redrawRegion = XCreateRegion();
     
     XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
 
-    GlobalConfig::getInstance()->registerConfigChangedCallback(Callback0(this, &TextWidget::treatConfigUpdate));
+    GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TextWidget::treatConfigUpdate));
 }
 
 TextWidget::~TextWidget()
@@ -187,9 +187,9 @@ void TextWidget::treatConfigUpdate()
     lineInfos.setAllInvalid();
 }
 
-void TextWidget::registerLineAndColumnListener(const Callback2<long,long>& listener)
+void TextWidget::registerLineAndColumnListener(Callback<long,long>::Ptr listener)
 {
-    listener.call(lastLineOfLineAndColumnListeners, lastColumnOfLineAndColumnListeners);
+    listener->call(lastLineOfLineAndColumnListeners, lastColumnOfLineAndColumnListeners);
     lineAndColumnListeners.registerCallback(listener);
 }
 
@@ -1992,14 +1992,14 @@ long TextWidget::getOpticalCursorColumn() const
 void TextWidget::flushPendingUpdates()
 {
     if (updateVerticalScrollBar) {
-        scrollBarVerticalValueRangeChangedCallback.call(
+        scrollBarVerticalValueRangeChangedCallback->call(
                     textData->getNumberOfLines(),
                     visibleLines, 
                     getTopLineNumber());
         updateVerticalScrollBar = false;
     }
     if (updateHorizontalScrollBar) {
-        scrollBarHorizontalValueRangeChangedCallback.call(
+        scrollBarHorizontalValueRangeChangedCallback->call(
                     totalPixWidth,
                     position.w, leftPix);
         updateHorizontalScrollBar = false;

@@ -92,6 +92,7 @@ public:
     void redo();
     void selectWordForward();
     void selectWordBackward();
+    void spaceBackward();
     void tabForward();
     void gotoMatchingBracket();
     void shiftBlockLeft();

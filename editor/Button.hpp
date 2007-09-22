@@ -46,17 +46,17 @@ public:
     
     int getStandardHeight();
 
-    void setButtonPressedCallback(const Callback1<Button*>& callback) {
+    void setButtonPressedCallback(Callback<Button*>::Ptr callback) {
         pressedCallback1 = callback;
-        pressedCallback0.disable();
+        pressedCallback0.invalidate();
     }
     
-    void setButtonPressedCallback(const Callback0& callback) {
+    void setButtonPressedCallback(Callback<>::Ptr callback) {
         pressedCallback0 = callback;
-        pressedCallback1.disable();
+        pressedCallback1.invalidate();
     }
     
-    void setButtonDefaultKeyCallback(const Callback1<Button*>& callback) {
+    void setButtonDefaultKeyCallback(Callback<Button*>::Ptr callback) {
         buttonDefaultKeyCallback = callback;
     }
     
@@ -92,9 +92,9 @@ private:
     bool isButtonPressed;
     bool isMouseButtonPressed;
     bool isMouseOverButton;
-    Callback1<Button*> pressedCallback1;
-    Callback0          pressedCallback0;
-    Callback1<Button*> buttonDefaultKeyCallback;
+    Callback<Button*>::Ptr pressedCallback1;
+    Callback<>::Ptr        pressedCallback0;
+    Callback<Button*>::Ptr buttonDefaultKeyCallback;
 
     bool isDefaultButton;
     bool isExplicitDefaultButton;

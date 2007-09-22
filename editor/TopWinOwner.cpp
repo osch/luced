@@ -40,7 +40,7 @@ void TopWinOwner::requestCloseChildWindow(TopWin* topWin)
             toBeClosedTopWins.append(ownedTopWins[i]);
             ownedTopWins.remove(i);
             if (!hasRegisteredAsUpdateSource) {
-                EventDispatcher::getInstance()->registerUpdateSource(Callback0(this, &TopWinOwner::closePendingChilds));
+                EventDispatcher::getInstance()->registerUpdateSource(newCallback(this, &TopWinOwner::closePendingChilds));
                 hasRegisteredAsUpdateSource = true;
             }
             if (lastFocusedOwnedTopWin == topWin) {

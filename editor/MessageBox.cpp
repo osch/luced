@@ -79,7 +79,7 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
     if (p.defaultButtonCallback.isValid()) {
         defaultButtonCallback = p.defaultButtonCallback;
     }
-    Callback1<Button*> buttonCallback(this, &MessageBox::handleButtonPressed);
+    Callback<Button*>::Ptr buttonCallback = newCallback(this, &MessageBox::handleButtonPressed);
     
     if (button1.isValid()) {
         button1->setButtonPressedCallback(buttonCallback);
@@ -151,10 +151,10 @@ void MessageBox::handleButtonPressed(Button* button)
     if (!wasClosed)
     {
 
-        if (button == button1 && defaultButtonCallback.isValid()) {
+        if (button == button1 && defaultButtonCallback->isEnabled()) {
                 PanelDialogWin::requestCloseWindow();
                 wasClosed = true;
-                defaultButtonCallback.call();
+                defaultButtonCallback->call();
         } else {
             if (button == button1 && button3.isInvalid()) {
                 PanelDialogWin::requestCloseWindow();
@@ -163,12 +163,12 @@ void MessageBox::handleButtonPressed(Button* button)
             else if (button == button3 && button3.isValid()) {
                 PanelDialogWin::requestCloseWindow();
                 wasClosed = true;
-                cancelButtonCallback.call();
+                cancelButtonCallback->call();
             }
             else if (button == button2) {
                 PanelDialogWin::requestCloseWindow();
                 wasClosed = true;
-                alternativeButtonCallback.call();
+                alternativeButtonCallback->call();
             }
         }
     }
@@ -178,10 +178,10 @@ void MessageBox::requestCloseWindow()
 {
     PanelDialogWin::requestCloseWindow();
     if (!wasClosed) {
-        if (closeCallback.isValid()) {
-            closeCallback.call();
+        if (closeCallback->isEnabled()) {
+            closeCallback->call();
         } else {
-            cancelButtonCallback.call();
+            cancelButtonCallback->call();
         }
         wasClosed = true;
     }

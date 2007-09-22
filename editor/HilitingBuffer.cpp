@@ -44,14 +44,14 @@ HilitingBuffer::HilitingBuffer(HilitedText::Ptr hiliting)
     maxDistance(calculateMaxDistance(hiliting))
     
 {
-    hiliting->registerHilitingChangedCallback(Callback1<HilitedText*>(this, &HilitingBuffer::treatChangedHiliting));
+    hiliting->registerHilitingChangedCallback(newCallback(this, &HilitingBuffer::treatChangedHiliting));
 
     textData = hiliting->getTextData();
     if (syntaxPatterns.isValid()) {
         ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
-    hiliting->registerUpdateListener(Callback1<HilitedText::UpdateInfo>(this, &HilitingBuffer::treatHilitingUpdate));
-    textData->registerUpdateListener(Callback1<TextData   ::UpdateInfo>(this, &HilitingBuffer::treatTextDataUpdate));
+    hiliting->registerUpdateListener(newCallback(this, &HilitingBuffer::treatHilitingUpdate));
+    textData->registerUpdateListener(newCallback(this, &HilitingBuffer::treatTextDataUpdate));
 }
 
 
@@ -284,7 +284,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
     }
 }
 
-void HilitingBuffer::registerUpdateListener(const Callback1<UpdateInfo>& updateCallback)
+void HilitingBuffer::registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback)
 {
     updateListeners.registerCallback(updateCallback);
 }

@@ -27,16 +27,32 @@
 
 namespace LucED {
 
-class Callback0Container
+
+
+template
+<
+    class A1 = EmptyClass,
+    class A2 = EmptyClass,
+    class A3 = EmptyClass
+>
+class CallbackContainer;
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+>
+class CallbackContainer<EmptyClass,EmptyClass,EmptyClass>
 {
 public:
-    void registerCallback(const Callback0& callback) {
+    void registerCallback(Callback<>::Ptr callback) {
         listeners.append(callback);
     }
-    
+
     void deregisterAllCallbacksFor(HeapObject* callbackObject) {
         for (int i = 0; i < listeners.getLength();) {
-            if (listeners[i].getObjectPtr() == callbackObject) {
+            if (listeners[i]->getObjectPtr() == callbackObject) {
                 listeners.remove(i);
             } else {
                 ++i;
@@ -46,29 +62,37 @@ public:
 
     void invokeAllCallbacks() {
         for (long i = 0; i < listeners.getLength();) {
-            if (!listeners[i].isValid()) {
+            if (!listeners[i]->isEnabled()) {
                 listeners.remove(i);
             } else {
-                listeners[i].call();
+                listeners[i]->call();
                 ++i;
             }
         }
     }
 
+
 private:
-    ObjectArray< Callback0 > listeners;
+    ObjectArray< Callback<>::Ptr > listeners;
 };
 
-template<class T> class Callback1Container
+/////////////////////////////////////////////////////////////////////////////////////////
+
+
+template
+<
+    class A1
+>
+class CallbackContainer<A1,EmptyClass,EmptyClass>
 {
 public:
-    void registerCallback(const Callback1<T>& callback) {
+    void registerCallback(typename Callback<A1>::Ptr callback) {
         listeners.append(callback);
     }
 
     void deregisterAllCallbacksFor(HeapObject* callbackObject) {
         for (int i = 0; i < listeners.getLength();) {
-            if (listeners[i].getObjectPtr() == callbackObject) {
+            if (listeners[i]->getObjectPtr() == callbackObject) {
                 listeners.remove(i);
             } else {
                 ++i;
@@ -76,31 +100,39 @@ public:
         }
     }
 
-    void invokeAllCallbacks(T argument) {
+    void invokeAllCallbacks(A1 argument1) {
         for (long i = 0; i < listeners.getLength();) {
-            if (!listeners[i].isValid()) {
+            if (!listeners[i]->isEnabled()) {
                 listeners.remove(i);
             } else {
-                listeners[i].call(argument);
+                listeners[i]->call(argument1);
                 ++i;
             }
         }
     }
 
 private:
-    ObjectArray< Callback1<T> > listeners;
+    ObjectArray< typename Callback<A1>::Ptr > listeners;
 };
 
-template<class S, class T> class Callback2Container
+/////////////////////////////////////////////////////////////////////////////////////////
+
+
+template
+<
+    class A1,
+    class A2
+>
+class CallbackContainer<A1,A2,EmptyClass>
 {
 public:
-    void registerCallback(const Callback2<S,T>& callback) {
+    void registerCallback(typename Callback<A1,A2>::Ptr callback) {
         listeners.append(callback);
     }
 
     void deregisterAllCallbacksFor(HeapObject* callbackObject) {
         for (int i = 0; i < listeners.getLength();) {
-            if (listeners[i].getObjectPtr() == callbackObject) {
+            if (listeners[i]->getObjectPtr() == callbackObject) {
                 listeners.remove(i);
             } else {
                 ++i;
@@ -108,20 +140,64 @@ public:
         }
     }
 
-    void invokeAllCallbacks(S argument1, T argument2) {
+    void invokeAllCallbacks(A1 a1, A2 a2) {
         for (long i = 0; i < listeners.getLength();) {
-            if (!listeners[i].isValid()) {
+            if (!listeners[i]->isEnabled()) {
                 listeners.remove(i);
             } else {
-                listeners[i].call(argument1, argument2);
+                listeners[i]->call(a1, a2);
                 ++i;
             }
         }
     }
 
 private:
-    ObjectArray< Callback2<S,T> > listeners;
+    ObjectArray< typename Callback<A1,A2>::Ptr > listeners;
 };
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+
+template
+<
+    class A1,
+    class A2,
+    class A3
+>
+class CallbackContainer
+{
+public:
+    void registerCallback(typename Callback<A1,A2,A3>::Ptr callback) {
+        listeners.append(callback);
+    }
+
+    void deregisterAllCallbacksFor(HeapObject* callbackObject) {
+        for (int i = 0; i < listeners.getLength();) {
+            if (listeners[i]->getObjectPtr() == callbackObject) {
+                listeners.remove(i);
+            } else {
+                ++i;
+            }
+        }
+    }
+
+    void invokeAllCallbacks(A1 a1, A2 a2, A3 a3) {
+        for (long i = 0; i < listeners.getLength();) {
+            if (!listeners[i]->isEnabled()) {
+                listeners.remove(i);
+            } else {
+                listeners[i]->call(a1, a2, a3);
+                ++i;
+            }
+        }
+    }
+
+private:
+    ObjectArray< typename Callback<A1,A2,A3>::Ptr > listeners;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
 
 } // namespace LucED
 

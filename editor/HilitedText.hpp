@@ -56,13 +56,13 @@ public:
     int process(int requestedProcessingAmount);
     bool needsProcessing();
     
-    void registerUpdateListener(const Callback1<UpdateInfo>& updateCallback);
+    void registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback);
 
     SyntaxPatterns::Ptr getSyntaxPatterns() {
         return syntaxPatterns;
     }
 
-    void registerHilitingChangedCallback(Callback1<HilitedText*> hilitingChangeCallback) {
+    void registerHilitingChangedCallback(Callback<HilitedText*>::Ptr hilitingChangeCallback) {
         hilitingChangedCallbacks.registerCallback(hilitingChangeCallback);
     }
 
@@ -111,7 +111,7 @@ private:
     long   endChangedPos;
     
     ByteArray patternStack;
-    Callback1Container<UpdateInfo> updateListeners;
+    CallbackContainer<UpdateInfo> updateListeners;
     
     ProcessHandler::Ptr processHandler;
     
@@ -119,9 +119,9 @@ private:
     
     int breakPointDistance;
 
-    Callback1Container<HilitedText*> hilitingChangedCallbacks;    
+    CallbackContainer<HilitedText*> hilitingChangedCallbacks;    
 
-    Callback1<SyntaxPatterns::Ptr> syntaxPatternUpdateCallback;
+    Callback<SyntaxPatterns::Ptr>::Ptr syntaxPatternUpdateCallback;
 };
 
 } // namespace LucED

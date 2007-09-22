@@ -35,10 +35,10 @@ DialogWin::DialogWin(TopWin* referingWindow)
 {
     if (referingWindow != NULL) {
         XSetTransientForHint(getDisplay(), getWid(), referingWindow->getWid());
-        referingWindow->registerMappingNotifyCallback(Callback1<bool>(this, &DialogWin::notifyAboutReferingWindowMapping));
+        referingWindow->registerMappingNotifyCallback(newCallback(this, &DialogWin::notifyAboutReferingWindowMapping));
     }
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    keyMapping.set(            0, XK_Escape,   Callback0(this, &DialogWin::requestCloseWindow));
+    keyMapping.set(            0, XK_Escape,   newCallback(this, &DialogWin::requestCloseWindow));
 }
 
 void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
@@ -109,9 +109,9 @@ GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const XEvent *event
     bool processed = false;
 
     KeyMapping::Id keyMappingId(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-    Callback0 keyAction = keyMapping.find(keyMappingId);
-    if (keyAction.isValid()) {
-        keyAction.call();
+    Callback<>::Ptr keyAction = keyMapping.find(keyMappingId);
+    if (keyAction->isEnabled()) {
+        keyAction->call();
         processed = true;
     }
     return processed ? EVENT_PROCESSED : NOT_PROCESSED;
@@ -126,7 +126,7 @@ void DialogWin::setReferingWindowForPositionHintsOnly(TopWin* referingWindow)
     if (referingWindow != NULL)
     {
         this->referingWindow = referingWindow;
-        referingWindow->registerMappingNotifyCallback(Callback1<bool>(this, &DialogWin::notifyAboutReferingWindowMapping));
+        referingWindow->registerMappingNotifyCallback(newCallback(this, &DialogWin::notifyAboutReferingWindowMapping));
     }
 }
 

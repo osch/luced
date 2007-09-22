@@ -87,7 +87,8 @@ public:
     {
         if (isPreviousActionMergeable()
             && getPreviousActionType() == ACTION_INSERT
-            && getPreviousActionTextPos() + getPreviousActionLength() == beginIndex)
+            && (   getPreviousActionTextPos() + getPreviousActionLength() == beginIndex
+                || getPreviousActionTextPos() == beginIndex))
         {
             actions.removeTail(nextActionIndex);
             actions[nextActionIndex - 1].length += length;

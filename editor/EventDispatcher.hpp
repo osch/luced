@@ -45,9 +45,6 @@ using std::priority_queue;
 class EventDispatcher : public HeapObject
 {
 public:
-    typedef Callback0 TimerCallback;
-    typedef Callback0 UpdateCallback;
-    
     static EventDispatcher* getInstance();
     
     void registerEventReceiver(const GuiWidget::EventRegistration& registration);
@@ -56,13 +53,13 @@ public:
     void registerEventReceiverForForeignWidget(const GuiWidget::EventRegistration& registration);
     bool isForeignWidget(Window wid);
 
-    void registerUpdateSource(const UpdateCallback& updateCallback);
+    void registerUpdateSource(Callback<>::Ptr updateCallback);
     void deregisterAllUpdateSourceCallbacksFor(WeakPtr<HeapObject> callbackObject);
     
-    void registerTimerCallback(const TimeVal& when, const TimerCallback& callback) {
+    void registerTimerCallback(const TimeVal& when, Callback<>::Ptr callback) {
         timers.push(TimerRegistration(when, callback));
     }
-    void registerTimerCallback(Seconds secs, MicroSeconds usecs, const TimerCallback& callback) {
+    void registerTimerCallback(Seconds secs, MicroSeconds usecs, Callback<>::Ptr callback) {
         TimeVal when;
         when.setToCurrentTime().add(secs, usecs);
         registerTimerCallback(when, callback);
@@ -77,7 +74,7 @@ public:
     void registerProcess(ProcessHandler::Ptr process);
 
     void registerEventReceiverForRootProperty(GuiRootProperty property,
-                                              Callback1<XEvent*> callback);
+                                              Callback<XEvent*>::Ptr callback);
 
     void registerRunningComponent(RunningComponent::OwningPtr runningComponent);
     
@@ -92,17 +89,17 @@ private:
     public:
         friend class EventDispatcher;
         TimerRegistration() {}
-        TimerRegistration(const TimeVal when, const TimerCallback& callback):
+        TimerRegistration(const TimeVal when, Callback<>::Ptr callback):
             when(when), callback(callback) {}
         bool operator<(const TimerRegistration& t) const {
             return this->when.isLaterThan(t.when);
         }
         bool isValid() {
-            return callback.isValid();
+            return callback->isEnabled();
         }
     private:
         TimeVal when;
-        TimerCallback callback;
+        Callback<>::Ptr callback;
     };
     
     EventDispatcher();
@@ -122,11 +119,11 @@ private:
     bool doQuit;
     int  x11FileDescriptor;
 
-    Callback0Container updateCallbacks;
+    CallbackContainer<> updateCallbacks;
     
     ObjectArray<ProcessHandler::Ptr> processes;
     
-    typedef HashMap< GuiRootProperty, Callback1<XEvent*> > RootPropertiesMap;
+    typedef HashMap< GuiRootProperty, Callback<XEvent*>::Ptr > RootPropertiesMap;
     RootPropertiesMap rootPropertyListeners;
     bool hasRootPropertyListeners;
     Window rootWid;

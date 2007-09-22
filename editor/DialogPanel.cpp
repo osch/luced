@@ -36,12 +36,12 @@ DialogPanel::DialogPanel(GuiWidget* parent)
 {
     addToXEventMask(ExposureMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    keyMapping1.set(            0, XK_Tab,      Callback0(this, &DialogPanel::switchFocusToNextWidget));
-    keyMapping1.set(    ShiftMask, XK_Tab,      Callback0(this, &DialogPanel::switchFocusToPrevWidget));
-    keyMapping2.set(                    0, XK_Left,      Callback0(this, &DialogPanel::switchFocusToPrevWidget));
-    keyMapping2.set(                    0, XK_Right,     Callback0(this, &DialogPanel::switchFocusToNextWidget));
-    keyMapping2.set(                    0, XK_KP_Left,   Callback0(this, &DialogPanel::switchFocusToPrevWidget));
-    keyMapping2.set(                    0, XK_KP_Right,  Callback0(this, &DialogPanel::switchFocusToNextWidget));
+    keyMapping1.set(            0, XK_Tab,      newCallback(this, &DialogPanel::switchFocusToNextWidget));
+    keyMapping1.set(    ShiftMask, XK_Tab,      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
+    keyMapping2.set(                    0, XK_Left,      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
+    keyMapping2.set(                    0, XK_Right,     newCallback(this, &DialogPanel::switchFocusToNextWidget));
+    keyMapping2.set(                    0, XK_KP_Left,   newCallback(this, &DialogPanel::switchFocusToPrevWidget));
+    keyMapping2.set(                    0, XK_KP_Right,  newCallback(this, &DialogPanel::switchFocusToNextWidget));
 }
 
 void DialogPanel::setRootElement(OwningPtr<GuiElement> rootElement)
@@ -227,9 +227,9 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
                 }
             } 
             if (!hotKeyProcessed) {
-                Callback0 keyAction = keyMapping1.find(keyMappingId);
-                if (keyAction.isValid()) {
-                    keyAction.call();
+                Callback<>::Ptr keyAction = keyMapping1.find(keyMappingId);
+                if (keyAction->isEnabled()) {
+                    keyAction->call();
                     processed = true;
                 } else {
                     if (focusedElement.isValid()) {
@@ -239,9 +239,9 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
                         }
                     }
                     if (!processed) {
-                        Callback0 keyAction = keyMapping2.find(keyMappingId);
-                        if (keyAction.isValid()) {
-                            keyAction.call();
+                        Callback<>::Ptr keyAction = keyMapping2.find(keyMappingId);
+                        if (keyAction->isEnabled()) {
+                            keyAction->call();
                             processed = true;
                         }
                     }

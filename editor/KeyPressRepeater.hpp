@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef KEYPRESSREPEATER_H
-#define KEYPRESSREPEATER_H
+#ifndef KEYPRESSREPEATER_HPP
+#define KEYPRESSREPEATER_HPP
 
 #include "HeapObject.hpp"
 #include "Callback.hpp"
@@ -56,7 +56,7 @@ private:
     KeyPressRepeater();
     void processRepeatingEvent();
 
-    Callback0 eventRepeatingCallback;
+    Callback<>::Ptr eventRepeatingCallback;
     XEvent event;
     int repeatCount;
     bool isRepeatingFlag;
@@ -66,4 +66,4 @@ private:
 
 } // namespace LucED
 
-#endif // KEYPRESSREPEATER_H
+#endif // KEYPRESSREPEATER_HPP

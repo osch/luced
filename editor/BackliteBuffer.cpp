@@ -38,7 +38,7 @@ byte BackliteBuffer::getNonBufferedBackground(long textPos)
     return 0;
 }
 
-void BackliteBuffer::registerUpdateListener(const Callback1<HilitingBuffer::UpdateInfo>& updateCallback)
+void BackliteBuffer::registerUpdateListener(Callback<HilitingBuffer::UpdateInfo>::Ptr updateCallback)
 {
     updateListeners.registerCallback(updateCallback);
 }

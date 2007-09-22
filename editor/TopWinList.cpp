@@ -41,7 +41,7 @@ TopWinList* TopWinList::getInstance()
                                      p->emptyChecker = EmptyChecker::create(p);
 
         EventDispatcher::getInstance()->registerRunningComponent(p);
-        EventDispatcher::getInstance()->registerUpdateSource(Callback0(p->emptyChecker, &EmptyChecker::check));
+        EventDispatcher::getInstance()->registerUpdateSource(newCallback(p->emptyChecker, &EmptyChecker::check));
 
         instance = p;
     }

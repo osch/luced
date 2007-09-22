@@ -69,7 +69,7 @@ public:
         }
     }
     
-    void registerUpdateListener(const Callback1<UpdateInfo>& updateCallback);
+    void registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback);
     
     LanguageMode::Ptr getLanguageMode() const {
         return languageMode;
@@ -102,7 +102,7 @@ private:
     long rememberedSearchRestartPos;
     ByteArray patternStack;
     ByteArray styleBuffer;
-    Callback1Container<UpdateInfo> updateListeners;
+    CallbackContainer<UpdateInfo> updateListeners;
     MemArray<int> ovector;
 
     int maxDistance;

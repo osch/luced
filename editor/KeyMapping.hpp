@@ -70,10 +70,10 @@ public:
         KeySym keySym;
     };
 
-    Callback0 find(int keyState, KeySym keySym)        { return find(Id(keyState, keySym)); }
+    Callback<>::Ptr find(int keyState, KeySym keySym)        { return find(Id(keyState, keySym)); }
 
-    Callback0 find(Id id) {
-        Callback0 rslt;
+    Callback<>::Ptr find(Id id) {
+        Callback<>::Ptr rslt;
         
         MyMap::Value foundCallback = map.get(id);
         if (foundCallback.isValid()) {
@@ -82,10 +82,10 @@ public:
         return rslt;
     }
 
-    void set(int keyState, KeySym keySym, const Callback0& cb) { set(Id(keyState, keySym), cb); }
+    void set(int keyState, KeySym keySym, Callback<>::Ptr cb) { set(Id(keyState, keySym), cb); }
     
 
-    void set(Id id, const Callback0& cb)
+    void set(Id id, Callback<>::Ptr cb)
     {
         map.set(id, cb);
     }
@@ -93,7 +93,7 @@ public:
 
 private:
 
-    typedef HashMap<Id, Callback0, Id::HashFunction>  MyMap;
+    typedef HashMap<Id, Callback<>::Ptr, Id::HashFunction>  MyMap;
 
 
     MyMap map;

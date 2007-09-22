@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TEXTEDITORWIDGET_H
-#define TEXTEDITORWIDGET_H
+#ifndef TEXTEDITORWIDGET_HPP
+#define TEXTEDITORWIDGET_HPP
 
 #include "TextWidget.hpp"
 #include "KeyMapping.hpp"
@@ -77,7 +77,7 @@ public:
     bool isWordCharacter(unsigned char c);
     
     template<class T> void setEditAction(int keyState, KeySym keySym, T* object, void (T::*method)()) {
-        keyMapping.set(keyState, keySym, Callback0(object, method));
+        keyMapping.set(keyState, keySym, newCallback(object, method));
     }
     
     bool scrollUp();
@@ -148,7 +148,7 @@ private:
     int movingSelectionX;
     int movingSelectionY;
     bool isMovingSelectionScrolling;
-    Callback0 scrollRepeatCallback;
+    Callback<>::Ptr scrollRepeatCallback;
     void handleScrollRepeating();
     
     bool cursorChangesDisabled;
@@ -166,4 +166,4 @@ private:
 
 } // namespace LucED
 
-#endif // TEXTEDITORWIDGET_H
+#endif // TEXTEDITORWIDGET_HPP

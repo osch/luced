@@ -42,7 +42,7 @@ TextData::TextData()
     changedAmount = 0;
     oldEndChangedPos = 0;
     oldLength = 0;
-    EventDispatcher::getInstance()->registerUpdateSource(Callback0(this, &TextData::flushPendingUpdates));
+    EventDispatcher::getInstance()->registerUpdateSource(newCallback(this, &TextData::flushPendingUpdates));
 }
 
 void TextData::loadFile(const String& filename)
@@ -290,7 +290,7 @@ void TextData::updateMarks(
     }
 }
 
-void TextData::setInsertFilterCallback(Callback2<const byte**, long*> filterCallback)
+void TextData::setInsertFilterCallback(Callback<const byte**, long*>::Ptr filterCallback)
 {
     this->filterCallback = filterCallback;
 }
@@ -485,7 +485,7 @@ long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
     if (!isReadOnlyFlag)
     {
         if (filterCallback.isValid()) {
-            filterCallback.call(&insertBuffer, &length);
+            filterCallback->call(&insertBuffer, &length);
         }
         if (length > 0)
         {
@@ -792,33 +792,33 @@ void TextData::flushPendingUpdatesIntern()
     }
 }
 
-void TextData::registerUpdateListener(UpdateCallback updateCallback)
+void TextData::registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback)
 {
     updateListeners.registerCallback(updateCallback);
 }
 
-void TextData::registerFileNameListener(Callback1<const String&> fileNameCallback)
+void TextData::registerFileNameListener(Callback<const String&>::Ptr fileNameCallback)
 {
     fileNameListeners.registerCallback(fileNameCallback);
-    fileNameCallback.call(fileName);
+    fileNameCallback->call(fileName);
 }
 
-void TextData::registerReadOnlyListener(Callback1<bool> readOnlyCallback)
+void TextData::registerReadOnlyListener(Callback<bool>::Ptr readOnlyCallback)
 {
     readOnlyListeners.registerCallback(readOnlyCallback);
-    readOnlyCallback.call(isReadOnlyFlag);
+    readOnlyCallback->call(isReadOnlyFlag);
 }
 
-void TextData::registerLengthListener(Callback1<long> lengthCallback)
+void TextData::registerLengthListener(Callback<long>::Ptr lengthCallback)
 {
     lengthListeners.registerCallback(lengthCallback);
-    lengthCallback.call(getLength());
+    lengthCallback->call(getLength());
 }
 
-void TextData::registerModifiedFlagListener(Callback1<bool> modifiedFlagCallback)
+void TextData::registerModifiedFlagListener(Callback<bool>::Ptr modifiedFlagCallback)
 {
     changedModifiedFlagListeners.registerCallback(modifiedFlagCallback);
-    modifiedFlagCallback.call(modifiedFlag);
+    modifiedFlagCallback->call(modifiedFlag);
 }
 
 void TextData::setHistorySeparator()

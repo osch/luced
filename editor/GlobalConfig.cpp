@@ -71,7 +71,7 @@ GlobalConfig::GlobalConfig()
 
 
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String& languageMode,
-                                                                   Callback1<SyntaxPatterns::Ptr> changeCallback)
+                                                                   Callback<SyntaxPatterns::Ptr>::Ptr changeCallback)
 {
     NameToIndexMap::Value foundIndex = languageModeToSyntaxIndex->get(languageMode);
     if (foundIndex.isValid())
@@ -86,7 +86,7 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String&
 }
 
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode,
-                                                                   Callback1<SyntaxPatterns::Ptr> changeCallback)
+                                                                   Callback<SyntaxPatterns::Ptr>::Ptr changeCallback)
 {
     if (languageMode.isValid()) {
         return getSyntaxPatternsForLanguageMode(languageMode->getName(), changeCallback);
@@ -96,7 +96,7 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode:
 }
     
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForFileName(const String& fileName,
-                                                               Callback1<SyntaxPatterns::Ptr> changeCallback)
+                                                               Callback<SyntaxPatterns::Ptr>::Ptr changeCallback)
 {
     return getSyntaxPatternsForLanguageMode(languageModes->getLanguageModeForFile(fileName)->getName(),
                                             changeCallback);

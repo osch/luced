@@ -43,7 +43,7 @@ public:
     }
     
 
-    void setButtonPressedCallback(const Callback1<CheckBox*>& callback) {
+    void setButtonPressedCallback(Callback<CheckBox*>::Ptr callback) {
         pressedCallback = callback;
     }
     
@@ -76,7 +76,7 @@ private:
     bool isBoxChecked;
     bool isMouseButtonPressed;
     bool isMouseOverButton;
-    Callback1<CheckBox*> pressedCallback;
+    Callback<CheckBox*>::Ptr pressedCallback;
     bool hasFocus;
     TimeVal earliestButtonReleaseTime;
     bool hasHotKey;
