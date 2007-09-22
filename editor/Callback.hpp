@@ -335,9 +335,13 @@ private:
 public:
     typedef CallbackPtr<Callback> Ptr;
     
-    template<class T, class S> static Ptr create(T* objectPtr, void (S::*methodPtr)());
+    template<class T, class S> static Ptr create(T* objectPtr, void (S::*methodPtr)()) {
+        return Ptr(CallbackImpl0<T>::create(objectPtr, methodPtr));
+    }
 
-    template<class T, class S> static Ptr create(OwningPtr<T> objectPtr, void (S::*methodPtr)());
+    template<class T, class S> static Ptr create(OwningPtr<T> objectPtr, void (S::*methodPtr)()) {
+        return Ptr(CallbackImpl0<T>::create(objectPtr.getRawPtr(), methodPtr));
+    }
 
     void call() const {
         if (implPtr.isValid()) {
@@ -376,27 +380,6 @@ private:
 
     ImplPtr implPtr;
 };
-
-
-
-template
-<
-    class T, class S
->
-inline Callback<EmptyClass,EmptyClass,EmptyClass>::Ptr Callback<EmptyClass,EmptyClass,EmptyClass>::create(T* objectPtr, void (S::*methodPtr)())
-{
-    return Ptr(CallbackImpl0<T>::create(objectPtr, methodPtr));
-}
-
-
-template
-<
-    class T, class S
->
-inline Callback<EmptyClass,EmptyClass,EmptyClass>::Ptr Callback<EmptyClass,EmptyClass,EmptyClass>::create(OwningPtr<T> objectPtr, void (S::*methodPtr)())
-{
-    return Ptr(CallbackImpl0<T>::create(objectPtr.getRawPtr(), methodPtr));
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
