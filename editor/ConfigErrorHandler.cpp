@@ -32,6 +32,7 @@ void ConfigErrorHandler::startMessageBox()
 {
     TopWinList*      topWins    = TopWinList::getInstance();
     LucED::WeakPtr<TopWin>  lastOpenedTopWin;
+    LucED::WeakPtr<TopWin>  lastFocusedTopWin;
 
     if (topWins != NULL)
     {
@@ -40,9 +41,19 @@ void ConfigErrorHandler::startMessageBox()
             EditorTopWin* topWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(w));
             if (topWin != NULL) {
                 lastOpenedTopWin = topWin;
-                break;
+                if (topWin->hasFocus()) {
+                    lastFocusedTopWin = topWin;
+                    break;
+                }
             }
         }
+    }
+    LucED::WeakPtr<TopWin> referingTopWin;
+
+    if (lastFocusedTopWin.isValid()) {
+        referingTopWin = lastFocusedTopWin;
+    } else {
+        referingTopWin = lastOpenedTopWin;
     }
 
     if (errorList.isValid() && errorList->getLength() > 0)
@@ -65,7 +76,7 @@ void ConfigErrorHandler::startMessageBox()
                                              .setDefaultButton    ("E]dit config files",   newCallback(this, &ConfigErrorHandler::handleOpenFilesButton))
                                              .setCancelButton     ("C]ancel",              newCallback(this, &ConfigErrorHandler::handleAbortButton)));
         }
-        messageBox->setReferingWindowForPositionHintsOnly(lastOpenedTopWin);
+        messageBox->setReferingWindowForPositionHintsOnly(referingTopWin);
         messageBox->show();
     }
     else {

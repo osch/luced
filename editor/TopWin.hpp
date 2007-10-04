@@ -63,6 +63,10 @@ public:
         mappingNotifyCallbacks.registerCallback(mappingNotifyCallback);
     }
     
+    bool hasFocus() const {
+        return focusFlag;
+    }
+    
 protected:
     TopWin();
     
@@ -86,6 +90,8 @@ private:
     TopWinOwner* owner;
     bool mapped;
     bool requestFocusAfterMapped;
+    
+    bool focusFlag;
     
     CallbackContainer<bool> mappingNotifyCallbacks;
 };

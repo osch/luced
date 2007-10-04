@@ -118,13 +118,13 @@ void GotoLinePanel::handleButtonPressed(Button* button)
                 editorWidget->moveCursorToTextMarkAndAdjustVisibility(m);
                 editorWidget->rememberCursorPixX();
                 if (!wasNegative) {
-                    m.moveToBeginOfLine();
-                    editorWidget->requestSelectionOwnership();
-                    editorWidget->getBackliteBuffer()->activateSelection(m.getPos());
-                    m.moveToNextLineBegin();
-                    editorWidget->getBackliteBuffer()->extendSelectionTo(m.getPos());
+                    m.moveToBeginOfLine();    long spos = m.getPos();
+                    m.moveToNextLineBegin();  long epos = m.getPos();
+                    
+                    editorWidget->setPrimarySelection(spos, epos);
+
                 } else {
-                    editorWidget->releaseSelectionOwnership();
+                    editorWidget->releaseSelection();
                 }
             }
         }

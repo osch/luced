@@ -19,43 +19,65 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SELECTIONOWNER_H
-#define SELECTIONOWNER_H
+#ifndef SELECTIONOWNER_HPP
+#define SELECTIONOWNER_HPP
 
 #include <X11/Xatom.h>
 #include "GuiWidget.hpp"
 
 namespace LucED {
 
-class SelectionOwner : GuiWidgetAccessForEventProcessors
+class SelectionOwner : public HeapObject,
+                       private GuiWidgetAccessForEventProcessors
 {
 public:
 
-    static SelectionOwner* getPrimarySelectionOwner() {return primarySelectionOwner;}
-    static bool hasPrimarySelectionOwner() {return primarySelectionOwner != NULL;}
+    typedef OwningPtr<SelectionOwner> Ptr;
 
-    bool requestSelectionOwnership();
-    void releaseSelectionOwnership();
-    bool hasSelectionOwnership();
-    
-protected:
-    friend class SelectionOwnerAccessForPasteDataReceiver;
-    
-    virtual long  initSelectionDataRequest() {return 0;}
-    virtual const byte* getSelectionDataChunk(long pos, long length) {return NULL;}
-    virtual void  endSelectionDataRequest() {}
+    enum Type
+    {
+        TYPE_PRIMARY,
+        TYPE_CLIPBOARD
+    };
 
-    SelectionOwner(GuiWidget* baseWidget, Atom x11AtomForSelection = XA_PRIMARY);
+    class ContentHandler : public HeapObject
+    {
+    public:
+        typedef OwningPtr<ContentHandler> Ptr;
+        
+        virtual long        initSelectionDataRequest()                   = 0;
+        virtual const byte* getSelectionDataChunk(long pos, long length) = 0;
+        virtual void        endSelectionDataRequest()                    = 0;
+        virtual void        notifyAboutLostSelectionOwnership()          = 0;
+        virtual void        notifyAboutObtainedSelectionOwnership()      = 0;
+    protected:
+        ContentHandler()
+        {}
+    };
+
+    static Ptr create(GuiWidget* baseWidget, Type type, ContentHandler::Ptr contentHandler) {
+        return Ptr(new SelectionOwner(baseWidget, type, contentHandler));
+    }
     ~SelectionOwner();
     
     GuiElement::ProcessingResult processSelectionOwnerEvent(const XEvent *event);
     
-    virtual void notifyAboutLostSelectionOwnership() {}
-    virtual void notifyAboutObtainedSelectionOwnership() {}
+    bool requestSelectionOwnership();
+    void releaseSelectionOwnership();
+    bool hasSelectionOwnership();
     
+    static SelectionOwner* getPrimarySelectionOwner() {return primarySelectionOwner;}
+    static bool hasPrimarySelectionOwner() {return primarySelectionOwner != NULL;}
+
 private:
 
-    GuiWidget* baseWidget;
+    friend class SelectionOwnerAccessForPasteDataReceiver;
+
+    SelectionOwner(GuiWidget* baseWidget, Type type, ContentHandler::Ptr contentHandler);
+
+    WeakPtr<GuiWidget> baseWidget;
+    OwningPtr<ContentHandler> contentHandler;
+    
     Atom x11AtomForSelection;
     bool sendingMultiPart;
     bool hasRequestedSelectionOwnership;
@@ -68,23 +90,23 @@ private:
     Atom x11AtomForIncr;
     Display* const display;
     
-    static SelectionOwner* primarySelectionOwner;
+    static WeakPtr<SelectionOwner> primarySelectionOwner;
 };
 
 class SelectionOwnerAccessForPasteDataReceiver
 {
 protected:
     static long initSelectionDataRequest(SelectionOwner* o) {
-        return o->initSelectionDataRequest();
+        return o->contentHandler->initSelectionDataRequest();
     }
     static const byte* getSelectionDataChunk(SelectionOwner* o, long pos, long length) {
-        return o->getSelectionDataChunk(pos, length);
+        return o->contentHandler->getSelectionDataChunk(pos, length);
     }
     static void endSelectionDataRequest(SelectionOwner* o) {
-        o->endSelectionDataRequest();
+        o->contentHandler->endSelectionDataRequest();
     }
 };
 
 } // namespace LucED
 
-#endif // SELECTIONOWNER_H
+#endif // SELECTIONOWNER_HPP

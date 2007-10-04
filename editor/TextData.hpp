@@ -416,8 +416,8 @@ public:
     
     void setIgnoreModifiedOnDiskFlag(bool newValue) {
         this->ignoreModifiedOnDiskFlag = newValue;
-        if (newValue == true) {
-            ignoreModifiedOnDiskTime.setToCurrentTime();
+        if (newValue == true && fileInfo.exists()) {
+            ignoreModifiedOnDiskTime = fileInfo.getLastModifiedTimeValSinceEpoche();
         }
     }
     

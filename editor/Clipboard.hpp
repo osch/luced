@@ -33,7 +33,6 @@
 namespace LucED {
 
 class Clipboard : public GuiWidget, 
-                  public SelectionOwner,
                   public PasteDataReceiver
 {
 public:
@@ -55,21 +54,17 @@ public:
     virtual ProcessingResult processEvent(const XEvent *event);
     
     bool hasClipboardOwnership() {
-        return hasSelectionOwnership();
+        return selectionOwner->hasSelectionOwnership();
     }
 
 private:
+    
     friend class SingletonInstance<Clipboard>;
+
     static SingletonInstance<Clipboard> instance;
     
     Clipboard();
     
-    virtual long  initSelectionDataRequest();
-    virtual const byte* getSelectionDataChunk(long pos, long length);
-    virtual void  endSelectionDataRequest();
-    virtual void notifyAboutLostSelectionOwnership();
-    virtual void notifyAboutObtainedSelectionOwnership();
-
     virtual void notifyAboutReceivedPasteData(const byte* data, long length);
     virtual void notifyAboutEndOfPastingData();
     virtual void notifyAboutBeginOfPastingData();
@@ -87,6 +82,9 @@ private:
     Atom   multiPartTargetProp;
 
     ProgramRunningKeeper programRunningKeeper;
+
+    class SelectionContentHandler;
+    SelectionOwner::Ptr selectionOwner;
 };
 
 } // namespace LucED

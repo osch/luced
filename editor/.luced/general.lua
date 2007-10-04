@@ -62,17 +62,22 @@ local bold_font   = "-*-courier-bold-r-*-*-*-120-75-75-*-*-*-*"
 
 textStyles = {
 
-    {name="default",    font=normal_font, color="black"},
-    {name="comment",    font=italic_font, color="grey20"},
-    {name="preproc",    font=normal_font, color="RoyalBlue4"},
-    {name="keyword",    font=bold_font,   color="black"},
-    {name="type",       font=bold_font,   color="brown"},
-    {name="string",     font=normal_font, color="darkGreen"},
-    {name="boldstring", font=bold_font,   color="darkGreen"},
-    {name="regex",      font=bold_font,   color="#009944"},
-    {name="textKey",    font=bold_font,   color="VioletRed4"},
-    {name="textKey1",   font=normal_font, color="VioletRed4"},
-    {name="command",    font=normal_font, color="darkgoldenrod4"},
+    {name="default",     font=normal_font, color="black"},
+    {name="comment",     font=italic_font, color="grey20"},
+    {name="preproc",     font=normal_font, color="RoyalBlue4"},
+    {name="keyword",     font=bold_font,   color="black"},
+    {name="type",        font=bold_font,   color="brown"},
+    {name="string",      font=normal_font, color="darkGreen"},
+    {name="boldstring",  font=bold_font,   color="darkGreen"},
+    {name="regex",       font=bold_font,   color="#009944"},
+    {name="textKey",     font=bold_font,   color="VioletRed4"},
+    {name="textKey1",    font=normal_font, color="VioletRed4"},
+    {name="command",     font=normal_font, color="darkgoldenrod4"},
+    {name="boldblue",    font=bold_font,   color="RoyalBlue4"},
+    {name="boldcommand", font=bold_font,   color="darkgoldenrod4"},
+    {name="orange",      font=normal_font, color="DarkOrange"},
+    {name="boldorange",  font=bold_font,   color="DarkOrange"},
+    
 }
 
 ------
@@ -109,7 +114,7 @@ languageModes = {
       hardTabWidth = 8,
       softTabWidth = 4,
     },
-
+    
     {
       name            = "makefile",
       fileNameRegex   =  [[^.*/(Makefile|.*\.h?mk)$]],
@@ -118,5 +123,15 @@ languageModes = {
       hilitingBreakPointDistance = 50,
       hardTabWidth = 8,
       softTabWidth = 0,
+    },
+
+    {
+      name            = "emlua",
+      fileNameRegex   =  [[^(.*\.emlua|.*\.(jcl|rexx?))$]],
+      approximateUnknownHiliting = true,
+      approximateUnknownHilitingReparseRange = 2000,
+      hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 4,
     },
 }

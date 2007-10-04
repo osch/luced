@@ -97,8 +97,8 @@ public:
     void gotoMatchingBracket();
     void shiftBlockLeft();
     void shiftBlockRight();
-    void findNextStructureElement();
-    void findPrevStructureElement();
+    void findNextLuaStructureElement();
+    void findPrevLuaStructureElement();
     
 private:
     StandardEditActions(TextEditorWidget *editWidget);

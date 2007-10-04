@@ -37,10 +37,42 @@ Clipboard* Clipboard::getInstance()
     return instance.getPtr();
 }
 
+class Clipboard::SelectionContentHandler : public SelectionOwner::ContentHandler
+{
+public:
+    typedef OwningPtr<ContentHandler> Ptr;
+
+    static Ptr create(Clipboard* clipboard) {
+        return Ptr(new SelectionContentHandler(clipboard));
+    }
+    virtual long initSelectionDataRequest() {
+        return clipboard->clipboardBuffer.getLength();
+    }
+    virtual const byte* getSelectionDataChunk(long pos, long length) {
+        return clipboard->clipboardBuffer.getPtr(pos);
+    }
+    virtual void endSelectionDataRequest() {
+    }
+    virtual void notifyAboutObtainedSelectionOwnership() {
+        if (GlobalConfig::getInstance()->shouldKeepRunningIfOwningClipboard() ) {
+            clipboard->programRunningKeeper.keepProgramRunning();
+        }
+    }
+    virtual void notifyAboutLostSelectionOwnership() {
+        clipboard->programRunningKeeper.doNotKeepProgramRunning();
+    }
+private:
+    SelectionContentHandler(Clipboard* clipboard)
+        : clipboard(clipboard)
+    {}
+    WeakPtr<Clipboard> clipboard;
+};
 
 Clipboard::Clipboard()
       : GuiWidget(0,0,1,1,0),
-        SelectionOwner(this, XInternAtom(getDisplay(), "CLIPBOARD", False)),
+        selectionOwner(SelectionOwner::create(this, 
+                                              SelectionOwner::TYPE_CLIPBOARD, 
+                                              SelectionContentHandler::create(this))),
         PasteDataReceiver(this),
         sendingMultiPart(false)
 {
@@ -54,7 +86,7 @@ Clipboard::Clipboard()
 
 void Clipboard::copyToClipboard(const byte* ptr, long length)
 {
-    if (requestSelectionOwnership()) {
+    if (selectionOwner->requestSelectionOwnership()) {
         clipboardBuffer.clear();
         clipboardBuffer.append(ptr, length);
     }
@@ -62,7 +94,7 @@ void Clipboard::copyToClipboard(const byte* ptr, long length)
 
 void Clipboard::copyActiveSelectionToClipboard()
 {
-    if (requestSelectionOwnership()) {
+    if (selectionOwner->requestSelectionOwnership()) {
         requestSelectionPasting();
     }
 }
@@ -75,8 +107,8 @@ const ByteArray& Clipboard::getClipboardBuffer() {
 
 GuiElement::ProcessingResult Clipboard::processEvent(const XEvent *event)
 {
-    if (processSelectionOwnerEvent(event)    == GuiElement::EVENT_PROCESSED
-     || processPasteDataReceiverEvent(event) == GuiElement::EVENT_PROCESSED)
+    if (selectionOwner->processSelectionOwnerEvent(event) == GuiElement::EVENT_PROCESSED
+     || processPasteDataReceiverEvent(event)              == GuiElement::EVENT_PROCESSED)
     {
         return GuiElement::EVENT_PROCESSED;
     }
@@ -86,34 +118,6 @@ GuiElement::ProcessingResult Clipboard::processEvent(const XEvent *event)
     }
 }
 
-
-long  Clipboard::initSelectionDataRequest()
-{
-    return clipboardBuffer.getLength();
-}
-
-
-const byte* Clipboard::getSelectionDataChunk(long pos, long length)
-{
-    return clipboardBuffer.getPtr(pos);
-}
-
-
-void Clipboard::endSelectionDataRequest()
-{
-}
-
-void Clipboard::notifyAboutObtainedSelectionOwnership()
-{
-    if (GlobalConfig::getInstance()->shouldKeepRunningIfOwningClipboard() ) {
-        programRunningKeeper.keepProgramRunning();
-    }
-}
-
-void Clipboard::notifyAboutLostSelectionOwnership()
-{
-    programRunningKeeper.doNotKeepProgramRunning();
-}
 
 void Clipboard::notifyAboutBeginOfPastingData()
 {
@@ -128,7 +132,7 @@ void Clipboard::notifyAboutReceivedPasteData(const byte* data, long length)
 
 void Clipboard::notifyAboutEndOfPastingData()
 {
-    if (hasSelectionOwnership() && newBuffer.getLength() > 0) {
+    if (selectionOwner->hasSelectionOwnership() && newBuffer.getLength() > 0) {
         clipboardBuffer = newBuffer;
     }
     newBuffer.clear();

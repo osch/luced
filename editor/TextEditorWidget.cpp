@@ -31,13 +31,64 @@
 using namespace LucED;
 
 
+class TextEditorWidget::SelectionContentHandler : public SelectionOwner::ContentHandler
+{
+public:
+    typedef OwningPtr<ContentHandler> Ptr;
+
+    static Ptr create(TextEditorWidget* textEditorWidget) {
+        return Ptr(new SelectionContentHandler(textEditorWidget));
+    }
+    virtual long initSelectionDataRequest()
+    {
+        ASSERT(textEditorWidget->getBackliteBuffer()->hasActiveSelection());
+        
+        long selBegin  = textEditorWidget->getBackliteBuffer()->getBeginSelectionPos();
+        long selLength = textEditorWidget->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+        textEditorWidget->disableCursorChanges();
+        return selLength;
+    }
+    virtual const byte* getSelectionDataChunk(long pos, long length)
+    {
+        ASSERT(textEditorWidget->getBackliteBuffer()->hasActiveSelection());
+    
+        long selBegin = textEditorWidget->getBackliteBuffer()->getBeginSelectionPos();
+        return textEditorWidget->getTextData()->getAmount(selBegin + pos, length);
+    }
+    virtual void endSelectionDataRequest()
+    {
+        textEditorWidget->enableCursorChanges();
+    }
+    virtual void notifyAboutObtainedSelectionOwnership() {
+    }
+    virtual void notifyAboutLostSelectionOwnership()
+    {
+        if (textEditorWidget->getBackliteBuffer()->isSelectionPrimary())
+        {
+            if (textEditorWidget->isSelectionPersistent) {
+                textEditorWidget->getBackliteBuffer()->makeSelectionToSecondarySelection();
+            } else {
+                textEditorWidget->getBackliteBuffer()->deactivateSelection();
+            }
+        }
+    }
+private:
+    SelectionContentHandler(TextEditorWidget* textEditorWidget)
+        : textEditorWidget(textEditorWidget)
+    {}
+    WeakPtr<TextEditorWidget> textEditorWidget;
+};
+
+
 TextEditorWidget::TextEditorWidget(GuiWidget*       parent, 
                                    TextStyles::Ptr  textStyles, 
                                    HilitedText::Ptr hilitedText, 
                                    int              borderWidth)
                                    
       : TextWidget(parent, textStyles, hilitedText, borderWidth),
-        SelectionOwner(this),
+        selectionOwner(SelectionOwner::create(this, 
+                                              SelectionOwner::TYPE_PRIMARY,
+                                              SelectionContentHandler::create(this))),
         PasteDataReceiver(this),
         rememberedCursorPixX(0),
         scrollRepeatCallback(newCallback(this, &TextEditorWidget::handleScrollRepeating)),
@@ -46,7 +97,8 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
         buttonPressedCounter(0),
         lastActionId(ACTION_UNSPECIFIED),
         currentActionId(ACTION_UNSPECIFIED),
-        pasteParameter(CURSOR_TO_END_OF_PASTED_DATA)
+        pasteParameter(CURSOR_TO_END_OF_PASTED_DATA),
+        isSelectionPersistent(false)
 {
     hasFocusFlag = false;
     addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
@@ -158,13 +210,6 @@ void TextEditorWidget::moveCursorToTextPositionAndAdjustVisibility(int position)
     adjustCursorVisibility();
 }
 
-void TextEditorWidget::notifyAboutLostSelectionOwnership()
-{
-    if (getBackliteBuffer()->isSelectionPrimary()) {
-        getBackliteBuffer()->deactivateSelection();
-    }
-}
-
 void TextEditorWidget::notifyAboutBeginOfPastingData()
 {
     disableCursorChanges();
@@ -205,7 +250,7 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
         enableCursorChanges();
     }
 
-    releaseSelectionOwnershipButKeepPseudoSelection();
+    releaseSelectionButKeepPseudoSelection();
 
     if (!getBackliteBuffer()->hasActiveSelection()
       || getBackliteBuffer()->getBeginSelectionPos() != beginPastingTextMark.getPos())
@@ -242,7 +287,7 @@ static inline MicroSeconds calculateScrollTime(int diffPix, int lineHeight)
 
 GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
 {
-    if (processSelectionOwnerEvent(event) == EVENT_PROCESSED || processPasteDataReceiverEvent(event) == EVENT_PROCESSED
+    if (selectionOwner->processSelectionOwnerEvent(event) == EVENT_PROCESSED || processPasteDataReceiverEvent(event) == EVENT_PROCESSED
             || TextWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
     } else {
@@ -273,8 +318,8 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                         long newCursorPos = getTextPosFromPixXY(x, y);
 
                         bool extendingSelection = (event->xbutton.state & ShiftMask != 0);
-                        if (extendingSelection && !hasSelectionOwnership()) {
-                            requestSelectionOwnership();
+                        if (extendingSelection && !selectionOwner->hasSelectionOwnership()) {
+                            selectionOwner->requestSelectionOwnership();
                             getBackliteBuffer()->activateSelection(getCursorTextPosition());
                         }
 
@@ -287,10 +332,8 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                             } else {
                                 getBackliteBuffer()->setAnchorToBeginOfSelection();
                             }
-                        } else if (hasSelectionOwnership()) {
-                            releaseSelectionOwnership();
-                        } else if (getBackliteBuffer()->hasActiveSelection()) {
-                            getBackliteBuffer()->deactivateSelection();
+                        } else {
+                            releaseSelection();
                         }
 
                         if (wasDoubleClick)
@@ -326,7 +369,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                                     }
                                 } else {
                                     if (p1 != p2) {
-                                        requestSelectionOwnership();
+                                        selectionOwner->requestSelectionOwnership();
                                         getBackliteBuffer()->activateSelection(p1);
                                         getBackliteBuffer()->extendSelectionTo(p2);
                                     }
@@ -367,10 +410,6 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                         
                         requestSelectionPasting(createNewMarkFromCursor());
                         currentActionId = ACTION_UNSPECIFIED;
-                        
-                        /*if (hasSelectionOwnership()) {
-                            releaseSelectionOwnership();
-                        }*/
                     }
                     assureCursorVisible();
                     rememberedCursorPixX = getCursorPixX();
@@ -449,10 +488,6 @@ void TextEditorWidget::replaceTextWithPrimarySelection()
         
         requestSelectionPasting(createNewMarkFromCursor());
         currentActionId = ACTION_UNSPECIFIED;
-        
-        /*if (hasSelectionOwnership()) {
-            releaseSelectionOwnership();
-        }*/
     }
     assureCursorVisible();
     rememberedCursorPixX = getCursorPixX();
@@ -492,8 +527,8 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                 }
                 if (p1 != getCursorTextPosition() || p2 != getCursorTextPosition())
                 {
-                    if (!hasSelectionOwnership()) {
-                        requestSelectionOwnership();
+                    if (!selectionOwner->hasSelectionOwnership()) {
+                        selectionOwner->requestSelectionOwnership();
                         getBackliteBuffer()->activateSelection(getCursorTextPosition());
                     }
                     if (p1 < getBackliteBuffer()->getSelectionAnchorPos()) {
@@ -536,8 +571,8 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
         } else {
             if (newCursorPos != getCursorTextPosition())
             {
-                if (!hasSelectionOwnership()) {
-                    requestSelectionOwnership();
+                if (!selectionOwner->hasSelectionOwnership()) {
+                    selectionOwner->requestSelectionOwnership();
                     getBackliteBuffer()->activateSelection(getCursorTextPosition());
                 }
                 getBackliteBuffer()->extendSelectionTo(newCursorPos);
@@ -585,46 +620,26 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
     }
 }
 
-void TextEditorWidget::releaseSelectionOwnership()
+
+
+void TextEditorWidget::releaseSelection()
 {
     if (getBackliteBuffer()->hasActiveSelection()) {
         getBackliteBuffer()->deactivateSelection();
     }
-    SelectionOwner::releaseSelectionOwnership();
+    selectionOwner->releaseSelectionOwnership();
 }
 
-void TextEditorWidget::releaseSelectionOwnershipButKeepPseudoSelection()
+void TextEditorWidget::releaseSelectionButKeepPseudoSelection()
 {
     if (getBackliteBuffer()->hasActiveSelection()) {
         getBackliteBuffer()->makeSelectionToSecondarySelection();
     }
-    if (hasSelectionOwnership()) {
-        SelectionOwner::releaseSelectionOwnership();
+    if (selectionOwner->hasSelectionOwnership()) {
+        selectionOwner->releaseSelectionOwnership();
     }
 }
 
-long  TextEditorWidget::initSelectionDataRequest()
-{
-    ASSERT(getBackliteBuffer()->hasActiveSelection());
-    
-    long selBegin = getBackliteBuffer()->getBeginSelectionPos();
-    long selLength = getBackliteBuffer()->getEndSelectionPos() - selBegin;
-    disableCursorChanges();
-    return selLength;
-}
-
-const byte* TextEditorWidget::getSelectionDataChunk(long pos, long length)
-{
-    ASSERT(getBackliteBuffer()->hasActiveSelection());
-
-    long selBegin = getBackliteBuffer()->getBeginSelectionPos();
-    return getTextData()->getAmount(selBegin + pos, length);
-}
-
-void  TextEditorWidget::endSelectionDataRequest()
-{
-    enableCursorChanges();
-}
 
 
 void TextEditorWidget::handleScrollRepeating()
@@ -633,8 +648,8 @@ void TextEditorWidget::handleScrollRepeating()
         long newCursorPos = getTextPosFromPixXY(movingSelectionX, movingSelectionY);
         if (newCursorPos != getCursorTextPosition())
         {
-            if (!hasSelectionOwnership()) {
-                requestSelectionOwnership();
+            if (!selectionOwner->hasSelectionOwnership()) {
+                selectionOwner->requestSelectionOwnership();
                 getBackliteBuffer()->activateSelection(getCursorTextPosition());
             }
             moveCursorToTextPosition(newCursorPos);
@@ -702,13 +717,13 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
                 EditingHistory::SectionHolder::Ptr historySectionHolder = getTextData()->getHistorySectionHolder();
                 
                 hideCursor();
-                if (hasSelectionOwnership())
+                if (selectionOwner->hasSelectionOwnership())
                 {
                     long selBegin = getBackliteBuffer()->getBeginSelectionPos();
                     long selLength = getBackliteBuffer()->getEndSelectionPos() - selBegin;
                     moveCursorToTextPosition(selBegin);
                     removeAtCursor(selLength);
-                    releaseSelectionOwnership();
+                    releaseSelection();
                 }
                 else if (getBackliteBuffer()->hasActiveSelection())
                 {
@@ -776,16 +791,7 @@ void TextEditorWidget::treatFocusIn()
     showMousePointer();
     hasFocusFlag = true;
 
-    if (getBackliteBuffer()->hasActiveSelection()) {
-        getBackliteBuffer()->turnOffSelectionPersistence();
-#if 0
-        if (requestSelectionOwnership()) {
-            getBackliteBuffer()->makeSecondarySelectionToPrimarySelection();
-        } else {
-            getBackliteBuffer()->deactivateSelection();
-        }
-#endif
-    }
+    isSelectionPersistent = false;
 }
 
 
@@ -797,7 +803,7 @@ void TextEditorWidget::treatFocusOut()
     hasFocusFlag = false;
 
     if (getBackliteBuffer()->hasActiveSelection()) {
-        getBackliteBuffer()->turnOnSelectionPersistence();
+        isSelectionPersistent = true;
     }
 
 }

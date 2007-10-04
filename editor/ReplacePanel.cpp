@@ -44,7 +44,8 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
       panelInvoker(panelInvoker),
       defaultDirection(Direction::DOWN),
       historyIndex(-1),
-      selectSearchRegexFlag(false)
+      selectSearchRegexFlag(false),
+      replaceUtil(e->getTextData())
 {
     GuiLayoutColumn::Ptr  c0 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr  c1 = GuiLayoutColumn::create();
@@ -178,8 +179,6 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     findEditField   ->getTextData()->registerModifiedFlagListener(newCallback(this, &ReplacePanel::handleModifiedEditField));
     replaceEditField->getTextData()->registerModifiedFlagListener(newCallback(this, &ReplacePanel::handleModifiedEditField));
 
-    replaceUtil.setTextData(e->getTextData());
-
     label0->setMiddleMouseButtonCallback(newCallback(findEditField,    &SingleLineEditField::replaceTextWithPrimarySelection));
     label1->setMiddleMouseButtonCallback(newCallback(replaceEditField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
@@ -226,6 +225,7 @@ void ReplacePanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSe
 */
         GuiRoot::getInstance()->flushDisplay();
 
+        replaceUtil.setAllowMatchAtStartOfSearchFlag(isWrapping);
         replaceUtil.findNext();
 
         if (replaceUtil.wasFound())
@@ -244,9 +244,13 @@ void ReplacePanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSe
             }
             e->moveCursorToTextMarkAndAdjustVisibility(m);
             e->rememberCursorPixX();
-            e->requestSelectionOwnership();
-            e->getBackliteBuffer()->activateSelection(replaceUtil.getMatchBeginPos());
-            e->getBackliteBuffer()->extendSelectionTo(replaceUtil.getMatchEndPos());
+            if (replaceUtil.getMatchBeginPos() < replaceUtil.getMatchEndPos())
+            {
+                e->setPrimarySelection(replaceUtil.getMatchBeginPos(),
+                                       replaceUtil.getMatchEndPos());
+            } else {
+                e->releaseSelection();
+            }
 
             replacePrevButton->setAsDefaultButton(!replaceUtil.isSearchingForward());
             replaceNextButton->setAsDefaultButton( replaceUtil.isSearchingForward());
@@ -350,14 +354,14 @@ void ReplacePanel::handleButtonPressed(Button* button)
 
             if (button == findNextButton) 
             {
-                if (e->getBackliteBuffer()->hasActiveSelection()) {
-                    replaceUtil.setTextPosition(e->getBackliteBuffer()->getEndSelectionPos());
+                if (e->hasPrimarySelection()) {
+                    replaceUtil.setTextPosition(e->getEndSelectionPos());
                 }
             }
             else if (button == findPrevButton)
             {
-                if (e->getBackliteBuffer()->hasActiveSelection()) {
-                    replaceUtil.setTextPosition(e->getBackliteBuffer()->getBeginSelectionPos());
+                if (e->hasPrimarySelection()) {
+                    replaceUtil.setTextPosition(e->getBeginSelectionPos());
                 }
             }
             else
@@ -366,9 +370,9 @@ void ReplacePanel::handleButtonPressed(Button* button)
 
                 long spos, epos;
 
-                if (e->getBackliteBuffer()->hasActiveSelection()) {
-                    spos = e->getBackliteBuffer()->getBeginSelectionPos();
-                    epos = e->getBackliteBuffer()->getEndSelectionPos();
+                if (e->hasPrimarySelection()) {
+                    spos = e->getBeginSelectionPos();
+                    epos = e->getEndSelectionPos();
                     replaceUtil.setTextPosition(spos);
                 } else {
                     spos = replaceUtil.getTextPosition();
@@ -389,11 +393,11 @@ void ReplacePanel::handleButtonPressed(Button* button)
                         replaceUtil.setTextPosition(spos);
                     }
                 } else {
-                    if (e->getBackliteBuffer()->hasActiveSelection()) {
+                    if (e->hasPrimarySelection()) {
                         if (button == replaceNextButton) {
-                            replaceUtil.setTextPosition(e->getBackliteBuffer()->getEndSelectionPos());
+                            replaceUtil.setTextPosition(e->getEndSelectionPos());
                         } else {
-                            replaceUtil.setTextPosition(e->getBackliteBuffer()->getBeginSelectionPos());
+                            replaceUtil.setTextPosition(e->getBeginSelectionPos());
                         }
                     }
                 }
@@ -401,15 +405,15 @@ void ReplacePanel::handleButtonPressed(Button* button)
 
             internalFindNext(false);
         }
-        else if ((button == replaceSelectionButton && e->getBackliteBuffer()->hasActiveSelection())
+        else if ((button == replaceSelectionButton && e->hasPrimarySelection())
                || button == replaceWindowButton)
         {
             if (button == replaceSelectionButton && rememberedSelection.getLength() > 0) 
             {
                 // replaceSelectionButton means "Restore Selection"
 
-               TextData::TextMark mark = e->getBackliteBuffer()->createMarkToBeginOfSelection();
-               long selLength = e->getBackliteBuffer()->getSelectionLength();
+               TextData::TextMark mark = e->getNewMarkToBeginOfSelection();
+               long selLength = e->getSelectionLength();
                 
                e->getTextData()->insertAtMark(mark, rememberedSelection);
                mark.moveForwardToPos(mark.getPos() + rememberedSelection.getLength());
@@ -427,8 +431,8 @@ void ReplacePanel::handleButtonPressed(Button* button)
                 long epos;
 
                 if (button == replaceSelectionButton) {
-                    spos = e->getBackliteBuffer()->getBeginSelectionPos();
-                    epos = e->getBackliteBuffer()->getEndSelectionPos();
+                    spos = e->getBeginSelectionPos();
+                    epos = e->getEndSelectionPos();
                 } else {
                     spos = 0;
                     epos = e->getTextData()->getLength();
@@ -542,8 +546,8 @@ void ReplacePanel::findAgainForward()
     historyIndex = -1;
 
     int   textPosition   = e->getCursorTextPosition();
-    if (e->getBackliteBuffer()->hasActiveSelection()) {
-        textPosition = e->getBackliteBuffer()->getEndSelectionPos();
+    if (e->hasPrimarySelection()) {
+        textPosition = e->getEndSelectionPos();
     }
     
     replaceUtil.setSearchForwardFlag(true);
@@ -573,8 +577,8 @@ void ReplacePanel::findAgainBackward()
     historyIndex = -1;
 
     int   textPosition   = e->getCursorTextPosition();
-    if (e->getBackliteBuffer()->hasActiveSelection()) {
-        textPosition = e->getBackliteBuffer()->getBeginSelectionPos();
+    if (e->hasPrimarySelection()) {
+        textPosition = e->getBeginSelectionPos();
     }
 
     replaceUtil.setSearchForwardFlag(false);
@@ -622,10 +626,10 @@ void ReplacePanel::replaceAgainForward()
     historyIndex = -1;
 
     int   textPosition   = e->getCursorTextPosition();
-    if (e->getBackliteBuffer()->hasActiveSelection())
+    if (e->hasPrimarySelection())
     {
-        long spos = e->getBackliteBuffer()->getBeginSelectionPos();
-        long epos = e->getBackliteBuffer()->getEndSelectionPos();
+        long spos = e->getBeginSelectionPos();
+        long epos = e->getEndSelectionPos();
 
         TextData* textData = e->getTextData();
 
@@ -695,10 +699,10 @@ void ReplacePanel::replaceAgainBackward()
 
     int   textPosition   = e->getCursorTextPosition();
 
-    if (e->getBackliteBuffer()->hasActiveSelection())
+    if (e->hasPrimarySelection())
     {
-        long spos = e->getBackliteBuffer()->getBeginSelectionPos();
-        long epos = e->getBackliteBuffer()->getEndSelectionPos();
+        long spos = e->getBeginSelectionPos();
+        long epos = e->getEndSelectionPos();
 
         replaceUtil.setTextPosition(spos);
         
@@ -871,15 +875,6 @@ void ReplacePanel::hide()
     
     lastFocusedEditField.invalidate();
     DialogPanel::hide();
-
-#if 0
-    if (e->getBackliteBuffer()->hasActiveSelection())
-    {
-        e->requestSelectionOwnership();
-        e->getBackliteBuffer()->makeSecondarySelectionToPrimarySelection();
-        e->getBackliteBuffer()->turnOffSelectionPersistence();
-    }
-#endif
 }
 
 
@@ -893,10 +888,10 @@ void ReplacePanel::show()
     rememberedSelection = String();
     replaceSelectionButton->setButtonText(REPLACE_IN_SELECTION_BUTTON_TEXT);
 
-    if (e->getBackliteBuffer()->hasActiveSelection())
+    if (e->hasPrimarySelection())
     {
-        TextData::TextMark  beginMark = e->getBackliteBuffer()->createMarkToBeginOfSelection();
-        TextData::TextMark  endMark = e->getBackliteBuffer()->createMarkToEndOfSelection();
+        TextData::TextMark  beginMark = e->getNewMarkToBeginOfSelection();
+        TextData::TextMark  endMark   = e->getNewMarkToEndOfSelection();
         
         if (beginMark.getLine() == endMark.getLine()) {
             String selectedText = e->getTextData()->getSubstring(beginMark, endMark);

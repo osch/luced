@@ -4,3 +4,11 @@ build
 luced
 test.cpp
 lc
+*gprof*
+*.bak.*
+test*
+gmon.out
+backup*
+Backup*
+ChangeLog
+~*

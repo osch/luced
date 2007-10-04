@@ -40,7 +40,7 @@ public:
     typedef LucED::WeakPtr  <ConfigErrorHandler> WeakPtr;
 
     static WeakPtr start(ConfigException::ErrorList::Ptr errorList,
-                         FileOpener::ParameterList::Ptr  fileOpenerParameters)
+                         FileOpener::ParameterList::Ptr  fileOpenerParameters = FileOpener::ParameterList::Ptr())
     {
         OwningPtr ptr(new ConfigErrorHandler(errorList, fileOpenerParameters));
         EventDispatcher::getInstance()->registerRunningComponent(ptr);

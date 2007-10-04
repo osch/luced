@@ -54,8 +54,6 @@ public:
     void activateSelection(long textPos);
     void deactivateSelection();
     void makeSelectionToSecondarySelection();
-    void turnOnSelectionPersistence();
-    void turnOffSelectionPersistence();
     void makeSecondarySelectionToPrimarySelection();
 
     bool isSelectionPrimary() const {
@@ -140,7 +138,6 @@ private:
     TextData::TextMark beginSelection;
     TextData::TextMark endSelection;
     bool isSecondarySelection;
-    bool isSelectionPersistent;
 };
 
 } // namespace LucED

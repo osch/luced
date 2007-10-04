@@ -32,11 +32,9 @@
 
 namespace LucED {
 
-class TextEditorWidget : public TextWidget, public SelectionOwner, public PasteDataReceiver
+class TextEditorWidget : public TextWidget, public PasteDataReceiver
 {
 public:
-    typedef void (EditActionFunction)(TextEditorWidget *);
-
     enum ActionId
     {
         ACTION_UNSPECIFIED,
@@ -103,9 +101,75 @@ public:
     bool isReadOnly() {
         return getTextData()->isReadOnly();
     }
-
-    virtual void releaseSelectionOwnership();
-    void releaseSelectionOwnershipButKeepPseudoSelection();
+    bool hasSelection() {
+        return getBackliteBuffer()->hasActiveSelection();
+    }
+    bool hasPseudoSelection() {
+        return getBackliteBuffer()->hasActiveSelection() && !getBackliteBuffer()->isSelectionPrimary();
+    }
+    bool hasPrimarySelection() {
+        return getBackliteBuffer()->hasActiveSelection() && getBackliteBuffer()->isSelectionPrimary();
+    }
+    long getBeginSelectionPos() {
+        return getBackliteBuffer()->getBeginSelectionPos();
+    }
+    long getEndSelectionPos() {
+        return getBackliteBuffer()->getEndSelectionPos();
+    }
+    void setPrimarySelection(long anchorPos, long extendingPos) {
+        selectionOwner->requestSelectionOwnership();
+        getBackliteBuffer()->activateSelection(anchorPos);
+        getBackliteBuffer()->extendSelectionTo(extendingPos);
+    }
+    void setPseudoSelection(long anchorPos, long extendingPos) {
+        selectionOwner->releaseSelectionOwnership();
+        getBackliteBuffer()->activateSelection(anchorPos);
+        getBackliteBuffer()->extendSelectionTo(extendingPos);
+        getBackliteBuffer()->makeSelectionToSecondarySelection();
+    }
+    void moveSelectionBeginTo(long beginPos) {
+        bool wasAnchorAtBegin = getBackliteBuffer()->isAnchorAtBegin();
+        getBackliteBuffer()->setAnchorToEndOfSelection();
+        getBackliteBuffer()->extendSelectionTo(beginPos);
+        if (wasAnchorAtBegin) {
+            getBackliteBuffer()->setAnchorToBeginOfSelection();
+        }
+    }
+    void moveSelectionEndTo(long endPos) {
+        bool wasAnchorAtEnd = !getBackliteBuffer()->isAnchorAtBegin();
+        getBackliteBuffer()->setAnchorToBeginOfSelection();
+        getBackliteBuffer()->extendSelectionTo(endPos);
+        if (wasAnchorAtEnd) {
+            getBackliteBuffer()->setAnchorToEndOfSelection();
+        }
+    }
+    void setAnchorToBeginOfSelection() {
+        getBackliteBuffer()->setAnchorToBeginOfSelection();
+    }
+    void setAnchorToEndOfSelection() {
+        getBackliteBuffer()->setAnchorToEndOfSelection();
+    }
+    bool isAnchorAtBeginOfSelection() {
+        return getBackliteBuffer()->isAnchorAtBegin();
+    }
+    TextData::TextMark getNewMarkToBeginOfSelection() {
+        return getBackliteBuffer()->createMarkToBeginOfSelection();
+    }
+    TextData::TextMark getNewMarkToEndOfSelection() {
+        return getBackliteBuffer()->createMarkToEndOfSelection();
+    }
+    void makePseudoSelectionToPrimary() {
+        getBackliteBuffer()->makeSecondarySelectionToPrimarySelection();
+    }
+    void extendSelectionTo(long pos) {
+        getBackliteBuffer()->extendSelectionTo(pos);
+    }
+    long getSelectionLength() {
+        getBackliteBuffer()->getSelectionLength();
+    }
+    
+    void releaseSelection();
+    void releaseSelectionButKeepPseudoSelection();
     
     void requestClipboardPasting(const TextData::TextMark& m, 
                                  PasteParameter p = CURSOR_TO_END_OF_PASTED_DATA)
@@ -133,10 +197,6 @@ protected:
     virtual void notifyAboutBeginOfPastingData();
 
 private:
-    virtual long  initSelectionDataRequest();
-    virtual const byte* getSelectionDataChunk(long pos, long length);
-    virtual void  endSelectionDataRequest();
-    virtual void notifyAboutLostSelectionOwnership();
 
     void setNewMousePositionForMovingSelection(int x, int y);
     
@@ -162,6 +222,11 @@ private:
     TextData::TextMark pastingTextMark;
     EditingHistory::SectionHolder::Ptr historySectionHolder;
     PasteParameter pasteParameter;
+
+    class SelectionContentHandler;
+    SelectionOwner::Ptr selectionOwner;
+    
+    bool isSelectionPersistent;
 };
 
 } // namespace LucED

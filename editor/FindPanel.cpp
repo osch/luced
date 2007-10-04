@@ -45,7 +45,8 @@ FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback
       defaultDirection(Direction::DOWN),
       historyIndex(-1),
       selectSearchRegexFlag(false),
-      selectionSearchForwardFlag(true)
+      selectionSearchForwardFlag(true),
+      findUtil(e->getTextData())
 {
     GuiLayoutColumn::Ptr  c0 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr  c1 = GuiLayoutColumn::create();
@@ -149,8 +150,6 @@ FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback
     
     editField->getTextData()->registerModifiedFlagListener(newCallback(this, &FindPanel::handleModifiedEditField));
     
-    findUtil.setTextData(e->getTextData());
-
     label0->setMiddleMouseButtonCallback(newCallback(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
@@ -176,6 +175,7 @@ void FindPanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearc
 */
         GuiRoot::getInstance()->flushDisplay();
 
+        findUtil.setAllowMatchAtStartOfSearchFlag(isWrapping);
         findUtil.findNext();
 
         if (findUtil.wasFound())
@@ -194,9 +194,13 @@ void FindPanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearc
             }
             e->moveCursorToTextMarkAndAdjustVisibility(m);
             e->rememberCursorPixX();
-            e->requestSelectionOwnership();
-            e->getBackliteBuffer()->activateSelection(findUtil.getMatchBeginPos());
-            e->getBackliteBuffer()->extendSelectionTo(findUtil.getMatchEndPos());
+            if (findUtil.getMatchBeginPos() < findUtil.getMatchEndPos())
+            {
+                e->setPrimarySelection(findUtil.getMatchBeginPos(),
+                                       findUtil.getMatchEndPos());
+            } else {
+                e->releaseSelection();
+            }
         } else if (!isWrapping) {
             if (findUtil.isSearchingForward()) {
                 messageBoxInvoker->call(MessageBoxParameter()
@@ -304,15 +308,15 @@ void FindPanel::handleButtonPressed(Button* button)
             findPrevButton->setAsDefaultButton(false);
             findNextButton->setAsDefaultButton(true);
             
-            if (e->getBackliteBuffer()->hasActiveSelection()) {
-                textPosition = e->getBackliteBuffer()->getEndSelectionPos();
+            if (e->hasPrimarySelection()) {
+                textPosition = e->getEndSelectionPos();
             }
         } else {
             findPrevButton->setAsDefaultButton(true);
             findNextButton->setAsDefaultButton(false);
 
-            if (e->getBackliteBuffer()->hasActiveSelection()) {
-                textPosition = e->getBackliteBuffer()->getBeginSelectionPos();
+            if (e->hasPrimarySelection()) {
+                textPosition = e->getBeginSelectionPos();
             }
         }
 
@@ -406,8 +410,8 @@ void FindPanel::findAgainForward()
     historyIndex = -1;
 
     int   textPosition   = e->getCursorTextPosition();
-    if (e->getBackliteBuffer()->hasActiveSelection()) {
-        textPosition = e->getBackliteBuffer()->getEndSelectionPos();
+    if (e->hasPrimarySelection()) {
+        textPosition = e->getEndSelectionPos();
     }
     
     findUtil.setSearchForwardFlag(true);
@@ -446,8 +450,8 @@ void FindPanel::findAgainBackward()
     historyIndex = -1;
 
     int   textPosition   = e->getCursorTextPosition();
-    if (e->getBackliteBuffer()->hasActiveSelection()) {
-        textPosition = e->getBackliteBuffer()->getBeginSelectionPos();
+    if (e->hasPrimarySelection()) {
+        textPosition = e->getBeginSelectionPos();
     }
 
     findUtil.setSearchForwardFlag(false);
@@ -641,11 +645,11 @@ void FindPanel::notifyAboutEndOfPastingData()
             findUtil.setRegexFlag        (selectSearchRegexFlag);
             findUtil.setWholeWordFlag    (false);
             findUtil.setSearchString     (selectionSearchString);
-            if (e->getBackliteBuffer()->hasActiveSelection()) {
+            if (e->hasPrimarySelection()) {
                 if (selectionSearchForwardFlag) {
-                    findUtil.setTextPosition(e->getBackliteBuffer()->getEndSelectionPos());
+                    findUtil.setTextPosition(e->getEndSelectionPos());
                 } else {
-                    findUtil.setTextPosition(e->getBackliteBuffer()->getBeginSelectionPos());
+                    findUtil.setTextPosition(e->getBeginSelectionPos());
                 }
             } else {
                 findUtil.setTextPosition(e->getCursorTextPosition());

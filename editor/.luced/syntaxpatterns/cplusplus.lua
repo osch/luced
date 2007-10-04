@@ -27,7 +27,7 @@ return
         	style = "default",
 
                 childPatterns = {
-                                 "emlualine",    "emluaexpr",
+                                 "emluaexpr",    "emlualine", "staticsql",
                                  "string",       "char",         "comment1",         "comment2",     "comment3", "preprop",      "template",     
                                  "sizeof",
                                  "newcast",      "oldcast",      "namespace",        "struct1", "struct2",      "class",        "keywords",
@@ -42,11 +42,19 @@ return
                                             |do     |for      |return  |try       |catch    |public   |private  |protected |virtual  |while
                                             |switch |case     |break   |continue  |template |typename |struct   |explicit  |mutable  |throw
                                             |new    |operator |sizeof  |extern    |friend   |delete   |volatile
-                                            |default
+                                            |default|goto
                                        )\b
                                    ]],
                 maxExtend        = 15,
         }, 
+        staticsql = {
+        	style = "command",
+                beginPattern     = [[EXEC\s+SQL]],
+                endPattern       = [[;]],
+                maxBeginExtend   = 100,
+                maxEndExtend     = 1,
+                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "comment3", "preprop" },
+        },
         emlualine = {
         	style = "regex",
                 beginPattern     = [[^@]],
@@ -134,7 +142,7 @@ return
         }, 
         class = {
         	style = "type",
-                beginPattern     = [[(?P<classBegin>\b(?>class|enum)\b)(?P<classBegin2>(?>(?>[^\s;{}:]*\s+)*(?=[^\s;{}:])))]],
+                beginPattern     = [[(?P<classBegin>\b(?>class|enum)\b)(?P<classBegin2>(?>(?>[^;{}:]*\s*)*(?=[^;{}:])))]],
                 endPattern       = [[(?P<classEnd>[;{}()])]],
                 maxBeginExtend   = 100,
                 maxEndExtend     = 1,
@@ -188,7 +196,7 @@ return
         comment3 = {
         	style = "comment",
                 beginPattern     = [[(?P<comment3Begin>^\s*\#\s*if\s+0)]],
-                endPattern       = [[(?P<comment3End>^\s*\#\s*endif)]],
+                endPattern       = [[(?P<comment3End>^\s*\#\s*endif|^\s*\#\s*else)]],
                 maxBeginExtend   = 200,
                 maxEndExtend     = 200,
                 beginSubstyles   = {comment3Begin = "preproc"},

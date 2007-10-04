@@ -42,12 +42,12 @@ public:
     
     virtual ~TextWidget();
     
+protected:
+    TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border);
+
     BackliteBuffer* getBackliteBuffer() {
         return backliteBuffer.getRawPtr();
     }
-
-protected:
-    TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border);
 
     void showMousePointer() {
         if (isMousePointerHidden) {

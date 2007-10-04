@@ -39,14 +39,42 @@ static int myX11ErrorHandler(Display *display, XErrorEvent *errorEvent)
     fprintf(stderr, "LucED: %s\n", buffer);
 }
 
+static bool GuiRoot_originalKeyboardModeWasAutoRepeat = false;
+static bool GuiRoot_wasKeyboardModeModified           = false;
+
+static int myFatalX11ErrorHandler(Display* display)
+{
+    // Handling of broken connections: try to open display again 
+    // to restore AutoRepeat. This could be useful if xkill was 
+    // used.
+
+    if (GuiRoot_wasKeyboardModeModified)
+    {
+        Display* tryAgainDisplay = XOpenDisplay(NULL);
+        if (tryAgainDisplay != NULL)
+        {
+            if (GuiRoot_originalKeyboardModeWasAutoRepeat) {
+                XAutoRepeatOn(tryAgainDisplay);
+            } else {
+                XAutoRepeatOff(tryAgainDisplay);
+            }
+            XCloseDisplay(tryAgainDisplay);
+        }
+    }
+    // xlib will terminate the program after this handler
+    return 0;
+}
+
+
 GuiRoot::GuiRoot()
     : wasKeyboardModeModified(false)
 {
     XSetErrorHandler(myX11ErrorHandler);
+    XSetIOErrorHandler(myFatalX11ErrorHandler);
 
     display = XOpenDisplay(NULL);
     if (display == NULL) {
-        throw SystemException("Can't open display.");
+        throw SystemException(String() << "Cannot open display \"" << XDisplayName(NULL) << "\"");
     }
     screenId = XDefaultScreen(display);
     screen = XScreenOfDisplay(display, screenId);
@@ -55,6 +83,9 @@ GuiRoot::GuiRoot()
     XKeyboardState keybstate;
     XGetKeyboardControl(display, &keybstate);
     originalKeyboardModeWasAutoRepeat = (keybstate.global_auto_repeat == AutoRepeatModeOn);
+
+    GuiRoot_originalKeyboardModeWasAutoRepeat = originalKeyboardModeWasAutoRepeat;
+    GuiRoot_wasKeyboardModeModified           = wasKeyboardModeModified;
     
     blackColor = GuiColor(BlackPixel(display, screenId));
     whiteColor = GuiColor(WhitePixel(display, screenId));
@@ -86,12 +117,17 @@ GuiRoot::GuiRoot()
     XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor05().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor05 = GuiColor(xcolor1_st.pixel);
+    
 }
 
 GuiRoot::~GuiRoot()
 {
-    if (wasKeyboardModeModified && originalKeyboardModeWasAutoRepeat) {
-        XAutoRepeatOn(display);
+    if (wasKeyboardModeModified) {
+        if (originalKeyboardModeWasAutoRepeat) {
+            XAutoRepeatOn(display);
+        } else {
+            XAutoRepeatOff(display);
+        }
     }
     XSync(display, False);
     XCloseDisplay(display);
@@ -108,21 +144,29 @@ GuiColor GuiRoot::getGuiColor(const String& colorName)
 
 void GuiRoot::setKeyboardAutoRepeatOn()
 {
-    wasKeyboardModeModified = !originalKeyboardModeWasAutoRepeat;
+            wasKeyboardModeModified = !originalKeyboardModeWasAutoRepeat;
+    GuiRoot_wasKeyboardModeModified = wasKeyboardModeModified;
+
     XAutoRepeatOn(display);
 }
 
 
 void GuiRoot::setKeyboardAutoRepeatOff()
 {
-    wasKeyboardModeModified = originalKeyboardModeWasAutoRepeat;
+            wasKeyboardModeModified = originalKeyboardModeWasAutoRepeat;
+    GuiRoot_wasKeyboardModeModified = wasKeyboardModeModified;
+
     XAutoRepeatOff(display);
 }
 
 void GuiRoot::setKeyboardAutoRepeatOriginal()
 {
-    if (wasKeyboardModeModified && originalKeyboardModeWasAutoRepeat) {
-       XAutoRepeatOn(display);
+    if (wasKeyboardModeModified) {
+        if (originalKeyboardModeWasAutoRepeat) {
+            XAutoRepeatOn(display);
+        } else {
+            XAutoRepeatOff(display);
+        }
     }
 }
 

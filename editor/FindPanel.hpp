@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FINDPANEL_H
-#define FINDPANEL_H
+#ifndef FINDPANEL_HPP
+#define FINDPANEL_HPP
 
 #include "String.hpp"
 
@@ -129,4 +129,4 @@ protected:
 
 } // namespace LucED
 
-#endif // FINDPANEL_H
+#endif // FINDPANEL_HPP

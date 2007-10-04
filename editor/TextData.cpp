@@ -161,8 +161,7 @@ void TextData::checkFileInfo()
         lastModifiedTimeValSinceEpoche = fileInfo.getLastModifiedTimeValSinceEpoche();
     }
 
-    File file(this->fileName);
-    this->fileInfo = file.getInfo();
+    this->fileInfo = File(this->fileName).getInfo();
     
     if (fileInfo.exists())
     {

@@ -28,8 +28,7 @@ BackliteBuffer::BackliteBuffer(TextData::Ptr textData)
       : textData(textData),
         startPos(0),
         hasSelection(false),
-        isSecondarySelection(false),
-        isSelectionPersistent(false)
+        isSecondarySelection(false)
 {
 }
 
@@ -47,10 +46,7 @@ void BackliteBuffer::activateSelection(long textPos)
 {
     isSecondarySelection = false;
     if (hasSelection) {
-        bool wasPersist = isSelectionPersistent;
-        isSelectionPersistent = false;
         deactivateSelection();
-        isSelectionPersistent = wasPersist;
     }
     hasSelection = true;
     isSelectionAnchorAtBegin = true;
@@ -79,36 +75,18 @@ void BackliteBuffer::makeSecondarySelectionToPrimarySelection()
     }
 }
 
-void BackliteBuffer::turnOnSelectionPersistence()
-{
-    if (!isSelectionPersistent) {
-        isSelectionPersistent = true;
-    }
-}
-
-void BackliteBuffer::turnOffSelectionPersistence()
-{
-    isSelectionPersistent = false;
-}
-
 void BackliteBuffer::deactivateSelection()
 {
     if (hasSelection) {
-        if (isSelectionPersistent) {
-            makeSelectionToSecondarySelection();
-        }
-        else
-        {
-            hasSelection = false;
-            isSecondarySelection = false;
-            isSelectionAnchorAtBegin = true;
-            long oldBeginPos = beginSelection.getPos();
-            long oldEndPos   = endSelection.getPos();
-            beginSelection = TextData::TextMark();
-            endSelection   = TextData::TextMark();
-            textData->flushPendingUpdates();
-            updateListeners.invokeAllCallbacks(HilitingBuffer::UpdateInfo(oldBeginPos, oldEndPos));
-        } 
+        hasSelection = false;
+        isSecondarySelection = false;
+        isSelectionAnchorAtBegin = true;
+        long oldBeginPos = beginSelection.getPos();
+        long oldEndPos   = endSelection.getPos();
+        beginSelection = TextData::TextMark();
+        endSelection   = TextData::TextMark();
+        textData->flushPendingUpdates();
+        updateListeners.invokeAllCallbacks(HilitingBuffer::UpdateInfo(oldBeginPos, oldEndPos));
     }
 }
 

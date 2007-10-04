@@ -31,7 +31,8 @@ using namespace LucED;
 TopWin::TopWin()
     : GuiWidget(0, 0, 1, 1, 0),
       mapped(false),
-      requestFocusAfterMapped(false)
+      requestFocusAfterMapped(false),
+      focusFlag(false)
 {
     setWindowManagerHints();
 
@@ -218,6 +219,7 @@ printf("TakeFocus\n");
                     KeyPressRepeater::getInstance()->reset();
                     GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
                 }
+                focusFlag = false;
                 treatFocusOut();
                 if (expectedFocusTopWin == this)
                 {
@@ -231,6 +233,7 @@ printf("TakeFocus\n");
                     // this also happens with NEdit, perhaps a bug in
                     // some window manager
                     
+                    expectedFocusTopWin->focusFlag = false;
                     expectedFocusTopWin->treatFocusOut();
                     expectedFocusTopWin = NULL;
                 }
@@ -249,9 +252,11 @@ printf("TakeFocus\n");
                     // this sometimes happens, perhaps a bug in
                     // the window manager, but I'm not sure.
                     
+                    expectedFocusTopWin->focusFlag = false;
                     expectedFocusTopWin->treatFocusOut();
                 }
                 expectedFocusTopWin = this;
+                focusFlag = true;
                 treatFocusIn();
                 reportFocusOwnershipToTopWinOwner(this, owner);
                 reportFocusOwnershipToTopWinOwner(this, this);

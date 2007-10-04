@@ -28,7 +28,7 @@
 using namespace LucED;
 
 
-FindUtil::FindUtil()
+FindUtil::FindUtil(TextData* textData)
     : searchForwardFlag(true),
       ignoreCaseFlag(false),
       regexFlag(false),
@@ -36,12 +36,15 @@ FindUtil::FindUtil()
       wasFoundFlag(false),
       textPosition(0),
       maximalEndOfMatchPosition(-1),
-      textData(NULL),
+      textData(textData),
       wasError(false),
       luaException(""),
       wasInitializedFlag(false),
-      maxRegexAssertionLength(GlobalConfig::getInstance()->getMaxRegexAssertionLength())
-{}
+      maxRegexAssertionLength(GlobalConfig::getInstance()->getMaxRegexAssertionLength()),
+      allowMatchAtStartOfSearchFlag(true)
+{
+    setOptions(Options());
+}
 
 
 LuaObject FindUtil::evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
@@ -378,6 +381,11 @@ bool FindUtil::doesMatch()
         int   textLength     = textData->getLength();
         byte* textStart      = textData->getAmount(0, textLength);
 
+        if (textPosition < 0 || textPosition > textLength) {
+            wasFoundFlag = false;
+            return false;
+        }
+
         if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
                             (char*)textStart, textLength, textPosition, Regex::ANCHORED, ovector)) {
             wasFoundFlag = true;
@@ -401,86 +409,98 @@ void FindUtil::findNext()
         if (!wasInitialized()) {
             initialize();
         }
-
-        bool doItAgain = true;
-        
-        while (doItAgain)
-        {
-            doItAgain = false;
-            
+	
+        if (textPosition < 0 || textPosition > textData->getLength()) {
             wasFoundFlag = false;
-            if (searchForwardFlag) 
-            {
-                long epos;
-                if (maximalEndOfMatchPosition == -1) {
-                    epos = textData->getLength();
-                } else {
-                    epos = maximalEndOfMatchPosition;
-                }
-                long blockStartPos = (textPosition - maxRegexAssertionLength > 0)
-                                   ? (textPosition - maxRegexAssertionLength) 
-                                   : 0;
-    
-                long blockLength   = (epos + maxRegexAssertionLength < textData->getLength()) 
-                                   ? (epos + maxRegexAssertionLength - blockStartPos) 
-                                   : (textData->getLength() - blockStartPos);
-                
-                byte* blockStartPtr = textData->getAmount(blockStartPos, blockLength);
-                
-                if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
-                                    (char*)blockStartPtr, blockLength, textPosition - blockStartPos,
-                                    Regex::MatchOptions(), ovector))
-                {
-                    for (int i = 0, n = ovector.getLength(); i < n; ++i) {
-                        ovector[i] += blockStartPos;
-                    }
-                    if (ovector[1] <= epos) {
-                        if (ovector[0] == ovector[1] && ovector[1] == textPosition
-                         && textPosition < epos)
-                        {
-                            doItAgain = true;
-                            ++textPosition;
-                        } else {
-                            wasFoundFlag = true;
-                            textPosition = ovector[0];
-                        }
-                    }
-                }
+            return;
+        }
+
+	long startingTextPosition = textPosition;
+	int doItCounter = 0;
+	
+    doItAgain:
+
+        wasFoundFlag = false;
+
+        ++doItCounter;
+
+        if (searchForwardFlag) 
+        {
+            long epos;
+            if (maximalEndOfMatchPosition == -1) {
+                epos = textData->getLength();
             } else {
-                int   textLength     = textData->getLength();
-                byte* textStart      = textData->getAmount(0, textLength);
-                
-                --textPosition;
-                long epos;
-                if (maximalEndOfMatchPosition == -1) {
-                    epos = textLength;
-                } else {
-                    epos = maximalEndOfMatchPosition;
+                epos = maximalEndOfMatchPosition;
+            }
+            long blockStartPos = (textPosition - maxRegexAssertionLength > 0)
+                               ? (textPosition - maxRegexAssertionLength) 
+                               : 0;
+
+            long blockLength   = (epos + maxRegexAssertionLength < textData->getLength()) 
+                               ? (epos + maxRegexAssertionLength - blockStartPos) 
+                               : (textData->getLength() - blockStartPos);
+            
+            byte* blockStartPtr = textData->getAmount(blockStartPos, blockLength);
+
+            if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
+                                (char*)blockStartPtr, blockLength, textPosition - blockStartPos,
+                                Regex::MatchOptions(), ovector))
+            {
+                for (int i = 0, n = ovector.getLength(); i < n; ++i) {
+                    ovector[i] += blockStartPos;
                 }
-                
-                while (!wasFoundFlag && textPosition >= 0) {
-                    if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
-                                        (char*)textStart, textLength, textPosition, Regex::ANCHORED, ovector))
+                if (ovector[1] <= epos)
+                {
+                    if (allowMatchAtStartOfSearchFlag || doItCounter > 1 || startingTextPosition < ovector[1])
                     {
-                        if (ovector[1] <= epos) {
-                            if (ovector[0] == ovector[1] && ovector[1] == textPosition
-                             && textPosition < epos)
-                            {
-                                doItAgain = true;
-                                --textPosition;
-                            } else {
-                                wasFoundFlag = true;
-                            }
+                        wasFoundFlag = true;
+                        textPosition = ovector[0];
+                    }
+                    else if (doItCounter == 1 && textPosition < textData->getLength())
+                    {
+                        ++textPosition;
+                        goto doItAgain;
+                    }
+                }
+            }
+        } else {
+            int   textLength     = textData->getLength();
+            byte* textStart      = textData->getAmount(0, textLength);
+            
+            long epos;
+            if (maximalEndOfMatchPosition == -1) {
+                epos = textLength;
+            } else {
+                epos = maximalEndOfMatchPosition;
+            }
+            
+            while (!wasFoundFlag && textPosition >= 0) {
+                if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
+                                    (char*)textStart, textLength, textPosition, Regex::ANCHORED, ovector))
+                {
+                    if (ovector[1] <= epos) 
+                    {
+                        if (allowMatchAtStartOfSearchFlag || doItCounter > 1 || ovector[0] < startingTextPosition)
+                        {
+                            wasFoundFlag = true;
+                        }
+                        else if (doItCounter == 1 && 0 < textPosition)
+                        {
+                            --textPosition;
+                            goto doItAgain;
+                        }
+                        else {
+                            --textPosition;
                         }
                     }
-                    else {
-                        --textPosition;
-                    }
+                }
+                else {
+                    --textPosition;
                 }
             }
-            if (wasError) {
-                throw luaException;
-            }
+        }
+        if (wasError) {
+            throw luaException;
         }
     }
     catch (MyRegexException& ex) {

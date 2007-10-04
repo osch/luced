@@ -38,6 +38,7 @@
 #include "ConfigException.hpp"
 #include "WindowCloser.hpp"
 #include "System.hpp"
+#include "ConfigErrorHandler.hpp"
 
 using namespace LucED;
 
@@ -589,9 +590,14 @@ void EditorTopWin::handleSaveKey()
     } catch (LuaException& ex) {
         invokeMessageBox(MessageBoxParameter().setTitle("Lua Error")
                                               .setMessage(ex.getMessage()));
-    } catch (ConfigException& ex) {
-        invokeMessageBox(MessageBoxParameter().setTitle("Config Error")
-                                              .setMessage(ex.getMessage()));
+    } catch (ConfigException& ex)
+    {
+        if (ex.getErrorList().isValid() && ex.getErrorList()->getLength() > 0) {
+            ConfigErrorHandler::start(ex.getErrorList());
+        } else {
+            invokeMessageBox(MessageBoxParameter().setTitle("Config Error")
+                                                  .setMessage(ex.getMessage()));
+        }
     }
 }
 
@@ -692,10 +698,10 @@ void EditorTopWin::executeLuaScript()
     }
     try
     {
-        if (textEditor->hasSelectionOwnership())
+        if (textEditor->hasSelection())
         {
-            long selBegin  = textEditor->getBackliteBuffer()->getBeginSelectionPos();
-            long selLength = textEditor->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+            long selBegin  = textEditor->getBeginSelectionPos();
+            long selLength = textEditor->getEndSelectionPos() - selBegin;
             
             LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeScript((const char*) textEditor->getTextData()->getAmount(selBegin, selLength),
                                                                                                selLength);
@@ -707,14 +713,14 @@ void EditorTopWin::executeLuaScript()
             textEditor->moveCursorToTextPosition(selBegin + selLength);
             if (output.getLength() > 0) {
                 textEditor->insertAtCursor((const byte*) output.toCString(), output.getLength());
-                textEditor->getBackliteBuffer()->activateSelection(selBegin + selLength);
-                textEditor->getBackliteBuffer()->extendSelectionTo(selBegin + selLength + output.getLength());
+                textEditor->setPrimarySelection(selBegin + selLength, 
+                                                selBegin + selLength + output.getLength());
 
                 textEditor->moveCursorToTextPosition(selBegin + selLength + output.getLength());
                 textEditor->assureCursorVisible();
                 textEditor->moveCursorToTextPosition(selBegin + selLength);
             } else {
-                textEditor->releaseSelectionOwnership();
+                textEditor->releaseSelection();
             }
             textEditor->assureCursorVisible();
             textEditor->rememberCursorPixX();

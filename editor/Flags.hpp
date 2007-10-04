@@ -19,36 +19,71 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REPLACEUTIL_HPP
-#define REPLACEUTIL_HPP
+#ifndef FLAGS_HPP
+#define FLAGS_HPP
 
-#include "FindUtil.hpp"
+#include "debug.hpp"
 
 namespace LucED
 {
 
-class ReplaceUtil : public FindUtil
+template
+<
+    class EnumType,
+    class ValueType = unsigned long
+>
+class Flags
 {
 public:
     
-    ReplaceUtil(TextData* textData)
-        : FindUtil(textData)
+    Flags()
+        : value()
     {}
     
-    void setReplaceString(const String& replaceString) {
-        this->replaceString = replaceString;
+    void clear() {
+        value = ValueType();
     }
-    String getReplaceString() const {
-        return replaceString;
+    
+    void set(EnumType flagNumber)
+    {
+        ASSERT(flagNumber < sizeof(ValueType) * 8);
+        value |= (1 << flagNumber);
     }
-    String getSubstitutedString();
     
-    bool replaceAllBetween(long spos, long epos);
+    void clear(EnumType flagNumber)
+    {
+        ASSERT(flagNumber < sizeof(ValueType) * 8);
+        value &= ~(1 << flagNumber);
+    }
     
+    bool isSet(EnumType flagNumber) const
+    {
+        ASSERT(flagNumber < sizeof(ValueType) * 8);
+        return value & (1 << flagNumber);
+    }
+    
+    bool contains(EnumType flagNumber) const {
+        return isSet(flagNumber);
+    }
+    
+    Flags operator|(EnumType flagNumber) const
+    {
+        Flags rslt = *this;
+        rslt.set(flagNumber);
+        return rslt;
+    }
+    
+    Flags& operator|=(EnumType flagNumber)
+    {
+        this->set(flagNumber);
+        return *this;
+    }
+
 private:
-    String replaceString;
+    ValueType value;
 };
+
 
 } // namespace LucED
 
-#endif // REPLACEUTIL_HPP
+#endif // FLAGS_HPP

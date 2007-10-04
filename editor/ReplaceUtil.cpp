@@ -176,6 +176,8 @@ bool ReplaceUtil::replaceAllBetween(long spos, long epos)
     
     try
     {
+        FindUtil::setAllowMatchAtStartOfSearchFlag(true);
+        
         while (textMark.getPos() < epos)
         {
             FindUtil::findNext();
@@ -191,11 +193,12 @@ bool ReplaceUtil::replaceAllBetween(long spos, long epos)
                     textData->insertAtMark(textMark, substitutedString);
 
                     textMark.moveForwardToPos(textMark.getPos() + substitutedString.getLength());
-                    if (textMark.isAtEndOfLine()) {
-                        textMark.moveToNextLineBegin();
-                    }
 
                     textData->removeAtMark(textMark, FindUtil::getMatchLength());
+
+                    if (FindUtil::getMatchLength() == 0) {
+                        textMark.inc();
+                    }
 
                     epos += substitutedString.getLength() - FindUtil::getMatchLength();
 

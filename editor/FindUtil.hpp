@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FINDUTIL_H
-#define FINDUTIL_H
+#ifndef FINDUTIL_HPP
+#define FINDUTIL_HPP
 
 #include "String.hpp"
 #include <pcre.h>
@@ -33,6 +33,7 @@
 #include "LuaStoredObject.hpp"
 #include "LuaException.hpp"
 #include "Regex.hpp"
+#include "Flags.hpp"
 
 namespace LucED
 {
@@ -43,7 +44,27 @@ class FindUtil : public NonCopyable
 {
 public:
 
-    FindUtil();
+    enum Option
+    {
+        REGEX,
+        WHOLE_WORD,
+        IGNORE_CASE,
+        BACKWARD,
+        NOT_AT_START
+    };
+    
+    typedef Flags<Option> Options;
+
+
+    FindUtil(TextData* textData);
+    
+    void setOptions(Options options) {
+        setRegexFlag                     ( options.contains(REGEX));
+        setWholeWordFlag                 ( options.contains(WHOLE_WORD));
+        setIgnoreCaseFlag                ( options.contains(IGNORE_CASE));
+        setSearchForwardFlag             (!options.contains(BACKWARD));
+        setAllowMatchAtStartOfSearchFlag (!options.contains(NOT_AT_START));
+    }
 
     void setSearchForwardFlag(bool flag) {
         wasInitializedFlag = false;
@@ -77,10 +98,33 @@ public:
     void setTextData(TextData* textData) {
         this->textData = textData;
     }
+    void setAllowMatchAtStartOfSearchFlag(bool flag) {
+        allowMatchAtStartOfSearchFlag = flag;
+    }
 
     bool doesMatch();
+    
+    bool doesMatch(const String& searchString, long textPosition, Options options) {
+        setOptions(options);
+        setTextPosition(textPosition);
+        setSearchString(searchString);
+        return doesMatch();
+    }
         
     void findNext();
+    
+    long find(const String& searchString, long textPosition, Options options) {
+        setOptions(options);
+        setTextPosition(textPosition);
+        setSearchString(searchString);
+        findNext();
+        if (wasFound()) {
+            return getMatchBeginPos();
+        } else {
+            return -1;
+        }
+        return wasFound();
+    }
     
     bool wasFound() const {
         return wasFoundFlag;
@@ -253,9 +297,11 @@ private:
     Regex regex;
 
     long maxRegexAssertionLength;
+    
+    bool allowMatchAtStartOfSearchFlag;
 };
 
 } // namespace LucED
 
-#endif // FINDUTIL_H
+#endif // FINDUTIL_HPP
 

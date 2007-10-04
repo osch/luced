@@ -185,6 +185,10 @@ TextWidget::~TextWidget()
 void TextWidget::treatConfigUpdate()
 {
     lineInfos.setAllInvalid();
+    textStyles = GlobalConfig::getInstance()->getTextStyles();
+    lineHeight  = textStyles->get(0)->getLineHeight();
+    lineAscent  = textStyles->get(0)->getLineAscent();
+    
 }
 
 void TextWidget::registerLineAndColumnListener(Callback<long,long>::Ptr listener)
