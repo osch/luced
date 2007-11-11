@@ -32,7 +32,7 @@ LanguageMode::Ptr LanguageMode::create(LuaObject config)
 }
 
 
-LanguageMode::LanguageMode(const String& name, Regex regex)
+LanguageMode::LanguageMode(const String& name, BasicRegex regex)
     : name(name), regex(regex),
       approximateUnknownHilitingFlag(true),
       approximateUnknownHilitingReparseRange(2000),
@@ -60,7 +60,7 @@ LanguageMode::LanguageMode(LuaObject config)
             throw ConfigException(String() << "languageMode '" << name << "' has invalid element 'fileNameRegex'");
         }
         try {
-            regex = Regex(o.toString());
+            regex = BasicRegex(o.toString());
         } catch (RegexException& ex) {
             throw ConfigException(String() << "languageMode '" << name << "' has invalid element 'fileNameRegex': "
                     << ex.getMessage());
@@ -128,7 +128,7 @@ void LanguageModes::append(LuaObject config)
 {
     modes.append(LanguageMode::create(config));
     nameToIndexMap.set(modes[modes.getLength() - 1]->getName(), modes.getLength() - 1);
-    Regex regex = modes[modes.getLength() - 1]->getRegex();
+    BasicRegex regex = modes[modes.getLength() - 1]->getRegex();
     if (regex.isValid()) {
         ovector.increaseTo(regex.getOvecSize());
     }
@@ -138,9 +138,9 @@ LanguageMode::Ptr LanguageModes::getLanguageModeForFile(const String& fileName)
 {
     for (int i = 0; i < modes.getLength(); ++i)
     {
-        Regex re = modes[i]->getRegex();
+        BasicRegex re = modes[i]->getRegex();
         if (re.isValid()) {
-            bool matched = re.findMatch(fileName.toCString(), fileName.getLength(), 0, Regex::MatchOptions(), ovector);
+            bool matched = re.findMatch(fileName.toCString(), fileName.getLength(), 0, BasicRegex::MatchOptions(), ovector);
             if (matched && ovector[0] == 0 && ovector[1] == fileName.getLength()) {
                 return modes[i];
             }

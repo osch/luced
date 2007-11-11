@@ -156,7 +156,7 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                     {
                         // send multi-part
                         
-                        this->multiPartTargetWid = e.requestor;
+                        this->multiPartTargetWid = WidgetId(e.requestor);
                         this->multiPartTargetProp = e.property;
                         this->sendingMultiPart = true;
                         this->alreadySentPos = 0;

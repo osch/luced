@@ -117,7 +117,7 @@ return
 
         dependenyLine = {
             style = "textKey1",
-            beginPattern     = [[^(?P<target>(?>[ ]*[^\n:]+))[:](?!=) ]],
+            beginPattern     = [[^(?P<target>(?>[ ]*(?>(?:\\\\)*\\\n|[^\n:])+))[:](?!=) ]],
             endPattern       = [[ \n ]],
             maxBeginExtend   = 100,
             maxEndExtend     = 1,

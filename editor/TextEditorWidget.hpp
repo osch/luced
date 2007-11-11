@@ -29,6 +29,7 @@
 #include "OwningPtr.hpp"
 #include "WeakPtr.hpp"
 #include "Callback.hpp"
+#include "KeyModifier.hpp" 
 
 namespace LucED {
 
@@ -62,8 +63,8 @@ public:
     void showCursor();
     void hideCursor();
 
-    virtual ProcessingResult processEvent(const XEvent *event);
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent* event);
+    virtual ProcessingResult processKeyboardEvent(const XEvent* event);
 
     void treatFocusIn();
     void treatFocusOut();
@@ -74,8 +75,12 @@ public:
     int  getRememberedCursorPixX()   { return rememberedCursorPixX; }
     bool isWordCharacter(unsigned char c);
     
-    template<class T> void setEditAction(int keyState, KeySym keySym, T* object, void (T::*method)()) {
-        keyMapping.set(keyState, keySym, newCallback(object, method));
+    template<class T> void setEditAction(KeyModifier keyState, KeyId keyId, T* object, void (T::*method)()) {
+        keyMapping.set(keyState, keyId, newCallback(object, method));
+    }
+    
+    void setEditAction(KeyModifier keyState, KeyId keyId, Callback<>::Ptr callback) {
+        keyMapping.set(keyState, keyId, callback);
     }
     
     bool scrollUp();
@@ -159,7 +164,9 @@ public:
         return getBackliteBuffer()->createMarkToEndOfSelection();
     }
     void makePseudoSelectionToPrimary() {
-        getBackliteBuffer()->makeSecondarySelectionToPrimarySelection();
+        if (selectionOwner->requestSelectionOwnership()) {
+            getBackliteBuffer()->makeSecondarySelectionToPrimarySelection();
+        }
     }
     void extendSelectionTo(long pos) {
         getBackliteBuffer()->extendSelectionTo(pos);
@@ -190,7 +197,7 @@ public:
     void replaceTextWithPrimarySelection();
 
 protected:
-    TextEditorWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth);
+    TextEditorWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth);
 
     virtual void notifyAboutReceivedPasteData(const byte* data, long length);
     virtual void notifyAboutEndOfPastingData();

@@ -60,6 +60,13 @@ public:
         return ptr;
     }
 
+    static WeakPtr start(String fileName)
+    {
+        ParameterList::Ptr pars = ParameterList::create();
+        pars->append(NumberAndFileName(1, fileName));
+        return start(pars);
+    }
+
 private:
     friend class EditorServer;
 

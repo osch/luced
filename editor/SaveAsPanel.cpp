@@ -28,9 +28,11 @@
 
 using namespace LucED;
 
-SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget)
+SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget, 
+                                            Callback<MessageBoxParameter>::Ptr messageBoxInvoker)
     : DialogPanel(parent),
-      editorWidget(editorWidget)
+      editorWidget(editorWidget),
+      messageBoxInvoker(messageBoxInvoker)
 {
     saveButton = Button::create(this, "S]ave File");
     cancelButton = Button::create(this, "C]ancel");
@@ -80,21 +82,44 @@ void SaveAsPanel::treatFocusIn()
 }
 
 
+void SaveAsPanel::continueSave()
+{
+    String newFileName = editField->getTextData()->getAsString();
+    TextData* textData = editorWidget->getTextData();
+
+    if (textData->getFileName() != newFileName)
+    {
+        LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(newFileName);
+        if (languageMode != editorWidget->getHilitedText()->getLanguageMode()) {
+            editorWidget->getHilitedText()->setLanguageMode(languageMode);
+        }
+    }
+    textData->setRealFileName(newFileName);
+    requestCloseFor(this);
+    saveCallback->call();
+}
+
+
 void SaveAsPanel::handleButtonPressed(Button* button)
 {
     if (button == saveButton)
     {
         String newFileName = editField->getTextData()->getAsString();
-        if (editorWidget->getTextData()->getFileName() != newFileName)
+        TextData* textData = editorWidget->getTextData();
+        
+        if (   (textData->isFileNamePseudo() || textData->getFileName() != newFileName)
+            && File(newFileName).exists())
         {
-            LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(newFileName);
-            if (languageMode != editorWidget->getHilitedText()->getLanguageMode()) {
-                editorWidget->getHilitedText()->setLanguageMode(languageMode);
-            }
+            messageBoxInvoker->call(MessageBoxParameter()
+                                    .setTitle("File exists")
+                                    .setMessage(String() << "File '" << newFileName << "' exists.")
+                                    .setDefaultButton("S]ave", newCallback(this, &SaveAsPanel::continueSave))
+                                    .setCancelButton("Ca]ncel"));
         }
-        editorWidget->getTextData()->setRealFileName(newFileName);
-        requestCloseFor(this);
-        saveCallback->call();
+        else
+        {
+            continueSave();
+        }
     }
     else if (button == cancelButton) {
         requestCloseFor(this);
@@ -107,7 +132,7 @@ void SaveAsPanel::show()
     TextData* textData = editorWidget->getTextData();
     String newContent;
     if (textData->isFileNamePseudo()) {
-        newContent = File(textData->getFileName()).getDirName();
+        newContent = String() << File(textData->getFileName()).getDirName() << "/";
     } else {
         newContent = File(textData->getFileName()).getAbsoluteFileName();
     }

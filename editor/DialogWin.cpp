@@ -38,7 +38,7 @@ DialogWin::DialogWin(TopWin* referingWindow)
         referingWindow->registerMappingNotifyCallback(newCallback(this, &DialogWin::notifyAboutReferingWindowMapping));
     }
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    keyMapping.set(            0, XK_Escape,   newCallback(this, &DialogWin::requestCloseWindow));
+    keyMapping.set(            0, KeyId("Escape"),   newCallback(this, &DialogWin::requestCloseWindow));
 }
 
 void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
@@ -106,9 +106,11 @@ void DialogWin::treatNewWindowPosition(Position newPosition)
 
 GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const XEvent *event)
 {
+    KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    
     bool processed = false;
 
-    KeyMapping::Id keyMappingId(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    KeyMapping::Id keyMappingId(event->xkey.state, pressedKey);
     Callback<>::Ptr keyAction = keyMapping.find(keyMappingId);
     if (keyAction->isEnabled()) {
         keyAction->call();

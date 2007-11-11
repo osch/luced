@@ -197,6 +197,7 @@ void TextWidget::registerLineAndColumnListener(Callback<long,long>::Ptr listener
     lineAndColumnListeners.registerCallback(listener);
 }
 
+
 void TextWidget::treatHilitingUpdate(HilitingBuffer::UpdateInfo update)
 {
     ASSERT(update.beginPos <= update.endPos);
@@ -504,10 +505,10 @@ inline void TextWidget::applyTextStyle(int styleIndex)
 //    XSetBackground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
 
     XSetForeground(getDisplay(), textWidget_gcid, style->getColor());
-    XSetFont(      getDisplay(), textWidget_gcid, style->getFontId());
+    XSetFont(      getDisplay(), textWidget_gcid, style->getFontHandle());
 }
 
-inline int TextWidget::calcVisiblePixX(LineInfo *li, long pos)
+inline int TextWidget::calcVisiblePixX(LineInfo* li, long pos)
 {
     int x = -li->leftPixOffset;
     int  p, i;
@@ -1060,6 +1061,7 @@ void TextWidget::drawArea(int minY, int maxY)
     endPos = pos;
 }
 
+
 void TextWidget::redrawChanged(long spos, long epos)
 {
     int minY = 0;
@@ -1420,7 +1422,6 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
     }
 }
 
-
 void TextWidget::internSetLeftPix(long newLeftPix)
 {
     textData->flushPendingUpdates();
@@ -1441,6 +1442,7 @@ void TextWidget::internSetLeftPix(long newLeftPix)
             startCursorBlinking();
         }
         if (diffPix < position.w) {
+            redrawChanged(getTopLeftTextPosition(), textData->getLength()); // assure that new lineinfos match screen content
             XCopyArea(getDisplay(), getWid(), getWid(), textWidget_gcid,
                     diffPix, 0,
                     position.w - diffPix, position.h,
@@ -1462,6 +1464,7 @@ void TextWidget::internSetLeftPix(long newLeftPix)
             startCursorBlinking();
         }
         if (diffPix < position.w) {
+            redrawChanged(getTopLeftTextPosition(), textData->getLength()); // assure that new lineinfos match screen content
             XCopyArea(getDisplay(), getWid(), getWid(), textWidget_gcid,
                     0, 0,
                     position.w - diffPix, position.h,

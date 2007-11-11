@@ -19,14 +19,12 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GUIWIDGET_H
-#define GUIWIDGET_H
+#ifndef GUIWIDGET_HPP
+#define GUIWIDGET_HPP
 
-#include <X11/Xlib.h>
-#include <X11/X.h>
-#include <X11/Xutil.h>
-
+#include "headers.hpp"
 #include "types.hpp"
+#include "WidgetId.hpp"
 #include "GuiElement.hpp"
 #include "GuiColor.hpp"
 #include "GuiRoot.hpp"
@@ -52,9 +50,9 @@ public:
         friend class GuiWidget;
         friend class EventDispatcher;
         friend class GuiWidgetAccessForEventProcessors;
-        EventRegistration(GuiWidget* guiWidget, Window wid) : guiWidget(guiWidget), wid(wid) {}
+        EventRegistration(GuiWidget* guiWidget, WidgetId wid) : guiWidget(guiWidget), wid(wid) {}
         GuiWidget* guiWidget;
-        Window wid;
+        WidgetId wid;
     };
     
     virtual ProcessingResult processEvent(const XEvent *event);
@@ -103,7 +101,7 @@ protected:
 
     virtual ~GuiWidget();
 
-    static Window getRootWid();
+    static WidgetId getRootWid();
     static Display* getDisplay();
     static EventDispatcher* getEventDispatcher();
     static GuiRoot* getGuiRoot() { return GuiRoot::getInstance(); }
@@ -137,7 +135,7 @@ protected:
     }    
 
 public:
-    Window getWid() const {
+    WidgetId getWid() const {
         return wid;
     }
 protected:
@@ -183,7 +181,7 @@ private:
     friend class GuiWidgetAccessForEventProcessors;
     
     bool isTopWindow;
-    Window wid;
+    WidgetId wid;
     long eventMask;
     WeakPtr<GuiWidget> parent;
     Position position;
@@ -199,10 +197,10 @@ protected:
     void addToXEventMaskForGuiWidget(GuiWidget* w, long eventMask) {
         w->addToXEventMask(eventMask);
     }
-    Window getGuiWidgetWid(GuiWidget* w) {
+    WidgetId getGuiWidgetWid(GuiWidget* w) {
         return w->getWid();
     }
-    GuiWidget::EventRegistration createEventRegistration(GuiWidget* guiWidget, Window wid) {
+    GuiWidget::EventRegistration createEventRegistration(GuiWidget* guiWidget, WidgetId wid) {
         return GuiWidget::EventRegistration(guiWidget, wid);
     }
 };
@@ -210,4 +208,4 @@ protected:
 } // namespace LucED
 
 
-#endif // GUIWIDGET_H
+#endif // GUIWIDGET_HPP

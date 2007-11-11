@@ -19,11 +19,12 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef EVENTDISPATCHER_H
-#define EVENTDISPATCHER_H
+#ifndef EVENTDISPATCHER_HPP
+#define EVENTDISPATCHER_HPP
 
 #include <queue>
 
+#include "headers.hpp"
 #include "options.hpp"
 #include "HeapObject.hpp"
 #include "GuiWidget.hpp"
@@ -51,7 +52,7 @@ public:
     void removeEventReceiver(const GuiWidget::EventRegistration& registration);
     
     void registerEventReceiverForForeignWidget(const GuiWidget::EventRegistration& registration);
-    bool isForeignWidget(Window wid);
+    bool isForeignWidget(WidgetId wid);
 
     void registerUpdateSource(Callback<>::Ptr updateCallback);
     void deregisterAllUpdateSourceCallbacksFor(WeakPtr<HeapObject> callbackObject);
@@ -110,7 +111,7 @@ private:
     
     ProcessHandler::Ptr getNextWaitingProcess();
     
-    typedef HashMap<Window, GuiWidget*> WidgetMap;
+    typedef HashMap<WidgetId, GuiWidget*> WidgetMap;
     WidgetMap widgetMap;
     WidgetMap foreignWidgetListeners;
     
@@ -126,7 +127,7 @@ private:
     typedef HashMap< GuiRootProperty, Callback<XEvent*>::Ptr > RootPropertiesMap;
     RootPropertiesMap rootPropertyListeners;
     bool hasRootPropertyListeners;
-    Window rootWid;
+    WidgetId rootWid;
     
     
     ObjectArray<RunningComponent::OwningPtr> runningComponents;
@@ -137,4 +138,4 @@ private:
 } // namespace  LucED
 
 
-#endif // EVENTDISPATCHER_H
+#endif // EVENTDISPATCHER_HPP

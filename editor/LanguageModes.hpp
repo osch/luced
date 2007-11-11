@@ -26,7 +26,7 @@
 
 #include "HeapObject.hpp"
 #include "ObjectArray.hpp"
-#include "Regex.hpp"
+#include "BasicRegex.hpp"
 #include "MemArray.hpp"
 #include "HashMap.hpp"
 #include "SyntaxPatterns.hpp"
@@ -43,7 +43,7 @@ class LanguageMode : public HeapObject
 public:
     typedef OwningPtr<LanguageMode> Ptr;
 
-    static Ptr create(const String& name, Regex regex = Regex()) {
+    static Ptr create(const String& name, BasicRegex regex = BasicRegex()) {
         return Ptr(new LanguageMode(name, regex));
     }
     static Ptr create(LuaObject config);
@@ -51,7 +51,7 @@ public:
     String getName() const {
         return name;
     }
-    Regex getRegex() const {
+    BasicRegex getRegex() const {
         return regex;
     }
     bool hasApproximateUnknownHilitingFlag() const {
@@ -73,11 +73,11 @@ public:
 private:
     friend class LanguageModes;
 
-    LanguageMode(const String& name, Regex regex = Regex());
+    LanguageMode(const String& name, BasicRegex regex = BasicRegex());
     LanguageMode(LuaObject config);
     
     String name;
-    Regex regex;
+    BasicRegex regex;
     bool approximateUnknownHilitingFlag;
     long approximateUnknownHilitingReparseRange;
     int hilitingBreakPointDistance;

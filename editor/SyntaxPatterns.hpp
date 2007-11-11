@@ -25,7 +25,7 @@
 #include "TextStyle.hpp"
 #include "HeapObject.hpp"
 #include "HeapHashMap.hpp"
-#include "Regex.hpp"
+#include "BasicRegex.hpp"
 #include "MemArray.hpp"
 #include "OwningPtr.hpp"
 
@@ -80,7 +80,7 @@ struct SyntaxPattern
     int  endSubstrNo;
     int  maxREBytesExtend;
     
-    Regex re;
+    BasicRegex re;
     ObjectArray<CombinedSubPatternStyle> combinedSubs;
 };
 

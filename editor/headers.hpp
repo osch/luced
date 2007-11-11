@@ -19,17 +19,27 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#ifndef HEADERS_HPP
+#define HEADERS_HPP
 
-#define  STAT_HAS_ST_MTIM_TV_NSEC
-#undef   STAT_HAS_ST_MTIMENSE
+#include "options.hpp"
 
-#define  HASH_MAP_UNDER_GNU_CXX
-#undef   HASH_MAP_UNDER_STD
 
-#undef   DEBUG
+#if defined(WIN32_GUI)
 
-#define X11_GUI
-#undef  WIN_GUI
+    #include <windows.h>
 
-#include "sandbox_options.hpp"
+#elif defined(X11_GUI)
 
+    #include <X11/Xlib.h>
+    #include <X11/X.h>
+    #include <X11/Xutil.h>
+    #include <X11/Xatom.h>
+    #include <X11/keysym.h>
+
+#else
+    #error Either WIN32_GUI or X11_GUI must be defined.
+#endif
+
+
+#endif // HEADERS_HPP

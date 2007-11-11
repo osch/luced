@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef STRING_H
-#define STRING_H
+#ifndef STRING_HPP
+#define STRING_HPP
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -42,12 +42,27 @@ public:
     {}
 
     String(const char* rhs)
+#ifdef DEBUG
+    {
+        ASSERT(rhs != NULL);
+        s = std::string(rhs);
+    }
+#else
         : s(rhs)
     {}
+#endif
+    
 
     String(const char* rhs, int length)
+#ifdef DEBUG
+    {
+        ASSERT(length == 0 || rhs != NULL);
+        s = std::string(rhs, length);
+    }
+#else
         : s(rhs, length)
     {}
+#endif
 
     String(const std::string& rhs)
         : s(rhs)
@@ -78,6 +93,9 @@ public:
         return s[i];
     }
     String getSubstring(int pos, int length) const {
+        if (length == 0) {
+            return String();
+        }
         ASSERT(0 <= length);
         ASSERT(0 <= pos && pos <= getLength());
         if (pos + length > getLength()) {
@@ -94,14 +112,17 @@ public:
         return *this;
     }
     String& append(const char* rhs) {
+        ASSERT(rhs != NULL);
         s.append(rhs);
         return *this;
     }
     String& append(const char* rhs, int length) {
+        ASSERT(rhs != NULL);
         s.append(rhs, length);
         return *this;
     }
     String& append(const byte* rhs, int length) {
+        ASSERT(rhs != NULL);
         s.append((const char*)rhs, length);
         return *this;
     }
@@ -128,6 +149,19 @@ public:
     
     int toInt() const {
         return atoi(s.c_str());
+    }
+    
+    bool equalsIgnoreCase(const String& rhs) const {
+        int j = getLength(), k = rhs.getLength();
+        if (j != k) {
+            return false;
+        }
+        for (int i = 0; i < j; ++i) {
+            if (tolower(s[i]) != tolower(rhs[i])) {
+                return false;
+            }
+        }
+        return true;
     }
     
     bool isInt() const {
@@ -225,4 +259,4 @@ private:
 
 } // namespace LucED
 
-#endif // STRING_H
+#endif // STRING_HPP

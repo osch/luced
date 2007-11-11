@@ -20,7 +20,6 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include <ctype.h>
-#include <X11/keysym.h>
 
 #include "TextEditorWidget.hpp"
 #include "util.hpp"
@@ -686,13 +685,15 @@ void TextEditorWidget::handleScrollRepeating()
 
 GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent *event)
 {
-    if (hasFocusFlag && event->type == KeyPress && !IsModifierKey(XLookupKeysym((XKeyEvent*)&event->xkey, 0)))
+    KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    
+    if (hasFocusFlag && event->type == KeyPress && !pressedKey.isModifierKey())
     {
         hideMousePointer();
     }
     
     unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
-    Callback<>::Ptr m = keyMapping.find(buttonState, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    Callback<>::Ptr m = keyMapping.find(buttonState, pressedKey);
 
     if (m->isEnabled())
     {
@@ -704,7 +705,6 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
     }
     else
     {
-        
         char buffer[100];
         int len = XLookupString(&((XEvent*)event)->xkey, buffer, 100, NULL, NULL);
         if (len > 0) {
@@ -750,6 +750,7 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
                 }
                 long cursorPixX = getCursorPixX();
                 int spaceWidth = getTextStyles()->get(0)->getSpaceWidth();
+
                 if (cursorPixX < getLeftPix()) {
                     setLeftPix(cursorPixX - spaceWidth);
                 } else if (cursorPixX >= getRightPix() - spaceWidth) {

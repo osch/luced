@@ -26,6 +26,7 @@
 #include "Button.hpp"
 #include "TextEditorWidget.hpp"
 #include "SingleLineEditField.hpp"
+#include "MessageBox.hpp"
 
 namespace LucED {
 
@@ -34,8 +35,10 @@ class SaveAsPanel : public DialogPanel
 public:
     typedef OwningPtr<SaveAsPanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget) {
-        return Ptr(new SaveAsPanel(parent, editorWidget));
+    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, 
+                                         Callback<MessageBoxParameter>::Ptr messageBoxInvoker)
+    {
+        return Ptr(new SaveAsPanel(parent, editorWidget, messageBoxInvoker));
     }
     
     virtual void treatFocusIn();
@@ -47,9 +50,12 @@ public:
     }
     
 private:
-    SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget);
+    SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget,
+                                   Callback<MessageBoxParameter>::Ptr messageBoxInvoker);
 
     void handleButtonPressed(Button* button);
+    
+    void continueSave();
 
     Button::Ptr saveButton;
     Button::Ptr cancelButton;
@@ -57,6 +63,7 @@ private:
   
     WeakPtr<TextEditorWidget> editorWidget;
     Callback<>::Ptr saveCallback;
+    Callback<MessageBoxParameter>::Ptr messageBoxInvoker;
 };
 
 } // namespace LucED

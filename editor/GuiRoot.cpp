@@ -78,7 +78,7 @@ GuiRoot::GuiRoot()
     }
     screenId = XDefaultScreen(display);
     screen = XScreenOfDisplay(display, screenId);
-    rootWid = XRootWindow(display, screenId);
+    rootWid = WidgetId(XRootWindow(display, screenId));
 
     XKeyboardState keybstate;
     XGetKeyboardControl(display, &keybstate);

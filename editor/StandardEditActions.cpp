@@ -27,6 +27,9 @@
 #include "Clipboard.hpp"
 #include "StandardEditActions.hpp"
 #include "FindUtil.hpp"
+#include "KeyModifier.hpp"
+#include "FileOpener.hpp"
+#include "Regex.hpp"
 
 using namespace LucED;
 
@@ -1389,6 +1392,7 @@ void StandardEditActions::selectWordForward()
             }
             e->setAnchorToBeginOfSelection();
             e->moveCursorToTextPosition(epos);
+            e->extendSelectionTo(epos);
         }
         else
         {
@@ -1751,63 +1755,101 @@ void StandardEditActions::findPrevLuaStructureElement()
 }
 
 
+void StandardEditActions::openCorrespondingFile()
+{
+    TextData* textData = e->getTextData();
+    if (!textData->isFileNamePseudo())
+    {
+        String currentFile = textData->getFileName();
+        String correspondingFile;
+        
+        Regex r("(.*\\.)(cpp|hpp|c|h)((?:\\.emlua)|)");
+        
+        if (r.matches(currentFile))
+        {
+            String ext = currentFile.getSubstring(r.getCaptureBegin(2),
+                                                  r.getCaptureLength(2));
+            String newExt;
+            
+            if (ext == "c") {
+                newExt = "h";
+            } else if (ext == "h") {
+                newExt = "c";
+            } else if (ext == "cpp") {
+                newExt = "hpp";
+            } else if (ext == "hpp") {
+                newExt = "cpp";
+            }                                  
+            correspondingFile << currentFile.getSubstring(r.getCaptureBegin(1),
+                                                          r.getCaptureLength(1))
+                              << newExt
+                              << currentFile.getSubstring(r.getCaptureBegin(3),
+                                                          r.getCaptureLength(3));
+            if (File(correspondingFile).exists())
+            {
+                FileOpener::start(correspondingFile);
+            }
+        }
+    }
+}
+
 void StandardEditActions::registerSingleLineEditActionsToEditWidget()
 {
-    e->setEditAction(                    0, XK_Left,      this, &StandardEditActions::cursorLeft);
-    e->setEditAction(                    0, XK_Right,     this, &StandardEditActions::cursorRight);
-    e->setEditAction(                    0, XK_KP_Left,   this, &StandardEditActions::cursorLeft);
-    e->setEditAction(                    0, XK_KP_Right,  this, &StandardEditActions::cursorRight);
+    e->setEditAction(            KeyModifier(), KeyId("Left"),      this, &StandardEditActions::cursorLeft);
+    e->setEditAction(            KeyModifier(), KeyId("Right"),     this, &StandardEditActions::cursorRight);
+    e->setEditAction(            KeyModifier(), KeyId("KP_Left"),   this, &StandardEditActions::cursorLeft);
+    e->setEditAction(            KeyModifier(), KeyId("KP_Right"),  this, &StandardEditActions::cursorRight);
 
-    e->setEditAction(             Mod1Mask, XK_Left,      this, &StandardEditActions::cursorBeginOfLine);
-    e->setEditAction(             Mod1Mask, XK_Right,     this, &StandardEditActions::cursorEndOfLine);
-    e->setEditAction(             Mod1Mask, XK_KP_Left,   this, &StandardEditActions::cursorBeginOfLine);
-    e->setEditAction(             Mod1Mask, XK_KP_Right,  this, &StandardEditActions::cursorEndOfLine);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("Left"),      this, &StandardEditActions::cursorBeginOfLine);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("Right"),     this, &StandardEditActions::cursorEndOfLine);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("KP_Left"),   this, &StandardEditActions::cursorBeginOfLine);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("KP_Right"),  this, &StandardEditActions::cursorEndOfLine);
 
-    e->setEditAction(                    0, XK_Home,      this, &StandardEditActions::cursorBeginOfLine);
-    e->setEditAction(                    0, XK_Begin,     this, &StandardEditActions::cursorBeginOfLine);
-    e->setEditAction(                    0, XK_End,       this, &StandardEditActions::cursorEndOfLine);
+    e->setEditAction(            KeyModifier(), KeyId("Home"),      this, &StandardEditActions::cursorBeginOfLine);
+    e->setEditAction(            KeyModifier(), KeyId("Begin"),     this, &StandardEditActions::cursorBeginOfLine);
+    e->setEditAction(            KeyModifier(), KeyId("End"),       this, &StandardEditActions::cursorEndOfLine);
 
-    e->setEditAction( ControlMask|Mod1Mask, XK_Left,      this, &StandardEditActions::scrollLeft);
-    e->setEditAction( ControlMask|Mod1Mask, XK_Right,     this, &StandardEditActions::scrollRight);
-    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Left,   this, &StandardEditActions::scrollLeft);
-    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Right,  this, &StandardEditActions::scrollRight);
+    e->setEditAction(  KeyModifier("Ctrl+Alt"), KeyId("Left"),      this, &StandardEditActions::scrollLeft);
+    e->setEditAction(  KeyModifier("Ctrl+Alt"), KeyId("Right"),     this, &StandardEditActions::scrollRight);
+    e->setEditAction(  KeyModifier("Ctrl+Alt"), KeyId("KP_Left"),   this, &StandardEditActions::scrollLeft);
+    e->setEditAction(  KeyModifier("Ctrl+Alt"), KeyId("KP_Right"),  this, &StandardEditActions::scrollRight);
 
-    e->setEditAction(          ControlMask, XK_Home,      this, &StandardEditActions::cursorBeginOfText);
-    e->setEditAction(          ControlMask, XK_Begin,     this, &StandardEditActions::cursorBeginOfText);
-    e->setEditAction(          ControlMask, XK_End,       this, &StandardEditActions::cursorEndOfText);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("Home"),      this, &StandardEditActions::cursorBeginOfText);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("Begin"),     this, &StandardEditActions::cursorBeginOfText);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("End"),       this, &StandardEditActions::cursorEndOfText);
 
-    e->setEditAction(                    0, XK_BackSpace, this, &StandardEditActions::backSpace);
-    e->setEditAction(                    0, XK_Delete,    this, &StandardEditActions::deleteKey);
+    e->setEditAction(            KeyModifier(), KeyId("BackSpace"), this, &StandardEditActions::backSpace);
+    e->setEditAction(            KeyModifier(), KeyId("Delete"),    this, &StandardEditActions::deleteKey);
 
-    e->setEditAction(          ControlMask, XK_c,         this, &StandardEditActions::copyToClipboard);
-    e->setEditAction(          ControlMask, XK_x,         this, &StandardEditActions::cutToClipboard);
-    e->setEditAction(          ControlMask, XK_v,         this, &StandardEditActions::pasteFromClipboardForward);
-    e->setEditAction(ShiftMask|ControlMask, XK_v,         this, &StandardEditActions::pasteFromClipboardBackward);
-    e->setEditAction(          ControlMask, XK_a,         this, &StandardEditActions::selectAll);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("c"),         this, &StandardEditActions::copyToClipboard);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("x"),         this, &StandardEditActions::cutToClipboard);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("v"),         this, &StandardEditActions::pasteFromClipboardForward);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("v"),         this, &StandardEditActions::pasteFromClipboardBackward);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("a"),         this, &StandardEditActions::selectAll);
 
-    e->setEditAction(            ShiftMask, XK_Left,      this, &StandardEditActions::selectionCursorLeft);
-    e->setEditAction(            ShiftMask, XK_Right,     this, &StandardEditActions::selectionCursorRight);
-    e->setEditAction(            ShiftMask, XK_KP_Left,   this, &StandardEditActions::selectionCursorLeft);
-    e->setEditAction(            ShiftMask, XK_KP_Right,  this, &StandardEditActions::selectionCursorRight);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("Left"),      this, &StandardEditActions::selectionCursorLeft);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("Right"),     this, &StandardEditActions::selectionCursorRight);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("KP_Left"),   this, &StandardEditActions::selectionCursorLeft);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("KP_Right"),  this, &StandardEditActions::selectionCursorRight);
     
-    e->setEditAction(          ControlMask, XK_Left,      this, &StandardEditActions::cursorWordLeft);
-    e->setEditAction(          ControlMask, XK_Right,     this, &StandardEditActions::cursorWordRight);
-    e->setEditAction(ShiftMask|ControlMask, XK_Left,      this, &StandardEditActions::selectionCursorWordLeft);
-    e->setEditAction(ShiftMask|ControlMask, XK_Right,     this, &StandardEditActions::selectionCursorWordRight);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("Left"),      this, &StandardEditActions::cursorWordLeft);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("Right"),     this, &StandardEditActions::cursorWordRight);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("Left"),      this, &StandardEditActions::selectionCursorWordLeft);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("Right"),     this, &StandardEditActions::selectionCursorWordRight);
 
-    e->setEditAction(            ShiftMask, XK_Home,      this, &StandardEditActions::selectionCursorBeginOfLine);
-    e->setEditAction(            ShiftMask, XK_Begin,     this, &StandardEditActions::selectionCursorBeginOfLine);
-    e->setEditAction(            ShiftMask, XK_End,       this, &StandardEditActions::selectionCursorEndOfLine);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("Home"),      this, &StandardEditActions::selectionCursorBeginOfLine);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("Begin"),     this, &StandardEditActions::selectionCursorBeginOfLine);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("End"),       this, &StandardEditActions::selectionCursorEndOfLine);
 
-    e->setEditAction(          ControlMask, XK_z,         this, &StandardEditActions::undo);
-    e->setEditAction(ShiftMask|ControlMask, XK_z,         this, &StandardEditActions::redo);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("z"),         this, &StandardEditActions::undo);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("z"),         this, &StandardEditActions::redo);
 
-    e->setEditAction(          ControlMask, XK_space,     this, &StandardEditActions::selectWordForward);
-    e->setEditAction(ShiftMask|ControlMask, XK_space,     this, &StandardEditActions::selectWordBackward);
-    e->setEditAction(                    0, XK_Insert,    this, &StandardEditActions::spaceBackward);
-    e->setEditAction(          ControlMask, XK_m,         this, &StandardEditActions::gotoMatchingBracket);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("space"),     this, &StandardEditActions::selectWordForward);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("space"),     this, &StandardEditActions::selectWordBackward);
+    e->setEditAction(            KeyModifier(), KeyId("Insert"),    this, &StandardEditActions::spaceBackward);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("m"),         this, &StandardEditActions::gotoMatchingBracket);
     
-    e->setEditAction(                    0, XK_Tab,       this, &StandardEditActions::tabForward);
+    e->setEditAction(            KeyModifier(), KeyId("Tab"),       this, &StandardEditActions::tabForward);
 }
 
 
@@ -1815,53 +1857,55 @@ void StandardEditActions::registerMultiLineEditActionsToEditWidget()
 {
     StandardEditActions::registerSingleLineEditActionsToEditWidget();
 
-    e->setEditAction(                    0, XK_Down,      this, &StandardEditActions::cursorDown);
-    e->setEditAction(                    0, XK_Up,        this, &StandardEditActions::cursorUp);
-    e->setEditAction(                    0, XK_KP_Down,   this, &StandardEditActions::cursorDown);
-    e->setEditAction(                    0, XK_KP_Up,     this, &StandardEditActions::cursorUp);
+    e->setEditAction(            KeyModifier(), KeyId("Down"),      this, &StandardEditActions::cursorDown);
+    e->setEditAction(            KeyModifier(), KeyId("Up"),        this, &StandardEditActions::cursorUp);
+    e->setEditAction(            KeyModifier(), KeyId("KP_Down"),   this, &StandardEditActions::cursorDown);
+    e->setEditAction(            KeyModifier(), KeyId("KP_Up"),     this, &StandardEditActions::cursorUp);
     
-    e->setEditAction(                    0, XK_Page_Down, this, &StandardEditActions::cursorPageDown);
-    e->setEditAction(                    0, XK_Page_Up,   this, &StandardEditActions::cursorPageUp);
+    e->setEditAction(            KeyModifier(), KeyId("Page_Down"), this, &StandardEditActions::cursorPageDown);
+    e->setEditAction(            KeyModifier(), KeyId("Page_Up"),   this, &StandardEditActions::cursorPageUp);
 
-    e->setEditAction(             Mod1Mask, XK_Down,      this, &StandardEditActions::scrollCursorDown);
-    e->setEditAction(             Mod1Mask, XK_Up,        this, &StandardEditActions::scrollCursorUp);
-    e->setEditAction(             Mod1Mask, XK_KP_Down,   this, &StandardEditActions::scrollCursorDown);
-    e->setEditAction(             Mod1Mask, XK_KP_Up,     this, &StandardEditActions::scrollCursorUp);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("Down"),      this, &StandardEditActions::scrollCursorDown);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("Up"),        this, &StandardEditActions::scrollCursorUp);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("KP_Down"),   this, &StandardEditActions::scrollCursorDown);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("KP_Up"),     this, &StandardEditActions::scrollCursorUp);
     
-    e->setEditAction( ControlMask|Mod1Mask, XK_Down,      this, &StandardEditActions::scrollDown);
-    e->setEditAction( ControlMask|Mod1Mask, XK_Up,        this, &StandardEditActions::scrollUp);
-    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Down,   this, &StandardEditActions::scrollDown);
-    e->setEditAction( ControlMask|Mod1Mask, XK_KP_Up,     this, &StandardEditActions::scrollUp);
+    e->setEditAction(  KeyModifier("Ctrl+Alt"), KeyId("Down"),      this, &StandardEditActions::scrollDown);
+    e->setEditAction(  KeyModifier("Ctrl+Alt"), KeyId("Up"),        this, &StandardEditActions::scrollUp);
+    e->setEditAction(  KeyModifier("Ctrl+Alt"), KeyId("KP_Down"),   this, &StandardEditActions::scrollDown);
+    e->setEditAction(  KeyModifier("Ctrl+Alt"), KeyId("KP_Up"),     this, &StandardEditActions::scrollUp);
 
-    e->setEditAction(                    0, XK_Return,    this, &StandardEditActions::insertNewLineAutoIndent);
-    e->setEditAction(                    0, XK_KP_Enter,  this, &StandardEditActions::insertNewLineAutoIndent);
+    e->setEditAction(            KeyModifier(), KeyId("Return"),    this, &StandardEditActions::insertNewLineAutoIndent);
+    e->setEditAction(            KeyModifier(), KeyId("KP_Enter"),  this, &StandardEditActions::insertNewLineAutoIndent);
 
-    e->setEditAction(             Mod1Mask, XK_Return,    this, &StandardEditActions::appendNewLineAutoIndent);
-    e->setEditAction(             Mod1Mask, XK_KP_Enter,  this, &StandardEditActions::appendNewLineAutoIndent);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("Return"),    this, &StandardEditActions::appendNewLineAutoIndent);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("KP_Enter"),  this, &StandardEditActions::appendNewLineAutoIndent);
 
-    e->setEditAction(          ControlMask, XK_Return,    this, &StandardEditActions::newLineFixedColumnIndentForward);
-    e->setEditAction(          ControlMask, XK_KP_Enter,  this, &StandardEditActions::newLineFixedColumnIndentForward);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("Return"),    this, &StandardEditActions::newLineFixedColumnIndentForward);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("KP_Enter"),  this, &StandardEditActions::newLineFixedColumnIndentForward);
 
-    e->setEditAction(ControlMask|ShiftMask, XK_Return,    this, &StandardEditActions::newLineFixedColumnIndentBackward);
-    e->setEditAction(ControlMask|ShiftMask, XK_KP_Enter,  this, &StandardEditActions::newLineFixedColumnIndentBackward);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("Return"),    this, &StandardEditActions::newLineFixedColumnIndentBackward);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("KP_Enter"),  this, &StandardEditActions::newLineFixedColumnIndentBackward);
 
-    e->setEditAction(            ShiftMask, XK_Down,      this, &StandardEditActions::selectionCursorDown);
-    e->setEditAction(            ShiftMask, XK_Up,        this, &StandardEditActions::selectionCursorUp);
-    e->setEditAction(            ShiftMask, XK_KP_Down,   this, &StandardEditActions::selectionCursorDown);
-    e->setEditAction(            ShiftMask, XK_KP_Up,     this, &StandardEditActions::selectionCursorUp);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("Down"),      this, &StandardEditActions::selectionCursorDown);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("Up"),        this, &StandardEditActions::selectionCursorUp);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("KP_Down"),   this, &StandardEditActions::selectionCursorDown);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("KP_Up"),     this, &StandardEditActions::selectionCursorUp);
     
-    e->setEditAction(ControlMask|ShiftMask, XK_Down,      this, &StandardEditActions::selectionLineCursorDown);
-    e->setEditAction(ControlMask|ShiftMask, XK_Up,        this, &StandardEditActions::selectionLineCursorUp);
-    e->setEditAction(ControlMask|ShiftMask, XK_KP_Down,   this, &StandardEditActions::selectionLineCursorDown);
-    e->setEditAction(ControlMask|ShiftMask, XK_KP_Up,     this, &StandardEditActions::selectionLineCursorUp);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("Down"),      this, &StandardEditActions::selectionLineCursorDown);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("Up"),        this, &StandardEditActions::selectionLineCursorUp);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("KP_Down"),   this, &StandardEditActions::selectionLineCursorDown);
+    e->setEditAction(KeyModifier("Ctrl+Shift"), KeyId("KP_Up"),     this, &StandardEditActions::selectionLineCursorUp);
 
-    e->setEditAction(            ShiftMask, XK_Page_Down, this, &StandardEditActions::selectionCursorPageDown);
-    e->setEditAction(            ShiftMask, XK_Page_Up,   this, &StandardEditActions::selectionCursorPageUp);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("Page_Down"), this, &StandardEditActions::selectionCursorPageDown);
+    e->setEditAction(     KeyModifier("Shift"), KeyId("Page_Up"),   this, &StandardEditActions::selectionCursorPageUp);
 
-    e->setEditAction(          ControlMask, XK_9,         this, &StandardEditActions::shiftBlockLeft);
-    e->setEditAction(          ControlMask, XK_0,         this, &StandardEditActions::shiftBlockRight);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("9"),         this, &StandardEditActions::shiftBlockLeft);
+    e->setEditAction(      KeyModifier("Ctrl"), KeyId("0"),         this, &StandardEditActions::shiftBlockRight);
 
-    e->setEditAction(             Mod1Mask, XK_m,         this, &StandardEditActions::findNextLuaStructureElement);
-    e->setEditAction(   ShiftMask|Mod1Mask, XK_m,         this, &StandardEditActions::findPrevLuaStructureElement);
+    e->setEditAction(       KeyModifier("Alt"), KeyId("m"),         this, &StandardEditActions::findNextLuaStructureElement);
+    e->setEditAction( KeyModifier("Alt+Shift"), KeyId("m"),         this, &StandardEditActions::findPrevLuaStructureElement);
+
+    e->setEditAction(       KeyModifier("Alt"), KeyId("h"),         this, &StandardEditActions::openCorrespondingFile);
 }
 

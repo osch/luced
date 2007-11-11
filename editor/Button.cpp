@@ -53,7 +53,7 @@ void Button::setButtonText(String buttonText)
     if (hasHotKey) {
         String keySymString;
         keySymString.appendLowerChar(hotKeyChar);
-        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(Mod1Mask, keySymString), this);
+        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
         hasHotKey = false;
     }
     int p1 = buttonText.findFirstOf(']', 1);
@@ -70,7 +70,7 @@ void Button::setButtonText(String buttonText)
         // showHotKey = true;
         String keySymString;
         keySymString.appendLowerChar(hotKeyChar);
-        requestHotKeyRegistrationFor(KeyMapping::Id(Mod1Mask, keySymString), this);
+        requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
     } else {
         this->buttonText = buttonText;
     }
@@ -332,9 +332,11 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
 
 GuiElement::ProcessingResult Button::processKeyboardEvent(const XEvent *event)
 {
+    KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+
     bool processed = false;
-    KeyMapping::Id pressedKey(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-    if (KeyMapping::Id(0, XK_space) == pressedKey) {
+    KeyMapping::Id pressedKeyCombination(event->xkey.state, pressedKey);
+    if (KeyMapping::Id(0, KeyId("space")) == pressedKeyCombination) {
         emulateButtonPress(false);
         processed = true;
     }
@@ -344,8 +346,8 @@ GuiElement::ProcessingResult Button::processKeyboardEvent(const XEvent *event)
 
 void Button::treatLostHotKeyRegistration(const KeyMapping::Id& id)
 {
-    if (id == KeyMapping::Id(0, XK_Return)
-     || id == KeyMapping::Id(0, XK_KP_Enter))
+    if (id == KeyMapping::Id(0, KeyId("Return"))
+     || id == KeyMapping::Id(0, KeyId("KP_Enter")))
     {
         if (isDefaultButton) {
             isDefaultButton = false;
@@ -362,8 +364,8 @@ void Button::treatLostHotKeyRegistration(const KeyMapping::Id& id)
 
 void Button::treatNewHotKeyRegistration(const KeyMapping::Id& id)
 {
-    if (id == KeyMapping::Id(0, XK_Return)
-     || id == KeyMapping::Id(0, XK_KP_Enter))
+    if (id == KeyMapping::Id(0, KeyId("Return"))
+     || id == KeyMapping::Id(0, KeyId("KP_Enter")))
     {
         if (!isDefaultButton) {
             isDefaultButton = true;
@@ -381,8 +383,8 @@ void Button::treatNewHotKeyRegistration(const KeyMapping::Id& id)
 void Button::treatFocusIn()
 {
     if (!isDefaultButton) {
-        requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
-        requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
+        requestHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("Return")),   this);
+        requestHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("KP_Enter")), this);
     }
     if (!hasFocus) {
         hasFocus = true;
@@ -395,8 +397,8 @@ void Button::treatFocusOut()
 {
     hasFocus = false;
     if (!isExplicitDefaultButton) {
-        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
-        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
+        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("Return")),   this);
+        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("KP_Enter")), this);
     }
     drawButton();
 }
@@ -425,16 +427,16 @@ void Button::emulateButtonPress(bool isDefaultKey)
 
 void Button::treatHotKeyEvent(const KeyMapping::Id& id)
 {
-    emulateButtonPress(id == KeyMapping::Id(0, XK_Return)
-                    || id == KeyMapping::Id(0, XK_KP_Enter));
+    emulateButtonPress(id == KeyMapping::Id(0, KeyId("Return"))
+                    || id == KeyMapping::Id(0, KeyId("KP_Enter")));
 }
 
 void Button::setAsDefaultButton(bool isDefault)
 {
     if (isDefault != isExplicitDefaultButton) {
         if (isDefault) {
-            requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_Return),   this);
-            requestHotKeyRegistrationFor(KeyMapping::Id(0, XK_KP_Enter), this);
+            requestHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("Return")),   this);
+            requestHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("KP_Enter")), this);
             isExplicitDefaultButton = true;
         } else {
             isExplicitDefaultButton = false;

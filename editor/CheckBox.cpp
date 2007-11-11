@@ -52,7 +52,7 @@ CheckBox::CheckBox(GuiWidget* parent, String buttonText)
         // showHotKey = true;
         String keySymString;
         keySymString.appendLowerChar(hotKeyChar);
-        requestHotKeyRegistrationFor(KeyMapping::Id(Mod1Mask, keySymString), this);
+        requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
     } else {
         this->buttonText = buttonText;
     }
@@ -265,9 +265,12 @@ GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
 
 GuiElement::ProcessingResult CheckBox::processKeyboardEvent(const XEvent *event)
 {
+    KeyId       pressedKey  = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    KeyModifier keyModifier = KeyModifier(event->xkey.state);
+
     bool processed = false;
-    KeyMapping::Id pressedKey(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-    if (KeyMapping::Id(0, XK_space) == pressedKey) {
+    KeyMapping::Id keyMappingId(keyModifier, pressedKey);
+    if (KeyMapping::Id(0, KeyId("space")) == keyMappingId) {
         isBoxChecked = !isBoxChecked;
         draw();
         processed = true;

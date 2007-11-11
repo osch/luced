@@ -19,17 +19,53 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#ifndef FONT_HANDLE_HPP
+#define FONT_HANDLE_HPP
 
-#define  STAT_HAS_ST_MTIM_TV_NSEC
-#undef   STAT_HAS_ST_MTIMENSE
+#include "headers.hpp"
 
-#define  HASH_MAP_UNDER_GNU_CXX
-#undef   HASH_MAP_UNDER_STD
+namespace LucED
+{
 
-#undef   DEBUG
+class FontHandle
+{
+#ifdef WIN32_GUI
 
-#define X11_GUI
-#undef  WIN_GUI
+public:
+    FontHandle()
+        : hFont()
+    {}
+    
+    explicit FontHandle(HFONT hFont)
+        : hFont(hFont)
+    {}
+    
+    operator HFONT() const {
+        return hFont;
+    }
+private:
+    HFONT hFont;
 
-#include "sandbox_options.hpp"
+#else
 
+public:
+    FontHandle()
+        : fid()
+    {}
+    
+    explicit FontHandle(Font fid)
+        : fid(fid)
+    {}
+    
+    operator Font() const {
+        return fid;
+    }
+private:
+    Font fid;
+
+#endif
+};
+
+} // namespace LucED
+
+#endif // FONT_HANDLE_HPP

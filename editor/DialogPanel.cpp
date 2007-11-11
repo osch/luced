@@ -36,12 +36,12 @@ DialogPanel::DialogPanel(GuiWidget* parent)
 {
     addToXEventMask(ExposureMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    keyMapping1.set(            0, XK_Tab,      newCallback(this, &DialogPanel::switchFocusToNextWidget));
-    keyMapping1.set(    ShiftMask, XK_Tab,      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
-    keyMapping2.set(                    0, XK_Left,      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
-    keyMapping2.set(                    0, XK_Right,     newCallback(this, &DialogPanel::switchFocusToNextWidget));
-    keyMapping2.set(                    0, XK_KP_Left,   newCallback(this, &DialogPanel::switchFocusToPrevWidget));
-    keyMapping2.set(                    0, XK_KP_Right,  newCallback(this, &DialogPanel::switchFocusToNextWidget));
+    keyMapping1.set(            0, KeyId("Tab"),      newCallback(this, &DialogPanel::switchFocusToNextWidget));
+    keyMapping1.set(    ShiftMask, KeyId("Tab"),      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
+    keyMapping2.set(            0, KeyId("Left"),      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
+    keyMapping2.set(            0, KeyId("Right"),     newCallback(this, &DialogPanel::switchFocusToNextWidget));
+    keyMapping2.set(            0, KeyId("KP_Left"),   newCallback(this, &DialogPanel::switchFocusToPrevWidget));
+    keyMapping2.set(            0, KeyId("KP_Right"),  newCallback(this, &DialogPanel::switchFocusToNextWidget));
 }
 
 void DialogPanel::setRootElement(OwningPtr<GuiElement> rootElement)
@@ -204,12 +204,14 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
     } else {
         for (int i = 0; !processed && i < 2; ++i)
         {
+            KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+            
             bool hotKeyProcessed = false;
-            KeyMapping::Id keyMappingId(0, 0);
+            KeyMapping::Id keyMappingId(0, KeyId());
             switch (i) {
-                case 0: keyMappingId = KeyMapping::Id(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+                case 0: keyMappingId = KeyMapping::Id(event->xkey.state, pressedKey);
                         break;
-                case 1: keyMappingId = KeyMapping::Id(         Mod1Mask, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+                case 1: keyMappingId = KeyMapping::Id(         Mod1Mask, pressedKey);
                         break;
             }
             HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping.get(keyMappingId);

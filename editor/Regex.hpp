@@ -19,106 +19,88 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REGEX_H
-#define REGEX_H
+#ifndef REGEX_HPP
+#define REGEX_HPP
 
 #include "String.hpp"
-#include <pcre.h>
-
 #include "MemArray.hpp"
 #include "ByteArray.hpp"
 #include "OptionBits.hpp"
-
-namespace LucED {
-
+#include "BasicRegex.hpp"
 
 
-class Regex
+namespace LucED
+{
+
+class Regex : public BasicRegexEnums
 {
 public:
-    enum CreateOption {
-        MULTILINE = PCRE_MULTILINE,
-        EXTENDED = PCRE_EXTENDED,
-        IGNORE_CASE = PCRE_CASELESS
-    };
-    typedef OptionBits<CreateOption> CreateOptions;
-    
-    enum MatchOption {
-        NOTBOL = PCRE_NOTBOL,
-        NOTEOL = PCRE_NOTEOL,
-        ANCHORED = PCRE_ANCHORED,
-        NOTEMPTY = PCRE_NOTEMPTY
-    };
-    typedef OptionBits<MatchOption> MatchOptions;
 
-    Regex() : re(NULL) {
-        pcre_callout = pcreCalloutCallback;
-    }
-    Regex(const String&    expr, CreateOptions createOptions = CreateOptions());
-    Regex(const ByteArray& expr, CreateOptions createOptions = CreateOptions());
-    Regex(const Regex& src);
-    Regex& operator=(const Regex& src);
-    
-    ~Regex();
+    Regex()
+        : matchFlag(false)
+    {}
+
+    Regex(const String& expr, CreateOptions createOptions = CreateOptions())
+        : regex(expr, createOptions),
+          matchFlag(false)
+    {}
     
     bool isValid() const {
-        return re != NULL;
+        return regex.isValid();
     }
 
-    int getStringNumber(const String& substringName) const;
-    int getStringNumber(const ByteArray& substringName) const;
-
-    int getOvecSize() const {
-        return 3 * (pcre_info(re, NULL, NULL) + 1);
+    int getCaptureNumberByName(const String& substringName) const {
+        return regex.getStringNumber(substringName);
     }
-    int getNumberOfCapturingSubpatterns() const {
-        return pcre_info(re, NULL, NULL);
+
+    int getNumberOfCaptures() const {
+        return regex.getNumberOfCapturingSubpatterns();
     }
     
-    bool findMatch( const char *subject, int length, int startoffset,
-            MatchOptions matchOptions, MemArray<int>& ovector )
+    int getCaptureBegin(int i) const
     {
-        ASSERT(pcre_callout == pcreCalloutCallback);
-
-        return pcre_exec(re, NULL, subject, length, startoffset, matchOptions.getOptions(), 
-                ovector.getPtr(0), ovector.getLength()) > 0;
+        ASSERT(matchFlag);
+        ASSERT(i <= getNumberOfCaptures());
+        return ovec[i * 2];
     }
-    
-    typedef int CalloutFunction(void*, pcre_callout_block*);
-    
-    bool findMatch(void* object, CalloutFunction* calloutFunctionX,
-                   const char *subject, int length, int startoffset,
-                   MatchOptions matchOptions, MemArray<int>& ovector)
+
+    int getCaptureEnd(int i) const
     {
-        ASSERT(pcre_callout == pcreCalloutCallback);
-        
-        CalloutData calloutData;
-                    calloutData.object = object;
-                    calloutData.calloutFunction = calloutFunctionX;
-                    
-        pcre_extra extra;
-                   extra.flags        = PCRE_EXTRA_CALLOUT_DATA;
-                   extra.callout_data = &calloutData;
-        
-        bool rslt = pcre_exec(re, &extra, subject, length, startoffset, matchOptions.getOptions(), 
-                    ovector.getPtr(0), ovector.getLength()) > 0;
-
-        return rslt;
+        ASSERT(matchFlag);
+        ASSERT(i <= getNumberOfCaptures());
+        return ovec[i * 2 + 1];
     }
     
+    int getCaptureLength(int i) const {
+        return getCaptureEnd(i) - getCaptureBegin(i);
+    }
+    
+    bool findMatch(const char* subject, int length, int startoffset, MatchOptions matchOptions)
+    {
+        if (ovec.getLength() < regex.getOvecSize()) {
+            ovec.increaseTo(regex.getOvecSize());
+        }
+        
+        matchFlag = regex.findMatch(subject, length, startoffset, matchOptions, ovec);
+        
+        return matchFlag;
+    }
+    
+    bool findMatch(const String& subject, MatchOptions matchOptions) {
+        return findMatch(subject.toCString(), subject.getLength(), 0, matchOptions);
+    }
+    
+    bool matches(const String& subject) {
+        bool rslt = findMatch(subject, MatchOptions() | ANCHORED);
+        return rslt && getCaptureEnd(0) == subject.getLength();
+    }
     
 private:
-
-    struct CalloutData
-    {
-        void* object;
-        CalloutFunction* calloutFunction;
-    };
-    static int pcreCalloutCallback(pcre_callout_block*);
-    static const unsigned char* pcreCharTable;
-    pcre *re;
+    MemArray<int> ovec;
+    BasicRegex regex;
+    bool matchFlag;
 };
 
 } // namespace LucED
 
-#endif // REGEX_H
+#endif // REGEX_HPP

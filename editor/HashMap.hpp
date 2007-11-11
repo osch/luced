@@ -67,7 +67,11 @@ public:
     }
 };
 
-template<class V> class HashMapValue
+template
+<
+    class V
+>
+class HashMapValue
 {
 public:
     HashMapValue() : valid(false) {}
@@ -80,7 +84,14 @@ private:
     V v;
 };
 
-template<class K, class V, class H = HashFunction<K> > class HashMap
+
+template
+<
+    class K, 
+    class V, 
+    class H = HashFunction<K> 
+>
+class HashMap
 {
 public:
     typedef HashMapValue<V> Value;

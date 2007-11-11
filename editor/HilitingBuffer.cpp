@@ -194,17 +194,17 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
     
     while (true) 
     {
-        Regex::MatchOptions additionalOptions;
+        BasicRegex::MatchOptions additionalOptions;
         
         long extendedSearchEndPos = searchEndPos + sp->maxREBytesExtend;
         
         util::minimize(&extendedSearchEndPos, textData->getLength());
 
         if (!textData->isBeginOfLine(searchStartPos)) {
-            additionalOptions |= Regex::NOTBOL;
+            additionalOptions |= BasicRegex::NOTBOL;
         }
         if (!textData->isEndOfLine(extendedSearchEndPos)) {
-            additionalOptions |= Regex::NOTEOL;
+            additionalOptions |= BasicRegex::NOTEOL;
         }
 
         // do searching
@@ -213,7 +213,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
         
         bool matched = sp->re.findMatch((const char*) textData->getAmount(searchStartPos, extendedSearchEndPos - searchStartPos), 
                 extendedSearchEndPos - searchStartPos, 0,
-                additionalOptions /*| Regex::NOTEMPTY*/, ovector);
+                additionalOptions /*| BasicRegex::NOTEMPTY*/, ovector);
 
         if (matched) {
             // something matched

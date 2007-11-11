@@ -28,14 +28,15 @@ using namespace LucED;
 
 TextStyle::TextStyle(const String& fontName, const String& colorName)
 {
-    XCharStruct *min_bounds;
-    XCharStruct *max_bounds;
+    XCharStruct* min_bounds;
+    XCharStruct* max_bounds;
     XColor xcolor1_st, xcolor2_st;
     
     this->font = XLoadQueryFont(GuiRoot::getInstance()->getDisplay(), fontName.toCString());
     if (font == NULL) {
         throw ConfigException(String() << "invalid font name: " << fontName);
     }
+    this->fontHandle = FontHandle(font->fid);
 
     this->color = GuiRoot::getInstance()->getGuiColor(colorName);
 
@@ -65,7 +66,7 @@ TextStyle::TextStyle(const String& fontName, const String& colorName)
             this->charRBearings[i] = rbearing;
         }
     } else {
-        XFontStruct *font = this->font;
+        XFontStruct* font = this->font;
         int i;
         short unknown_width;
         short unknown_lbearing;
@@ -77,7 +78,7 @@ TextStyle::TextStyle(const String& fontName, const String& colorName)
             unknown_lbearing = 0;
             unknown_rbearing = 0;
         } else {
-            XCharStruct *def = &(font->per_char[font->default_char]);
+            XCharStruct* def = &(font->per_char[font->default_char]);
             unknown_width    = def->width;
             unknown_lbearing = def->lbearing;
             unknown_rbearing = def->rbearing;
@@ -137,6 +138,10 @@ TextStyle::TextStyle(const String& fontName, const String& colorName)
 
 TextStyle::~TextStyle()
 {
+#ifdef WIND32_GUI
+    DeleteObject(fontHandle);
+#else
     XFreeFontInfo(NULL, font, 0);
+#endif
 }
 

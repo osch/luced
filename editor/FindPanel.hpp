@@ -31,7 +31,7 @@
 #include "SingleLineEditField.hpp"
 #include "MessageBox.hpp"
 #include "Callback.hpp"
-#include "Regex.hpp"
+#include "BasicRegex.hpp"
 #include "types.hpp"
 #include "FindUtil.hpp"
 #include "PasteDataReceiver.hpp"
@@ -109,7 +109,7 @@ private:
     CheckBox::Ptr regularExprCheckBox;
     Callback<MessageBoxParameter>::Ptr messageBoxInvoker;
     Callback<DialogPanel*>::Ptr        panelInvoker;
-    Regex regex;
+    BasicRegex regex;
     Direction::Type defaultDirection;
     int historyIndex;
     String selectionSearchString;

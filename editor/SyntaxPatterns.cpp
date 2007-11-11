@@ -263,7 +263,7 @@ void SyntaxPatterns::compile(int i) {
         first = false;
     }
     if (!first) {
-        sp->re = Regex(patStr, Regex::MULTILINE | Regex::EXTENDED);
+        sp->re = BasicRegex(patStr, BasicRegex::MULTILINE | BasicRegex::EXTENDED);
         util::maximize(&maxOvecSize, sp->re.getOvecSize());
 
         for (int ci = 0; ci < sp->childList.getLength(); ++ci) {
@@ -287,7 +287,7 @@ void SyntaxPatterns::compile(int i) {
             sp->endSubstrNo = sp->re.getStringNumber(temp);
         }
     } else {
-        sp->re = Regex();
+        sp->re = BasicRegex();
     }
 
     maximize(&this->totalMaxREBytesExtend, sp->maxREBytesExtend);

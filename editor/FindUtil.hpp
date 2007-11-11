@@ -32,7 +32,7 @@
 #include "NonCopyable.hpp"
 #include "LuaStoredObject.hpp"
 #include "LuaException.hpp"
-#include "Regex.hpp"
+#include "BasicRegex.hpp"
 #include "Flags.hpp"
 
 namespace LucED
@@ -294,7 +294,7 @@ private:
     bool wasInitializedFlag;
 
     MemArray<int> expressionPositions;
-    Regex regex;
+    BasicRegex regex;
 
     long maxRegexAssertionLength;
     

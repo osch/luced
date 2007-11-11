@@ -283,9 +283,9 @@ void FindUtil::initialize()
         return;
     }
 
-    Regex::CreateOptions opts = Regex::MULTILINE;
+    BasicRegex::CreateOptions opts = BasicRegex::MULTILINE;
     if (ignoreCaseFlag) {
-        opts |= Regex::IGNORE_CASE;
+        opts |= BasicRegex::IGNORE_CASE;
     }
 
     String searchPattern;
@@ -352,7 +352,7 @@ void FindUtil::initialize()
     
     expressionPositions.append(searchString.getLength());
 
-    regex = Regex(searchPattern, opts);
+    regex = BasicRegex(searchPattern, opts);
 
     ovector.clear();
     ovector.appendAmount(regex.getOvecSize());
@@ -387,7 +387,7 @@ bool FindUtil::doesMatch()
         }
 
         if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
-                            (char*)textStart, textLength, textPosition, Regex::ANCHORED, ovector)) {
+                            (char*)textStart, textLength, textPosition, BasicRegex::ANCHORED, ovector)) {
             wasFoundFlag = true;
         } else {
             wasFoundFlag = false;
@@ -444,7 +444,7 @@ void FindUtil::findNext()
 
             if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
                                 (char*)blockStartPtr, blockLength, textPosition - blockStartPos,
-                                Regex::MatchOptions(), ovector))
+                                BasicRegex::MatchOptions(), ovector))
             {
                 for (int i = 0, n = ovector.getLength(); i < n; ++i) {
                     ovector[i] += blockStartPos;
@@ -476,7 +476,7 @@ void FindUtil::findNext()
             
             while (!wasFoundFlag && textPosition >= 0) {
                 if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
-                                    (char*)textStart, textLength, textPosition, Regex::ANCHORED, ovector))
+                                    (char*)textStart, textLength, textPosition, BasicRegex::ANCHORED, ovector))
                 {
                     if (ovector[1] <= epos) 
                     {

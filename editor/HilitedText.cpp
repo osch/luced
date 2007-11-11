@@ -306,18 +306,18 @@ int HilitedText::process(int requestedProcessingAmount)
     {
         ASSERT(sp == syntaxPatterns->get(patternStack.getLast()));
         long extendedSearchEndPos = searchEndPos + sp->maxREBytesExtend;
-        Regex::MatchOptions additionalOptions;
+        BasicRegex::MatchOptions additionalOptions;
         
         util::minimize(&extendedSearchEndPos, textData->getLength());
         if (!textData->isBeginOfLine(pos)) {
-            additionalOptions |= Regex::NOTBOL;
+            additionalOptions |= BasicRegex::NOTBOL;
         }
         if (!textData->isEndOfLine(extendedSearchEndPos)) {
-            additionalOptions |= Regex::NOTEOL;
+            additionalOptions |= BasicRegex::NOTEOL;
         }
         bool matched = sp->re.findMatch( (const char*) textData->getAmount(pos, extendedSearchEndPos - pos), 
                 extendedSearchEndPos - pos, 0,
-                additionalOptions /*| Regex::NOTEMPTY*/, ovector);
+                additionalOptions /*| BasicRegex::NOTEMPTY*/, ovector);
 
         if (matched)
         {

@@ -58,7 +58,7 @@ private:
 
         XSetGraphicsExposures(display, gcid, True);
 
-        XSetFont(display, gcid, guiTextStyle.getFontId());
+        XSetFont(display, gcid, guiTextStyle.getFontHandle());
     }
     
     ~GuiWidgetSingletonData()
@@ -83,7 +83,7 @@ Display* GuiWidget::getDisplay()
     return GuiRoot::getInstance()->getDisplay();
 }
 
-Window GuiWidget::getRootWid()
+WidgetId GuiWidget::getRootWid()
 {
     return GuiRoot::getInstance()->getRootWid();
 }
@@ -101,9 +101,10 @@ GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsi
       visible(false),
       gcid(GuiWidgetSingletonData::getInstance()->getGcid())
 {
-    wid = XCreateSimpleWindow(getDisplay(), getRootWid(), 
-            x, y, width, height, border_width, 
-            GuiRoot::getInstance()->getBlackColor(), GuiRoot::getInstance()->getGreyColor() );
+    wid = WidgetId(XCreateSimpleWindow(getDisplay(), getRootWid(), 
+                                       x, y, width, height, border_width, 
+                                       GuiRoot::getInstance()->getBlackColor(), 
+                                       GuiRoot::getInstance()->getGreyColor()));
  
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
     addToXEventMask(StructureNotifyMask);
@@ -118,9 +119,10 @@ GuiWidget::GuiWidget(GuiWidget* parent,
       visible(false),
       gcid(GuiWidgetSingletonData::getInstance()->getGcid())
 {
-    wid = XCreateSimpleWindow(getDisplay(), parent->getWid(), 
-            x, y, width, height, border_width, 
-            GuiRoot::getInstance()->getBlackColor(), GuiRoot::getInstance()->getGreyColor() );
+    wid = WidgetId(XCreateSimpleWindow(getDisplay(), parent->getWid(), 
+                                       x, y, width, height, border_width, 
+                                       GuiRoot::getInstance()->getBlackColor(), 
+                                       GuiRoot::getInstance()->getGreyColor()));
     
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
     addToXEventMask(StructureNotifyMask);
@@ -178,7 +180,7 @@ Position GuiWidget::getAbsolutePosition()
     Position rslt(this->position);
     Window child_return;
     XTranslateCoordinates(getDisplay(), getWid(), getGuiRoot()->getRootWid(), 0, 0, &rslt.x, 
-                &rslt.y, &child_return);
+                          &rslt.y, &child_return);
     return rslt;
 }
 
@@ -223,7 +225,7 @@ void GuiWidget::removeFromXEventMask(long eventMask)
 }
 
 
-static inline void drawLine(Display *display, Window wid, GC gc, int x, int y, int dx, int dy)
+static inline void drawLine(Display *display, WidgetId wid, GC gc, int x, int y, int dx, int dy)
 {
     XDrawLine(display, wid,  gc, 
             x, y, x + dx, y + dy);
@@ -232,7 +234,7 @@ static inline void drawLine(Display *display, Window wid, GC gc, int x, int y, i
 void GuiWidget::drawLine(int x, int y, int dx, int dy)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
     XSetForeground(display, gcid, getGuiRoot()->getBlackColor());
     XDrawLine(display, wid,  gcid, 
             x, y, x + dx, y + dy);
@@ -241,7 +243,7 @@ void GuiWidget::drawLine(int x, int y, int dx, int dy)
 void GuiWidget::drawLine(int x, int y, int dx, int dy, GuiColor color)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
     XSetForeground(display, gcid, color);
     XDrawLine(display, wid,  gcid, 
             x, y, x + dx, y + dy);
@@ -250,7 +252,7 @@ void GuiWidget::drawLine(int x, int y, int dx, int dy, GuiColor color)
 void GuiWidget::drawRaisedSurface(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
 
     XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
     XFillRectangle(display, wid, gcid,
@@ -260,7 +262,7 @@ void GuiWidget::drawRaisedSurface(int x, int y, int w, int h)
 void GuiWidget::drawRaisedSurface(int x, int y, int w, int h, GuiColor color)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
 
     XSetForeground(display, gcid, color);
     XFillRectangle(display, wid, gcid,
@@ -276,7 +278,7 @@ int GuiWidget::getRaisedBoxBorderWidth()
 void GuiWidget::drawRaisedBox(int x, int y, int w, int h, GuiColor color)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
     
     int x1 = x, y1 = y, x2 = x + w -1, y2 = y + h - 1;
     int dx = w - 1, dy = h - 1;
@@ -313,7 +315,7 @@ void GuiWidget::drawRaisedBox(int x, int y, int w, int h)
 void GuiWidget::drawPressedBox(int x, int y, int w, int h, GuiColor color)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
 
     int x1 = x, y1 = y, x2 = x + w -1, y2 = y + h - 1;
     int dx = w - 1, dy = h - 1;
@@ -349,7 +351,7 @@ void GuiWidget::drawPressedBox(int x, int y, int w, int h)
 void GuiWidget::drawArrow(int x, int y, int w, int h, const Direction::Type direct)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
 
     XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
 
@@ -398,7 +400,7 @@ void GuiWidget::drawArrow(int x, int y, int w, int h, const Direction::Type dire
 void GuiWidget::drawInactiveSunkenFrame(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
     
     w -= 1; 
     h -= 1;
@@ -415,7 +417,7 @@ void GuiWidget::drawInactiveSunkenFrame(int x, int y, int w, int h)
 void GuiWidget::drawActiveSunkenFrame(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
     
     w -= 1; 
     h -= 1;
@@ -432,7 +434,7 @@ void GuiWidget::drawActiveSunkenFrame(int x, int y, int w, int h)
 void GuiWidget::drawFrame(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
     
     w -= 1; 
     h -= 1;
@@ -449,7 +451,7 @@ void GuiWidget::drawFrame(int x, int y, int w, int h)
 void GuiWidget::undrawFrame(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
     
     w -= 1; 
     h -= 1;
@@ -466,7 +468,7 @@ void GuiWidget::undrawFrame(int x, int y, int w, int h)
 void GuiWidget::drawDottedFrame(int x, int y, int w, int h)
 {
     Display* display = getDisplay();
-    Window wid = getWid();
+    WidgetId wid = getWid();
 
     XSetLineAttributes(display, gcid, 1, 
         LineOnOffDash, CapButt, JoinMiter);

@@ -19,10 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CLIPBOARD_H
-#define CLIPBOARD_H
+#ifndef CLIPBOARD_HPP
+#define CLIPBOARD_HPP
 
 #include "debug.hpp"
+#include "WidgetId.hpp"
 #include "GuiWidget.hpp"
 #include "ByteArray.hpp"
 #include "SelectionOwner.hpp"
@@ -78,7 +79,7 @@ private:
     
     bool sendingMultiPart;
     long alreadySentPos;
-    Window multiPartTargetWid;
+    WidgetId multiPartTargetWid;
     Atom   multiPartTargetProp;
 
     ProgramRunningKeeper programRunningKeeper;
@@ -89,4 +90,4 @@ private:
 
 } // namespace LucED
 
-#endif // CLIPBOARD_H
+#endif // CLIPBOARD_HPP

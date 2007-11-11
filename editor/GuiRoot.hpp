@@ -19,15 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GUIROOT_H
-#define GUIROOT_H
+#ifndef GUIROOT_HPP
+#define GUIROOT_HPP
 
-#include <X11/Xlib.h>
-#include <X11/X.h>
-#include <X11/Xutil.h>
-
+#include "WidgetId.hpp"
 #include "String.hpp"
-
 #include "HeapObject.hpp"
 #include "GuiColor.hpp"
 #include "SingletonInstance.hpp"
@@ -46,7 +42,7 @@ public:
     
     ~GuiRoot();
     
-    Window getRootWid() const {
+    WidgetId getRootWid() const {
         return rootWid;
     }
         
@@ -88,7 +84,7 @@ private:
     XWindowAttributes  rootWinAttr;
     int screenId;
     Screen *screen;
-    Window rootWid;
+    WidgetId rootWid;
     bool originalKeyboardModeWasAutoRepeat;
     bool wasKeyboardModeModified;
 
@@ -108,4 +104,4 @@ private:
 } // namespace LucED
 
 
-#endif // GUIROOT_H
+#endif // GUIROOT_HPP

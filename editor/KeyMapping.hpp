@@ -19,17 +19,19 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef KEYMAPPING_H
-#define KEYMAPPING_H
+#ifndef KEYMAPPING_HPP
+#define KEYMAPPING_HPP
 
 #include "debug.hpp"
 #include "HeapObject.hpp"
 #include "GuiRoot.hpp"
 #include "HashMap.hpp"
 #include "Callback.hpp"
+#include "KeyId.hpp"
+#include "KeyModifier.hpp"
 
-namespace LucED {
-
+namespace LucED
+{
 
 class KeyMapping : private NonCopyable
 {
@@ -38,39 +40,39 @@ public:
     class Id
     {
     public:
-        Id(int keyState, KeySym keySym) :
-            keyState(keyState), keySym(keySym)
+        Id(KeyModifier keyState, KeyId keyId)
+            : keyState(keyState), keyId(keyId)
         {}
 
-        Id(int keyState, String keySym) :
-            keyState(keyState), keySym(XStringToKeysym(keySym.toCString()))
+        Id(String keyState, String keyName)
+            : keyState(keyState), keyId(keyName)
         {}
         
         bool operator<(const Id& rhs) const {
-            return keyState < rhs.keyState || keySym < rhs.keySym;
+            return keyState < rhs.keyState || keyId < rhs.keyId;
         }
         bool operator==(const Id& rhs) const {
-            return keyState == rhs.keyState && keySym == rhs.keySym;
+            return keyState == rhs.keyState && keyId == rhs.keyId;
         }
-        int getKeyState() const { return keyState; }
-        KeySym getKeySym() const { return keySym; }
+        KeyModifier getKeyState() const { return keyState; }
+        KeyId       getKeyId() const { return keyId; }
 
         class HashFunction
         {
         public:
             size_t operator()(const KeyMapping::Id& id) const {
-                size_t rslt = id.getKeyState();
-                rslt = (rslt << 16) ^ id.getKeyState() ^ (id.getKeySym() << 16) ^ (id.getKeySym());
+                size_t rslt = id.getKeyState().toHashValue();
+                rslt = (rslt << 16) ^ id.getKeyState().toHashValue() ^ (id.getKeyId() << 16) ^ (id.getKeyId());
                 return rslt;
             }
         };
 
     private:
-        int keyState;
-        KeySym keySym;
+        KeyModifier keyState;
+        KeyId keyId;
     };
 
-    Callback<>::Ptr find(int keyState, KeySym keySym)        { return find(Id(keyState, keySym)); }
+    Callback<>::Ptr find(KeyModifier keyState, KeyId keyId)        { return find(Id(keyState, keyId)); }
 
     Callback<>::Ptr find(Id id) {
         Callback<>::Ptr rslt;
@@ -82,7 +84,7 @@ public:
         return rslt;
     }
 
-    void set(int keyState, KeySym keySym, Callback<>::Ptr cb) { set(Id(keyState, keySym), cb); }
+    void set(KeyModifier keyState, KeyId keyId, Callback<>::Ptr cb) { set(Id(keyState, keyId), cb); }
     
 
     void set(Id id, Callback<>::Ptr cb)
@@ -109,4 +111,4 @@ public:
 
 } // namespace LucED
 
-#endif // KEYMAPPING_H
+#endif // KEYMAPPING_HPP

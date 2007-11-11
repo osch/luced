@@ -269,7 +269,7 @@ return
         
         operatorInDecl = {
         	style = "keyword",
-                pattern          = [[ [:] | (?>operator(?>\s*)(?>->|==|!=|<<|>>|\[\]|[<>+\-*=])) ]],
+                pattern          = [[ [:] | (?>operator(?>\s*)(?>->|==|!=|<<|>>|\[\]|[<>+\-*=]+)) ]],
                 maxExtend        = 100,
         }, 
 

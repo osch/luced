@@ -107,10 +107,9 @@ String File::getAbsoluteFileName() const
         buffer = String() << cwd.toCStr() << "/" << name;
     }
     Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./");
-    MemArray<int> ovec(r.getOvecSize());
 
-    while (r.findMatch(buffer.toCString(), buffer.getLength(), 0, Regex::MatchOptions(), ovec)) {
-        buffer.removeAmount(ovec[0], ovec[1] - ovec[0]);
+    while (r.findMatch(buffer, Regex::MatchOptions())) {
+        buffer.removeAmount(r.getCaptureBegin(0), r.getCaptureLength(0));
     }
     return buffer;
 }

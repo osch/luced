@@ -188,28 +188,28 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
                                   newCallback(this, &EditorTopWin::invokeMessageBox),
                                   newCallback(this, &EditorTopWin::invokePanel));
 
-    keyMapping1.set(            ControlMask, XK_q,      newCallback(this,      &EditorTopWin::requestProgramQuit));
-    keyMapping1.set(            ControlMask, XK_l,      newCallback(this,      &EditorTopWin::invokeGotoLinePanel));
-    keyMapping1.set(            ControlMask, XK_f,      newCallback(this,      &EditorTopWin::invokeFindPanelForward));
-    keyMapping1.set(  ControlMask|ShiftMask, XK_f,      newCallback(this,      &EditorTopWin::invokeFindPanelBackward));
-    keyMapping1.set(            ControlMask, XK_r,      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
-    keyMapping1.set(  ControlMask|ShiftMask, XK_r,      newCallback(this,      &EditorTopWin::invokeReplacePanelBackward));
-    keyMapping1.set(            ControlMask, XK_w,      newCallback(this,      &EditorTopWin::requestCloseWindow));
-    keyMapping1.set(                      0, XK_Escape, newCallback(this,      &EditorTopWin::handleEscapeKey));
-    keyMapping1.set(            ControlMask, XK_s,      newCallback(this,      &EditorTopWin::handleSaveKey));
-    keyMapping1.set(  ControlMask|ShiftMask, XK_s,      newCallback(this,      &EditorTopWin::handleSaveAsKey));
-    keyMapping1.set(            ControlMask, XK_n,      newCallback(this,      &EditorTopWin::createEmptyWindow));
-    keyMapping1.set(            ControlMask, XK_h,      newCallback(findPanel, &FindPanel::findSelectionForward));
-    keyMapping1.set(  ShiftMask|ControlMask, XK_h,      newCallback(findPanel, &FindPanel::findSelectionBackward));
+    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("q"),      newCallback(this,      &EditorTopWin::requestProgramQuit));
+    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("l"),      newCallback(this,      &EditorTopWin::invokeGotoLinePanel));
+    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("f"),      newCallback(this,      &EditorTopWin::invokeFindPanelForward));
+    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("f"),      newCallback(this,      &EditorTopWin::invokeFindPanelBackward));
+    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
+    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelBackward));
+    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("w"),      newCallback(this,      &EditorTopWin::requestCloseWindow));
+    keyMapping1.set( KeyModifier(),             KeyId("Escape"), newCallback(this,      &EditorTopWin::handleEscapeKey));
+    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveKey));
+    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveAsKey));
+    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("n"),      newCallback(this,      &EditorTopWin::createEmptyWindow));
+    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("h"),      newCallback(findPanel, &FindPanel::findSelectionForward));
+    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("h"),      newCallback(findPanel, &FindPanel::findSelectionBackward));
 
-    keyMapping1.set(            ControlMask, XK_t,      newCallback(replacePanel, &ReplacePanel::replaceAgainForward));
-    keyMapping1.set(  ControlMask|ShiftMask, XK_t,      newCallback(replacePanel, &ReplacePanel::replaceAgainBackward));
+    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("t"),      newCallback(replacePanel, &ReplacePanel::replaceAgainForward));
+    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("t"),      newCallback(replacePanel, &ReplacePanel::replaceAgainBackward));
 
-    keyMapping2.set(            ControlMask, XK_g,      newCallback(findPanel, &FindPanel::findAgainForward));
-    keyMapping2.set(  ControlMask|ShiftMask, XK_g,      newCallback(findPanel, &FindPanel::findAgainBackward));
+    keyMapping2.set( KeyModifier("Ctrl"),       KeyId("g"),      newCallback(findPanel, &FindPanel::findAgainForward));
+    keyMapping2.set( KeyModifier("Ctrl+Shift"), KeyId("g"),      newCallback(findPanel, &FindPanel::findAgainBackward));
 
-    keyMapping2.set(               Mod1Mask, XK_c,      newCallback(this,      &EditorTopWin::createCloneWindow));
-    keyMapping2.set(               Mod1Mask, XK_l,      newCallback(this,      &EditorTopWin::executeLuaScript));
+    keyMapping2.set( KeyModifier("Alt"),        KeyId("c"),      newCallback(this,      &EditorTopWin::createCloneWindow));
+    keyMapping2.set( KeyModifier("Alt"),        KeyId("l"),      newCallback(this,      &EditorTopWin::executeLuaScript));
 
     
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &EditorTopWin::treatConfigUpdate));
@@ -266,13 +266,16 @@ void EditorTopWin::treatNewWindowPosition(Position newPosition)
 
 GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *event)
 {
+    KeyId       pressedKey  = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    KeyModifier keyModifier = KeyModifier(event->xkey.state);
+
     ProcessingResult rslt = NOT_PROCESSED;
 
-    Callback<>::Ptr m = keyMapping1.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    Callback<>::Ptr m = keyMapping1.find(keyModifier, pressedKey);
 
     if (m.isValid())
     {
-        if (event->type == KeyPress && !IsModifierKey(XLookupKeysym((XKeyEvent*)&event->xkey, 0))) {
+        if (event->type == KeyPress && !pressedKey.isModifierKey()) {
             textEditor->hideMousePointer();
         }
 
@@ -286,7 +289,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
     
     if (rslt == NOT_PROCESSED)
     {
-       m = keyMapping2.find(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+       m = keyMapping2.find(keyModifier, pressedKey);
 
        if (m.isValid())
        {
@@ -438,7 +441,8 @@ void EditorTopWin::invokeGotoLinePanel()
 void EditorTopWin::invokeSaveAsPanel(Callback<>::Ptr saveCallback)
 {
     if (saveAsPanel.isInvalid()) {
-        saveAsPanel = SaveAsPanel::create(this, textEditor);
+        saveAsPanel = SaveAsPanel::create(this, textEditor, 
+                                                newCallback(this, &EditorTopWin::invokeMessageBox));
     }
     saveAsPanel->setSaveCallback(saveCallback);
     invokePanel(saveAsPanel);

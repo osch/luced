@@ -19,17 +19,52 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#ifndef KEY_MODIFIER_HPP
+#define KEY_MODIFIER_HPP
 
-#define  STAT_HAS_ST_MTIM_TV_NSEC
-#undef   STAT_HAS_ST_MTIMENSE
+#include "headers.hpp"
+#include "String.hpp"
 
-#define  HASH_MAP_UNDER_GNU_CXX
-#undef   HASH_MAP_UNDER_STD
+namespace LucED
+{
 
-#undef   DEBUG
+class KeyModifier
+{
+public:
 
-#define X11_GUI
-#undef  WIN_GUI
+#ifdef X11_GUI
+    KeyModifier()
+        : keyState(0)
+    {}
+    
+    KeyModifier(const String& asString);
+    
+    KeyModifier(int keyState)
+        : keyState(keyState)
+    {}
+    
+    String toString() const;
 
-#include "sandbox_options.hpp"
+    bool operator==(const KeyModifier& rhs) const {
+        return keyState == rhs.keyState;
+    }
+    bool operator<(const KeyModifier& rhs) const {
+        return keyState < rhs.keyState;
+    }
+    
+    int toHashValue() const {
+        return keyState;
+    }
+#endif
+    
+private:
 
+#ifdef X11_GUI
+    int keyState;
+#endif
+
+};      
+
+} // namespace LucED
+
+#endif // KEY_MODIFIER_HPP

@@ -351,23 +351,11 @@ void ReplacePanel::handleButtonPressed(Button* button)
             replaceEditField->getTextData()->setModifiedFlag(false);
 
             historyIndex = -1;
-
-            if (button == findNextButton) 
+            
+            bool wasReplaced = false;
+            
+            if (button == replaceNextButton || button == replacePrevButton)
             {
-                if (e->hasPrimarySelection()) {
-                    replaceUtil.setTextPosition(e->getEndSelectionPos());
-                }
-            }
-            else if (button == findPrevButton)
-            {
-                if (e->hasPrimarySelection()) {
-                    replaceUtil.setTextPosition(e->getBeginSelectionPos());
-                }
-            }
-            else
-            {
-                ASSERT(button == replaceNextButton || button == replacePrevButton);
-
                 long spos, epos;
 
                 if (e->hasPrimarySelection()) {
@@ -379,33 +367,53 @@ void ReplacePanel::handleButtonPressed(Button* button)
                     epos = replaceUtil.getTextPosition();
                 }
 
-                if (replaceUtil.doesMatch()) {
+                if (replaceUtil.doesMatch())
+                {
                     ASSERT(replaceUtil.getMatchBeginPos() == spos);
-                    if (replaceUtil.getMatchEndPos() == epos) {
+                    if (replaceUtil.getMatchEndPos() == epos)
+                    {
                         String substitutedString = replaceUtil.getSubstitutedString();
                         e->moveCursorToTextPosition(spos);
                         e->removeAtCursor(epos - spos);
                         e->insertAtCursor(substitutedString);
-                    }
-                    if (button == replaceNextButton) {
-                        replaceUtil.setTextPosition(epos);
-                    } else {
-                        replaceUtil.setTextPosition(spos);
-                    }
-                } else {
-                    if (e->hasPrimarySelection()) {
+                        wasReplaced = true;
                         if (button == replaceNextButton) {
-                            replaceUtil.setTextPosition(e->getEndSelectionPos());
+                            int offs = (replaceUtil.getMatchLength() == 0) ? 1 : 0;
+                            e->moveCursorToTextPosition(spos + substitutedString.getLength() + offs);
                         } else {
-                            replaceUtil.setTextPosition(e->getBeginSelectionPos());
+                            e->moveCursorToTextPosition(spos);
+                        }
+                    }
+                    else {
+                        if (button == replaceNextButton) {
+                            e->moveCursorToTextPosition(epos);
+                        } else {
+                            e->moveCursorToTextPosition(spos);
                         }
                     }
                 }
             }
-
+            int textPosition = e->getCursorTextPosition();
+            if (button == findNextButton || (button == replaceNextButton && !wasReplaced)) {
+                if (e->hasPrimarySelection()) {
+                    replaceUtil.setTextPosition(e->getBeginSelectionPos());
+                    if (replaceUtil.doesMatch() && replaceUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+                        textPosition = e->getEndSelectionPos();
+                    }
+                }
+            } else if (button == findPrevButton || (button == replacePrevButton && !wasReplaced)) {
+                if (e->hasPrimarySelection()) {
+                    replaceUtil.setTextPosition(e->getBeginSelectionPos());
+                    if (replaceUtil.doesMatch() && replaceUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+                        textPosition = e->getBeginSelectionPos();
+                    }
+                }
+            }
+            replaceUtil.setTextPosition(textPosition);
+            
             internalFindNext(false);
         }
-        else if ((button == replaceSelectionButton && e->hasPrimarySelection())
+        else if ((button == replaceSelectionButton && e->hasSelection())
                || button == replaceWindowButton)
         {
             if (button == replaceSelectionButton && rememberedSelection.getLength() > 0) 
@@ -545,13 +553,16 @@ void ReplacePanel::findAgainForward()
 
     historyIndex = -1;
 
-    int   textPosition   = e->getCursorTextPosition();
+    int textPosition = e->getCursorTextPosition();
     if (e->hasPrimarySelection()) {
-        textPosition = e->getEndSelectionPos();
+        replaceUtil.setTextPosition(e->getBeginSelectionPos());
+        if (replaceUtil.doesMatch() && replaceUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+            textPosition = e->getEndSelectionPos();
+        }
     }
+    replaceUtil.setTextPosition(textPosition);
     
     replaceUtil.setSearchForwardFlag(true);
-    replaceUtil.setTextPosition(textPosition);
     
     internalFindNext(false);
 }
@@ -576,13 +587,16 @@ void ReplacePanel::findAgainBackward()
 
     historyIndex = -1;
 
-    int   textPosition   = e->getCursorTextPosition();
+    int textPosition = e->getCursorTextPosition();
     if (e->hasPrimarySelection()) {
-        textPosition = e->getBeginSelectionPos();
+        replaceUtil.setTextPosition(e->getBeginSelectionPos());
+        if (replaceUtil.doesMatch() && replaceUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+            textPosition = e->getBeginSelectionPos();
+        }
     }
+    replaceUtil.setTextPosition(textPosition);
 
     replaceUtil.setSearchForwardFlag(false);
-    replaceUtil.setTextPosition(textPosition);
     
     internalFindNext(false);
 }
@@ -734,11 +748,13 @@ void ReplacePanel::replaceAgainBackward()
 
 GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *event)
 {
-    bool processed = false;
-    KeyMapping::Id pressedKey(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
 
-    if (KeyMapping::Id(0, XK_Up)    == pressedKey
-     || KeyMapping::Id(0, XK_KP_Up) == pressedKey)
+    bool processed = false;
+    KeyMapping::Id keyMappingId(event->xkey.state, pressedKey);
+
+    if (KeyMapping::Id(0, KeyId("Up"))    == keyMappingId
+     || KeyMapping::Id(0, KeyId("KP_Up")) == keyMappingId)
     {
         SearchHistory* history = SearchHistory::getInstance();
 
@@ -788,8 +804,8 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
         }
         processed = true;
     }
-    else if (KeyMapping::Id(0, XK_Down)    == pressedKey
-          || KeyMapping::Id(0, XK_KP_Down) == pressedKey)
+    else if (KeyMapping::Id(0, KeyId("Down"))    == keyMappingId
+          || KeyMapping::Id(0, KeyId("KP_Down")) == keyMappingId)
     {
         SearchHistory* history = SearchHistory::getInstance();
 
@@ -849,12 +865,12 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
         }
         processed = true;
     }
-    else if (KeyMapping::Id(ControlMask, XK_g) == pressedKey)
+    else if (KeyMapping::Id(ControlMask, KeyId("g")) == keyMappingId)
     {
         findAgainForward();
         processed = true;
     }
-    else if (KeyMapping::Id(ShiftMask|ControlMask, XK_g) == pressedKey)
+    else if (KeyMapping::Id(ShiftMask|ControlMask, KeyId("g")) == keyMappingId)
     {
         findAgainBackward();
         processed = true;

@@ -62,12 +62,12 @@ SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget        
                 FileException           EditorServer           ClientServerUtil       EditorClient  \
                 CommandlineException    ReplacePanel           LuaFunctionArguments   GuiElement \
                 SelectionOwner          PasteDataReceiver      Clipboard              FileOpener \
-                ConfigErrorHandler      WindowCloser           SaveAsPanel
+                ConfigErrorHandler      WindowCloser           SaveAsPanel            KeyModifier
 		
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \
-                HilitingBuffer          HeapMem                File                   Regex       \
+                HilitingBuffer          HeapMem                File                   BasicRegex  \
                 BackliteBuffer          GuiLayoutRow           GuiLayoutColumn        HeapObject  \
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
                 

@@ -62,7 +62,7 @@ void EventDispatcher::removeEventReceiver(const GuiWidget::EventRegistration& re
 }
 
 
-bool EventDispatcher::isForeignWidget(Window wid)
+bool EventDispatcher::isForeignWidget(WidgetId wid)
 {
     WidgetMap::Value foundWidget = widgetMap.get(wid);
     return !foundWidget.isValid();
@@ -96,7 +96,9 @@ bool EventDispatcher::processEvent(XEvent *event)
             XRefreshKeyboardMapping(&event->xmapping);
         }
     } else {
-        if (hasRootPropertyListeners && event->xany.window == rootWid
+        WidgetId widgetId = WidgetId(event->xany.window);
+        
+        if (hasRootPropertyListeners && widgetId == rootWid
                                      && event->type == PropertyNotify)
         {
             GuiRootProperty property(event->xproperty.atom);
@@ -113,12 +115,12 @@ bool EventDispatcher::processEvent(XEvent *event)
         }
         else
         {
-            WidgetMap::Value foundWidget = widgetMap.get(event->xany.window);
+            WidgetMap::Value foundWidget = widgetMap.get(widgetId);
             if (foundWidget.isValid()) {
                 foundWidget.get()->processEvent(event);
                 hasSomethingDone = true;
             } else {
-                foundWidget = foreignWidgetListeners.get(event->xany.window);
+                foundWidget = foreignWidgetListeners.get(widgetId);
                 if (foundWidget.isValid()){
                     foundWidget.get()->processEvent(event);
                     hasSomethingDone = true;

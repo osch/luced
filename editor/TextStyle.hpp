@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TEXTSTYLE_H
-#define TEXTSTYLE_H
+#ifndef TEXTSTYLE_HPP
+#define TEXTSTYLE_HPP
 
 #include "String.hpp"
 
@@ -29,6 +29,7 @@
 #include "HeapObject.hpp"
 #include "ObjectArray.hpp"
 #include "OwningPtr.hpp"
+#include "FontHandle.hpp"
 
 namespace LucED {
 
@@ -64,8 +65,8 @@ public:
     int getLineDescent() const {
         return lineDescent;
     }
-    Font getFontId() const {
-        return font->fid;
+    FontHandle getFontHandle() const {
+        return fontHandle;
     }
     int getTextWidth(const char* str, int length) const {
         int rslt = 0;
@@ -77,8 +78,13 @@ public:
     int getTextWidth(const String& str) const {
         return getTextWidth(str.toCString(), str.getLength());
     }
+
 private:
-    XFontStruct *font;
+
+#ifdef X11_GUI
+    XFontStruct* font;
+#endif
+    FontHandle fontHandle;
     GuiColor color;
 
     short charWidths[256];
@@ -120,4 +126,4 @@ private:
 
 }
 
-#endif // TEXTSTYLE_H
+#endif // TEXTSTYLE_HPP

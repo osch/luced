@@ -22,7 +22,7 @@
 #ifndef SELECTIONOWNER_HPP
 #define SELECTIONOWNER_HPP
 
-#include <X11/Xatom.h>
+#include "WidgetId.hpp"
 #include "GuiWidget.hpp"
 
 namespace LucED {
@@ -83,7 +83,7 @@ private:
     bool hasRequestedSelectionOwnership;
     long selectionDataLength;
     long alreadySentPos;
-    Window multiPartTargetWid;
+    WidgetId multiPartTargetWid;
     Atom   multiPartTargetProp;
     
     Atom x11AtomForTargets;

@@ -302,23 +302,30 @@ void FindPanel::handleButtonPressed(Button* button)
 //    }
     else if (button == findNextButton || button == findPrevButton)
     {
-        int   textPosition   = e->getCursorTextPosition();
+        int textPosition = e->getCursorTextPosition();
         if (button == findNextButton) 
         {
             findPrevButton->setAsDefaultButton(false);
             findNextButton->setAsDefaultButton(true);
             
             if (e->hasPrimarySelection()) {
-                textPosition = e->getEndSelectionPos();
+                findUtil.setTextPosition(e->getBeginSelectionPos());
+                if (findUtil.doesMatch() && findUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+                    textPosition = e->getEndSelectionPos();
+                }
             }
         } else {
             findPrevButton->setAsDefaultButton(true);
             findNextButton->setAsDefaultButton(false);
 
             if (e->hasPrimarySelection()) {
-                textPosition = e->getBeginSelectionPos();
+                findUtil.setTextPosition(e->getBeginSelectionPos());
+                if (findUtil.doesMatch() && findUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+                    textPosition = e->getBeginSelectionPos();
+                }
             }
         }
+        findUtil.setTextPosition(textPosition);
 
         historyIndex = -1;
 
@@ -326,7 +333,6 @@ void FindPanel::handleButtonPressed(Button* button)
         findUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
         findUtil.setRegexFlag        (regularExprCheckBox->isChecked());
         findUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
-        findUtil.setTextPosition     (textPosition);
         findUtil.setSearchString     (editField->getTextData()->getAsString());
         editField->getTextData()->setModifiedFlag(false);
 
@@ -409,13 +415,16 @@ void FindPanel::findAgainForward()
     }
     historyIndex = -1;
 
-    int   textPosition   = e->getCursorTextPosition();
+    int textPosition = e->getCursorTextPosition();
     if (e->hasPrimarySelection()) {
-        textPosition = e->getEndSelectionPos();
+        findUtil.setTextPosition(e->getBeginSelectionPos());
+        if (findUtil.doesMatch() && findUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+            textPosition = e->getEndSelectionPos();
+        }
     }
+    findUtil.setTextPosition(textPosition);
     
     findUtil.setSearchForwardFlag(true);
-    findUtil.setTextPosition(textPosition);
     
     internalFindNext(false);
 }
@@ -449,13 +458,16 @@ void FindPanel::findAgainBackward()
     }
     historyIndex = -1;
 
-    int   textPosition   = e->getCursorTextPosition();
+    int textPosition = e->getCursorTextPosition();
     if (e->hasPrimarySelection()) {
-        textPosition = e->getBeginSelectionPos();
+        findUtil.setTextPosition(e->getBeginSelectionPos());
+        if (findUtil.doesMatch() && findUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+            textPosition = e->getBeginSelectionPos();
+        }
     }
+    findUtil.setTextPosition(textPosition);
 
     findUtil.setSearchForwardFlag(false);
-    findUtil.setTextPosition(textPosition);
     
     internalFindNext(false);
 }
@@ -473,11 +485,13 @@ GuiElement::ProcessingResult FindPanel::processEvent(const XEvent *event)
 
 GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event)
 {
+    KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
     bool processed = false;
-    KeyMapping::Id pressedKey(event->xkey.state, XLookupKeysym((XKeyEvent*)&event->xkey, 0));
 
-    if (KeyMapping::Id(0, XK_Up)    == pressedKey
-     || KeyMapping::Id(0, XK_KP_Up) == pressedKey)
+    KeyMapping::Id keyMappingId(event->xkey.state, pressedKey);
+
+    if (KeyMapping::Id(0, KeyId("Up"))    == keyMappingId
+     || KeyMapping::Id(0, KeyId("KP_Up")) == keyMappingId)
     {
         SearchHistory* history = SearchHistory::getInstance();
 
@@ -518,8 +532,8 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
         }
         processed = true;
     }
-    else if (KeyMapping::Id(0, XK_Down)    == pressedKey
-          || KeyMapping::Id(0, XK_KP_Down) == pressedKey)
+    else if (KeyMapping::Id(0, KeyId("Down"))    == keyMappingId
+          || KeyMapping::Id(0, KeyId("KP_Down")) == keyMappingId)
     {
         SearchHistory* history = SearchHistory::getInstance();
         TextData* textData     = editField->getTextData();
@@ -569,12 +583,12 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
         }
         processed = true;
     }
-    else if (KeyMapping::Id(ControlMask, XK_g) == pressedKey)
+    else if (KeyMapping::Id(ControlMask, KeyId("g")) == keyMappingId)
     {
         findAgainForward();
         processed = true;
     }
-    else if (KeyMapping::Id(ShiftMask|ControlMask, XK_g) == pressedKey)
+    else if (KeyMapping::Id(ShiftMask|ControlMask, KeyId("g")) == keyMappingId)
     {
         findAgainBackward();
         processed = true;
