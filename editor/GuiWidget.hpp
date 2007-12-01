@@ -169,6 +169,9 @@ protected:
     void drawGuiText(int x, int y, const String& ptr) {
         drawGuiText(x, y, ptr.toCString(), ptr.getLength());
     }
+    void drawGuiText(int x, int y, const char* ptr) {
+        drawGuiText(x, y, ptr, strlen(ptr));
+    }
     void drawActiveSunkenFrame(int x, int y, int w, int h);
     void drawInactiveSunkenFrame(int x, int y, int w, int h);
     void drawFrame(int x, int y, int w, int h);

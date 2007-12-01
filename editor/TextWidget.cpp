@@ -119,6 +119,8 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       opticalCursorColumn(0),
       lastLineOfLineAndColumnListeners(0),
       lastColumnOfLineAndColumnListeners(0),
+      lastPosOfLineAndColumnListeners(0),
+      lastLengthOfSelectionLengthListeners(0),
       minWidthChars(10),
       minHeightChars(1),
       bestWidthChars(80),
@@ -142,7 +144,7 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
     updateVerticalScrollBar = false;
     updateHorizontalScrollBar = false;
 
-    setBackgroundColor(getGuiRoot()->getWhiteColor());
+    //setBackgroundColor(getGuiRoot()->getWhiteColor());
     setBorderColor(getGuiRoot()->getWhiteColor());
 
     lineHeight  = textStyles->get(0)->getLineHeight();
@@ -154,12 +156,23 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
 
     addToXEventMask(ExposureMask);
 
-//    XSetWindowAttributes at;
+#if 0
+    XSetWindowAttributes at;
+    at.background_pixmap = None;
 //    at.backing_store = Always;
+//    at.save_under = True;
+//    at.backing_store = WhenMapped;
 //    at.bit_gravity = StaticGravity; // NorthWestGravity; //StaticGravity;
 //    XChangeWindowAttributes(getDisplay(), getWid(), 
 //            //CWBackingStore|
 //            CWBitGravity, &at);
+
+    XChangeWindowAttributes(getDisplay(), getWid(), 
+//            CWBackingStore|CWSaveUnder
+              CWBackPixmap
+            , &at);
+#endif
+
     setBitGravity(NorthWestGravity);
             
     textData->flushPendingUpdates();
@@ -191,9 +204,10 @@ void TextWidget::treatConfigUpdate()
     
 }
 
-void TextWidget::registerLineAndColumnListener(Callback<long,long>::Ptr listener)
+void TextWidget::registerCursorPositionDataListener(Callback<CursorPositionData>::Ptr listener)
 {
-    listener->call(lastLineOfLineAndColumnListeners, lastColumnOfLineAndColumnListeners);
+    listener->call(CursorPositionData(lastLineOfLineAndColumnListeners, lastColumnOfLineAndColumnListeners,
+                                      lastPosOfLineAndColumnListeners, lastLengthOfSelectionLengthListeners));
     lineAndColumnListeners.registerCallback(listener);
 }
 
@@ -2013,11 +2027,24 @@ void TextWidget::flushPendingUpdates()
     }
     long newLine = getCursorLineNumber();
     long newColumn = getOpticalCursorColumn();
-    if (newLine != lastLineOfLineAndColumnListeners || newColumn != lastColumnOfLineAndColumnListeners)
+    long newPos    = getCursorTextPosition();
+
+    long newSelectionLength = 0;
+    if (backliteBuffer->hasActiveSelection() && backliteBuffer->isSelectionPrimary()) {
+        newSelectionLength = backliteBuffer->getSelectionLength();
+    }
+    if (   newLine != lastLineOfLineAndColumnListeners || newColumn != lastColumnOfLineAndColumnListeners
+        || newPos != lastPosOfLineAndColumnListeners || newSelectionLength != lastLengthOfSelectionLengthListeners)
     {
         lastLineOfLineAndColumnListeners = newLine;
         lastColumnOfLineAndColumnListeners = newColumn;
-        lineAndColumnListeners.invokeAllCallbacks(newLine, newColumn);
+        lastPosOfLineAndColumnListeners = newPos;
+        lastLengthOfSelectionLengthListeners = newSelectionLength;
+
+        lineAndColumnListeners.invokeAllCallbacks(CursorPositionData(newLine, 
+                                                                     newColumn, 
+                                                                     newPos, 
+                                                                     newSelectionLength));
     }
 }
 

@@ -97,10 +97,16 @@ void SingleLineEditField::draw()
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
     int ud = heightOffset;
     int ld = (adjustment == VerticalAdjustment::CENTER) ? heightOffset : 0;
+    
+    int x = guiSpacing;
+    int y = ud + guiSpacing;
+    int w = getPosition().w - guiSpacing;
+    int h = getPosition().h - ud - ld - guiSpacing;
+    
     if (hasFocusFlag) {
-        drawActiveSunkenFrame(  guiSpacing, ud + guiSpacing, getPosition().w - guiSpacing, getPosition().h - ud - ld - guiSpacing);
+        drawActiveSunkenFrame(  x, y, w, h);
     } else {
-        drawInactiveSunkenFrame(guiSpacing, ud + guiSpacing, getPosition().w - guiSpacing, getPosition().h - ud - ld - guiSpacing);
+        drawInactiveSunkenFrame(x, y, w, h);
     }
 }
 

@@ -103,15 +103,15 @@ GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsi
 {
     wid = WidgetId(XCreateSimpleWindow(getDisplay(), getRootWid(), 
                                        x, y, width, height, border_width, 
-                                       GuiRoot::getInstance()->getBlackColor(), 
+                                       GuiRoot::getInstance()->getGreyColor(), 
                                        GuiRoot::getInstance()->getGreyColor()));
- 
+
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
     addToXEventMask(StructureNotifyMask);
 }
     
 GuiWidget::GuiWidget(GuiWidget* parent,
-            int x, int y, unsigned int width, unsigned int height, unsigned border_width)
+                     int x, int y, unsigned int width, unsigned int height, unsigned border_width)
     : isTopWindow(false),
       parent(parent),
       eventMask(0),
@@ -119,10 +119,24 @@ GuiWidget::GuiWidget(GuiWidget* parent,
       visible(false),
       gcid(GuiWidgetSingletonData::getInstance()->getGcid())
 {
+#if 0
     wid = WidgetId(XCreateSimpleWindow(getDisplay(), parent->getWid(), 
                                        x, y, width, height, border_width, 
                                        GuiRoot::getInstance()->getBlackColor(), 
-                                       GuiRoot::getInstance()->getGreyColor()));
+                                       GuiRoot::getInstance()->getWhiteColor()));
+#endif
+
+    XSetWindowAttributes at;
+    at.background_pixmap = None;
+    at.backing_store = WhenMapped;
+
+    wid = WidgetId(XCreateWindow(getDisplay(), parent->getWid(), 
+                                 x, y, width, height, border_width, 
+                                 CopyFromParent, // <-- depth from parent
+                                 InputOutput,
+                                 CopyFromParent, // <-- visual from parent
+                                 CWBackPixmap|CWBackingStore, 
+                                 &at));
     
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
     addToXEventMask(StructureNotifyMask);
@@ -144,8 +158,8 @@ GuiWidget::~GuiWidget()
 
 GuiElement::ProcessingResult GuiWidget::processEvent(const XEvent *event)
 {
-    switch (event->type) {
-
+    switch (event->type)
+    {
         case ConfigureNotify: {
             if (event->xconfigure.window == getWid()
              && event->xconfigure.event  == getWid()) {
@@ -251,22 +265,28 @@ void GuiWidget::drawLine(int x, int y, int dx, int dy, GuiColor color)
 
 void GuiWidget::drawRaisedSurface(int x, int y, int w, int h)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
-
-    XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
-    XFillRectangle(display, wid, gcid,
-            x, y, w, h);
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
+    
+        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
+        XFillRectangle(display, wid, gcid,
+                x, y, w, h);
+    }
 }
 
 void GuiWidget::drawRaisedSurface(int x, int y, int w, int h, GuiColor color)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
-
-    XSetForeground(display, gcid, color);
-    XFillRectangle(display, wid, gcid,
-            x, y, w, h);
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
+    
+        XSetForeground(display, gcid, color);
+        XFillRectangle(display, wid, gcid,
+                x, y, w, h);
+    }
 }
 
 
@@ -277,33 +297,34 @@ int GuiWidget::getRaisedBoxBorderWidth()
 
 void GuiWidget::drawRaisedBox(int x, int y, int w, int h, GuiColor color)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
-    
-    int x1 = x, y1 = y, x2 = x + w -1, y2 = y + h - 1;
-    int dx = w - 1, dy = h - 1;
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
         
-/*        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
-        drawLine(display, wid, gcid, 
-                x + dx, y + 1, 0, dy - 1);
-*/
-        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor05());
-        ::drawLine(display, wid, gcid,
-                x, y, dx - 1, 0);
-        ::drawLine(display, wid, gcid,
-                x, y, 0, dy - 1);
-
-        XSetForeground(display, gcid, color);
-        XFillRectangle(display, wid, gcid,
-                x + 1, y + 1, dx - 1, dy - 1);
-
-        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
-        ::drawLine(display, wid, gcid,
-                x + dx, y, 0, dy);
-        ::drawLine(display, wid, gcid,
-                x, y + dy, dx, 0);
-
-
+        int x1 = x, y1 = y, x2 = x + w -1, y2 = y + h - 1;
+        int dx = w - 1, dy = h - 1;
+            
+    /*        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
+            drawLine(display, wid, gcid, 
+                    x + dx, y + 1, 0, dy - 1);
+    */
+            XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor05());
+            ::drawLine(display, wid, gcid,
+                    x, y, dx - 1, 0);
+            ::drawLine(display, wid, gcid,
+                    x, y, 0, dy - 1);
+    
+            XSetForeground(display, gcid, color);
+            XFillRectangle(display, wid, gcid,
+                    x + 1, y + 1, dx - 1, dy - 1);
+    
+            XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
+            ::drawLine(display, wid, gcid,
+                    x + dx, y, 0, dy);
+            ::drawLine(display, wid, gcid,
+                    x, y + dy, dx, 0);
+    }
 }
 
 void GuiWidget::drawRaisedBox(int x, int y, int w, int h)
@@ -314,33 +335,34 @@ void GuiWidget::drawRaisedBox(int x, int y, int w, int h)
 
 void GuiWidget::drawPressedBox(int x, int y, int w, int h, GuiColor color)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
-
-    int x1 = x, y1 = y, x2 = x + w -1, y2 = y + h - 1;
-    int dx = w - 1, dy = h - 1;
-        
-/*        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
-        ::drawLine(display, wid, gcid, 
-                x + dx, y + 1, 0, dy - 1);
-*/
-        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
-        ::drawLine(display, wid, gcid,
-                x, y, dx - 1, 0);
-        ::drawLine(display, wid, gcid,
-                x, y, 0, dy - 1);
-
-        XSetForeground(display, gcid, color);
-        XFillRectangle(display, wid, gcid,
-                x + 1, y + 1, dx - 1, dy - 1);
-
-        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor05());
-        ::drawLine(display, wid, gcid,
-                x + dx, y, 0, dy);
-        ::drawLine(display, wid, gcid,
-                x, y + dy, dx, 0);
-
-
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
+    
+        int x1 = x, y1 = y, x2 = x + w -1, y2 = y + h - 1;
+        int dx = w - 1, dy = h - 1;
+            
+    /*        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor03());
+            ::drawLine(display, wid, gcid, 
+                    x + dx, y + 1, 0, dy - 1);
+    */
+            XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
+            ::drawLine(display, wid, gcid,
+                    x, y, dx - 1, 0);
+            ::drawLine(display, wid, gcid,
+                    x, y, 0, dy - 1);
+    
+            XSetForeground(display, gcid, color);
+            XFillRectangle(display, wid, gcid,
+                    x + 1, y + 1, dx - 1, dy - 1);
+    
+            XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor05());
+            ::drawLine(display, wid, gcid,
+                    x + dx, y, 0, dy);
+            ::drawLine(display, wid, gcid,
+                    x, y + dy, dx, 0);
+    }
 }
 
 void GuiWidget::drawPressedBox(int x, int y, int w, int h)
@@ -350,145 +372,163 @@ void GuiWidget::drawPressedBox(int x, int y, int w, int h)
 
 void GuiWidget::drawArrow(int x, int y, int w, int h, const Direction::Type direct)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
-
-    XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
-
-    const int d = (w-5)/ 2;
-    const int n = 6;
-    XPoint points[n] = {{2 + d, 2 + d/2}, {-d, d}, {0, d/3}, {2*d, 0}, {0, -d/3}, {-d, -d}};
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
     
-    if (direct == Direction::UP) {
-        points[0].x += x;
-        points[0].y += y;
-    } else if (direct == Direction::DOWN) {
-        points[0].x += x;
-        points[0].y  = y + h - 1 - points[0].y;
-        for (int i = 1; i < n; ++i) {
-            points[i].y = -1 * points[i].y;
+        XSetForeground(display, gcid, GuiRoot::getInstance()->getGuiColor01());
+    
+        const int d = (w-5)/ 2;
+        const int n = 6;
+        XPoint points[n] = {{2 + d, 2 + d/2}, {-d, d}, {0, d/3}, {2*d, 0}, {0, -d/3}, {-d, -d}};
+        
+        if (direct == Direction::UP) {
+            points[0].x += x;
+            points[0].y += y;
+        } else if (direct == Direction::DOWN) {
+            points[0].x += x;
+            points[0].y  = y + h - 1 - points[0].y;
+            for (int i = 1; i < n; ++i) {
+                points[i].y = -1 * points[i].y;
+            }
+        } else if (direct == Direction::LEFT) {
+            int h;
+            for (int i = 0; i < n; ++i) {
+                          h = points[i].x;
+                points[i].x = points[i].y;
+                points[i].y = h;
+            }
+            points[0].x += x;
+            points[0].y += y;
+        } else if (direct == Direction::RIGHT) {
+            int h;
+            for (int i = 0; i < n; ++i) {
+                          h = points[i].x;
+                points[i].x = points[i].y;
+                points[i].y = h;
+            }
+            points[0].x = x + w - 1 - points[0].x;
+            points[0].y += y;
+            for (int i = 1; i < n; ++i) {
+                points[i].x = -1 * points[i].x;
+            }
         }
-    } else if (direct == Direction::LEFT) {
-        int h;
-        for (int i = 0; i < n; ++i) {
-                      h = points[i].x;
-            points[i].x = points[i].y;
-            points[i].y = h;
-        }
-        points[0].x += x;
-        points[0].y += y;
-    } else if (direct == Direction::RIGHT) {
-        int h;
-        for (int i = 0; i < n; ++i) {
-                      h = points[i].x;
-            points[i].x = points[i].y;
-            points[i].y = h;
-        }
-        points[0].x = x + w - 1 - points[0].x;
-        points[0].y += y;
-        for (int i = 1; i < n; ++i) {
-            points[i].x = -1 * points[i].x;
-        }
+        XFillPolygon(display, wid, gcid,
+                points, n, Convex, CoordModePrevious);
+        XDrawLines(display, wid, gcid,
+                points, n, CoordModePrevious);
     }
-    XFillPolygon(display, wid, gcid,
-            points, n, Convex, CoordModePrevious);
-    XDrawLines(display, wid, gcid,
-            points, n, CoordModePrevious);
 }
 
 
 void GuiWidget::drawInactiveSunkenFrame(int x, int y, int w, int h)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
+        
+        w -= 1; 
+        h -= 1;
+        
+        XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor02());
+        XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
+        XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
     
-    w -= 1; 
-    h -= 1;
-    
-    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor02());
-    XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
-    XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
-
-    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor03());
-    XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
-    XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
+        XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor03());
+        XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
+        XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
+    }
 }
 
 void GuiWidget::drawActiveSunkenFrame(int x, int y, int w, int h)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
+        
+        w -= 1; 
+        h -= 1;
+        
+        XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor01());
+        XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
+        XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
     
-    w -= 1; 
-    h -= 1;
-    
-    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor01());
-    XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
-    XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
-
-    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor02());
-    XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
-    XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
+        XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor02());
+        XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
+        XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
+    }
 }
 
 void GuiWidget::drawFrame(int x, int y, int w, int h)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
+        
+        w -= 1; 
+        h -= 1;
+        
+        XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor01());
+        XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
+        XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
     
-    w -= 1; 
-    h -= 1;
-    
-    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor01());
-    XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
-    XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
-
-//    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor05());
-    XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
-    XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
+    //    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor05());
+        XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
+        XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
+    }
 }
 
 void GuiWidget::undrawFrame(int x, int y, int w, int h)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
+        
+        w -= 1; 
+        h -= 1;
+        
+        XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor03());
+        XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
+        XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
     
-    w -= 1; 
-    h -= 1;
-    
-    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor03());
-    XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
-    XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
-
-//    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor05());
-    XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
-    XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
+    //    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor05());
+        XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
+        XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
+    }
 }
 
 void GuiWidget::drawDottedFrame(int x, int y, int w, int h)
 {
-    Display* display = getDisplay();
-    WidgetId wid = getWid();
-
-    XSetLineAttributes(display, gcid, 1, 
-        LineOnOffDash, CapButt, JoinMiter);
-
-    char dashList[] = { 1, 1 };
-    XSetDashes(display, gcid, 0, dashList, sizeof(dashList));
-
-    w -= 1; 
-    h -= 1;
+    if (w > 0 && h > 0)
+    {
+        Display* display = getDisplay();
+        WidgetId wid = getWid();
     
-    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor01());
-    XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
-    XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
-
-//    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor05());
-    XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
-    XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
-
-    XSetLineAttributes(display, gcid, 0, 
-        LineSolid, CapButt, JoinMiter);
+        XSetLineAttributes(display, gcid, 1, 
+            LineOnOffDash, CapButt, JoinMiter);
+    
+        char dashList[] = { 1, 1 };
+        XSetDashes(display, gcid, 0, dashList, sizeof(dashList));
+    
+        w -= 1; 
+        h -= 1;
+        
+        XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor01());
+        XDrawLine(display, wid,  gcid,    x + 0, y + 0,    x + w, y + 0);
+        XDrawLine(display, wid,  gcid,    x + 0, y + h,    x + 0, y + 0);
+    
+    //    XSetForeground(display,  gcid, GuiRoot::getInstance()->getGuiColor05());
+        XDrawLine(display, wid,  gcid,    x + w, y + h,    x + 0, y + h);
+        XDrawLine(display, wid,  gcid,    x + w, y + 0,    x + w, y + h);
+    
+        XSetLineAttributes(display, gcid, 0, 
+            LineSolid, CapButt, JoinMiter);
+    }
 }
 
 

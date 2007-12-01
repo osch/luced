@@ -30,10 +30,22 @@ using namespace LucED;
 StatusLine::StatusLine(GuiWidget* parent)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
-      lengthPos(0), line(0), column(0), lineAndColumnWidth(0)
+      fileLength(0), selectionLength(0),
+      lengthPos(0), line(0), column(0), pos(0), lineAndColumnWidth(0)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
+    
+    
+    labelSWidth    = getGuiTextStyle()->getTextWidth("S: ");
+    labelPWidth    = getGuiTextStyle()->getTextWidth("P: ");
+    labelLWidth    = getGuiTextStyle()->getTextWidth("L: ");
+    labelCWidth    = getGuiTextStyle()->getTextWidth("C: ");
+    spaceWidth     = getGuiTextStyle()->getTextWidth("  ");
+    
+    smallWidth  = getGuiTextStyle()->getTextWidth("888");
+    middleWidth = getGuiTextStyle()->getTextWidth("888");
+    bigWidth    = getGuiTextStyle()->getTextWidth("888888");
 }
 
 void StatusLine::setPosition(Position newPosition)
@@ -104,21 +116,61 @@ void StatusLine::drawFileLength()
             getRaisedBoxBorderWidth(), getRaisedBoxBorderWidth(), 
             position.w - 2 * getRaisedBoxBorderWidth(), position.h - 2 * getRaisedBoxBorderWidth());
 
-    char buffer[30];
+    char buffer[100];
     sprintf(buffer, "%ld bytes", fileLength);
+
     drawRaisedSurface(lengthPos, 2, getGuiTextStyle()->getTextWidth(buffer, strlen(buffer)), getGuiTextHeight());
     drawGuiText(      lengthPos, 2, buffer, strlen(buffer));
 }
 
-void StatusLine::drawLineAndColumn()
+int StatusLine::calcWidth(long value)
 {
     char buffer[100];
-    sprintf(buffer, "  L: %ld  C: %ld  ", line + 1, column);
-    int len = strlen(buffer);
-    int width = getGuiTextStyle()->getTextWidth(buffer, len);
+    sprintf(buffer, "%ld", value);
+    return getGuiTextStyle()->getTextWidth(buffer);
+}
+
+void StatusLine::drawLineAndColumn()
+{
+    char buffer[200];
+    
+    int width = 0;
+    
+    if (selectionLength != 0) {
+        width += labelSWidth + util::maximum(smallWidth, calcWidth(selectionLength)) + spaceWidth;
+        
+        //sprintf(buffer,             "P: %-6ld    L: %-5ld  C: %-3ld  ", pos, line + 1, column);
+    }
+    {
+        width += labelPWidth + util::maximum(bigWidth,    calcWidth(pos))      + 2*spaceWidth;
+        width += labelLWidth + util::maximum(middleWidth, calcWidth(line + 1)) +   spaceWidth;
+        width += labelCWidth + util::maximum(smallWidth,  calcWidth(column))   +   spaceWidth;
+    }
+        //sprintf(buffer, "S: %-6ld    P: %-6ld    L: %-5ld  C: %-3ld  ", selectionLength, pos, line + 1, column);
+    
     int w = util::maximum(width, lineAndColumnWidth);
     drawRaisedSurface(position.w - getRaisedBoxBorderWidth() - w,     2, w, getGuiTextHeight());
-    drawGuiText(      position.w - getRaisedBoxBorderWidth() - width, 2, buffer, len);
+
+    int p = position.w - getRaisedBoxBorderWidth() - width;
+    
+    if (selectionLength != 0) {
+        sprintf(buffer, "S: %ld", selectionLength);
+        drawGuiText(p, 2, buffer);
+        p += labelSWidth + util::maximum(smallWidth, calcWidth(selectionLength)) + spaceWidth;
+    }
+    {
+        sprintf(buffer, "P: %ld", pos);
+        drawGuiText(p, 2, buffer);
+        p += labelPWidth + util::maximum(bigWidth,    calcWidth(pos))      + 2*spaceWidth;
+
+        sprintf(buffer, "L: %ld", line + 1);
+        drawGuiText(p, 2, buffer);
+        p += labelLWidth + util::maximum(middleWidth, calcWidth(line + 1)) +  spaceWidth;
+
+        sprintf(buffer, "C: %ld", column);
+        drawGuiText(p, 2, buffer);
+        p += labelCWidth + util::maximum(smallWidth,  calcWidth(column));
+    }
     lineAndColumnWidth = width;
 }
 
@@ -139,16 +191,24 @@ void StatusLine::setFileName(const String& fileName)
 
 void StatusLine::setFileLength(long fileLength)
 {
-    this->fileLength = fileLength;
-    drawFileLength();
+    if (fileLength < this->fileLength) {
+        this->fileLength = fileLength;
+        drawArea();
+    }
+    else {
+        this->fileLength = fileLength;
+        drawFileLength();
+    }
 }
 
-void StatusLine::setLineAndColumn(long line, long column)
+void StatusLine::setCursorPositionData(CursorPositionData d)
 {
-    if (this->line != line || this->column != column)
+    if (this->line != d.line || this->column != d.column || this->selectionLength != d.selectionLength)
     {
-        this->line = line;
-        this->column = column;
+        this->line = d.line;
+        this->column = d.column;
+        this->pos = d.pos;
+        this->selectionLength = d.selectionLength;
         drawLineAndColumn();
     }
 }

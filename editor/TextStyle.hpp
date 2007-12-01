@@ -78,6 +78,9 @@ public:
     int getTextWidth(const String& str) const {
         return getTextWidth(str.toCString(), str.getLength());
     }
+    int getTextWidth(const char* str) const {
+        return getTextWidth(str, strlen(str));
+    }
 
 private:
 

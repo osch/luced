@@ -92,7 +92,7 @@ ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     calculateValuesFromPosition();
 
-    setBackgroundColor(getGuiRoot()->getGuiColor02());
+//    setBackgroundColor(getGuiRoot()->getGuiColor02());
  }
 
 

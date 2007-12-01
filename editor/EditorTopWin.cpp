@@ -134,17 +134,18 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     
     textData->registerModifiedFlagListener(newCallback(this, &EditorTopWin::handleChangedModifiedFlag));
     
-    textData->registerFileNameListener       (newCallback(statusLine, &StatusLine  ::setFileName));
-    textData->registerReadOnlyListener       (newCallback(this,       &EditorTopWin::handleChangedReadOnlyFlag));
-    textData->registerFileNameListener       (newCallback(this,       &EditorTopWin::handleNewFileName));
-    textData->registerLengthListener         (newCallback(statusLine, &StatusLine  ::setFileLength));
-    textEditor->registerLineAndColumnListener(newCallback(statusLine, &StatusLine  ::setLineAndColumn));
-    
-    scrollBarV->setChangedValueCallback      (newCallback(textEditor, &TextWidget::setTopLineNumber));
-    scrollBarH->setChangedValueCallback      (newCallback(textEditor, &TextWidget::setLeftPix));
+    textData->registerFileNameListener          (newCallback(statusLine, &StatusLine  ::setFileName));
+    textData->registerReadOnlyListener          (newCallback(this,       &EditorTopWin::handleChangedReadOnlyFlag));
+    textData->registerFileNameListener          (newCallback(this,       &EditorTopWin::handleNewFileName));
+    textData->registerLengthListener            (newCallback(statusLine, &StatusLine  ::setFileLength));
 
-    scrollBarV->setScrollStepCallback        (newCallback(textEditor, &TextEditorWidget::handleScrollStepV));
-    scrollBarH->setScrollStepCallback        (newCallback(textEditor, &TextEditorWidget::handleScrollStepH));
+    textEditor->registerCursorPositionDataListener(newCallback(statusLine, &StatusLine::setCursorPositionData));
+    
+    scrollBarV->setChangedValueCallback         (newCallback(textEditor, &TextWidget::setTopLineNumber));
+    scrollBarH->setChangedValueCallback         (newCallback(textEditor, &TextWidget::setLeftPix));
+
+    scrollBarV->setScrollStepCallback           (newCallback(textEditor, &TextEditorWidget::handleScrollStepV));
+    scrollBarH->setScrollStepCallback           (newCallback(textEditor, &TextEditorWidget::handleScrollStepH));
 
     textEditor->setScrollBarVerticalValueRangeChangedCallback  (newCallback(scrollBarV, &ScrollBar::setValueRange));
     textEditor->setScrollBarHorizontalValueRangeChangedCallback(newCallback(scrollBarH, &ScrollBar::setValueRange));

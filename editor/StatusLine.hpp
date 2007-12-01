@@ -27,6 +27,7 @@
 #include "GuiWidget.hpp"
 #include "Callback.hpp"
 #include "OwningPtr.hpp"
+#include "CursorPositionData.hpp"
 
 namespace LucED {
 
@@ -47,7 +48,8 @@ public:
     virtual void setPosition(Position newPosition);
     virtual Measures getDesiredMeasures();
 
-    void setLineAndColumn(long line, long column);
+    void setCursorPositionData(CursorPositionData data);
+
     void setFileName(const String& fileName);
     void setFileLength(long length);
     
@@ -55,6 +57,8 @@ private:
 
     StatusLine(GuiWidget* parent);
 
+    int calcWidth(long value);
+    
     void drawArea();
     void drawFileName();
     void drawFileLength();
@@ -63,11 +67,23 @@ private:
     Position position;
     String fileName;
     long fileLength;
+    long selectionLength;
     long lengthPos;
     
     long line;
     long column;
+    long pos;
     int lineAndColumnWidth;
+    
+    int smallWidth;
+    int middleWidth;
+    int bigWidth;
+
+    int labelSWidth;    
+    int labelPWidth;
+    int labelLWidth;
+    int labelCWidth;
+    int spaceWidth;
 };
 
 

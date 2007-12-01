@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TEXTWIDGET_H
-#define TEXTWIDGET_H
+#ifndef TEXT_WIDGET_HPP
+#define TEXT_WIDGET_HPP
 
 #include "GuiWidget.hpp"
 #include "TextData.hpp"
@@ -32,6 +32,7 @@
 #include "CallbackContainer.hpp"
 #include "OwningPtr.hpp"
 #include "GuiColor.hpp"
+#include "CursorPositionData.hpp"
 
 namespace LucED {
 
@@ -169,7 +170,8 @@ public:
     void hideCursor();
     void showCursor();
 
-    void registerLineAndColumnListener(Callback<long,long>::Ptr listener);
+    void registerCursorPositionDataListener(Callback<CursorPositionData>::Ptr listener);
+
     void notifyAboutHotKeyEventForOtherWidget();
         
 private:
@@ -250,9 +252,11 @@ private:
 
     Region redrawRegion; // collects Rectangles for redraw events
     
-    CallbackContainer<long,long> lineAndColumnListeners;
-    long lastLineOfLineAndColumnListeners;
-    long lastColumnOfLineAndColumnListeners;
+    CallbackContainer<CursorPositionData> lineAndColumnListeners;
+    long                         lastLineOfLineAndColumnListeners;
+    long                       lastColumnOfLineAndColumnListeners;
+    long                          lastPosOfLineAndColumnListeners;
+    long                     lastLengthOfSelectionLengthListeners;
     
     int minWidthChars;
     int minHeightChars;
@@ -270,5 +274,5 @@ private:
 
 } // namespace LucED
 
-#endif // TEXTWIDGET_H
+#endif // TEXT_WIDGET_HPP
 

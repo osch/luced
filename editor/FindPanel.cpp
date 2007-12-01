@@ -668,7 +668,11 @@ void FindPanel::notifyAboutEndOfPastingData()
             } else {
                 findUtil.setTextPosition(e->getCursorTextPosition());
             }
-            executeFind(false, newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton));
+            if (selectionSearchForwardFlag) {
+                executeFind(false, newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton));
+            } else {
+                executeFind(false, newCallback(this, &FindPanel::handleContinueSelectionFindAtEndButton));
+            }
         }
         e->assureCursorVisible();
     }
