@@ -27,6 +27,7 @@
 #include "MemBuffer.hpp"
 #include "ByteArray.hpp"
 #include "ByteBuffer.hpp"
+#include "PatternStack.hpp"
 
 namespace LucED {
 
@@ -161,11 +162,36 @@ public:
         ASSERT(!isEndOfBreaks(iterator));
         return getBreakData(iterator)->stackLength;
     }
-    byte getBreakStackByte(IteratorHandle iterator, long stackPos) {
+/*    byte getBreakStackByte(IteratorHandle iterator, long stackPos) {
         return stack[getBreakStackBegin(iterator) + stackPos];
-    }
+    }*/
     byte getLastBreakStackByte(IteratorHandle iterator) {
-        return stack[getBreakStackBegin(iterator) + getBreakStackLength(iterator) - 1];
+        long endPos = getBreakStackBegin(iterator) + getBreakStackLength(iterator);
+        byte b = stack[endPos - 1];
+        if (b != 0xFF) {
+            return b;
+        } else {
+            return stack[endPos - 2];
+        }
+    }
+    byte getParentBreakStackByte(IteratorHandle iterator) {
+        long endPos = getBreakStackBegin(iterator) + getBreakStackLength(iterator);
+        long len = PatternStack::getAdditionalDataLength(stack, endPos).getTotal();
+        if (len == 0) {
+            byte b = stack[endPos - 2];
+            if (b != 0xFF) {
+                return b;
+            } else {
+                return stack[endPos - 3];
+            }
+        } else {
+            byte b = stack[endPos - 2 - len - 1];
+            if (b != 0xFF) {
+                return b;
+            } else {
+                return stack[endPos - 2 - len - 1 - 1];
+            }
+        }
     }
     long getPrevBreakStackBegin(IteratorHandle iterator) const {
         const IteratorData *I   = getIteratorData(iterator);
@@ -173,13 +199,13 @@ public:
         ASSERT(0 < I->breakIndex);
         return I->stackStartPos - breaks[I->breakIndex - 1].stackLength;
     }
-    void copyBreakStackTo(IteratorHandle iterator, ByteArray& dest) {
+    void copyBreakStackTo(IteratorHandle iterator, PatternStack& dest) {
         dest.clear();
         long stackLength = getBreakStackEnd(iterator) - getBreakStackBegin(iterator);
         dest.appendAmount(stackLength);
         memcpy(dest.getPtr(0), stack.getAmount(getBreakStackBegin(iterator), stackLength), stackLength);
     }
-    bool hasEqualBreakStack(IteratorHandle iterator, const ByteArray& rhs) {
+    bool hasEqualBreakStack(IteratorHandle iterator, const PatternStack& rhs) {
         long stackLength = getBreakStackEnd(iterator) - getBreakStackBegin(iterator);
         if (stackLength != rhs.getLength()) {
             return false;
@@ -218,12 +244,12 @@ public:
     void deleteBreaks(IteratorHandle start, IteratorHandle end);
 
     void fillInterBreaks(IteratorHandle iterator, long startPos,
-            const ByteArray& parsingStack, long fillCount, long fillDistance) {
+            const PatternStack& parsingStack, long fillCount, long fillDistance) {
         insertBreaks(iterator, startPos, 1, Break_INTER, parsingStack, fillCount, fillDistance);
     }
             
     void insertBreak(IteratorHandle iterator, long startPos, long breakLength, BreakType type,
-            const ByteArray& parsingStack) {
+            const PatternStack& parsingStack) {
         insertBreaks(iterator, startPos, breakLength, type, parsingStack, 1, 0);
     }
     void treatTextDataUpdate(IteratorHandle processingRestartedIterator,
@@ -248,7 +274,7 @@ protected:
 private:
 
     void insertBreaks(IteratorHandle iterator, long startPos, long breakLength, BreakType type,
-            const ByteArray& parsingStack, long fillCount, long fillDistance);
+            const PatternStack& parsingStack, long fillCount, long fillDistance);
 
     ObjectArray<IteratorData> iterators;
     long lastFreeIteratorIndex;

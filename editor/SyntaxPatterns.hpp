@@ -56,6 +56,8 @@ struct ChildPatternDescriptor
     {}
     int id;
     int substrNo;
+    int pushedSubstrNo;
+    bool hasPushedSubstr;
 };
 
 struct SyntaxPattern
@@ -76,12 +78,14 @@ struct SyntaxPattern
     ObjectArray<ChildPatternDescriptor> childList;
     ObjectArray<SubPatternDescriptor>   beginSubStyles;
     ObjectArray<SubPatternDescriptor>   endSubStyles;
+    String pushedSubPatternName;
 
     int  endSubstrNo;
     int  maxREBytesExtend;
     
     BasicRegex re;
     ObjectArray<CombinedSubPatternStyle> combinedSubs;
+    bool hasPushedSubstr;
 };
 
 
@@ -100,6 +104,16 @@ public:
     {
         ChildPatternDescriptor* cdescr = parent->childList.getPtr(childId);
         return get(cdescr->id);
+    }
+    bool hasPushedSubstr(SyntaxPattern* parent, int childId)
+    {
+        ChildPatternDescriptor* cdescr = parent->childList.getPtr(childId);
+        return cdescr->hasPushedSubstr;
+    }
+    int getPushedSubstrNo(SyntaxPattern* parent, int childId)
+    {
+        ChildPatternDescriptor* cdescr = parent->childList.getPtr(childId);
+        return cdescr->pushedSubstrNo;
     }
     int getChildPatternId(SyntaxPattern* parent, int childId)
     {

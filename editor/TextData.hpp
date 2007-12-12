@@ -189,6 +189,10 @@ public:
     String getSubstring(long pos, long amount) {
         return String((const char*) getAmount(pos, amount), amount);
     }
+    String getSubstringBetween(long pos1, long pos2) {
+        long amount = pos2 - pos1;
+        return String((const char*) getAmount(pos1, amount), amount);
+    }
     String getSubstring(const MarkHandle& beginMark, const MarkHandle& endMark) {
         long amount = getTextPositionOfMark(endMark) - getTextPositionOfMark(beginMark);
         ASSERT(0 <= amount);

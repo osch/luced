@@ -178,6 +178,14 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                     sp->endSubStyles.appendNew(k, foundIndex.get());
                 }
             }
+            
+            o = p["pushSubpattern"];
+            if (o.isValid()) {
+                if (!o.isString()) {
+                    throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'pushSubpattern' element");
+                }
+                sp->pushedSubPatternName = o.toString();
+            }
         } 
         else {
             o = p["pattern"];
@@ -226,7 +234,7 @@ static inline void maximize(int *ptr, int i) {
 }
 
 void SyntaxPatterns::compile(int i) {
-    ByteArray patStr;
+    String patStr;
     bool first = true;
     const char *errortxt;
     int errorpos;
@@ -238,12 +246,12 @@ void SyntaxPatterns::compile(int i) {
         ChildPatternDescriptor *cdescr = sp->childList.getPtr(i);
         SyntaxPattern *cpat = get(cdescr->id);
         if (!first) {
-            patStr.appendCStr("|");
+            patStr.append("|");
         }
-        patStr.appendCStr("(")
-                  .appendCStr("?P<").appendString(cpat->name).appendCStr(">")
-                  .appendString(cpat->beginPattern)
-              .appendCStr(")");
+        patStr.append("(")
+                  .append("?P<").append(cpat->name).append(">")
+                  .append(cpat->beginPattern)
+              .append(")");
 
         maximize(&sp->maxREBytesExtend, cpat->maxBeginBytesExtend);
 
@@ -251,25 +259,94 @@ void SyntaxPatterns::compile(int i) {
     }
     if (sp->hasEndPattern) {
         if (!first) {
-            patStr.appendCStr("|");
+            patStr.append("|");
         }
-        patStr.appendCStr("(")
-                  .appendCStr("?P<").appendString(sp->name).appendCStr("_END>")
-                  .appendString(sp->endPattern)
-              .appendCStr(")");
+        patStr.append("(")
+              .append("?P<").append(sp->name).append("_END>");
+
+        if (sp->pushedSubPatternName.getLength() > 0)
+        {
+            sp->hasPushedSubstr = true;
+
+            int a = 0;
+
+            for (int i = 0, n = sp->endPattern.getLength(); i < n; ++i) {
+                if (sp->endPattern[i] == '\\') {
+                    ++i;
+                } else if (sp->endPattern[i] == '[') {
+                    while (i < n && sp->endPattern[i] != ']') {
+                        if (sp->endPattern[i] == '\\') {
+                            ++i;
+                        }
+                        ++i;
+                    }
+                } else {
+                    if (sp->endPattern.equalsSubstringAt(i, "(*")) {
+                        int j1 = i + 2;
+                        while (j1 < n && (sp->endPattern[j1] == ' ' || sp->endPattern[j1] == '\t')) {
+                            ++j1;
+                        }
+                        if (j1 < n)
+                        {
+                            int j = j1;
+                            while (j < n && sp->endPattern[j] != ')' && sp->endPattern[j] != ' ' && sp->endPattern[j] != '\t') {
+                                ++j;
+                            }
+                            int j2 = j;
+                            while (j < n && sp->endPattern[j] != ')') {
+                                ++j;
+                            }
+                            String s = sp->endPattern.getSubstringBetween(j1, j2);
+                            if (s == sp->pushedSubPatternName) {
+                                patStr.appendSubstring(sp->endPattern, a, i - a);
+                                patStr.append("(?C1)");
+                                i = j;
+                                a = j + 1;
+                            }
+                            else
+                            {
+                                throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'endPattern' element '(*" << s << ")'");
+                            }
+                        }
+                    }
+                }
+            }
+            patStr.appendSubstring(sp->endPattern, a, sp->endPattern.getLength() - a);
+        }
+        else
+        {
+            patStr.append(sp->endPattern);
+        }
+        patStr.append(")");
         
         maximize(&sp->maxREBytesExtend, sp->maxEndBytesExtend);
         
         first = false;
+        
     }
     if (!first) {
         sp->re = BasicRegex(patStr, BasicRegex::MULTILINE | BasicRegex::EXTENDED);
         util::maximize(&maxOvecSize, sp->re.getOvecSize());
 
-        for (int ci = 0; ci < sp->childList.getLength(); ++ci) {
+        for (int ci = 0; ci < sp->childList.getLength(); ++ci)
+        {
             ChildPatternDescriptor *cdescr = sp->childList.getPtr(ci);
             SyntaxPattern *cpat = get(cdescr->id);
+
             cdescr->substrNo = sp->re.getStringNumber(cpat->name);
+            
+            if (cpat->pushedSubPatternName.getLength() > 0)
+            {
+                cdescr->pushedSubstrNo = sp->re.getStringNumber(cpat->pushedSubPatternName);
+                cdescr->hasPushedSubstr = true;
+                cpat->hasPushedSubstr = true;
+            }
+            else
+            {
+                cdescr->pushedSubstrNo = -1;
+                cdescr->hasPushedSubstr = false;
+                cpat->hasPushedSubstr = false;
+            }
 
             for (int i = 0; i < cpat->beginSubStyles.getLength(); ++i) {
                 int substrNo = sp->re.getStringNumber(cpat->beginSubStyles[i].subPatternName);
@@ -282,9 +359,7 @@ void SyntaxPatterns::compile(int i) {
         }
         
         if (sp->hasEndPattern) {
-            ByteArray temp;
-            temp.appendString(sp->name).appendCStr("_END");
-            sp->endSubstrNo = sp->re.getStringNumber(temp);
+            sp->endSubstrNo = sp->re.getStringNumber(String() << sp->name << "_END");
         }
     } else {
         sp->re = BasicRegex();

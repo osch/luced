@@ -80,9 +80,11 @@ private:
     
     HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode);
 
+    static int pcreCalloutFunction(void*, pcre_callout_block*);
+
     bool setBreak(IteratorHandle iterator, 
             long startPos1, long startPos, long endPos, BreakType type, 
-            const ByteArray& stack);
+            const PatternStack& stack);
 
     void treatTextDataUpdate(TextData::UpdateInfo);
     
@@ -91,7 +93,7 @@ private:
     void gotoReparseStart(long textPos, IteratorHandle iterator);
     bool fillWithBreaks(IteratorHandle iterator, 
             long fillStart, long fillEnd,
-            long *lastFillEnd, ByteArray& patternStack);
+            long *lastFillEnd, PatternStack& patternStack);
             
     void flushPendingUpdates();
     
@@ -110,7 +112,7 @@ private:
     long beginChangedPos;
     long   endChangedPos;
     
-    ByteArray patternStack;
+    PatternStack patternStack;
     CallbackContainer<UpdateInfo> updateListeners;
     
     ProcessHandler::Ptr processHandler;
@@ -122,6 +124,8 @@ private:
     CallbackContainer<HilitedText*> hilitingChangedCallbacks;    
 
     Callback<SyntaxPatterns::Ptr>::Ptr syntaxPatternUpdateCallback;
+
+    String pushedSubstr;
 };
 
 } // namespace LucED

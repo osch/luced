@@ -261,9 +261,9 @@ void HilitingBase::treatTextDataUpdate(IteratorHandle processingRestartedIterato
 
 
 void HilitingBase::insertBreaks(IteratorHandle iterator, long startPos, long breakLength, BreakType type,
-            const ByteArray& parsingStack, long fillCount, long fillDistance)
+            const PatternStack& parsingStack, long fillCount, long fillDistance)
 {
-    ASSERT(parsingStack[0] == 0);
+    ASSERT(parsingStack.getFirst() == 0);
     ASSERT(!isFirstBreak(iterator));
     ASSERT(getPrevBreakEndPos(iterator) <= startPos);
     ASSERT(type == Break_INTER || fillCount == 1);

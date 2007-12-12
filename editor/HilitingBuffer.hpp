@@ -83,6 +83,8 @@ private:
     
     HilitingBuffer(HilitedText::Ptr hiliting);
     
+    static int pcreCalloutFunction(void*, pcre_callout_block*);
+
     byte* getNonBufferedTextStyles(long textPos, long numberStyles);
 
 
@@ -100,12 +102,14 @@ private:
 
     long startPos;
     long rememberedSearchRestartPos;
-    ByteArray patternStack;
+    PatternStack patternStack;
     ByteArray styleBuffer;
     CallbackContainer<UpdateInfo> updateListeners;
     MemArray<int> ovector;
 
     int maxDistance;
+
+    String pushedSubstr;
 };
 
 } // namespace LucED

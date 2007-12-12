@@ -103,7 +103,7 @@ void HilitedText::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPattern
 
 bool HilitedText::setBreak(IteratorHandle iterator, 
                            long startPos1, long startPos, long endPos, BreakType type, 
-                           const ByteArray& parsingStack)
+                           const PatternStack& parsingStack)
 {
     ASSERT(!isFirstBreak(iterator));
     ASSERT(startPos1 == startPos 
@@ -143,7 +143,7 @@ bool HilitedText::setBreak(IteratorHandle iterator,
 
 bool HilitedText::fillWithBreaks(IteratorHandle iterator, 
         long fillStart, long fillEnd,
-        long *lastFillEnd, ByteArray& patternStack)
+        long *lastFillEnd, PatternStack& patternStack)
 {
     long p;
     long p1 = fillStart;
@@ -178,7 +178,7 @@ void HilitedText::gotoReparseStart(long textPos, IteratorHandle iterator)
         }
         BreakType type = getBreakType(iterator);
         if (type == Break_BEGIN) {
-            byte parentPatternId = getBreakStackByte(iterator, getBreakStackLength(iterator) - 2);  
+            byte parentPatternId = getParentBreakStackByte(iterator);
             SyntaxPattern* parentPattern = syntaxPatterns->get(parentPatternId);
             if (textPos - getBreakStartPos(iterator) <= parentPattern->maxREBytesExtend) {
                 // noch weiter vorne Reparsen
@@ -278,6 +278,28 @@ void HilitedText::flushPendingUpdates()
     this->endChangedPos   = 0;
 }
 
+int HilitedText::pcreCalloutFunction(void* voidPtr, pcre_callout_block* calloutBlock)
+{
+    HilitedText* self = static_cast<HilitedText*>(voidPtr);
+
+    ASSERT(calloutBlock->callout_number == 1);
+
+    bool didMatch = false;
+
+    if (   calloutBlock->capture_last != -1 
+        && self->ovector[calloutBlock->capture_last * 2 + 1] == calloutBlock->current_position)
+    {
+        int i1 = self->ovector[calloutBlock->capture_last * 2 + 0];
+        int i2 = self->ovector[calloutBlock->capture_last * 2 + 1];
+        
+        didMatch = self->pushedSubstr.equals(calloutBlock->subject + i1, i2 - i1);
+    }
+
+    return didMatch ? 0 : 1;
+}
+
+
+
 int HilitedText::process(int requestedProcessingAmount)
 {
     if (!syntaxPatterns.isValid()) {
@@ -300,7 +322,8 @@ int HilitedText::process(int requestedProcessingAmount)
     BreakType foundType = Break_INTER;
     util::minimize(&this->beginChangedPos, pos);
     bool canBeStopped = false;
-    copyBreakStackTo(startNextProcessIterator, this->patternStack);
+    copyBreakStackTo(startNextProcessIterator, patternStack);
+    pushedSubstr = patternStack.getAdditionalDataAsString();
     
     while (!canBeStopped && pos < searchEndPos)
     {
@@ -315,15 +338,17 @@ int HilitedText::process(int requestedProcessingAmount)
         if (!textData->isEndOfLine(extendedSearchEndPos)) {
             additionalOptions |= BasicRegex::NOTEOL;
         }
-        bool matched = sp->re.findMatch( (const char*) textData->getAmount(pos, extendedSearchEndPos - pos), 
-                extendedSearchEndPos - pos, 0,
-                additionalOptions /*| BasicRegex::NOTEMPTY*/, ovector);
+        
+        bool matched = sp->re.findMatch(this, &HilitedText::pcreCalloutFunction,
+                                        (const char*) textData->getAmount(pos, extendedSearchEndPos - pos), 
+                    extendedSearchEndPos - pos, 0,
+                    additionalOptions /*| BasicRegex::NOTEMPTY*/, ovector);
 
         if (matched)
         {
             // something matched
 
-            canBeStopped = fillWithBreaks(startNextProcessIterator, pos, pos + ovector[0], &lastSetBreakEnd, this->patternStack);
+            canBeStopped = fillWithBreaks(startNextProcessIterator, pos, pos + ovector[0], &lastSetBreakEnd, patternStack);
             if (canBeStopped) break;
             
             int cid = sp->getMatchedChild(ovector);
@@ -339,6 +364,7 @@ int HilitedText::process(int requestedProcessingAmount)
                 pos += ovector[1];
                 patternStack.removeLast();
                 sp = syntaxPatterns->get(patternStack.getLast());
+                pushedSubstr = patternStack.getAdditionalDataAsString();
             }
             else
             {
@@ -362,14 +388,28 @@ int HilitedText::process(int requestedProcessingAmount)
 
                     foundStartPos = pos + ovector[0];
                     foundEndPos   = pos + ovector[1];
-                    pos += ovector[1];
+
                     if (cpat->hasEndPattern) {
-                        patternStack.append(syntaxPatterns->getChildPatternId(sp, cid));
+                        if (!cpat->hasPushedSubstr) {
+                            pushedSubstr = String();
+                            patternStack.append(syntaxPatterns->getChildPatternId(sp, cid));
+                        } else {
+                            
+                            int pushedSubstrNo = syntaxPatterns->getPushedSubstrNo(sp, cid);
+                        
+                            pushedSubstr = textData->getSubstringBetween(pos + ovector[pushedSubstrNo * 2 + 0],
+                                                                         pos + ovector[pushedSubstrNo * 2 + 1]);
+
+                            patternStack.append(syntaxPatterns->getChildPatternId(sp, cid),
+                                                pushedSubstr);
+                        }
                         sp = cpat;
                         foundType = Break_BEGIN;
                     } else {
                         foundType = Break_INTER;
                     }
+
+                    pos += ovector[1];
                 }
             }
         }

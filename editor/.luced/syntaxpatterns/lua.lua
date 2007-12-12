@@ -21,14 +21,24 @@
 
 
 
-local patterns = 
+return
 {
 	root = {
         	style = "default",
-                childPatterns = {"string1", "string2"},
+                childPatterns = {"string1", "string2", "string3", "comment1", "comment2", "keyword"},
         },
         
         comment1 = {
+        	style = "comment",
+                beginPattern     = [=[--\[(?P<comment1EqualSigns>(?>\=*))\[]=],
+                endPattern       = [=[\]((?>\=*))(*comment1EqualSigns)\]]=],
+                maxBeginExtend   = 2,
+                maxEndExtend     = 1,
+                pushSubpattern   = "comment1EqualSigns",
+                childPatterns    = {},
+        },
+        
+        comment2 = {
         	style = "comment",
                 beginPattern     = [[--]],
                 endPattern       = [[\n]],
@@ -74,6 +84,17 @@ local patterns =
                 endSubstyles     = {stringEnd2   = "keyword"},
         },
 
+        string3 = {
+            style = "string",
+            beginPattern     = [[(?P<string3Begin>\[(?P<string3EqualSigns>(?>\=*))\[)]],
+            endPattern       = [[(?P<string3End>\]((?>\=*))(*string3EqualSigns)\])]],
+            maxBeginExtend   = 400,
+            maxEndExtend     = 400,
+            pushSubpattern   = "string3EqualSigns",
+            beginSubstyles   = { string3Begin = "keyword" },
+            endSubstyles     = { string3End   = "keyword" },
+        },
+
         stringescape = {
         	style = "boldstring",
                 pattern          = [[\\\d{1,3}|\\.|\\\n]],
@@ -82,29 +103,4 @@ local patterns =
         
 }
 
-local append = table.insert
-local format = string.format
-local rep    = string.rep
 
-local maxNumberOfEqualSigns = 20
-local rootChildPatterns     = patterns.root.childPatterns
-
-for i = 0, maxNumberOfEqualSigns do
-    local patternName = format("bracketString%d", i)
-    local equalSigns  = rep("=", i)
-    append(rootChildPatterns, patternName)
-    patterns[patternName] = {
-                                style = "string",
-                                beginPattern     = format([[(?P<%sBegin>\[%s\[)]], patternName, equalSigns),
-                                endPattern       = format([[(?P<%sEnd>\]%s\])]],   patternName, equalSigns),
-                                maxBeginExtend   = 2 + i,
-                                maxEndExtend     = 2 + i,
-                                beginSubstyles   = { [format("%sBegin", patternName)] = "keyword" },
-                                endSubstyles     = { [format("%sEnd",   patternName)] = "keyword"},
-                            }
-end
-
-append(rootChildPatterns, "comment1")
-append(rootChildPatterns, "keyword")
-
-return patterns

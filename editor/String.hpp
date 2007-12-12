@@ -103,6 +103,9 @@ public:
         }
         return s.substr(pos, length);
     }
+    String getSubstringBetween(int pos1, int pos2) const {
+        return getSubstring(pos1, pos2 - pos1);
+    }
     String& append(const String& rhs) {
         s.append(rhs.s);
         return *this;
@@ -119,6 +122,11 @@ public:
     String& append(const char* rhs, int length) {
         ASSERT(rhs != NULL);
         s.append(rhs, length);
+        return *this;
+    }
+    String& appendSubstring(const String& rhs, int pos, int length) {
+        ASSERT(pos + length <= rhs.getLength());
+        s.append(rhs.toCString() + pos, length);
         return *this;
     }
     String& append(const byte* rhs, int length) {
@@ -149,6 +157,30 @@ public:
     
     int toInt() const {
         return atoi(s.c_str());
+    }
+    
+    bool equals(const char* rhs, long len) const
+    {
+        ASSERT(len >= 0);
+             
+        if (len != getLength()) {
+            return false;
+        } else {
+            return memcmp(toCString(), rhs, len) == 0;
+        }
+    }
+    
+    bool equalsSubstringAt(long pos, const char* rhs) const
+    {
+        long len = strlen(rhs);
+        
+        ASSERT(pos + len >= 0);
+             
+        if (pos + len > getLength()) {
+            return false;
+        } else {
+            return memcmp(toCString() + pos, rhs, len) == 0;
+        }
     }
     
     bool equalsIgnoreCase(const String& rhs) const {

@@ -112,6 +112,30 @@ static inline void fillSubs(ObjectArray<CombinedSubPatternStyle>& sps, ByteArray
     }
 }
 
+
+int HilitingBuffer::pcreCalloutFunction(void* voidPtr, pcre_callout_block* calloutBlock)
+{
+    HilitingBuffer* self = static_cast<HilitingBuffer*>(voidPtr);
+
+    ASSERT(calloutBlock->callout_number == 1);
+
+    bool didMatch = false;
+
+    if (   calloutBlock->capture_last != -1 
+        && self->ovector[calloutBlock->capture_last * 2 + 1] == calloutBlock->current_position)
+    {
+        int i1 = self->ovector[calloutBlock->capture_last * 2 + 0];
+        int i2 = self->ovector[calloutBlock->capture_last * 2 + 1];
+
+        
+        didMatch = self->pushedSubstr.equals(calloutBlock->subject + i1, i2 - i1);
+    }
+
+    return didMatch ? 0 : 1;
+}
+
+
+
 byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
 {
     if (numberStyles == 0) {
@@ -124,6 +148,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
     ASSERT(desiredEndPos <= textData->getLength());
     
     SyntaxPattern* sp = NULL;
+    pushedSubstr = String();
     long searchStartPos = 0;
     
     if (!syntaxPatterns.isValid()) {
@@ -137,6 +162,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
         ASSERT(searchStartPos < this->startPos + styleBuffer.getLength());
         if (pos >= searchStartPos && pos - searchStartPos < maxDistance) {
             sp = syntaxPatterns->get(patternStack.getLast());
+            pushedSubstr = patternStack.getAdditionalDataAsString();
         }
     }
     if (sp == NULL)
@@ -159,7 +185,8 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
             // HilitedText would be too expensive -> return default style or approximate
             if (languageMode->hasApproximateUnknownHilitingFlag()) {
                 sp = syntaxPatterns->get(0);
-                patternStack.clear().append(0);
+                patternStack.clear();
+                patternStack.append(0);
                 searchStartPos = pos - languageMode->getApproximateUnknownHilitingReparseRange();
                 if (searchStartPos < 0) {
                     searchStartPos = 0;
@@ -172,6 +199,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
         {
             hiliting->copyBreakStackTo(iterator, patternStack);
             sp = syntaxPatterns->get(patternStack.getLast());
+            pushedSubstr = patternStack.getAdditionalDataAsString();
         }
     }
     if (searchStartPos > this->startPos && searchStartPos - this->startPos 
@@ -211,7 +239,8 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
         
         this->rememberedSearchRestartPos = searchStartPos;
         
-        bool matched = sp->re.findMatch((const char*) textData->getAmount(searchStartPos, extendedSearchEndPos - searchStartPos), 
+        bool matched = sp->re.findMatch(this, &HilitingBuffer::pcreCalloutFunction,
+                                        (const char*) textData->getAmount(searchStartPos, extendedSearchEndPos - searchStartPos), 
                 extendedSearchEndPos - searchStartPos, 0,
                 additionalOptions /*| BasicRegex::NOTEMPTY*/, ovector);
 
@@ -233,6 +262,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
                 }
                 patternStack.removeLast();
                 sp = syntaxPatterns->get(patternStack.getLast());
+                pushedSubstr = patternStack.getAdditionalDataAsString();
                 searchStartPos += ovector[1];
 
             } else {
@@ -267,7 +297,18 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
                         return styleBuffer.getPtr(pos - this->startPos);
                     }
                     if (childPat->hasEndPattern) {
-                        patternStack.append(syntaxPatterns->getChildPatternId(sp, cid));
+                        if (!childPat->hasPushedSubstr) {
+                            pushedSubstr = String();
+                            patternStack.append(syntaxPatterns->getChildPatternId(sp, cid));
+                        } else {
+                            int pushedSubstrNo = syntaxPatterns->getPushedSubstrNo(sp, cid);
+                            
+                            pushedSubstr = textData->getSubstringBetween(searchStartPos + ovector[pushedSubstrNo * 2 + 0],
+                                                                         searchStartPos + ovector[pushedSubstrNo * 2 + 1]);
+
+                            patternStack.append(syntaxPatterns->getChildPatternId(sp, cid),
+                                                pushedSubstr);
+                        }
                         sp = childPat;
                     }
                     searchStartPos += ovector[1];
