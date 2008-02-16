@@ -126,9 +126,10 @@ void LanguageModes::append(const String& name)
 
 void LanguageModes::append(LuaObject config)
 {
-    modes.append(LanguageMode::create(config));
-    nameToIndexMap.set(modes[modes.getLength() - 1]->getName(), modes.getLength() - 1);
-    BasicRegex regex = modes[modes.getLength() - 1]->getRegex();
+    LanguageMode::Ptr newMode = LanguageMode::create(config);
+    modes.append(newMode);
+    nameToIndexMap.set(newMode->getName(), modes.getLength() - 1);
+    BasicRegex regex = newMode->getRegex();
     if (regex.isValid()) {
         ovector.increaseTo(regex.getOvecSize());
     }

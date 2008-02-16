@@ -98,7 +98,20 @@ public:
     
     LanguageMode::Ptr getLanguageModeForFile(const String& fileName);
     LanguageMode::Ptr getDefaultLanguageMode();
+
+    LanguageMode::Ptr getLanguageMode(const String& name) {
+        HashMap<String,int>::Value foundValue = nameToIndexMap.get(name);
+        if (foundValue.isValid()) {
+            return modes[foundValue.get()];
+        } else {
+            return LanguageMode::Ptr();
+        }
+    }
     
+    bool hasLanguageMode(const String& name) const {
+        return nameToIndexMap.hasKey(name);
+    }
+        
     int getLength() const {
         return modes.getLength();
     }

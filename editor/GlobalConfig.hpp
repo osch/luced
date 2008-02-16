@@ -33,6 +33,7 @@
 #include "Callback.hpp"
 #include "CallbackContainer.hpp"
 #include "MicroSeconds.hpp"
+#include "SyntaxPatternsConfig.hpp"
 
 namespace LucED {
 
@@ -125,9 +126,8 @@ public:
         return textStyleNameToIndexMap;
     }
     
-    bool hasSyntaxPatternsFor(const String& languageMode) {
-        NameToIndexMap::Value foundIndex = languageModeToSyntaxIndex->get(languageMode);
-        return foundIndex.isValid();
+    bool hasSyntaxPatternsForLanguageMode(const String& languageMode) {
+        return syntaxPatternsConfig->hasEntryForLanguageModeName(languageMode);
     }
     
     long getMaxRegexAssertionLength() const {
@@ -185,14 +185,11 @@ private:
     TextStyles::Ptr textStyles;
     NameToIndexMap::Ptr textStyleNameToIndexMap;
     
-    ObjectArray<SyntaxPatterns::Ptr> allSyntaxPatterns;
-    NameToIndexMap::Ptr languageModeToSyntaxIndex;
-    
-    NameToIndexMap::Ptr configFileNameToSyntaxIndex;
     
     LanguageModes::Ptr languageModes;
     
-    ObjectArray< CallbackContainer<SyntaxPatterns::Ptr> > syntaxPatternCallbackContainers;
+    SyntaxPatternsConfig::Ptr syntaxPatternsConfig;
+    
     CallbackContainer<> configChangedCallbackContainer;
     
     long x11SelectionChunkLength;
@@ -204,7 +201,6 @@ private:
     
     String generalConfigFileName;
     String syntaxPatternDirectory;
-    NameToIndexMap::Ptr languageModeToIndex;
 };
 
 } // namespace LucED

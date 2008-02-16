@@ -36,7 +36,7 @@ void TopWinOwner::requestCloseChildWindow(TopWin* topWin)
     for (int i = 0; i < ownedTopWins.getLength(); ++i)
     {
         if (ownedTopWins[i].getRawPtr() == topWin) {
-            ownedTopWins[i]->hide();
+            //ownedTopWins[i]->hide(); caused problems here (sometimes missing exposure events), probably a bug in the X11-server
             toBeClosedTopWins.append(ownedTopWins[i]);
             ownedTopWins.remove(i);
             if (!hasRegisteredAsUpdateSource) {

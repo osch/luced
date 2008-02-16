@@ -35,6 +35,8 @@ using namespace LucED;
 
 SingletonInstance<GlobalConfig> GlobalConfig::instance;;
 
+static const char* const luaFileExtension = ".lua";
+
 GlobalConfig* GlobalConfig::getInstance()
 {
     return instance.getPtr();
@@ -64,26 +66,19 @@ GlobalConfig::GlobalConfig()
           guiSpacing(2),
           editorPanelOnTop(false),
           keepRunningIfOwningClipboard(false),
-          maxRegexAssertionLength(3000)
+          maxRegexAssertionLength(3000),
+          syntaxPatternsConfig(SyntaxPatternsConfig::create())
 {
     setlocale(LC_CTYPE, "");
 }
 
 
-SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String& languageMode,
+SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String& languageModeName,
                                                                    Callback<SyntaxPatterns::Ptr>::Ptr changeCallback)
 {
-    NameToIndexMap::Value foundIndex = languageModeToSyntaxIndex->get(languageMode);
-    if (foundIndex.isValid())
-    {
-        if (changeCallback.isValid()) {
-            syntaxPatternCallbackContainers[foundIndex.get()].registerCallback(changeCallback);
-        }
-        return allSyntaxPatterns.get(foundIndex.get());
-    } else {
-        return SyntaxPatterns::Ptr();
-    }
+    return this->syntaxPatternsConfig->getSyntaxPatternsForLanguageMode(languageModeName, changeCallback);
 }
+
 
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode,
                                                                    Callback<SyntaxPatterns::Ptr>::Ptr changeCallback)
@@ -95,6 +90,7 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode:
     }
 }
     
+
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForFileName(const String& fileName,
                                                                Callback<SyntaxPatterns::Ptr>::Ptr changeCallback)
 {
@@ -108,10 +104,12 @@ LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const String& fileNam
     return languageModes->getLanguageModeForFile(fileName);
 }
 
+
 LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode()
 {
     return languageModes->getDefaultLanguageMode();
 }
+
 
 void GlobalConfig::readConfig()
 {
@@ -124,8 +122,6 @@ void GlobalConfig::readConfig()
         configDirectory = File(homeDirectory, ".luced").getAbsoluteFileName();
     }
 
-    this->languageModeToIndex = NameToIndexMap::create();
-    
     LuaInterpreter* lua = LuaInterpreter::getInstance();
 
     this->generalConfigFileName = File(configDirectory, "general.lua").getAbsoluteFileName();
@@ -390,7 +386,6 @@ void GlobalConfig::readConfig()
                 if (!n.isString()) {
                     throw ConfigException("invalid or missing element 'name' in languageMode");
                 }
-                languageModeToIndex->set(n.toString(), i);
                 languageModes->append(o);
             }
         }
@@ -409,27 +404,21 @@ void GlobalConfig::readConfig()
 
     // SyntaxPatterns
     
-    this->languageModeToSyntaxIndex   = NameToIndexMap::create();
-    this->configFileNameToSyntaxIndex = NameToIndexMap::create();
-    this->allSyntaxPatterns.clear();
-    this->syntaxPatternCallbackContainers.clear();
-    
+    this->syntaxPatternsConfig->clear();
     this->syntaxPatternDirectory = File(configDirectory, "syntaxpatterns").getAbsoluteFileName();
     
-    DirectoryReader dirReader(syntaxPatternDirectory);
-    for (int i = 0; dirReader.next();) {
+    
+    for (DirectoryReader dirReader(syntaxPatternDirectory); dirReader.next();)
+    {
         if (dirReader.isFile()) {
             String fileName = dirReader.getName();
-            if (fileName.endsWith(".lua")) {
-                String name = fileName.getSubstring(0, fileName.getLength() - 4);
-                configFileName = File(syntaxPatternDirectory, String() << name << ".lua").getAbsoluteFileName();
+            if (fileName.endsWith(luaFileExtension))
+            {
+                String languageModeName = fileName.getSubstring(0, fileName.getLength() - strlen(luaFileExtension));
+                configFileName = File(syntaxPatternDirectory, String() << languageModeName << luaFileExtension).getAbsoluteFileName();
 
-                languageModeToSyntaxIndex  ->set(name, i);
-                configFileNameToSyntaxIndex->set(configFileName, i);
-
-                if (!languageModeToIndex->hasKey(name)) {
-                    languageModes->append(name);
-                    languageModeToIndex->set(name, languageModes->getLength() - 1);
+                if (!languageModes->hasLanguageMode(languageModeName)) {
+                    languageModes->append(languageModeName);
                 }
 
                 try
@@ -437,44 +426,42 @@ void GlobalConfig::readConfig()
                     LuaInterpreter::Result luaRslt = lua->executeFile(configFileName);
 
                     if (luaRslt.objects.getLength() <= 0 || !luaRslt.objects[0].isTable()) {
-                        throw ConfigException(String() << "Syntaxpattern '" << name << "' returns invalid element");
+                        throw ConfigException(String() << "Syntaxpattern '" << languageModeName << "' returns invalid element");
                     }
                     LuaObject sp = luaRslt.objects[0];
                     
                     try
                     {
-                        allSyntaxPatterns.append(SyntaxPatterns::create(sp, textStyleNameToIndexMap));
-                        syntaxPatternCallbackContainers.appendNew();
+                        this->syntaxPatternsConfig->append(languageModeName, 
+                                                           configFileName, 
+                                                           SyntaxPatterns::create(sp, textStyleNameToIndexMap));
                     }
                     catch (RegexException& ex) {
-                        throw ConfigException(String() << "syntaxpatterns for language mode '" << name << "' have invalid regex: "
+                        throw ConfigException(String() << "syntaxpatterns for language mode '" << languageModeName << "' have invalid regex: "
                                 << ex.getMessage());
                     }
                 }
                 catch (BaseException& ex)
                 {
                     errorList->appendNew(configFileName, ex.getMessage());
-                    allSyntaxPatterns.append(SyntaxPatterns::Ptr());
-                    syntaxPatternCallbackContainers.appendNew();
+                    this->syntaxPatternsConfig->append(languageModeName, 
+                                                       configFileName, 
+                                                       SyntaxPatterns::Ptr());
                 }
-                ++i;
             }
         }
     }
     for (int i = 0; i < languageModes->getLength(); ++i)
     {
         LanguageMode::Ptr languageMode      = languageModes->get(i);
-        String            potentialFileName = String() << syntaxPatternDirectory << "/" << languageMode->getName() << ".lua";
+        const String      languageModeName  = languageMode->getName();
+        const String      configFileName    = String() << syntaxPatternDirectory << "/" << languageModeName << luaFileExtension;
 
-        if (!configFileNameToSyntaxIndex->hasKey(potentialFileName))
+        if (!this->syntaxPatternsConfig->hasEntryForConfigFileName(configFileName))
         {
-            syntaxPatternCallbackContainers.appendNew();
-            allSyntaxPatterns.append(SyntaxPatterns::Ptr());
-            
-            ASSERT(syntaxPatternCallbackContainers.getLength() == allSyntaxPatterns.getLength());
-            
-            configFileNameToSyntaxIndex->set(potentialFileName,       allSyntaxPatterns.getLength() - 1);
-            languageModeToSyntaxIndex  ->set(languageMode->getName(), allSyntaxPatterns.getLength() - 1); 
+            this->syntaxPatternsConfig->append(languageModeName, 
+                                               configFileName, 
+                                               SyntaxPatterns::Ptr());
         }
     }
     if (errorList->getLength() > 0)
@@ -512,34 +499,25 @@ void GlobalConfig::notifyAboutNewFileContent(String absoluteFileName)
     }
     else
     {
-        NameToIndexMap::Value foundIndex = configFileNameToSyntaxIndex->get(absoluteFileName);
-        if (foundIndex.isValid())
+        if (this->syntaxPatternsConfig->hasEntryForConfigFileName(absoluteFileName))
         {
-            SyntaxPatterns::Ptr newPatterns = loadSyntaxPatterns(absoluteFileName);
-
-            allSyntaxPatterns              [foundIndex.get()] = newPatterns;
-            syntaxPatternCallbackContainers[foundIndex.get()].invokeAllCallbacks(newPatterns);
+            this->syntaxPatternsConfig->updateForConfigFileName(absoluteFileName, 
+                                                                loadSyntaxPatterns(absoluteFileName));
         }
-        else if (File(absoluteFileName).getDirName() == syntaxPatternDirectory && absoluteFileName.endsWith(".lua"))
+        else if (File(absoluteFileName).getDirName() == syntaxPatternDirectory && absoluteFileName.endsWith(luaFileExtension))
         {
-            String baseName = File(absoluteFileName).getBaseName();
-            ASSERT(baseName.endsWith(".lua"));
+            const String baseName = File(absoluteFileName).getBaseName();
+            ASSERT(baseName.endsWith(luaFileExtension));
             
-            String name = baseName.getSubstring(0, baseName.getLength() - 4);
-            SyntaxPatterns::Ptr newPatterns = loadSyntaxPatterns(absoluteFileName);
+            const String        languageModeName = baseName.getSubstring(0, baseName.getLength() - strlen(luaFileExtension));
 
-            if (!languageModeToIndex->hasKey(name)) {
-                languageModes->append(name);
-                languageModeToIndex->set(name, languageModes->getLength() - 1);
+            if (!languageModes->hasLanguageMode(languageModeName)) {
+                languageModes->append(languageModeName);
             }
-
-            syntaxPatternCallbackContainers.appendNew();
-            allSyntaxPatterns.append(newPatterns);
             
-            ASSERT(syntaxPatternCallbackContainers.getLength() == allSyntaxPatterns.getLength());
-            
-            configFileNameToSyntaxIndex->set(absoluteFileName, allSyntaxPatterns.getLength() - 1);
-            languageModeToSyntaxIndex  ->set(name,             allSyntaxPatterns.getLength() - 1); 
+            this->syntaxPatternsConfig->append(languageModeName,
+                                               absoluteFileName,
+                                               loadSyntaxPatterns(absoluteFileName));
         }
     }
 }
