@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef MESSAGEBOX_H
-#define MESSAGEBOX_H
+#ifndef MESSAGEBOX_HPP
+#define MESSAGEBOX_HPP
 
 #include "TopWin.hpp"
 #include "EventDispatcher.hpp"
@@ -29,63 +29,10 @@
 #include "DialogWin.hpp"
 #include "PanelDialogWin.hpp"
 #include "TopWinList.hpp"
+#include "MessageBoxParameter.hpp"
 
-namespace LucED {
-
-class MessageBoxParameter
+namespace LucED
 {
-public:
-    MessageBoxParameter& setTitle(String title) {
-        this->title = title;
-        return *this;
-    }
-    MessageBoxParameter& setMessage(String message) {
-        this->message = message;
-        return *this;
-    }
-    MessageBoxParameter& setDefaultButton(String buttonLabel, Callback<>::Ptr callback) {
-        defaultButtonLabel = buttonLabel;
-        defaultButtonCallback = callback;
-        return *this;
-    }
-    MessageBoxParameter& setAlternativeButton(String buttonLabel, Callback<>::Ptr callback) {
-        alternativeButtonLabel = buttonLabel;
-        alternativeButtonCallback = callback;
-        return *this;
-    }
-    MessageBoxParameter& setCancelButton(String buttonLabel) {
-        cancelButtonLabel = buttonLabel;
-        return *this;
-    }
-    
-    MessageBoxParameter& setCancelButton(String buttonLabel, Callback<>::Ptr callback) {
-        cancelButtonLabel = buttonLabel;
-        cancelButtonCallback = callback;
-        return *this;
-    }
-    
-    MessageBoxParameter& setCloseCallback(Callback<>::Ptr callback) {
-        closeCallback= callback;
-        return *this;
-    }
-    
-private:
-    friend class MessageBox;
-
-    String title;
-    String message;
-
-    String defaultButtonLabel;
-    Callback<>::Ptr   defaultButtonCallback;
-
-    String alternativeButtonLabel;
-    Callback<>::Ptr   alternativeButtonCallback;
-
-    String cancelButtonLabel;
-    Callback<>::Ptr   cancelButtonCallback;
-    
-    Callback<>::Ptr   closeCallback;
-};
 
 class MessageBox : public PanelDialogWin
 {
@@ -124,4 +71,4 @@ private:
 
 } // namespace LucED
 
-#endif // MESSAGEBOX_H
+#endif // MESSAGEBOX_HPP
