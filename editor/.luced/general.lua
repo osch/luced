@@ -68,6 +68,7 @@ textStyles = {
     {name="keyword",     font=bold_font,   color="black"},
     {name="type",        font=bold_font,   color="brown"},
     {name="string",      font=normal_font, color="darkGreen"},
+    {name="string1",     font=normal_font, color="SeaGreen"},
     {name="boldstring",  font=bold_font,   color="darkGreen"},
     {name="regex",       font=bold_font,   color="#009944"},
     {name="textKey",     font=bold_font,   color="VioletRed4"},
@@ -77,6 +78,11 @@ textStyles = {
     {name="boldcommand", font=bold_font,   color="darkgoldenrod4"},
     {name="orange",      font=normal_font, color="DarkOrange"},
     {name="boldorange",  font=bold_font,   color="DarkOrange"},
+    {name="textcomment", font=italic_font, color="SteelBlue4"},
+    {name="error",       font=bold_font,   color="red"},
+    {name="numericconst",font=normal_font, color="darkGreen"},
+    {name="subroutine",  font=normal_font, color="brown"},
+    {name="identifier1", font=normal_font, color="RoyalBlue4"},
     
 }
 
@@ -134,4 +140,16 @@ languageModes = {
       hardTabWidth = 8,
       softTabWidth = 4,
     },
+
+-- [=[
+    { 
+      name            = "java",
+      fileNameRegex   = [[^.*\.(?:java)$]],
+      approximateUnknownHiliting = true,
+      approximateUnknownHilitingReparseRange = 2000,
+      hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 4,
+    },
+--]=]    
 }
