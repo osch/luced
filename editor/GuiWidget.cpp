@@ -152,6 +152,7 @@ GuiWidget::~GuiWidget()
     }
     EventDispatcher::getInstance()->removeEventReceiver(EventRegistration(this, wid));
     if (isTopWindow) {
+        XUnmapWindow(getDisplay(), wid); // Workaround: without "unmap" strange focus changed happened under the Exceed xserver
         XDestroyWindow(getDisplay(), wid);
     }
 }
