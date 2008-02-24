@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -74,8 +74,9 @@ void FileOpener::openFiles()
 
     while (numberAndFileList.isValid() && numberAndFileList->getLength() > 0)
     {
-        int    numberOfWindows = numberAndFileList->get(0).numberOfWindows;
-        String fileName        = numberAndFileList->get(0).fileName;
+        int    numberOfWindows  = numberAndFileList->get(0).numberOfWindows;
+        String fileName         = numberAndFileList->get(0).fileName;
+        String resolvedFileName = File(fileName).getAbsoluteNameWithResolvedLinks();
 
         if (numberOfWindows <= 0)
         {
@@ -92,7 +93,7 @@ void FileOpener::openFiles()
             for (int w = 0; w < topWins->getNumberOfTopWins() && numberOfRaisedWindows < numberOfWindows; ++w)
             {
                 EditorTopWin* topWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(w));
-                if (topWin != NULL && topWin->getFileName() == fileName) {
+                if (topWin != NULL && File(topWin->getFileName()).getAbsoluteNameWithResolvedLinks() == resolvedFileName) {
                     topWin->raise();
                     numberOfRaisedWindows += 1;
                     lastTopWin = topWin;

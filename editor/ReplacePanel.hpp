@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REPLACEPANEL_H
-#define REPLACEPANEL_H
+#ifndef REPLACE_PANEL_HPP
+#define REPLACE_PANEL_HPP
 
 #include "String.hpp"
 
@@ -82,6 +82,7 @@ private:
     void executeFind(bool isWrapping, Callback<>::Ptr  handleContinueSearchButton);
 
     void handleButtonPressed(Button* button);
+    void handleButtonRightClicked(Button* button);
 
     void handleContinueAtBeginningButton();
     void handleContinueAtEndButton();
@@ -95,6 +96,8 @@ private:
     
     void findAgainForward();
     void findAgainBackward();
+    
+    void forgetRememberedSelection();
 
     WeakPtr<TextEditorWidget> e;
 
@@ -126,4 +129,4 @@ private:
 
 } // namespace LucED
 
-#endif // REPLACEPANEL_H
+#endif // REPLACE_PANEL_HPP

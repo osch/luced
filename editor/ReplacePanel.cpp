@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -32,8 +32,6 @@
 #include "SubstitutionException.hpp"
 
 using namespace LucED;
-
-static const char* const REPLACE_IN_SELECTION_BUTTON_TEXT = "All in S]election";
 
 ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel, 
                            Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
@@ -76,7 +74,7 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     findPrevButton          = Button::create     (this, "Find P]revious");
     replaceNextButton       = Button::create     (this, "Replace & Nex]t");
     replacePrevButton       = Button::create     (this, "Replace & Pre]v");
-    replaceSelectionButton  = Button::create     (this, REPLACE_IN_SELECTION_BUTTON_TEXT);
+    replaceSelectionButton  = Button::create     (this, "All in S]election");
     replaceWindowButton     = Button::create     (this, "All in W]indow");
     cancelButton            = Button::create     (this, "Cl]ose");
     LabelWidget::Ptr label0 = LabelWidget::create(this, "Find:");
@@ -98,14 +96,19 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     label0->setDesiredMeasures(labelMeasures);
     label1->setDesiredMeasures(labelMeasures);
 
-    Callback<Button*>::Ptr buttonCallback = newCallback(this, &ReplacePanel::handleButtonPressed);
-    findNextButton        ->setButtonPressedCallback(buttonCallback);
-    findPrevButton        ->setButtonPressedCallback(buttonCallback);
-    replaceNextButton     ->setButtonPressedCallback(buttonCallback);
-    replacePrevButton     ->setButtonPressedCallback(buttonCallback);
-    replaceSelectionButton->setButtonPressedCallback(buttonCallback);
-    replaceWindowButton   ->setButtonPressedCallback(buttonCallback);
-    cancelButton          ->setButtonPressedCallback(buttonCallback);
+    Callback<Button*>::Ptr buttonPressedCallback      = newCallback(this, &ReplacePanel::handleButtonPressed);
+    Callback<Button*>::Ptr buttonRightClickedCallback = newCallback(this, &ReplacePanel::handleButtonRightClicked);
+
+    findNextButton        ->setButtonPressedCallback(buttonPressedCallback);
+    findPrevButton        ->setButtonPressedCallback(buttonPressedCallback);
+    replaceNextButton     ->setButtonPressedCallback(buttonPressedCallback);
+    replacePrevButton     ->setButtonPressedCallback(buttonPressedCallback);
+
+    replaceSelectionButton->setButtonPressedCallback(buttonPressedCallback);
+    replaceSelectionButton->setButtonRightClickedCallback(buttonRightClickedCallback);
+
+    replaceWindowButton   ->setButtonPressedCallback(buttonPressedCallback);
+    cancelButton          ->setButtonPressedCallback(buttonPressedCallback);
     
     findEditField         ->setNextFocusWidget(replaceEditField);
     replaceEditField      ->setNextFocusWidget(findPrevButton);
@@ -416,66 +419,46 @@ void ReplacePanel::handleButtonPressed(Button* button)
         else if ((button == replaceSelectionButton && e->hasSelection())
                || button == replaceWindowButton)
         {
-            if (button == replaceSelectionButton && rememberedSelection.getLength() > 0) 
-            {
-                // replaceSelectionButton means "Restore Selection"
+            long spos;
+            long epos;
 
-               TextData::TextMark mark = e->getNewMarkToBeginOfSelection();
-               long selLength = e->getSelectionLength();
-                
-               e->getTextData()->insertAtMark(mark, rememberedSelection);
-               mark.moveForwardToPos(mark.getPos() + rememberedSelection.getLength());
-               e->getTextData()->removeAtMark(mark, selLength);
-               e->adjustCursorVisibility();
-
-               rememberedSelection = String();
-               replaceSelectionButton->setButtonText(REPLACE_IN_SELECTION_BUTTON_TEXT);
+            if (button == replaceSelectionButton) {
+                spos = e->getBeginSelectionPos();
+                epos = e->getEndSelectionPos();
+            } else {
+                spos = 0;
+                epos = e->getTextData()->getLength();
             }
-            else
-            {
-                // replaceSelectionButton means "Normal Replace"
-                
-                long spos;
-                long epos;
+            String newRememberedSelection;
+            if (button == replaceSelectionButton) {
+                newRememberedSelection = e->getTextData()->getSubstring(spos, epos - spos);
+            }
+            replaceUtil.setSearchForwardFlag(true);
+            replaceUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
+            replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
+            replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
+            replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
+            replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
 
-                if (button == replaceSelectionButton) {
-                    spos = e->getBeginSelectionPos();
-                    epos = e->getEndSelectionPos();
-                } else {
-                    spos = 0;
-                    epos = e->getTextData()->getLength();
-                }
-                String rememberedSelection;
-                if (button == replaceSelectionButton) {
-                    rememberedSelection = e->getTextData()->getSubstring(spos, epos - spos);
-                }
-                replaceUtil.setSearchForwardFlag(true);
-                replaceUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
-                replaceUtil.setRegexFlag        (regularExprCheckBox->isChecked());
-                replaceUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
-                replaceUtil.setSearchString     (findEditField   ->getTextData()->getAsString());
-                replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
+            findEditField   ->getTextData()->setModifiedFlag(false);
+            replaceEditField->getTextData()->setModifiedFlag(false);
 
-                findEditField   ->getTextData()->setModifiedFlag(false);
-                replaceEditField->getTextData()->setModifiedFlag(false);
+            historyIndex = -1;
 
-                historyIndex = -1;
+            SearchHistory::Entry newEntry;
+                                 newEntry.setFindString    (replaceUtil.getSearchString());
+                                 newEntry.setReplaceString (replaceUtil.getReplaceString());
+                                 newEntry.setWholeWordFlag (replaceUtil.getWholeWordFlag());
+                                 newEntry.setRegexFlag     (replaceUtil.getRegexFlag());
+                                 newEntry.setIgnoreCaseFlag(replaceUtil.getIgnoreCaseFlag());
 
-                SearchHistory::Entry newEntry;
-                                     newEntry.setFindString    (replaceUtil.getSearchString());
-                                     newEntry.setReplaceString (replaceUtil.getReplaceString());
-                                     newEntry.setWholeWordFlag (replaceUtil.getWholeWordFlag());
-                                     newEntry.setRegexFlag     (replaceUtil.getRegexFlag());
-                                     newEntry.setIgnoreCaseFlag(replaceUtil.getIgnoreCaseFlag());
+            SearchHistory::getInstance()->append(newEntry);
 
-                SearchHistory::getInstance()->append(newEntry);
+            bool wasAythingReplaced = replaceUtil.replaceAllBetween(spos, epos);
 
-                bool wasAythingReplaced = replaceUtil.replaceAllBetween(spos, epos);
-
-                if (wasAythingReplaced && button == replaceSelectionButton && rememberedSelection.getLength() > 0) {
-                    this->rememberedSelection = rememberedSelection;
-                    button->setButtonText("Restore S]election");
-                }
+            if (wasAythingReplaced && button == replaceSelectionButton && newRememberedSelection.getLength() > 0) {
+                this->rememberedSelection = newRememberedSelection;
+                e->registerListenerForNextSelectionChange(newCallback(this, &ReplacePanel::forgetRememberedSelection));
             }
         }
     }
@@ -490,6 +473,29 @@ void ReplacePanel::handleButtonPressed(Button* button)
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Replace Error")
                                 .setMessage(String() << "Error within replace string: " << ex.getMessage()));
+    }
+}
+
+void ReplacePanel::forgetRememberedSelection()
+{
+    rememberedSelection = String();
+}
+
+void ReplacePanel::handleButtonRightClicked(Button* button)
+{
+    if (button == replaceSelectionButton && rememberedSelection.getLength() > 0) 
+    {
+        // right clicking replaceSelectionButton means "Restore Selection"
+    
+       TextData::TextMark mark = e->getNewMarkToBeginOfSelection();
+       long selLength = e->getSelectionLength();
+        
+       e->getTextData()->insertAtMark(mark, rememberedSelection);
+       mark.moveForwardToPos(mark.getPos() + rememberedSelection.getLength());
+       e->getTextData()->removeAtMark(mark, selLength);
+       e->adjustCursorVisibility();
+    
+       rememberedSelection = String();
     }
 }
 
@@ -902,7 +908,6 @@ void ReplacePanel::show()
     replaceNextButton->setAsDefaultButton(false);
 
     rememberedSelection = String();
-    replaceSelectionButton->setButtonText(REPLACE_IN_SELECTION_BUTTON_TEXT);
 
     if (e->hasPrimarySelection())
     {
@@ -937,7 +942,6 @@ void ReplacePanel::handleModifiedEditField(bool modifiedFlag)
     if (modifiedFlag == true)
     {
         rememberedSelection = String();
-        replaceSelectionButton->setButtonText(REPLACE_IN_SELECTION_BUTTON_TEXT);
         historyIndex = -1;
     }
 }

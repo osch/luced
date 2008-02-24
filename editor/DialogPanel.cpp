@@ -201,26 +201,34 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
     if (focusedElement.isValid() && focusedElement->getFocusType() == TOTAL_FOCUS) {
         focusedElement->processKeyboardEvent(event);
         processed = true;
-    } else {
+    } else
+    {
+        
+        KeyId       pressedKey      = KeyId      (XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+        KeyModifier pressedModifier = KeyModifier(event->xkey.state);
+        
         for (int i = 0; !processed && i < 2; ++i)
         {
-            KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-            
             bool hotKeyProcessed = false;
             KeyMapping::Id keyMappingId(0, KeyId());
             switch (i) {
-                case 0: keyMappingId = KeyMapping::Id(event->xkey.state, pressedKey);
+                case 0: keyMappingId = KeyMapping::Id(pressedModifier, pressedKey);
                         break;
-                case 1: keyMappingId = KeyMapping::Id(         Mod1Mask, pressedKey);
+                case 1: keyMappingId = KeyMapping::Id(       Mod1Mask, pressedKey);
                         break;
             }
             HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping.get(keyMappingId);
+            
+            if (i == 0 && !foundHotKeyWidgets.isValid() && pressedModifier.containsModifier1()) {
+                foundHotKeyWidgets = hotKeyMapping.get(KeyMapping::Id(Mod1Mask, pressedKey));
+            }
+            
             if (foundHotKeyWidgets.isValid()) {
                 WidgetQueue::Ptr widgets = foundHotKeyWidgets.get();
                 ASSERT(widgets.isValid());
                 WeakPtr<GuiWidget> w = widgets->getLast();
                 if (w.isValid()) {
-                    w->treatHotKeyEvent(keyMappingId);
+                    w->treatHotKeyEvent(KeyMapping::Id(pressedModifier, pressedKey));
                     if (focusedElement.isValid() && w != focusedElement) {
                         focusedElement->notifyAboutHotKeyEventForOtherWidget();
                     }

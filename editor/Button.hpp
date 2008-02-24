@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef BUTTON_H
-#define BUTTON_H
+#ifndef BUTTON_HPP
+#define BUTTON_HPP
 
 #include "String.hpp"
 
@@ -56,6 +56,20 @@ public:
         pressedCallback1.invalidate();
     }
     
+    void setButtonRightClickedCallback(Callback<Button*>::Ptr callback) {
+        rightClickedCallback1 = callback;
+        rightClickedCallback0.invalidate();
+    }
+    
+    bool doesReactOnRightClick() const {
+        return rightClickedCallback0.isValid() || rightClickedCallback1.isValid();
+    }
+    
+    void setButtonRightClickedCallback(Callback<>::Ptr callback) {
+        rightClickedCallback0 = callback;
+        rightClickedCallback1.invalidate();
+    }
+    
     void setButtonDefaultKeyCallback(Callback<Button*>::Ptr callback) {
         buttonDefaultKeyCallback = callback;
     }
@@ -82,7 +96,7 @@ public:
     
     
 private:
-    void emulateButtonPress(bool isDefaultKey);
+    void emulateButtonPress(bool isDefaultKey, bool isRightClicked);
     void drawButton();
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
@@ -92,8 +106,14 @@ private:
     bool isButtonPressed;
     bool isMouseButtonPressed;
     bool isMouseOverButton;
+    
     Callback<Button*>::Ptr pressedCallback1;
     Callback<>::Ptr        pressedCallback0;
+    
+    Callback<Button*>::Ptr rightClickedCallback1;
+    Callback<>::Ptr        rightClickedCallback0;
+    
+    
     Callback<Button*>::Ptr buttonDefaultKeyCallback;
 
     bool isDefaultButton;
@@ -111,4 +131,4 @@ private:
 
 } // namespace LucED
 
-#endif // BUTTON_H
+#endif // BUTTON_HPP

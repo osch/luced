@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -217,7 +217,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
             }
 
             case ButtonPress: {
-                if (event->xbutton.button == Button1)
+                if (event->xbutton.button == Button1 || (this->doesReactOnRightClick() && event->xbutton.button == Button3))
                 {
                     earliestButtonReleaseTime.setToCurrentTime().add(shortTime);
                     
@@ -250,10 +250,19 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                     int x = event->xbutton.x;
                     int y = event->xbutton.y;
                     if (isMouseInsideButtonArea(x, y)) {
-                        if (pressedCallback0->isEnabled()) {
-                            pressedCallback0->call();
+                        if (event->xbutton.button == Button1) {
+                            if (pressedCallback0->isEnabled()) {
+                                pressedCallback0->call();
+                            } else {
+                                pressedCallback1->call(this);
+                            }
                         } else {
-                            pressedCallback1->call(this);
+                            ASSERT(event->xbutton.button == Button3);
+                            if (rightClickedCallback0->isEnabled()) {
+                                rightClickedCallback0->call();
+                            } else {
+                                rightClickedCallback1->call(this);
+                            }
                         }
                     }
                 }
@@ -337,7 +346,7 @@ GuiElement::ProcessingResult Button::processKeyboardEvent(const XEvent *event)
     bool processed = false;
     KeyMapping::Id pressedKeyCombination(event->xkey.state, pressedKey);
     if (KeyMapping::Id(0, KeyId("space")) == pressedKeyCombination) {
-        emulateButtonPress(false);
+        emulateButtonPress(false, false);
         processed = true;
     }
     return processed ? EVENT_PROCESSED : NOT_PROCESSED;
@@ -404,8 +413,11 @@ void Button::treatFocusOut()
 }
 
 
-void Button::emulateButtonPress(bool isDefaultKey)
+void Button::emulateButtonPress(bool isDefaultKey, bool isRightClicked)
 {
+    if (isRightClicked && !this->doesReactOnRightClick()) {
+        return;
+    }
     bool oldIsButtonPressed = isButtonPressed;
     isButtonPressed = true;
     drawButton();
@@ -416,19 +428,32 @@ void Button::emulateButtonPress(bool isDefaultKey)
     isButtonPressed = oldIsButtonPressed;
     drawButton();
     XSync(getDisplay(), False); waitShort();
-    if (isDefaultKey && buttonDefaultKeyCallback->isEnabled()) {
-        buttonDefaultKeyCallback->call(this);
-    } else if (pressedCallback0->isEnabled()) {
-        pressedCallback0->call();
-    } else {
-        pressedCallback1->call(this);
+
+    if (isRightClicked)
+    {
+        if (rightClickedCallback0->isEnabled()) {
+            rightClickedCallback0->call();
+        } else {
+            rightClickedCallback1->call(this);
+        }
+    }
+    else
+    {
+        if (isDefaultKey && buttonDefaultKeyCallback->isEnabled()) {
+            buttonDefaultKeyCallback->call(this);
+        } else if (pressedCallback0->isEnabled()) {
+            pressedCallback0->call();
+        } else {
+            pressedCallback1->call(this);
+        }
     }
 }
 
 void Button::treatHotKeyEvent(const KeyMapping::Id& id)
 {
-    emulateButtonPress(id == KeyMapping::Id(0, KeyId("Return"))
-                    || id == KeyMapping::Id(0, KeyId("KP_Enter")));
+    emulateButtonPress(   id == KeyMapping::Id(0, KeyId("Return"))
+                       || id == KeyMapping::Id(0, KeyId("KP_Enter")),
+                       id.getKeyModifier().containsShift());
 }
 
 void Button::setAsDefaultButton(bool isDefault)

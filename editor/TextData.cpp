@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -61,7 +61,7 @@ void TextData::loadFile(const String& filename)
     this->beginChangedPos = 0;
     this->changedAmount = len;
     this->oldEndChangedPos = 0;
-    this->fileName = file.getAbsoluteFileName();
+    this->fileName = file.getAbsoluteName();
     fileNameListeners.invokeAllCallbacks(this->fileName);
 
     if (modifiedFlag == true) {
@@ -181,7 +181,7 @@ void TextData::checkFileInfo()
 void TextData::setRealFileName(const String& filename)
 {
     this->fileNamePseudoFlag = false;
-    this->fileName = File(filename).getAbsoluteFileName();
+    this->fileName = File(filename).getAbsoluteName();
     fileNameListeners.invokeAllCallbacks(this->fileName);
     checkFileInfo();
 }
@@ -189,7 +189,7 @@ void TextData::setRealFileName(const String& filename)
 void TextData::setPseudoFileName(const String& filename)
 {
     this->fileNamePseudoFlag = true;
-    this->fileName = File(filename).getAbsoluteFileName();
+    this->fileName = File(filename).getAbsoluteName();
     fileNameListeners.invokeAllCallbacks(this->fileName);
 }
 
@@ -388,6 +388,21 @@ long TextData::undo(MarkHandle m)
                     case EditingHistory::ACTION_NONE: {
                         break;
                     }
+                    case EditingHistory::ACTION_SELECT: {
+                        long pos               = history->getPreviousActionTextPos();
+                        long length            = history->getPreviousActionLength();
+                        
+                        history->undoSelectAction();
+                        
+                        if (spos > pos) {
+                            spos = pos;
+                        }
+                        if (epos < pos + length) {
+                            epos = pos + length;
+                        }
+                        break;
+                    }
+                    default: ASSERT(false);
                 }
             } while (!history->isPreviousActionSectionSeperator());
     
@@ -459,6 +474,21 @@ long TextData::redo(MarkHandle m)
                     case EditingHistory::ACTION_NONE: {
                         break;
                     }
+                    case EditingHistory::ACTION_SELECT: {
+                        long pos               = history->getNextActionTextPos();
+                        long length            = history->getNextActionLength();
+                        
+                        history->redoSelectAction();
+                        
+                        if (spos > pos) {
+                            spos = pos;
+                        }
+                        if (epos < pos + length) {
+                            epos = pos + length;
+                        }
+                        break;
+                    }
+                    default: ASSERT(false);
                 }
             } while (!history->isLastAction() && !history->isPreviousActionSectionSeperator());
     

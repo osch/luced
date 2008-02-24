@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -81,7 +81,7 @@ public:
                 } else {
                     fileName = commandline->get(i);
                 }
-                fileName = File(fileName).getAbsoluteFileName();
+                fileName = File(fileName).getAbsoluteName();
                 commandline->set(i, fileName); // replace with absolute filename in command array
                 actor.openFile(numberOfWindowsForThisFile, fileName);
                 

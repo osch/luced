@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -49,7 +49,7 @@ File::File(const String& path, const String& fileName)
 
 
 
-void File::loadInto(ByteBuffer& buffer)
+void File::loadInto(ByteBuffer& buffer) const
 {
     struct stat statData;
     int fd = open(name.toCString(), O_RDONLY);
@@ -73,7 +73,7 @@ void File::loadInto(ByteBuffer& buffer)
     }
 }
 
-void File::storeData(ByteBuffer& data)
+void File::storeData(ByteBuffer& data) const
 {
     int fd = open(name.toCString(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
     
@@ -90,28 +90,65 @@ void File::storeData(ByteBuffer& data)
     }
 }
 
-String File::getAbsoluteFileName() const
+String File::getAbsoluteName() const
 {
-    String buffer;
-    if (name.getLength() > 0 && name[0] == '/') {
-        buffer = name;
-    } else {
-        ByteArray cwd;
-        cwd.appendAmount(255);
-        do {
-            if (getcwd((char*)cwd.getPtr(0), cwd.getLength()) == NULL && errno == ERANGE) {
-                cwd.increaseTo(2 * cwd.getLength());
-                continue;
-            }
-        } while (false);
-        buffer = String() << cwd.toCStr() << "/" << name;
+    if (absoluteName.getLength() == 0)
+    {
+        String buffer;
+        if (name.getLength() > 0 && name[0] == '/') {
+            buffer = name;
+        } else {
+            MemArray<char> cwd(2000);
+            do {
+                if (getcwd(cwd.getPtr(), cwd.getLength()) == NULL && errno == ERANGE) {
+                    cwd.increaseTo(1000 + cwd.getLength());
+                    continue;
+                }
+            } while (false);
+            buffer = String() << cwd.getPtr() << "/" << name;
+        }
+        Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./");
+    
+        while (r.findMatch(buffer, Regex::MatchOptions())) {
+            buffer.removeAmount(r.getCaptureBegin(0), r.getCaptureLength(0));
+        }
+        absoluteName = buffer;
     }
-    Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./");
+    return absoluteName;
+}
 
-    while (r.findMatch(buffer, Regex::MatchOptions())) {
-        buffer.removeAmount(r.getCaptureBegin(0), r.getCaptureLength(0));
+String File::getAbsoluteNameWithResolvedLinks() const
+{
+    String origName = getAbsoluteName();
+    String absName = origName;
+
+    while (true)
+    {
+        MemArray<char> buffer(2000);
+        long len = 0;
+        
+        while (true)
+        {
+            len = readlink(absName.toCString(), buffer.getPtr(), buffer.getLength());
+            if (len == buffer.getLength()) {
+                buffer.increaseTo(len + 1000);
+                continue;
+            } else {
+                break;
+            }
+        }
+        if (len <= 0) {
+            // The named file is not a symbolic link or does not exist or...
+            return absName;
+        } else {
+            String linkContent = String(buffer.getPtr(), len);
+            if (linkContent.getLength() > 0 && linkContent[0] == '/') {
+                absName = linkContent;
+            } else {
+                absName = File(File(absName).getDirName(), linkContent).getAbsoluteName();
+            }
+        }
     }
-    return buffer;
 }
 
 String File::getBaseName() const
@@ -125,19 +162,23 @@ String File::getBaseName() const
 
 String File::getDirName() const
 {
-    String absoluteName = getAbsoluteFileName();
+    String absoluteName = getAbsoluteName();
 
     int i = absoluteName.getLength();
     while (i > 0 && absoluteName[i-1] != '/') {
         i -= 1;
     }
-    return absoluteName.getSubstring(0, i - 1);
+    if (i > 0) {
+        return absoluteName.getSubstring(0, i - 1);
+    } else {
+        return absoluteName;
+    }
 }
 
 bool File::exists() const
 {
     struct stat statData;
-    String      fileName = getAbsoluteFileName();
+    String      fileName = getAbsoluteName();
 
     int rc = stat(fileName.toCString(), &statData);
     
@@ -155,7 +196,7 @@ bool File::exists() const
 File::Info File::getInfo() const
 {
     struct stat statData;
-    String      fileName = getAbsoluteFileName();
+    String      fileName = getAbsoluteName();
 
     if (stat(fileName.toCString(), &statData) == 0)
     {
@@ -172,7 +213,7 @@ File::Info File::getInfo() const
         rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
                                                       MicroSeconds(0));
 #endif
-        rslt.isWritableFlag = (::access(getAbsoluteFileName().toCString(), W_OK) == 0);
+        rslt.isWritableFlag = (::access(getAbsoluteName().toCString(), W_OK) == 0);
         rslt.existsFlag = true;
         return rslt;
     }

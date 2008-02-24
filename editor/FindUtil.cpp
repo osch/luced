@@ -280,6 +280,8 @@ void FindUtil::initialize()
     calloutObjects.clear();
 
     if (searchString.getLength() <= 0) {
+        regex = BasicRegex();
+        wasInitializedFlag = true;
         return;
     }
 

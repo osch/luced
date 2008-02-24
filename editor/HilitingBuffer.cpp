@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -220,6 +220,8 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
     long searchEndPos = desiredEndPos + maxDistance;
     util::minimize(&searchEndPos, textData->getLength());
     
+    bool wasZeroLengthMatch = false;
+    
     while (true) 
     {
         BasicRegex::MatchOptions additionalOptions;
@@ -235,7 +237,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
             additionalOptions |= BasicRegex::NOTEOL;
         }
 
-        // do searching
+        // do searching        
         
         this->rememberedSearchRestartPos = searchStartPos;
         
@@ -244,8 +246,24 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
                 extendedSearchEndPos - searchStartPos, 0,
                 additionalOptions /*| BasicRegex::NOTEMPTY*/, ovector);
 
-        if (matched) {
+        if (matched)
+        {
             // something matched
+            
+            if (ovector[1] == 0)
+            {
+                if (wasZeroLengthMatch) {
+                    ovector[1] = 1; // prevent endless loop for second zero length match
+                    wasZeroLengthMatch = false;
+                }
+                else {
+                    wasZeroLengthMatch = true;
+                }
+            }
+            else {
+                wasZeroLengthMatch = false;
+            }
+            
             int cid;
 
             cid = sp->getMatchedChild(ovector);

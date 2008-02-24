@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -165,6 +165,10 @@ String ReplaceUtil::getSubstitutedString()
 
 bool ReplaceUtil::replaceAllBetween(long spos, long epos)
 {
+    if (!FindUtil::wasInitialized()) {
+        FindUtil::initialize();
+    }
+
     TextData* textData = getTextData();
     TextData::TextMark textMark = textData->createNewMark();
     textMark.moveToPos(spos);
@@ -173,7 +177,7 @@ bool ReplaceUtil::replaceAllBetween(long spos, long epos)
     FindUtil::setMaximalEndOfMatchPosition(epos);
     
     bool wasAnythingReplaced = false;
-    
+
     try
     {
         FindUtil::setAllowMatchAtStartOfSearchFlag(true);
@@ -185,9 +189,13 @@ bool ReplaceUtil::replaceAllBetween(long spos, long epos)
             {
                 textMark.moveForwardToPos(FindUtil::getTextPosition());
                 
+    
                 if (FindUtil::getTextPosition() < epos)
                 {
-                    wasAnythingReplaced = true;
+                    if (!wasAnythingReplaced) {
+                        textData->rememberChangeAreaInHistory(spos, epos);
+                        wasAnythingReplaced = true;
+                    }
 
                     String substitutedString = getSubstitutedString();
                     textData->insertAtMark(textMark, substitutedString);

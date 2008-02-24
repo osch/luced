@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -119,12 +119,12 @@ void GlobalConfig::readConfig()
     
     if (!File(configDirectory).exists()) {
         String homeDirectory = System::getInstance()->getHomeDirectory();
-        configDirectory = File(homeDirectory, ".luced").getAbsoluteFileName();
+        configDirectory = File(homeDirectory, ".luced").getAbsoluteName();
     }
 
     LuaInterpreter* lua = LuaInterpreter::getInstance();
 
-    this->generalConfigFileName = File(configDirectory, "general.lua").getAbsoluteFileName();
+    this->generalConfigFileName = File(configDirectory, "general.lua").getAbsoluteName();
     String configFileName = generalConfigFileName;
 
     languageModes           = LanguageModes::create();
@@ -405,7 +405,7 @@ void GlobalConfig::readConfig()
     // SyntaxPatterns
     
     this->syntaxPatternsConfig->clear();
-    this->syntaxPatternDirectory = File(configDirectory, "syntaxpatterns").getAbsoluteFileName();
+    this->syntaxPatternDirectory = File(configDirectory, "syntaxpatterns").getAbsoluteName();
     
     
     for (DirectoryReader dirReader(syntaxPatternDirectory); dirReader.next();)
@@ -415,7 +415,7 @@ void GlobalConfig::readConfig()
             if (fileName.endsWith(luaFileExtension))
             {
                 String languageModeName = fileName.getSubstring(0, fileName.getLength() - strlen(luaFileExtension));
-                configFileName = File(syntaxPatternDirectory, String() << languageModeName << luaFileExtension).getAbsoluteFileName();
+                configFileName = File(syntaxPatternDirectory, String() << languageModeName << luaFileExtension).getAbsoluteName();
 
                 if (!languageModes->hasLanguageMode(languageModeName)) {
                     languageModes->append(languageModeName);

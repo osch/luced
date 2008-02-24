@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -54,15 +54,15 @@ public:
         bool operator==(const Id& rhs) const {
             return keyState == rhs.keyState && keyId == rhs.keyId;
         }
-        KeyModifier getKeyState() const { return keyState; }
+        KeyModifier getKeyModifier() const { return keyState; }
         KeyId       getKeyId() const { return keyId; }
 
         class HashFunction
         {
         public:
             size_t operator()(const KeyMapping::Id& id) const {
-                size_t rslt = id.getKeyState().toHashValue();
-                rslt = (rslt << 16) ^ id.getKeyState().toHashValue() ^ (id.getKeyId() << 16) ^ (id.getKeyId());
+                size_t rslt = id.getKeyModifier().toHashValue();
+                rslt = (rslt << 16) ^ id.getKeyModifier().toHashValue() ^ (id.getKeyId() << 16) ^ (id.getKeyId());
                 return rslt;
             }
         };

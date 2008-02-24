@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -325,6 +325,8 @@ int HilitedText::process(int requestedProcessingAmount)
     copyBreakStackTo(startNextProcessIterator, patternStack);
     pushedSubstr = patternStack.getAdditionalDataAsString();
     
+    bool wasZeroLengthMatch = false;
+
     while (!canBeStopped && pos < searchEndPos)
     {
         ASSERT(sp == syntaxPatterns->get(patternStack.getLast()));
@@ -343,10 +345,24 @@ int HilitedText::process(int requestedProcessingAmount)
                                         (const char*) textData->getAmount(pos, extendedSearchEndPos - pos), 
                     extendedSearchEndPos - pos, 0,
                     additionalOptions /*| BasicRegex::NOTEMPTY*/, ovector);
-
+        
         if (matched)
         {
             // something matched
+
+            if (ovector[1] == 0)
+            {
+                if (wasZeroLengthMatch) {
+                    ovector[1] = 1; // prevent endless loop for second zero length match
+                    wasZeroLengthMatch = false;
+                }
+                else {
+                    wasZeroLengthMatch = true;
+                }
+            }
+            else {
+                wasZeroLengthMatch = false;
+            }
 
             canBeStopped = fillWithBreaks(startNextProcessIterator, pos, pos + ovector[0], &lastSetBreakEnd, patternStack);
             if (canBeStopped) break;

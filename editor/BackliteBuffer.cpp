@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -42,6 +42,11 @@ void BackliteBuffer::registerUpdateListener(Callback<HilitingBuffer::UpdateInfo>
     updateListeners.registerCallback(updateCallback);
 }
 
+void BackliteBuffer::registerListenerForNextChange(Callback<>::Ptr callback)
+{
+    nextChangeListeners.registerCallback(callback);
+}
+
 void BackliteBuffer::activateSelection(long textPos)
 {
     isSecondarySelection = false;
@@ -77,6 +82,9 @@ void BackliteBuffer::makeSecondarySelectionToPrimarySelection()
 
 void BackliteBuffer::deactivateSelection()
 {
+    nextChangeListeners.invokeAllCallbacks();
+    nextChangeListeners.clear();
+
     if (hasSelection) {
         hasSelection = false;
         isSecondarySelection = false;
@@ -94,6 +102,10 @@ void BackliteBuffer::deactivateSelection()
 void BackliteBuffer::extendSelectionTo(long textPos)
 {
     ASSERT(hasSelection);
+
+    nextChangeListeners.invokeAllCallbacks();
+    nextChangeListeners.clear();
+
     if (isSelectionAnchorAtBegin)
     {
         if (textPos < beginSelection.getPos())

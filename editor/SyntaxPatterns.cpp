@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -119,9 +119,14 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
         sp->style = foundIndex.get();
 
         o = p["beginPattern"];
-        if (o.isString()) {
-            sp->beginPattern = o.toString();
+        if (o.isString())
+        {
+            sp->beginPattern = o.toString().getTrimmedSubstring();
             
+            if (sp->beginPattern.getLength() == 0) {
+                throw ConfigException(String() << "pattern '" << sp->name << "' has zero pattern length");
+            }
+ 
             o = p["endPattern"];
             if (!o.isString()) {
                 throw ConfigException(String() << "pattern '" << sp->name << "': missing 'endPattern' element");
@@ -186,13 +191,16 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 }
                 sp->pushedSubPatternName = o.toString();
             }
-        } 
+        }
         else {
             o = p["pattern"];
             if (!o.isString()) {
                 throw ConfigException(String() << "pattern '" << sp->name << "' must have 'beginPattern' or 'pattern' element");
             }
-            sp->beginPattern = o.toString();
+            sp->beginPattern = o.toString().getTrimmedSubstring();
+            if (sp->beginPattern.getLength() == 0) {
+                throw ConfigException(String() << "pattern '" << sp->name << "' has zero pattern length");
+            }
             sp->hasEndPattern = false;
             
             o = p["maxExtend"];

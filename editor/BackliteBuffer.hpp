@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -66,6 +66,8 @@ public:
     }
 
     void registerUpdateListener(Callback<HilitingBuffer::UpdateInfo>::Ptr updateCallback);
+    
+    void registerListenerForNextChange(Callback<>::Ptr callback);
 
     long getBeginSelectionPos() {
         ASSERT(hasSelection);
@@ -132,6 +134,7 @@ private:
     ByteArray buffer;
     long startPos;
     CallbackContainer<HilitingBuffer::UpdateInfo> updateListeners;
+    CallbackContainer<> nextChangeListeners;
 
     bool hasSelection;
     bool isSelectionAnchorAtBegin;
