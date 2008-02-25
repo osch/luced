@@ -172,7 +172,7 @@ public:
         getBackliteBuffer()->extendSelectionTo(pos);
     }
     long getSelectionLength() {
-        getBackliteBuffer()->getSelectionLength();
+        return getBackliteBuffer()->getSelectionLength();
     }
     
     void releaseSelection();
