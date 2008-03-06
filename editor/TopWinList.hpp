@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -25,27 +25,25 @@
 #include "HeapObject.hpp"
 #include "WeakPtr.hpp"
 #include "TopWin.hpp"
-#include "TopWinOwner.hpp"
+#include "OwnedTopWins.hpp"
 #include "RunningComponent.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class TopWin;
 
-class TopWinList : public TopWinOwner,
-                   public RunningComponent
+class TopWinList : public RunningComponent
 {
 public:
     static TopWinList* getInstance();
     
-    virtual void requestCloseChildWindow(TopWin *topWin);
-
     int getNumberOfTopWins() const {
-        return getNumberOfChildWindows();
+        return ownedTopWins->getNumberOfTopWins();
     }
     
     TopWin* getTopWin(int i) {
-        return getChildWindow(i);
+        return ownedTopWins->getTopWin(i);
     }
 
 private:
@@ -69,11 +67,26 @@ private:
         LucED::WeakPtr<TopWinList> topWinList;
     };
   
-    TopWinList() {}
+    TopWinList() 
+        : ownedTopWins(OwnedTopWins::create())
+    {
+        ownedTopWins->registerNewOwnedTopWinNotifyCallback(newCallback(this, &TopWinList::notifyAboutNewOwnedTopWin));
+    }
+    
+    void notifyAboutNewOwnedTopWin(TopWin* topWin);
+    
+    friend class TopWin;
+    ValidPtr<OwnedTopWins> getOwnedTopWins() {
+        return ownedTopWins;
+    }
+
+    void notifyRequestCloseChildWindow(TopWin* topWin);
 
     void checkIfEmpty();
     
     EmptyChecker::Ptr emptyChecker;
+
+    OwnedTopWins::Ptr ownedTopWins;
 };
 
 } // namespace LucED

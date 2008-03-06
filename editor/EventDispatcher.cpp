@@ -23,11 +23,17 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
+#include <errno.h>
+#include <signal.h>
 #include <X11/Xatom.h>
 
+#include "util.hpp"
 #include "EventDispatcher.hpp"
 #include "GuiRoot.hpp"
+#include "System.hpp"
+#include "SystemException.hpp"
 
 using namespace LucED;
 
@@ -38,11 +44,102 @@ EventDispatcher* EventDispatcher::getInstance()
     return instance.getPtr();
 }
 
+static bool hasSignalHandlers = false;
+static int sigChildPipeIn   = -1;
+static int sigChildPipeOut  = -1;
+static sigset_t enabledSignalBlockMask;
+static sigset_t disabledSignalBlockMask;
+
+
+static void sigchildHandler(int signal)
+{
+    switch (signal)
+    {
+        case SIGCHLD: {
+            if (hasSignalHandlers) {
+                char msg = 'x';
+                ::write(sigChildPipeOut, &msg, 1);
+            }
+            break;
+        }
+    }
+}
+
+static inline void enableSignals()
+{
+    ASSERT(hasSignalHandlers);
+    
+    if (sigprocmask(SIG_SETMASK, &enabledSignalBlockMask, NULL) != 0) {
+        throw SystemException(String() << "Could not call sigprocmask: " << strerror(errno));
+    }
+}
+
+static inline void disableSignals()
+{
+    ASSERT(hasSignalHandlers);
+
+    if (sigprocmask(SIG_SETMASK, &disabledSignalBlockMask, NULL) != 0) {
+        throw SystemException(String() << "Could not call sigprocmask: " << strerror(errno));
+    }
+}
+
+static inline int internalSelect(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal)
+{
+    enableSignals();
+    int rslt = System::select(n, readfds, writefds, exceptfds, timeVal);
+    disableSignals();
+    return rslt;
+}
+
+
 EventDispatcher::EventDispatcher()
     : doQuit(false),
       hasRootPropertyListeners(false)
 {
     x11FileDescriptor = ConnectionNumber(GuiRoot::getInstance()->getDisplay());
+
+    System::setCloseOnExecFlag(x11FileDescriptor);
+
+    if (!hasSignalHandlers)
+    {
+        int sigChildPipe[2];
+    
+        if (::pipe(sigChildPipe) != 0) {
+            throw SystemException(String() << "Could not create pipe: " << strerror(errno));
+        }
+        
+        sigChildPipeIn  = sigChildPipe[0];
+        sigChildPipeOut = sigChildPipe[1];
+    
+        System::setCloseOnExecFlag(sigChildPipeIn);
+        System::setCloseOnExecFlag(sigChildPipeOut);
+        {
+            struct sigaction handler;
+       
+            handler.sa_handler = sigchildHandler;
+            ::sigfillset(&handler.sa_mask);
+            handler.sa_flags = SA_NOCLDSTOP;
+           
+        #ifdef SA_RESTART
+            handler.sa_flags |= SA_RESTART;
+        #endif
+        #ifdef SA_INTERRUPT
+            handler.sa_flags &= ~SA_INTERRUPT;
+        #endif
+       
+            if (::sigaction(SIGCHLD, &handler, NULL) != 0) {
+                throw SystemException(String() << "Could not call sigaction: " << strerror(errno));
+            }
+            
+            sigfillset(&enabledSignalBlockMask);
+            sigfillset(&disabledSignalBlockMask);
+            
+            sigdelset(&enabledSignalBlockMask, SIGCHLD);
+            
+        }
+        hasSignalHandlers = true;
+    }
+    disableSignals();
 }
 
 void EventDispatcher::registerEventReceiver(const GuiWidget::EventRegistration& registration)
@@ -134,6 +231,7 @@ bool EventDispatcher::processEvent(XEvent *event)
 void EventDispatcher::doEventLoop()
 {
     fd_set             readfds;
+    fd_set             writefds;
     fd_set             exceptfds;
 
     TimeVal            remainingTime;
@@ -158,11 +256,39 @@ void EventDispatcher::doEventLoop()
             //XSync(display, False); <-- not this here!
 
             TimerRegistration nextTimer = getNextTimer();
-
+            
             FD_ZERO(&readfds);
+            FD_ZERO(&writefds);
             FD_ZERO(&exceptfds);
             FD_SET(x11FileDescriptor, &readfds);
             FD_SET(x11FileDescriptor, &exceptfds);
+            int maxFileDescriptor = x11FileDescriptor;
+            
+            util::maximize(&maxFileDescriptor, sigChildPipeIn);
+            FD_SET(sigChildPipeIn, &readfds);
+            
+            for (int i = 0; i < fileDescriptorListeners.getLength();)
+            {
+                FileDescriptorListener::Ptr listener = fileDescriptorListeners[i]; 
+                if (listener->isWaitingForRead())
+                {
+                    util::maximize(&maxFileDescriptor, listener->getFileDescriptor());
+                    FD_SET(listener->getFileDescriptor(), &readfds);
+                    if (listener->isWaitingForWrite()) {
+                        FD_SET(listener->getFileDescriptor(), &writefds);
+                    }
+                    ++i;
+                }
+                else if (listener->isWaitingForWrite())
+                {
+                    util::maximize(&maxFileDescriptor, listener->getFileDescriptor());
+                    FD_SET(listener->getFileDescriptor(), &writefds);
+                    ++i;
+                }
+                else {
+                    fileDescriptorListeners.remove(i);
+                }
+            }
 
             int p = 0;
             bool hasWaitingProcess = false;
@@ -178,61 +304,112 @@ void EventDispatcher::doEventLoop()
                 }
             }
             
-            int rslt;
+            int selectResult;
             bool wasSelectInvoked = false;
             bool wasTimerInvoked = false;
             
-            if (nextTimer.isValid()) {
-                if (hasWaitingProcess) {
-                    TimeVal now;
-                    now.setToCurrentTime();
-                    if (nextTimer.when.isLaterThan(now)) {
-                        long diffTime = TimeVal::diffMicroSecs(now, nextTimer.when);
-                        if (diffTime > 100 * 1000) {
-                            diffTime = 100 * 1000;
-                        }
-                        ProcessHandler::Ptr h = processes[p];
-                        processes.remove(p);
-                        processes.append(h);
-                        h->execute(diffTime);
-                        hasSomethingDone = true;
-                        
-                        now.setToCurrentTime();
-                        if (now.add(MicroSeconds(100 * 1000)).isLaterThan(nextTimer.when)) {
+            {
+                if (nextTimer.isValid()) {
+                    if (hasWaitingProcess) {
+                        TimeVal now(TimeVal::NOW);
+                        if (nextTimer.when.isLaterThan(now)) {
+                            long diffTime = TimeVal::diffMicroSecs(now, nextTimer.when);
+                            if (diffTime > 100 * 1000) {
+                                diffTime = 100 * 1000;
+                            }
+                            ProcessHandler::Ptr h = processes[p];
+                            processes.remove(p);
+                            processes.append(h);
+                            h->execute(diffTime);
+                            hasSomethingDone = true;
+                            
+                            now.setToCurrentTime();
+                            if (now.add(MicroSeconds(100 * 1000)).isLaterThan(nextTimer.when)) {
+                                remainingTime.setToRemainingTimeUntil(nextTimer.when);
+                                selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, &remainingTime);
+                                wasSelectInvoked = true;
+                            }
+                        } else {
                             remainingTime.setToRemainingTimeUntil(nextTimer.when);
-                            rslt = LucED::select(x11FileDescriptor + 1, &readfds, NULL, NULL, &remainingTime);
+                            selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, &remainingTime);
                             wasSelectInvoked = true;
                         }
                     } else {
                         remainingTime.setToRemainingTimeUntil(nextTimer.when);
-                        rslt = LucED::select(x11FileDescriptor + 1, &readfds, NULL, NULL, &remainingTime);
+                            
+                        selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, &remainingTime);
+                        
                         wasSelectInvoked = true;
                     }
                 } else {
-                    remainingTime.setToRemainingTimeUntil(nextTimer.when);
-                    rslt = LucED::select(x11FileDescriptor + 1, &readfds, NULL, NULL, &remainingTime);
-                    wasSelectInvoked = true;
-                }
-            } else {
-                if (hasWaitingProcess) {
-                    ProcessHandler::Ptr h = processes[p];
-                    processes.remove(p);
-                    processes.append(h);
-                    h->execute(100 * 1000);
-                    hasSomethingDone = true;
-                } else {
-                    rslt = LucED::select(x11FileDescriptor + 1, &readfds, NULL, NULL, NULL);
-                    wasSelectInvoked = true;
+                    if (hasWaitingProcess) {
+                        ProcessHandler::Ptr h = processes[p];
+                        processes.remove(p);
+                        processes.append(h);
+                        h->execute(100 * 1000);
+                        hasSomethingDone = true;
+                    } else {
+                    
+                        selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, NULL);
+                        wasSelectInvoked = true;
+                    }
                 }
             }
+            
             if (wasSelectInvoked) {
-                if (rslt > 0) {
-                    XNextEvent(display, &event);
-                    hasSomethingDone = processEvent(&event);
+                if (selectResult > 0) {
+                    if (FD_ISSET(x11FileDescriptor, &readfds)) {
+                        XNextEvent(display, &event);
+                        hasSomethingDone = processEvent(&event);
+                    }
+                    for (int i = 0; i < fileDescriptorListeners.getLength(); ++i)
+                    {
+                        FileDescriptorListener::Ptr listener = fileDescriptorListeners[i];
+                        int                         fd       = listener->getFileDescriptor();
+                    
+                        if (FD_ISSET(fd, &readfds)) {
+                            listener->handleReading();
+                            hasSomethingDone = true;
+                        }
+                        if (FD_ISSET(fd, &writefds)) {
+                            listener->handleWriting();
+                            hasSomethingDone = true;
+                        }
+                    }
+                    if (FD_ISSET(sigChildPipeIn, &readfds)) {
+                        char buffer[40];
+                        int readCounter = ::read(sigChildPipeIn, buffer, sizeof(buffer));
+
+                        int status;
+                        pid_t pid = 0;
+
+                        do {
+                            pid = waitpid(-1, &status, WNOHANG);
+                            if (pid == -1) {
+                                if (errno != ECHILD) {
+                                    throw SystemException(String() << "Error while calling waitpid: " << strerror(errno));
+                                }
+                                pid = 0;
+                            }
+                            if (pid != 0)
+                            {
+                                ProcessListenerMap::Value foundListener = childProcessListeners.get(pid);
+                                if (foundListener.isValid())
+                                {
+                                    int returnCode = -1;
+                                    if (WIFEXITED(status)) {
+                                        returnCode = WEXITSTATUS(status);
+                                    }
+                                    foundListener.get()->call(returnCode);
+                                    childProcessListeners.remove(pid);
+                                    hasSomethingDone = true;
+                                }
+                            }
+                        } while (pid != 0);
+                    }
                 } else {
                     if (nextTimer.isValid()) {
-                        TimeVal now; 
-                        now.setToCurrentTime();
+                        TimeVal now(TimeVal::NOW); 
                         if (now.isLaterThan(nextTimer.when)) {
                             nextTimer.callback->call();
                             hasSomethingDone = true;
@@ -335,4 +512,13 @@ void EventDispatcher::deregisterRunningComponent(RunningComponent* runningCompon
     stoppingComponents.append(runningComponent);
 }
 
+void EventDispatcher::registerFileDescriptorListener(FileDescriptorListener::Ptr fileDescriptorListener)
+{
+    fileDescriptorListeners.append(fileDescriptorListener);
+}
+
+void EventDispatcher::registerForTerminatingChildProcess(pid_t childPid, Callback<int>::Ptr callback)
+{
+    childProcessListeners.set(childPid, callback);
+}
 

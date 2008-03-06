@@ -33,6 +33,7 @@
 #include "OwningPtr.hpp"
 #include "GuiColor.hpp"
 #include "CursorPositionData.hpp"
+#include "ValidPtr.hpp"
 
 namespace LucED {
 
@@ -73,8 +74,10 @@ public:
 
     void setDesiredMeasuresInChars(int bestWidth, int bestHeight);
     
-    TextData* getTextData() {
-        return textData.getRawPtr();
+    virtual void setBackgroundColor(GuiColor color);
+    
+    TextData::Ptr getTextData() {
+        return textData;
     }
     
     TextStyles::Ptr getTextStyles() const {
@@ -269,6 +272,7 @@ private:
     bool isMousePointerHidden;
     GuiColor primarySelectionColor;
     GuiColor secondarySelectionColor;
+    GuiColor backgroundColor;
     GC textWidget_gcid;
 };
 

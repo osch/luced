@@ -313,6 +313,10 @@ public:
         return impl.implPtr.isValid();
     }
 
+    bool isEnabled() const {
+        return impl.implPtr.isValid() && impl.implPtr->getObjectPtr() != NULL;
+    }
+
     void invalidate() {
         impl.implPtr.invalidate();
     }

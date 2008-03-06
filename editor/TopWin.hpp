@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TOPWIN_H
-#define TOPWIN_H
+#ifndef TOP_WIN_HPP
+#define TOP_WIN_HPP
 
 #include <iostream>
 
@@ -28,20 +28,20 @@
 #include "WeakPtr.hpp"
 #include "OwningPtr.hpp"
 #include "ObjectArray.hpp"
-#include "TopWinOwner.hpp"
+#include "OwnedTopWins.hpp"
 #include "CallbackContainer.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-
-class TopWin : public GuiWidget, public TopWinOwner, private TopWinOwnerAccessForTopWin
+class TopWin : public GuiWidget, private OwnedTopWinsAccessForTopWin
 {
 public:
     typedef WeakPtr<TopWin> Ptr;
     
     virtual ~TopWin();
 
-    virtual ProcessingResult processEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent* event);
 
     virtual void requestFocus();
     virtual void requestCloseWindow();
@@ -59,6 +59,10 @@ public:
         return mapped;
     }
 
+    void registerRequestForCloseNotifyCallback(Callback<TopWin*>::Ptr callback) {
+        requestForCloseNotifyCallbacks.registerCallback(callback);
+    }
+
     void registerMappingNotifyCallback(Callback<bool>::Ptr mappingNotifyCallback) {
         mappingNotifyCallbacks.registerCallback(mappingNotifyCallback);
     }
@@ -73,8 +77,12 @@ protected:
     void setSizeHints(int minWidth, int minHeight, int dx, int dy);
     void setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy);
     
-    template<class T> static WeakPtr<T> transferOwnershipTo(T *topWin, TopWinOwner* owner);
-    template<class T> static WeakPtr<T> transferOwnershipTo(T *topWin, TopWin::Ptr owner);
+    template
+    <
+        class T, 
+        class OwnerPtr
+    > 
+    static WeakPtr<T> transferOwnershipTo(T* topWin, OwnerPtr owner);
     
     virtual void notifyAboutBeingMapped()
     {}
@@ -82,37 +90,46 @@ protected:
     virtual void notifyAboutBeingUnmapped()
     {}
     
+    
 private:
     void setWindowManagerHints();
+   
+    ValidPtr<OwnedTopWins> getOwnedTopWins() {
+        return ownedTopWins;
+    }
     
     Atom x11InternAtomForDeleteWindow;
 //  Atom x11InternAtomForTakeFocus;
-    TopWinOwner* owner;
+    ValidPtr<OwnedTopWins> myOwner;
     bool mapped;
     bool requestFocusAfterMapped;
     
     bool focusFlag;
     
     CallbackContainer<bool> mappingNotifyCallbacks;
+    CallbackContainer<TopWin*> requestForCloseNotifyCallbacks;
+
+    OwnedTopWins::Ptr ownedTopWins;
 };
 
 
 
-template<class T> WeakPtr<T> TopWin::transferOwnershipTo(T *topWin, TopWinOwner* owner)
+template
+<
+    class T, 
+    class OwnerPtr
+>
+WeakPtr<T> TopWin::transferOwnershipTo(T* topWin, OwnerPtr owner)
 {
     OwningPtr<T>  rslt(topWin);
-    appendTopWinToTopWinOwner(rslt, owner);
-    topWin->owner = owner;
+    OwnedTopWinsAccessForTopWin::appendTopWinToOwnedTopWins(rslt, owner->getOwnedTopWins());
+    topWin->myOwner = owner->getOwnedTopWins();
     return rslt;
 }
 
-template<class T> WeakPtr<T> TopWin::transferOwnershipTo(T *topWin, TopWin::Ptr owner)
-{
-    return transferOwnershipTo(topWin, owner.getRawPtr());
-}
 
 
 } // namespace LucED
 
-#endif // TOPWIN_H
+#endif // TOP_WIN_HPP
 

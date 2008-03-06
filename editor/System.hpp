@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -25,6 +25,7 @@
 #include "HeapObject.hpp"
 #include "SingletonInstance.hpp"
 #include "String.hpp"
+#include "TimeVal.hpp"
 
 namespace LucED
 {
@@ -48,6 +49,17 @@ public:
         return hostName;
     }
     
+    String getCurrentDirectory() const;
+    
+    void setCurrentDirectory(const String& dir);
+    
+    static int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal)
+    {
+        return ::select(n, readfds, writefds, exceptfds, &timeVal->timeval);
+    }
+    
+    static void setCloseOnExecFlag(int fileDescriptor);
+
 private:
     friend class SingletonInstance<System>;
     static SingletonInstance<System> instance;

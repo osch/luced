@@ -24,7 +24,7 @@
 #include "util.hpp"
 #include "Clipboard.hpp"
 #include "GlobalConfig.hpp"
-
+#include "ValidPtr.hpp"
 
 using namespace LucED;
 
@@ -42,7 +42,7 @@ class Clipboard::SelectionContentHandler : public SelectionOwner::ContentHandler
 public:
     typedef OwningPtr<ContentHandler> Ptr;
 
-    static Ptr create(Clipboard* clipboard) {
+    static Ptr create(ValidPtr<Clipboard> clipboard) {
         return Ptr(new SelectionContentHandler(clipboard));
     }
     virtual long initSelectionDataRequest() {
@@ -62,10 +62,35 @@ public:
         clipboard->programRunningKeeper.doNotKeepProgramRunning();
     }
 private:
-    SelectionContentHandler(Clipboard* clipboard)
+    SelectionContentHandler(ValidPtr<Clipboard> clipboard)
         : clipboard(clipboard)
     {}
-    WeakPtr<Clipboard> clipboard;
+    ValidPtr<Clipboard> clipboard;
+};
+
+class Clipboard::PasteDataContentHandler : public PasteDataReceiver::ContentHandler
+{
+public:
+    typedef OwningPtr<ContentHandler> Ptr;
+
+    static Ptr create(ValidPtr<Clipboard> clipboard) {
+        return Ptr(new PasteDataContentHandler(clipboard));
+    }
+    
+    virtual void notifyAboutBeginOfPastingData() {
+        clipboard->notifyAboutBeginOfPastingData();
+    }
+    virtual void notifyAboutReceivedPasteData(const byte* data, long length) {
+        clipboard->notifyAboutReceivedPasteData(data, length);
+    }
+    virtual void notifyAboutEndOfPastingData() {
+        clipboard->notifyAboutEndOfPastingData();
+    }
+private:
+    PasteDataContentHandler(ValidPtr<Clipboard> clipboard)
+        : clipboard(clipboard)
+    {}
+    ValidPtr<Clipboard> clipboard;
 };
 
 Clipboard::Clipboard()
@@ -73,7 +98,10 @@ Clipboard::Clipboard()
         selectionOwner(SelectionOwner::create(this, 
                                               SelectionOwner::TYPE_CLIPBOARD, 
                                               SelectionContentHandler::create(this))),
-        PasteDataReceiver(this),
+
+        pasteDataReceiver(PasteDataReceiver::create(this,
+                                                    PasteDataContentHandler::create(this))),
+
         sendingMultiPart(false)
 {
     addToXEventMask(PropertyChangeMask);
@@ -95,7 +123,7 @@ void Clipboard::copyToClipboard(const byte* ptr, long length)
 void Clipboard::copyActiveSelectionToClipboard()
 {
     if (selectionOwner->requestSelectionOwnership()) {
-        requestSelectionPasting();
+        pasteDataReceiver->requestSelectionPasting();
     }
 }
 
@@ -107,8 +135,8 @@ const ByteArray& Clipboard::getClipboardBuffer() {
 
 GuiElement::ProcessingResult Clipboard::processEvent(const XEvent *event)
 {
-    if (selectionOwner->processSelectionOwnerEvent(event) == GuiElement::EVENT_PROCESSED
-     || processPasteDataReceiverEvent(event)              == GuiElement::EVENT_PROCESSED)
+    if (selectionOwner   ->processSelectionOwnerEvent(event)     == GuiElement::EVENT_PROCESSED
+     || pasteDataReceiver->processPasteDataReceiverEvent(event)  == GuiElement::EVENT_PROCESSED)
     {
         return GuiElement::EVENT_PROCESSED;
     }

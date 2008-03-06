@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef EDITORTOPWIN_H
-#define EDITORTOPWIN_H
+#ifndef EDITORTOPWIN_HPP
+#define EDITORTOPWIN_HPP
 
 #include "TopWin.hpp"
 #include "EventDispatcher.hpp"
@@ -38,6 +38,8 @@
 #include "ReplacePanel.hpp"
 #include "MessageBox.hpp"
 #include "SaveAsPanel.hpp"
+#include "ProgramExecutor.hpp"
+#include "ValidPtr.hpp"
 
 namespace LucED {
 
@@ -68,7 +70,6 @@ public:
     virtual void show();
     
     virtual void requestCloseFor(GuiWidget* w);
-    virtual void requestCloseChildWindow(TopWin *topWin);
 
     void invokeGotoLinePanel();
     void invokeSaveAsPanel(Callback<>::Ptr saveCallback);
@@ -96,7 +97,7 @@ public:
     void invokeMessageBox(MessageBoxParameter p);
     
     bool hasUnsavedData() const {
-        return textEditor->getTextData()->getModifiedFlag();
+        return textData->getModifiedFlag();
     }
 
     void requestCloseWindowAndDiscardChanges();
@@ -131,7 +132,15 @@ private:
     
     void setWindowTitle();
     
+    void notifyRequestCloseChildWindow(TopWin *topWin);
+    void invokeNewModalMessageBox();
+
+    void executeTestScript();
+    void displayTestBox();
+    void finishedTestScript(ProgramExecutor::Result result);
+    
     MultiLineEditorWidget::Ptr textEditor;
+    ValidPtr<TextData>         textData;
     ScrollBar::Ptr scrollBarH;
     ScrollBar::Ptr scrollBarV;    
     StatusLine::Ptr statusLine;
@@ -160,4 +169,4 @@ private:
 
 } // namespace LucED
 
-#endif // EDITORTOPWIN_H
+#endif // EDITORTOPWIN_HPP

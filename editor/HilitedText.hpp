@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HILITING_H
-#define HILITING_H
+#ifndef HILITED_TEXT_HPP
+#define HILITED_TEXT_HPP
 
 #include "HilitingBase.hpp"
 #include "TextData.hpp"
@@ -30,6 +30,7 @@
 #include "MemArray.hpp"
 #include "LanguageModes.hpp"
 #include "OwningPtr.hpp"
+#include "ValidPtr.hpp"
 
 // TODO: Konstanten
 //
@@ -130,4 +131,4 @@ private:
 
 } // namespace LucED
 
-#endif // HILITING_H
+#endif // HILITED_TEXT_HPP

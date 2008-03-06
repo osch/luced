@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TEXTEDITORWIDGET_HPP
-#define TEXTEDITORWIDGET_HPP
+#ifndef TEXT_EDITOR_WIDGET_HPP
+#define TEXT_EDITOR_WIDGET_HPP
 
 #include "TextWidget.hpp"
 #include "KeyMapping.hpp"
@@ -30,12 +30,23 @@
 #include "WeakPtr.hpp"
 #include "Callback.hpp"
 #include "KeyModifier.hpp" 
+#include "OptionBits.hpp"
 
 namespace LucED {
 
-class TextEditorWidget : public TextWidget, public PasteDataReceiver
+class TextEditorWidget : public TextWidget
 {
 public:
+    typedef OwningPtr<TextEditorWidget> Ptr;
+    
+    static const int BORDER_WIDTH = 4;
+    
+    enum CreateOption {
+        DEFAULT = 0,
+        READ_ONLY
+    };
+    typedef OptionBits<CreateOption> CreateOptions;
+    
     enum ActionId
     {
         ACTION_UNSPECIFIED,
@@ -49,6 +60,14 @@ public:
         CURSOR_TO_BEGIN_OF_PASTED_DATA,
         CURSOR_TO_END_OF_PASTED_DATA,
     };
+
+    static Ptr create(GuiWidget*       parent,
+                      TextStyles::Ptr  textStyles, 
+                      HilitedText::Ptr hilitedText,
+                      CreateOptions    options = CreateOptions(DEFAULT))
+    {
+        return Ptr(new TextEditorWidget(parent, textStyles, hilitedText, options));
+    }
 
     ActionId getLastAction() const;
     void setCurrentAction(ActionId action);
@@ -103,8 +122,8 @@ public:
         addToXEventMask(PointerMotionMask);
     }
     
-    bool isReadOnly() {
-        return getTextData()->isReadOnly();
+    bool isReadOnly() const {
+        return readOnlyFlag || textData->isReadOnly();
     }
     bool hasSelection() {
         return getBackliteBuffer()->hasActiveSelection();
@@ -181,17 +200,23 @@ public:
     void requestClipboardPasting(const TextData::TextMark& m, 
                                  PasteParameter p = CURSOR_TO_END_OF_PASTED_DATA)
     {
-        beginPastingTextMark = getTextData()->createNewMark(m);
-        pasteParameter = p;
-        PasteDataReceiver::requestClipboardPasting();
+        if (pasteDataReceiver.isValid() && !isReadOnly())
+        {
+            beginPastingTextMark = getTextData()->createNewMark(m);
+            pasteParameter = p;
+            pasteDataReceiver->requestClipboardPasting();
+        }
     }
 
     void requestSelectionPasting(const TextData::TextMark& m,
                                  PasteParameter p = CURSOR_TO_END_OF_PASTED_DATA)
     {
-        beginPastingTextMark = getTextData()->createNewMark(m);
-        pasteParameter = p;
-        PasteDataReceiver::requestSelectionPasting();
+        if (pasteDataReceiver.isValid() && !isReadOnly())
+        {
+            beginPastingTextMark = getTextData()->createNewMark(m);
+            pasteParameter = p;
+            pasteDataReceiver->requestSelectionPasting();
+        }
     }
 
     void replaceTextWithPrimarySelection();
@@ -201,11 +226,15 @@ public:
     }
 
 protected:
-    TextEditorWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int borderWidth);
+    TextEditorWidget(GuiWidget*       parent, 
+                     TextStyles::Ptr  textStyles, 
+                     HilitedText::Ptr hilitedText, 
+                     CreateOptions    options = CreateOptions(DEFAULT),
+                     int              borderWidth = BORDER_WIDTH);
 
-    virtual void notifyAboutReceivedPasteData(const byte* data, long length);
-    virtual void notifyAboutEndOfPastingData();
-    virtual void notifyAboutBeginOfPastingData();
+    void notifyAboutReceivedPasteData(const byte* data, long length);
+    void notifyAboutEndOfPastingData();
+    void notifyAboutBeginOfPastingData();
 
 private:
 
@@ -238,8 +267,15 @@ private:
     SelectionOwner::Ptr selectionOwner;
     
     bool isSelectionPersistent;
+
+    ValidPtr<TextData> textData;
+
+    class PasteDataContentHandler;
+    PasteDataReceiver::Ptr pasteDataReceiver;
+    
+    bool readOnlyFlag;
 };
 
 } // namespace LucED
 
-#endif // TEXTEDITORWIDGET_HPP
+#endif // TEXT_EDITOR_WIDGET_HPP

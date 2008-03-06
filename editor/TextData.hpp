@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TEXTDATA_H
-#define TEXTDATA_H
+#ifndef TEXT_DATA_HPP
+#define TEXT_DATA_HPP
 
 #include "String.hpp"
 #include "HeapObject.hpp"
@@ -32,10 +32,10 @@
 #include "EditingHistory.hpp"
 #include "TimeVal.hpp"
 #include "File.hpp"
+#include "ValidPtr.hpp"
 
-namespace LucED {
-
-
+namespace LucED
+{
 
 class TextData : public HeapObject
 {
@@ -68,25 +68,25 @@ public:
     class TextMark : public MarkHandle
     {
     public:
-        TextMark() : textData(NULL) {}
+        TextMark() {}
         ~TextMark() {
-            if (textData != NULL) {
+            if (textData.isValid()) {
                 textData->getTextMarkData(index)->inUseCounter -= 1;
             }
         }
         TextMark(const TextMark& src) {
             index = src.index;
             textData = src.textData;
-            if (textData != NULL) {
+            if (textData.isValid()) {
                 textData->getTextMarkData(index)->inUseCounter += 1;
             }
         }
         TextMark& operator=(const TextMark& src) {
-            ASSERT(textData == src.textData || textData ==  NULL || src.textData == NULL);
-            if (src.textData != NULL) {
+            ASSERT(!textData.isValid() || !src.textData.isValid() || textData == src.textData);
+            if (src.textData.isValid()) {
                 src.textData->getTextMarkData(src.index)->inUseCounter += 1;
             }
-            if (textData != NULL) {
+            if (textData.isValid()) {
                 textData->getTextMarkData(index)->inUseCounter -= 1;
             }
             index = src.index;
@@ -129,7 +129,7 @@ public:
             return textData->isEndOfText(*this);
         }
         bool isValid() {
-            return textData != NULL;
+            return textData.isValid();
         }
         bool isAtBeginOfLine() {
             return textData->isBeginOfLine(getPos());
@@ -139,13 +139,13 @@ public:
         }
     private:
         friend class TextData;
-        TextMark(TextData *textData, long index) {
+        TextMark(ValidPtr<TextData> textData, long index) {
             this->index = index;
             this->textData = textData;
             textData->getTextMarkData(index)->inUseCounter += 1;
         }
         
-        TextData *textData;
+        ValidPtr<TextData> textData;
     };
     
     class TextMarkData
@@ -159,8 +159,8 @@ public:
         long column;
     };
     
-    static TextData::Ptr create() {
-        return TextData::Ptr(new TextData());
+    static Ptr create() {
+        return Ptr(new TextData());
     }
 
     void loadFile(const String& filename);
@@ -205,6 +205,16 @@ public:
     void setToString(const String& newContent) {
         clear();
         insertAtMark(createNewMark(), newContent);
+    }
+
+    void setToData(const char* buffer, int length) {
+        clear();
+        insertAtMark(createNewMark(), (const byte*) buffer, length);
+    }
+
+    void setToData(const byte* buffer, int length) {
+        clear();
+        insertAtMark(createNewMark(), buffer, length);
     }
 
     const byte& operator[](long pos) const {
@@ -484,17 +494,17 @@ private:
 class ViewCounterTextDataAccess
 {
 protected:
-    int getViewCounter(TextData* textData) {
+    int getViewCounter(ValidPtr<TextData> textData) {
         return textData->viewCounter;
     }
-    void decViewCounter(TextData* textData) {
+    void decViewCounter(ValidPtr<TextData> textData) {
         textData->viewCounter -= 1;
     }
-    void incViewCounter(TextData* textData) {
+    void incViewCounter(ValidPtr<TextData> textData) {
         textData->viewCounter += 1;
     }
 };
 
 } // namespace LucED
 
-#endif // TEXTDATA_H
+#endif // TEXT_DATA_HPP

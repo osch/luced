@@ -651,7 +651,7 @@ void ReplacePanel::replaceAgainForward()
         long spos = e->getBeginSelectionPos();
         long epos = e->getEndSelectionPos();
 
-        TextData* textData = e->getTextData();
+        ValidPtr<TextData> textData = e->getTextData();
 
         replaceUtil.setTextPosition(spos);
         
@@ -729,7 +729,7 @@ void ReplacePanel::replaceAgainBackward()
         if (replaceUtil.doesMatch() && replaceUtil.getMatchEndPos() == epos)
         {
             String substitutedString = replaceUtil.getSubstitutedString();
-            TextData* textData = e->getTextData();
+            ValidPtr<TextData> textData = e->getTextData();
             
             TextData::TextMark textMark = e->createNewMarkFromCursor();
             textMark.moveToPos(spos);
@@ -790,7 +790,7 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
             String lastReplaceString = entry.getReplaceString();
             if (lastFindString != findFieldContent || lastReplaceString != replaceFieldContent)
             {
-                TextData* textData = findEditField->getTextData();
+                ValidPtr<TextData> textData = findEditField->getTextData();
                 textData->setToString(lastFindString);
                 textData->clearHistory();
                 textData->setModifiedFlag(false);
@@ -842,7 +842,7 @@ GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *ev
                 String nextReplaceString = entry.getReplaceString();
                 if (nextFindString != findFieldContent || nextReplaceString != replaceFieldContent)
                 {
-                    TextData* textData = findEditField->getTextData();
+                    ValidPtr<TextData> textData = findEditField->getTextData();
                     textData->setToString(nextFindString);
                     textData->clearHistory();
                     textData->setModifiedFlag(false);

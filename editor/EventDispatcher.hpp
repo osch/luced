@@ -38,6 +38,8 @@
 #include "RunningComponent.hpp"
 #include "Seconds.hpp"
 #include "MicroSeconds.hpp"
+#include "FileDescriptorListener.hpp"
+#include "ValidPtr.hpp"
 
 namespace LucED {
 
@@ -80,6 +82,10 @@ public:
     void registerRunningComponent(RunningComponent::OwningPtr runningComponent);
     
     void deregisterRunningComponent(RunningComponent* runningComponent);
+
+    void registerFileDescriptorListener(FileDescriptorListener::Ptr fileDescriptorListener);
+    
+    void registerForTerminatingChildProcess(pid_t childPid, Callback<int>::Ptr callback);
     
 private:
     friend class SingletonInstance<EventDispatcher>;
@@ -111,7 +117,7 @@ private:
     
     ProcessHandler::Ptr getNextWaitingProcess();
     
-    typedef HashMap<WidgetId, GuiWidget*> WidgetMap;
+    typedef HashMap< WidgetId, ValidPtr<GuiWidget> > WidgetMap;
     WidgetMap widgetMap;
     WidgetMap foreignWidgetListeners;
     
@@ -132,6 +138,11 @@ private:
     
     ObjectArray<RunningComponent::OwningPtr> runningComponents;
     ObjectArray<RunningComponent::WeakPtr>   stoppingComponents;
+
+    ObjectArray<FileDescriptorListener::Ptr> fileDescriptorListeners;
+    
+    typedef HashMap< pid_t, Callback<int>::Ptr > ProcessListenerMap;
+    ProcessListenerMap childProcessListeners;
 };
 
 

@@ -152,17 +152,6 @@ bool CheckBox::isMouseInsideButtonArea(int mouseX, int mouseY)
                             && y >= BUTTON_OUTER_BORDER - 1 && y <= position.h - 2*BUTTON_OUTER_BORDER + 1);
 }
 
-static const MicroSeconds shortTime = MicroSeconds(50 * 1000);
-
-static void waitShort(MicroSeconds microSecs = shortTime)
-{
-    if (microSecs > 0) {
-        TimeVal timeVal;
-        timeVal.add(microSecs);
-        LucED::select(0, NULL, NULL, NULL, &timeVal);
-    }
-}
-
 GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
@@ -186,8 +175,6 @@ GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
             case ButtonPress: {
                 if (event->xbutton.button == Button1)
                 {
-                    earliestButtonReleaseTime.setToCurrentTime().add(shortTime);
-                    
                     isMouseButtonPressed = true;
                     int x = event->xbutton.x;
                     int y = event->xbutton.y;

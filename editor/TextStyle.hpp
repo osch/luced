@@ -81,9 +81,16 @@ public:
     int getTextWidth(const char* str) const {
         return getTextWidth(str, strlen(str));
     }
+    String getFontName() const {
+        return fontName;
+    }
+    String getColorName() const {
+        return colorName;
+    }
 
 private:
-
+    String fontName;
+    String colorName;
 #ifdef X11_GUI
     XFontStruct* font;
 #endif

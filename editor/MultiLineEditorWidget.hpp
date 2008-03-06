@@ -32,17 +32,18 @@ class MultiLineEditorWidget : public TextEditorWidget
 public:
     typedef OwningPtr<MultiLineEditorWidget> Ptr;
 
-    static MultiLineEditorWidget::Ptr create(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
+    static Ptr create(GuiWidget*       parent, 
+                      TextStyles::Ptr  textStyles,
+                      HilitedText::Ptr hilitedText)
     {
-        return MultiLineEditorWidget::Ptr(new MultiLineEditorWidget(parent, 
-                textStyles, hilitedText));
+        return Ptr(new MultiLineEditorWidget(parent, textStyles, hilitedText));
     }
 
 
 private:
-    MultiLineEditorWidget(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
+    MultiLineEditorWidget(GuiWidget*       parent,
+                          TextStyles::Ptr  textStyles, 
+                          HilitedText::Ptr hilitedText);
 
     StandardEditActions::Ptr standardActions;
 };

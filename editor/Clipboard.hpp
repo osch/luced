@@ -33,8 +33,7 @@
 
 namespace LucED {
 
-class Clipboard : public GuiWidget, 
-                  public PasteDataReceiver
+class Clipboard : public GuiWidget
 {
 public:
     
@@ -66,9 +65,9 @@ private:
     
     Clipboard();
     
-    virtual void notifyAboutReceivedPasteData(const byte* data, long length);
-    virtual void notifyAboutEndOfPastingData();
-    virtual void notifyAboutBeginOfPastingData();
+    void notifyAboutReceivedPasteData(const byte* data, long length);
+    void notifyAboutEndOfPastingData();
+    void notifyAboutBeginOfPastingData();
 
     Atom x11AtomForClipboard;
     Atom x11AtomForTargets;
@@ -86,6 +85,9 @@ private:
 
     class SelectionContentHandler;
     SelectionOwner::Ptr selectionOwner;
+
+    class PasteDataContentHandler;
+    PasteDataReceiver::Ptr pasteDataReceiver;
 };
 
 } // namespace LucED

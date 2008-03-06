@@ -34,8 +34,7 @@ namespace LucED {
 class TimeVal
 {
 public:
-
-    friend int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal);
+    
     
     /**
      * Time t2 should be later than t1.
@@ -58,12 +57,28 @@ public:
         timeval.tv_sec = 0;
         timeval.tv_usec = 0;
     }
+
+    enum CurrentTimeFlag {
+        NOW
+    };
+    TimeVal(CurrentTimeFlag c) {
+        gettimeofday(&timeval, NULL);
+    }
     
     TimeVal(Seconds seconds, MicroSeconds microSeconds) {
         timeval.tv_sec = seconds;
         timeval.tv_usec = microSeconds;
     }
+    TimeVal(Seconds seconds) {
+        timeval.tv_sec = seconds;
+        timeval.tv_usec = 0;
+    }
     
+    TimeVal(MicroSeconds microSeconds) {
+        timeval.tv_sec = 0;
+        timeval.tv_usec = microSeconds;
+    }
+
     Seconds getSeconds() const {
         return Seconds(timeval.tv_sec);
     }
@@ -185,15 +200,11 @@ public:
         return *this;
     }
 
-public:
+private:
+    friend class System;
+
     struct timeval timeval;
 };
-
-
-inline int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal)
-{
-    return select(n, readfds, writefds, exceptfds, &timeVal->timeval);
-}
 
 
 } // namespace LucED

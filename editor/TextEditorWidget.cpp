@@ -29,13 +29,14 @@
 
 using namespace LucED;
 
+const int TextEditorWidget::BORDER_WIDTH;
 
 class TextEditorWidget::SelectionContentHandler : public SelectionOwner::ContentHandler
 {
 public:
     typedef OwningPtr<ContentHandler> Ptr;
 
-    static Ptr create(TextEditorWidget* textEditorWidget) {
+    static Ptr create(ValidPtr<TextEditorWidget> textEditorWidget) {
         return Ptr(new SelectionContentHandler(textEditorWidget));
     }
     virtual long initSelectionDataRequest()
@@ -52,7 +53,7 @@ public:
         ASSERT(textEditorWidget->getBackliteBuffer()->hasActiveSelection());
     
         long selBegin = textEditorWidget->getBackliteBuffer()->getBeginSelectionPos();
-        return textEditorWidget->getTextData()->getAmount(selBegin + pos, length);
+        return textEditorWidget->textData->getAmount(selBegin + pos, length);
     }
     virtual void endSelectionDataRequest()
     {
@@ -72,23 +73,50 @@ public:
         }
     }
 private:
-    SelectionContentHandler(TextEditorWidget* textEditorWidget)
+    SelectionContentHandler(ValidPtr<TextEditorWidget> textEditorWidget)
         : textEditorWidget(textEditorWidget)
     {}
-    WeakPtr<TextEditorWidget> textEditorWidget;
+    ValidPtr<TextEditorWidget> textEditorWidget;
 };
 
+
+class TextEditorWidget::PasteDataContentHandler : public PasteDataReceiver::ContentHandler
+{
+public:
+    typedef OwningPtr<ContentHandler> Ptr;
+
+    static Ptr create(ValidPtr<TextEditorWidget> textEditorWidget) {
+        return Ptr(new PasteDataContentHandler(textEditorWidget));
+    }
+    
+    virtual void notifyAboutBeginOfPastingData() {
+        textEditorWidget->notifyAboutBeginOfPastingData();
+    }
+    virtual void notifyAboutReceivedPasteData(const byte* data, long length) {
+        textEditorWidget->notifyAboutReceivedPasteData(data, length);
+    }
+    virtual void notifyAboutEndOfPastingData() {
+        textEditorWidget->notifyAboutEndOfPastingData();
+    }
+private:
+    PasteDataContentHandler(ValidPtr<TextEditorWidget> textEditorWidget)
+        : textEditorWidget(textEditorWidget)
+    {}
+    ValidPtr<TextEditorWidget> textEditorWidget;
+};
 
 TextEditorWidget::TextEditorWidget(GuiWidget*       parent, 
                                    TextStyles::Ptr  textStyles, 
                                    HilitedText::Ptr hilitedText, 
+                                   CreateOptions    options,
                                    int              borderWidth)
                                    
       : TextWidget(parent, textStyles, hilitedText, borderWidth),
+
         selectionOwner(SelectionOwner::create(this, 
                                               SelectionOwner::TYPE_PRIMARY,
                                               SelectionContentHandler::create(this))),
-        PasteDataReceiver(this),
+
         rememberedCursorPixX(0),
         scrollRepeatCallback(newCallback(this, &TextEditorWidget::handleScrollRepeating)),
         hasMovingSelection(false),
@@ -97,11 +125,17 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
         lastActionId(ACTION_UNSPECIFIED),
         currentActionId(ACTION_UNSPECIFIED),
         pasteParameter(CURSOR_TO_END_OF_PASTED_DATA),
-        isSelectionPersistent(false)
+        isSelectionPersistent(false),
+        textData(getTextData()),
+        readOnlyFlag(options.isSet(READ_ONLY))
 {
+    if (!options.isSet(READ_ONLY)) {
+        pasteDataReceiver = PasteDataReceiver::create(this,
+                                                      PasteDataContentHandler::create(this));
+    }
     hasFocusFlag = false;
     addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
-    getTextData()->activateHistory();
+    textData->activateHistory();
 }
 
 
@@ -161,8 +195,8 @@ void TextEditorWidget::assureSelectionVisible()
     else if (getBackliteBuffer()->getBeginSelectionLine() >= getTopLineNumber() + getNumberOfVisibleLines()  - 1)
     {
         int newTopLineNumber = getBackliteBuffer()->getBeginSelectionLine() + getNumberOfVisibleLines() / 3 - getNumberOfVisibleLines();
-        if (newTopLineNumber > getTextData()->getNumberOfLines() - getNumberOfVisibleLines()) {
-            newTopLineNumber = getTextData()->getNumberOfLines() - getNumberOfVisibleLines();
+        if (newTopLineNumber > textData->getNumberOfLines() - getNumberOfVisibleLines()) {
+            newTopLineNumber = textData->getNumberOfLines() - getNumberOfVisibleLines();
         }
         setTopLineNumber(newTopLineNumber);
     }
@@ -178,8 +212,8 @@ void TextEditorWidget::adjustCursorVisibility()
         setTopLineNumber(newTopLineNumber);
     } else if (getCursorLineNumber() >= getTopLineNumber() + getNumberOfVisibleLines()) {
         int newTopLineNumber = getCursorLineNumber() - getNumberOfVisibleLines() + getNumberOfVisibleLines() / 4;
-        if (newTopLineNumber + getNumberOfVisibleLines() > getTextData()->getNumberOfLines()) {
-            newTopLineNumber = getTextData()->getNumberOfLines() - getNumberOfVisibleLines();
+        if (newTopLineNumber + getNumberOfVisibleLines() > textData->getNumberOfLines()) {
+            newTopLineNumber = textData->getNumberOfLines() - getNumberOfVisibleLines();
         }
         setTopLineNumber(newTopLineNumber);
     }
@@ -217,7 +251,7 @@ void TextEditorWidget::notifyAboutBeginOfPastingData()
         beginPastingTextMark = createNewMarkFromCursor();
         pastingTextMark      = createNewMarkFromCursor();
     } else {
-        pastingTextMark      = getTextData()->createNewMark(beginPastingTextMark);
+        pastingTextMark      = textData->createNewMark(beginPastingTextMark);
     }
 //    getBackliteBuffer()->activateSelection(pastingTextMark.getPos());
 //    getBackliteBuffer()->makeSelectionToSecondarySelection();
@@ -228,7 +262,7 @@ void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long lengt
     if (length > 0) {
         bool first =  (pastingTextMark.getPos() == beginPastingTextMark.getPos());
         
-        getTextData()->insertAtMark(pastingTextMark, data, length);
+        textData->insertAtMark(pastingTextMark, data, length);
         pastingTextMark.moveToPos(pastingTextMark.getPos() + length);
         
         if (!first) {
@@ -265,7 +299,7 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
     assureCursorVisible();
 
     rememberedCursorPixX = getCursorPixX();
-    getTextData()->setHistorySeparator();
+    textData->setHistorySeparator();
 
     pastingTextMark = TextData::TextMark();
 
@@ -286,8 +320,10 @@ static inline MicroSeconds calculateScrollTime(int diffPix, int lineHeight)
 
 GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
 {
-    if (selectionOwner->processSelectionOwnerEvent(event) == EVENT_PROCESSED || processPasteDataReceiverEvent(event) == EVENT_PROCESSED
-            || TextWidget::processEvent(event) == EVENT_PROCESSED) {
+    if (   (selectionOwner.isValid()    && selectionOwner   ->processSelectionOwnerEvent   (event) == EVENT_PROCESSED) 
+        || (pasteDataReceiver.isValid() && pasteDataReceiver->processPasteDataReceiverEvent(event) == EVENT_PROCESSED)
+        || TextWidget::processEvent(event) == EVENT_PROCESSED)
+    {
         return EVENT_PROCESSED;
     } else {
         switch (event->type)
@@ -340,7 +376,6 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                             long doubleClickPos = getTextPosFromPixXY(x, y, false);
                             long p1 = doubleClickPos;
                             long p2 = p1;
-                            TextData *textData = getTextData();
                             if (doubleClickPos < textData->getLength())
                             {
                                 if (isWordCharacter(textData->getChar(p1))) {
@@ -405,7 +440,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
 
                         long newCursorPos = getTextPosFromPixXY(x, y);
                         moveCursorToTextPosition(newCursorPos);
-                        EditingHistory::SectionHolder::Ptr historySectionHolder = getTextData()->createHistorySection();
+                        EditingHistory::SectionHolder::Ptr historySectionHolder = textData->createHistorySection();
                         
                         requestSelectionPasting(createNewMarkFromCursor());
                         currentActionId = ACTION_UNSPECIFIED;
@@ -423,8 +458,8 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                 }
                 else if (event->xbutton.button == Button5)
                 {
-                    if (getTopLineNumber() + 5 >= getTextData()->getNumberOfLines() - getNumberOfVisibleLines()) {
-                        setTopLineNumber(getTextData()->getNumberOfLines() - getNumberOfVisibleLines());
+                    if (getTopLineNumber() + 5 >= textData->getNumberOfLines() - getNumberOfVisibleLines()) {
+                        setTopLineNumber(textData->getNumberOfLines() - getNumberOfVisibleLines());
                     } else {
                         setTopLineNumber(getTopLineNumber() + 5);
                     }
@@ -478,8 +513,6 @@ void TextEditorWidget::replaceTextWithPrimarySelection()
 {
     if (!cursorChangesDisabled && !isReadOnly())
     {
-        TextData* textData = getTextData();
-        
         historySectionHolder = textData->createHistorySection();
         //textData->setHistorySeparator();
         
@@ -505,7 +538,6 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
             long doubleClickPos = getTextPosFromPixXY(x, y, false);
             long p1 = doubleClickPos;
             long p2 = p1;
-            TextData *textData = getTextData();
 
             if (doubleClickPos < textData->getLength())
             {
@@ -605,7 +637,7 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                         calculateScrollTime(-x, getLineHeight()),
                         scrollRepeatCallback);
             }
-        } else if (x > getPixWidth() && !getTextData()->isEndOfLine(newCursorPos)) {
+        } else if (x > getPixWidth() && !textData->isEndOfLine(newCursorPos)) {
             if (!isMovingSelectionScrolling) {
                 scrollRight();
                 isMovingSelectionScrolling = true;
@@ -671,7 +703,7 @@ void TextEditorWidget::handleScrollRepeating()
             EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                     calculateScrollTime(-movingSelectionX, getLineHeight()),
                     scrollRepeatCallback);
-        } else if (movingSelectionX > getPixWidth() && !getTextData()->isEndOfLine(newCursorPos)) {
+        } else if (movingSelectionX > getPixWidth() && !textData->isEndOfLine(newCursorPos)) {
             scrollRight();
             EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
                     calculateScrollTime(movingSelectionX - getPixWidth(), getLineHeight()),
@@ -713,8 +745,8 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
                 lastActionId = currentActionId;
                 currentActionId = ACTION_KEYBOARD_INPUT;
                 
-                getTextData()->setMergableHistorySeparator();
-                EditingHistory::SectionHolder::Ptr historySectionHolder = getTextData()->getHistorySectionHolder();
+                textData->setMergableHistorySeparator();
+                EditingHistory::SectionHolder::Ptr historySectionHolder = textData->getHistorySectionHolder();
                 
                 hideCursor();
                 if (selectionOwner->hasSelectionOwnership())
@@ -858,7 +890,7 @@ void TextEditorWidget::handleScrollStepH(ScrollStep::Type scrollStep)
 
 bool TextEditorWidget::scrollDown()
 {
-    if (this->getTopLineNumber() < this->getTextData()->getNumberOfLines() - this->getNumberOfVisibleLines()) {
+    if (this->getTopLineNumber() < this->textData->getNumberOfLines() - this->getNumberOfVisibleLines()) {
         this->setTopLineNumber(this->getTopLineNumber() + 1);
         return true;
     } else {
@@ -908,8 +940,8 @@ void TextEditorWidget::scrollPageDown()
 {
     long targetTopLine = this->getTopLineNumber() + this->getNumberOfVisibleLines() - 1;
     
-    if (targetTopLine > this->getTextData()->getNumberOfLines() - this->getNumberOfVisibleLines()) {
-        targetTopLine = this->getTextData()->getNumberOfLines() - this->getNumberOfVisibleLines();
+    if (targetTopLine > this->textData->getNumberOfLines() - this->getNumberOfVisibleLines()) {
+        targetTopLine = this->textData->getNumberOfLines() - this->getNumberOfVisibleLines();
     }
     this->setTopLineNumber(targetTopLine);
 }

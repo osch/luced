@@ -33,7 +33,7 @@
 
 using namespace LucED;
 
-StandardEditActions::StandardEditActions(TextEditorWidget *editWidget)
+StandardEditActions::StandardEditActions(ValidPtr<TextEditorWidget> editWidget)
     : e(editWidget)
 {}
 
@@ -110,7 +110,7 @@ void StandardEditActions::gotoMatchingBracket()
             bool forward;
             bool hasBracket = false;
             
-            TextData* textData = e->getTextData();
+            ValidPtr<TextData> textData = e->getTextData();
             
             switch (textData->getChar(cursorPos - 1)) {
                 case '(': hasBracket = true; forward = true; openBracket = '('; closeBracket = ')'; break;
@@ -519,7 +519,7 @@ void StandardEditActions::shiftBlockLeft()
 {
     if (!e->areCursorChangesDisabled() && e->hasSelection() && !e->isReadOnly())
     {
-        TextData* textData                                = e->getTextData();
+        ValidPtr<TextData> textData                       = e->getTextData();
         EditingHistory::SectionHolder::Ptr historySection = textData->createHistorySection();
         
         TextData::TextMark mark   = e->getNewMarkToBeginOfSelection();
@@ -558,7 +558,7 @@ void StandardEditActions::shiftBlockRight()
 {
     if (!e->areCursorChangesDisabled() && e->hasSelection() && !e->isReadOnly())
     {
-        TextData* textData                                = e->getTextData();
+        ValidPtr<TextData> textData                       = e->getTextData();
         EditingHistory::SectionHolder::Ptr historySection = textData->createHistorySection();
         
         TextData::TextMark mark   = e->getNewMarkToBeginOfSelection();
@@ -1122,7 +1122,7 @@ void StandardEditActions::backSpace()
                 else 
                 {
 #if 0
-                    TextData* textData = e->getTextData();
+                    ValidPtr<TextData> textData = e->getTextData();
                     bool wasAllSpace = true;
                     for (long p = cursorPos - e->getCursorColumn(); p < cursorPos; ++p) {
                         byte c = textData->getChar(p);
@@ -1140,9 +1140,9 @@ void StandardEditActions::backSpace()
                         amountToBeRemoved = 1;
                     }
 #else
-                    TextData* textData = e->getTextData();
-                    long p             = cursorPos;
-                    long opticalColumn = e->getOpticalCursorColumn();
+                    ValidPtr<TextData> textData = e->getTextData();
+                    long p                      = cursorPos;
+                    long opticalColumn          = e->getOpticalCursorColumn();
                     
                     while (p - 1 >= 0 && textData->getChar(p - 1) == ' ') {
                         p             -= 1;
@@ -1358,7 +1358,7 @@ void StandardEditActions::selectWordForward()
 {
     if (!e->areCursorChangesDisabled())
     {
-        TextData*       textData       = e->getTextData();
+        ValidPtr<TextData>  textData = e->getTextData();
         
         long len  = textData->getLength();
         long cursorPos = e->getCursorTextPosition();
@@ -1427,7 +1427,7 @@ void StandardEditActions::selectWordBackward()
 {
     if (!e->areCursorChangesDisabled())
     {
-        TextData*       textData       = e->getTextData();
+        ValidPtr<TextData> textData = e->getTextData();
 
         long len  = textData->getLength();
         long cursorPos = e->getCursorTextPosition();
@@ -1763,7 +1763,7 @@ void StandardEditActions::findPrevLuaStructureElement()
 
 void StandardEditActions::openCorrespondingFile()
 {
-    TextData* textData = e->getTextData();
+    ValidPtr<TextData> textData = e->getTextData();
     if (!textData->isFileNamePseudo())
     {
         String currentFile = textData->getFileName();

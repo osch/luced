@@ -27,6 +27,8 @@
 using namespace LucED;
 
 TextStyle::TextStyle(const String& fontName, const String& colorName)
+    : fontName(fontName),
+      colorName(colorName)
 {
     XCharStruct* min_bounds;
     XCharStruct* max_bounds;

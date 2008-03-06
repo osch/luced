@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -26,13 +26,6 @@ using namespace LucED;
 
 WeakPtr<TopWinList> TopWinList::instance;
 
-
-namespace // anonymous namespace
-{
-
-
-} // anonymous namespace
-
 TopWinList* TopWinList::getInstance()
 {
     if (instance.isInvalid())
@@ -49,11 +42,9 @@ TopWinList* TopWinList::getInstance()
 }
 
 
-void TopWinList::requestCloseChildWindow(TopWin* topWin)
+void TopWinList::notifyRequestCloseChildWindow(TopWin* topWin)
 {
-    TopWinOwner::requestCloseChildWindow(topWin);
-    
-    if (getNumberOfChildWindows() == 0)
+    if (ownedTopWins->getNumberOfTopWins() == 0)
     {
         EventDispatcher::getInstance()->deregisterRunningComponent(this);
         instance.invalidate();
@@ -70,7 +61,7 @@ void TopWinList::EmptyChecker::check()
 
 void TopWinList::checkIfEmpty()
 {
-    if (getNumberOfChildWindows() == 0)
+    if (ownedTopWins->getNumberOfTopWins() == 0)
     {
         EventDispatcher::getInstance()->deregisterRunningComponent(this);
         instance.invalidate();
@@ -78,3 +69,7 @@ void TopWinList::checkIfEmpty()
     emptyChecker.invalidate();
 }
 
+void TopWinList::notifyAboutNewOwnedTopWin(TopWin* topWin)
+{
+    topWin->registerRequestForCloseNotifyCallback(newCallback(this, &TopWinList::notifyRequestCloseChildWindow));
+}

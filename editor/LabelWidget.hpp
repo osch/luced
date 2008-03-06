@@ -39,9 +39,9 @@ public:
 
     typedef OwningPtr<LabelWidget> Ptr;
 
-    static LabelWidget::Ptr create(GuiWidget* parent, const String& leftText, const String& rightText = "")
+    static Ptr create(GuiWidget* parent, const String& leftText, const String& rightText = "")
     {
-        return LabelWidget::Ptr(new LabelWidget(parent, leftText, rightText));
+        return Ptr(new LabelWidget(parent, leftText, rightText));
     }
 
     virtual ProcessingResult processEvent(const XEvent *event);

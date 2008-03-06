@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,25 +19,27 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef STANDARDEDITACTIONS_H
-#define STANDARDEDITACTIONS_H
+#ifndef STANDARD_EDIT_ACTIONS_HPP
+#define STANDARD_EDIT_ACTIONS_HPP
 
 #include "TextEditorWidget.hpp"
 #include "HeapObject.hpp"
+#include "ValidPtr.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class StandardEditActions : public HeapObject
 {
 public:
     typedef OwningPtr<StandardEditActions> Ptr;
     
-    static Ptr createSingleLineActions(TextEditorWidget* editWidget) {
+    static Ptr createSingleLineActions(ValidPtr<TextEditorWidget> editWidget) {
         Ptr rslt(new StandardEditActions(editWidget));
         rslt->registerSingleLineEditActionsToEditWidget();
         return rslt;
     }
-    static Ptr createMultiLineActions(TextEditorWidget* editWidget) {
+    static Ptr createMultiLineActions(ValidPtr<TextEditorWidget> editWidget) {
         Ptr rslt(new StandardEditActions(editWidget));
         rslt->registerMultiLineEditActionsToEditWidget();
         return rslt;
@@ -102,7 +104,7 @@ public:
     void openCorrespondingFile();
     
 private:
-    StandardEditActions(TextEditorWidget *editWidget);
+    StandardEditActions(ValidPtr<TextEditorWidget> editWidget);
     
     void registerSingleLineEditActionsToEditWidget();
     void registerMultiLineEditActionsToEditWidget();
@@ -110,11 +112,11 @@ private:
     void newLineFixedColumnIndent(bool forward);
     void newLineAutoIndent(bool insert);
 
-    WeakPtr<TextEditorWidget> e;
+    ValidPtr<TextEditorWidget> e;
 };
 
 
 } // namespace LucED
 
 
-#endif // STANDARDEDITACTIONS_H
+#endif // STANDARD_EDIT_ACTIONS_HPP

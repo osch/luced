@@ -39,6 +39,8 @@
 #include "WindowCloser.hpp"
 #include "System.hpp"
 #include "ConfigErrorHandler.hpp"
+#include "ProgramExecutor.hpp"
+#include "TestBox.hpp"
 
 using namespace LucED;
 
@@ -95,6 +97,8 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 //    rootElement->addElement(tableLayout);
     
     textEditor = MultiLineEditorWidget::create(this, textStyles, hilitedText);
+    textData   = textEditor->getTextData();
+
     
 //    GuiLayoutColumn::Ptr c1 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr c2 = GuiLayoutColumn::create();
@@ -129,7 +133,6 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     
 //    rootElement->setPosition(Position(0, 0, width, height));
     
-    TextData::Ptr textData = hilitedText->getTextData();
     ViewCounterTextDataAccess::incViewCounter(textData);
     
     textData->registerModifiedFlagListener(newCallback(this, &EditorTopWin::handleChangedModifiedFlag));
@@ -212,20 +215,22 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping2.set( KeyModifier("Alt"),        KeyId("c"),      newCallback(this,      &EditorTopWin::createCloneWindow));
     keyMapping2.set( KeyModifier("Alt"),        KeyId("l"),      newCallback(this,      &EditorTopWin::executeLuaScript));
 
+///////////// TODO
+    keyMapping1.set( KeyModifier("Modifier5"),  KeyId("e"),      newCallback(this,      &EditorTopWin::executeTestScript));
+    keyMapping1.set( KeyModifier("Modifier5"),  KeyId("t"),      newCallback(this,      &EditorTopWin::displayTestBox));
+/////////////
     
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &EditorTopWin::treatConfigUpdate));
 }
 
 EditorTopWin::~EditorTopWin()
 {
-    ViewCounterTextDataAccess::decViewCounter(textEditor->getTextData());
+    ViewCounterTextDataAccess::decViewCounter(textData);
     closeModalMessageBox();
 }
 
 void EditorTopWin::treatConfigUpdate()
 {
-    TextData* textData = textEditor->getTextData();
-
     LanguageMode::Ptr newLanguageMode;
 
     if (textData->isFileNamePseudo())
@@ -338,8 +343,7 @@ void EditorTopWin::treatFocusIn()
 {
     if (hasModalMessageBox) {
         if (modalMessageBox.isInvalid()) {
-            modalMessageBox = MessageBox::create(this, modalMessageBoxParameter);
-            modalMessageBox->show();
+            invokeNewModalMessageBox();
         }
         textEditor->disableCursorChanges();
         modalMessageBox->raise();
@@ -355,7 +359,6 @@ void EditorTopWin::treatFocusIn()
 
 bool EditorTopWin::checkForFileModifications()
 {
-    TextData* textData = textEditor->getTextData();
     textData->checkFileInfo();
 
     if (   textData->wasFileModifiedOnDisk() 
@@ -379,13 +382,12 @@ bool EditorTopWin::checkForFileModifications()
 
 void EditorTopWin::reloadFile()
 {
-    TextData* textData = textEditor->getTextData();
     textData->reloadFile();
 }
 
 void EditorTopWin::doNotReloadFile()
 {
-    textEditor->getTextData()->setIgnoreModifiedOnDiskFlag(true);
+    textData->setIgnoreModifiedOnDiskFlag(true);
 }
 
 void EditorTopWin::treatFocusOut()
@@ -397,6 +399,13 @@ void EditorTopWin::treatFocusOut()
     }
 }
 
+void EditorTopWin::invokeNewModalMessageBox()
+{
+    modalMessageBox = MessageBox::create(this, modalMessageBoxParameter);
+    modalMessageBox->registerRequestForCloseNotifyCallback(newCallback(this, &EditorTopWin::notifyRequestCloseChildWindow));
+    modalMessageBox->show();
+}
+
 void EditorTopWin::setModalMessageBox(const MessageBoxParameter& messageBoxParameter)
 {
     this->hasModalMessageBox = true;
@@ -404,8 +413,7 @@ void EditorTopWin::setModalMessageBox(const MessageBoxParameter& messageBoxParam
     if (modalMessageBox.isValid()) {
         modalMessageBox->hide();
         modalMessageBox->requestCloseWindow();
-        modalMessageBox = MessageBox::create(this, modalMessageBoxParameter);
-        modalMessageBox->show();
+        invokeNewModalMessageBox();
     }
 }
 
@@ -421,14 +429,13 @@ void EditorTopWin::closeModalMessageBox()
     }
 }
 
-void EditorTopWin::requestCloseChildWindow(TopWin *topWin)
+void EditorTopWin::notifyRequestCloseChildWindow(TopWin *topWin)
 {
     if (hasModalMessageBox && topWin == modalMessageBox)
     {
         hasModalMessageBox = false;
         textEditor->enableCursorChanges();
     }
-    TopWinOwner::requestCloseChildWindow(topWin);
 }
 
 void EditorTopWin::invokeGotoLinePanel()
@@ -508,7 +515,7 @@ void EditorTopWin::requestCloseFor(GuiWidget* w)
 {
     if (w == invokedPanel) {
         if (messageBox.isValid()) {
-            requestCloseChildWindow(messageBox);
+            messageBox->requestCloseWindow();
         }
         int panelIndex;
         if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
@@ -539,7 +546,7 @@ void EditorTopWin::handleEscapeKey()
 void EditorTopWin::invokeMessageBox(MessageBoxParameter p)
 {
     if (messageBox.isValid()) {
-        requestCloseChildWindow(messageBox);
+        messageBox->requestCloseWindow();
     }
     messageBox = MessageBox::create(this, p);
     messageBox->requestFocus();
@@ -547,16 +554,16 @@ void EditorTopWin::invokeMessageBox(MessageBoxParameter p)
 
 void EditorTopWin::setWindowTitle()
 {
-    File file(textEditor->getTextData()->getFileName());
+    File file(textData->getFileName());
     
     String title = file.getBaseName();
-    if (textEditor->getTextData()->getModifiedFlag() == true
-     && textEditor->getTextData()->isReadOnly())
+    if (textData->getModifiedFlag() == true
+     && textData->isReadOnly())
     {
         title << " (read only, modified)";
-    } else if (textEditor->getTextData()->isReadOnly()) {
+    } else if (textData->isReadOnly()) {
         title << " (read only)";
-    } else if (textEditor->getTextData()->getModifiedFlag() == true) {
+    } else if (textData->getModifiedFlag() == true) {
         title << " (modified)";
     }
     title << " - ";
@@ -582,12 +589,12 @@ void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
 void EditorTopWin::handleSaveKey()
 {
     try {
-        if (textEditor->getTextData()->isFileNamePseudo()) {
+        if (textData->isFileNamePseudo()) {
             invokeSaveAsPanel(newCallback(this, &EditorTopWin::handleSaveKey));
         }
         else {
-            textEditor->getTextData()->save();
-            GlobalConfig::getInstance()->notifyAboutNewFileContent(textEditor->getTextData()->getFileName());
+            textData->save();
+            GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
         }
     } catch (FileException& ex) {
         invokeMessageBox(MessageBoxParameter().setTitle("File Error")
@@ -614,12 +621,12 @@ void EditorTopWin::handleSaveAsKey()
 void EditorTopWin::saveAndClose()
 {
     try {
-        if (textEditor->getTextData()->isFileNamePseudo()) {
+        if (textData->isFileNamePseudo()) {
             invokeSaveAsPanel(newCallback(this, &EditorTopWin::saveAndClose));
         }
         else {
-            textEditor->getTextData()->save();
-            GlobalConfig::getInstance()->notifyAboutNewFileContent(textEditor->getTextData()->getFileName());
+            textData->save();
+            GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
             requestCloseWindow();
         }
     } catch (FileException& ex) {
@@ -636,10 +643,10 @@ void EditorTopWin::saveAndClose()
 
 void EditorTopWin::requestCloseWindow()
 {
-    File file(textEditor->getTextData()->getFileName());
+    File file(textData->getFileName());
 
-    if (ViewCounterTextDataAccess::getViewCounter(textEditor->getTextData()) == 1
-     && textEditor->getTextData()->getModifiedFlag() == true)
+    if (ViewCounterTextDataAccess::getViewCounter(textData) == 1
+     && textData->getModifiedFlag() == true)
     {
         invokeMessageBox(MessageBoxParameter().setTitle("Save File")
                                               .setMessage(String() << "Save file '" << file.getBaseName() 
@@ -665,7 +672,7 @@ void EditorTopWin::createEmptyWindow()
     TextStyles::Ptr   textStyles   = GlobalConfig::getInstance()->getTextStyles();
     LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
 
-    String untitledFileName = File(String() << textEditor->getTextData()->getFileName()).getDirName() << "/Untitled";
+    String untitledFileName = File(String() << textData->getFileName()).getDirName() << "/Untitled";
     TextData::Ptr     emptyTextData     = TextData::create();
                       emptyTextData->setPseudoFileName(untitledFileName);
 
@@ -708,11 +715,11 @@ void EditorTopWin::executeLuaScript()
             long selBegin  = textEditor->getBeginSelectionPos();
             long selLength = textEditor->getEndSelectionPos() - selBegin;
             
-            LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeScript((const char*) textEditor->getTextData()->getAmount(selBegin, selLength),
+            LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeScript((const char*) textData->getAmount(selBegin, selLength),
                                                                                                selLength);
             String output = scriptResult.output;
             
-            EditingHistory::SectionHolder::Ptr historySectionHolder = textEditor->getTextData()->createHistorySection();
+            EditingHistory::SectionHolder::Ptr historySectionHolder = textData->createHistorySection();
             
             textEditor->hideCursor();
             textEditor->moveCursorToTextPosition(selBegin + selLength);
@@ -739,7 +746,7 @@ void EditorTopWin::executeLuaScript()
             
             while (spos > 0)
             {
-                byte c = textEditor->getTextData()->getChar(spos - 1);
+                byte c = textData->getChar(spos - 1);
                 if (parenCounter > 0)
                 {
                     if (c == '(') {
@@ -761,7 +768,7 @@ void EditorTopWin::executeLuaScript()
             }
             if (spos < cursorPos)
             {
-                LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeExpression((const char*) textEditor->getTextData()->getAmount(spos, cursorPos - spos),
+                LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeExpression((const char*) textData->getAmount(spos, cursorPos - spos),
                                                                                                        cursorPos - spos);
                 String output = scriptResult.output;
                 for (int i = 0, n = scriptResult.objects.getLength(); i < n; ++i) {
@@ -769,7 +776,7 @@ void EditorTopWin::executeLuaScript()
                 }
                 if (output.getLength() > 0) 
                 {
-                    EditingHistory::SectionHolder::Ptr historySectionHolder = textEditor->getTextData()->createHistorySection();
+                    EditingHistory::SectionHolder::Ptr historySectionHolder = textData->createHistorySection();
                     
                     textEditor->hideCursor();
                     textEditor->moveCursorToTextPosition(spos);
@@ -792,11 +799,40 @@ void EditorTopWin::executeLuaScript()
 
 String EditorTopWin::getFileName() const
 {
-    return textEditor->getTextData()->getFileName();
+    return textData->getFileName();
 }
 
 void EditorTopWin::requestProgramQuit()
 {
     WindowCloser::start();
+}
+
+void EditorTopWin::executeTestScript()
+{
+    printf("-------------------------\n");
+    ProgramExecutor::start("/bin/sh",
+                           "echo 1234567890; ls; exit 12",
+                           newCallback(this, &EditorTopWin::finishedTestScript));
+}
+
+void EditorTopWin::finishedTestScript(ProgramExecutor::Result rslt)
+{
+#if 0
+    String out(rslt.outputBuffer, 
+               rslt.outputLength);
+    
+    printf("-------------------------- finished '%s'\n", out.toCString());
+#endif
+    
+    TextData::Ptr textData = TextData::create();
+    textData->setToData(rslt.outputBuffer,
+                        rslt.outputLength);
+
+    TestBox::Ptr testBox = TestBox::create(this, textData);
+    testBox->show();
+}
+
+void EditorTopWin::displayTestBox()
+{
 }
 

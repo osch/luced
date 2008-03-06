@@ -25,6 +25,7 @@
 #include "SingleLineEditorWidget.hpp"
 #include "TextData.hpp"
 #include "EditFieldGroup.hpp"
+#include "ValidPtr.hpp"
 
 namespace LucED
 {
@@ -34,11 +35,13 @@ class SingleLineEditField : public GuiWidget
 public:
     typedef OwningPtr<SingleLineEditField> Ptr;
 
-    static SingleLineEditField::Ptr create(GuiWidget *parent, 
-            LanguageMode::Ptr languageMode, TextData::Ptr textData = TextData::Ptr())
+    static Ptr create(GuiWidget*        parent, 
+                      LanguageMode::Ptr languageMode, 
+                      TextData::Ptr     textData = TextData::Ptr())
     {
-        return SingleLineEditField::Ptr(new SingleLineEditField(parent, 
-                languageMode, textData));
+        return Ptr(new SingleLineEditField(parent, 
+                                           languageMode, 
+                                           textData));
     }
 
     void setLayoutHeight(int height, VerticalAdjustment::Type adjust);
@@ -52,7 +55,7 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    TextData* getTextData() {
+    TextData::Ptr getTextData() {
         return editorWidget->getTextData();
     }
     

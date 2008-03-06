@@ -29,7 +29,7 @@
 namespace LucED
 {
 
-class RunningComponent : public virtual HeapObject
+class RunningComponent : public HeapObject
 {
 public:
     typedef OwningPtr<RunningComponent> OwningPtr;

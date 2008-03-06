@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,36 +19,43 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REPLACEUTIL_HPP
-#define REPLACEUTIL_HPP
+#ifndef MULTI_LINE_OUTPUT_WIDGET_HPP
+#define MULTI_LINE_OUTPUT_WIDGET_HPP
 
-#include "FindUtil.hpp"
+#include "GuiWidget.hpp"
+#include "OwningPtr.hpp"
+#include "TextEditorWidget.hpp"
 
 namespace LucED
 {
 
-class ReplaceUtil : public FindUtil
+class MultiLineOutputWidget : public GuiWidget
 {
 public:
-    
-    ReplaceUtil(ValidPtr<TextData> textData)
-        : FindUtil(textData)
-    {}
-    
-    void setReplaceString(const String& replaceString) {
-        this->replaceString = replaceString;
+    typedef OwningPtr<MultiLineOutputWidget> Ptr;
+
+    enum Style {
+        STYLE_OUTPUT,
+        STYLE_GUI
+    };
+
+    static Ptr create(GuiWidget* parent, Style style, TextData::Ptr textData)
+    {
+        return Ptr(new MultiLineOutputWidget(parent, style, textData));
     }
-    String getReplaceString() const {
-        return replaceString;
-    }
-    String getSubstitutedString();
     
-    bool replaceAllBetween(long spos, long epos);
-    
+    virtual Measures getDesiredMeasures();
+    virtual void setPosition(Position p);
+
 private:
-    String replaceString;
+    MultiLineOutputWidget(GuiWidget* parent, Style style, TextData::Ptr textData);
+
+    Style                 style;
+    TextStyles::Ptr       textStyles;
+    TextData::Ptr         textData;
+    TextEditorWidget::Ptr textWidget;
 };
 
 } // namespace LucED
 
-#endif // REPLACEUTIL_HPP
+#endif // MULTI_LINE_OUTPUT_WIDGET_HPP

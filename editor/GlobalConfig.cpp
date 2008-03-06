@@ -30,6 +30,7 @@
 #include "LuaObject.hpp"
 #include "System.hpp"
 #include "File.hpp"
+#include "CurrentDirectoryKeeper.hpp"
 
 using namespace LucED;
 
@@ -110,7 +111,6 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode()
     return languageModes->getDefaultLanguageMode();
 }
 
-
 void GlobalConfig::readConfig()
 {
     ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::create();
@@ -124,7 +124,7 @@ void GlobalConfig::readConfig()
 
     LuaInterpreter* lua = LuaInterpreter::getInstance();
 
-    this->generalConfigFileName = File(configDirectory, "general.lua").getAbsoluteName();
+    this->generalConfigFileName = File(configDirectory, "config.lua").getAbsoluteName();
     String configFileName = generalConfigFileName;
 
     languageModes           = LanguageModes::create();
@@ -133,19 +133,32 @@ void GlobalConfig::readConfig()
 
     try
     {
-        lua->executeFile(configFileName);
+        CurrentDirectoryKeeper currentDirectoryKeeper(configDirectory);
+        
+        LuaInterpreter::Result luaRslt = lua->executeFile(configFileName);
+        
+        if (luaRslt.objects.getLength() < 1) {
+            throw ConfigException("config file does not return table");
+        }
+        
+        LuaObject configTable = luaRslt.objects[0];
 
-        // globalConfig
+        if (!configTable.isTable()) {
+            throw ConfigException("config file does not return table");
+        }
+        
 
-        LuaObject globalConfig = lua->getGlobal("globalConfig");
+        // generalConfig
 
-        if (globalConfig.isValid())
+        LuaObject generalConfig = configTable["generalConfig"];
+
+        if (generalConfig.isValid())
         {
-            if (!globalConfig.isTable()) {
-                throw ConfigException("invalid globalConfig");
+            if (!generalConfig.isTable()) {
+                throw ConfigException("invalid generalConfig");
             }
 
-            LuaObject o = globalConfig["useKeyPressRepeater"];
+            LuaObject o = generalConfig["useKeyPressRepeater"];
             if (o.isValid()) {
                 if (!o.isBoolean()) {
                     throw ConfigException("invalid useKeyPressRepeater");
@@ -153,7 +166,7 @@ void GlobalConfig::readConfig()
                 this->useKeyPressRepeater = o.toBoolean();
             }
 
-            o = globalConfig["keyPressRepeatFirstMilliSecs"];
+            o = generalConfig["keyPressRepeatFirstMilliSecs"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid keyPressRepeatFirstMilliSecs");
@@ -161,7 +174,7 @@ void GlobalConfig::readConfig()
                 this->keyPressRepeatFirstMicroSecs = MicroSeconds((long) (o.toNumber() * 1000));
             }
 
-            o = globalConfig["keyPressRepeatNextMilliSecs"];
+            o = generalConfig["keyPressRepeatNextMilliSecs"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid keyPressRepeatNextMilliSecs");
@@ -169,7 +182,7 @@ void GlobalConfig::readConfig()
                 this->keyPressRepeatNextMicroSecs = MicroSeconds((long) (o.toNumber() * 1000));
             }
 
-            o = globalConfig["scrollBarWidth"];
+            o = generalConfig["scrollBarWidth"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid scrollBarWidth");
@@ -177,7 +190,7 @@ void GlobalConfig::readConfig()
                 this->scrollBarWidth = (int) o.toNumber();
             }
 
-            o = globalConfig["scrollBarRepeatFirstMilliSecs"];
+            o = generalConfig["scrollBarRepeatFirstMilliSecs"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid scrollBarRepeatFirstMilliSecs");
@@ -185,7 +198,7 @@ void GlobalConfig::readConfig()
                 this->scrollBarRepeatFirstMicroSecs = MicroSeconds((long) (o.toNumber() * 1000));
             }
 
-            o = globalConfig["scrollBarRepeatNextMilliSecs"];
+            o = generalConfig["scrollBarRepeatNextMilliSecs"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid scrollBarRepeatNextMilliSecs");
@@ -193,7 +206,7 @@ void GlobalConfig::readConfig()
                 this->scrollBarRepeatNextMicroSecs = MicroSeconds((long) (o.toNumber() * 1000));
             }
 
-            o = globalConfig["doubleClickMilliSecs"];
+            o = generalConfig["doubleClickMilliSecs"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid doubleClickMilliSecs");
@@ -201,49 +214,49 @@ void GlobalConfig::readConfig()
                 this->doubleClickMilliSecs = (long) o.toNumber();
             }
 
-            o = globalConfig["guiColor01"];
+            o = generalConfig["guiColor01"];
             if (o.isValid()) {
                 if (!o.isString()) {
                     throw ConfigException("invalid guiColor01");
                 }
                 this->guiColor01 = o.toString();
             }
-            o = globalConfig["guiColor02"];
+            o = generalConfig["guiColor02"];
             if (o.isValid()) {
                 if (!o.isString()) {
                     throw ConfigException("invalid guiColor02");
                 }
                 this->guiColor02 = o.toString();
             }
-            o = globalConfig["guiColor03"];
+            o = generalConfig["guiColor03"];
             if (o.isValid()) {
                 if (!o.isString()) {
                     throw ConfigException("invalid guiColor03");
                 }
                 this->guiColor03 = o.toString();
             }
-            o = globalConfig["guiColor04"];
+            o = generalConfig["guiColor04"];
             if (o.isValid()) {
                 if (!o.isString()) {
                     throw ConfigException("invalid guiColor04");
                 }
                 this->guiColor04 = o.toString();
             }
-            o = globalConfig["guiColor05"];
+            o = generalConfig["guiColor05"];
             if (o.isValid()) {
                 if (!o.isString()) {
                     throw ConfigException("invalid guiColor05");
                 }
                 this->guiColor05 = o.toString();
             }
-            o = globalConfig["guiFont"];
+            o = generalConfig["guiFont"];
             if (o.isValid()) {
                 if (!o.isString()) {
                     throw ConfigException("invalid guiFont");
                 }
                 this->guiFont = o.toString();
             }
-            o = globalConfig["guiFontColor"];
+            o = generalConfig["guiFontColor"];
             if (o.isValid()) {
                 if (!o.isString()) {
                     throw ConfigException("invalid guiFontColor");
@@ -251,14 +264,14 @@ void GlobalConfig::readConfig()
                 this->guiFontColor = o.toString();
             }
 
-            o = globalConfig["primarySelectionColor"];
+            o = generalConfig["primarySelectionColor"];
             if (o.isValid()) {
                 if (!o.isString()) {
                     throw ConfigException("invalid primarySelectionColor");
                 }
                 this->primarySelectionColor = o.toString();
             }
-            o = globalConfig["pseudoSelectionColor"];
+            o = generalConfig["pseudoSelectionColor"];
             if (o.isValid()) {
                 if (!o.isString()) {
                     throw ConfigException("invalid pseudoSelectionColor");
@@ -266,7 +279,7 @@ void GlobalConfig::readConfig()
                 this->pseudoSelectionColor = o.toString();
             }
 
-            o = globalConfig["initialWindowWidth"];
+            o = generalConfig["initialWindowWidth"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid initialWindowWidth");
@@ -274,7 +287,7 @@ void GlobalConfig::readConfig()
                 this->initialWindowWidth = (int) o.toNumber();
             }
 
-            o = globalConfig["initialWindowHeight"];
+            o = generalConfig["initialWindowHeight"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid initialWindowHeight");
@@ -282,7 +295,7 @@ void GlobalConfig::readConfig()
                 this->initialWindowHeight = (int) o.toNumber();
             }
 
-            o = globalConfig["x11SelectionChunkLength"];
+            o = generalConfig["x11SelectionChunkLength"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid x11SelectionChunkLength");
@@ -293,7 +306,7 @@ void GlobalConfig::readConfig()
                 }
             }
 
-            o = globalConfig["buttonInnerSpacing"];
+            o = generalConfig["buttonInnerSpacing"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid buttonInnerSpacing");
@@ -301,7 +314,7 @@ void GlobalConfig::readConfig()
                 this->buttonInnerSpacing = (int) o.toNumber();
             }
 
-            o = globalConfig["guiSpacing"];
+            o = generalConfig["guiSpacing"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid guiSpacing");
@@ -309,7 +322,7 @@ void GlobalConfig::readConfig()
                 this->guiSpacing = (int) o.toNumber();
             }
 
-            o = globalConfig["editorPanelOnTop"];
+            o = generalConfig["editorPanelOnTop"];
             if (o.isValid()) {
                 if (!o.isBoolean()) {
                     throw ConfigException("invalid editorPanelOnTop");
@@ -317,7 +330,7 @@ void GlobalConfig::readConfig()
                 this->editorPanelOnTop = o.toBoolean();
             }
 
-            o = globalConfig["keepRunningIfOwningClipboard"];
+            o = generalConfig["keepRunningIfOwningClipboard"];
             if (o.isValid()) {
                 if (!o.isBoolean()) {
                     throw ConfigException("invalid keepRunningIfOwningClipboard");
@@ -325,7 +338,7 @@ void GlobalConfig::readConfig()
                 this->keepRunningIfOwningClipboard = o.toBoolean();
             }
 
-            o = globalConfig["maxRegexAssertionLength"];
+            o = generalConfig["maxRegexAssertionLength"];
             if (o.isValid()) {
                 if (!o.isNumber()) {
                     throw ConfigException("invalid maxRegexAssertionLength");
@@ -338,7 +351,7 @@ void GlobalConfig::readConfig()
 
         // textStyles
 
-        LuaObject ts = lua->getGlobal("textStyles");
+        LuaObject ts = configTable["textStyles"];
         if (!ts.isTable()) {
             throw ConfigException("invalid textstyles");
         }
@@ -374,7 +387,7 @@ void GlobalConfig::readConfig()
 
         // LanguageModes
 
-        LuaObject lm = lua->getGlobal("languageModes");
+        LuaObject lm = configTable["languageModes"];
         if (lm.isValid())
         {
             if (!lm.isTable()) {

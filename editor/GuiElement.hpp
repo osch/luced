@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GUIELEMENT_H
-#define GUIELEMENT_H
+#ifndef GUI_ELEMENT_HPP
+#define GUI_ELEMENT_HPP
 
 #include <X11/Xlib.h>
 
@@ -29,9 +29,10 @@
 #include "OwningPtr.hpp"
 #include "WeakPtr.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-class GuiElement : virtual public HeapObject
+class GuiElement : public HeapObject
 {
 public:
     typedef OwningPtr<GuiElement> Ptr;
@@ -87,4 +88,4 @@ protected:
 
 } // namespace LucED
 
-#endif // GUIELEMENT_H
+#endif // GUI_ELEMENT_HPP

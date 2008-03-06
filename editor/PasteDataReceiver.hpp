@@ -27,33 +27,50 @@
 #include "SelectionOwner.hpp"
 #include "TimeVal.hpp"
 #include "GuiElement.hpp"
+#include "OwningPtr.hpp"
+#include "ValidPtr.hpp"
 
 namespace LucED {
 
-class PasteDataReceiver : public virtual HeapObject,
+class PasteDataReceiver : public HeapObject,
                           public GuiWidgetAccessForEventProcessors, 
                           public SelectionOwnerAccessForPasteDataReceiver
 {
 public:
+    typedef OwningPtr<PasteDataReceiver> Ptr;
+
+    class ContentHandler : public HeapObject
+    {
+    public:
+        typedef OwningPtr<ContentHandler> Ptr;
+        
+        virtual void notifyAboutBeginOfPastingData() = 0;
+        virtual void notifyAboutReceivedPasteData(const byte* data, long length) = 0;    
+        virtual void notifyAboutEndOfPastingData() = 0;    
+    protected:
+        ContentHandler()
+        {}
+    };
+    
+    static Ptr create(ValidPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler) {
+        return Ptr(new PasteDataReceiver(baseWidget, contentHandler));
+    }
+
     void requestSelectionPasting();
     void requestClipboardPasting();
     bool isReceivingPasteData();
-    
-protected:
-    PasteDataReceiver(GuiWidget* baseWidget);
 
     GuiElement::ProcessingResult processPasteDataReceiverEvent(const XEvent *event);
 
-    virtual void notifyAboutBeginOfPastingData() = 0;
-    virtual void notifyAboutReceivedPasteData(const byte* data, long length) = 0;    
-    virtual void notifyAboutEndOfPastingData() = 0;    
-
 private:
+    PasteDataReceiver(ValidPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler);
 
     void handleTimerEvent();
     TimeVal lastPasteEventTime;
 
-    GuiWidget* baseWidget;
+    ValidPtr<GuiWidget>       baseWidget;
+    OwningPtr<ContentHandler> contentHandler;
+
     bool isReceivingPasteDataFlag;
     bool isMultiPartPastingFlag;
     ByteArray pasteBuffer;

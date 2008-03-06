@@ -78,7 +78,6 @@ private:
     bool isMouseOverButton;
     Callback<CheckBox*>::Ptr pressedCallback;
     bool hasFocus;
-    TimeVal earliestButtonReleaseTime;
     bool hasHotKey;
     bool showHotKey;
     char hotKeyChar;

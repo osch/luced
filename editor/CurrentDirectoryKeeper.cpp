@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,15 +19,27 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "MultiLineEditorWidget.hpp"
+#include <stdio.h>
+
+#include "CurrentDirectoryKeeper.hpp"
+#include "FileException.hpp"
+#include "System.hpp"
 
 using namespace LucED;
 
-MultiLineEditorWidget::MultiLineEditorWidget(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
-    : TextEditorWidget(parent, textStyles, hilitedText),
-      standardActions(StandardEditActions::createMultiLineActions(this))
+CurrentDirectoryKeeper::CurrentDirectoryKeeper(const String& dir)
 {
+    oldDir = System::getInstance()->getCurrentDirectory();
+    System::getInstance()->setCurrentDirectory(dir);
 }
 
 
+CurrentDirectoryKeeper::~CurrentDirectoryKeeper()
+{
+    try {
+        System::getInstance()->setCurrentDirectory(oldDir);
+    } catch (FileException& ex) {
+        // no Excetpions from destructor
+        fprintf(stderr, "Severe error: %s\n", ex.getMessage().toCString());
+    }
+}

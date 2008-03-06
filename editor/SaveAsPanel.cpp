@@ -85,7 +85,7 @@ void SaveAsPanel::treatFocusIn()
 void SaveAsPanel::continueSave()
 {
     String newFileName = editField->getTextData()->getAsString();
-    TextData* textData = editorWidget->getTextData();
+    ValidPtr<TextData> textData = editorWidget->getTextData();
 
     if (textData->getFileName() != newFileName)
     {
@@ -105,7 +105,7 @@ void SaveAsPanel::handleButtonPressed(Button* button)
     if (button == saveButton)
     {
         String newFileName = editField->getTextData()->getAsString();
-        TextData* textData = editorWidget->getTextData();
+        ValidPtr<TextData> textData = editorWidget->getTextData();
         
         if (   (textData->isFileNamePseudo() || textData->getFileName() != newFileName)
             && File(newFileName).exists())
@@ -129,7 +129,7 @@ void SaveAsPanel::handleButtonPressed(Button* button)
 
 void SaveAsPanel::show()
 {
-    TextData* textData = editorWidget->getTextData();
+    ValidPtr<TextData> textData = editorWidget->getTextData();
     String newContent;
     if (textData->isFileNamePseudo()) {
         newContent = String() << File(textData->getFileName()).getDirName() << "/";

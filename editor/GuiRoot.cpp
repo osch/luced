@@ -36,7 +36,7 @@ static int myX11ErrorHandler(Display *display, XErrorEvent *errorEvent)
 {
     XGetErrorText(display, errorEvent->error_code, buffer, sizeof(buffer));
     buffer[sizeof(buffer) - 1] = '\0';
-    fprintf(stderr, "LucED: %s\n", buffer);
+    fprintf(stderr, "LucED: xlib error: %s\n", buffer);
 }
 
 static bool GuiRoot_originalKeyboardModeWasAutoRepeat = false;

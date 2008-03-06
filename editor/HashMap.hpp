@@ -22,6 +22,7 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
+#include <sys/types.h>
 #include <ext/hash_map>
 
 #include "String.hpp"
@@ -63,6 +64,14 @@ template<> class HashFunction<unsigned long>
 {
 public:
     size_t operator()(unsigned long key) const {
+        return (size_t) key;
+    }
+};
+
+template<> class HashFunction<pid_t>
+{
+public:
+    size_t operator()(pid_t key) const {
         return (size_t) key;
     }
 };

@@ -33,6 +33,7 @@
 #include "ByteArray.hpp"
 #include "Regex.hpp"
 #include "FileException.hpp"
+#include "System.hpp"
 
 using namespace LucED;
 
@@ -98,14 +99,9 @@ String File::getAbsoluteName() const
         if (name.getLength() > 0 && name[0] == '/') {
             buffer = name;
         } else {
-            MemArray<char> cwd(2000);
-            do {
-                if (getcwd(cwd.getPtr(), cwd.getLength()) == NULL && errno == ERANGE) {
-                    cwd.increaseTo(1000 + cwd.getLength());
-                    continue;
-                }
-            } while (false);
-            buffer = String() << cwd.getPtr() << "/" << name;
+            buffer = String() << System::getInstance()->getCurrentDirectory() 
+                              << "/" 
+                              << name;
         }
         Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./");
     

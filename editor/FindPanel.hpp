@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FINDPANEL_HPP
-#define FINDPANEL_HPP
+#ifndef FIND_PANEL_HPP
+#define FIND_PANEL_HPP
 
 #include "String.hpp"
 
@@ -36,18 +36,16 @@
 #include "FindUtil.hpp"
 #include "PasteDataReceiver.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-
-
-class FindPanel : public DialogPanel,
-                  public PasteDataReceiver
+class FindPanel : public DialogPanel
 {
 public:
     typedef OwningPtr<FindPanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                                                         Callback<DialogPanel*>::Ptr        panelInvoker)
+    static Ptr create(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                                                                                  Callback<DialogPanel*>::Ptr        panelInvoker)
     {
         return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker));
     }
@@ -75,8 +73,8 @@ public:
 private:
     friend class FindPanelAccess;
     
-    FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                                                 Callback<DialogPanel*>::Ptr        panelInvoker);
+    FindPanel(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                                                                          Callback<DialogPanel*>::Ptr        panelInvoker);
 
     void executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearchButton);
 
@@ -93,11 +91,11 @@ private:
     
     void handleModifiedEditField(bool modifiedFlag);
 
-    virtual void notifyAboutBeginOfPastingData();
-    virtual void notifyAboutReceivedPasteData(const byte* data, long length);
-    virtual void notifyAboutEndOfPastingData();
+    void notifyAboutBeginOfPastingData();
+    void notifyAboutReceivedPasteData(const byte* data, long length);
+    void notifyAboutEndOfPastingData();
 
-    WeakPtr<TextEditorWidget> e;
+    ValidPtr<TextEditorWidget> e;
 
     SingleLineEditField::Ptr editField;
     Button::Ptr findNextButton;
@@ -117,6 +115,9 @@ private:
     bool selectSearchRegexFlag;
     TextData::Ptr editFieldTextData;
     FindUtil      findUtil;
+
+    class PasteDataContentHandler;
+    PasteDataReceiver::Ptr pasteDataReceiver;
 };
 
 class FindPanelAccess
@@ -129,4 +130,4 @@ protected:
 
 } // namespace LucED
 
-#endif // FINDPANEL_HPP
+#endif // FIND_PANEL_HPP

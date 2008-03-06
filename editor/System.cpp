@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -21,12 +21,15 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <pwd.h>
 
 #include "System.hpp"
 #include "SystemException.hpp"
+#include "FileException.hpp"
 
 using namespace LucED;
 
@@ -77,3 +80,37 @@ System::System()
     }
 }
 
+
+String System::getCurrentDirectory() const
+{
+    MemArray<char> cwd(2000);
+    do {
+        if (getcwd(cwd.getPtr(), cwd.getLength()) == NULL && errno == ERANGE) {
+            cwd.increaseTo(1000 + cwd.getLength());
+            continue;
+        }
+    } while (false);
+    return String() << cwd.getPtr();
+}
+
+
+void System::setCurrentDirectory(const String& dir)
+{
+    if (chdir(dir.toCString()) != 0) {
+        throw FileException(errno,
+                            String() << "Failed setting current directory to "
+                                     << dir << ": " << strerror(errno));
+    }
+}
+
+void System::setCloseOnExecFlag(int fileDescriptor)
+{
+    int flags = ::fcntl(fileDescriptor, F_GETFD);
+    if (flags == -1) {
+        throw SystemException(String() << "Error while setting close on exec flag: " << strerror(errno));
+    }
+    flags |= FD_CLOEXEC;
+    if (::fcntl(fileDescriptor, F_SETFD, flags) == 1) {
+        throw SystemException(String() << "Error while setting close on exec flag: " << strerror(errno));
+    }
+}

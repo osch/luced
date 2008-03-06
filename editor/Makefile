@@ -54,7 +54,7 @@ SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget        
                 LuaObject               LuaInterpreter         ConfigException        GlobalConfig \
                 LanguageModes           RegexException         StatusLine             \
                 Button                  GuiLayoutWidget        LuaStoredObject \
-                GotoLinePanel           SingletonKeeper        TopWinList             TopWinOwner \
+                GotoLinePanel           SingletonKeeper        TopWinList             OwnedTopWins \
                 DialogWin               GuiLayoutSpacer        MultiLineEditorWidget  SubstitutionException \
                 SingleLineEditorWidget  StandardEditActions    LuaStackChecker \
                 SingleLineEditField     LabelWidget            DialogPanel            PanelDialogWin \
@@ -62,8 +62,8 @@ SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget        
                 FileException           EditorServer           ClientServerUtil       EditorClient  \
                 CommandlineException    ReplacePanel           LuaFunctionArguments   GuiElement \
                 SelectionOwner          PasteDataReceiver      Clipboard              FileOpener \
-                ConfigErrorHandler      WindowCloser           SaveAsPanel            KeyModifier
-		
+                ConfigErrorHandler      WindowCloser           SaveAsPanel            KeyModifier \
+		CurrentDirectoryKeeper  ProgramExecutor        MultiLineOutputWidget  TestBox
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

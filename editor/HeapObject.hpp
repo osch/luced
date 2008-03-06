@@ -32,6 +32,7 @@
 #include "NonCopyable.hpp"
 #include "String.hpp"
 
+#undef HEAP_OBJECT_USES_DYNAMIC_CAST
 // #define PRINT_MALLOCS
 
 namespace LucED {
@@ -236,7 +237,11 @@ protected:
     {
         if (heapObject != NULL)
         {
+#ifdef HEAP_OBJECT_USES_DYNAMIC_CAST
             const void* rawAddress = dynamic_cast<const void*>(heapObject);
+#else
+            const void* rawAddress = static_cast<const void*>(heapObject);
+#endif
             HeapObjectCounters* rslt = const_cast<HeapObjectCounters*>(
                 static_cast<const HeapObjectCounters*>(rawAddress) - 1
             );

@@ -26,6 +26,7 @@
 #include "TimeVal.hpp"
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
+#include "ValidPtr.hpp"
 
 #define CURSOR_WIDTH 2
 
@@ -133,6 +134,7 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       
       primarySelectionColor(  getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPrimarySelectionColor())),
       secondarySelectionColor(getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPseudoSelectionColor())),
+      backgroundColor(        getGuiRoot()->getWhiteColor()),
       textWidget_gcid(TextWidgetSingletonData::getInstance()->getGcId())
 {
     totalPixWidth = 0;
@@ -144,8 +146,8 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
     updateVerticalScrollBar = false;
     updateHorizontalScrollBar = false;
 
-    //setBackgroundColor(getGuiRoot()->getWhiteColor());
-    setBorderColor(getGuiRoot()->getWhiteColor());
+    //setBackgroundColor(backgroundColor);
+    setBorderColor(backgroundColor);
 
     lineHeight  = textStyles->get(0)->getLineHeight();
     lineAscent  = textStyles->get(0)->getLineAscent();
@@ -232,11 +234,11 @@ namespace LucED
 class TextWidgetFillLineInfoIterator
 {
 public:
-    TextWidgetFillLineInfoIterator(const TextData*       textData, 
-                                   HilitingBuffer*       hilitingBuffer, 
-                                   BackliteBuffer*       backliteBuffer,
-                                   const TextStyles*     textStyles,
-                                   long                  textPos)
+    TextWidgetFillLineInfoIterator(ValidPtr<const TextData>   textData, 
+                                   ValidPtr<HilitingBuffer>   hilitingBuffer, 
+                                   ValidPtr<BackliteBuffer>   backliteBuffer,
+                                   ValidPtr<const TextStyles> textStyles,
+                                   long                       textPos)
         : textData(textData),
           hilitingBuffer(hilitingBuffer),
           backliteBuffer(backliteBuffer),
@@ -309,10 +311,10 @@ public:
     }
 
 private:
-    const TextData*   const textData;
-    HilitingBuffer*   const hilitingBuffer;
-    BackliteBuffer*   const backliteBuffer;
-    const TextStyles* const textStyles;
+    ValidPtr<const TextData>   const textData;
+    ValidPtr<HilitingBuffer>   const hilitingBuffer;
+    ValidPtr<BackliteBuffer>   const backliteBuffer;
+    ValidPtr<const TextStyles> const textStyles;
     long pixelPos;
     long textPos;
     bool isEndOfLineFlag;
@@ -550,11 +552,11 @@ inline GuiColor TextWidget::getColorForBackground(byte background)
 {
     switch (background)
     {
-        case 0:  return getGuiRoot()->getWhiteColor();
+        case 0:  return backgroundColor;
         case 1:  return primarySelectionColor;
         case 2:  return secondarySelectionColor;
         default: ASSERT(false);
-                 return getGuiRoot()->getWhiteColor();
+                 return backgroundColor;
     }
 }
 
@@ -1028,7 +1030,7 @@ void TextWidget::drawPartialArea(int minY, int maxY, int x1, int x2)
 //        XClearArea(XGlobal_display_pst, tw->wid, 
 //                0, y, 0, 0, False);
 
-        XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
+        XSetForeground(getDisplay(), textWidget_gcid, backgroundColor);
         XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
                 0, y, position.w, position.h - y);
     }
@@ -1068,7 +1070,7 @@ void TextWidget::drawArea(int minY, int maxY)
 //        XClearArea(getDisplay(), tw->wid, 
 //                0, y, 0, 0, False);
 
-        XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
+        XSetForeground(getDisplay(), textWidget_gcid, backgroundColor);
         XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
                 0, y, position.w, position.h - y);
     }
@@ -1131,7 +1133,7 @@ void TextWidget::redrawChanged(long spos, long epos)
 //        XClearArea(XGlobal_display_pst, tw->wid, 
 //                0, y, 0, 0, False);
 
-        XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
+        XSetForeground(getDisplay(), textWidget_gcid, backgroundColor);
         XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
                 0, y, position.w, position.h - y);
     }
@@ -2086,3 +2088,9 @@ void TextWidget::internalHideMousePointer()
 }
 
 
+void TextWidget::setBackgroundColor(GuiColor color)
+{
+    // do not set background in the parent class, because we have no x11 handeld background!
+    backgroundColor = color;
+    setBorderColor(backgroundColor);
+}

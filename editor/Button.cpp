@@ -25,6 +25,7 @@
 #include "GuiRoot.hpp"
 #include "TopWin.hpp"
 #include "GlobalConfig.hpp"
+#include "System.hpp"
 
 using namespace LucED;
 
@@ -190,9 +191,8 @@ static const MicroSeconds shortTime = MicroSeconds(20 * 1000);
 static void waitShort(MicroSeconds microSecs = shortTime)
 {
     if (microSecs > 0) {
-        TimeVal timeVal;
-        timeVal.add(microSecs);
-        LucED::select(0, NULL, NULL, NULL, &timeVal);
+        TimeVal timeVal(microSecs);
+        System::select(0, NULL, NULL, NULL, &timeVal);
     }
 }
 

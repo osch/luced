@@ -33,12 +33,40 @@
 
 using namespace LucED;
 
+class FindPanel::PasteDataContentHandler : public PasteDataReceiver::ContentHandler
+{
+public:
+    typedef OwningPtr<ContentHandler> Ptr;
+
+    static Ptr create(ValidPtr<FindPanel> findPanel) {
+        return Ptr(new PasteDataContentHandler(findPanel));
+    }
+    
+    virtual void notifyAboutBeginOfPastingData() {
+        findPanel->notifyAboutBeginOfPastingData();
+    }
+    virtual void notifyAboutReceivedPasteData(const byte* data, long length) {
+        findPanel->notifyAboutReceivedPasteData(data, length);
+    }
+    virtual void notifyAboutEndOfPastingData() {
+        findPanel->notifyAboutEndOfPastingData();
+    }
+private:
+    PasteDataContentHandler(ValidPtr<FindPanel> findPanel)
+        : findPanel(findPanel)
+    {}
+    ValidPtr<FindPanel> findPanel;
+};
 
 
-FindPanel::FindPanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                                                        Callback<DialogPanel*>::Ptr        panelInvoker)
+
+FindPanel::FindPanel(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                                                                                 Callback<DialogPanel*>::Ptr        panelInvoker)
     : DialogPanel(parent),
-      PasteDataReceiver(this),
+
+      pasteDataReceiver(PasteDataReceiver::create(this,
+                                                  PasteDataContentHandler::create(this))),
+
       e(editorWidget),
       messageBoxInvoker(messageBoxInvoker),
       panelInvoker(panelInvoker),
@@ -253,7 +281,7 @@ void FindPanel::findSelectionForward()
     {
         selectionSearchString.clear();
         selectionSearchForwardFlag = true;
-        requestSelectionPasting();
+        pasteDataReceiver->requestSelectionPasting();
     }
     e->assureCursorVisible();
 }
@@ -266,7 +294,7 @@ void FindPanel::findSelectionBackward()
     {
         selectionSearchString.clear();
         selectionSearchForwardFlag = false;
-        requestSelectionPasting();
+        pasteDataReceiver->requestSelectionPasting();
     }
     e->assureCursorVisible();
 }
@@ -475,7 +503,7 @@ void FindPanel::findAgainBackward()
     
 GuiElement::ProcessingResult FindPanel::processEvent(const XEvent *event)
 {
-    if (processPasteDataReceiverEvent(event) == EVENT_PROCESSED) {
+    if (pasteDataReceiver->processPasteDataReceiverEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
     } else {
         return DialogPanel::processEvent(event);
@@ -513,7 +541,7 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
             h = history->getEntryCount();
         }
         --h;
-        WeakPtr<TextData> textData = editField->getTextData();
+        ValidPtr<TextData> textData = editField->getTextData();
         String editFieldContent = textData->getSubstring(0, textData->getLength());
         while (h >= 0) {
             SearchHistory::Entry entry = history->getEntry(h);
@@ -535,8 +563,8 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
     else if (KeyMapping::Id(0, KeyId("Down"))    == keyMappingId
           || KeyMapping::Id(0, KeyId("KP_Down")) == keyMappingId)
     {
-        SearchHistory* history = SearchHistory::getInstance();
-        TextData* textData     = editField->getTextData();
+        SearchHistory* history      = SearchHistory::getInstance();
+        ValidPtr<TextData> textData = editField->getTextData();
 
         if (historyIndex < 0) {
             int editFieldLength = editField->getTextData()->getLength();

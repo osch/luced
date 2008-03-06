@@ -28,8 +28,10 @@
 
 using namespace LucED;
 
+
 TopWin::TopWin()
     : GuiWidget(0, 0, 1, 1, 0),
+      ownedTopWins(OwnedTopWins::create()),
       mapped(false),
       requestFocusAfterMapped(false),
       focusFlag(false)
@@ -258,8 +260,6 @@ printf("TakeFocus\n");
                 expectedFocusTopWin = this;
                 focusFlag = true;
                 treatFocusIn();
-                reportFocusOwnershipToTopWinOwner(this, owner);
-                reportFocusOwnershipToTopWinOwner(this, this);
                 return EVENT_PROCESSED;
             }
 
@@ -332,7 +332,8 @@ void TopWin::setWindowManagerHints()
 
 void TopWin::requestCloseWindow()
 {
-    owner->requestCloseChildWindow(this);
+    myOwner->requestCloseChildWindow(this);
+    requestForCloseNotifyCallbacks.invokeAllCallbacks(this);
 }
 
 
