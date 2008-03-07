@@ -101,7 +101,7 @@ public:
         return ptr;
     }
     
-    operator T*() {
+    operator T*() const {
         return ptr;
     }
     
