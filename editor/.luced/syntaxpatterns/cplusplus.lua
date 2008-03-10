@@ -19,6 +19,24 @@
 --
 -------------------------------------------------------------------------------------
 
+local function append(array1, array2)
+    local rslt = {}
+    for _,x in ipairs(array1) do
+        table.insert(rslt, x)
+    end
+    for _,x in ipairs(array2) do
+        table.insert(rslt, x)
+    end
+    return rslt
+end
+
+local topChildPatterns = {
+                          "emluaexpr",    "emlualine", "staticsql",
+                          "string",       "char",         "comment1",         "comment2",     "comment3", "comment4", "preprop",      "template",     
+                          "sizeof",
+                          "newcast",      "oldcast",      "namespace",        "struct1", "struct2",      "class",        "keywords",
+                          "typekeywords", "decl",      "operators"  
+                         }
 
 return
 {
@@ -26,13 +44,7 @@ return
 	root = {
         	style = "default",
 
-                childPatterns = {
-                                 "emluaexpr",    "emlualine", "staticsql",
-                                 "string",       "char",         "comment1",         "comment2",     "comment3", "preprop",      "template",     
-                                 "sizeof",
-                                 "newcast",      "oldcast",      "namespace",        "struct1", "struct2",      "class",        "keywords",
-                                 "typekeywords", "decl",      "operators"  
-                                },
+                childPatterns = topChildPatterns,
         },
         
         keywords = {
@@ -53,7 +65,7 @@ return
                 endPattern       = [[;]],
                 maxBeginExtend   = 100,
                 maxEndExtend     = 1,
-                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "comment3", "preprop" },
+                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "comment3", "comment4", "preprop" },
         },
         emlualine = {
         	style = "regex",
@@ -209,6 +221,25 @@ return
                 endPattern       = [[^\s*\#\s*endif]],
                 maxBeginExtend   = 200,
                 maxEndExtend     = 200,
+                childPatterns    = { "comment1", "comment2", "comment3a" },
+        },
+        comment4 = {
+        	style = "default",
+                beginPattern     = [[(?P<comment4Begin>^\s*\#\s*if\s+1)]],
+                endPattern       = [[(?P<comment4End>^\s*\#\s*endif|^\s*\#\s*else)]],
+                maxBeginExtend   = 200,
+                maxEndExtend     = 200,
+                beginSubstyles   = {comment4Begin = "preproc"},
+                endSubstyles     = {comment4End   = "preproc"},
+                childPatterns    = append({"comment4a"}, topChildPatterns),
+        },
+        comment4a = {
+        	style = "comment",
+                beginPattern     = [[(?P<comment4aBegin>^\s*\#\s*else\b)]],
+                endPattern       = [[(?=^\s*\#\s*endif)]],
+                maxBeginExtend   = 200,
+                maxEndExtend     = 200,
+                beginSubstyles   = {comment4aBegin = "preproc"},
                 childPatterns    = { "comment1", "comment2", "comment3a" },
         },
         
