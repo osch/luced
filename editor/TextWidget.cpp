@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -104,10 +104,19 @@ SingletonInstance<TextWidgetSingletonData> TextWidgetSingletonData::instance;
 /**
  * TextWidget-Constructor.
  */
-TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border)
+TextWidget::TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border,
+                       CreateOptions options)
 
     : GuiWidget(parent, 0, 0, textStyles->get(0)->getSpaceWidth()*200, textStyles->get(0)->getLineHeight(), border),
 
+      totalPixWidth(0),
+      leftPix(0),
+      endPos(0),
+      cursorIsBlinking(false),
+      cursorIsActive(false),
+      updateVerticalScrollBar(false),
+      updateHorizontalScrollBar(false),
+      
       position(GuiWidget::getPosition()),
       textData(hilitedText->getTextData()),
       cursorBlinkCallback(newCallback(this, &TextWidget::blinkCursor)),
@@ -135,17 +144,12 @@ TextWidget::TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedTex
       primarySelectionColor(  getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPrimarySelectionColor())),
       secondarySelectionColor(getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPseudoSelectionColor())),
       backgroundColor(        getGuiRoot()->getWhiteColor()),
-      textWidget_gcid(TextWidgetSingletonData::getInstance()->getGcId())
+      textWidget_gcid(TextWidgetSingletonData::getInstance()->getGcId()),
+      
+      cursorVisible(options),
+      neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR)),
+      rasterizeDesiredMeasuresFlag(!options.isSet(DO_NOT_RASTERIZE_DESIRED_MEASURES))
 {
-    totalPixWidth = 0;
-    leftPix = 0;
-    endPos = 0;
-    cursorVisible = 0;
-    cursorIsBlinking = false;
-    cursorIsActive = false;
-    updateVerticalScrollBar = false;
-    updateHorizontalScrollBar = false;
-
     //setBackgroundColor(backgroundColor);
     setBorderColor(backgroundColor);
 
@@ -516,7 +520,7 @@ void TextWidget::fillLineInfo(long beginOfLinePos, LineInfo* li)
 
 inline void TextWidget::applyTextStyle(int styleIndex)
 {
-    const TextStyle *style = textStyles->get(styleIndex);
+    const TextStyle* style = textStyles->get(styleIndex);
     
 //    XSetBackground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
 
@@ -561,7 +565,7 @@ inline GuiColor TextWidget::getColorForBackground(byte background)
 }
 
 
-inline void TextWidget::clearLine(LineInfo *li, int y)
+inline void TextWidget::clearLine(LineInfo* li, int y)
 {
 /*{
     long x = 0;
@@ -577,7 +581,7 @@ inline void TextWidget::clearLine(LineInfo *li, int y)
 
 
 
-inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
+inline void TextWidget::clearPartialLine(LineInfo* li, int y, int x1, int x2)
 {
     ByteArray& buf = li->outBuf;
     MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
@@ -653,7 +657,7 @@ inline void TextWidget::clearPartialLine(LineInfo *li, int y, int x1, int x2)
 
 }
 
-inline void TextWidget::printPartialLineWithoutCursor(LineInfo *li, int y, int x1, int x2)
+inline void TextWidget::printPartialLineWithoutCursor(LineInfo* li, int y, int x1, int x2)
 {
     ByteArray& buf = li->outBuf;
     MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
@@ -717,7 +721,7 @@ inline void TextWidget::printPartialLineWithoutCursor(LineInfo *li, int y, int x
 }
 
 
-inline void TextWidget::printPartialLine(LineInfo *li, int y, int x1, int x2)
+inline void TextWidget::printPartialLine(LineInfo* li, int y, int x1, int x2)
 {
     long cursorPos = getCursorTextPosition();
     
@@ -747,7 +751,7 @@ inline void TextWidget::printPartialLine(LineInfo *li, int y, int x1, int x2)
 }
 
 
-inline void TextWidget::printLine(LineInfo *li, int y)
+inline void TextWidget::printLine(LineInfo* li, int y)
 {
     long cursorPos      = getCursorTextPosition();
     bool considerCursor = false;
@@ -1008,7 +1012,7 @@ void TextWidget::drawPartialArea(int minY, int maxY, int x1, int x2)
     long oldpos;
     
     do {
-        LineInfo *li = lineInfos.getPtr(line);
+        LineInfo* li = lineInfos.getPtr(line);
 
         if (!li->valid) {
             fillLineInfo(pos, li);
@@ -1047,7 +1051,7 @@ void TextWidget::drawArea(int minY, int maxY)
 
     if (lineInfos.getLength() > 0) {
         do {
-            LineInfo *li = lineInfos.getPtr(line);
+            LineInfo* li = lineInfos.getPtr(line);
 
             if (!li->valid) {
                 fillLineInfo(pos, li);
@@ -1091,7 +1095,7 @@ void TextWidget::redrawChanged(long spos, long epos)
 
     if (lineInfos.getLength() > 0) {
         do {
-            LineInfo *li = lineInfos.getPtr(line);
+            LineInfo* li = lineInfos.getPtr(line);
 
             if (li->valid && li->beginOfLinePos == pos) {
                 
@@ -1148,7 +1152,7 @@ inline void TextWidget::redraw() {
 
 LineInfo* TextWidget::getValidLineInfo(long line)
 {
-    LineInfo *li = lineInfos.getPtr(line);
+    LineInfo* li = lineInfos.getPtr(line);
 
     if (!li->valid)
     {
@@ -1176,8 +1180,8 @@ void TextWidget::drawCursor(long cursorPos)
 {
     int y = 0;
     int line = 0;
-    LineInfo *li;
-    
+    LineInfo* li;
+
     if (lineInfos.getLength() > 0) {
         do {
             li = getValidLineInfo(line);
@@ -1210,7 +1214,7 @@ long TextWidget::getCursorPixX()
     
     if (0 <= line && line < visibleLines) {
 
-        LineInfo *li = getValidLineInfo(line);
+        LineInfo* li = getValidLineInfo(line);
     
         if (li->startPos <= cursorPos && cursorPos <= li->endPos) {
             // cursor visible
@@ -1245,7 +1249,7 @@ long TextWidget::calcLongestVisiblePixWidth()
     
     if (lineInfos.getLength() > 0) {
         do {
-            LineInfo *li = lineInfos.getPtr(line);
+            LineInfo* li = lineInfos.getPtr(line);
             if (!li->valid) {
                 fillLineInfo(pos, li);
             }
@@ -1637,6 +1641,8 @@ void TextWidget::setPosition(Position newPosition)
 
 GuiElement::Measures TextWidget::getDesiredMeasures()
 {
+    int incrWidth  = getSpaceCharWidth();
+    int incrHeight = getLineHeight();
     
     Measures rslt(  minWidthChars * textStyles->get(0)->getSpaceWidth() + 2*border, 
                      minHeightChars * lineHeight + 2*border, 
@@ -1647,9 +1653,10 @@ GuiElement::Measures TextWidget::getDesiredMeasures()
                      maxWidthChars == INT_MAX ? INT_MAX :  maxWidthChars * textStyles->get(0)->getSpaceWidth() + 2*border,
                     maxHeightChars == INT_MAX ? INT_MAX : maxHeightChars * lineHeight + 2*border,
 
-                    textStyles->get(0)->getSpaceWidth(), lineHeight);
-//                    1, 1);
-    
+                    incrWidth, incrHeight);
+
+    rslt.onlyRasteredValues = rasterizeDesiredMeasuresFlag;
+
 //    return Measures( 2 * textStyles->get(0)->getSpaceWidth() + 2*border, lineHeight + 2*border, 
 //                    35 * textStyles->get(0)->getSpaceWidth() + 2*border, lineHeight + 2*border,
 //                    INT_MAX, INT_MAX,
@@ -1678,37 +1685,46 @@ void TextWidget::clip(int x, int y, int w, int h)
 
 void TextWidget::blinkCursor()
 {
-    if (cursorIsBlinking)
+    if (!neverShowCursorFlag)
     {
-        TimeVal now;
-        now.setToCurrentTime();
-        
-        if (now.isLaterThan(cursorNextBlinkTime))
+        if (cursorIsBlinking)
         {
-            cursorVisible = !cursorVisible;
-            drawCursor(getCursorTextPosition());
+            TimeVal now;
+            now.setToCurrentTime();
             
-            cursorNextBlinkTime = now;
-            cursorNextBlinkTime.add(MicroSeconds(400000));
-            EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
-
-        } else { 
+            if (now.isLaterThan(cursorNextBlinkTime))
+            {
+                cursorVisible = !cursorVisible;
+                drawCursor(getCursorTextPosition());
+                
+                cursorNextBlinkTime = now;
+                cursorNextBlinkTime.add(MicroSeconds(400000));
+                EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
+    
+            } else { 
+            }
         }
     }
 }
 
 void TextWidget::setCursorActive()
 {
-    cursorIsActive = true;
-    cursorVisible = true;
-    drawCursor(getCursorTextPosition());
+    if (!neverShowCursorFlag)
+    {
+        cursorIsActive = true;
+        cursorVisible = true;
+        drawCursor(getCursorTextPosition());
+    }
 }
 
 void TextWidget::setCursorInactive()
 {
-    cursorIsActive = false;
-    cursorVisible = true;
-    drawCursor(getCursorTextPosition());
+    if (!neverShowCursorFlag)
+    {
+        cursorIsActive = false;
+        cursorVisible = true;
+        drawCursor(getCursorTextPosition());
+    }
 }
 
 
@@ -1723,35 +1739,44 @@ void TextWidget::hideCursor()
 
 void TextWidget::showCursor()
 {
-    cursorIsBlinking = false;
-    if (!cursorVisible) {
-        cursorVisible = true;
-        drawCursor(getCursorTextPosition());
+    if (!neverShowCursorFlag)
+    {
+        cursorIsBlinking = false;
+        if (!cursorVisible) {
+            cursorVisible = true;
+            drawCursor(getCursorTextPosition());
+        }
     }
 }
 
 void TextWidget::stopCursorBlinking()
 {
-    cursorIsBlinking = false;
-    if (!cursorVisible) {
-        cursorVisible = true;
-        drawCursor(getCursorTextPosition());
+    if (!neverShowCursorFlag)
+    {
+        cursorIsBlinking = false;
+        if (!cursorVisible) {
+            cursorVisible = true;
+            drawCursor(getCursorTextPosition());
+        }
     }
 }
 
 void TextWidget::startCursorBlinking()
 {
-    textData->flushPendingUpdates();
-
-    if (!cursorVisible) {
-        cursorVisible = true;
-        drawCursor(getCursorTextPosition());
+    if (!neverShowCursorFlag)
+    {
+        textData->flushPendingUpdates();
+    
+        if (!cursorVisible) {
+            cursorVisible = true;
+            drawCursor(getCursorTextPosition());
+        }
+    
+        cursorNextBlinkTime.setToCurrentTime().add(MicroSeconds(400000));
+    
+        cursorIsBlinking = true;
+        EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
     }
-
-    cursorNextBlinkTime.setToCurrentTime().add(MicroSeconds(400000));
-
-    cursorIsBlinking = true;
-    EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
 }
 
 void TextWidget::moveCursorToTextPosition(long pos)
@@ -1774,7 +1799,7 @@ void TextWidget::moveCursorToTextPosition(long pos)
         textData->moveMarkToPos(cursorMarkId, pos);
         if (cursorIsBlinking) {
             startCursorBlinking();
-        } else if (cursorWasVisible) {
+        } else if (cursorWasVisible && !neverShowCursorFlag) {
             cursorVisible = true;
             drawCursor(getCursorTextPosition());
         }
@@ -1796,7 +1821,7 @@ void TextWidget::moveCursorToTextMark(TextData::MarkHandle m)
         textData->moveMarkToPosOfMark(cursorMarkId, m);
         if (cursorIsBlinking) {
             startCursorBlinking();
-        } else if (cursorWasVisible) {
+        } else if (cursorWasVisible && !neverShowCursorFlag) {
             cursorVisible = true;
             drawCursor(getCursorTextPosition());
         }
@@ -1936,7 +1961,7 @@ void TextWidget::processAllExposureEvents()
     }
 }
 
-static inline bool adjustLineInfoPosition(long *pos, long beginChangedPos, long oldEndChangedPos, long changedAmount)
+static inline bool adjustLineInfoPosition(long* pos, long beginChangedPos, long oldEndChangedPos, long changedAmount)
 {
     ASSERT(0 <= *pos);
 
@@ -1970,7 +1995,7 @@ void TextWidget::treatTextDataUpdate(TextData::UpdateInfo u)
     }
 
     for (int i = 0; i < lineInfos.getLength(); ++i) {
-        LineInfo *li = lineInfos.getPtr(i);
+        LineInfo* li = lineInfos.getPtr(i);
         if (li->valid)
         {
             if (adjustLineInfoPosition(&li->beginOfLinePos, u.beginChangedPos, u.oldEndChangedPos, u.changedAmount)

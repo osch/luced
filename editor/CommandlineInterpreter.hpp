@@ -38,6 +38,10 @@ public:
 
     typedef HeapObjectArray<String> Commandline;
 
+    CommandlineInterpreter()
+        : hasInstanceNameFlag(false)
+    {}
+
     void doCommandline(Commandline::Ptr commandline)
     {
         const int argc = commandline->getLength();
@@ -47,11 +51,21 @@ public:
             String  fileName;
             int     numberOfWindowsForThisFile = -1;
             
-            while (i < argc && commandline->get(i)[0] == '-' && commandline->get(i)[1] != '-')
+            while (i < argc && commandline->get(i).startsWith("-") && !commandline->get(i).startsWith("--"))
             {
                 // Parameter is a command option
             
-                if (commandline->get(i) == "-w")
+                if (commandline->get(i) == "-i")
+                {
+                    i += 1;
+                    if (i >= argc) {
+                        throw CommandlineException("Command option -i needs additional argument 'instance name'.");
+                    }
+                    instanceName = commandline->get(i);
+
+                    hasInstanceNameFlag = true;
+                }
+                else if (commandline->get(i) == "-w")
                 {
                     i += 1;
 
@@ -75,7 +89,7 @@ public:
             if (i < argc)
             {
                 // Parameter is a filename
-
+                
                 if (commandline->get(i)[0] == '-') {
                     fileName = commandline->get(i).getTail(1);  // "--fname" means filename == "-fname"
                 } else {
@@ -84,9 +98,9 @@ public:
                 fileName = File(fileName).getAbsoluteName();
                 commandline->set(i, fileName); // replace with absolute filename in command array
                 actor.openFile(numberOfWindowsForThisFile, fileName);
-                
+                numberOfWindowsForThisFile = -1;
             }
-            else
+            else if (numberOfWindowsForThisFile > 0)
             {
                 throw CommandlineException("Command needs filename parameter.");
             }
@@ -97,8 +111,17 @@ public:
         return actor;
     }
 
+    String getInstanceName() const {
+        return instanceName;
+    }
+    bool hasInstanceName() const {
+        return hasInstanceNameFlag;
+    }
+
 private:
     Actor actor;
+    String instanceName;
+    bool hasInstanceNameFlag;
 };
 
 } // namespace LucED

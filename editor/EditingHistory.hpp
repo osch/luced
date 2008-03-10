@@ -27,7 +27,7 @@
 #include "HeapObject.hpp"
 #include "OwningPtr.hpp"
 #include "MemBuffer.hpp"
-#include "OptionBits.hpp"
+#include "Flags.hpp"
 
 
 namespace LucED
@@ -61,11 +61,11 @@ public:
     };
     
     enum ActionFlag {
-        FLAG_SECTION_MARK = 1,
-        FLAG_MERGE_STOP = 2
+        FLAG_SECTION_MARK,
+        FLAG_MERGE_STOP
     };
     
-    typedef OptionBits<ActionFlag> ActionFlags;
+    typedef Flags<ActionFlag> ActionFlags;
 
     class Action
     {

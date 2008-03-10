@@ -28,8 +28,8 @@
 
 using namespace LucED;
 
-GotoLinePanel::GotoLinePanel(GuiWidget* parent, TextEditorWidget* editorWidget)
-    : DialogPanel(parent),
+GotoLinePanel::GotoLinePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Callback<GuiWidget*>::Ptr requestCloseCallback)
+    : DialogPanel(parent, requestCloseCallback),
       editorWidget(editorWidget)
 {
     gotoButton = Button::create(this, "G]oto Line");
@@ -128,11 +128,11 @@ void GotoLinePanel::handleButtonPressed(Button* button)
                 }
             }
         }
-        requestCloseFor(this);
+        requestClose();
         editField->getTextData()->clear();
     }
     else if (button == cancelButton) {
-        requestCloseFor(this);
+        requestClose();
         editField->getTextData()->clear();
     }
 }

@@ -42,39 +42,7 @@ void GuiLayoutColumn::addSpacer()
 
 GuiElement::Measures GuiLayoutColumn::getDesiredMeasures()
 {
-    int bestWidth = 0;
-    int bestHeight = 0;
-    int minWidth = 0;
-    int minHeight = 0;
-    int maxWidth = 0;
-    int maxHeight = 0;
-    int incrWidth = 1;
-    int incrHeight = INT_MAX;
-    
-    for (int i = 0; i < elements.getLength(); ++i)
-    {
-        Measures m = elements[i]->getDesiredMeasures();
-
-        addimize(&minHeight,  m.minHeight);
-        addimize(&bestHeight, m.bestHeight);
-        addimize(&maxHeight,  m.maxHeight);
-        
-        maximize(&minWidth,  m.minWidth);
-        maximize(&bestWidth, m.bestWidth);
-        maximize(&maxWidth,  m.maxWidth);
-
-        maximize(&incrWidth,  m.incrWidth);
-        if (m.maxHeight > m.bestHeight && m.incrHeight < incrHeight) {
-            incrHeight = m.incrHeight;
-        }
-    }
-    if (incrHeight == INT_MAX) {
-        incrHeight = 1;
-    }
-    minWidth  = bestWidth  - ((bestWidth  - minWidth) / incrWidth)  * incrWidth;
-    minHeight = bestHeight - ((bestHeight - minHeight)/ incrHeight) * incrHeight;
-    return Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight,
-                    incrWidth, incrHeight);
+    return GuiLayouter<VerticalAdapter>::getDesiredMeasures(elements);
 }
 
 void GuiLayoutColumn::setPosition(Position p)
@@ -92,7 +60,24 @@ void GuiLayoutColumn::setPosition(Position p)
     for (int i = 0; i < elements.getLength(); ++i)
     {
         Measures& m = rowMeasures[i];
-        elements[i]->setPosition(Position(p.x, y, p.w, m.bestHeight));
+        
+        int h = m.bestHeight;
+        int w = p.w;
+        
+        if (m.onlyRasteredValues)
+        {
+            if (m.incrHeight > 1 && (h - m.minHeight) % m.incrHeight != 0)
+            {
+                h = m.minHeight + (h - m.minHeight) / m.incrHeight * m.incrHeight;
+            }
+            if (   m.onlyRasteredValues
+                && m.incrWidth > 1 && (w - m.minWidth) > 0 && (w - m.minWidth) % m.incrWidth != 0)
+            {
+                w = m.minWidth + (w - m.minWidth) / m.incrWidth * m.incrWidth;
+            }
+        }
+        elements[i]->setPosition(Position(p.x, y, w, h));
+
         y += m.bestHeight;
     }
 }

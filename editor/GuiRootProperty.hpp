@@ -68,6 +68,9 @@ public:
         return getValue(true);
     }
 
+    bool isValid() const {
+        return atom != 0;
+    }
 
     bool exists() const
     {

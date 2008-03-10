@@ -35,14 +35,15 @@ class GotoLinePanel : public DialogPanel
 public:
     typedef OwningPtr<GotoLinePanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget) {
-        return Ptr(new GotoLinePanel(parent, editorWidget));
+    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, Callback<GuiWidget*>::Ptr requestCloseCallback) {
+        return Ptr(new GotoLinePanel(parent, editorWidget, requestCloseCallback));
     }
     
     virtual void treatFocusIn();
     
 private:
-    GotoLinePanel(GuiWidget* parent, TextEditorWidget* editorWidget);
+    GotoLinePanel(GuiWidget* parent, TextEditorWidget* editorWidget, 
+                                     Callback<GuiWidget*>::Ptr requestCloseCallback);
 
     void handleButtonPressed(Button* button);
 

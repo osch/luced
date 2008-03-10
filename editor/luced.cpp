@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     
     try
     {
-        bool wasServerFound = false;
+        bool isServerStartupNeeded = false;
         {
             SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
             Commandline::Ptr     commandline     = Commandline::create(argc, argv);
@@ -53,13 +53,13 @@ int main(int argc, char** argv)
 
             EventDispatcher::getInstance()->doEventLoop();
             
-            wasServerFound = editorClient->wasServerFound();
+            isServerStartupNeeded = editorClient->isServerStartupNeeded();
         }
         #ifdef DEBUG
             HeapObjectChecker::assertAllCleared();
         #endif
         
-        if (!wasServerFound) // start new server
+        if (isServerStartupNeeded) // start new server
         {
             pid_t pid = fork();
             

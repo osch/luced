@@ -45,9 +45,10 @@ public:
     typedef OwningPtr<FindPanel> Ptr;
 
     static Ptr create(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                                                                  Callback<DialogPanel*>::Ptr        panelInvoker)
+                                                                                  Callback<DialogPanel*>::Ptr        panelInvoker,
+                                                                                  Callback<GuiWidget*>::Ptr          requestCloseCallback)
     {
-        return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker));
+        return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker, requestCloseCallback));
     }
     
     virtual void treatFocusIn();
@@ -74,7 +75,8 @@ private:
     friend class FindPanelAccess;
     
     FindPanel(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                                                          Callback<DialogPanel*>::Ptr        panelInvoker);
+                                                                          Callback<DialogPanel*>::Ptr        panelInvoker,
+                                                                          Callback<GuiWidget*>::Ptr          requestCloseCallback);
 
     void executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearchButton);
 

@@ -34,16 +34,18 @@ public:
 
     static Ptr create(GuiWidget*       parent, 
                       TextStyles::Ptr  textStyles,
-                      HilitedText::Ptr hilitedText)
+                      HilitedText::Ptr hilitedText,
+                      CreateOptions    options = CreateOptions())
     {
-        return Ptr(new MultiLineEditorWidget(parent, textStyles, hilitedText));
+        return Ptr(new MultiLineEditorWidget(parent, textStyles, hilitedText, options));
     }
 
 
 private:
     MultiLineEditorWidget(GuiWidget*       parent,
                           TextStyles::Ptr  textStyles, 
-                          HilitedText::Ptr hilitedText);
+                          HilitedText::Ptr hilitedText,
+                          CreateOptions    options);
 
     StandardEditActions::Ptr standardActions;
 };

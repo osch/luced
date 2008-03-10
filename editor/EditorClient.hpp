@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef EDITORCLIENT_H
-#define EDITORCLIENT_H
+#ifndef EDITOR_CLIENT_HPP
+#define EDITOR_CLIENT_HPP
 
 #include "String.hpp"
 
@@ -29,6 +29,7 @@
 #include "GuiRootProperty.hpp"
 #include "HeapObjectArray.hpp"
 #include "WeakPtr.hpp"
+#include "ValidPtr.hpp"
 
 namespace LucED
 {
@@ -38,7 +39,7 @@ class EditorClient : public HeapObject
 public:
     typedef WeakPtr<EditorClient> Ptr;
     
-    static EditorClient* getInstance() {
+    static ValidPtr<EditorClient> getInstance() {
         return instance.getPtr();
     }
     
@@ -46,8 +47,8 @@ public:
 
     void startWithCommandline(HeapObjectArray<String>::Ptr commandline);
     
-    bool wasServerFound() const {
-        return wasServerFoundFlag;
+    bool isServerStartupNeeded() const {
+        return isServerStartupNeededFlag;
     }
 
 private:
@@ -61,11 +62,11 @@ private:
     
     bool isStarted;
     bool wasCommandSet;
-    bool wasServerFoundFlag;
+    bool isServerStartupNeededFlag;
     GuiRootProperty serverProperty;
     GuiRootProperty commandProperty;
 };
 
 } // namespace LucED
 
-#endif // EDITORCLIENT_H
+#endif // EDITOR_CLIENT_HPP

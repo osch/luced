@@ -19,16 +19,30 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef OPTIONBITS_H
-#define OPTIONBITS_H
+#ifndef OPTION_BITS_HPP
+#define OPTION_BITS_HPP
 
-namespace LucED {
+#include "debug.hpp"
 
+namespace LucED
+{
+
+/**
+ * Use this class only to wrap low level C flags. 
+ * Prefer using Flags.hpp!
+ */
 template<class B, class T=int> class OptionBits
 {
 public:
-    OptionBits() : bits(0) {}
-    OptionBits(B bit) : bits(bit) {}
+    OptionBits() : bits(0)
+    {
+        ASSERT(sizeof(B) <= sizeof(T));
+    }
+
+    OptionBits(B bit) : bits(bit)
+    {
+        ASSERT(sizeof(B) <= sizeof(T));
+    }
     
     OptionBits operator|(B bit) {
         OptionBits rslt = *this;
@@ -58,13 +72,6 @@ private:
     T bits;
 };
 
-template<class B> OptionBits<B> operator|(B bit1, B bit2) {
-    OptionBits<B> rslt;
-    rslt |= bit1;
-    rslt |= bit2;
-    return rslt;
-}
-    
 } // namespace LucED
 
-#endif // OPTIONBITS_H
+#endif // OPTION_BITS_HPP

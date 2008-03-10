@@ -36,9 +36,10 @@ public:
     typedef OwningPtr<SaveAsPanel> Ptr;
 
     static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, 
-                                         Callback<MessageBoxParameter>::Ptr messageBoxInvoker)
+                                         Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                                         Callback<GuiWidget*>::Ptr          requestCloseCallback)
     {
-        return Ptr(new SaveAsPanel(parent, editorWidget, messageBoxInvoker));
+        return Ptr(new SaveAsPanel(parent, editorWidget, messageBoxInvoker, requestCloseCallback));
     }
     
     virtual void treatFocusIn();
@@ -51,7 +52,8 @@ public:
     
 private:
     SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget,
-                                   Callback<MessageBoxParameter>::Ptr messageBoxInvoker);
+                                   Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                                   Callback<GuiWidget*>::Ptr          requestCloseCallback);
 
     void handleButtonPressed(Button* button);
     

@@ -40,6 +40,12 @@ public:
         : value()
     {}
     
+    Flags(EnumType initialFlagNumber)
+        : value(1 << initialFlagNumber)
+    {
+        ASSERT(initialFlagNumber < sizeof(ValueType) * 8);
+    }
+    
     void clear() {
         value = ValueType();
     }
@@ -82,7 +88,6 @@ public:
 private:
     ValueType value;
 };
-
 
 } // namespace LucED
 

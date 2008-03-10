@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -41,6 +41,7 @@
 #include "ConfigErrorHandler.hpp"
 #include "ProgramExecutor.hpp"
 #include "TestBox.hpp"
+#include "EditorServer.hpp"
 
 using namespace LucED;
 
@@ -75,8 +76,8 @@ private:
     {}
     
 
-    WeakPtr<MultiLineEditorWidget> editorWidget;
-    WeakPtr<GuiElement> panel;
+    ValidPtr<MultiLineEditorWidget> editorWidget;
+    ValidPtr<GuiElement> panel;
 };
 
 
@@ -96,7 +97,8 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 //    GuiLayoutTable::Ptr tableLayout = GuiLayoutTable::create(2, 2);
 //    rootElement->addElement(tableLayout);
     
-    textEditor = MultiLineEditorWidget::create(this, textStyles, hilitedText);
+    textEditor = MultiLineEditorWidget::create(this, textStyles, hilitedText, 
+                                               TextWidget::CreateOptions() | TextWidget::DO_NOT_RASTERIZE_DESIRED_MEASURES);
     textData   = textEditor->getTextData();
 
     
@@ -184,13 +186,17 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     scrollBarH->show();
     statusLine->show();
 
+    Callback<GuiWidget*>::Ptr requestClosePanelCallback = newCallback(this, &EditorTopWin::requestCloseFor);
+
     findPanel = FindPanel::create(this, textEditor, 
                                   newCallback(this, &EditorTopWin::invokeMessageBox),
-                                  newCallback(this, &EditorTopWin::invokePanel));
+                                  newCallback(this, &EditorTopWin::invokePanel),
+                                  requestClosePanelCallback);
 
     replacePanel = ReplacePanel::create(this, textEditor, findPanel,
                                   newCallback(this, &EditorTopWin::invokeMessageBox),
-                                  newCallback(this, &EditorTopWin::invokePanel));
+                                  newCallback(this, &EditorTopWin::invokePanel),
+                                  requestClosePanelCallback);
 
     keyMapping1.set( KeyModifier("Ctrl"),       KeyId("q"),      newCallback(this,      &EditorTopWin::requestProgramQuit));
     keyMapping1.set( KeyModifier("Ctrl"),       KeyId("l"),      newCallback(this,      &EditorTopWin::invokeGotoLinePanel));
@@ -441,7 +447,7 @@ void EditorTopWin::notifyRequestCloseChildWindow(TopWin *topWin)
 void EditorTopWin::invokeGotoLinePanel()
 {
     if (gotoLinePanel.isInvalid()) {
-        gotoLinePanel = GotoLinePanel::create(this, textEditor);
+        gotoLinePanel = GotoLinePanel::create(this, textEditor, newCallback(this, &EditorTopWin::requestCloseFor));
     }
     invokePanel(gotoLinePanel);
 }
@@ -450,7 +456,8 @@ void EditorTopWin::invokeSaveAsPanel(Callback<>::Ptr saveCallback)
 {
     if (saveAsPanel.isInvalid()) {
         saveAsPanel = SaveAsPanel::create(this, textEditor, 
-                                                newCallback(this, &EditorTopWin::invokeMessageBox));
+                                                newCallback(this, &EditorTopWin::invokeMessageBox),
+                                                newCallback(this, &EditorTopWin::requestCloseFor));
     }
     saveAsPanel->setSaveCallback(saveCallback);
     invokePanel(saveAsPanel);
@@ -492,15 +499,15 @@ void EditorTopWin::invokePanel(DialogPanel* panel)
             requestCloseFor(invokedPanel);
         }
         ASSERT(invokedPanel.isInvalid());
-        int panelIndex;
         if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
             textEditor->setResizeAdjustment(VerticalAdjustment::BOTTOM);
-            panelIndex = upperPanelIndex;
+            this->invokedPanelIndex = upperPanelIndex;
         } else {
             textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
-            panelIndex = lowerPanelIndex;
+            this->invokedPanelIndex = lowerPanelIndex;
         }
-        rootElement->insertElementAtPosition(PanelLayoutAdapter::create(textEditor, panel), panelIndex);
+        rootElement->insertElementAtPosition(PanelLayoutAdapter::create(textEditor, panel), 
+                                             this->invokedPanelIndex);
         Position p = getPosition();
         rootElement->setPosition(Position(0, 0, p.w, p.h));
         panel->show();
@@ -517,15 +524,7 @@ void EditorTopWin::requestCloseFor(GuiWidget* w)
         if (messageBox.isValid()) {
             messageBox->requestCloseWindow();
         }
-        int panelIndex;
-        if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
-            textEditor->setResizeAdjustment(VerticalAdjustment::BOTTOM);
-            panelIndex = upperPanelIndex;
-        } else {
-            textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
-            panelIndex = lowerPanelIndex;
-        }
-        rootElement->removeElementAtPosition(panelIndex);
+        rootElement->removeElementAtPosition(this->invokedPanelIndex);
         w->hide();
         w->treatFocusOut();
         textEditor->treatFocusIn();
@@ -556,7 +555,14 @@ void EditorTopWin::setWindowTitle()
 {
     File file(textData->getFileName());
     
-    String title = file.getBaseName();
+    String title;
+    
+    if (EditorServer::getInstance()->getInstanceName().getLength() > 0) {
+        title << EditorServer::getInstance()->getInstanceName() << ": ";
+    }
+    
+    title << file.getBaseName();
+
     if (textData->getModifiedFlag() == true
      && textData->isReadOnly())
     {
@@ -566,8 +572,10 @@ void EditorTopWin::setWindowTitle()
     } else if (textData->getModifiedFlag() == true) {
         title << " (modified)";
     }
-    title << " - ";
-    title << file.getDirName() << "/ [" << System::getInstance()->getHostName() << "]";
+    title << " - " << file.getDirName() << "/ ["
+          << System::getInstance()->getUserName() << "@" 
+          << System::getInstance()->getHostName() << "]";
+
     setTitle(title);
 }
 

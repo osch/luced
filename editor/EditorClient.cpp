@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -32,10 +32,9 @@ SingletonInstance<EditorClient> EditorClient::instance;
 EditorClient::EditorClient()
     : isStarted(false),
       wasCommandSet(false),
-      wasServerFoundFlag(false)
+      isServerStartupNeededFlag(true)
 {
-    serverProperty  = GuiRootProperty(ClientServerUtil::getDefaultServerRunningProperty());
-    commandProperty = GuiRootProperty(ClientServerUtil::getDefaultServerCommandProperty());
+    GuiRoot::getInstance(); // assure that GuiRoot instance lives longer than EditorClient
 }
 
 EditorClient::~EditorClient()
@@ -57,7 +56,7 @@ void EditorClient::processEventForCommandProperty(XEvent* event)
     if (event->xproperty.state == PropertyDelete)
     {
         EventDispatcher::getInstance()->requestProgramTermination();
-        wasServerFoundFlag = true;
+        isServerStartupNeededFlag = false;
     }
     else if (event->xproperty.state == PropertyNewValue)
     {
@@ -67,7 +66,7 @@ void EditorClient::processEventForCommandProperty(XEvent* event)
 void EditorClient::waitingForServerFailed()
 {
         EventDispatcher::getInstance()->requestProgramTermination();
-        wasServerFoundFlag = false;
+        isServerStartupNeededFlag = true;
 }
 
 
@@ -92,6 +91,20 @@ void EditorClient::startWithCommandline(HeapObjectArray<String>::Ptr commandline
     {
         CommandlineInterpreter<DoNothingActor> commandInterpreter;
         commandInterpreter.doCommandline(commandline); // check and transform parameters
+        
+        String instanceName;
+        
+        if (commandInterpreter.hasInstanceName()) {
+            instanceName = commandInterpreter.getInstanceName();
+        } else {
+            const char* ptr = ::getenv("LUCED_INSTANCE");
+            if (ptr != NULL) {
+                instanceName = ptr;
+            }
+        }
+
+        serverProperty  = ClientServerUtil::getServerRunningProperty(instanceName);
+        commandProperty = ClientServerUtil::getServerCommandProperty(instanceName);
 
         if (serverProperty.exists())
         {
@@ -112,6 +125,6 @@ void EditorClient::startWithCommandline(HeapObjectArray<String>::Ptr commandline
     if (!wasCommandSet)
     {
         EventDispatcher::getInstance()->requestProgramTermination();
-        wasServerFoundFlag = false;
+        isServerStartupNeededFlag = true;
     }
 }

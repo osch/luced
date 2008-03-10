@@ -25,7 +25,6 @@
 #include "String.hpp"
 #include "MemArray.hpp"
 #include "ByteArray.hpp"
-#include "OptionBits.hpp"
 #include "BasicRegex.hpp"
 
 

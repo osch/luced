@@ -58,19 +58,8 @@ EditorServer::~EditorServer()
 void EditorServer::startWithCommandlineAndErrorList(HeapObjectArray<String>::Ptr    commandline,
                                                     ConfigException::ErrorList::Ptr errorList)
 {
-    serverProperty = GuiRootProperty(ClientServerUtil::getDefaultServerRunningProperty());
-    serverProperty.setValue("running");
-    EventDispatcher::getInstance()
-                     ->registerEventReceiverForRootProperty(serverProperty, 
-                                                            newCallback(this, &EditorServer::processEventForServerProperty));
-
-    commandProperty = GuiRootProperty(ClientServerUtil::getDefaultServerCommandProperty());
-    commandProperty.remove();
-    EventDispatcher::getInstance()
-                     ->registerEventReceiverForRootProperty(commandProperty, 
-                                                            newCallback(this, &EditorServer::processEventForCommandProperty));
     isStarted = true;
-    processCommandline(commandline, errorList);
+    processCommandline(commandline, true, errorList);
 }
 
 
@@ -102,7 +91,7 @@ void EditorServer::processEventForCommandProperty(XEvent* event)
         String commandline = commandProperty.getValueAndRemove();
 //        printf(" *********** Event: command newValue <%s>\n", commandline.toCString());
         if (commandline.getLength() > 0) {
-            processCommandline(ClientServerUtil::unquoteCommandline(commandline));
+            processCommandline(ClientServerUtil::unquoteCommandline(commandline), false);
         }
     }
     else
@@ -143,15 +132,40 @@ namespace // anonymous namespace
 
 
 void EditorServer::processCommandline(HeapObjectArray<String>::Ptr commandline,
+                                      bool isStarting,
                                       ConfigException::ErrorList::Ptr errorList)
 {
     ASSERT(isStarted);
 
+    CommandlineInterpreter<Actor> commandInterpreter;
+    commandInterpreter.doCommandline(commandline);
+    
+    if (isStarting)
+    {
+        if (commandInterpreter.hasInstanceName()) {
+            this->instanceName = commandInterpreter.getInstanceName();
+        } else {
+            const char* ptr = ::getenv("LUCED_INSTANCE");
+            if (ptr != NULL) {
+                this->instanceName = ptr;
+            }
+        }
+        
+        serverProperty = ClientServerUtil::getServerRunningProperty(instanceName);
+        serverProperty.setValue("running");
+        EventDispatcher::getInstance()
+                         ->registerEventReceiverForRootProperty(serverProperty, 
+                                                                newCallback(this, &EditorServer::processEventForServerProperty));
+    
+        commandProperty = GuiRootProperty(ClientServerUtil::getServerCommandProperty(instanceName));
+        commandProperty.remove();
+        EventDispatcher::getInstance()
+                         ->registerEventReceiverForRootProperty(commandProperty, 
+                                                                newCallback(this, &EditorServer::processEventForCommandProperty));
+    }
+
     if (commandline->getLength() > 0)
     {
-        CommandlineInterpreter<Actor> commandInterpreter;
-        commandInterpreter.doCommandline(commandline);
-
         if (errorList.isValid() && errorList->getLength() > 0)
         {
             ConfigErrorHandler::start(errorList, commandInterpreter.getActor().getNumberAndFileList());

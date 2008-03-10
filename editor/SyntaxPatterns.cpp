@@ -333,7 +333,8 @@ void SyntaxPatterns::compile(int i) {
         
     }
     if (!first) {
-        sp->re = BasicRegex(patStr, BasicRegex::MULTILINE | BasicRegex::EXTENDED);
+        sp->re = BasicRegex(patStr, BasicRegex::CreateOptions() | BasicRegex::MULTILINE 
+                                                                | BasicRegex::EXTENDED);
         util::maximize(&maxOvecSize, sp->re.getOvecSize());
 
         for (int ci = 0; ci < sp->childList.getLength(); ++ci)

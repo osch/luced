@@ -35,9 +35,9 @@ namespace LucED
 class ClientServerUtil
 {
 public:
-    static GuiRootProperty getDefaultServerRunningProperty();
+    static GuiRootProperty getServerRunningProperty(const String& instanceName);
     
-    static GuiRootProperty getDefaultServerCommandProperty();
+    static GuiRootProperty getServerCommandProperty(const String& instanceName);
     
     static String quoteCommandline(HeapObjectArray<String>::Ptr commandline);
 

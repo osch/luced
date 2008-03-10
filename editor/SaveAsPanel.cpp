@@ -29,8 +29,9 @@
 using namespace LucED;
 
 SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget, 
-                                            Callback<MessageBoxParameter>::Ptr messageBoxInvoker)
-    : DialogPanel(parent),
+                                            Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+                                            Callback<GuiWidget*>::Ptr          requestCloseCallback)
+    : DialogPanel(parent, requestCloseCallback),
       editorWidget(editorWidget),
       messageBoxInvoker(messageBoxInvoker)
 {
@@ -95,7 +96,7 @@ void SaveAsPanel::continueSave()
         }
     }
     textData->setRealFileName(newFileName);
-    requestCloseFor(this);
+    requestClose();
     saveCallback->call();
 }
 
@@ -122,7 +123,7 @@ void SaveAsPanel::handleButtonPressed(Button* button)
         }
     }
     else if (button == cancelButton) {
-        requestCloseFor(this);
+        requestClose();
     }
 }
 

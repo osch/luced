@@ -35,8 +35,9 @@ using namespace LucED;
 
 ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel, 
                            Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                           Callback<DialogPanel*>::Ptr        panelInvoker)
-    : DialogPanel(parent),
+                           Callback<DialogPanel*>::Ptr        panelInvoker,
+                           Callback<GuiWidget*>::Ptr          requestCloseCallback)
+    : DialogPanel(parent, requestCloseCallback),
       e(editorWidget),
       messageBoxInvoker(messageBoxInvoker),
       panelInvoker(panelInvoker),
@@ -336,7 +337,7 @@ void ReplacePanel::handleButtonPressed(Button* button)
     {
         if (button == cancelButton)
         {
-            requestCloseFor(this);
+            requestClose();
         }
         else if (button == findNextButton    || button == findPrevButton
               || button == replaceNextButton || button == replacePrevButton)
@@ -555,7 +556,7 @@ void ReplacePanel::findAgainForward()
     replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
     findEditField   ->getTextData()->setModifiedFlag(false);
     replaceEditField->getTextData()->setModifiedFlag(false);
-    requestCloseFor(this);
+    requestClose();
 
     historyIndex = -1;
 
@@ -589,7 +590,7 @@ void ReplacePanel::findAgainBackward()
     replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
     findEditField   ->getTextData()->setModifiedFlag(false);
     replaceEditField->getTextData()->setModifiedFlag(false);
-    requestCloseFor(this);
+    requestClose();
 
     historyIndex = -1;
 
@@ -622,7 +623,7 @@ void ReplacePanel::replaceAgainForward()
         replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
         findEditField   ->getTextData()->setModifiedFlag(false);
         replaceEditField->getTextData()->setModifiedFlag(false);
-        requestCloseFor(this);
+        requestClose();
     }
     else
     {
@@ -695,7 +696,7 @@ void ReplacePanel::replaceAgainBackward()
         replaceUtil.setReplaceString    (replaceEditField->getTextData()->getAsString());
         findEditField   ->getTextData()->setModifiedFlag(false);
         replaceEditField->getTextData()->setModifiedFlag(false);
-        requestCloseFor(this);
+        requestClose();
     }
     else
     {

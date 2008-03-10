@@ -26,6 +26,7 @@
 #include "KeyMapping.hpp"
 #include "HeapObjectArray.hpp"
 #include "WeakPtrQueue.hpp"
+#include "Callback.hpp"
 
 namespace LucED {
 
@@ -36,7 +37,7 @@ public:
     typedef OwningPtr<DialogPanel> Ptr;
     
     static Ptr create(GuiWidget* parent) {
-        return Ptr(new DialogPanel(parent));
+        return Ptr(new DialogPanel(parent, Callback<GuiWidget*>::Ptr()));
     }
 
     virtual Measures getDesiredMeasures();
@@ -54,15 +55,19 @@ public:
     void setRootElement(OwningPtr<GuiElement> rootElement);
     void setFocus(GuiWidget* element);
     virtual void notifyAboutHotKeyEventForOtherWidget();
+
+    virtual void setPosition(Position newPosition);
     
 protected:
-    DialogPanel(GuiWidget* parent);
+    DialogPanel(GuiWidget* parent, Callback<GuiWidget*>::Ptr requestCloseCallback);
     
     GuiElement* getRootElement() {return rootElement.getRawPtr();}
     
     void switchFocusToNextWidget();
     void switchFocusToPrevWidget();
     virtual void requestFocusFor(GuiWidget* w);
+    
+    virtual void requestClose();
     
 private:
     OwningPtr<GuiElement> rootElement;
@@ -77,6 +82,8 @@ private:
     WeakPtr<GuiWidget> focusedElement;
     
     bool hasFocus;
+    
+    Callback<GuiWidget*>::Ptr requestCloseCallback;
 };
 
 } // namespace LucED

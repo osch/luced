@@ -43,20 +43,24 @@ public:
         Measures() 
                 : minWidth(0),  minHeight(0),
                   bestWidth(0), bestHeight(0),
-                  maxWidth(0),  maxHeight(0)
+                  maxWidth(0),  maxHeight(0),
+                  incrWidth(1), incrHeight(1),
+                  onlyRasteredValues(false)
         {}
         Measures(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight) 
                 : minWidth(minWidth),   minHeight(minHeight),
                   bestWidth(bestWidth), bestHeight(bestHeight),
                   maxWidth(maxWidth),   maxHeight(maxHeight),
-                  incrWidth(1),         incrHeight(1)
+                  incrWidth(1),         incrHeight(1),
+                  onlyRasteredValues(false)
         {}
         Measures(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight,
                  int incrWidth,int incrHeight) 
                 : minWidth(minWidth),   minHeight(minHeight),
                   bestWidth(bestWidth), bestHeight(bestHeight),
                   maxWidth(maxWidth),   maxHeight(maxHeight),
-                  incrWidth(incrWidth), incrHeight(incrHeight)
+                  incrWidth(incrWidth), incrHeight(incrHeight),
+                  onlyRasteredValues(false)
         {}
         void maximize(const Measures& rhs);
         
@@ -68,6 +72,7 @@ public:
         int maxHeight;
         int incrWidth;
         int incrHeight;
+        bool onlyRasteredValues;
     };
     
     enum ProcessingResult

@@ -48,12 +48,14 @@ GuiElement::Measures GuiLayoutSpacerFrame::getDesiredMeasures()
 
 void GuiLayoutSpacerFrame::setPosition(Position p)
 {
+#if 1
     Measures desired = root->getDesiredMeasures();
     if (desired.bestHeight < p.h) {
         int d = p.h - desired.bestHeight;
         p.y += d/2;
         p.h -= d/2;
     }
+#endif
     root->setPosition(p);
 }
 

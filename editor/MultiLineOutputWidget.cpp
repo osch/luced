@@ -34,23 +34,27 @@ MultiLineOutputWidget::MultiLineOutputWidget(GuiWidget* parent, Style style, Tex
 {
     textStyles = TextStyles::create();
 
-    if (style == STYLE_OUTPUT) {
-        textStyles->appendNewStyle(GlobalConfig::getInstance()->getTextStyles()->get(0)->getFontName(),
-                                   GlobalConfig::getInstance()->getTextStyles()->get(0)->getColorName());
-    }
-    else if (style == STYLE_GUI) {
-        textStyles->appendNewStyle(GlobalConfig::getInstance()->getGuiFont(), 
-                                   GlobalConfig::getInstance()->getGuiFontColor());
-    }
-    else {
-        ASSERT(false);
+    switch (style)
+    {
+        case STYLE_GUI: {
+            textStyles->appendNewStyle(GlobalConfig::getInstance()->getGuiFont(), 
+                                       GlobalConfig::getInstance()->getGuiFontColor());
+            break;
+        }
+        default: ASSERT(false);
+        case STYLE_OUTPUT: {
+            textStyles->appendNewStyle(GlobalConfig::getInstance()->getTextStyles()->get(0)->getFontName(),
+                                       GlobalConfig::getInstance()->getTextStyles()->get(0)->getColorName());
+            break;
+        }
     }
     
     
     textWidget = TextEditorWidget::create(this, 
                                           textStyles, 
                                           HilitedText::create(textData, GlobalConfig::getInstance()->getDefaultLanguageMode()),
-                                          TextEditorWidget::READ_ONLY);
+                                          TextWidget::CreateOptions() | TextWidget::READ_ONLY
+                                                                      | TextWidget::NEVER_SHOW_CURSOR);
 //    textWidget->disableCursorChanges();
 
 //    textWidget->setBackgroundColor(getGuiRoot()->getGuiColor03());

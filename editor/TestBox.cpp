@@ -46,7 +46,7 @@ TestBox::TestBox(TopWin* referingWindow, TextData::Ptr textData)
     GuiLayoutSpacerFrame::Ptr frame0 = GuiLayoutSpacerFrame::create(column0, 10);
     setRootElement(frame0);
 
-    column0->addSpacer();
+    //column0->addSpacer();
 //    column0->addElement(label0);
     column0->addElement(multiLineOut);
     column0->addElement(GuiLayoutSpacer::create(0, 0, 0, 10, 0, INT_MAX));

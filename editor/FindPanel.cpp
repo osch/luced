@@ -61,8 +61,9 @@ private:
 
 
 FindPanel::FindPanel(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                                                                 Callback<DialogPanel*>::Ptr        panelInvoker)
-    : DialogPanel(parent),
+                                                                                 Callback<DialogPanel*>::Ptr        panelInvoker,
+                                                                                 Callback<GuiWidget*>::Ptr          requestCloseCallback)
+    : DialogPanel(parent, requestCloseCallback),
 
       pasteDataReceiver(PasteDataReceiver::create(this,
                                                   PasteDataContentHandler::create(this))),
@@ -276,7 +277,7 @@ void FindPanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearc
 
 void FindPanel::findSelectionForward()
 {
-    requestCloseFor(this);
+    requestClose();
     if (!e->areCursorChangesDisabled())
     {
         selectionSearchString.clear();
@@ -289,7 +290,7 @@ void FindPanel::findSelectionForward()
 
 void FindPanel::findSelectionBackward()
 {
-    requestCloseFor(this);
+    requestClose();
     if (!e->areCursorChangesDisabled())
     {
         selectionSearchString.clear();
@@ -322,7 +323,7 @@ void FindPanel::handleButtonPressed(Button* button)
 {
     if (button == cancelButton)
     {
-        requestCloseFor(this);
+        requestClose();
     }
 //    else if (button == goBackButton)
 //    {
@@ -372,7 +373,7 @@ void FindPanel::handleButtonPressed(Button* button)
 void FindPanel::handleButtonDefaultKey(Button* button)
 {
     if (button == findNextButton || button == findPrevButton) {
-        requestCloseFor(this);
+        requestClose();
     }
     handleButtonPressed(button);
 }
@@ -427,7 +428,7 @@ void FindPanel::findAgainForward()
         findUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
         findUtil.setSearchString     (editField->getTextData()->getAsString());
         editField->getTextData()->setModifiedFlag(false);
-        requestCloseFor(this);
+        requestClose();
     }
     else
     {
@@ -470,7 +471,7 @@ void FindPanel::findAgainBackward()
         findUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
         findUtil.setSearchString     (editField->getTextData()->getAsString());
         editField->getTextData()->setModifiedFlag(false);
-        requestCloseFor(this);
+        requestClose();
     }
     else
     {

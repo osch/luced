@@ -69,8 +69,6 @@ public:
     virtual void setSize(int width, int height);
     virtual void show();
     
-    virtual void requestCloseFor(GuiWidget* w);
-
     void invokeGotoLinePanel();
     void invokeSaveAsPanel(Callback<>::Ptr saveCallback);
     void invokeFindPanelBackward();
@@ -112,6 +110,8 @@ private:
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
 
     void treatConfigUpdate();
+
+    void requestCloseFor(GuiWidget* w);
 
     void handleEscapeKey();
     void handleSaveKey();
@@ -156,6 +156,7 @@ private:
     int lowerPanelIndex;
     
     WeakPtr<DialogPanel> invokedPanel;
+    int                  invokedPanelIndex;
     MessageBox::Ptr messageBox;
 
     MessageBox::Ptr     modalMessageBox;

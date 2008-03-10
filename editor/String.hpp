@@ -240,6 +240,15 @@ public:
         }
     }
     
+    bool startsWith(const char* str) const {
+        long len = strlen(str);
+        if (getLength() < len) {
+            return false;
+        } else {
+            return memcmp(toCString(), str, len) == 0;
+        }
+    }
+    
     template<class T> String& operator<<(const T& rhs) {
         return append(rhs);
     }

@@ -23,9 +23,12 @@
 
 using namespace LucED;
 
-MultiLineEditorWidget::MultiLineEditorWidget(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
-    : TextEditorWidget(parent, textStyles, hilitedText),
+MultiLineEditorWidget::MultiLineEditorWidget(GuiWidget*       parent, 
+                                             TextStyles::Ptr  textStyles, 
+                                             HilitedText::Ptr hilitedText,
+                                             CreateOptions    options)
+
+    : TextEditorWidget(parent, textStyles, hilitedText, options),
       standardActions(StandardEditActions::createMultiLineActions(this))
 {
 }

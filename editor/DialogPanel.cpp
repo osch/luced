@@ -29,10 +29,11 @@
 
 using namespace LucED;
 
-DialogPanel::DialogPanel(GuiWidget* parent)
+DialogPanel::DialogPanel(GuiWidget* parent, Callback<GuiWidget*>::Ptr requestCloseCallback)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       wasNeverShown(true),
-      hasFocus(false)
+      hasFocus(false),
+      requestCloseCallback(requestCloseCallback)
 {
     addToXEventMask(ExposureMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -67,6 +68,19 @@ void DialogPanel::treatNewWindowPosition(Position newPosition)
     }
 }
 
+void DialogPanel::setPosition(Position p)
+{
+    Measures m = rootElement->getDesiredMeasures();
+    
+    if (m.minWidth > p.w) {
+        p.w = m.minWidth;
+    }
+    if (m.minHeight > p.h) {
+        p.h = m.minHeight;
+    }
+    
+    GuiWidget::setPosition(p);
+}
 
 GuiElement::Measures DialogPanel::getDesiredMeasures()
 {
@@ -337,3 +351,7 @@ void DialogPanel::notifyAboutHotKeyEventForOtherWidget()
     }    
 }
 
+void DialogPanel::requestClose()
+{
+    requestCloseCallback->call(this);
+}

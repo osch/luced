@@ -21,21 +21,36 @@
 
 #include "ClientServerUtil.hpp"
 #include "System.hpp"
+#include "ValidPtr.hpp"
 
 using namespace LucED;
 
 
-GuiRootProperty ClientServerUtil::getDefaultServerRunningProperty()
+GuiRootProperty ClientServerUtil::getServerRunningProperty(const String& instanceName)
 {
-    System* sys = System::getInstance();
-    return GuiRootProperty(String() << "LUCED_SERVER_HOST_" << sys->getHostName() << "_USER_" << sys->getUserName());
+    ValidPtr<System> sys = System::getInstance();
+    
+    String name = String() << "LUCED_SERVER_HOST_" << sys->getHostName() << "_USER_" << sys->getUserName();
+
+    if (instanceName.getLength() > 0) {
+        name << "_INSTANCE_" << instanceName;
+    }
+    
+    return GuiRootProperty(name);
 }
 
 
-GuiRootProperty ClientServerUtil::getDefaultServerCommandProperty()
+GuiRootProperty ClientServerUtil::getServerCommandProperty(const String& instanceName)
 {
-    System* sys = System::getInstance();
-    return GuiRootProperty(String() << "LUCED_COMMAND_HOST" << sys->getHostName() << "_USER_" << sys->getUserName());
+    ValidPtr<System> sys = System::getInstance();
+
+    String name = String() << "LUCED_COMMAND_HOST" << sys->getHostName() << "_USER_" << sys->getUserName();
+
+    if (instanceName.getLength() > 0) {
+        name << "_INSTANCE_" << instanceName;
+    }
+
+    return GuiRootProperty(name);
 }
 
 String ClientServerUtil::quoteCommandline(HeapObjectArray<String>::Ptr commandline)

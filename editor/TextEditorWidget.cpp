@@ -111,7 +111,7 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
                                    CreateOptions    options,
                                    int              borderWidth)
                                    
-      : TextWidget(parent, textStyles, hilitedText, borderWidth),
+      : TextWidget(parent, textStyles, hilitedText, borderWidth, options),
 
         selectionOwner(SelectionOwner::create(this, 
                                               SelectionOwner::TYPE_PRIMARY,

@@ -30,7 +30,7 @@
 #include "WeakPtr.hpp"
 #include "Callback.hpp"
 #include "KeyModifier.hpp" 
-#include "OptionBits.hpp"
+#include "Flags.hpp"
 
 namespace LucED {
 
@@ -40,12 +40,6 @@ public:
     typedef OwningPtr<TextEditorWidget> Ptr;
     
     static const int BORDER_WIDTH = 4;
-    
-    enum CreateOption {
-        DEFAULT = 0,
-        READ_ONLY
-    };
-    typedef OptionBits<CreateOption> CreateOptions;
     
     enum ActionId
     {
@@ -64,7 +58,7 @@ public:
     static Ptr create(GuiWidget*       parent,
                       TextStyles::Ptr  textStyles, 
                       HilitedText::Ptr hilitedText,
-                      CreateOptions    options = CreateOptions(DEFAULT))
+                      CreateOptions    options = CreateOptions())
     {
         return Ptr(new TextEditorWidget(parent, textStyles, hilitedText, options));
     }
@@ -229,7 +223,7 @@ protected:
     TextEditorWidget(GuiWidget*       parent, 
                      TextStyles::Ptr  textStyles, 
                      HilitedText::Ptr hilitedText, 
-                     CreateOptions    options = CreateOptions(DEFAULT),
+                     CreateOptions    options = CreateOptions(),
                      int              borderWidth = BORDER_WIDTH);
 
     void notifyAboutReceivedPasteData(const byte* data, long length);

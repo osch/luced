@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -32,6 +32,7 @@
 #include "EditorTopWin.hpp"
 #include "ConfigException.hpp"
 #include "WeakPtr.hpp"
+#include "ValidPtr.hpp"
 
 namespace LucED
 {
@@ -56,6 +57,10 @@ public:
         startWithCommandlineAndErrorList(commandLine, ConfigException::ErrorList::Ptr());
     }
     
+    String getInstanceName() const {
+        return instanceName;
+    }
+    
 private:
     friend class SingletonInstance<EditorServer>;
     static SingletonInstance<EditorServer> instance;
@@ -65,11 +70,13 @@ private:
     void processEventForServerProperty(XEvent* event);
     void processEventForCommandProperty(XEvent* event);
     void processCommandline(HeapObjectArray<String>::Ptr    commandline, 
+                            bool isStarting,
                             ConfigException::ErrorList::Ptr errorList    = ConfigException::ErrorList::Ptr());
 
     bool isStarted;
     GuiRootProperty serverProperty;
     GuiRootProperty commandProperty;
+    String instanceName;
 };
 
 } // namespace LucED

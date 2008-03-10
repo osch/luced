@@ -131,9 +131,6 @@ protected:
     virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w) {
         if (parent != NULL) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
     }
-    virtual void requestCloseFor(GuiWidget* w) {
-        if (parent != NULL) parent->requestCloseFor(w);
-    }    
 
 public:
     WidgetId getWid() const {

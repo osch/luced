@@ -49,9 +49,12 @@ public:
 
     static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
                       Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                      Callback<DialogPanel*>::Ptr        panelInvoker)
+                      Callback<DialogPanel*>::Ptr        panelInvoker,
+                      Callback<GuiWidget*>::Ptr          requestCloseCallback)
     {
-        return Ptr(new ReplacePanel(parent, editorWidget, findPanel, messageBoxInvoker, panelInvoker));
+        return Ptr(new ReplacePanel(parent, editorWidget, findPanel, messageBoxInvoker, 
+                                                                     panelInvoker,
+                                                                     requestCloseCallback));
     }
     
     void replaceAgainForward();
@@ -77,7 +80,8 @@ public:
 private:
     ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
                  Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                 Callback<DialogPanel*>::Ptr        panelInvoker);
+                 Callback<DialogPanel*>::Ptr        panelInvoker,
+                 Callback<GuiWidget*>::Ptr          requestCloseCallback);
 
     void executeFind(bool isWrapping, Callback<>::Ptr  handleContinueSearchButton);
 

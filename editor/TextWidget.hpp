@@ -34,6 +34,7 @@
 #include "GuiColor.hpp"
 #include "CursorPositionData.hpp"
 #include "ValidPtr.hpp"
+#include "Flags.hpp"
 
 namespace LucED {
 
@@ -42,10 +43,19 @@ class TextWidget : public GuiWidget
 public:
     typedef OwningPtr<TextWidget> Ptr;
     
+    enum CreateOption
+    {
+        READ_ONLY,
+        NEVER_SHOW_CURSOR,
+        DO_NOT_RASTERIZE_DESIRED_MEASURES
+    };
+    typedef Flags<CreateOption> CreateOptions;
+    
     virtual ~TextWidget();
     
 protected:
-    TextWidget(GuiWidget *parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border);
+    TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border,
+               CreateOptions options);
 
     BackliteBuffer* getBackliteBuffer() {
         return backliteBuffer.getRawPtr();
@@ -244,7 +254,6 @@ private:
     long totalPixWidth;
     long leftPix;
     long endPos;
-    bool cursorVisible;
     bool cursorIsBlinking;
     bool cursorIsActive;
     
@@ -274,6 +283,33 @@ private:
     GuiColor secondarySelectionColor;
     GuiColor backgroundColor;
     GC textWidget_gcid;
+
+    class CursorVisibleFlag
+    {
+    public:
+        CursorVisibleFlag(CreateOptions options)
+            : cursorVisibleFlag(false),
+              neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR))
+        {}
+        
+        operator bool() const {
+            return cursorVisibleFlag;
+        }
+        
+        CursorVisibleFlag& operator=(bool newValue) {
+            if (!neverShowCursorFlag) {
+                cursorVisibleFlag = newValue;
+            }
+            return *this;
+        }
+    private:
+        bool cursorVisibleFlag;
+        bool neverShowCursorFlag;
+    };
+
+    CursorVisibleFlag cursorVisible;
+    bool neverShowCursorFlag;
+    bool rasterizeDesiredMeasuresFlag;
 };
 
 } // namespace LucED

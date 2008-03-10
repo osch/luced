@@ -27,6 +27,16 @@
 namespace LucED
 {
 
+/**
+ * Pointer that should stay valid, once it has been assigned to a
+ * valid HeapObject.
+ *
+ * Use this class if you are shure that the ownership of the
+ * underlaying HeapObject is to be preserverd somewhere else.
+ *
+ * In DEBUG version this is checked through a WeakPtr.
+ * In NON-DEBUG version it is simply a raw pointer.
+ */
 template<class T> class ValidPtr
 {
 public:
@@ -123,6 +133,18 @@ public:
     T* getRawPtr() const {
         ASSERT(isValid());
         return ptr;
+    }
+
+    operator WeakPtr<T>() const {
+        return WeakPtr<T>(ptr);
+    }
+
+    template
+    <
+        class S
+    > 
+    operator WeakPtr<S>() const {
+        return WeakPtr<S>(ptr);
     }
 
 private:
