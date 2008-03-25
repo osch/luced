@@ -28,6 +28,8 @@
 #include "Position.hpp"
 #include "OwningPtr.hpp"
 #include "WeakPtr.hpp"
+#include "Flags.hpp"
+#include "BaseException.hpp"
 
 namespace LucED
 {
@@ -37,6 +39,20 @@ class GuiElement : public HeapObject
 public:
     typedef OwningPtr<GuiElement> Ptr;
 
+    enum LayoutOption
+    {
+        LAYOUT_HORIZONTAL_RASTERING,
+        LAYOUT_VERTICAL_RASTERING,
+
+        LAYOUT_VERTICAL_CENTER,
+        LAYOUT_BOTTOM,
+
+        LAYOUT_HORIZONTAL_CENTER,
+        LAYOUT_RIGHT
+    };
+    
+    typedef Flags<LayoutOption> LayoutOptions;
+
     class Measures
     {
     public:
@@ -44,23 +60,20 @@ public:
                 : minWidth(0),  minHeight(0),
                   bestWidth(0), bestHeight(0),
                   maxWidth(0),  maxHeight(0),
-                  incrWidth(1), incrHeight(1),
-                  onlyRasteredValues(false)
+                  incrWidth(0), incrHeight(0)
         {}
         Measures(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight) 
                 : minWidth(minWidth),   minHeight(minHeight),
                   bestWidth(bestWidth), bestHeight(bestHeight),
                   maxWidth(maxWidth),   maxHeight(maxHeight),
-                  incrWidth(1),         incrHeight(1),
-                  onlyRasteredValues(false)
+                  incrWidth(1),         incrHeight(1)
         {}
         Measures(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight,
                  int incrWidth,int incrHeight) 
                 : minWidth(minWidth),   minHeight(minHeight),
                   bestWidth(bestWidth), bestHeight(bestHeight),
                   maxWidth(maxWidth),   maxHeight(maxHeight),
-                  incrWidth(incrWidth), incrHeight(incrHeight),
-                  onlyRasteredValues(false)
+                  incrWidth(incrWidth), incrHeight(incrHeight)
         {}
         void maximize(const Measures& rhs);
         
@@ -72,7 +85,6 @@ public:
         int maxHeight;
         int incrWidth;
         int incrHeight;
-        bool onlyRasteredValues;
     };
     
     enum ProcessingResult
@@ -82,12 +94,59 @@ public:
     };
     
     
+    class DesiredMeasuresChangedException : public BaseException
+    {
+    public:
+        DesiredMeasuresChangedException()
+            : BaseException("internal DesiredMeasuresChangedException")
+        {}
+        virtual const char* what();
+    };
+
+    class LayoutedElement
+    {
+    public:
+        LayoutedElement(GuiElement::Ptr element,
+                        LayoutOptions layoutOptions = LayoutOptions())
+            : element(element),
+              layoutOptions(layoutOptions)
+        {}
+        
+        GuiElement* getPtr() const {
+            return element;
+        }
+        
+        LayoutOptions getLayoutOptions() const {
+            return layoutOptions;
+        }
+        
+    private:
+        GuiElement::Ptr element;
+        LayoutOptions layoutOptions;
+    };
+
+
+    bool isVisible() const {
+        return isVisibleFlag;
+    }
     virtual Measures getDesiredMeasures() { return Measures(0, 0, 0, 0, 0, 0); };
     virtual void setPosition(Position p) = 0;
 
+    virtual void show() {
+        isVisibleFlag = true;
+    }
+    virtual void hide() {
+        isVisibleFlag = false;
+    }
     
 protected:
-    GuiElement() {}
+    
+    GuiElement()
+        : isVisibleFlag(true)
+    {}
+    
+private:
+    bool isVisibleFlag;
 };
 
 

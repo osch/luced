@@ -63,6 +63,19 @@ public:
         return Ptr(new TextEditorWidget(parent, textStyles, hilitedText, options));
     }
 
+    void connectToVerticalScrollBar(ScrollBar::Ptr scrollBar)
+    {
+        scrollBar->setChangedValueCallback                   (newCallback(this, &TextEditorWidget::setTopLineNumber));
+        scrollBar->setScrollStepCallback                     (newCallback(this, &TextEditorWidget::handleScrollStepV));
+        this->setScrollBarVerticalValueRangeChangedCallback  (newCallback(scrollBar, &ScrollBar::setValueRange));
+    }
+    void connectToHorizontalScrollBar(ScrollBar::Ptr scrollBar)
+    {
+        scrollBar->setChangedValueCallback                   (newCallback(this, &TextEditorWidget::setLeftPix));
+        scrollBar->setScrollStepCallback                     (newCallback(this, &TextEditorWidget::handleScrollStepH));
+        this->setScrollBarHorizontalValueRangeChangedCallback(newCallback(scrollBar, &ScrollBar::setValueRange));
+    }
+
     ActionId getLastAction() const;
     void setCurrentAction(ActionId action);
     

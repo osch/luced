@@ -54,12 +54,20 @@ public:
             processingAmount = 1000;
         }
         ASSERT(processingAmount > 0);
+
         TimeVal startTime;
         TimeVal endTime;
+
         startTime.setToCurrentTime();
-        this->processingAmount = process(processingAmount);
+        int newProcessingAmount = process(processingAmount);
         endTime.setToCurrentTime();
-        this->microSecs = TimeVal::diffMicroSecs(startTime, endTime);
+
+        long newMicroSecs = TimeVal::diffMicroSecs(startTime, endTime);
+
+        if (newProcessingAmount > 0 && newMicroSecs > 0) {
+            this->processingAmount = ( 3 * this->processingAmount + newProcessingAmount) / 4;
+            this->microSecs        = ( 3 * this->microSecs        + newMicroSecs       ) / 4;
+        }
     }
     long getMicroSecs() {
         return microSecs;

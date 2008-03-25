@@ -195,8 +195,8 @@ void TextEditorWidget::assureSelectionVisible()
     else if (getBackliteBuffer()->getBeginSelectionLine() >= getTopLineNumber() + getNumberOfVisibleLines()  - 1)
     {
         int newTopLineNumber = getBackliteBuffer()->getBeginSelectionLine() + getNumberOfVisibleLines() / 3 - getNumberOfVisibleLines();
-        if (newTopLineNumber > textData->getNumberOfLines() - getNumberOfVisibleLines()) {
-            newTopLineNumber = textData->getNumberOfLines() - getNumberOfVisibleLines();
+        if (newTopLineNumber > getNumberOfLines() - getNumberOfVisibleLines()) {
+            newTopLineNumber = getNumberOfLines() - getNumberOfVisibleLines();
         }
         setTopLineNumber(newTopLineNumber);
     }
@@ -212,8 +212,8 @@ void TextEditorWidget::adjustCursorVisibility()
         setTopLineNumber(newTopLineNumber);
     } else if (getCursorLineNumber() >= getTopLineNumber() + getNumberOfVisibleLines()) {
         int newTopLineNumber = getCursorLineNumber() - getNumberOfVisibleLines() + getNumberOfVisibleLines() / 4;
-        if (newTopLineNumber + getNumberOfVisibleLines() > textData->getNumberOfLines()) {
-            newTopLineNumber = textData->getNumberOfLines() - getNumberOfVisibleLines();
+        if (newTopLineNumber + getNumberOfVisibleLines() > getNumberOfLines()) {
+            newTopLineNumber = getNumberOfLines() - getNumberOfVisibleLines();
         }
         setTopLineNumber(newTopLineNumber);
     }
@@ -458,8 +458,8 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                 }
                 else if (event->xbutton.button == Button5)
                 {
-                    if (getTopLineNumber() + 5 >= textData->getNumberOfLines() - getNumberOfVisibleLines()) {
-                        setTopLineNumber(textData->getNumberOfLines() - getNumberOfVisibleLines());
+                    if (getTopLineNumber() + 5 >= getNumberOfLines() - getNumberOfVisibleLines()) {
+                        setTopLineNumber(getNumberOfLines() - getNumberOfVisibleLines());
                     } else {
                         setTopLineNumber(getTopLineNumber() + 5);
                     }
@@ -600,13 +600,20 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                 }
             }
         } else {
-            if (newCursorPos != getCursorTextPosition())
+            long newCursorPos2 = newCursorPos;
+            
+            if (   this->getTopLineNumber() >= getNumberOfLines() - this->getNumberOfVisibleLines()
+                && y >= 0 && y > getHeightPix())
+            {
+                newCursorPos2 = textData->getLength();  // special handling if last empty line is not displayed
+            }
+//            if (newCursorPos2 != getCursorTextPosition() || newCursorPos2 != getBackliteBuffer()->)
             {
                 if (!selectionOwner->hasSelectionOwnership()) {
                     selectionOwner->requestSelectionOwnership();
                     getBackliteBuffer()->activateSelection(getCursorTextPosition());
                 }
-                getBackliteBuffer()->extendSelectionTo(newCursorPos);
+                getBackliteBuffer()->extendSelectionTo(newCursorPos2);
             }
         }
         moveCursorToTextPosition(newCursorPos);
@@ -890,7 +897,7 @@ void TextEditorWidget::handleScrollStepH(ScrollStep::Type scrollStep)
 
 bool TextEditorWidget::scrollDown()
 {
-    if (this->getTopLineNumber() < this->textData->getNumberOfLines() - this->getNumberOfVisibleLines()) {
+    if (this->getTopLineNumber() < getNumberOfLines() - this->getNumberOfVisibleLines()) {
         this->setTopLineNumber(this->getTopLineNumber() + 1);
         return true;
     } else {
@@ -940,8 +947,8 @@ void TextEditorWidget::scrollPageDown()
 {
     long targetTopLine = this->getTopLineNumber() + this->getNumberOfVisibleLines() - 1;
     
-    if (targetTopLine > this->textData->getNumberOfLines() - this->getNumberOfVisibleLines()) {
-        targetTopLine = this->textData->getNumberOfLines() - this->getNumberOfVisibleLines();
+    if (targetTopLine > getNumberOfLines() - this->getNumberOfVisibleLines()) {
+        targetTopLine = getNumberOfLines() - this->getNumberOfVisibleLines();
     }
     this->setTopLineNumber(targetTopLine);
 }

@@ -19,43 +19,41 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef MULTI_LINE_OUTPUT_WIDGET_HPP
-#define MULTI_LINE_OUTPUT_WIDGET_HPP
+#ifndef TEXT_DISPLAY_GUI_COMPOUND_HPP
+#define TEXT_DISPLAY_GUI_COMPOUND_HPP
 
 #include "GuiWidget.hpp"
 #include "OwningPtr.hpp"
 #include "TextEditorWidget.hpp"
+#include "GuiLayoutColumn.hpp"
+#include "GuiLayoutRow.hpp"
+#include "ScrollBar.hpp"
+#include "GuiLayoutSpacer.hpp"
+#include "GuiLayoutWidget.hpp"
+#include "FramedGuiCompound.hpp"
+#include "ScrollableTextGuiCompound.hpp"
 
 namespace LucED
 {
 
-class MultiLineOutputWidget : public GuiWidget
+class TextDisplayGuiCompound : public ScrollableTextGuiCompound
 {
 public:
-    typedef OwningPtr<MultiLineOutputWidget> Ptr;
+    typedef OwningPtr<TextDisplayGuiCompound> Ptr;
 
     enum Style {
         STYLE_OUTPUT,
         STYLE_GUI
     };
 
-    static Ptr create(GuiWidget* parent, Style style, TextData::Ptr textData)
-    {
-        return Ptr(new MultiLineOutputWidget(parent, style, textData));
-    }
+    static Ptr create(GuiWidget* parent, Style style, TextData::Ptr textData);
     
-    virtual Measures getDesiredMeasures();
-    virtual void setPosition(Position p);
-
 private:
-    MultiLineOutputWidget(GuiWidget* parent, Style style, TextData::Ptr textData);
-
-    Style                 style;
-    TextStyles::Ptr       textStyles;
-    TextData::Ptr         textData;
-    TextEditorWidget::Ptr textWidget;
+    TextDisplayGuiCompound(GuiWidget*                         parent, 
+                           TextEditorWidget::Ptr              textWidget, 
+                           ScrollableTextGuiCompound::Options options);
 };
 
 } // namespace LucED
 
-#endif // MULTI_LINE_OUTPUT_WIDGET_HPP
+#endif // TEXT_DISPLAY_GUI_COMPOUND_HPP

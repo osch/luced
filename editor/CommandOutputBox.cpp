@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,7 +19,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "TestBox.hpp"
+#include "CommandOutputBox.hpp"
 #include "GlobalConfig.hpp"
 #include "GuiLayoutRow.hpp"
 #include "GuiLayoutSpacer.hpp"
@@ -29,27 +29,30 @@
 
 using namespace LucED;
 
-TestBox::TestBox(TopWin* referingWindow, TextData::Ptr textData)
+CommandOutputBox::CommandOutputBox(TopWin* referingWindow, TextData::Ptr textData)
     : PanelDialogWin(referingWindow),
       wasClosed(false)
 {
     button1 = Button::create(this, "O]K");
     
-    multiLineOut = MultiLineOutputWidget::create(this, 
-                                                 MultiLineOutputWidget::STYLE_OUTPUT,
-                                                 textData);
+    multiLineOut = TextDisplayGuiCompound::create(this, 
+                                                  TextDisplayGuiCompound::STYLE_OUTPUT,
+                                                  textData);
     
 
-    LabelWidget::Ptr label0 = LabelWidget::create(this, "TestBox");
+    LabelWidget::Ptr label0 = LabelWidget::create(this, "CommandOutputBox");
     GuiLayoutColumn::Ptr column0 = GuiLayoutColumn::create();
     GuiLayoutRow::Ptr row0 = GuiLayoutRow::create();
+
     GuiLayoutSpacerFrame::Ptr frame0 = GuiLayoutSpacerFrame::create(column0, 10);
     setRootElement(frame0);
 
-    //column0->addSpacer();
-//    column0->addElement(label0);
-    column0->addElement(multiLineOut);
-    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, 10, 0, INT_MAX));
+    column0->setReportRasteringOptions(  GuiLayoutColumn::ReportRasteringOptions() 
+                                       | GuiLayoutColumn::DO_NOT_REPORT_HORIZONTAL_RASTERING
+                                       | GuiLayoutColumn::DO_NOT_REPORT_VERTICAL_RASTERING);
+                                                                                 
+    column0->addElement(multiLineOut, GuiElement::LayoutOptions() | GuiElement::LAYOUT_VERTICAL_RASTERING);
+    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, 10, INT_MAX, INT_MAX));
     column0->addElement(row0);
     column0->addSpacer();
 
@@ -57,10 +60,9 @@ TestBox::TestBox(TopWin* referingWindow, TextData::Ptr textData)
     if (button1.isValid()) {
         row0->addElement(button1);
     }
-    //row0->addElement(GuiLayoutSpacer::create(3, 0, 10, 0, 10, 0));
     row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
     
-    Callback<Button*>::Ptr buttonCallback = newCallback(this, &TestBox::handleButtonPressed);
+    Callback<Button*>::Ptr buttonCallback = newCallback(this, &CommandOutputBox::handleButtonPressed);
     
     if (button1.isValid()) {
         button1->setButtonPressedCallback(buttonCallback);
@@ -74,7 +76,7 @@ TestBox::TestBox(TopWin* referingWindow, TextData::Ptr textData)
     if (button1.isValid()) {
         button1->setAsDefaultButton();
     }
-    setTitle("Titel TestBox");
+    setTitle("Command Output");
 
     if (button1.isValid()) {
         setFocus(button1);
@@ -83,7 +85,7 @@ TestBox::TestBox(TopWin* referingWindow, TextData::Ptr textData)
 }
 
 
-void TestBox::handleButtonPressed(Button* button)
+void CommandOutputBox::handleButtonPressed(Button* button)
 {
 #if 0
     if (!wasClosed)
@@ -113,7 +115,7 @@ void TestBox::handleButtonPressed(Button* button)
 #endif
 }
 
-void TestBox::requestCloseWindow()
+void CommandOutputBox::requestCloseWindow()
 {
     PanelDialogWin::requestCloseWindow();
 #if 0

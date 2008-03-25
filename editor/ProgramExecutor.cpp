@@ -21,9 +21,11 @@
 
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 
 #include "ProgramExecutor.hpp"
 #include "SystemException.hpp"
+#include "MemArray.hpp"
 
 extern char **environ;
 
@@ -52,6 +54,10 @@ void ProgramExecutor::startExecuting()
     {
         // we are child process: the new program
         
+        sigset_t blockedSignals;
+        sigemptyset(&blockedSignals);
+        ::sigprocmask(SIG_SETMASK, &blockedSignals, NULL);
+
         ::close(inpPipe[1]);
         ::close(outPipe[0]);
         
@@ -62,7 +68,10 @@ void ProgramExecutor::startExecuting()
         ::close(inpPipe[0]);
         ::close(outPipe[1]);
 
-        char* const argv[] = { NULL };
+        MemArray<char> filenameBuffer;
+        filenameBuffer.append(programName.toCString(), programName.getLength() + 1);
+
+        char* const argv[] = { filenameBuffer.getPtr(), NULL };
         
         ::execve(programName.toCString(), argv, environ);
         
@@ -136,7 +145,7 @@ void ProgramExecutor::readFromChild(int fileDescriptor)
     else if (readCounter == 0)
     {
         printf("reading finished\n");
-        childOutputListener->close();
+        // childOutputListener->close();
         output.removeTail(outputPosition);
     }
     else {
@@ -152,9 +161,11 @@ void ProgramExecutor::catchTerminatedChild(int returnCode)
     childInputListener->close();
     childOutputListener->close();
 
+    ASSERT(outputPosition <= output.getLength());
+
     finishedCallback->call(Result(returnCode, 
                                   output.getPtr(), 
-                                  output.getLength()));
+                                  outputPosition));
     input.clear();
     inputPosition = 0;    
 

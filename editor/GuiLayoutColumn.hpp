@@ -28,6 +28,7 @@
 #include "GuiElement.hpp"
 #include "ObjectArray.hpp"
 #include "OwningPtr.hpp"
+#include "Flags.hpp"
 
 namespace LucED {
 
@@ -40,16 +41,14 @@ public:
         return Ptr(new GuiLayoutColumn());
     }
     
-    int addElement(GuiElement::Ptr element) {
-        elements.append(element);
-        return elements.getLength() - 1;
-    }
+    int addElement(GuiElement::Ptr element, LayoutOptions layoutOptions = LayoutOptions());
+
     void removeElementAtPosition(int i) {
         elements.remove(i);
     }
     int getElementIndex(GuiElement::Ptr element) {
         for (int i = 0; i < elements.getLength(); ++i) {
-            if (elements[i] == element) {
+            if (elements[i].getPtr() == element) {
                 return i;
             }
         }
@@ -91,11 +90,27 @@ public:
     virtual Measures getDesiredMeasures();
     virtual void setPosition(Position p);
     
+    enum ReportRasteringOption {
+        DO_NOT_REPORT_HORIZONTAL_RASTERING,
+        DO_NOT_REPORT_VERTICAL_RASTERING
+    };
+    
+    typedef Flags<ReportRasteringOption> ReportRasteringOptions;
+    
+    void setReportRasteringOptions(ReportRasteringOptions reportRasteringOptions) {
+        this->reportRasteringOptions = reportRasteringOptions;
+    }
+
+    virtual void show();
+    virtual void hide();
+
 private:
     GuiLayoutColumn() {}
     
-    ObjectArray<GuiElement::Ptr> elements;
+    ObjectArray<LayoutedElement> elements;
     ObjectArray<Measures> rowMeasures;
+
+    ReportRasteringOptions reportRasteringOptions;
 };
 
 } // namespace LucED

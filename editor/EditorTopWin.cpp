@@ -40,7 +40,7 @@
 #include "System.hpp"
 #include "ConfigErrorHandler.hpp"
 #include "ProgramExecutor.hpp"
-#include "TestBox.hpp"
+#include "CommandOutputBox.hpp"
 #include "EditorServer.hpp"
 
 using namespace LucED;
@@ -94,47 +94,20 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     int statusLineIndex = rootElement->addElement(statusLine);
     upperPanelIndex = statusLineIndex + 1;
     
-//    GuiLayoutTable::Ptr tableLayout = GuiLayoutTable::create(2, 2);
-//    rootElement->addElement(tableLayout);
-    
-    textEditor = MultiLineEditorWidget::create(this, textStyles, hilitedText, 
-                                               TextWidget::CreateOptions() | TextWidget::DO_NOT_RASTERIZE_DESIRED_MEASURES);
-    textData   = textEditor->getTextData();
+    textEditor = MultiLineEditorWidget::create(this, textStyles, hilitedText);
 
-    
-//    GuiLayoutColumn::Ptr c1 = GuiLayoutColumn::create();
-    GuiLayoutColumn::Ptr c2 = GuiLayoutColumn::create();
-    GuiLayoutRow::Ptr    r1 = GuiLayoutRow::create();
-    GuiLayoutRow::Ptr    r2 = GuiLayoutRow::create();
-    rootElement->addElement(r1);
-    
-//    tableLayout->setElement(0, 0, c2);
+    textEditor->setVerticalAdjustmentStrategy(TextWidget::STRICT_TOP_LINE_ANCHOR);
 
 
-    scrollBarV = ScrollBar::create(this, Orientation::VERTICAL);
-//    tableLayout->setElement(0, 1, scrollBarV);
+    scrollableTextCompound = ScrollableTextGuiCompound::create(this,
+                                                               textEditor,
+                                                                 ScrollableTextGuiCompound::Options()
+                                                               | ScrollableTextGuiCompound::WITHOUT_OUTER_FRAME);
     
-    c2->addElement(textEditor);
-    c2->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, INT_MAX, 1));
-    r1->addElement(c2);
-    r1->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, 1, INT_MAX));
-    r1->addElement(scrollBarV);
-    
-    scrollBarH = ScrollBar::create(this, Orientation::HORIZONTAL);
-//    tableLayout->setElement(1, 0, scrollBarH);
-    
-//    c2->addElement(r2);
-    int r2Index = rootElement->addElement(r2);
+    int r2Index = rootElement->addElement(scrollableTextCompound);
     lowerPanelIndex = r2Index + 1;
     
-    r2->addElement(scrollBarH);
-//    c1->addElement(GuiLayoutWidget::create(this, 1, 1, 1, 1, INT_MAX, 1));
-//    c1->addElement(scrollBarH);
-    int w = GlobalConfig::getInstance()->getScrollBarWidth();
-    r2->addElement(GuiLayoutSpacer::create(w, w, w, w, w, w));
-    
-//    rootElement->setPosition(Position(0, 0, width, height));
-    
+    textData   = textEditor->getTextData();
     ViewCounterTextDataAccess::incViewCounter(textData);
     
     textData->registerModifiedFlagListener(newCallback(this, &EditorTopWin::handleChangedModifiedFlag));
@@ -146,24 +119,17 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 
     textEditor->registerCursorPositionDataListener(newCallback(statusLine, &StatusLine::setCursorPositionData));
     
-    scrollBarV->setChangedValueCallback         (newCallback(textEditor, &TextWidget::setTopLineNumber));
-    scrollBarH->setChangedValueCallback         (newCallback(textEditor, &TextWidget::setLeftPix));
-
-    scrollBarV->setScrollStepCallback           (newCallback(textEditor, &TextEditorWidget::handleScrollStepV));
-    scrollBarH->setScrollStepCallback           (newCallback(textEditor, &TextEditorWidget::handleScrollStepH));
-
-    textEditor->setScrollBarVerticalValueRangeChangedCallback  (newCallback(scrollBarV, &ScrollBar::setValueRange));
-    textEditor->setScrollBarHorizontalValueRangeChangedCallback(newCallback(scrollBarH, &ScrollBar::setValueRange));
-    
     textEditor->setDesiredMeasuresInChars(
             GlobalConfig::getInstance()->getInitialWindowWidth(),
             GlobalConfig::getInstance()->getInitialWindowHeight()
     );
 
 
+    statusLine->show();
+    scrollableTextCompound->show();
+
     Measures m = rootElement->getDesiredMeasures();
-//    setPosition(Position(getPosition().x, getPosition().y, 
-//                         m.bestWidth, m.bestHeight));
+
     if (width == -1 || height == -1)
     {
         setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
@@ -176,16 +142,9 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
         setSize(width, height);
         rootElement->setPosition(Position(0, 0, width, height));
     }
-//    setSizeHints(getPosition().x, getPosition().y, 
-//                         m.minWidth, m.minHeight, 1, 1);
 
     flagForSetSizeHintAtFirstShow = true;
     
-    textEditor->show();
-    scrollBarV->show();
-    scrollBarH->show();
-    statusLine->show();
-
     Callback<GuiWidget*>::Ptr requestClosePanelCallback = newCallback(this, &EditorTopWin::requestCloseFor);
 
     findPanel = FindPanel::create(this, textEditor, 
@@ -223,7 +182,6 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 
 ///////////// TODO
     keyMapping1.set( KeyModifier("Modifier5"),  KeyId("e"),      newCallback(this,      &EditorTopWin::executeTestScript));
-    keyMapping1.set( KeyModifier("Modifier5"),  KeyId("t"),      newCallback(this,      &EditorTopWin::displayTestBox));
 /////////////
     
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &EditorTopWin::treatConfigUpdate));
@@ -389,6 +347,7 @@ bool EditorTopWin::checkForFileModifications()
 void EditorTopWin::reloadFile()
 {
     textData->reloadFile();
+    textEditor->releaseSelection();
 }
 
 void EditorTopWin::doNotReloadFile()
@@ -500,10 +459,10 @@ void EditorTopWin::invokePanel(DialogPanel* panel)
         }
         ASSERT(invokedPanel.isInvalid());
         if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
-            textEditor->setResizeAdjustment(VerticalAdjustment::BOTTOM);
+            textEditor->setVerticalAdjustmentStrategy(TextWidget::BOTTOM_LINE_ANCHOR);
             this->invokedPanelIndex = upperPanelIndex;
         } else {
-            textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
+            textEditor->setVerticalAdjustmentStrategy(TextWidget::STRICT_TOP_LINE_ANCHOR);
             this->invokedPanelIndex = lowerPanelIndex;
         }
         rootElement->insertElementAtPosition(PanelLayoutAdapter::create(textEditor, panel), 
@@ -514,7 +473,7 @@ void EditorTopWin::invokePanel(DialogPanel* panel)
         panel->treatFocusIn();
         textEditor->treatFocusOut();
         invokedPanel = panel;
-        textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
+        textEditor->setVerticalAdjustmentStrategy(TextWidget::STRICT_TOP_LINE_ANCHOR);
     }
 }
 
@@ -531,7 +490,7 @@ void EditorTopWin::requestCloseFor(GuiWidget* w)
         invokedPanel.invalidate();
         Position p = getPosition();
         rootElement->setPosition(Position(0, 0, p.w, p.h));
-        textEditor->setResizeAdjustment(VerticalAdjustment::TOP);
+        textEditor->setVerticalAdjustmentStrategy(TextWidget::STRICT_TOP_LINE_ANCHOR);
     }
 }
 
@@ -819,7 +778,7 @@ void EditorTopWin::executeTestScript()
 {
     printf("-------------------------\n");
     ProgramExecutor::start("/bin/sh",
-                           "echo 1234567890; ls; exit 12",
+                           "echo 1234567890; ls|head; exit 12",
                            newCallback(this, &EditorTopWin::finishedTestScript));
 }
 
@@ -835,12 +794,22 @@ void EditorTopWin::finishedTestScript(ProgramExecutor::Result rslt)
     TextData::Ptr textData = TextData::create();
     textData->setToData(rslt.outputBuffer,
                         rslt.outputLength);
+#if 0
+    long   numberOfLines = textData->getNumberOfLines();
+    TextData::TextMark m = textData->createNewMark();
+    m.moveToPos(textData->getLength());
+    bool lastLineIsEmpty = m.isAtBeginOfLine();
 
-    TestBox::Ptr testBox = TestBox::create(this, textData);
-    testBox->show();
+    if (lastLineIsEmpty) {
+        long p = m.getPos();
+        p -= textData->getLengthOfPrevLineEnding(p);
+        m.moveToPos(p);
+        textData->removeAtMark(m, textData->getLength() - m.getPos());
+    }
+#endif
+
+    CommandOutputBox::Ptr commandOutputBox = CommandOutputBox::create(this, textData);
+    commandOutputBox->show();
 }
 
-void EditorTopWin::displayTestBox()
-{
-}
 

@@ -98,42 +98,80 @@ template<class Adapter> class GuiLayouter
 {
 public:
 
-    static GuiElement::Measures getDesiredMeasures(ObjectArray<GuiElement::Ptr> elements)
+    static GuiElement::Measures getDesiredMeasures(ObjectArray<GuiElement::LayoutedElement> elements)
     {
         int bestCoValue = 0;
         int bestValue   = 0;
         int minCoValue  = 0;
         int minValue    = 0;
-        int maxCoValue  = 0;
+        int maxCoValue  = INT_MAX;
         int maxValue    = 0;
         int incrCoValue = 1;
-        int incrValue   = INT_MAX;
+
+        int minVisibleValue = 0;
+        int bestVisibleValue = 0;
+
+        int incrValue   = 1;
+
+        int numberOfRasteredValues = 0;
         
         for (int i = 0; i < elements.getLength(); ++i)
         {
-            GuiElement::Measures m = elements[i]->getDesiredMeasures();
+            GuiElement::Measures m = elements[i].getPtr()->getDesiredMeasures();
             Adapter a(m);
-    
-            addimize(&minValue,  a.getMinValue());
+
+            if (elements[i].getPtr()->isVisible())
+            {
+                addimize(&minVisibleValue,   a.getMinValue());
+                addimize(&bestVisibleValue,  a.getBestValue());
+                
+                addimize(&maxValue,  a.getMaxValue());
+
+                minimize(&maxCoValue,        a.getMaxCoValue());
+//            }
             addimize(&bestValue, a.getBestValue());
-            addimize(&maxValue,  a.getMaxValue());
             
-            maximize(&minCoValue,  a.getMinCoValue());
             maximize(&bestCoValue, a.getBestCoValue());
-            maximize(&maxCoValue,  a.getMaxCoValue());
+            
     
             maximize(&incrCoValue,  a.getIncrCoValue());
 
-            if (a.getMaxValue() > a.getBestValue() && a.getIncrValue() < incrValue) {
-                incrValue = a.getIncrValue();
+            if (a.getIncrValue() > 1) {
+                ++numberOfRasteredValues;
+                if (numberOfRasteredValues == 1) {
+                    incrValue = a.getIncrValue();
+                }
             }
+            
+            } // test
+            maximize(&minCoValue,  a.getMinCoValue());
+            addimize(&minValue,  a.getMinValue());
         }
-        if (incrValue == INT_MAX) {
+        if (numberOfRasteredValues > 1) {
             incrValue = 1;
+        }
+#if 0
+        if (incrValue > 1 && (bestVisibleValue != bestValue)) {
+            ASSERT(bestVisibleValue < bestValue);
+            bestValue = bestVisibleValue + ROUNDED_DIV(bestValue - bestVisibleValue, incrValue) * incrValue;
+        }
+#endif        
+        if (bestCoValue < minCoValue) {
+            bestCoValue = minCoValue;
+        }
+        if (maxCoValue < bestCoValue) {
+            maxCoValue = bestCoValue;
+        }
+        if (bestValue < minValue) {
+            bestValue = minValue;
+        }
+        if (maxValue < bestValue) {
+            maxValue = bestValue;
         }
         minCoValue  = bestCoValue  - ((bestCoValue  - minCoValue) / incrCoValue)  * incrCoValue;
         minValue = bestValue - ((bestValue - minValue)/ incrValue) * incrValue;
         
+
         GuiElement::Measures rslt;
         Adapter a(rslt);
 
@@ -227,6 +265,8 @@ public:
             
             int singleFlexRestValue;
             
+            int remainingTotalNonFlexRestValue = totalNonFlexRestValue;
+            
             if (numberFlex > 0) {
                 singleFlexRestValue = ROUNDED_DIV(totalFlexRestValue, numberFlex);
             } else {
@@ -242,10 +282,30 @@ public:
                 if (a.getMaxValue() == INT_MAX) {
                     v += singleFlexRestValue;
                 }
-                else if (maxValueWithoutFlex > 0) {
-                    v += ROUNDED_DIV(a.getMaxValue() * totalNonFlexRestValue, maxValueWithoutFlex);
+                else if (maxValueWithoutFlex - bestValue > 0)
+                {
+                    int add =  ROUNDED_DIV((a.getMaxValue() - a.getBestValue()) * totalNonFlexRestValue, maxValueWithoutFlex - bestValue);
+
+                    if (add <= remainingTotalNonFlexRestValue)
+                    {
+                        v += add;
+                        remainingTotalNonFlexRestValue -= add;
+    
+                        if (a.getIncrValue() > 1)
+                        {
+                            int rasteredV = a.getBestValue() + ROUNDED_UP_DIV(v - a.getBestValue(), a.getIncrValue()) * a.getIncrValue();
+                            ASSERT(rasteredV >= v);
+
+                            int diff = rasteredV - v;
+                            
+                            if (diff <= remainingTotalNonFlexRestValue) {
+                                v = rasteredV;
+                                totalNonFlexRestValue          -= diff;
+                                remainingTotalNonFlexRestValue -= diff;
+                            }
+                        }
+                    }
                 }
-                
                 a.setBestValue(v);
                 totalRealValue += v;
             }
@@ -272,7 +332,7 @@ public:
                 totalRealValue += v;
             }
         }
-            
+#if 0
         while (totalRealValue < targetValue)
         {
             // handle rounding errors
@@ -296,6 +356,7 @@ public:
                 break;
             }
         }
+#endif
     }
 
 private:
@@ -308,6 +369,10 @@ private:
                 util::maximize(a, b);
             }
         }
+    }
+
+    static void minimize(int* a, int b) {
+        util::minimize(a, b);
     }
 
     static void addimize(int* a, int b) {

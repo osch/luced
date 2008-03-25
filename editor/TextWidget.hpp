@@ -35,6 +35,7 @@
 #include "CursorPositionData.hpp"
 #include "ValidPtr.hpp"
 #include "Flags.hpp"
+#include "ScrollBar.hpp"
 
 namespace LucED {
 
@@ -46,8 +47,7 @@ public:
     enum CreateOption
     {
         READ_ONLY,
-        NEVER_SHOW_CURSOR,
-        DO_NOT_RASTERIZE_DESIRED_MEASURES
+        NEVER_SHOW_CURSOR
     };
     typedef Flags<CreateOption> CreateOptions;
     
@@ -56,6 +56,15 @@ public:
 protected:
     TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border,
                CreateOptions options);
+
+    void setScrollBarVerticalValueRangeChangedCallback(Callback<long,long,long>::Ptr callback) {
+        scrollBarVerticalValueRangeChangedCallback = callback;
+        scrollBarVerticalValueRangeChangedCallback->call(getNumberOfLines(), visibleLines, getTopLineNumber());
+    }
+    void setScrollBarHorizontalValueRangeChangedCallback(Callback<long,long,long>::Ptr callback) {
+        scrollBarHorizontalValueRangeChangedCallback = callback;
+        scrollBarHorizontalValueRangeChangedCallback->call(totalPixWidth, position.w, leftPix);
+    }
 
     BackliteBuffer* getBackliteBuffer() {
         return backliteBuffer.getRawPtr();
@@ -72,10 +81,31 @@ protected:
         }
     }
     
+    
 public:
     virtual void setPosition(Position newPosition);
     
-    void setResizeAdjustment(VerticalAdjustment::Type adjustment);
+    enum VerticalAdjustmentStrategy {
+           STRICT_TOP_LINE_ANCHOR,
+       NOT_STRICT_TOP_LINE_ANCHOR,
+               BOTTOM_LINE_ANCHOR,
+    };
+    
+    enum HorizontalAdjustmentStrategy {
+           STRICT_LEFT_COLUMN_ANCHOR,
+       NOT_STRICT_LEFT_COLUMN_ANCHOR,
+                 RIGHT_COLUMN_ANCHOR,
+    };
+    
+    void setVerticalAdjustmentStrategy(VerticalAdjustmentStrategy verticalAdjustmentStrategy);
+    void setHorizontalAdjustmentStrategy(HorizontalAdjustmentStrategy horizontalAdjustmentStrategy);
+    
+    enum LastEmptyLineStrategy {
+        DO_NOT_IGNORE_EMPTY_LAST_LINE,
+        IGNORE_EMPTY_LAST_LINE,
+    };
+    
+    void setLastEmptyLineStrategy(LastEmptyLineStrategy lastEmptyLineStrategy);
     
     virtual Measures getDesiredMeasures();
     
@@ -139,6 +169,9 @@ public:
     int getSpaceCharWidth() const {
         return textStyles->get(0)->getSpaceWidth();
     }
+    long getMaximalVisiblePixWidth() const {
+        return totalPixWidth;
+    }
     
     TextData::TextMark createNewMarkFromCursor();
 
@@ -148,14 +181,16 @@ public:
     long getTopLineNumber() const {
         return textData->getLineNumberOfMark(topMarkId);
     }
-    void setScrollBarVerticalValueRangeChangedCallback(Callback<long,long,long>::Ptr callback) {
-        scrollBarVerticalValueRangeChangedCallback = callback;
-        scrollBarVerticalValueRangeChangedCallback->call(textData->getNumberOfLines(), visibleLines, getTopLineNumber());
+    long getNumberOfLines() const {
+        if (    lastEmptyLineStrategy == DO_NOT_IGNORE_EMPTY_LAST_LINE
+            || !textData->isBeginOfLine(textData->getLength()))
+        {
+            return textData->getNumberOfLines();
+        } else {
+            return textData->getNumberOfLines() - 1;
+        }
     }
-    void setScrollBarHorizontalValueRangeChangedCallback(Callback<long,long,long>::Ptr callback) {
-        scrollBarHorizontalValueRangeChangedCallback = callback;
-        scrollBarHorizontalValueRangeChangedCallback->call(totalPixWidth, position.w, leftPix);
-    }
+
     void setTopLineNumber(long n);
     void setLeftPix(long leftPix);
     long getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCursor = true);
@@ -277,7 +312,9 @@ private:
     int maxWidthChars;
     int maxHeightChars;
     int border;
-    VerticalAdjustment::Type adjustment;
+    VerticalAdjustmentStrategy verticalAdjustmentStrategy;
+    HorizontalAdjustmentStrategy horizontalAdjustmentStrategy;
+    LastEmptyLineStrategy lastEmptyLineStrategy;
     bool isMousePointerHidden;
     GuiColor primarySelectionColor;
     GuiColor secondarySelectionColor;
@@ -309,7 +346,6 @@ private:
 
     CursorVisibleFlag cursorVisible;
     bool neverShowCursorFlag;
-    bool rasterizeDesiredMeasuresFlag;
 };
 
 } // namespace LucED

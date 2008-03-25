@@ -27,7 +27,7 @@ static const int BORDER_WIDTH = 2;
 
 SingleLineEditorWidget::SingleLineEditorWidget(GuiWidget *parent, 
             TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
-    : TextEditorWidget(parent, textStyles, hilitedText, TextEditorWidget::CreateOptions(), BORDER_WIDTH),
+    : TextEditorWidget(parent, textStyles, hilitedText, TextEditorWidget::CreateOptions(), ::BORDER_WIDTH),
       standardActions(StandardEditActions::createSingleLineActions(this))
 {
     getTextData()->setInsertFilterCallback(newCallback(this, &SingleLineEditorWidget::filterInsert));

@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef EDITORTOPWIN_HPP
-#define EDITORTOPWIN_HPP
+#ifndef EDITOR_TOP_WIN_HPP
+#define EDITOR_TOP_WIN_HPP
 
 #include "TopWin.hpp"
 #include "EventDispatcher.hpp"
@@ -40,8 +40,10 @@
 #include "SaveAsPanel.hpp"
 #include "ProgramExecutor.hpp"
 #include "ValidPtr.hpp"
+#include "ScrollableTextGuiCompound.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 
 class EditorTopWin : public  TopWin,
@@ -136,13 +138,10 @@ private:
     void invokeNewModalMessageBox();
 
     void executeTestScript();
-    void displayTestBox();
     void finishedTestScript(ProgramExecutor::Result result);
     
     MultiLineEditorWidget::Ptr textEditor;
     ValidPtr<TextData>         textData;
-    ScrollBar::Ptr scrollBarH;
-    ScrollBar::Ptr scrollBarV;    
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
     KeyMapping keyMapping1;
@@ -166,8 +165,10 @@ private:
     SaveAsPanel::Ptr    saveAsPanel;
     
     bool isClosingFlag;
+
+    ScrollableTextGuiCompound::Ptr scrollableTextCompound;
 };
 
 } // namespace LucED
 
-#endif // EDITORTOPWIN_HPP
+#endif // EDITOR_TOP_WIN_HPP

@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -32,30 +32,36 @@ GuiLayoutSpacerFrame::GuiLayoutSpacerFrame(GuiElement::Ptr member, int thickness
     GuiLayoutRow::Ptr    row0    = GuiLayoutRow::create();
     this->root = column0;
 
-    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, thickness, 0, thickness));
+    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, thickness, INT_MAX, thickness));
     column0->addElement(row0);
-    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, thickness, 0, thickness));
+    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, thickness, INT_MAX, thickness));
     
-    row0->addElement(GuiLayoutSpacer::create(0, 0, thickness, 0, thickness, 0));
+    row0->addElement(GuiLayoutSpacer::create(0, 0, thickness, 0, thickness, INT_MAX));
     row0->addElement(member);
-    row0->addElement(GuiLayoutSpacer::create(0, 0, thickness, 0, thickness, 0));
+    row0->addElement(GuiLayoutSpacer::create(0, 0, thickness, 0, thickness, INT_MAX));
 }
+
 
 GuiElement::Measures GuiLayoutSpacerFrame::getDesiredMeasures()
 {
-    return root->getDesiredMeasures();
+    Measures rslt = root->getDesiredMeasures();
+    return rslt;
 }
+
 
 void GuiLayoutSpacerFrame::setPosition(Position p)
 {
-#if 1
     Measures desired = root->getDesiredMeasures();
-    if (desired.bestHeight < p.h) {
-        int d = p.h - desired.bestHeight;
+    if (desired.maxHeight < p.h) {
+        int d = p.h - desired.maxHeight;
         p.y += d/2;
         p.h -= d/2;
     }
-#endif
+    if (desired.maxWidth < p.w) {
+        int d = p.w - desired.maxWidth;
+        p.x += d/2;
+        p.w -= d/2;
+    }
     root->setPosition(p);
 }
 

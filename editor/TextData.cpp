@@ -148,6 +148,7 @@ void TextData::reloadFile()
         isReadOnlyFlag = !fileInfo.isWritable();
         readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
     }
+    clearHistory();
 }
 
 void TextData::checkFileInfo()

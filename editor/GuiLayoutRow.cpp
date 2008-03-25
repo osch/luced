@@ -48,65 +48,112 @@ private:
 };
 
 
-void GuiLayoutRow::addElement(GuiElement::Ptr element)
+void GuiLayoutRow::addElement(GuiElement::Ptr element, LayoutOptions layoutOptions)
 {
-    elements.append(element);
+    elements.append(LayoutedElement(element, layoutOptions));
 }
 
 void GuiLayoutRow::addSpacer(int width)
 {
-    elements.append(SpacerH::create(width, width));
+    elements.append(LayoutedElement(SpacerH::create(width, width)));
 }
 
 void GuiLayoutRow::addSpacer()
 {
-    elements.append(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
+    elements.append(LayoutedElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0)));
 }
 
 void GuiLayoutRow::addSpacer(int minWidth, int maxWidth)
 {
-    elements.append(SpacerH::create(minWidth, maxWidth));
+    elements.append(LayoutedElement(SpacerH::create(minWidth, maxWidth)));
 }
 
 
 GuiElement::Measures GuiLayoutRow::getDesiredMeasures()
 {
-    return GuiLayouter<HorizontalAdapter>::getDesiredMeasures(elements);
+    Measures rslt = GuiLayouter<HorizontalAdapter>::getDesiredMeasures(elements);
+
+    if (reportRasteringOptions.isSet(DO_NOT_REPORT_HORIZONTAL_RASTERING)) {
+        rslt.incrWidth = 1;
+    }
+    if (reportRasteringOptions.isSet(DO_NOT_REPORT_VERTICAL_RASTERING)) {
+        rslt.incrHeight = 1;
+    }
+    return rslt;
 }
 
 void GuiLayoutRow::setPosition(Position p)
 {
-    columnMeasures.clear();
-    for (int i = 0; i < elements.getLength(); ++i)
-    {
-        columnMeasures.append(elements[i]->getDesiredMeasures());
-    }
+    bool doItAgain = true;
     
-    GuiLayouter<HorizontalAdapter>::adjust(columnMeasures, p.w);
-
-    int x = p.x;
-    for (int i = 0; i < elements.getLength(); ++i)
+    while (doItAgain)
     {
-        Measures& m = columnMeasures[i];
-
-        int h = p.h;
-        int w = m.bestWidth;
-        
-        if (m.onlyRasteredValues)
+        try
         {
-            if (m.incrHeight > 1 && (h - m.minHeight) % m.incrHeight != 0)
+            columnMeasures.clear();
+            for (int i = 0; i < elements.getLength(); ++i)
             {
-                h = m.minHeight + (h - m.minHeight) / m.incrHeight * m.incrHeight;
+                Measures m = elements[i].getPtr()->getDesiredMeasures();
+                if (!elements[i].getPtr()->isVisible()) {
+                    m = Measures();
+                }
+                columnMeasures.append(m);
             }
-            if (   m.onlyRasteredValues
-                && m.incrWidth > 1 && (w - m.minWidth) > 0 && (w - m.minWidth) % m.incrWidth != 0)
+            
+            GuiLayouter<HorizontalAdapter>::adjust(columnMeasures, p.w);
+        
+            int x = p.x;
+            for (int i = 0; i < elements.getLength(); ++i)
             {
-                w = m.minWidth + (w - m.minWidth) / m.incrWidth * m.incrWidth;
+                if (elements[i].getPtr()->isVisible())
+                {
+                    Measures& m = columnMeasures[i];
+            
+                    int h = p.h;
+                    int w = m.bestWidth;
+              
+                    LayoutOptions layoutOptions = elements[i].getLayoutOptions();
+                    
+                    if (layoutOptions.isSet(LAYOUT_VERTICAL_RASTERING))
+                    {
+                        if (m.incrHeight > 1 && (h - m.minHeight) % m.incrHeight != 0)
+                        {
+                            h = m.minHeight + (h - m.minHeight) / m.incrHeight * m.incrHeight;
+                        }
+                    }
+                    if (layoutOptions.isSet(LAYOUT_HORIZONTAL_RASTERING))
+                    {
+                        if (m.incrWidth > 1 && (w - m.minWidth) > 0 && (w - m.minWidth) % m.incrWidth != 0)
+                        {
+                            w = m.minWidth + (w - m.minWidth) / m.incrWidth * m.incrWidth;
+                        }
+                    }
+            
+                    elements[i].getPtr()->setPosition(Position(x, p.y, w, h));
+            
+                    x += m.bestWidth;
+                }
             }
+            doItAgain = false;
         }
-
-        elements[i]->setPosition(Position(x, p.y, w, h));
-
-        x += m.bestWidth;
+        catch (GuiElement::DesiredMeasuresChangedException& ex) {
+            doItAgain = true;
+        }
     }
 }
+void GuiLayoutRow::show()
+{
+    for (int i = 0; i < elements.getLength(); ++i) {
+        elements[i].getPtr()->show();
+    }
+    GuiElement::show();
+}
+
+void GuiLayoutRow::hide()
+{
+    for (int i = 0; i < elements.getLength(); ++i) {
+        elements[i].getPtr()->hide();
+    }
+    GuiElement::hide();
+}
+

@@ -63,7 +63,8 @@ SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget        
                 CommandlineException    ReplacePanel           LuaFunctionArguments   GuiElement \
                 SelectionOwner          PasteDataReceiver      Clipboard              FileOpener \
                 ConfigErrorHandler      WindowCloser           SaveAsPanel            KeyModifier \
-		CurrentDirectoryKeeper  ProgramExecutor        MultiLineOutputWidget  TestBox
+		CurrentDirectoryKeeper  ProgramExecutor        TextDisplayGuiCompound CommandOutputBox \
+		FramedGuiCompound       ScrollableTextGuiCompound
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

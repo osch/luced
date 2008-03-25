@@ -169,10 +169,11 @@ GuiElement::ProcessingResult ScrollBar::processEvent(const XEvent *event)
             }
 
             case ButtonRelease: {
+                bool wasProcessed = false;
                 if (this->movingBar) {
                     //printf("ButtonReleased\n");
                     this->movingBar = false;
-                    return EVENT_PROCESSED;
+                    wasProcessed = true;
                 }
                 if (isButtonPressedForScrollStep) {
                     if (scrollStep == ScrollStep::LINE_UP) {
@@ -181,6 +182,22 @@ GuiElement::ProcessingResult ScrollBar::processEvent(const XEvent *event)
                         drawDownButton();
                     }
                     isButtonPressedForScrollStep = false;
+                    wasProcessed = true;
+                }
+                if (wasProcessed) {
+                    long v = calcValue();
+                    if (v == 0 && this->scrollY > 0) {
+                        this->scrollY = 0;
+                        drawArea();
+                    }
+                    else if (   v >= this->totalValue - this->heightValue 
+                             && this->scrollY + this->scrollHeight < this->scrollAreaLength)
+                    {
+                        this->scrollY = this->scrollAreaLength - this->scrollHeight;
+                        drawArea();
+                    }
+                }
+                if (wasProcessed) {
                     return EVENT_PROCESSED;
                 }
                 break;

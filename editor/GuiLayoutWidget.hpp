@@ -26,6 +26,7 @@
 
 #include "GuiWidget.hpp"
 #include "OwningPtr.hpp"
+#include "GuiRoot.hpp"
 
 namespace LucED {
 
@@ -36,8 +37,10 @@ class GuiLayoutWidget : public GuiWidget
 public:
     typedef OwningPtr<GuiLayoutWidget> Ptr;
     
-    static Ptr create(GuiWidget* parent, int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight) {
-        return Ptr(new GuiLayoutWidget(parent, Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight)));
+    static Ptr create(GuiWidget* parent, int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight,
+                      GuiColor color = GuiRoot::getInstance()->getGuiColor01())
+    {
+        return Ptr(new GuiLayoutWidget(parent, Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight), color));
     }
 
     //virtual bool processEvent(const XEvent *event);
@@ -45,7 +48,7 @@ public:
     virtual void setPosition(Position newPosition);
     
 private:
-    GuiLayoutWidget(GuiWidget* parent, const Measures& m);
+    GuiLayoutWidget(GuiWidget* parent, const Measures& m, GuiColor color);
     Measures measures;
     Position position;
 };

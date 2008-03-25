@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TEST_BOX_HPP
-#define TEST_BOX_HPP
+#ifndef COMMAND_OUTPUT_BOX_HPP
+#define COMMAND_OUTPUT_BOX_HPP
 
 #include "TopWin.hpp"
 #include "EventDispatcher.hpp"
@@ -29,32 +29,32 @@
 #include "DialogWin.hpp"
 #include "PanelDialogWin.hpp"
 #include "TopWinList.hpp"
-#include "MultiLineOutputWidget.hpp"
+#include "TextDisplayGuiCompound.hpp"
 
 namespace LucED
 {
 
-class TestBox : public PanelDialogWin
+class CommandOutputBox : public PanelDialogWin
 {
 public:
-    typedef WeakPtr<TestBox> Ptr;
+    typedef WeakPtr<CommandOutputBox> Ptr;
     
     static Ptr create(TopWin* referingWindow, TextData::Ptr textData)
     {
-        return transferOwnershipTo(new TestBox(referingWindow, textData),
+        return transferOwnershipTo(new CommandOutputBox(referingWindow, textData),
                                    referingWindow);
     }
     
     static Ptr create(TextData::Ptr textData)
     {
-        return transferOwnershipTo(new TestBox(NULL, textData),
+        return transferOwnershipTo(new CommandOutputBox(NULL, textData),
                                    TopWinList::getInstance());
     }
     
     virtual void requestCloseWindow();
 
 private:
-    TestBox(TopWin* referingWindow, TextData::Ptr textData);
+    CommandOutputBox(TopWin* referingWindow, TextData::Ptr textData);
     
     
     void handleButtonPressed(Button* button);
@@ -66,9 +66,9 @@ private:
     Callback<>::Ptr closeCallback;
     bool wasClosed;
     
-    MultiLineOutputWidget::Ptr multiLineOut;
+    TextDisplayGuiCompound::Ptr multiLineOut;
 };
 
 } // namespace LucED
 
-#endif // TEST_BOX_HPP
+#endif // COMMAND_OUTPUT_BOX_HPP

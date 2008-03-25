@@ -112,6 +112,15 @@ public:
 
     virtual void setPosition(Position p);
 
+    virtual void show() {
+        root->show();
+        GuiElement::show();
+    }
+    virtual void hide() {
+        root->hide();
+        GuiElement::hide();
+    }
+    
 protected:
     GuiLayoutSpacerFrame(GuiElement::Ptr member, int thickness);
 

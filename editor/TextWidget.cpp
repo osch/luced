@@ -138,7 +138,9 @@ TextWidget::TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedTex
       maxWidthChars(INT_MAX),
       maxHeightChars(INT_MAX),
       border(border),
-      adjustment(VerticalAdjustment::TOP),
+      verticalAdjustmentStrategy(STRICT_TOP_LINE_ANCHOR),
+      horizontalAdjustmentStrategy(STRICT_LEFT_COLUMN_ANCHOR),
+      lastEmptyLineStrategy(DO_NOT_IGNORE_EMPTY_LAST_LINE),
       isMousePointerHidden(false),
       
       primarySelectionColor(  getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPrimarySelectionColor())),
@@ -147,8 +149,7 @@ TextWidget::TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedTex
       textWidget_gcid(TextWidgetSingletonData::getInstance()->getGcId()),
       
       cursorVisible(options),
-      neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR)),
-      rasterizeDesiredMeasuresFlag(!options.isSet(DO_NOT_RASTERIZE_DESIRED_MEASURES))
+      neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR))
 {
     //setBackgroundColor(backgroundColor);
     setBorderColor(backgroundColor);
@@ -221,7 +222,9 @@ void TextWidget::registerCursorPositionDataListener(Callback<CursorPositionData>
 void TextWidget::treatHilitingUpdate(HilitingBuffer::UpdateInfo update)
 {
     ASSERT(update.beginPos <= update.endPos);
-    
+#if 0
+printf("treatHilitingUpdate %d ... %d\n", update.beginPos, update.endPos);
+#endif
     if (update.endPos >= getTopLeftTextPosition() && update.beginPos < this->endPos)
     {
         redrawChanged(update.beginPos, update.endPos);
@@ -1290,8 +1293,10 @@ void TextWidget::setTopLineNumber(long n)
 
     long oldTopLineNumber = getTopLineNumber();
     
-    if ( n > textData->getNumberOfLines() - 1)
-        n = textData->getNumberOfLines() - 1;
+    long numberOfLines = getNumberOfLines();
+    if ( n > numberOfLines - 1) {
+        n = numberOfLines - 1;
+    }
     
     if (n < 0) 
         n = 0;
@@ -1384,8 +1389,9 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
     long pixLine = topLineNumber + screenLine;
     long newCursorPos;
 
-    if (pixLine >= textData->getNumberOfLines()) {
-        pixLine = textData->getNumberOfLines() - 1;
+    long numberOfLines = getNumberOfLines();
+    if (pixLine >= numberOfLines) {
+        pixLine = numberOfLines - 1;
     }
     long totalPixX = pixX + leftPix;
     
@@ -1509,9 +1515,19 @@ void TextWidget::setLeftPix(long newLeftPix)
     updateHorizontalScrollBar= true;
 }
 
-void TextWidget::setResizeAdjustment(VerticalAdjustment::Type adjustment)
+void TextWidget::setVerticalAdjustmentStrategy(VerticalAdjustmentStrategy verticalAdjustmentStrategy)
 {
-    this->adjustment = adjustment;
+    this->verticalAdjustmentStrategy = verticalAdjustmentStrategy;
+}
+
+void TextWidget::setHorizontalAdjustmentStrategy(HorizontalAdjustmentStrategy horizontalAdjustmentStrategy)
+{
+    this->horizontalAdjustmentStrategy = horizontalAdjustmentStrategy;
+}
+
+void TextWidget::setLastEmptyLineStrategy(LastEmptyLineStrategy lastEmptyLineStrategy)
+{
+    this->lastEmptyLineStrategy = lastEmptyLineStrategy;
 }
 
 
@@ -1535,7 +1551,9 @@ void TextWidget::setPosition(Position newPosition)
         int oldCursorPixXToLeft;
         int oldCursorPixXToRight;
         
-        if (cursorLine >= oldTopLineNumber && cursorLine < oldTopLineNumber + getNumberOfVisibleLines()) {
+        if (cursorLine >= oldTopLineNumber && cursorLine < oldTopLineNumber + getNumberOfVisibleLines()
+            && !neverShowCursorFlag)
+        {
             if (cursorPixX >= getLeftPix() && cursorPixX < getRightPix()) {
                 cursorWasInVisibleArea      = true;
                 cursorShouldBeInVisibleArea = true;
@@ -1556,17 +1574,23 @@ void TextWidget::setPosition(Position newPosition)
         long newTopLine;
         bool forceRedraw = false;
         
-        if (adjustment == VerticalAdjustment::TOP) {
+        if (   verticalAdjustmentStrategy ==     STRICT_TOP_LINE_ANCHOR
+            || verticalAdjustmentStrategy == NOT_STRICT_TOP_LINE_ANCHOR)
+        {
             newTopLine = oldTopLineNumber;
             GuiWidget::setPosition(newPosition);
-        } else if (oldTopLineNumber + oldVisibleLines - newVisibleLines >= 0) {
+        }
+        else if (oldTopLineNumber + oldVisibleLines - newVisibleLines >= 0)
+        {
             setBitGravity(StaticGravity); // screen content can be preservered
             GuiWidget::setPosition(newPosition);
             setBitGravity(NorthWestGravity);
 
             newTopLine = oldTopLineNumber + oldVisibleLines - newVisibleLines;
-            oldTopLineNumber = newTopLine;
+
+            oldTopLineNumber = newTopLine; // no forceRedraw below
             textData->moveMarkToLineAndColumn(topMarkId, oldTopLineNumber, 0);
+
         } else {
             newTopLine = 0;
             forceRedraw = true;
@@ -1587,14 +1611,16 @@ void TextWidget::setPosition(Position newPosition)
 
         int  newLeftPix = oldLeftPix;
 
-        if (oldTopLineNumber != 0 && 
-                oldTopLineNumber + visibleLines > textData->getNumberOfLines())
+        long numberOfLines = getNumberOfLines();
+        
+        if (verticalAdjustmentStrategy == NOT_STRICT_TOP_LINE_ANCHOR
+            && newTopLine != 0 
+            && newTopLine + visibleLines > numberOfLines)
         {
-            long newTopLine = textData->getNumberOfLines() - visibleLines;
+            newTopLine = numberOfLines - visibleLines;
             if (newTopLine < 0)
                 newTopLine = 0;
         }
-        
         if (cursorShouldBeInVisibleArea)
         {
             if (cursorLine < newTopLine) {
@@ -1617,6 +1643,8 @@ void TextWidget::setPosition(Position newPosition)
             }
         }
         
+        bool setLeftPix = false;
+        
         totalPixWidth = 0;
         if (newTopLine != oldTopLineNumber || forceRedraw) {
             if (newLeftPix != oldLeftPix || forceRedraw) {
@@ -1628,8 +1656,41 @@ void TextWidget::setPosition(Position newPosition)
             }
         }
         else if (newLeftPix != oldLeftPix) {
+            setLeftPix = true;
+        }
+
+        if (horizontalAdjustmentStrategy == NOT_STRICT_LEFT_COLUMN_ANCHOR)
+        {
+            long longestVisiblePixWidth = calcLongestVisiblePixWidth(); // calcLongestVisiblePixWidth after topline has been set
+            
+            if (newLeftPix + position.w > longestVisiblePixWidth)
+            {
+                long newLeftPix2 = longestVisiblePixWidth - position.w;
+                if (newLeftPix2 < 0) {
+                    newLeftPix2 = 0;
+                }
+                if (newLeftPix2 != newLeftPix) {
+                    setLeftPix = true;
+                    newLeftPix = newLeftPix2;
+                }
+            }       
+        }
+        else if (horizontalAdjustmentStrategy == RIGHT_COLUMN_ANCHOR)
+        {
+            long longestVisiblePixWidth = calcLongestVisiblePixWidth(); // calcLongestVisiblePixWidth after topline has been set
+            long newLeftPix2 = longestVisiblePixWidth - position.w;
+            if (newLeftPix2 < 0) {
+                newLeftPix2 = 0;
+            }
+            if (newLeftPix2 != newLeftPix) {
+                setLeftPix = true;
+                newLeftPix = newLeftPix2;
+            }
+        }
+        if (setLeftPix) {
             internSetLeftPix(newLeftPix);
         }
+        
         totalPixWidth = 0;
         calcTotalPixWidth();
         updateVerticalScrollBar = true;
@@ -1655,12 +1716,11 @@ GuiElement::Measures TextWidget::getDesiredMeasures()
 
                     incrWidth, incrHeight);
 
-    rslt.onlyRasteredValues = rasterizeDesiredMeasuresFlag;
-
 //    return Measures( 2 * textStyles->get(0)->getSpaceWidth() + 2*border, lineHeight + 2*border, 
 //                    35 * textStyles->get(0)->getSpaceWidth() + 2*border, lineHeight + 2*border,
 //                    INT_MAX, INT_MAX,
 //                    textStyles->get(0)->getSpaceWidth(), lineHeight);
+
     return rslt;
 }
 
@@ -2041,7 +2101,7 @@ void TextWidget::flushPendingUpdates()
 {
     if (updateVerticalScrollBar) {
         scrollBarVerticalValueRangeChangedCallback->call(
-                    textData->getNumberOfLines(),
+                    getNumberOfLines(),
                     visibleLines, 
                     getTopLineNumber());
         updateVerticalScrollBar = false;
@@ -2119,3 +2179,4 @@ void TextWidget::setBackgroundColor(GuiColor color)
     backgroundColor = color;
     setBorderColor(backgroundColor);
 }
+

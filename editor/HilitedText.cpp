@@ -308,6 +308,7 @@ int HilitedText::process(int requestedProcessingAmount)
     }
     ASSERT(!isEndOfBreaks(startNextProcessIterator));
     long pos = getBreakEndPos(startNextProcessIterator);
+
     long wasStartPos = pos;
     long lastSetBreakEnd = pos;
     SyntaxPattern* sp = syntaxPatterns->get(getLastBreakStackByte(startNextProcessIterator));
@@ -315,6 +316,12 @@ int HilitedText::process(int requestedProcessingAmount)
     const long processAmountUnit = 10 * breakPointDistance;
 
     long searchEndPos = pos + processAmountUnit * requestedProcessingAmount;
+
+#if 0
+printf("------HilitedText::process start = %ld / %ld .. %ld\n", getBreakStartPos(startNextProcessIterator),
+                                                                pos, searchEndPos);
+#endif
+
     util::minimize(&searchEndPos, textData->getLength());
     long oldBreakPos = pos;
     long foundStartPos = pos;
@@ -451,7 +458,8 @@ int HilitedText::process(int requestedProcessingAmount)
     }
     int processedAmount = (pos - wasStartPos)/processAmountUnit;
     
-    util::maximize(&this->endChangedPos, searchEndPos);
+    util::maximize(&this->endChangedPos, getBreakEndPos(startNextProcessIterator));
+    util::maximize(&this->endChangedPos, lastSetBreakEnd);
 
     ASSERT(!isEndOfBreaks(startNextProcessIterator));
 
@@ -468,6 +476,10 @@ int HilitedText::process(int requestedProcessingAmount)
             copyToIteratorFromIterator(startNextProcessIterator, tryToBeLastBreakIterator);
             decIterator(startNextProcessIterator);
         }
+#if 0
+printf("------HilitedText::process can be stoppend = %ld / %ld  --> %d\n", getBreakStartPos(startNextProcessIterator),
+                                                                   getBreakEndPos(startNextProcessIterator), processedAmount);
+#endif
     }
     else
     {
@@ -488,8 +500,14 @@ int HilitedText::process(int requestedProcessingAmount)
                 }
                 deleteBreaks(startNextProcessIterator, tempIterator);
             }
+            util::maximize(&this->endChangedPos, searchEndPos);
         }
+#if 0
+printf("------HilitedText::process cannot be stoppend = %ld / %ld  --> %d\n", getBreakStartPos(startNextProcessIterator),
+                                                                   getBreakEndPos(startNextProcessIterator), processedAmount);
+#endif
     }
+
     ASSERT(!needsProcessingFlag || !isEndOfBreaks(startNextProcessIterator));
     return processedAmount;
 }

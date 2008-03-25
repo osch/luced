@@ -38,12 +38,12 @@ SingleLineEditField::SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr la
     if (textData.isInvalid()) {
         textData = TextData::create();
     }
-    editorWidget = SingleLineEditorWidget::create(
-                       this, GlobalConfig::getInstance()->getTextStyles(), 
-                       HilitedText::create(textData, languageMode));
-    editorWidget->setDesiredMeasuresInChars(5,  1, 
+    editorWidget = SingleLineEditorWidget::create(this, 
+                                                  GlobalConfig::getInstance()->getTextStyles(), 
+                                                  HilitedText::create(textData, languageMode));
+    editorWidget->setDesiredMeasuresInChars( 5, 1, 
                                             20, 1, 
-                                            40,  1);
+                                            40, 1);
     editorWidget->show();
 }
 
@@ -129,6 +129,7 @@ GuiElement::Measures SingleLineEditField::getDesiredMeasures()
     rslt.minHeight  = util::maximum(rslt.minHeight,  layoutHeight);
     rslt.bestHeight = util::maximum(rslt.bestHeight, layoutHeight);
     rslt.maxHeight  = util::maximum(rslt.maxHeight,  layoutHeight);
+
     return rslt;
 }
 

@@ -23,6 +23,15 @@
 
 using namespace LucED;
 
+
+const char* GuiElement::DesiredMeasuresChangedException::what()
+{
+    static const char* whatString = "DesiredMeasuresChangedException";
+    return whatString;
+}
+
+
+
 void GuiElement::Measures::maximize(const GuiElement::Measures& rhs)
 {
     if (bestWidth < rhs.bestWidth) {

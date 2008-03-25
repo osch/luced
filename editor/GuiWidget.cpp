@@ -98,9 +98,10 @@ GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsi
       parent(NULL),
       eventMask(0),
       position(x, y, width, height),
-      visible(false),
       gcid(GuiWidgetSingletonData::getInstance()->getGcid())
 {
+    GuiElement::hide();
+    
     wid = WidgetId(XCreateSimpleWindow(getDisplay(), getRootWid(), 
                                        x, y, width, height, border_width, 
                                        GuiRoot::getInstance()->getGreyColor(), 
@@ -116,7 +117,6 @@ GuiWidget::GuiWidget(GuiWidget* parent,
       parent(parent),
       eventMask(0),
       position(x, y, width, height),
-      visible(false),
       gcid(GuiWidgetSingletonData::getInstance()->getGcid())
 {
 #if 0
@@ -126,6 +126,8 @@ GuiWidget::GuiWidget(GuiWidget* parent,
                                        GuiRoot::getInstance()->getWhiteColor()));
 #endif
 
+    GuiElement::hide();
+    
     XSetWindowAttributes at;
     at.background_pixmap = None;
     at.backing_store = WhenMapped;
@@ -208,13 +210,13 @@ void GuiWidget::setSize(int width, int height)
 void GuiWidget::show()
 {
     XMapWindow(getDisplay(), wid);
-    visible = true;
+    GuiElement::show();
 }
 
 void GuiWidget::hide()
 {
     XUnmapWindow(getDisplay(), wid);
-    visible = false;
+    GuiElement::hide();
 }
 
 void GuiWidget::setBackgroundColor(GuiColor color)
