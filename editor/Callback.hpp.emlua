@@ -1,0 +1,398 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef CALLBACK_HPP
+#define CALLBACK_HPP
+
+#include "HeapObject.hpp"
+#include "OwningPtr.hpp"
+#include "WeakPtr.hpp"
+#include "EmptyClass.hpp"
+
+namespace LucED
+{
+
+@ MAX_TEMPLATE_ARGS = 3 -- maximal number of arguments for 
+@                       -- which callback classes are generated
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Generalized Templates
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class A1 = EmptyClass,
+    class A2 = EmptyClass,
+    class A3 = EmptyClass
+>
+class Callback;
+
+template
+<
+    class CallbackPtrType,
+    class ObjectPtrType,
+    class MethodPtrType
+>
+CallbackPtrType newCallback(ObjectPtrType objectPtr, 
+                            MethodPtrType methodPtr);
+
+template
+<
+    class CallbackPtrType,
+    class ObjectPtrType,
+    class MethodPtrType,
+    class ExceptionHandlerPtrType
+>
+CallbackPtrType newCallback(ObjectPtrType           objectPtr, 
+                            MethodPtrType           methodPtr,
+                            ExceptionHandlerPtrType exceptionHandlerPtr);
+
+
+@ local functions     = require("functions")
+@ local argList       = functions.argList
+@ local filledArgList = functions.filledArgList
+@ local typedArgList  = functions.typedArgList
+@ local classList     = functions.classList
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+namespace CallbackInternal
+{
+@ for argCount = 0, MAX_TEMPLATE_ARGS do
+
+@ if argCount >= 1 then
+template
+<
+   @(classList('A', argCount))
+>
+@ end
+class CallbackBase@(argCount) : public HeapObject
+{
+public:
+    typedef OwningPtr<CallbackBase@(argCount)> Ptr;
+    
+    virtual void        call(@(typedArgList('A','a',argCount))) const = 0;
+    virtual HeapObject* getObjectPtr() const = 0;
+    virtual void        disable() = 0;
+};
+
+template
+<
+    class T @(argCount > 0 and ',')
+    @(classList('A', argCount))
+>
+class CallbackImpl@(argCount) : public CallbackBase@(argCount)
+@                                         if argCount >= 1 then
+                                          <
+                                            @(argList('A',argCount))
+                                          >
+@                                         end
+{
+public:
+    typedef OwningPtr<CallbackImpl@(argCount)> Ptr;
+
+    template
+    <
+        class S
+    >
+    static Ptr create(T* objectPtr, void (S::*methodPtr)(@(argList('A',argCount)))) {
+        return Ptr(new CallbackImpl@(argCount)(objectPtr, methodPtr));
+    }
+    
+    virtual void call(@(typedArgList('A','a',argCount))) const {
+        if (objectPtr.isValid()) {
+            (objectPtr->*methodPtr)(@(argList('a',argCount)));
+        }
+    }
+
+    virtual HeapObject* getObjectPtr() const {
+        return objectPtr;
+    }
+    
+    virtual void disable() {
+        objectPtr.invalidate();
+    }
+
+private:
+    
+    CallbackImpl@(argCount)(T* objectPtr, void (T::*methodPtr)(@(argList('A',argCount))))
+        : objectPtr(objectPtr),
+          methodPtr(methodPtr)
+    {}
+
+    WeakPtr<T> objectPtr;
+    void (T::* methodPtr)(@(typedArgList('A','a',argCount)));
+};
+
+template
+<
+    class T @(argCount > 0 and ',')
+    @(classList('A', argCount))
+>
+class CallbackImplWithExceptionHandler@(argCount) : public CallbackBase@(argCount)
+@                                                         if argCount >= 1 then
+                                                          <
+                                                            @(argList('A',argCount))
+                                                          >
+@                                                         end
+{
+public:
+    typedef OwningPtr<CallbackImplWithExceptionHandler@(argCount)> Ptr;
+
+    template
+    <
+        class S
+    >
+    static Ptr create(T* objectPtr, 
+                      void (S::*methodPtr)(@(argList('A',argCount))),
+                      void (S::*exceptionHandler)())
+    {
+        return Ptr(new CallbackImplWithExceptionHandler@(argCount)(objectPtr, 
+                                                                   methodPtr, 
+                                                                   exceptionHandler));
+    }
+    
+    virtual void call(@(typedArgList('A','a',argCount))) const
+    {
+        try {
+            if (objectPtr.isValid()) {
+                (objectPtr->*methodPtr)(@(argList('a',argCount))); // call method
+            }
+        } catch (...) {
+            (objectPtr->*exceptionHandler)(); // call exception handler
+        }
+    }
+
+    virtual HeapObject* getObjectPtr() const {
+        return objectPtr;
+    }
+
+    virtual void disable() {
+        objectPtr.invalidate();
+    }
+
+private:
+    
+    CallbackImplWithExceptionHandler@(argCount)(T* objectPtr, 
+                                                void (T::*methodPtr)(@(argList('A',argCount))),
+                                                void (T::*exceptionHandler)())
+        : objectPtr(objectPtr),
+          methodPtr(methodPtr),
+          exceptionHandler(exceptionHandler)
+    {}
+
+    WeakPtr<T> objectPtr;
+    void (T::* methodPtr)(@(typedArgList('A','a',argCount)));
+    void (T::* exceptionHandler)();
+};
+@ end
+
+} // namespace CallbackInternal
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Generic pseudo pointer to callback
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class Callback
+>
+class CallbackPtr
+{
+private:
+    typedef typename Callback::ImplPtr ImplPtr;
+public:
+    CallbackPtr()
+    {}
+
+    CallbackPtr(ImplPtr implPtr)
+        : impl(implPtr)
+    {}
+
+    Callback* operator->() const {
+        return &impl;
+    }
+
+    bool isValid() const {
+        return impl.implPtr.isValid();
+    }
+
+    bool isEnabled() const {
+        return impl.implPtr.isValid() && impl.implPtr->getObjectPtr() != NULL;
+    }
+
+    void invalidate() {
+        impl.implPtr.invalidate();
+    }
+
+private:
+    mutable Callback impl;
+};
+
+
+@ for argCount = 0, MAX_TEMPLATE_ARGS do
+@
+@    local typename = (argCount > 0 and 'typename')
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Callback class for @(argCount) arguments
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    @(classList('A',argCount))
+>
+class Callback
+@ if argCount < MAX_TEMPLATE_ARGS then
+    <@(filledArgList('A','EmptyClass',argCount,MAX_TEMPLATE_ARGS))>
+@ end
+{
+private:
+    typedef @(typename) CallbackInternal::CallbackBase@(argCount)
+@   if argCount >= 1 then
+                    <
+                        @(argList('A',argCount))
+                    >
+@   end    
+                    ::Ptr ImplPtr;
+
+    template<class T> static T* getRawPtr(T* ptr)           { return ptr; }
+    template<class T> static T* getRawPtr(OwningPtr<T> ptr) { return ptr.getRawPtr(); }
+
+public:
+    typedef CallbackPtr<Callback> Ptr;
+
+@ for _, ptrType in ipairs({'T*', 'OwningPtr<T>'}) do
+    template<class T, class S> static Ptr create(@(ptrType) objectPtr, 
+                                                 void (S::*methodPtr)(@(argList('A',argCount))))
+    {
+        return Ptr(CallbackInternal::CallbackImpl@(argCount)
+                   <
+                     T @(argCount > 0 and ',')
+                     @(argList('A',argCount))
+                   >
+                   ::create(getRawPtr(objectPtr), 
+                            methodPtr));
+    }
+    template<class T, class S> static Ptr create(@(ptrType) objectPtr, 
+                                                 void (S::*methodPtr)(@(argList('A',argCount))),
+                                                 void (S::*exceptionHandler)())
+    {
+        return Ptr(CallbackInternal::CallbackImplWithExceptionHandler@(argCount)
+                   <
+                     T @(argCount > 0 and ',')
+                     @(argList('A',argCount))
+                   >
+                   ::create(getRawPtr(objectPtr), 
+                            methodPtr,
+                            exceptionHandler));
+    }
+@ end
+
+    void call(@(typedArgList('A','a',argCount))) const
+    {
+        if (implPtr.isValid()) {
+            implPtr->call(@(argList('a',argCount)));
+        }
+    }
+    
+    bool isEnabled() const {
+        return implPtr.isValid() && implPtr->getObjectPtr() != NULL;
+    }
+    
+    void disable() {
+        if (implPtr.isValid()) {
+            implPtr->disable();
+            implPtr.invalidate();
+        }
+    }
+    
+    HeapObject* getObjectPtr() const {
+        if (implPtr.isValid()) {
+            return implPtr->getObjectPtr();
+        } else {
+            return NULL;
+        }
+    }
+
+private:
+    friend class CallbackPtr<Callback>;
+
+    Callback()
+    {}
+    
+    Callback(ImplPtr implPtr)
+        : implPtr(implPtr)
+    {}
+
+    ImplPtr implPtr;
+};
+
+@end
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Function newCallback()
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+@ for argCount = 0, MAX_TEMPLATE_ARGS do
+@   for _, ptrType in ipairs({'OwningPtr<T>', 'T*'}) do
+
+template
+<
+    class T, class S @(argCount > 0 and ',')
+    @(classList('A', argCount))
+>
+typename Callback<@(argList('A',argCount))>::Ptr newCallback
+(
+    @(ptrType) objectPtr, 
+    void (S::*methodPtr)(@(argList('A',argCount)))
+) {
+    return Callback<@(argList('A',argCount))>::create(objectPtr,
+                                                      methodPtr);
+}
+
+template
+<
+    class T, class S @(argCount > 0 and ',')
+    @(classList('A', argCount))
+>
+typename Callback<@(argList('A',argCount))>::Ptr newCallback
+(
+    @(ptrType) objectPtr, 
+    void (S::*methodPtr)(@(argList('A',argCount))),
+    void (S::*exceptionHandler)()
+) {
+    return Callback<@(argList('A',argCount))>::create(objectPtr, 
+                                                      methodPtr,
+                                                      exceptionHandler);
+}
+@   end
+@ end
+
+
+} // namespace LucED
+
+#endif // CALLBACK_HPP

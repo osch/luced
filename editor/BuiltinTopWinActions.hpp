@@ -19,54 +19,38 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef EDITOR_CLIENT_HPP
-#define EDITOR_CLIENT_HPP
+#ifndef BUILTIN_TOP_WIN_ACTIONS_HPP
+#define BUILTIN_TOP_WIN_ACTIONS_HPP
 
-#include "String.hpp"
-
-#include "HeapObject.hpp"
-#include "SingletonInstance.hpp"
-#include "GuiRootProperty.hpp"
-#include "HeapObjectArray.hpp"
-#include "WeakPtr.hpp"
-#include "RawPtr.hpp"
+#include "TopWinActions.hpp"
+#include "HeapHashMap.hpp"
 
 namespace LucED
 {
 
-class EditorClient : public HeapObject
+class BuiltinTopWinActions : public TopWinActions
 {
 public:
-    typedef WeakPtr<EditorClient> Ptr;
+    typedef OwningPtr<BuiltinTopWinActions> Ptr;
+    typedef TopWinActions::Handler          Handler;
     
-    static RawPtr<EditorClient> getInstance() {
-        return instance.getPtr();
+    static Ptr create() {
+        return Ptr(new BuiltinTopWinActions());
     }
     
-    ~EditorClient();
-
-    void startWithCommandline(HeapObjectArray<String>::Ptr commandline);
-    
-    bool isServerStartupNeeded() const {
-        return isServerStartupNeededFlag;
-    }
+    virtual Handler::Ptr createNewHandler(const TopWinActions::Parameter& parameter);
 
 private:
-    friend class SingletonInstance<EditorClient>;
-    static SingletonInstance<EditorClient> instance;
+    BuiltinTopWinActions();
 
-    EditorClient();
+    class HandlerImpl;
+    typedef void (HandlerImpl::*MethodPtr)();
 
-    void processEventForCommandProperty(XEvent* event);
-    void waitingForServerFailed();
+    typedef HeapHashMap< String, MethodPtr > MethodMap;
     
-    bool isStarted;
-    bool wasCommandSet;
-    bool isServerStartupNeededFlag;
-    GuiRootProperty serverProperty;
-    GuiRootProperty commandProperty;
+    MethodMap::Ptr methodMap;
 };
 
 } // namespace LucED
 
-#endif // EDITOR_CLIENT_HPP
+#endif // BUILTIN_TOP_WIN_ACTIONS_HPP

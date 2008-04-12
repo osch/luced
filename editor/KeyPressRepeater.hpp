@@ -27,6 +27,8 @@
 #include "EventDispatcher.hpp"
 #include "TimeVal.hpp"
 #include "SingletonInstance.hpp"
+#include "RawPtr.hpp"
+#include "TopWin.hpp"
 
 namespace LucED {
 
@@ -40,13 +42,21 @@ public:
     static bool isInstanceValid() {
         return instance.isValid();
     }
-    void repeatEvent(const XEvent *event);
+    void triggerNextRepeatEventFor(const XEvent* event, TopWin* topWin);
     void reset();
     
-    bool isRepeating() const;
-    bool isRepeatingEvent(const XEvent *event) const;
-    bool addKeyModifier(const XEvent *event);
-    bool removeKeyModifier(const XEvent *event);
+    bool isRepeating() const {
+        return isRepeatingFlag;
+    }
+
+    bool isRepeatingFor(TopWin* topWin) const {
+        return isRepeatingFlag 
+            && topWin != NULL 
+            && topWin == this->repeatingTopWin;
+    }
+    bool isRepeatingEvent (const XEvent* event) const;
+    bool addKeyModifier   (const XEvent* event);
+    bool removeKeyModifier(const XEvent* event);
     
 private:
     friend class SingletonInstance<KeyPressRepeater>;
@@ -62,6 +72,8 @@ private:
     bool isRepeatingFlag;
     
     TimeVal when;
+    
+    RawPtr<TopWin> repeatingTopWin;
 };
 
 } // namespace LucED

@@ -34,7 +34,7 @@
 #include "LuaException.hpp"
 #include "BasicRegex.hpp"
 #include "Flags.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {
@@ -57,7 +57,7 @@ public:
     typedef Flags<Option> Options;
 
 
-    FindUtil(ValidPtr<TextData> textData);
+    FindUtil(RawPtr<TextData> textData);
     
     void setOptions(Options options) {
         setRegexFlag                     ( options.contains(REGEX));
@@ -96,7 +96,7 @@ public:
     void setMaximalEndOfMatchPosition(long epos) {
         maximalEndOfMatchPosition = epos;
     }
-    void setTextData(ValidPtr<TextData> textData) {
+    void setTextData(RawPtr<TextData> textData) {
         this->textData = textData;
     }
     void setAllowMatchAtStartOfSearchFlag(bool flag) {
@@ -180,7 +180,7 @@ public:
     }
     
 protected:
-    ValidPtr<TextData> getTextData() {
+    RawPtr<TextData> getTextData() {
         return textData;
     }
     
@@ -283,7 +283,7 @@ private:
     bool wasFoundFlag;
     long textPosition;
     long maximalEndOfMatchPosition;
-    ValidPtr<TextData> textData;
+    RawPtr<TextData> textData;
     
     String searchString;
     MemArray<int> ovector;

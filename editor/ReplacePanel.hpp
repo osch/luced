@@ -85,6 +85,8 @@ private:
 
     void executeFind(bool isWrapping, Callback<>::Ptr  handleContinueSearchButton);
 
+    void handleException();
+    
     void handleButtonPressed(Button* button);
     void handleButtonRightClicked(Button* button);
 

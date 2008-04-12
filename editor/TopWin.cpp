@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -20,11 +20,13 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include <X11/xpm.h>
+#include <X11/Xutil.h>
 
 #include "TopWin.hpp"
 #include "KeyPressRepeater.hpp"
 #include "GlobalConfig.hpp"
 #include "SingletonInstance.hpp"
+#include "EditorServer.hpp"
 
 using namespace LucED;
 
@@ -51,15 +53,16 @@ TopWin::TopWin()
     
     addToXEventMask(KeyPressMask|KeyReleaseMask|FocusChangeMask|StructureNotifyMask);
 
+    GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TopWin::handleConfigChanged));
 }
 
-static TopWin* expectedFocusTopWin = NULL;
+static TopWin* expectedFocusTopWin; // cannot be WeakPtr, because it is used in the destructor
 
 TopWin::~TopWin()
 {
     if (this == expectedFocusTopWin) {
         expectedFocusTopWin = NULL;
-        if (GlobalConfig::getInstance()->getUseKeyPressRepeater())
+        if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
         {
             if (KeyPressRepeater::isInstanceValid()) {
                 KeyPressRepeater::getInstance()->reset();
@@ -69,9 +72,41 @@ TopWin::~TopWin()
     }
 }
 
+static inline bool hasCurrentX11Focus(TopWin* topWin)
+{
+    Window focusWidget;
+    int    revertToReturn;
+    
+    XGetInputFocus(GuiRoot::getInstance()->getDisplay(), 
+                   &focusWidget,
+                   &revertToReturn);
+                   
+    return (focusWidget == topWin->getWid());
+}
+
+
+void TopWin::checkTopWinFocus()
+{
+    if (expectedFocusTopWin != NULL)
+    {
+        if (!hasCurrentX11Focus(expectedFocusTopWin))
+        {
+#ifdef DEBUG
+fprintf(stderr, "****************** expected FocusTopWin mismatch\n");
+#endif
+            if (expectedFocusTopWin->focusFlag) {
+                expectedFocusTopWin->focusFlag = false;
+                expectedFocusTopWin->treatFocusOut();
+            }
+            expectedFocusTopWin = NULL;
+        }
+    }
+}
+
+
 void TopWin::setSizeHints(int minWidth, int minHeight, int dx, int dy)
 {
-    XSizeHints *hints = XAllocSizeHints();
+    XSizeHints* hints = XAllocSizeHints();
     hints->flags = PMinSize|PResizeInc;
     hints->min_width  = minWidth;
     hints->min_height = minHeight;
@@ -83,7 +118,7 @@ void TopWin::setSizeHints(int minWidth, int minHeight, int dx, int dy)
 
 void TopWin::setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy)
 {
-    XSizeHints *hints = XAllocSizeHints();
+    XSizeHints* hints = XAllocSizeHints();
     hints->flags = USPosition|PMinSize|PResizeInc;
     hints->x = x;
     hints->y = y;
@@ -105,7 +140,14 @@ void TopWin::requestFocus()
     }
 }
 
-GuiElement::ProcessingResult TopWin::processEvent(const XEvent *event)
+void TopWin::repeatKeyPress(const XEvent* event)
+{
+    KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
+    processKeyboardEvent(event);
+}
+
+
+GuiElement::ProcessingResult TopWin::processEvent(const XEvent* event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED)
     {
@@ -158,22 +200,25 @@ printf("TakeFocus\n");
             }
             
             case KeyPress: {
-                
-                if (GlobalConfig::getInstance()->getUseKeyPressRepeater())
+                if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
                 {
                     if (KeyPressRepeater::getInstance()->isRepeating())
                     {
                         if (!KeyPressRepeater::getInstance()->addKeyModifier(event)) {
-                            ProcessingResult processed = processKeyboardEvent(event);
-                            KeyPressRepeater::getInstance()->repeatEvent(event);
-                            return processed;
+                            if (!KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
+                                KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
+                                ProcessingResult processed = processKeyboardEvent(event);
+                                return processed;
+                            } else {
+                                return EVENT_PROCESSED;
+                            }
                         } else {
                             return EVENT_PROCESSED;
                         }
                     }
                     else {
+                        KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
                         ProcessingResult processed = processKeyboardEvent(event);
-                        KeyPressRepeater::getInstance()->repeatEvent(event);
                         return processed;
                     }
                 }
@@ -203,7 +248,7 @@ printf("TakeFocus\n");
             }
             
             case KeyRelease: {
-                if (GlobalConfig::getInstance()->getUseKeyPressRepeater())
+                if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
                 {
                     if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
                         KeyPressRepeater::getInstance()->reset();
@@ -215,19 +260,22 @@ printf("TakeFocus\n");
                 return EVENT_PROCESSED;
             }
 
-            case FocusOut: {
-                if (GlobalConfig::getInstance()->getUseKeyPressRepeater())
+            case FocusOut:
+            {
+                if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
                 {
                     KeyPressRepeater::getInstance()->reset();
                     GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
                 }
-                focusFlag = false;
-                treatFocusOut();
+                if (focusFlag) {
+                    focusFlag = false;
+                    treatFocusOut();
+                }
                 if (expectedFocusTopWin == this)
                 {
                     expectedFocusTopWin = NULL;
                 }
-                else if (expectedFocusTopWin != NULL)
+                else if (expectedFocusTopWin != NULL && !hasCurrentX11Focus(expectedFocusTopWin))
                 {
                     // I don't understand, why this can happen: 
                     // but without this workaround sometimes a window
@@ -235,18 +283,23 @@ printf("TakeFocus\n");
                     // this also happens with NEdit, perhaps a bug in
                     // some window manager
                     
-                    expectedFocusTopWin->focusFlag = false;
-                    expectedFocusTopWin->treatFocusOut();
+                    if (expectedFocusTopWin->focusFlag) {
+                        expectedFocusTopWin->focusFlag = false;
+                        expectedFocusTopWin->treatFocusOut();
+                    }
                     expectedFocusTopWin = NULL;
                 }
                 return EVENT_PROCESSED;
             }
 
-            case FocusIn: {
-                if (GlobalConfig::getInstance()->getUseKeyPressRepeater())
+            case FocusIn:
+            {
+                if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
                 {
                     KeyPressRepeater::getInstance()->reset();
-                    GuiRoot::getInstance()->setKeyboardAutoRepeatOff();
+                    if (!GuiRoot::getInstance()->hasDetectableAutorepeat()) {
+                        GuiRoot::getInstance()->setKeyboardAutoRepeatOff();
+                    }
                 }
                 if (expectedFocusTopWin != NULL && expectedFocusTopWin != this)
                 {
@@ -254,12 +307,16 @@ printf("TakeFocus\n");
                     // this sometimes happens, perhaps a bug in
                     // the window manager, but I'm not sure.
                     
-                    expectedFocusTopWin->focusFlag = false;
-                    expectedFocusTopWin->treatFocusOut();
+                    if (expectedFocusTopWin->focusFlag) {
+                        expectedFocusTopWin->focusFlag = false;
+                        expectedFocusTopWin->treatFocusOut();
+                    }
                 }
                 expectedFocusTopWin = this;
-                focusFlag = true;
-                treatFocusIn();
+                if (!focusFlag) {
+                    focusFlag = true;
+                    treatFocusIn();
+                }
                 return EVENT_PROCESSED;
             }
 
@@ -267,6 +324,24 @@ printf("TakeFocus\n");
             default: {
                 return NOT_PROCESSED;
             }
+        }
+    }
+}
+
+void TopWin::handleConfigChanged()
+{
+    if (focusFlag)
+    {
+        if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+        {
+            if (!GuiRoot::getInstance()->hasDetectableAutorepeat()) {
+                GuiRoot::getInstance()->setKeyboardAutoRepeatOff();
+            }
+        }
+        else
+        {
+            KeyPressRepeater::getInstance()->reset();
+            GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
         }
     }
 }
@@ -296,6 +371,9 @@ private:
                 GuiRoot::getInstance()->getRootWid(), luced_xpm, &pixMap, NULL, NULL) != 0) {
             pixMap = 0;
         }
+        if (GuiRoot::getInstance()->hasXkbExtension()) {
+            GuiRoot::getInstance()->setDetectableAutorepeat(true);
+        }
     }    
 
     ~TopWinSingletonData()
@@ -319,14 +397,38 @@ void TopWin::setWindowManagerHints()
     
     if (pixMap != 0)
     {
-        XWMHints *hints = XAllocWMHints();
+        XWMHints* hints = XAllocWMHints();
         
-        hints->flags  = IconPixmapHint|InputHint;// | IconMaskHint ;//| IconWindowHint;
-        hints->icon_pixmap = pixMap;
-        hints->input = True;
-        XSetWMHints(getDisplay(), getWid(), hints);
-        
-        XFree(hints);
+        if (hints != NULL) {
+            hints->flags  = IconPixmapHint|InputHint;// | IconMaskHint ;//| IconWindowHint;
+            hints->icon_pixmap = pixMap;
+            hints->input = True;
+            XSetWMHints(getDisplay(), getWid(), hints);
+            
+            XFree(hints);
+        }        
+    }
+    XClassHint* classHint = XAllocClassHint();
+
+    if (classHint != NULL) {
+        MemArray<char> buffer;
+
+        String instanceName = EditorServer::getInstance()->getInstanceName();
+        if (instanceName.getLength() > 0) {
+            buffer.append(instanceName.toCString(), instanceName.getLength() + 1);
+        } else {
+            const char* envString = ::getenv("RESOURCE_NAME");
+            if (envString != NULL) {
+                buffer.append(envString, ::strlen(envString) + 1);
+            } else {
+                String programName = EditorServer::getInstance()->getProgramName();
+                buffer.append(programName.toCString(), programName.getLength() + 1);
+            }
+        }
+        classHint->res_name  = buffer.getPtr(); // use buffer because res_name is not const char*
+        classHint->res_class = "LucED";
+        XSetClassHint(getDisplay(), getWid(), classHint);
+        XFree(classHint);
     }
 }
 

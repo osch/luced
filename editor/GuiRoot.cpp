@@ -22,9 +22,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "options.hpp"
 #include "GuiRoot.hpp"
 #include "GlobalConfig.hpp"
 #include "SystemException.hpp"
+#include "GuiRootProperty.hpp"
+
+#ifdef USE_X11_XKB_EXTENSION
+#include <X11/XKBlib.h>
+#endif
 
 using namespace LucED;
 
@@ -39,7 +45,10 @@ static int myX11ErrorHandler(Display *display, XErrorEvent *errorEvent)
     fprintf(stderr, "LucED: xlib error: %s\n", buffer);
 }
 
-static bool GuiRoot_originalKeyboardModeWasAutoRepeat = false;
+static const char* KEYBOARD_WAS_AUTOREPEAT_PROPERTY_NAME = "LUCED_KEYBOARD_WAS_AUTOREPEAT";
+
+static bool GuiRoot_knowsOriginalKeyboardMode = false;
+static bool GuiRoot_originalKeyboardModeWasAutoRepeat = true;
 static bool GuiRoot_wasKeyboardModeModified           = false;
 
 static int myFatalX11ErrorHandler(Display* display)
@@ -58,6 +67,15 @@ static int myFatalX11ErrorHandler(Display* display)
             } else {
                 XAutoRepeatOff(tryAgainDisplay);
             }
+            {
+                // Delete RootProperty
+             
+                Atom    atom     = XInternAtom(tryAgainDisplay, KEYBOARD_WAS_AUTOREPEAT_PROPERTY_NAME, False);
+                int     screenId = XDefaultScreen(tryAgainDisplay);
+                Screen* screen   = XScreenOfDisplay(tryAgainDisplay, screenId);
+                Window  rootWid  = XRootWindow(tryAgainDisplay, screenId);
+                XDeleteProperty(tryAgainDisplay, rootWid, atom);
+            }            
             XCloseDisplay(tryAgainDisplay);
         }
     }
@@ -65,9 +83,26 @@ static int myFatalX11ErrorHandler(Display* display)
     return 0;
 }
 
+static bool GuiRoot_queryOriginalKeyboardModeWasAutoRepeat()
+{
+    bool wasAutoRepeat = true;
+    
+    GuiRootProperty prop(KEYBOARD_WAS_AUTOREPEAT_PROPERTY_NAME);
+    if (prop.exists()) {
+        wasAutoRepeat = (prop.getValue() == "false" ? false : true);
+    } else {
+        XKeyboardState keybstate;
+        XGetKeyboardControl(GuiRoot::getInstance()->getDisplay(), &keybstate);
+        wasAutoRepeat = (keybstate.global_auto_repeat == AutoRepeatModeOn);
+        prop.setValue(wasAutoRepeat ? "true" : "false");
+    }
+    return wasAutoRepeat;
+}
 
 GuiRoot::GuiRoot()
-    : wasKeyboardModeModified(false)
+    : xkbExtensionFlag(false),
+      hadDetecableAutorepeatFlag(false),
+      detecableAutorepeatFlag(false)
 {
     XSetErrorHandler(myX11ErrorHandler);
     XSetIOErrorHandler(myFatalX11ErrorHandler);
@@ -80,13 +115,34 @@ GuiRoot::GuiRoot()
     screen = XScreenOfDisplay(display, screenId);
     rootWid = WidgetId(XRootWindow(display, screenId));
 
-    XKeyboardState keybstate;
-    XGetKeyboardControl(display, &keybstate);
-    originalKeyboardModeWasAutoRepeat = (keybstate.global_auto_repeat == AutoRepeatModeOn);
+    evaluateConfig();
 
-    GuiRoot_originalKeyboardModeWasAutoRepeat = originalKeyboardModeWasAutoRepeat;
-    GuiRoot_wasKeyboardModeModified           = wasKeyboardModeModified;
-    
+    GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &GuiRoot::evaluateConfig));
+}
+
+GuiRoot::~GuiRoot()
+{
+    if (GuiRoot_wasKeyboardModeModified) {
+        if (GuiRoot_originalKeyboardModeWasAutoRepeat) {
+            XAutoRepeatOn(display);
+        } else {
+            XAutoRepeatOff(display);
+        }
+        GuiRoot_wasKeyboardModeModified = false;
+        GuiRoot_knowsOriginalKeyboardMode = false;
+        {
+            // Delete RootProperty
+         
+            Atom atom = XInternAtom(display, KEYBOARD_WAS_AUTOREPEAT_PROPERTY_NAME, False);
+            XDeleteProperty(display, rootWid, atom);
+        }            
+    }
+    XSync(display, False);
+    XCloseDisplay(display);
+}
+
+void GuiRoot::evaluateConfig()
+{
     blackColor = GuiColor(BlackPixel(display, screenId));
     whiteColor = GuiColor(WhitePixel(display, screenId));
 
@@ -117,21 +173,58 @@ GuiRoot::GuiRoot()
     XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor05().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor05 = GuiColor(xcolor1_st.pixel);
-    
-}
 
-GuiRoot::~GuiRoot()
-{
-    if (wasKeyboardModeModified) {
-        if (originalKeyboardModeWasAutoRepeat) {
-            XAutoRepeatOn(display);
-        } else {
-            XAutoRepeatOff(display);
+    xkbExtensionFlag = false;
+#ifdef USE_X11_XKB_EXTENSION
+    if (!GlobalConfig::getInstance()->getDoNotUseX11XkbExtension())
+    {
+        int xkbMajorVersion = XkbMajorVersion;
+        int xbkMinorVersion = XkbMinorVersion;
+        xkbExtensionFlag = XkbLibraryVersion(&xkbMajorVersion, &xbkMinorVersion);
+        if (xkbExtensionFlag)
+        {
+            int opcode;
+            int event;
+            int error;
+            xkbExtensionFlag = XkbQueryExtension(display, 
+                                                 &opcode,
+                                                 &event,
+                                                 &error,
+                                                 &xkbMajorVersion,
+                                                 &xbkMinorVersion);
         }
     }
-    XSync(display, False);
-    XCloseDisplay(display);
+
+    if (xkbExtensionFlag && !hasDetectableAutorepeat() && hadDetecableAutorepeatFlag)
+    {
+        setDetectableAutorepeat(true);
+    }
+    
+    if (!xkbExtensionFlag && hasDetectableAutorepeat())
+    {
+        setDetectableAutorepeat(false);
+        hadDetecableAutorepeatFlag = true;
+    }
+#endif
+
 }
+
+bool GuiRoot::setDetectableAutorepeat(bool flag)
+{
+    ASSERT(flag == false || xkbExtensionFlag);
+
+    hadDetecableAutorepeatFlag = flag;
+
+#ifdef USE_X11_XKB_EXTENSION
+    int supportedFlag;
+    detecableAutorepeatFlag = XkbSetDetectableAutoRepeat(display, flag, &supportedFlag);
+    detecableAutorepeatFlag = detecableAutorepeatFlag && supportedFlag;
+    return detecableAutorepeatFlag;
+#else
+    return false;
+#endif
+}
+
 
 GuiColor GuiRoot::getGuiColor(const String& colorName)
 {
@@ -144,29 +237,36 @@ GuiColor GuiRoot::getGuiColor(const String& colorName)
 
 void GuiRoot::setKeyboardAutoRepeatOn()
 {
-            wasKeyboardModeModified = !originalKeyboardModeWasAutoRepeat;
-    GuiRoot_wasKeyboardModeModified = wasKeyboardModeModified;
-
+    if (!GuiRoot_knowsOriginalKeyboardMode) {
+        GuiRoot_originalKeyboardModeWasAutoRepeat = GuiRoot_queryOriginalKeyboardModeWasAutoRepeat();
+        GuiRoot_knowsOriginalKeyboardMode = true;
+    }
+    GuiRoot_wasKeyboardModeModified = !GuiRoot_originalKeyboardModeWasAutoRepeat;
+    
     XAutoRepeatOn(display);
 }
 
 
 void GuiRoot::setKeyboardAutoRepeatOff()
 {
-            wasKeyboardModeModified = originalKeyboardModeWasAutoRepeat;
-    GuiRoot_wasKeyboardModeModified = wasKeyboardModeModified;
-
+    if (!GuiRoot_knowsOriginalKeyboardMode) {
+        GuiRoot_originalKeyboardModeWasAutoRepeat = GuiRoot_queryOriginalKeyboardModeWasAutoRepeat();
+        GuiRoot_knowsOriginalKeyboardMode = true;
+    }
+    GuiRoot_wasKeyboardModeModified = GuiRoot_originalKeyboardModeWasAutoRepeat;
+    
     XAutoRepeatOff(display);
 }
 
 void GuiRoot::setKeyboardAutoRepeatOriginal()
 {
-    if (wasKeyboardModeModified) {
-        if (originalKeyboardModeWasAutoRepeat) {
+    if (GuiRoot_wasKeyboardModeModified) {
+        if (GuiRoot_originalKeyboardModeWasAutoRepeat) {
             XAutoRepeatOn(display);
         } else {
             XAutoRepeatOff(display);
         }
+        GuiRoot_wasKeyboardModeModified = false;
     }
 }
 

@@ -24,7 +24,7 @@
 #include "util.hpp"
 #include "Clipboard.hpp"
 #include "GlobalConfig.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 using namespace LucED;
 
@@ -42,7 +42,7 @@ class Clipboard::SelectionContentHandler : public SelectionOwner::ContentHandler
 public:
     typedef OwningPtr<ContentHandler> Ptr;
 
-    static Ptr create(ValidPtr<Clipboard> clipboard) {
+    static Ptr create(RawPtr<Clipboard> clipboard) {
         return Ptr(new SelectionContentHandler(clipboard));
     }
     virtual long initSelectionDataRequest() {
@@ -62,10 +62,10 @@ public:
         clipboard->programRunningKeeper.doNotKeepProgramRunning();
     }
 private:
-    SelectionContentHandler(ValidPtr<Clipboard> clipboard)
+    SelectionContentHandler(RawPtr<Clipboard> clipboard)
         : clipboard(clipboard)
     {}
-    ValidPtr<Clipboard> clipboard;
+    RawPtr<Clipboard> clipboard;
 };
 
 class Clipboard::PasteDataContentHandler : public PasteDataReceiver::ContentHandler
@@ -73,7 +73,7 @@ class Clipboard::PasteDataContentHandler : public PasteDataReceiver::ContentHand
 public:
     typedef OwningPtr<ContentHandler> Ptr;
 
-    static Ptr create(ValidPtr<Clipboard> clipboard) {
+    static Ptr create(RawPtr<Clipboard> clipboard) {
         return Ptr(new PasteDataContentHandler(clipboard));
     }
     
@@ -87,10 +87,10 @@ public:
         clipboard->notifyAboutEndOfPastingData();
     }
 private:
-    PasteDataContentHandler(ValidPtr<Clipboard> clipboard)
+    PasteDataContentHandler(RawPtr<Clipboard> clipboard)
         : clipboard(clipboard)
     {}
-    ValidPtr<Clipboard> clipboard;
+    RawPtr<Clipboard> clipboard;
 };
 
 Clipboard::Clipboard()

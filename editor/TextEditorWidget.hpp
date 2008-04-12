@@ -267,7 +267,7 @@ private:
     ActionId currentActionId;
     TextData::TextMark beginPastingTextMark;
     TextData::TextMark pastingTextMark;
-    EditingHistory::SectionHolder::Ptr historySectionHolder;
+    TextData::HistorySection::Ptr pastingDataHistorySectionHolder;
     PasteParameter pasteParameter;
 
     class SelectionContentHandler;
@@ -275,7 +275,7 @@ private:
     
     bool isSelectionPersistent;
 
-    ValidPtr<TextData> textData;
+    RawPtr<TextData> textData;
 
     class PasteDataContentHandler;
     PasteDataReceiver::Ptr pasteDataReceiver;

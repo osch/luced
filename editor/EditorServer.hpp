@@ -32,7 +32,7 @@
 #include "EditorTopWin.hpp"
 #include "ConfigException.hpp"
 #include "WeakPtr.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {
@@ -61,6 +61,10 @@ public:
         return instanceName;
     }
     
+    String getProgramName() const {
+        return programName;
+    }
+    
 private:
     friend class SingletonInstance<EditorServer>;
     static SingletonInstance<EditorServer> instance;
@@ -77,6 +81,7 @@ private:
     GuiRootProperty serverProperty;
     GuiRootProperty commandProperty;
     String instanceName;
+    String programName;
 };
 
 } // namespace LucED

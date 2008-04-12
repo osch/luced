@@ -74,19 +74,29 @@ public:
     
     GuiColor getGuiColor(const String& colorName);
 
+    bool hasXkbExtension() const {
+        return xkbExtensionFlag;
+    }
+    
+    bool setDetectableAutorepeat(bool flag);
+    
+    bool hasDetectableAutorepeat() const {
+        return detecableAutorepeatFlag;
+    }
+
 private:
     friend class SingletonInstance<GuiRoot>;
     static SingletonInstance<GuiRoot> instance;
     
     GuiRoot();
     
-    Display *display;
+    void evaluateConfig();
+    
+    Display* display;
     XWindowAttributes  rootWinAttr;
     int screenId;
-    Screen *screen;
+    Screen* screen;
     WidgetId rootWid;
-    bool originalKeyboardModeWasAutoRepeat;
-    bool wasKeyboardModeModified;
 
     GuiColor blackColor;
     GuiColor whiteColor;
@@ -98,6 +108,9 @@ private:
     GuiColor guiColor04;
     GuiColor guiColor05;
 
+    bool xkbExtensionFlag;
+    bool hadDetecableAutorepeatFlag;
+    bool detecableAutorepeatFlag;
 };
 
 

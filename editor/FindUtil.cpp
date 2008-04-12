@@ -28,7 +28,7 @@
 using namespace LucED;
 
 
-FindUtil::FindUtil(ValidPtr<TextData> textData)
+FindUtil::FindUtil(RawPtr<TextData> textData)
     : searchForwardFlag(true),
       ignoreCaseFlag(false),
       regexFlag(false),

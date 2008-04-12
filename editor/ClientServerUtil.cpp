@@ -21,14 +21,14 @@
 
 #include "ClientServerUtil.hpp"
 #include "System.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 using namespace LucED;
 
 
 GuiRootProperty ClientServerUtil::getServerRunningProperty(const String& instanceName)
 {
-    ValidPtr<System> sys = System::getInstance();
+    RawPtr<System> sys = System::getInstance();
     
     String name = String() << "LUCED_SERVER_HOST_" << sys->getHostName() << "_USER_" << sys->getUserName();
 
@@ -42,7 +42,7 @@ GuiRootProperty ClientServerUtil::getServerRunningProperty(const String& instanc
 
 GuiRootProperty ClientServerUtil::getServerCommandProperty(const String& instanceName)
 {
-    ValidPtr<System> sys = System::getInstance();
+    RawPtr<System> sys = System::getInstance();
 
     String name = String() << "LUCED_COMMAND_HOST" << sys->getHostName() << "_USER_" << sys->getUserName();
 
@@ -58,13 +58,13 @@ String ClientServerUtil::quoteCommandline(HeapObjectArray<String>::Ptr commandli
     const int argc = commandline->getLength();
     String rslt;
     
-    for (int i = 0; i < argc; ++i)
+    for (int i = 1; i < argc; ++i)
     {
         const String argument = commandline->get(i);
         
         for (int j = 0; j < argument.getLength(); ++j)
         {
-            if (j == 0 && i > 0) {
+            if (j == 0 && i > 1) {
                 rslt << ' ';
             }
             switch (argument[j]) {
@@ -91,6 +91,8 @@ HeapObjectArray<String>::Ptr ClientServerUtil::unquoteCommandline(const String& 
 {
     HeapObjectArray<String>::Ptr  rslt = HeapObjectArray<String>::create();
     String s;
+    
+    rslt->append("luced"); // fake arg0 as program name
     
     for (int i = 0; i < commandline.getLength(); ++i)
     {

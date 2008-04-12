@@ -35,6 +35,10 @@
 #include "System.hpp"
 #include "SystemException.hpp"
 
+#ifdef DEBUG
+    #include "TopWin.hpp"
+#endif
+
 using namespace LucED;
 
 SingletonInstance<EventDispatcher> EventDispatcher::instance;
@@ -85,9 +89,38 @@ static inline void disableSignals()
 
 static inline int internalSelect(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal)
 {
+#ifdef DEBUG
+  TimeVal diffTimeVal;
+  if (timeVal != NULL) {
+    diffTimeVal = *timeVal;
+  }
+  TimeVal oldTimeVal = TimeVal::NOW;
+#endif
+
     enableSignals();
     int rslt = System::select(n, readfds, writefds, exceptfds, timeVal);
     disableSignals();
+
+#ifdef DEBUG
+  if (timeVal != NULL)
+  {
+    TimeVal newTimeVal = TimeVal::NOW;
+    TimeVal oldTimeVal2 = oldTimeVal + diffTimeVal;
+    if (oldTimeVal2 < newTimeVal)
+    {
+        MicroSeconds msecs = TimeVal::diffMicroSecs(oldTimeVal2, newTimeVal);
+        if (msecs > 50 * 1000) {
+            printf("--------------------- %ld --- (%ld:%ld) -> (%ld:%ld)  : (%ld:%ld)\n", (long) msecs, 
+                                                                                          (long) oldTimeVal.getSeconds(),
+                                                                                          (long) oldTimeVal.getMicroSeconds(),
+                                                                                          (long) newTimeVal.getSeconds(),
+                                                                                          (long) newTimeVal.getMicroSeconds(),
+                                                                                          (long) diffTimeVal.getSeconds(),
+                                                                                          (long) diffTimeVal.getMicroSeconds());
+        }
+    }
+  }
+#endif
     return rslt;
 }
 
@@ -310,9 +343,12 @@ void EventDispatcher::doEventLoop()
             
             {
                 if (nextTimer.isValid()) {
+#if 0
+    TopWin::checkTopWinFocus();
+#endif
                     if (hasWaitingProcess) {
-                        TimeVal now(TimeVal::NOW);
-                        if (nextTimer.when.isLaterThan(now)) {
+                        TimeVal now = TimeVal::now();
+                        if (nextTimer.when > now) {
                             long diffTime = TimeVal::diffMicroSecs(now, nextTimer.when);
                             if (diffTime > 100 * 1000) {
                                 diffTime = 100 * 1000;
@@ -323,8 +359,7 @@ void EventDispatcher::doEventLoop()
                             h->execute(diffTime);
                             hasSomethingDone = true;
                             
-                            now.setToCurrentTime();
-                            if (now.add(MicroSeconds(100 * 1000)).isLaterThan(nextTimer.when)) {
+                            if (nextTimer.when < TimeVal::now() + MicroSeconds(100 * 1000)) {
                                 remainingTime.setToRemainingTimeUntil(nextTimer.when);
                                 selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, &remainingTime);
                                 wasSelectInvoked = true;
@@ -409,8 +444,7 @@ void EventDispatcher::doEventLoop()
                     }
                 } else {
                     if (nextTimer.isValid()) {
-                        TimeVal now(TimeVal::NOW); 
-                        if (now.isLaterThan(nextTimer.when)) {
+                        if (nextTimer.when < TimeVal::now()) {
                             nextTimer.callback->call();
                             hasSomethingDone = true;
                             wasTimerInvoked = true;

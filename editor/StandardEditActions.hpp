@@ -24,7 +24,7 @@
 
 #include "TextEditorWidget.hpp"
 #include "HeapObject.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {
@@ -34,12 +34,12 @@ class StandardEditActions : public HeapObject
 public:
     typedef OwningPtr<StandardEditActions> Ptr;
     
-    static Ptr createSingleLineActions(ValidPtr<TextEditorWidget> editWidget) {
+    static Ptr createSingleLineActions(RawPtr<TextEditorWidget> editWidget) {
         Ptr rslt(new StandardEditActions(editWidget));
         rslt->registerSingleLineEditActionsToEditWidget();
         return rslt;
     }
-    static Ptr createMultiLineActions(ValidPtr<TextEditorWidget> editWidget) {
+    static Ptr createMultiLineActions(RawPtr<TextEditorWidget> editWidget) {
         Ptr rslt(new StandardEditActions(editWidget));
         rslt->registerMultiLineEditActionsToEditWidget();
         return rslt;
@@ -104,7 +104,7 @@ public:
     void openCorrespondingFile();
     
 private:
-    StandardEditActions(ValidPtr<TextEditorWidget> editWidget);
+    StandardEditActions(RawPtr<TextEditorWidget> editWidget);
     
     void registerSingleLineEditActionsToEditWidget();
     void registerMultiLineEditActionsToEditWidget();
@@ -112,7 +112,7 @@ private:
     void newLineFixedColumnIndent(bool forward);
     void newLineAutoIndent(bool insert);
 
-    ValidPtr<TextEditorWidget> e;
+    RawPtr<TextEditorWidget> e;
 };
 
 

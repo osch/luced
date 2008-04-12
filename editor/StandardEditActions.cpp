@@ -33,7 +33,7 @@
 
 using namespace LucED;
 
-StandardEditActions::StandardEditActions(ValidPtr<TextEditorWidget> editWidget)
+StandardEditActions::StandardEditActions(RawPtr<TextEditorWidget> editWidget)
     : e(editWidget)
 {}
 
@@ -110,7 +110,7 @@ void StandardEditActions::gotoMatchingBracket()
             bool forward;
             bool hasBracket = false;
             
-            ValidPtr<TextData> textData = e->getTextData();
+            RawPtr<TextData> textData = e->getTextData();
             
             switch (textData->getChar(cursorPos - 1)) {
                 case '(': hasBracket = true; forward = true; openBracket = '('; closeBracket = ')'; break;
@@ -519,8 +519,8 @@ void StandardEditActions::shiftBlockLeft()
 {
     if (!e->areCursorChangesDisabled() && e->hasSelection() && !e->isReadOnly())
     {
-        ValidPtr<TextData> textData                       = e->getTextData();
-        EditingHistory::SectionHolder::Ptr historySection = textData->createHistorySection();
+        RawPtr<TextData> textData                       = e->getTextData();
+        TextData::HistorySection::Ptr historySection = textData->createHistorySection();
         
         TextData::TextMark mark   = e->getNewMarkToBeginOfSelection();
         long               endPos = e->getEndSelectionPos();
@@ -558,8 +558,8 @@ void StandardEditActions::shiftBlockRight()
 {
     if (!e->areCursorChangesDisabled() && e->hasSelection() && !e->isReadOnly())
     {
-        ValidPtr<TextData> textData                       = e->getTextData();
-        EditingHistory::SectionHolder::Ptr historySection = textData->createHistorySection();
+        RawPtr<TextData> textData                       = e->getTextData();
+        TextData::HistorySection::Ptr historySection = textData->createHistorySection();
         
         TextData::TextMark mark   = e->getNewMarkToBeginOfSelection();
         long               endPos = e->getEndSelectionPos();
@@ -907,7 +907,7 @@ void StandardEditActions::newLineAutoIndent(bool insert)
     {
         e->setCurrentAction(TextEditorWidget::ACTION_NEWLINE);
         
-        EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+        TextData::HistorySection::Ptr historySectionHolder = e->getTextData()->createHistorySection();
 
         if (e->hasPrimarySelection())
         {
@@ -956,7 +956,7 @@ void StandardEditActions::newLineFixedColumnIndent(bool forward)
     {
         e->setCurrentAction(TextEditorWidget::ACTION_NEWLINE);
         
-        EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+        TextData::HistorySection::Ptr historySectionHolder = e->getTextData()->createHistorySection();
 
         if (e->hasPrimarySelection()) {
             long selBegin  = e->getBeginSelectionPos();
@@ -1025,7 +1025,7 @@ void StandardEditActions::tabForward()
     if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
         e->getTextData()->setMergableHistorySeparator();
-        EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->getHistorySectionHolder();
+        TextData::HistorySection::Ptr historySection = e->getTextData()->getHistorySectionHolder();
         
         if (e->hasPrimarySelection()) {
             long selBegin  = e->getBeginSelectionPos();
@@ -1081,7 +1081,7 @@ void StandardEditActions::backSpace()
         if (e->hasPrimarySelection())
         {
             {
-                EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+                TextData::HistorySection::Ptr historySectionHolder = e->getTextData()->createHistorySection();
 
                 long selBegin = e->getBeginSelectionPos();
                 long selLength = e->getEndSelectionPos() - selBegin;
@@ -1094,7 +1094,7 @@ void StandardEditActions::backSpace()
         else
         {
             e->getTextData()->setMergableHistorySeparator();
-            EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->getHistorySectionHolder();
+            TextData::HistorySection::Ptr historySection = e->getTextData()->getHistorySectionHolder();
 
             const long cursorPos = e->getCursorTextPosition(); 
 
@@ -1122,7 +1122,7 @@ void StandardEditActions::backSpace()
                 else 
                 {
 #if 0
-                    ValidPtr<TextData> textData = e->getTextData();
+                    RawPtr<TextData> textData = e->getTextData();
                     bool wasAllSpace = true;
                     for (long p = cursorPos - e->getCursorColumn(); p < cursorPos; ++p) {
                         byte c = textData->getChar(p);
@@ -1140,7 +1140,7 @@ void StandardEditActions::backSpace()
                         amountToBeRemoved = 1;
                     }
 #else
-                    ValidPtr<TextData> textData = e->getTextData();
+                    RawPtr<TextData> textData = e->getTextData();
                     long p                      = cursorPos;
                     long opticalColumn          = e->getOpticalCursorColumn();
                     
@@ -1177,7 +1177,7 @@ void StandardEditActions::deleteKey()
         if (e->hasPrimarySelection()) 
         {
             {
-                EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+                TextData::HistorySection::Ptr historySectionHolder = e->getTextData()->createHistorySection();
 
                 long selBegin  = e->getBeginSelectionPos();
                 long selLength = e->getEndSelectionPos() - selBegin;
@@ -1198,7 +1198,7 @@ void StandardEditActions::deleteKey()
                 }
             }
             e->getTextData()->setMergableHistorySeparator();
-            EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->getHistorySectionHolder();
+            TextData::HistorySection::Ptr historySection = e->getTextData()->getHistorySectionHolder();
 
             e->setCurrentAction(TextEditorWidget::ACTION_KEYBOARD_INPUT);
             e->removeAtCursor(1);
@@ -1214,7 +1214,7 @@ void StandardEditActions::copyToClipboard()
 {
     if (!e->areCursorChangesDisabled())
     {
-        EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+        TextData::HistorySection::Ptr historySectionHolder = e->getTextData()->createHistorySection();
 
         if (e->hasPrimarySelection()) {
             long selBegin  = e->getBeginSelectionPos();
@@ -1233,7 +1233,7 @@ void StandardEditActions::cutToClipboard()
         if (e->hasPrimarySelection())
         {
             {
-                EditingHistory::SectionHolder::Ptr historySectionHolder = e->getTextData()->createHistorySection();
+                TextData::HistorySection::Ptr historySectionHolder = e->getTextData()->createHistorySection();
 
                 long selBegin  = e->getBeginSelectionPos();
                 long selLength = e->getEndSelectionPos() - selBegin;
@@ -1264,18 +1264,21 @@ void StandardEditActions::pasteFromClipboardForward()
 {
     if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
-        EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->createHistorySection();
-
-        TextData::TextMark m;
-
-        if (e->hasPrimarySelection()) {
-            m = e->getNewMarkToBeginOfSelection();
-            long selLength = e->getEndSelectionPos() - m.getPos();
-            e->getTextData()->removeAtMark(m, selLength);
-        } else {
-            m = e->createNewMarkFromCursor();
+        {
+            TextData::HistorySection::Ptr historySection = e->getTextData()->createHistorySection();
+    
+            TextData::TextMark m;
+    
+            if (e->hasPrimarySelection()) {
+                m = e->getNewMarkToBeginOfSelection();
+                long selLength = e->getEndSelectionPos() - m.getPos();
+                e->getTextData()->removeAtMark(m, selLength);
+            } else {
+                m = e->createNewMarkFromCursor();
+            }
+            e->requestClipboardPasting(m, TextEditorWidget::CURSOR_TO_END_OF_PASTED_DATA);
         }
-        e->requestClipboardPasting(m, TextEditorWidget::CURSOR_TO_END_OF_PASTED_DATA);
+        //e->getTextData()->setHistorySeparator();
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
@@ -1285,7 +1288,7 @@ void StandardEditActions::pasteFromClipboardBackward()
 {
     if (!e->areCursorChangesDisabled() && !e->isReadOnly())
     {
-        EditingHistory::SectionHolder::Ptr historySection = e->getTextData()->createHistorySection();
+        TextData::HistorySection::Ptr historySection = e->getTextData()->createHistorySection();
 
         TextData::TextMark m;
 
@@ -1358,7 +1361,7 @@ void StandardEditActions::selectWordForward()
 {
     if (!e->areCursorChangesDisabled())
     {
-        ValidPtr<TextData>  textData = e->getTextData();
+        RawPtr<TextData>  textData = e->getTextData();
         
         long len  = textData->getLength();
         long cursorPos = e->getCursorTextPosition();
@@ -1427,7 +1430,7 @@ void StandardEditActions::selectWordBackward()
 {
     if (!e->areCursorChangesDisabled())
     {
-        ValidPtr<TextData> textData = e->getTextData();
+        RawPtr<TextData> textData = e->getTextData();
 
         long len  = textData->getLength();
         long cursorPos = e->getCursorTextPosition();
@@ -1763,7 +1766,7 @@ void StandardEditActions::findPrevLuaStructureElement()
 
 void StandardEditActions::openCorrespondingFile()
 {
-    ValidPtr<TextData> textData = e->getTextData();
+    RawPtr<TextData> textData = e->getTextData();
     if (!textData->isFileNamePseudo())
     {
         String currentFile = textData->getFileName();

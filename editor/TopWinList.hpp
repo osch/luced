@@ -76,7 +76,7 @@ private:
     void notifyAboutNewOwnedTopWin(TopWin* topWin);
     
     friend class TopWin;
-    ValidPtr<OwnedTopWins> getOwnedTopWins() {
+    RawPtr<OwnedTopWins> getOwnedTopWins() {
         return ownedTopWins;
     }
 

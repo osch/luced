@@ -48,67 +48,70 @@ public:
     
     void readConfig();
     
-    bool getUseKeyPressRepeater() {
-        return useKeyPressRepeater;
+    bool getUseOwnKeyPressRepeater() const {
+        return useOwnKeyPressRepeater;
     }
-    MicroSeconds getKeyPressRepeatFirstMicroSecs() {
+    bool getDoNotUseX11XkbExtension() const {
+        return doNotUseX11XkbExtension;
+    }
+    MicroSeconds getKeyPressRepeatFirstMicroSecs() const {
         return keyPressRepeatFirstMicroSecs;
     }
-    MicroSeconds getKeyPressRepeatNextMicroSecs() {
+    MicroSeconds getKeyPressRepeatNextMicroSecs() const {
         return keyPressRepeatNextMicroSecs;
     }
-    int getScrollBarWidth() {
+    int getScrollBarWidth() const {
         return scrollBarWidth;
     }
-    MicroSeconds getScrollBarRepeatFirstMicroSecs() {
+    MicroSeconds getScrollBarRepeatFirstMicroSecs() const {
         return scrollBarRepeatFirstMicroSecs;
     }
-    MicroSeconds getScrollBarRepeatNextMicroSecs() {
+    MicroSeconds getScrollBarRepeatNextMicroSecs() const {
         return scrollBarRepeatNextMicroSecs;
     }
-    long getDoubleClickMilliSecs() {
+    long getDoubleClickMilliSecs() const {
         return doubleClickMilliSecs;
     }
-    String getGuiColor01() {
+    String getGuiColor01() const {
         return guiColor01;
     }
-    String getGuiColor02() {
+    String getGuiColor02() const {
         return guiColor02;
     }
-    String getGuiColor03() {
+    String getGuiColor03() const {
         return guiColor03;
     }
-    String getGuiColor04() {
+    String getGuiColor04() const {
         return guiColor04;
     }
-    String getGuiColor05() {
+    String getGuiColor05() const {
         return guiColor05;
     }
-    String getGuiFont() {
+    String getGuiFont() const {
         return guiFont;
     }
-    String getGuiFontColor() {
+    String getGuiFontColor() const {
         return guiFontColor;
     }
-    String getPrimarySelectionColor() {
+    String getPrimarySelectionColor() const {
         return primarySelectionColor;
     }
-    String getPseudoSelectionColor() {
+    String getPseudoSelectionColor() const {
         return pseudoSelectionColor;
     }
-    int getInitialWindowWidth() {
+    int getInitialWindowWidth() const {
         return initialWindowWidth;
     }
-    int getInitialWindowHeight() {
+    int getInitialWindowHeight() const {
         return initialWindowHeight;
     }
-    long getX11SelectionChunkLength() {
+    long getX11SelectionChunkLength() const {
         return x11SelectionChunkLength;
     }
-    int getButtonInnerSpacing() {
+    int getButtonInnerSpacing() const {
         return buttonInnerSpacing;
     }
-    int getGuiSpacing() {
+    int getGuiSpacing() const {
         return guiSpacing;
     }
     bool isEditorPanelOnTop() const {
@@ -118,15 +121,15 @@ public:
         return keepRunningIfOwningClipboard;
     }
 
-    TextStyles::Ptr getTextStyles() {
+    TextStyles::Ptr getTextStyles() const {
         return textStyles;
     }
     
-    NameToIndexMap::ConstPtr getTextStyleNameToIndexMap() {
+    NameToIndexMap::ConstPtr getTextStyleNameToIndexMap() const {
         return textStyleNameToIndexMap;
     }
     
-    bool hasSyntaxPatternsForLanguageMode(const String& languageMode) {
+    bool hasSyntaxPatternsForLanguageMode(const String& languageMode) const {
         return syntaxPatternsConfig->hasEntryForLanguageModeName(languageMode);
     }
     
@@ -135,16 +138,16 @@ public:
     }
     
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(const String& languageMode,
-                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback);
+                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const;
 
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode, 
-                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback);
+                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const;
 
     SyntaxPatterns::Ptr getSyntaxPatternsForFileName    (const String& fileName,
-                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback);
+                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const;
 
-    LanguageMode::Ptr   getLanguageModeForFileName(const String& fileName);
-    LanguageMode::Ptr   getDefaultLanguageMode();
+    LanguageMode::Ptr   getLanguageModeForFileName(const String& fileName) const;
+    LanguageMode::Ptr   getDefaultLanguageMode() const;
 
     void notifyAboutNewFileContent(String absoluteFileName);
 
@@ -160,7 +163,8 @@ private:
 
     SyntaxPatterns::Ptr loadSyntaxPatterns(const String& absoluteFileName);
 
-    bool         useKeyPressRepeater;
+    bool         useOwnKeyPressRepeater;
+    bool         doNotUseX11XkbExtension;
     MicroSeconds keyPressRepeatFirstMicroSecs;
     MicroSeconds keyPressRepeatNextMicroSecs;
     

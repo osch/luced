@@ -25,9 +25,10 @@
 
 local generalConfig = {
 
-          useKeyPressRepeater = true,
+          useOwnKeyPressRepeater = false,  -- try this on systems with slow keyboard repeat rate
+          doNotUseX11XkbExtension = false, -- this should be set to false
           keyPressRepeatFirstMilliSecs = 200,
-          keyPressRepeatNextMilliSecs  =  21,
+          keyPressRepeatNextMilliSecs  =  20,
 
           scrollBarWidth = 12+2,
           scrollBarRepeatFirstMilliSecs = 300,
@@ -145,7 +146,6 @@ local languageModes = {
       softTabWidth = 4,
     },
 
--- [=[
     { 
       name            = "java",
       fileNameRegex   = [[^.*\.(?:java)$]],
@@ -155,7 +155,6 @@ local languageModes = {
       hardTabWidth = 8,
       softTabWidth = 4,
     },
---]=]    
 }
 
 local config =

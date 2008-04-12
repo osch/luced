@@ -30,7 +30,7 @@ using namespace LucED;
 WeakPtr<SelectionOwner> SelectionOwner::primarySelectionOwner = NULL;
 
 
-SelectionOwner::SelectionOwner(ValidPtr<GuiWidget> baseWidget, Type type, ContentHandler::Ptr contentHandler)
+SelectionOwner::SelectionOwner(RawPtr<GuiWidget> baseWidget, Type type, ContentHandler::Ptr contentHandler)
       : baseWidget(baseWidget),
         contentHandler(contentHandler),
         x11AtomForSelection(type == TYPE_PRIMARY ? XA_PRIMARY : XInternAtom(GuiRoot::getInstance()->getDisplay(), "CLIPBOARD", False)),

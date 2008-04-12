@@ -193,7 +193,7 @@ public:
     }
     
     void setMergeStopMarkOnPreviousAction(bool flag = true) {
-        if (nextActionIndex > 0) {
+        if (nextActionIndex > 0 && sectionHolder.getRefCounter() <= 1) {
             if (flag) {
                 actions[nextActionIndex - 1].flags.set(FLAG_MERGE_STOP);
             } else {

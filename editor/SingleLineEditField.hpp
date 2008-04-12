@@ -25,7 +25,7 @@
 #include "SingleLineEditorWidget.hpp"
 #include "TextData.hpp"
 #include "EditFieldGroup.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {

@@ -27,7 +27,7 @@
 
 using namespace LucED;
 
-PasteDataReceiver::PasteDataReceiver(ValidPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler)
+PasteDataReceiver::PasteDataReceiver(RawPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler)
   : baseWidget(baseWidget),
     contentHandler(contentHandler),
     isReceivingPasteDataFlag(false),

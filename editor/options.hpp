@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -28,8 +28,11 @@
 
 #undef   DEBUG
 
-#define X11_GUI
-#undef  WIN_GUI
+#define  X11_GUI
+#undef   WIN_GUI
+
+#define  USE_X11_XKB_EXTENSION
+
 
 #include "sandbox_options.hpp"
 

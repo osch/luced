@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,36 +19,14 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REPLACEUTIL_HPP
-#define REPLACEUTIL_HPP
+#include "TopWinActionsRegistry.hpp"
 
-#include "FindUtil.hpp"
+using namespace LucED;
 
-namespace LucED
+SingletonInstance<TopWinActionsRegistry> TopWinActionsRegistry::instance;
+
+RawPtr<TopWinActionsRegistry> TopWinActionsRegistry::getInstance()
 {
+    return instance.getPtr();
+}
 
-class ReplaceUtil : public FindUtil
-{
-public:
-    
-    ReplaceUtil(RawPtr<TextData> textData)
-        : FindUtil(textData)
-    {}
-    
-    void setReplaceString(const String& replaceString) {
-        this->replaceString = replaceString;
-    }
-    String getReplaceString() const {
-        return replaceString;
-    }
-    String getSubstitutedString();
-    
-    bool replaceAllBetween(long spos, long epos);
-    
-private:
-    String replaceString;
-};
-
-} // namespace LucED
-
-#endif // REPLACEUTIL_HPP

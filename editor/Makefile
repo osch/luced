@@ -2,7 +2,7 @@
 #
 #   LucED - The Lucid Editor
 #
-#   Copyright (C) 2005-2006 Oliver Schmidt, oliver at luced dot de
+#   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 #
 #   This program is free software; you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License Version 2 as published
@@ -28,7 +28,7 @@ CPPCOMP_SLOW_OPTS := -Os
 
 BUILD_DIR       := build
 
-LINK_X11_OPTS   := -L /usr/X11R6/lib/ -lX11 -lXpm
+LINK_X11_OPTS   := -L /usr/X11R6/lib/ -lX11 -lXpm -lXext
 LINK_PCRE_OPTS  := -lpcre
 LINK_LUA_OPTS   := -llua5.1
 LINK_EXTRA_OPTS := 
@@ -38,16 +38,17 @@ INCL_LUA_OPTS   := -I /usr/include/lua5.1
 INCL_EXTRA_OPTS :=
 INCL_OPTS       :=
 
-# include sandbox-specific local settins in sandbox.mk, the
-# above variables may be modified in this file:
+# include sandbox-specific local settings from sandbox.mk,
+# the above variables may be modified in this file:
 #
 include sandbox.mk
-
 
 LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_LUA_OPTS) $(LINK_EXTRA_OPTS)
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 
- 
+GENERATED_HEADERS := \
+                CallbackContainer       Callback
+
 SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget              SystemException \
                 TextEditorWidget        TextStyle              KeyPressRepeater       ScrollBar \
                 System                  LuaException           TopWin                 \
@@ -64,7 +65,7 @@ SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget        
                 SelectionOwner          PasteDataReceiver      Clipboard              FileOpener \
                 ConfigErrorHandler      WindowCloser           SaveAsPanel            KeyModifier \
 		CurrentDirectoryKeeper  ProgramExecutor        TextDisplayGuiCompound CommandOutputBox \
-		FramedGuiCompound       ScrollableTextGuiCompound
+		FramedGuiCompound       BuiltinTopWinActions   TopWinActionsRegistry  ScrollableTextGuiCompound
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \
@@ -72,26 +73,48 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 BackliteBuffer          GuiLayoutRow           GuiLayoutColumn        HeapObject  \
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
                 
-
 PRG_MODULES  := luced
 
-MODULES = $(FAST_MODULES) $(SLOW_MODULES)
+MODULES   := $(FAST_MODULES) $(SLOW_MODULES)
 
 LIB_MBRS  := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o), $(MODULES))
 LIB_OBJS  := $(patsubst %, $(BUILD_DIR)/%.o,             $(MODULES))
 FAST_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,             $(FAST_MODULES))
 SLOW_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,             $(SLOW_MODULES))
  PRG_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,              $(PRG_MODULES))
+GEN_HDRS  := $(patsubst %, $(BUILD_DIR)/%.hpp,      $(GENERATED_HEADERS))
 
-.PHONY:        default clean
-.INTERMEDIATE: $(LIB_OBJS)
+MAKECMDGOALS   ?=
+NONBUILD_GOALS := clean
+.PHONY:           clean default
 
 default: luced
+
+clean:
+	rm -rf $(BUILD_DIR)
 
 luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
 	$(LINK_RUN)
 
 
+###############################################################
+#                                                             #
+# Assure that headers are generated before anything else is   #
+# build:                                                      #
+#                                                             #
+ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)           #
+#                                                             #
+-include $(BUILD_DIR)/headers_generated                       #
+$(BUILD_DIR)/headers_generated: $(GEN_HDRS)                   #
+	@mkdir -p $(@D); touch $@                             #
+#                                                             #
+endif                                                         #
+###############################################################
+
+
+$(GEN_HDRS): $(BUILD_DIR)/%.hpp: %.hpp.emlua functions.lua
+	$(call EMLUA_RUN)
+	
 $(FAST_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
 
@@ -101,13 +124,21 @@ $(SLOW_OBJS): $(BUILD_DIR)/%.o: %.cpp
 $(PRG_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(call COMPILE_RUN,$(CPPCOMP_SLOW_OPTS))
 
-$(BUILD_DIR)/libluced.a: $(LIB_MBRS)
+$(BUILD_DIR)/libluced.a: $(LIB_OBJS)
+	@rm -f $@; 
+	ar -r $@ $^
 
-$(BUILD_DIR)/libluced.a(%.o): $(BUILD_DIR)/%.o
-	ar -r $(BUILD_DIR)/libluced.a $<
+##
+# no rules for member creation within archive files
+# because of parallel build problems.
+#
+#
+#$(BUILD_DIR)/libluced.a: $(LIB_MBRS)
+#
+#$(BUILD_DIR)/libluced.a(%.o): $(BUILD_DIR)/%.o
+#	ar -r $(BUILD_DIR)/libluced.a $<
+##
 
-clean:
-	rm -rf $(BUILD_DIR)
 
 
 ##########################################################################
@@ -115,21 +146,12 @@ clean:
 # Dependencies
 #
 
-# Spezialregel verhindert, dass bei fehlenden Includes,
-# die von den Dependencies noch benoetigt werden,
-# gar nicht mehr compiliert wird:
 %.h: ;
 
 %.hpp: ;
 
 
-# bei folgenden Goals keine Dependencies inkludieren:
-IGNOREDEPS_GOALS := clean 
-
-# damit es keine Warnung bei leerer Kommandozeile gibt:
-MAKECMDGOALS ?=
-
-ifeq ($(strip $(filter $(IGNOREDEPS_GOALS),$(MAKECMDGOALS))),)
+ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)
   DEPS := $(wildcard $(BUILD_DIR)/deps/*.dep)
   ifneq ($(DEPS),)
     -include $(DEPS)
@@ -142,9 +164,17 @@ endif
 # Runs
 #
 
+define EMLUA_RUN
+	@echo "Generating $< --> $@"; \
+	mkdir -p $(@D); \
+	lua em.lua $< > $@; rc=$$?; \
+	if [ 0 -ne $$rc ]; then rm -f $@; fi; \
+	exit $$rc
+endef
+
 define COMPILE_RUN
 	@mkdir -p $(@D) && mkdir -p $(BUILD_DIR)/deps
-	$(CPPCOMP_PRG) -g $1 $(CPP_DEFINES) $(INCL_OPTS) -c $<  -o "$@" \
+	$(CPPCOMP_PRG) -g -I . -I $(BUILD_DIR) $1 $(CPP_DEFINES) $(INCL_OPTS) -c $<  -o "$@" \
 	-MMD -MF $(BUILD_DIR)/deps/$(*F).dep 
 endef
 

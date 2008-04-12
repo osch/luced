@@ -34,6 +34,8 @@
 namespace LucED
 {
 
+class KeyPressRepeater;
+
 class TopWin : public GuiWidget, private OwnedTopWinsAccessForTopWin
 {
 public:
@@ -71,6 +73,18 @@ public:
         return focusFlag;
     }
     
+    static void checkTopWinFocus();
+
+    class KeyPressRepeaterAccess
+    {
+    private:
+        friend class KeyPressRepeater;
+        
+        static void repeat(TopWin* topWin, const XEvent* event) {
+            topWin->repeatKeyPress(event);
+        }
+    };
+    
 protected:
     TopWin();
     
@@ -89,18 +103,20 @@ protected:
     
     virtual void notifyAboutBeingUnmapped()
     {}
-    
-    
+
 private:
     void setWindowManagerHints();
-   
-    ValidPtr<OwnedTopWins> getOwnedTopWins() {
+    void handleConfigChanged();
+    
+    void repeatKeyPress(const XEvent* event);
+    
+    RawPtr<OwnedTopWins> getOwnedTopWins() {
         return ownedTopWins;
     }
     
     Atom x11InternAtomForDeleteWindow;
 //  Atom x11InternAtomForTakeFocus;
-    ValidPtr<OwnedTopWins> myOwner;
+    RawPtr<OwnedTopWins> myOwner;
     bool mapped;
     bool requestFocusAfterMapped;
     

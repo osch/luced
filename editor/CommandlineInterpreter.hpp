@@ -46,7 +46,7 @@ public:
     {
         const int argc = commandline->getLength();
         
-        for (int i = 0; i < argc; ++i)
+        for (int i = 1; i < argc; ++i)
         {
             String  fileName;
             int     numberOfWindowsForThisFile = -1;
@@ -55,7 +55,7 @@ public:
             {
                 // Parameter is a command option
             
-                if (commandline->get(i) == "-i")
+                if (commandline->get(i) == "-i" || commandline->get(i) == "-name")
                 {
                     i += 1;
                     if (i >= argc) {

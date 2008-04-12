@@ -31,7 +31,7 @@
 #include "TextStyle.hpp"
 #include "OwningPtr.hpp"
 #include "KeyMapping.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED {
 
@@ -51,8 +51,8 @@ public:
         friend class GuiWidget;
         friend class EventDispatcher;
         friend class GuiWidgetAccessForEventProcessors;
-        EventRegistration(ValidPtr<GuiWidget> guiWidget, WidgetId wid) : guiWidget(guiWidget), wid(wid) {}
-        ValidPtr<GuiWidget> guiWidget;
+        EventRegistration(RawPtr<GuiWidget> guiWidget, WidgetId wid) : guiWidget(guiWidget), wid(wid) {}
+        RawPtr<GuiWidget> guiWidget;
         WidgetId wid;
     };
     
@@ -110,8 +110,8 @@ protected:
         ~GuiClipping();
     private:
         friend class GuiWidget;
-        GuiClipping(ValidPtr<GuiWidget> guiWidget) : guiWidget(guiWidget) {}
-        ValidPtr<GuiWidget> guiWidget;
+        GuiClipping(RawPtr<GuiWidget> guiWidget) : guiWidget(guiWidget) {}
+        RawPtr<GuiWidget> guiWidget;
     };
     friend class GuiClipping;
     

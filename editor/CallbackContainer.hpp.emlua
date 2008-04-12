@@ -1,0 +1,109 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef CALLBACK_CONTAINER_HPP
+#define CALLBACK_CONTAINER_HPP
+
+#include "ObjectArray.hpp"
+#include "Callback.hpp"
+
+
+namespace LucED
+{
+
+@ MAX_TEMPLATE_ARGS = 3 -- maximal number of arguments for 
+@                       -- which callback classes are generated
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Generalized Templates
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    class A1 = EmptyClass,
+    class A2 = EmptyClass,
+    class A3 = EmptyClass
+>
+class CallbackContainer;
+
+@ local functions     = require("functions")
+@ local argList       = functions.argList
+@ local filledArgList = functions.filledArgList
+@ local typedArgList  = functions.typedArgList
+@ local classList     = functions.classList
+
+@ for argCount = 0, MAX_TEMPLATE_ARGS do
+@
+@    local typename = (argCount > 0 and 'typename')
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Callback container class for @(argCount) arguments
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+template
+<
+    @(classList('A',argCount))
+>
+class CallbackContainer
+@ if argCount < MAX_TEMPLATE_ARGS then
+    <@(filledArgList('A','EmptyClass',argCount,MAX_TEMPLATE_ARGS))>
+@ end
+{
+public:
+    void registerCallback(@(typename) Callback<@(argList('A',argCount))>::Ptr callback) {
+        listeners.append(callback);
+    }
+
+    void deregisterAllCallbacksFor(HeapObject* callbackObject) {
+        for (int i = 0; i < listeners.getLength();) {
+            if (listeners[i]->getObjectPtr() == callbackObject) {
+                listeners.remove(i);
+            } else {
+                ++i;
+            }
+        }
+    }
+
+    void invokeAllCallbacks(@(typedArgList('A','a',argCount))) {
+        for (long i = 0; i < listeners.getLength();) {
+            if (!listeners[i]->isEnabled()) {
+                listeners.remove(i);
+            } else {
+                listeners[i]->call(@(argList('a',argCount)));
+                ++i;
+            }
+        }
+    }
+    
+    void clear() {
+        listeners.clear();
+    }
+
+private:
+    ObjectArray< @(typename) Callback<@(argList('A',argCount))>::Ptr > listeners;
+};
+
+@ end
+
+} // namespace LucED
+
+#endif // CALLBACK_CONTAINER_HPP
+

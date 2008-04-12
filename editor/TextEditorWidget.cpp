@@ -36,7 +36,7 @@ class TextEditorWidget::SelectionContentHandler : public SelectionOwner::Content
 public:
     typedef OwningPtr<ContentHandler> Ptr;
 
-    static Ptr create(ValidPtr<TextEditorWidget> textEditorWidget) {
+    static Ptr create(RawPtr<TextEditorWidget> textEditorWidget) {
         return Ptr(new SelectionContentHandler(textEditorWidget));
     }
     virtual long initSelectionDataRequest()
@@ -73,10 +73,10 @@ public:
         }
     }
 private:
-    SelectionContentHandler(ValidPtr<TextEditorWidget> textEditorWidget)
+    SelectionContentHandler(RawPtr<TextEditorWidget> textEditorWidget)
         : textEditorWidget(textEditorWidget)
     {}
-    ValidPtr<TextEditorWidget> textEditorWidget;
+    RawPtr<TextEditorWidget> textEditorWidget;
 };
 
 
@@ -85,7 +85,7 @@ class TextEditorWidget::PasteDataContentHandler : public PasteDataReceiver::Cont
 public:
     typedef OwningPtr<ContentHandler> Ptr;
 
-    static Ptr create(ValidPtr<TextEditorWidget> textEditorWidget) {
+    static Ptr create(RawPtr<TextEditorWidget> textEditorWidget) {
         return Ptr(new PasteDataContentHandler(textEditorWidget));
     }
     
@@ -99,10 +99,10 @@ public:
         textEditorWidget->notifyAboutEndOfPastingData();
     }
 private:
-    PasteDataContentHandler(ValidPtr<TextEditorWidget> textEditorWidget)
+    PasteDataContentHandler(RawPtr<TextEditorWidget> textEditorWidget)
         : textEditorWidget(textEditorWidget)
     {}
-    ValidPtr<TextEditorWidget> textEditorWidget;
+    RawPtr<TextEditorWidget> textEditorWidget;
 };
 
 TextEditorWidget::TextEditorWidget(GuiWidget*       parent, 
@@ -247,6 +247,8 @@ void TextEditorWidget::notifyAboutBeginOfPastingData()
 {
     disableCursorChanges();
     
+    pastingDataHistorySectionHolder = textData->createHistorySection();
+    
     if (!beginPastingTextMark.isValid()) {
         beginPastingTextMark = createNewMarkFromCursor();
         pastingTextMark      = createNewMarkFromCursor();
@@ -265,7 +267,7 @@ void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long lengt
         textData->insertAtMark(pastingTextMark, data, length);
         pastingTextMark.moveToPos(pastingTextMark.getPos() + length);
         
-        if (!first) {
+        //if (!first) {
             if (!getBackliteBuffer()->hasActiveSelection()
               || getBackliteBuffer()->getBeginSelectionPos() != beginPastingTextMark.getPos())
             {
@@ -273,7 +275,7 @@ void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long lengt
             }
             getBackliteBuffer()->makeSelectionToSecondarySelection();
             getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
-        }
+        //}
     }
 }
 
@@ -299,11 +301,11 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
     assureCursorVisible();
 
     rememberedCursorPixX = getCursorPixX();
-    textData->setHistorySeparator();
 
     pastingTextMark = TextData::TextMark();
 
-    historySectionHolder.invalidate();
+    pastingDataHistorySectionHolder.invalidate();
+    textData->setHistorySeparator();
     
     pasteParameter = CURSOR_TO_END_OF_PASTED_DATA;
 }
@@ -440,7 +442,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
 
                         long newCursorPos = getTextPosFromPixXY(x, y);
                         moveCursorToTextPosition(newCursorPos);
-                        EditingHistory::SectionHolder::Ptr historySectionHolder = textData->createHistorySection();
+                        pastingDataHistorySectionHolder = textData->createHistorySection();
                         
                         requestSelectionPasting(createNewMarkFromCursor());
                         currentActionId = ACTION_UNSPECIFIED;
@@ -513,7 +515,7 @@ void TextEditorWidget::replaceTextWithPrimarySelection()
 {
     if (!cursorChangesDisabled && !isReadOnly())
     {
-        historySectionHolder = textData->createHistorySection();
+        pastingDataHistorySectionHolder = textData->createHistorySection();
         //textData->setHistorySeparator();
         
         textData->clear();
@@ -753,7 +755,7 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
                 currentActionId = ACTION_KEYBOARD_INPUT;
                 
                 textData->setMergableHistorySeparator();
-                EditingHistory::SectionHolder::Ptr historySectionHolder = textData->getHistorySectionHolder();
+                TextData::HistorySection::Ptr historySectionHolder = textData->getHistorySectionHolder();
                 
                 hideCursor();
                 if (selectionOwner->hasSelectionOwnership())

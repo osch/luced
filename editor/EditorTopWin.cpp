@@ -76,8 +76,8 @@ private:
     {}
     
 
-    ValidPtr<MultiLineEditorWidget> editorWidget;
-    ValidPtr<GuiElement> panel;
+    RawPtr<MultiLineEditorWidget> editorWidget;
+    RawPtr<GuiElement> panel;
 };
 
 
@@ -323,23 +323,30 @@ void EditorTopWin::treatFocusIn()
 
 bool EditorTopWin::checkForFileModifications()
 {
-    textData->checkFileInfo();
-
-    if (   textData->wasFileModifiedOnDisk() 
-        && (  !textData->hasModifiedOnDiskFlagBeenIgnored()
-            || textData->wasFileModifiedOnDiskSinceLastIgnore()))
+    try
     {
-        invokeMessageBox(MessageBoxParameter().setTitle("File Modified")
-                                              .setMessage(String() << "File '" 
-                                                                   << textData->getFileName()
-                                                                   << "' was modified on disk.")
-                                              .setDefaultButton(    "R]eload", newCallback(this, &EditorTopWin::reloadFile))
-                                              .setCancelButton (    "C]ancel", newCallback(this, &EditorTopWin::doNotReloadFile))
-                                              );
-        return true;
+        textData->checkFileInfo();
+    
+        if (   textData->wasFileModifiedOnDisk() 
+            && (  !textData->hasModifiedOnDiskFlagBeenIgnored()
+                || textData->wasFileModifiedOnDiskSinceLastIgnore()))
+        {
+            invokeMessageBox(MessageBoxParameter().setTitle("File Modified")
+                                                  .setMessage(String() << "File '" 
+                                                                       << textData->getFileName()
+                                                                       << "' was modified on disk.")
+                                                  .setDefaultButton(    "R]eload", newCallback(this, &EditorTopWin::reloadFile))
+                                                  .setCancelButton (    "C]ancel", newCallback(this, &EditorTopWin::doNotReloadFile))
+                                                  );
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    else {
-        return false;
+    catch (FileException& ex) {
+        invokeMessageBox(MessageBoxParameter().setTitle("File Error")
+                                              .setMessage(ex.getMessage()));
     }
 }
 
@@ -686,7 +693,7 @@ void EditorTopWin::executeLuaScript()
                                                                                                selLength);
             String output = scriptResult.output;
             
-            EditingHistory::SectionHolder::Ptr historySectionHolder = textData->createHistorySection();
+            TextData::HistorySection::Ptr historySectionHolder = textData->createHistorySection();
             
             textEditor->hideCursor();
             textEditor->moveCursorToTextPosition(selBegin + selLength);
@@ -743,7 +750,7 @@ void EditorTopWin::executeLuaScript()
                 }
                 if (output.getLength() > 0) 
                 {
-                    EditingHistory::SectionHolder::Ptr historySectionHolder = textData->createHistorySection();
+                    TextData::HistorySection::Ptr historySectionHolder = textData->createHistorySection();
                     
                     textEditor->hideCursor();
                     textEditor->moveCursorToTextPosition(spos);
@@ -784,32 +791,15 @@ void EditorTopWin::executeTestScript()
 
 void EditorTopWin::finishedTestScript(ProgramExecutor::Result rslt)
 {
-#if 0
-    String out(rslt.outputBuffer, 
-               rslt.outputLength);
+    if (rslt.outputLength > 0)
+    {
+        TextData::Ptr textData = TextData::create();
+        textData->setToData(rslt.outputBuffer,
+                            rslt.outputLength);
     
-    printf("-------------------------- finished '%s'\n", out.toCString());
-#endif
-    
-    TextData::Ptr textData = TextData::create();
-    textData->setToData(rslt.outputBuffer,
-                        rslt.outputLength);
-#if 0
-    long   numberOfLines = textData->getNumberOfLines();
-    TextData::TextMark m = textData->createNewMark();
-    m.moveToPos(textData->getLength());
-    bool lastLineIsEmpty = m.isAtBeginOfLine();
-
-    if (lastLineIsEmpty) {
-        long p = m.getPos();
-        p -= textData->getLengthOfPrevLineEnding(p);
-        m.moveToPos(p);
-        textData->removeAtMark(m, textData->getLength() - m.getPos());
+        CommandOutputBox::Ptr commandOutputBox = CommandOutputBox::create(this, textData);
+        commandOutputBox->show();
     }
-#endif
-
-    CommandOutputBox::Ptr commandOutputBox = CommandOutputBox::create(this, textData);
-    commandOutputBox->show();
 }
 
 

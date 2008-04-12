@@ -169,7 +169,7 @@ bool ReplaceUtil::replaceAllBetween(long spos, long epos)
         FindUtil::initialize();
     }
 
-    ValidPtr<TextData> textData = getTextData();
+    RawPtr<TextData> textData = getTextData();
     TextData::TextMark textMark = textData->createNewMark();
     textMark.moveToPos(spos);
 

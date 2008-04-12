@@ -30,7 +30,7 @@
 #include "MemArray.hpp"
 #include "LanguageModes.hpp"
 #include "OwningPtr.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 // TODO: Konstanten
 //

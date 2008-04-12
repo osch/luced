@@ -26,7 +26,7 @@
 #include "SingletonInstance.hpp"
 #include "String.hpp"
 #include "TimeVal.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {
@@ -34,7 +34,7 @@ namespace LucED
 class System : public HeapObject
 {
 public:
-    static ValidPtr<System> getInstance() {
+    static RawPtr<System> getInstance() {
         return instance.getPtr();
     }
     

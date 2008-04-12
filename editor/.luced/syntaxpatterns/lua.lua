@@ -19,15 +19,34 @@
 --
 -------------------------------------------------------------------------------------
 
-
-
+local topChildPatterns = {
+                            "string1",   "string2",  "string3", 
+                            "comment1",  "comment2", "keyword"
+                         }
 return
 {
 	root = {
         	style = "default",
-                childPatterns = {"string1", "string2", "string3", "comment1", "comment2", "keyword"},
+                childPatterns = {"shebang", "noshebang"},
         },
         
+        shebang = {
+                style = "default",
+                beginPattern     = [[ ^(?P<shebangLine>\#\!.*?)$ ]],
+                endPattern       = [[ (?!.|\n) ]],
+                beginSubstyles   = {shebangLine = "comment"},
+                maxBeginExtend   = 150,
+                maxEndExtend     = 150,
+                childPatterns = topChildPatterns,
+        },
+        noshebang = {
+                style = "default",
+                beginPattern     = [[ (?=.) ]],
+                endPattern       = [[ (?!.|\n) ]],
+                maxBeginExtend   = 1,
+                maxEndExtend     = 1,
+                childPatterns = topChildPatterns,
+        },
         comment1 = {
         	style = "comment",
                 beginPattern     = [=[--\[(?P<comment1EqualSigns>(?>\=*))\[]=],

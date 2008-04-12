@@ -24,7 +24,7 @@
 
 #include "WidgetId.hpp"
 #include "GuiWidget.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED {
 
@@ -55,7 +55,7 @@ public:
         {}
     };
 
-    static Ptr create(ValidPtr<GuiWidget> baseWidget, Type type, ContentHandler::Ptr contentHandler) {
+    static Ptr create(RawPtr<GuiWidget> baseWidget, Type type, ContentHandler::Ptr contentHandler) {
         return Ptr(new SelectionOwner(baseWidget, type, contentHandler));
     }
     ~SelectionOwner();
@@ -73,9 +73,9 @@ private:
 
     friend class SelectionOwnerAccessForPasteDataReceiver;
 
-    SelectionOwner(ValidPtr<GuiWidget> baseWidget, Type type, ContentHandler::Ptr contentHandler);
+    SelectionOwner(RawPtr<GuiWidget> baseWidget, Type type, ContentHandler::Ptr contentHandler);
 
-    ValidPtr<GuiWidget> baseWidget;
+    RawPtr<GuiWidget> baseWidget;
     OwningPtr<ContentHandler> contentHandler;
     
     Atom x11AtomForSelection;

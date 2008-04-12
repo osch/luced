@@ -51,6 +51,7 @@ CommandOutputBox::CommandOutputBox(TopWin* referingWindow, TextData::Ptr textDat
                                        | GuiLayoutColumn::DO_NOT_REPORT_HORIZONTAL_RASTERING
                                        | GuiLayoutColumn::DO_NOT_REPORT_VERTICAL_RASTERING);
                                                                                  
+    column0->addElement(GuiLayoutSpacer::create(0, 0, 0,  0, INT_MAX, INT_MAX));
     column0->addElement(multiLineOut, GuiElement::LayoutOptions() | GuiElement::LAYOUT_VERTICAL_RASTERING);
     column0->addElement(GuiLayoutSpacer::create(0, 0, 0, 10, INT_MAX, INT_MAX));
     column0->addElement(row0);

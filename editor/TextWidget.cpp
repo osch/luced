@@ -26,7 +26,7 @@
 #include "TimeVal.hpp"
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 #define CURSOR_WIDTH 2
 
@@ -149,7 +149,8 @@ TextWidget::TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedTex
       textWidget_gcid(TextWidgetSingletonData::getInstance()->getGcId()),
       
       cursorVisible(options),
-      neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR))
+      neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR)),
+      exposureNeedsSync(false)
 {
     //setBackgroundColor(backgroundColor);
     setBorderColor(backgroundColor);
@@ -241,11 +242,11 @@ namespace LucED
 class TextWidgetFillLineInfoIterator
 {
 public:
-    TextWidgetFillLineInfoIterator(ValidPtr<const TextData>   textData, 
-                                   ValidPtr<HilitingBuffer>   hilitingBuffer, 
-                                   ValidPtr<BackliteBuffer>   backliteBuffer,
-                                   ValidPtr<const TextStyles> textStyles,
-                                   long                       textPos)
+    TextWidgetFillLineInfoIterator(RawPtr<const TextData>   textData, 
+                                   RawPtr<HilitingBuffer>   hilitingBuffer, 
+                                   RawPtr<BackliteBuffer>   backliteBuffer,
+                                   RawPtr<const TextStyles> textStyles,
+                                   long                     textPos)
         : textData(textData),
           hilitingBuffer(hilitingBuffer),
           backliteBuffer(backliteBuffer),
@@ -318,10 +319,10 @@ public:
     }
 
 private:
-    ValidPtr<const TextData>   const textData;
-    ValidPtr<HilitingBuffer>   const hilitingBuffer;
-    ValidPtr<BackliteBuffer>   const backliteBuffer;
-    ValidPtr<const TextStyles> const textStyles;
+    RawPtr<const TextData>   const textData;
+    RawPtr<HilitingBuffer>   const hilitingBuffer;
+    RawPtr<BackliteBuffer>   const backliteBuffer;
+    RawPtr<const TextStyles> const textStyles;
     long pixelPos;
     long textPos;
     bool isEndOfLineFlag;
@@ -1319,6 +1320,7 @@ void TextWidget::setTopLineNumber(long n)
                         0, 0,
                         position.w, position.h - diff * lineHeight,
                         0, diff * lineHeight);
+                exposureNeedsSync = true;
                 drawArea(0, diff * lineHeight);
             }
         } else {
@@ -1332,7 +1334,7 @@ void TextWidget::setTopLineNumber(long n)
                         0, diff * lineHeight,
                         position.w, position.h - diff * lineHeight,
                         0, 0);
-            
+                exposureNeedsSync = true;
                 drawArea(position.h - (diff * lineHeight), position.h);
             }
 
@@ -1346,7 +1348,6 @@ void TextWidget::setTopLineNumber(long n)
             startCursorBlinking();
         }
     }
-    processAllExposureEvents();
 }
 
 
@@ -1473,6 +1474,7 @@ void TextWidget::internSetLeftPix(long newLeftPix)
                     diffPix, 0,
                     position.w - diffPix, position.h,
                     0, 0);
+            exposureNeedsSync = true;
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
             clip(position.w - diffPix, 0, diffPix, position.h);
@@ -1495,6 +1497,7 @@ void TextWidget::internSetLeftPix(long newLeftPix)
                     0, 0,
                     position.w - diffPix, position.h,
                     diffPix, 0);
+            exposureNeedsSync = true;
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
             clip(0, 0, diffPix, position.h);
@@ -1506,7 +1509,6 @@ void TextWidget::internSetLeftPix(long newLeftPix)
             redraw();
         }
     }
-    processAllExposureEvents();
 }
 
 void TextWidget::setLeftPix(long newLeftPix)
@@ -1536,7 +1538,6 @@ void TextWidget::setPosition(Position newPosition)
     if (position != newPosition)
     {
         textData->flushPendingUpdates();
-        processAllExposureEvents();
         
         long oldTopLineNumber = getTopLineNumber();
         
@@ -1695,8 +1696,6 @@ void TextWidget::setPosition(Position newPosition)
         calcTotalPixWidth();
         updateVerticalScrollBar = true;
         updateHorizontalScrollBar = true;
-    
-        processAllExposureEvents();
     }
 }
 
@@ -1749,16 +1748,15 @@ void TextWidget::blinkCursor()
     {
         if (cursorIsBlinking)
         {
-            TimeVal now;
-            now.setToCurrentTime();
+            const TimeVal now = TimeVal::now();
             
             if (now.isLaterThan(cursorNextBlinkTime))
             {
                 cursorVisible = !cursorVisible;
                 drawCursor(getCursorTextPosition());
                 
-                cursorNextBlinkTime = now;
-                cursorNextBlinkTime.add(MicroSeconds(400000));
+                cursorNextBlinkTime = now + MicroSeconds(400000);
+
                 EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
     
             } else { 
@@ -1832,7 +1830,7 @@ void TextWidget::startCursorBlinking()
             drawCursor(getCursorTextPosition());
         }
     
-        cursorNextBlinkTime.setToCurrentTime().add(MicroSeconds(400000));
+        cursorNextBlinkTime = TimeVal::now() + MicroSeconds(400000);
     
         cursorIsBlinking = true;
         EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
@@ -2013,7 +2011,10 @@ GuiElement::ProcessingResult TextWidget::processEvent(const XEvent *event)
 
 void TextWidget::processAllExposureEvents()
 {
-    XSync(getDisplay(), False);
+    if (exposureNeedsSync) {
+        XSync(getDisplay(), False);
+        exposureNeedsSync = false;   
+    }
     XEvent newEvent;
     while (XCheckWindowEvent(getDisplay(), getWid(), ExposureMask, &newEvent) == True)
     {
@@ -2025,7 +2026,7 @@ static inline bool adjustLineInfoPosition(long* pos, long beginChangedPos, long 
 {
     ASSERT(0 <= *pos);
 
-    if (*pos >= oldEndChangedPos) {
+    if (*pos > oldEndChangedPos) {
         *pos += changedAmount;
         return true;
     } else if (*pos < beginChangedPos) {

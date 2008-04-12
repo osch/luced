@@ -33,7 +33,7 @@
 #include "OwningPtr.hpp"
 #include "GuiColor.hpp"
 #include "CursorPositionData.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 #include "Flags.hpp"
 #include "ScrollBar.hpp"
 
@@ -346,6 +346,8 @@ private:
 
     CursorVisibleFlag cursorVisible;
     bool neverShowCursorFlag;
+    
+    bool exposureNeedsSync;
 };
 
 } // namespace LucED

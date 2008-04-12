@@ -44,7 +44,7 @@ class FindPanel : public DialogPanel
 public:
     typedef OwningPtr<FindPanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+    static Ptr create(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
                                                                                   Callback<DialogPanel*>::Ptr        panelInvoker,
                                                                                   Callback<GuiWidget*>::Ptr          requestCloseCallback)
     {
@@ -74,10 +74,12 @@ public:
 private:
     friend class FindPanelAccess;
     
-    FindPanel(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+    FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
                                                                           Callback<DialogPanel*>::Ptr        panelInvoker,
                                                                           Callback<GuiWidget*>::Ptr          requestCloseCallback);
 
+    void handleException();
+    
     void executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearchButton);
 
     void handleButtonPressed(Button* button);
@@ -97,7 +99,7 @@ private:
     void notifyAboutReceivedPasteData(const byte* data, long length);
     void notifyAboutEndOfPastingData();
 
-    ValidPtr<TextEditorWidget> e;
+    RawPtr<TextEditorWidget> e;
 
     SingleLineEditField::Ptr editField;
     Button::Ptr findNextButton;

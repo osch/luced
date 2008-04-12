@@ -53,6 +53,10 @@ public:
         }
     }
     
+    static TimeVal now() {
+        return TimeVal(NOW);
+    }
+    
     TimeVal() {
         timeval.tv_sec = 0;
         timeval.tv_usec = 0;
@@ -117,6 +121,13 @@ public:
         return false;
     }
     
+    bool operator>(const TimeVal& rhs) const {
+        return this->isLaterThan(rhs);
+    }
+    bool operator<(const TimeVal& rhs) const {
+        return rhs.isLaterThan(*this);
+    }
+
     bool isLaterOrEqualThan(const TimeVal& t) const
     {
         if (timeval.tv_sec > t.timeval.tv_sec) {
@@ -128,6 +139,13 @@ public:
         return false;
     }
     
+    bool operator>=(const TimeVal& rhs) const {
+        return this->isLaterOrEqualThan(rhs);
+    }
+    bool operator<=(const TimeVal& rhs) const {
+        return rhs.isLaterOrEqualThan(*this);
+    }
+
     bool isZero() const
     {
         return timeval.tv_sec == 0 && timeval.tv_usec == 0;
@@ -164,6 +182,25 @@ public:
         return *this;
     }
     
+    TimeVal& add(const TimeVal& rhs)
+    {
+        add(MicroSeconds(rhs.timeval.tv_usec));
+        timeval.tv_sec += rhs.timeval.tv_sec;
+        return *this;
+    }
+
+    
+    template
+    <
+        class T
+    >    
+    TimeVal operator+(const T& rhs) const {
+        TimeVal rslt = *this;
+        rslt.add(rhs);
+        return rslt;
+    }
+    
+       
     TimeVal& setToCurrentTime()
     {
         gettimeofday(&timeval, NULL);

@@ -471,8 +471,13 @@ printf("------HilitedText::process start = %ld / %ld .. %ld\n", getBreakStartPos
         }
         if (textData->getLength() - getBreakStartPos(tryToBeLastBreakIterator) < 2 * breakPointDistance) { 
             this->needsProcessingFlag = false;
+            this->endChangedPos = textData->getLength();
         } else {
             this->needsProcessingFlag = true;
+
+            incIterator(startNextProcessIterator);
+            util::maximize(&this->endChangedPos, getBreakStartPos(startNextProcessIterator));
+
             copyToIteratorFromIterator(startNextProcessIterator, tryToBeLastBreakIterator);
             decIterator(startNextProcessIterator);
         }

@@ -38,7 +38,7 @@ class FindPanel::PasteDataContentHandler : public PasteDataReceiver::ContentHand
 public:
     typedef OwningPtr<ContentHandler> Ptr;
 
-    static Ptr create(ValidPtr<FindPanel> findPanel) {
+    static Ptr create(RawPtr<FindPanel> findPanel) {
         return Ptr(new PasteDataContentHandler(findPanel));
     }
     
@@ -52,15 +52,15 @@ public:
         findPanel->notifyAboutEndOfPastingData();
     }
 private:
-    PasteDataContentHandler(ValidPtr<FindPanel> findPanel)
+    PasteDataContentHandler(RawPtr<FindPanel> findPanel)
         : findPanel(findPanel)
     {}
-    ValidPtr<FindPanel> findPanel;
+    RawPtr<FindPanel> findPanel;
 };
 
 
 
-FindPanel::FindPanel(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
+FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
                                                                                  Callback<DialogPanel*>::Ptr        panelInvoker,
                                                                                  Callback<GuiWidget*>::Ptr          requestCloseCallback)
     : DialogPanel(parent, requestCloseCallback),
@@ -107,8 +107,10 @@ FindPanel::FindPanel(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget,
     label0   ->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
     editField->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
  
-    Callback<Button*>::Ptr buttonCallback           = newCallback(this, &FindPanel::handleButtonPressed);
-    Callback<Button*>::Ptr buttonDefaultKeyCallback = newCallback(this, &FindPanel::handleButtonDefaultKey);
+    Callback<Button*>::Ptr buttonCallback           = newCallback(this, &FindPanel::handleButtonPressed,
+                                                                        &FindPanel::handleException);
+    Callback<Button*>::Ptr buttonDefaultKeyCallback = newCallback(this, &FindPanel::handleButtonDefaultKey,
+                                                                        &FindPanel::handleException);
     
     findNextButton->setButtonPressedCallback(buttonCallback);
     findPrevButton->setButtonPressedCallback(buttonCallback);
@@ -177,7 +179,8 @@ FindPanel::FindPanel(GuiWidget* parent, ValidPtr<TextEditorWidget> editorWidget,
     regularExprCheckBox->show();
     wholeWordCheckBox->show();
     
-    editField->getTextData()->registerModifiedFlagListener(newCallback(this, &FindPanel::handleModifiedEditField));
+    editField->getTextData()->registerModifiedFlagListener(newCallback(this, &FindPanel::handleModifiedEditField,
+                                                                             &FindPanel::handleException));
     
     label0->setMiddleMouseButtonCallback(newCallback(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
@@ -191,8 +194,6 @@ void FindPanel::treatFocusIn()
 
 void FindPanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearchButton)
 {
-    try
-    {
 /*        {
             if (e->hasSelectionOwnership()) {
                 e->getBackliteBuffer()->deactivateSelection();
@@ -202,102 +203,93 @@ void FindPanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearc
             e->moveCursorToTextMarkAndAdjustVisibility(m);
         }
 */
-        GuiRoot::getInstance()->flushDisplay();
+    GuiRoot::getInstance()->flushDisplay();
 
-        findUtil.setAllowMatchAtStartOfSearchFlag(isWrapping);
-        findUtil.findNext();
+    findUtil.setAllowMatchAtStartOfSearchFlag(isWrapping);
+    findUtil.findNext();
 
-        if (findUtil.wasFound())
-        {
-            TextData::TextMark m = e->createNewMarkFromCursor();
-            if (findUtil.isSearchingForward()) {
-                m.moveToPos(findUtil.getMatchBeginPos());
-            } else {
-                m.moveToPos(findUtil.getMatchEndPos());
-            }
-            e->moveCursorToTextMarkAndAdjustVisibility(m);
-            if (findUtil.isSearchingForward()) {
-                m.moveToPos(findUtil.getMatchEndPos());
-            } else {
-                m.moveToPos(findUtil.getMatchBeginPos());
-            }
-            e->moveCursorToTextMarkAndAdjustVisibility(m);
-            e->rememberCursorPixX();
-            if (findUtil.getMatchBeginPos() < findUtil.getMatchEndPos())
-            {
-                e->setPrimarySelection(findUtil.getMatchBeginPos(),
-                                       findUtil.getMatchEndPos());
-            } else {
-                e->releaseSelection();
-            }
-        } else if (!isWrapping) {
-            if (findUtil.isSearchingForward()) {
-                messageBoxInvoker->call(MessageBoxParameter()
-                                        .setTitle("Not found")
-                                        .setMessage("Continue search from beginning of file?")
-                                        .setDefaultButton("C]ontinue", handleContinueSearchButton)
-                                        .setCancelButton("Ca]ncel"));
-            } else {
-                messageBoxInvoker->call(MessageBoxParameter()
-                                        .setTitle("Not found")
-                                        .setMessage("Continue search from end of file?")
-                                        .setDefaultButton("C]ontinue", handleContinueSearchButton)
-                                        .setCancelButton("Ca]ncel"));
-            }
+    if (findUtil.wasFound())
+    {
+        TextData::TextMark m = e->createNewMarkFromCursor();
+        if (findUtil.isSearchingForward()) {
+            m.moveToPos(findUtil.getMatchBeginPos());
         } else {
-                messageBoxInvoker->call(MessageBoxParameter()
-                                        .setTitle("Not found")
-                                        .setMessage("String was not found"));
+            m.moveToPos(findUtil.getMatchEndPos());
         }
-    }
-    catch (RegexException& ex)
-    {
-        panelInvoker->call(this);
-
-        editField->getTextData()->setToString(findUtil.getSearchString());
-        int position = ex.getPosition();
-        if (position >= 0) {
-            editField->setCursorPosition(position);
+        e->moveCursorToTextMarkAndAdjustVisibility(m);
+        if (findUtil.isSearchingForward()) {
+            m.moveToPos(findUtil.getMatchEndPos());
+        } else {
+            m.moveToPos(findUtil.getMatchBeginPos());
         }
-        messageBoxInvoker->call(MessageBoxParameter()
-                                .setTitle("Regex Error")
-                                .setMessage(String() << "Error within regular expression: " << ex.getMessage()));
-    }
-    catch (LuaException& ex)
-    {
-        panelInvoker->call(this);
-
-        editField->getTextData()->setToString(findUtil.getSearchString());
-
-        messageBoxInvoker->call(MessageBoxParameter()
-                                .setTitle("Lua Error")
-                                .setMessage(ex.getMessage()));
+        e->moveCursorToTextMarkAndAdjustVisibility(m);
+        e->rememberCursorPixX();
+        if (findUtil.getMatchBeginPos() < findUtil.getMatchEndPos())
+        {
+            e->setPrimarySelection(findUtil.getMatchBeginPos(),
+                                   findUtil.getMatchEndPos());
+        } else {
+            e->releaseSelection();
+        }
+    } else if (!isWrapping) {
+        if (findUtil.isSearchingForward()) {
+            messageBoxInvoker->call(MessageBoxParameter()
+                                    .setTitle("Not found")
+                                    .setMessage("Continue search from beginning of file?")
+                                    .setDefaultButton("C]ontinue", handleContinueSearchButton)
+                                    .setCancelButton("Ca]ncel"));
+        } else {
+            messageBoxInvoker->call(MessageBoxParameter()
+                                    .setTitle("Not found")
+                                    .setMessage("Continue search from end of file?")
+                                    .setDefaultButton("C]ontinue", handleContinueSearchButton)
+                                    .setCancelButton("Ca]ncel"));
+        }
+    } else {
+            messageBoxInvoker->call(MessageBoxParameter()
+                                    .setTitle("Not found")
+                                    .setMessage("String was not found"));
     }
 }
 
 void FindPanel::findSelectionForward()
 {
-    requestClose();
-    if (!e->areCursorChangesDisabled())
+    try
     {
-        selectionSearchString.clear();
-        selectionSearchForwardFlag = true;
-        pasteDataReceiver->requestSelectionPasting();
+        requestClose();
+        if (!e->areCursorChangesDisabled())
+        {
+            selectionSearchString.clear();
+            selectionSearchForwardFlag = true;
+            pasteDataReceiver->requestSelectionPasting();
+        }
+        e->assureCursorVisible();
     }
-    e->assureCursorVisible();
+    catch (...)
+    {
+        handleException();
+    }
 }
 
 
 void FindPanel::findSelectionBackward()
 {
-    requestClose();
-    if (!e->areCursorChangesDisabled())
+    try
     {
-        selectionSearchString.clear();
-        selectionSearchForwardFlag = false;
-        pasteDataReceiver->requestSelectionPasting();
+        requestClose();
+        if (!e->areCursorChangesDisabled())
+        {
+            selectionSearchString.clear();
+            selectionSearchForwardFlag = false;
+            pasteDataReceiver->requestSelectionPasting();
+        }
+        e->assureCursorVisible();
     }
-    e->assureCursorVisible();
+    catch (...)
+    {
+        handleException();
+    }
+
 }
 
 void FindPanel::internalFindNext(bool isWrapping)
@@ -315,8 +307,10 @@ void FindPanel::internalFindNext(bool isWrapping)
 
     bool forward = findUtil.getSearchForwardFlag();
 
-    executeFind(isWrapping, forward ? newCallback(this, &FindPanel::handleContinueAtBeginningButton)
-                                    : newCallback(this, &FindPanel::handleContinueAtEndButton));
+    executeFind(isWrapping, forward ? newCallback(this, &FindPanel::handleContinueAtBeginningButton,
+                                                        &FindPanel::handleException)
+                                    : newCallback(this, &FindPanel::handleContinueAtEndButton,
+                                                        &FindPanel::handleException));
 }
 
 void FindPanel::handleButtonPressed(Button* button)
@@ -387,7 +381,8 @@ void FindPanel::handleContinueSelectionFindAtBeginningButton()
     findUtil.setWholeWordFlag    (false);
     findUtil.setSearchString     (selectionSearchString);
     findUtil.setTextPosition     (0);
-    executeFind(true, newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton));
+    executeFind(true, newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton,
+                                        &FindPanel::handleException));
 }
 
 void FindPanel::handleContinueAtBeginningButton()
@@ -406,7 +401,8 @@ void FindPanel::handleContinueSelectionFindAtEndButton()
     findUtil.setWholeWordFlag    (false);
     findUtil.setSearchString     (selectionSearchString);
     findUtil.setTextPosition     (e->getTextData()->getLength());
-    executeFind(true, newCallback(this, &FindPanel::handleContinueSelectionFindAtEndButton));
+    executeFind(true, newCallback(this, &FindPanel::handleContinueSelectionFindAtEndButton,
+                                        &FindPanel::handleException));
 }
 
 void FindPanel::handleContinueAtEndButton()
@@ -419,86 +415,102 @@ void FindPanel::handleContinueAtEndButton()
 
 void FindPanel::findAgainForward()
 {
-    if (this->isVisible() && editField->getTextData()->getLength() == 0) {
-        return;
-    }
-    if (this->isVisible()) {
-        findUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
-        findUtil.setRegexFlag        (regularExprCheckBox->isChecked());
-        findUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
-        findUtil.setSearchString     (editField->getTextData()->getAsString());
-        editField->getTextData()->setModifiedFlag(false);
-        requestClose();
-    }
-    else
+    try
     {
-        SearchHistory* history = SearchHistory::getInstance();
-        if (history->getEntryCount() >= 1) {
-            SearchHistory::Entry entry = history->getEntry(history->getEntryCount() - 1);
-
-            findUtil.setIgnoreCaseFlag   (entry.getIgnoreCaseFlag());
-            findUtil.setRegexFlag        (entry.getRegexFlag());
-            findUtil.setWholeWordFlag    (entry.getWholeWordFlag());
-            findUtil.setSearchString     (entry.getFindString());
+        if (this->isVisible() && editField->getTextData()->getLength() == 0) {
+            return;
         }
-    }
-    historyIndex = -1;
-
-    int textPosition = e->getCursorTextPosition();
-    if (e->hasPrimarySelection()) {
-        findUtil.setTextPosition(e->getBeginSelectionPos());
-        if (findUtil.doesMatch() && findUtil.getMatchEndPos() == e->getEndSelectionPos()) {
-            textPosition = e->getEndSelectionPos();
+        if (this->isVisible()) {
+            findUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
+            findUtil.setRegexFlag        (regularExprCheckBox->isChecked());
+            findUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
+            findUtil.setSearchString     (editField->getTextData()->getAsString());
+            editField->getTextData()->setModifiedFlag(false);
+            requestClose();
         }
+        else
+        {
+            SearchHistory* history = SearchHistory::getInstance();
+            if (history->getEntryCount() >= 1) {
+                SearchHistory::Entry entry = history->getEntry(history->getEntryCount() - 1);
+    
+                findUtil.setIgnoreCaseFlag   (entry.getIgnoreCaseFlag());
+                findUtil.setRegexFlag        (entry.getRegexFlag());
+                findUtil.setWholeWordFlag    (entry.getWholeWordFlag());
+                findUtil.setSearchString     (entry.getFindString());
+            }
+        }
+        historyIndex = -1;
+    
+        int textPosition = e->getCursorTextPosition();
+        if (e->hasPrimarySelection()) {
+            findUtil.setTextPosition(e->getBeginSelectionPos());
+            if (findUtil.doesMatch() && findUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+                textPosition = e->getEndSelectionPos();
+            }
+        }
+        findUtil.setTextPosition(textPosition);
+        
+        findUtil.setSearchForwardFlag(true);
+        
+        internalFindNext(false);
     }
-    findUtil.setTextPosition(textPosition);
-    
-    findUtil.setSearchForwardFlag(true);
-    
-    internalFindNext(false);
+    catch (...)
+    {
+        handleException();
+    }
+
 }
 
 
 void FindPanel::findAgainBackward()
 {
-    if (this->isVisible() && editField->getTextData()->getLength() == 0) {
-        return;
-    }
-
-    if (this->isVisible()) {
-        findUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
-        findUtil.setRegexFlag        (regularExprCheckBox->isChecked());
-        findUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
-        findUtil.setSearchString     (editField->getTextData()->getAsString());
-        editField->getTextData()->setModifiedFlag(false);
-        requestClose();
-    }
-    else
+    try
     {
-        SearchHistory* history = SearchHistory::getInstance();
-        if (history->getEntryCount() >= 1) {
-            SearchHistory::Entry entry = history->getEntry(history->getEntryCount() - 1);
-
-            findUtil.setIgnoreCaseFlag   (entry.getIgnoreCaseFlag());
-            findUtil.setRegexFlag        (entry.getRegexFlag());
-            findUtil.setWholeWordFlag    (entry.getWholeWordFlag());
-            findUtil.setSearchString     (entry.getFindString());
+        if (this->isVisible() && editField->getTextData()->getLength() == 0) {
+            return;
         }
-    }
-    historyIndex = -1;
-
-    int textPosition = e->getCursorTextPosition();
-    if (e->hasPrimarySelection()) {
-        findUtil.setTextPosition(e->getBeginSelectionPos());
-        if (findUtil.doesMatch() && findUtil.getMatchEndPos() == e->getEndSelectionPos()) {
-            textPosition = e->getBeginSelectionPos();
-        }
-    }
-    findUtil.setTextPosition(textPosition);
-
-    findUtil.setSearchForwardFlag(false);
     
-    internalFindNext(false);
+        if (this->isVisible()) {
+            findUtil.setIgnoreCaseFlag   (!caseSensitiveCheckBox->isChecked());
+            findUtil.setRegexFlag        (regularExprCheckBox->isChecked());
+            findUtil.setWholeWordFlag    (wholeWordCheckBox->isChecked());
+            findUtil.setSearchString     (editField->getTextData()->getAsString());
+            editField->getTextData()->setModifiedFlag(false);
+            requestClose();
+        }
+        else
+        {
+            SearchHistory* history = SearchHistory::getInstance();
+            if (history->getEntryCount() >= 1) {
+                SearchHistory::Entry entry = history->getEntry(history->getEntryCount() - 1);
+    
+                findUtil.setIgnoreCaseFlag   (entry.getIgnoreCaseFlag());
+                findUtil.setRegexFlag        (entry.getRegexFlag());
+                findUtil.setWholeWordFlag    (entry.getWholeWordFlag());
+                findUtil.setSearchString     (entry.getFindString());
+            }
+        }
+        historyIndex = -1;
+    
+        int textPosition = e->getCursorTextPosition();
+        if (e->hasPrimarySelection()) {
+            findUtil.setTextPosition(e->getBeginSelectionPos());
+            if (findUtil.doesMatch() && findUtil.getMatchEndPos() == e->getEndSelectionPos()) {
+                textPosition = e->getBeginSelectionPos();
+            }
+        }
+        findUtil.setTextPosition(textPosition);
+    
+        findUtil.setSearchForwardFlag(false);
+        
+        internalFindNext(false);
+    }
+    catch (...)
+    {
+        handleException();
+    }
+
 }
 
     
@@ -542,7 +554,7 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
             h = history->getEntryCount();
         }
         --h;
-        ValidPtr<TextData> textData = editField->getTextData();
+        RawPtr<TextData> textData = editField->getTextData();
         String editFieldContent = textData->getSubstring(0, textData->getLength());
         while (h >= 0) {
             SearchHistory::Entry entry = history->getEntry(h);
@@ -565,7 +577,7 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent *event
           || KeyMapping::Id(0, KeyId("KP_Down")) == keyMappingId)
     {
         SearchHistory* history      = SearchHistory::getInstance();
-        ValidPtr<TextData> textData = editField->getTextData();
+        RawPtr<TextData> textData = editField->getTextData();
 
         if (historyIndex < 0) {
             int editFieldLength = editField->getTextData()->getLength();
@@ -698,13 +710,46 @@ void FindPanel::notifyAboutEndOfPastingData()
                 findUtil.setTextPosition(e->getCursorTextPosition());
             }
             if (selectionSearchForwardFlag) {
-                executeFind(false, newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton));
+                executeFind(false, newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton,
+                                                     &FindPanel::handleException));
             } else {
-                executeFind(false, newCallback(this, &FindPanel::handleContinueSelectionFindAtEndButton));
+                executeFind(false, newCallback(this, &FindPanel::handleContinueSelectionFindAtEndButton,
+                                                     &FindPanel::handleException));
             }
         }
         e->assureCursorVisible();
     }
 }
 
+
+void FindPanel::handleException()
+{
+    try
+    {
+        throw;
+    }
+    catch (RegexException& ex)
+    {
+        panelInvoker->call(this);
+
+        editField->getTextData()->setToString(findUtil.getSearchString());
+        int position = ex.getPosition();
+        if (position >= 0) {
+            editField->setCursorPosition(position);
+        }
+        messageBoxInvoker->call(MessageBoxParameter()
+                                .setTitle("Regex Error")
+                                .setMessage(String() << "Error within regular expression: " << ex.getMessage()));
+    }
+    catch (LuaException& ex)
+    {
+        panelInvoker->call(this);
+
+        editField->getTextData()->setToString(findUtil.getSearchString());
+
+        messageBoxInvoker->call(MessageBoxParameter()
+                                .setTitle("Lua Error")
+                                .setMessage(ex.getMessage()));
+    }
+}
 

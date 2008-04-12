@@ -145,7 +145,7 @@ void ProgramExecutor::readFromChild(int fileDescriptor)
     else if (readCounter == 0)
     {
         printf("reading finished\n");
-        // childOutputListener->close();
+        childOutputListener->close();
         output.removeTail(outputPosition);
     }
     else {

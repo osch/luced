@@ -39,7 +39,7 @@
 #include "MessageBox.hpp"
 #include "SaveAsPanel.hpp"
 #include "ProgramExecutor.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 #include "ScrollableTextGuiCompound.hpp"
 
 namespace LucED
@@ -141,7 +141,7 @@ private:
     void finishedTestScript(ProgramExecutor::Result result);
     
     MultiLineEditorWidget::Ptr textEditor;
-    ValidPtr<TextData>         textData;
+    RawPtr<TextData>         textData;
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
     KeyMapping keyMapping1;

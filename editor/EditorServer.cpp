@@ -139,6 +139,10 @@ void EditorServer::processCommandline(HeapObjectArray<String>::Ptr commandline,
 
     CommandlineInterpreter<Actor> commandInterpreter;
     commandInterpreter.doCommandline(commandline);
+
+    if (commandline->getLength() > 0 && programName.getLength() == 0) {
+        programName = File(commandline->get(0)).getBaseName();
+    }
     
     if (isStarting)
     {

@@ -32,7 +32,7 @@
 #include "EditingHistory.hpp"
 #include "TimeVal.hpp"
 #include "File.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {
@@ -139,13 +139,13 @@ public:
         }
     private:
         friend class TextData;
-        TextMark(ValidPtr<TextData> textData, long index) {
+        TextMark(RawPtr<TextData> textData, long index) {
             this->index = index;
             this->textData = textData;
             textData->getTextMarkData(index)->inUseCounter += 1;
         }
         
-        ValidPtr<TextData> textData;
+        RawPtr<TextData> textData;
     };
     
     class TextMarkData
@@ -400,20 +400,63 @@ public:
         }
     }
     
-    EditingHistory::SectionHolder::Ptr createHistorySection() {
+    class HistorySection : public HeapObject
+    {
+    public:
+        typedef OwningPtr<HistorySection> Ptr;
+        
+        ~HistorySection() {
+            if (textData.isValid() && modus == SET_SEPARATOR_AT_END) {
+                historySectionHolder.invalidate();
+                textData->setHistorySeparator();
+            }
+        }
+        
+    private:
+        friend class TextData;
+        
+        enum Modus {
+            DEFAULT_MODUS,
+            SET_SEPARATOR_AT_END
+        };
+        
+        static Ptr create(TextData*                          textData, 
+                          EditingHistory::SectionHolder::Ptr historySectionHolder,
+                          Modus                              modus = DEFAULT_MODUS)
+        {
+            return Ptr(new HistorySection(textData, historySectionHolder, modus));
+        }
+        
+        HistorySection(TextData*                          textData, 
+                       EditingHistory::SectionHolder::Ptr historySectionHolder,
+                       Modus                              modus)
+            : textData(textData),
+              historySectionHolder(historySectionHolder),
+              modus(modus)
+        {}
+        
+        EditingHistory::SectionHolder::Ptr historySectionHolder;
+        WeakPtr<TextData> textData;
+        Modus modus;
+    };
+    
+    HistorySection::Ptr createHistorySection() {
         if (hasHistory()) {
             setHistorySeparator();
-            return history->getSectionHolder();
+            return HistorySection::create(this, 
+                                          history->getSectionHolder(), 
+                                          HistorySection::SET_SEPARATOR_AT_END);
         } else {
-            return EditingHistory::SectionHolder::Ptr();
+            return HistorySection::Ptr();
         }
     }
     
-    EditingHistory::SectionHolder::Ptr getHistorySectionHolder() {
+    HistorySection::Ptr getHistorySectionHolder() {
         if (hasHistory()) {
-            return history->getSectionHolder();
+            return HistorySection::create(this, 
+                                          history->getSectionHolder());
         } else {
-            return EditingHistory::SectionHolder::Ptr();
+            return HistorySection::Ptr();
         }
     }
 
@@ -494,13 +537,13 @@ private:
 class ViewCounterTextDataAccess
 {
 protected:
-    int getViewCounter(ValidPtr<TextData> textData) {
+    int getViewCounter(RawPtr<TextData> textData) {
         return textData->viewCounter;
     }
-    void decViewCounter(ValidPtr<TextData> textData) {
+    void decViewCounter(RawPtr<TextData> textData) {
         textData->viewCounter -= 1;
     }
-    void incViewCounter(ValidPtr<TextData> textData) {
+    void incViewCounter(RawPtr<TextData> textData) {
         textData->viewCounter += 1;
     }
 };

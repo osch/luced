@@ -39,7 +39,7 @@
 #include "Seconds.hpp"
 #include "MicroSeconds.hpp"
 #include "FileDescriptorListener.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED {
 
@@ -117,7 +117,7 @@ private:
     
     ProcessHandler::Ptr getNextWaitingProcess();
     
-    typedef HashMap< WidgetId, ValidPtr<GuiWidget> > WidgetMap;
+    typedef HashMap< WidgetId, RawPtr<GuiWidget> > WidgetMap;
     WidgetMap widgetMap;
     WidgetMap foreignWidgetListeners;
     

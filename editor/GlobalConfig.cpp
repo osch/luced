@@ -44,7 +44,8 @@ GlobalConfig* GlobalConfig::getInstance()
 }
 
 GlobalConfig::GlobalConfig()
-        : useKeyPressRepeater(true),
+        : useOwnKeyPressRepeater(false),
+          doNotUseX11XkbExtension(false),
           keyPressRepeatFirstMicroSecs(300 * 1000),
           keyPressRepeatNextMicroSecs(  15 * 1000),
           scrollBarWidth(12+2+1),
@@ -75,14 +76,14 @@ GlobalConfig::GlobalConfig()
 
 
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String& languageModeName,
-                                                                   Callback<SyntaxPatterns::Ptr>::Ptr changeCallback)
+                                                                   Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const
 {
     return this->syntaxPatternsConfig->getSyntaxPatternsForLanguageMode(languageModeName, changeCallback);
 }
 
 
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode,
-                                                                   Callback<SyntaxPatterns::Ptr>::Ptr changeCallback)
+                                                                   Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const
 {
     if (languageMode.isValid()) {
         return getSyntaxPatternsForLanguageMode(languageMode->getName(), changeCallback);
@@ -93,20 +94,20 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode:
     
 
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForFileName(const String& fileName,
-                                                               Callback<SyntaxPatterns::Ptr>::Ptr changeCallback)
+                                                               Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const
 {
     return getSyntaxPatternsForLanguageMode(languageModes->getLanguageModeForFile(fileName)->getName(),
                                             changeCallback);
 }
 
 
-LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const String& fileName)
+LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const String& fileName) const
 {
     return languageModes->getLanguageModeForFile(fileName);
 }
 
 
-LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode()
+LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode() const
 {
     return languageModes->getDefaultLanguageMode();
 }
@@ -158,12 +159,20 @@ void GlobalConfig::readConfig()
                 throw ConfigException("invalid generalConfig");
             }
 
-            LuaObject o = generalConfig["useKeyPressRepeater"];
+            LuaObject o = generalConfig["useOwnKeyPressRepeater"];
             if (o.isValid()) {
                 if (!o.isBoolean()) {
-                    throw ConfigException("invalid useKeyPressRepeater");
+                    throw ConfigException("invalid useOwnKeyPressRepeater");
                 }
-                this->useKeyPressRepeater = o.toBoolean();
+                this->useOwnKeyPressRepeater = o.toBoolean();
+            }
+
+            o = generalConfig["doNotUseX11XkbExtension"];
+            if (o.isValid()) {
+                if (!o.isBoolean()) {
+                    throw ConfigException("invalid doNotUseX11XkbExtension");
+                }
+                this->doNotUseX11XkbExtension = o.toBoolean();
             }
 
             o = generalConfig["keyPressRepeatFirstMilliSecs"];
@@ -481,6 +490,8 @@ void GlobalConfig::readConfig()
     {
         throw ConfigException(errorList);
     }
+
+    configChangedCallbackContainer.invokeAllCallbacks();
 }
 
 
@@ -508,7 +519,6 @@ void GlobalConfig::notifyAboutNewFileContent(String absoluteFileName)
     if (absoluteFileName == generalConfigFileName)
     {
         readConfig();
-        configChangedCallbackContainer.invokeAllCallbacks();
     }
     else
     {

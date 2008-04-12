@@ -28,7 +28,7 @@
 #include "TimeVal.hpp"
 #include "GuiElement.hpp"
 #include "OwningPtr.hpp"
-#include "ValidPtr.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED {
 
@@ -52,7 +52,7 @@ public:
         {}
     };
     
-    static Ptr create(ValidPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler) {
+    static Ptr create(RawPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler) {
         return Ptr(new PasteDataReceiver(baseWidget, contentHandler));
     }
 
@@ -63,12 +63,12 @@ public:
     GuiElement::ProcessingResult processPasteDataReceiverEvent(const XEvent *event);
 
 private:
-    PasteDataReceiver(ValidPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler);
+    PasteDataReceiver(RawPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler);
 
     void handleTimerEvent();
     TimeVal lastPasteEventTime;
 
-    ValidPtr<GuiWidget>       baseWidget;
+    RawPtr<GuiWidget>       baseWidget;
     OwningPtr<ContentHandler> contentHandler;
 
     bool isReceivingPasteDataFlag;

@@ -19,54 +19,45 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef EDITOR_CLIENT_HPP
-#define EDITOR_CLIENT_HPP
-
-#include "String.hpp"
+#ifndef GENERIC_ACTIONS_HPP
+#define GENERIC_ACTIONS_HPP
 
 #include "HeapObject.hpp"
-#include "SingletonInstance.hpp"
-#include "GuiRootProperty.hpp"
-#include "HeapObjectArray.hpp"
-#include "WeakPtr.hpp"
-#include "RawPtr.hpp"
+#include "OwningPtr.hpp"
+#include "String.hpp"
+#include "HashMap.hpp"
 
 namespace LucED
 {
 
-class EditorClient : public HeapObject
+template < class P // handler parameter
+         >
+class GenericActions : public HeapObject
 {
 public:
-    typedef WeakPtr<EditorClient> Ptr;
-    
-    static RawPtr<EditorClient> getInstance() {
-        return instance.getPtr();
-    }
-    
-    ~EditorClient();
+    typedef OwningPtr<GenericActions> Ptr;
+    typedef P                         Parameter;
 
-    void startWithCommandline(HeapObjectArray<String>::Ptr commandline);
+    class Handler : public HeapObject
+    {
+    public:
+        typedef OwningPtr<Handler> Ptr;
+
+        virtual bool execute(const String& methodName) = 0;
+
+    protected:
+        Handler()
+        {}
+    };
     
-    bool isServerStartupNeeded() const {
-        return isServerStartupNeededFlag;
-    }
-
-private:
-    friend class SingletonInstance<EditorClient>;
-    static SingletonInstance<EditorClient> instance;
-
-    EditorClient();
-
-    void processEventForCommandProperty(XEvent* event);
-    void waitingForServerFailed();
     
-    bool isStarted;
-    bool wasCommandSet;
-    bool isServerStartupNeededFlag;
-    GuiRootProperty serverProperty;
-    GuiRootProperty commandProperty;
+    virtual OwningPtr<Handler> createNewHandler(const Parameter& parameter) = 0;
+
+protected:
+    GenericActions()
+    {}
 };
 
 } // namespace LucED
 
-#endif // EDITOR_CLIENT_HPP
+#endif // GENERIC_ACTIONS_HPP
