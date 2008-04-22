@@ -24,7 +24,7 @@
 
 using namespace LucED;
 
-const char* LuaException::what()
+const char* LuaException::what() const throw()
 {
     static const char* whatString = "LuaException";
     return whatString;

@@ -56,11 +56,17 @@ public:
     void registerNewOwnedTopWinNotifyCallback(Callback<TopWin*>::Ptr callback) {
         notifyAboutNewOwnedTopWinCallbacks.registerCallback(callback);
     }
+    
+    class AccessForTopWin
+    {
+        friend class TopWin;
+
+        static void appendTopWinToOwnedTopWins(OwningPtr<TopWin> topWin, OwnedTopWins* owner);
+    };
 
 private:
     OwnedTopWins();
 
-    friend class OwnedTopWinsAccessForTopWin;
     void closePendingChilds();
     
     ObjectArray< OwningPtr<TopWin> > ownedTopWins;
@@ -71,14 +77,20 @@ private:
 };
 
 
-class OwnedTopWinsAccessForTopWin : public NonCopyable
+} // namespace LucED
+
+#include "TopWin.hpp"
+
+namespace LucED
 {
-protected:
-    static void appendTopWinToOwnedTopWins(OwningPtr<TopWin> topWin, OwnedTopWins* owner) {
-        owner->appendOwnedTopWin(topWin);
-    }
-};
+
+inline void OwnedTopWins::AccessForTopWin::appendTopWinToOwnedTopWins(OwningPtr<TopWin> topWin,
+                                                                      OwnedTopWins*     owner)
+{
+    owner->appendOwnedTopWin(topWin);
+}
 
 } // namespace LucED
+
 
 #endif // OWNED_TOP_WINS_HPP

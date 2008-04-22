@@ -68,7 +68,7 @@ public:
         registerTimerCallback(when, callback);
     }
 
-    bool processEvent(XEvent *event);
+    bool processEvent(XEvent* event);
     void doEventLoop();
     void requestProgramTermination() {
         doQuit = true;
@@ -79,13 +79,17 @@ public:
     void registerEventReceiverForRootProperty(GuiRootProperty property,
                                               Callback<XEvent*>::Ptr callback);
 
-    void registerRunningComponent(RunningComponent::OwningPtr runningComponent);
+    void registerRunningComponent(OwningPtr<RunningComponent> runningComponent);
     
     void deregisterRunningComponent(RunningComponent* runningComponent);
 
     void registerFileDescriptorListener(FileDescriptorListener::Ptr fileDescriptorListener);
     
     void registerForTerminatingChildProcess(pid_t childPid, Callback<int>::Ptr callback);
+    
+    Time getLastX11Timestamp() {
+        return lastX11EventTime;
+    }
     
 private:
     friend class SingletonInstance<EventDispatcher>;
@@ -136,13 +140,14 @@ private:
     WidgetId rootWid;
     
     
-    ObjectArray<RunningComponent::OwningPtr> runningComponents;
-    ObjectArray<RunningComponent::WeakPtr>   stoppingComponents;
+    ObjectArray< OwningPtr<RunningComponent> > runningComponents;
+    ObjectArray< WeakPtr  <RunningComponent> >   stoppingComponents;
 
     ObjectArray<FileDescriptorListener::Ptr> fileDescriptorListeners;
     
     typedef HashMap< pid_t, Callback<int>::Ptr > ProcessListenerMap;
     ProcessListenerMap childProcessListeners;
+    Time               lastX11EventTime;
 };
 
 

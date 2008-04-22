@@ -51,7 +51,7 @@ void PanelDialogWin::treatFocusOut()
     dialogPanel->treatFocusOut();
 }
 
-GuiElement::ProcessingResult PanelDialogWin::processKeyboardEvent(const XEvent *event)
+GuiElement::ProcessingResult PanelDialogWin::processKeyboardEvent(const XEvent* event)
 {
     if (DialogWin::processKeyboardEvent(event) != EVENT_PROCESSED) {
         return dialogPanel->processKeyboardEvent(event);

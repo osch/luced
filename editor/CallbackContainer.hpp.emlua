@@ -38,9 +38,12 @@ namespace LucED
 
 template
 <
-    class A1 = EmptyClass,
-    class A2 = EmptyClass,
-    class A3 = EmptyClass
+@ for i = 1, MAX_TEMPLATE_ARGS do
+    class A@(i) = EmptyClass
+@  if i < MAX_TEMPLATE_ARGS then 
+    ,
+@  end
+@ end
 >
 class CallbackContainer;
 

@@ -84,9 +84,13 @@ private:
 
 EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
+      keyMapping1(KeyMapping::create()),
+      keyMapping2(KeyMapping::create()),
       flagForSetSizeHintAtFirstShow(true),
-      hasModalMessageBox(false),
-      isClosingFlag(false)
+      hasMessageBox(false),
+      isMessageBoxModal(false),
+      isClosingFlag(false),
+      shouldRaise(false)
 {
     addToXEventMask(ButtonPressMask);
     
@@ -148,40 +152,40 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     Callback<GuiWidget*>::Ptr requestClosePanelCallback = newCallback(this, &EditorTopWin::requestCloseFor);
 
     findPanel = FindPanel::create(this, textEditor, 
-                                  newCallback(this, &EditorTopWin::invokeMessageBox),
+                                  newCallback(this, &EditorTopWin::setMessageBox),
                                   newCallback(this, &EditorTopWin::invokePanel),
                                   requestClosePanelCallback);
 
     replacePanel = ReplacePanel::create(this, textEditor, findPanel,
-                                  newCallback(this, &EditorTopWin::invokeMessageBox),
+                                  newCallback(this, &EditorTopWin::setMessageBox),
                                   newCallback(this, &EditorTopWin::invokePanel),
                                   requestClosePanelCallback);
 
-    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("q"),      newCallback(this,      &EditorTopWin::requestProgramQuit));
-    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("l"),      newCallback(this,      &EditorTopWin::invokeGotoLinePanel));
-    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("f"),      newCallback(this,      &EditorTopWin::invokeFindPanelForward));
-    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("f"),      newCallback(this,      &EditorTopWin::invokeFindPanelBackward));
-    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
-    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelBackward));
-    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("w"),      newCallback(this,      &EditorTopWin::requestCloseWindow));
-    keyMapping1.set( KeyModifier(),             KeyId("Escape"), newCallback(this,      &EditorTopWin::handleEscapeKey));
-    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveKey));
-    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveAsKey));
-    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("n"),      newCallback(this,      &EditorTopWin::createEmptyWindow));
-    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("h"),      newCallback(findPanel, &FindPanel::findSelectionForward));
-    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("h"),      newCallback(findPanel, &FindPanel::findSelectionBackward));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("q"),      newCallback(this,      &EditorTopWin::requestProgramQuit));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("l"),      newCallback(this,      &EditorTopWin::invokeGotoLinePanel));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("f"),      newCallback(this,      &EditorTopWin::invokeFindPanelForward));
+    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("f"),      newCallback(this,      &EditorTopWin::invokeFindPanelBackward));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
+    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelBackward));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("w"),      newCallback(this,      &EditorTopWin::requestCloseWindow));
+    keyMapping1->set( KeyModifier(),             KeyId("Escape"), newCallback(this,      &EditorTopWin::handleEscapeKey));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveKey));
+    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveAsKey));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("n"),      newCallback(this,      &EditorTopWin::createEmptyWindow));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("h"),      newCallback(findPanel, &FindPanel::findSelectionForward));
+    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("h"),      newCallback(findPanel, &FindPanel::findSelectionBackward));
 
-    keyMapping1.set( KeyModifier("Ctrl"),       KeyId("t"),      newCallback(replacePanel, &ReplacePanel::replaceAgainForward));
-    keyMapping1.set( KeyModifier("Ctrl+Shift"), KeyId("t"),      newCallback(replacePanel, &ReplacePanel::replaceAgainBackward));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("t"),      newCallback(replacePanel, &ReplacePanel::replaceAgainForward));
+    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("t"),      newCallback(replacePanel, &ReplacePanel::replaceAgainBackward));
 
-    keyMapping2.set( KeyModifier("Ctrl"),       KeyId("g"),      newCallback(findPanel, &FindPanel::findAgainForward));
-    keyMapping2.set( KeyModifier("Ctrl+Shift"), KeyId("g"),      newCallback(findPanel, &FindPanel::findAgainBackward));
+    keyMapping2->set( KeyModifier("Ctrl"),       KeyId("g"),      newCallback(findPanel, &FindPanel::findAgainForward));
+    keyMapping2->set( KeyModifier("Ctrl+Shift"), KeyId("g"),      newCallback(findPanel, &FindPanel::findAgainBackward));
 
-    keyMapping2.set( KeyModifier("Alt"),        KeyId("c"),      newCallback(this,      &EditorTopWin::createCloneWindow));
-    keyMapping2.set( KeyModifier("Alt"),        KeyId("l"),      newCallback(this,      &EditorTopWin::executeLuaScript));
+    keyMapping2->set( KeyModifier("Alt"),        KeyId("c"),      newCallback(this,      &EditorTopWin::createCloneWindow));
+    keyMapping2->set( KeyModifier("Alt"),        KeyId("l"),      newCallback(this,      &EditorTopWin::executeLuaScript));
 
 ///////////// TODO
-    keyMapping1.set( KeyModifier("Modifier5"),  KeyId("e"),      newCallback(this,      &EditorTopWin::executeTestScript));
+    keyMapping1->set( KeyModifier("Modifier5"),  KeyId("e"),      newCallback(this,      &EditorTopWin::executeTestScript));
 /////////////
     
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &EditorTopWin::treatConfigUpdate));
@@ -190,7 +194,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 EditorTopWin::~EditorTopWin()
 {
     ViewCounterTextDataAccess::decViewCounter(textData);
-    closeModalMessageBox();
+    closeMessageBox();
 }
 
 void EditorTopWin::treatConfigUpdate()
@@ -241,7 +245,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
 
     ProcessingResult rslt = NOT_PROCESSED;
 
-    Callback<>::Ptr m = keyMapping1.find(keyModifier, pressedKey);
+    Callback<>::Ptr m = keyMapping1->find(keyModifier, pressedKey);
 
     if (m.isValid())
     {
@@ -259,7 +263,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *ev
     
     if (rslt == NOT_PROCESSED)
     {
-       m = keyMapping2.find(keyModifier, pressedKey);
+       m = keyMapping2->find(keyModifier, pressedKey);
 
        if (m.isValid())
        {
@@ -305,13 +309,21 @@ GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent *event)
 
 void EditorTopWin::treatFocusIn()
 {
-    if (hasModalMessageBox) {
-        if (modalMessageBox.isInvalid()) {
-            invokeNewModalMessageBox();
+    if (hasMessageBox) {
+        if (messageBox.isInvalid()) {
+            internalInvokeNewMessageBox();
         }
-        textEditor->disableCursorChanges();
-        modalMessageBox->raise();
+        if (isMessageBoxModal) {
+            textEditor->disableCursorChanges();
+        }
+        messageBox->raise();
+        messageBox->requestFocus();
+        shouldRaise = false;
     } else {
+        if (shouldRaise) {
+            shouldRaise = false;
+            raise();
+        }
         if (invokedPanel.isValid()) {
             invokedPanel->treatFocusIn();
         } else {
@@ -331,13 +343,13 @@ bool EditorTopWin::checkForFileModifications()
             && (  !textData->hasModifiedOnDiskFlagBeenIgnored()
                 || textData->wasFileModifiedOnDiskSinceLastIgnore()))
         {
-            invokeMessageBox(MessageBoxParameter().setTitle("File Modified")
-                                                  .setMessage(String() << "File '" 
-                                                                       << textData->getFileName()
-                                                                       << "' was modified on disk.")
-                                                  .setDefaultButton(    "R]eload", newCallback(this, &EditorTopWin::reloadFile))
-                                                  .setCancelButton (    "C]ancel", newCallback(this, &EditorTopWin::doNotReloadFile))
-                                                  );
+            setMessageBox(MessageBoxParameter().setTitle("File Modified")
+                                               .setMessage(String() << "File '" 
+                                                                    << textData->getFileName()
+                                                                    << "' was modified on disk.")
+                                               .setDefaultButton(    "R]eload", newCallback(this, &EditorTopWin::reloadFile))
+                                               .setCancelButton (    "C]ancel", newCallback(this, &EditorTopWin::doNotReloadFile))
+                                               );
             return true;
         }
         else {
@@ -345,8 +357,9 @@ bool EditorTopWin::checkForFileModifications()
         }
     }
     catch (FileException& ex) {
-        invokeMessageBox(MessageBoxParameter().setTitle("File Error")
-                                              .setMessage(ex.getMessage()));
+        setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                           .setMessage(ex.getMessage()));
+        return false;
     }
 }
 
@@ -371,42 +384,81 @@ void EditorTopWin::treatFocusOut()
     }
 }
 
-void EditorTopWin::invokeNewModalMessageBox()
+void EditorTopWin::setModalMessageBox(const MessageBoxParameter& p)
 {
-    modalMessageBox = MessageBox::create(this, modalMessageBoxParameter);
-    modalMessageBox->registerRequestForCloseNotifyCallback(newCallback(this, &EditorTopWin::notifyRequestCloseChildWindow));
-    modalMessageBox->show();
+    isMessageBoxModal = true;
+    internalSetMessageBox(p);
 }
 
-void EditorTopWin::setModalMessageBox(const MessageBoxParameter& messageBoxParameter)
+void EditorTopWin::setMessageBox(const MessageBoxParameter& p)
 {
-    this->hasModalMessageBox = true;
-    this->modalMessageBoxParameter = messageBoxParameter;
-    if (modalMessageBox.isValid()) {
-        modalMessageBox->hide();
-        modalMessageBox->requestCloseWindow();
-        invokeNewModalMessageBox();
+    isMessageBoxModal = false;
+    internalSetMessageBox(p);
+}
+
+void EditorTopWin::internalSetMessageBox(const MessageBoxParameter& p)
+{
+    hasMessageBox = true;
+    this->messageBoxParameter = p;
+    
+    if (messageBox.isValid())
+    {
+        MessageBox::Ptr oldBox = messageBox;
+                                 messageBox.invalidate();
+        oldBox->hide();
+        oldBox->requestCloseWindow();
+    }
+    if (isVisible())
+    {
+        if (isMessageBoxModal) {
+            textEditor->disableCursorChanges();
+        }
+        internalInvokeNewMessageBox();
+        messageBox->raise();
+        messageBox->requestFocus();
     }
 }
 
-void EditorTopWin::closeModalMessageBox()
+void EditorTopWin::internalInvokeNewMessageBox()
 {
-    if (hasModalMessageBox) {
-        hasModalMessageBox = false;
-        textEditor->enableCursorChanges();
-        if (modalMessageBox.isValid()) {
-            modalMessageBox->hide();
-            modalMessageBox->requestCloseWindow();
+    messageBox = MessageBox::create(this, messageBoxParameter);
+    messageBox->registerRequestForCloseNotifyCallback(newCallback(this, &EditorTopWin::notifyRequestCloseChildWindow));
+    messageBox->show();
+}
+
+void EditorTopWin::closeMessageBox()
+{
+    if (hasMessageBox) {
+        hasMessageBox = false;
+        if (isMessageBoxModal) {
+            textEditor->enableCursorChanges();
+        }
+        if (messageBox.isValid()) {
+            messageBox->hide();
+            messageBox->requestCloseWindow();
         }
     }
 }
 
-void EditorTopWin::notifyRequestCloseChildWindow(TopWin *topWin)
+void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin)
 {
-    if (hasModalMessageBox && topWin == modalMessageBox)
+    if (hasMessageBox && topWin == messageBox)
     {
-        hasModalMessageBox = false;
-        textEditor->enableCursorChanges();
+        hasMessageBox = false;
+        
+        if (isMessageBoxModal) {
+            isMessageBoxModal = false;
+            textEditor->enableCursorChanges();
+        }
+        this->requestFocus();
+        this->raise();
+        
+        if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
+            && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100)
+        {
+            // vendor <Hummingbird Communications Ltd.> <6100>
+            this->shouldRaise = true; // delayed raise is Workaround for Exceed X11-Server
+        }
     }
 }
 
@@ -422,7 +474,7 @@ void EditorTopWin::invokeSaveAsPanel(Callback<>::Ptr saveCallback)
 {
     if (saveAsPanel.isInvalid()) {
         saveAsPanel = SaveAsPanel::create(this, textEditor, 
-                                                newCallback(this, &EditorTopWin::invokeMessageBox),
+                                                newCallback(this, &EditorTopWin::setMessageBox),
                                                 newCallback(this, &EditorTopWin::requestCloseFor));
     }
     saveAsPanel->setSaveCallback(saveCallback);
@@ -508,15 +560,6 @@ void EditorTopWin::handleEscapeKey()
     }
 }
 
-void EditorTopWin::invokeMessageBox(MessageBoxParameter p)
-{
-    if (messageBox.isValid()) {
-        messageBox->requestCloseWindow();
-    }
-    messageBox = MessageBox::create(this, p);
-    messageBox->requestFocus();
-}
-
 void EditorTopWin::setWindowTitle()
 {
     File file(textData->getFileName());
@@ -571,18 +614,18 @@ void EditorTopWin::handleSaveKey()
             GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
         }
     } catch (FileException& ex) {
-        invokeMessageBox(MessageBoxParameter().setTitle("File Error")
-                                              .setMessage(ex.getMessage()));
+        setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                           .setMessage(ex.getMessage()));
     } catch (LuaException& ex) {
-        invokeMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                              .setMessage(ex.getMessage()));
+        setMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                           .setMessage(ex.getMessage()));
     } catch (ConfigException& ex)
     {
         if (ex.getErrorList().isValid() && ex.getErrorList()->getLength() > 0) {
             ConfigErrorHandler::start(ex.getErrorList());
         } else {
-            invokeMessageBox(MessageBoxParameter().setTitle("Config Error")
-                                                  .setMessage(ex.getMessage()));
+            setMessageBox(MessageBoxParameter().setTitle("Config Error")
+                                               .setMessage(ex.getMessage()));
         }
     }
 }
@@ -604,14 +647,14 @@ void EditorTopWin::saveAndClose()
             requestCloseWindow();
         }
     } catch (FileException& ex) {
-        invokeMessageBox(MessageBoxParameter().setTitle("File Error")
-                                              .setMessage(ex.getMessage()));
+        setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                           .setMessage(ex.getMessage()));
     } catch (LuaException& ex) {
-        invokeMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                              .setMessage(ex.getMessage()));
+        setMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                           .setMessage(ex.getMessage()));
     } catch (ConfigException& ex) {
-        invokeMessageBox(MessageBoxParameter().setTitle("Config Error")
-                                              .setMessage(ex.getMessage()));
+        setMessageBox(MessageBoxParameter().setTitle("Config Error")
+                                           .setMessage(ex.getMessage()));
     }
 }
 
@@ -622,11 +665,11 @@ void EditorTopWin::requestCloseWindow()
     if (ViewCounterTextDataAccess::getViewCounter(textData) == 1
      && textData->getModifiedFlag() == true)
     {
-        invokeMessageBox(MessageBoxParameter().setTitle("Save File")
-                                              .setMessage(String() << "Save file '" << file.getBaseName() 
-                                                                   << "' before closing?")
-                                              .setDefaultButton(    "S]ave",    newCallback(this, &EditorTopWin::saveAndClose))
-                                              .setAlternativeButton("D]iscard", newCallback(this, &EditorTopWin::requestCloseWindowAndDiscardChanges)));
+        setMessageBox(MessageBoxParameter().setTitle("Save File")
+                                           .setMessage(String() << "Save file '" << file.getBaseName() 
+                                                                << "' before closing?")
+                                           .setDefaultButton(    "S]ave",    newCallback(this, &EditorTopWin::saveAndClose))
+                                           .setAlternativeButton("D]iscard", newCallback(this, &EditorTopWin::requestCloseWindowAndDiscardChanges)));
         
     }
     else
@@ -766,8 +809,8 @@ void EditorTopWin::executeLuaScript()
     }
     catch (LuaException& ex)
     {
-        invokeMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                              .setMessage(ex.getMessage()));
+        setMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                           .setMessage(ex.getMessage()));
     }
 }
 

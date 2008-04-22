@@ -47,7 +47,7 @@ void FileOpener::handleCreateFileButton()
 {
     isWaitingForMessageBox = false;
     if (lastTopWin.isValid()) {
-        lastTopWin->closeModalMessageBox();
+        lastTopWin->closeMessageBox();
         lastTopWin = NULL;
     }
     openFiles();
@@ -220,7 +220,7 @@ void FileOpener::openConfigFiles()
                 editorWin = EditorTopWin::create(textStyles, hilitedText);
                 editorWin->show();
             }
-            editorWin->invokeMessageBox(p);
+            editorWin->setMessageBox(p);
         }
     }
     EventDispatcher::getInstance()->deregisterRunningComponent(this);

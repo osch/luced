@@ -45,7 +45,7 @@ void KeyPressRepeater::processRepeatingEvent()
     {
         ++repeatCount;
         
-        TopWin::KeyPressRepeaterAccess::repeat(repeatingTopWin, &event);
+        TopWin::AccessForKeyPressRepeater::repeat(repeatingTopWin, &event);
         //EventDispatcher::getInstance()->processEvent(&event);
         
 //        TimeVal when;

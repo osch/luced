@@ -44,7 +44,7 @@ GuiRootProperty ClientServerUtil::getServerCommandProperty(const String& instanc
 {
     RawPtr<System> sys = System::getInstance();
 
-    String name = String() << "LUCED_COMMAND_HOST" << sys->getHostName() << "_USER_" << sys->getUserName();
+    String name = String() << "LUCED_COMMAND_HOST_" << sys->getHostName() << "_USER_" << sys->getUserName();
 
     if (instanceName.getLength() > 0) {
         name << "_INSTANCE_" << instanceName;

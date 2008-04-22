@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -29,7 +29,7 @@
 
 using namespace LucED;
 
-MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
+MessageBox::MessageBox(TopWin* referingWindow, const MessageBoxParameter& p)
     : PanelDialogWin(referingWindow),
       wasClosed(false)
 {
@@ -143,6 +143,11 @@ MessageBox::MessageBox(TopWin* referingWindow, MessageBoxParameter p)
     if (p.closeCallback.isValid()) {
         this->closeCallback = p.closeCallback;
     }
+    
+    keyMapping = p.keyMapping;
+    if (p.messageBoxQueue.isValid()) {
+        p.messageBoxQueue->append(this);
+    }
 }
 
 
@@ -187,4 +192,31 @@ void MessageBox::requestCloseWindow()
     }
 }
 
+
+GuiElement::ProcessingResult MessageBox::processKeyboardEvent(const XEvent* event)
+{
+    ProcessingResult rslt = NOT_PROCESSED;
+
+    if (keyMapping.isValid())
+    {
+        KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+        
+        KeyMapping::Id keyMappingId(event->xkey.state, pressedKey);
+        
+        Callback<>::Ptr keyAction = keyMapping->find(keyMappingId);
+        
+        if (keyAction.isEnabled()) {
+            keyAction->call();
+            PanelDialogWin::requestCloseWindow();
+            rslt = EVENT_PROCESSED;
+        }
+    }
+    
+    if (rslt == NOT_PROCESSED)
+    {
+        rslt = PanelDialogWin::processKeyboardEvent(event);
+    }
+
+    return rslt;
+}
 

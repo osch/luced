@@ -133,7 +133,7 @@ namespace // anonymous namespace
             : BaseException(message),
               position(position)
         {}
-        virtual const char *what() {
+        virtual const char* what() const throw() {
             return "FindUtil::MyRegexException";
         }
         int getPosition() const {

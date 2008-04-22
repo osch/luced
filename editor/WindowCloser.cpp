@@ -75,12 +75,12 @@ void WindowCloser::closeWindows()
             if (editorTopWin->hasUnsavedData())
             {
                 editorTopWin->raise();
-                editorTopWin->invokeMessageBox(MessageBoxParameter()
-                                               .setTitle("Unsaved Data")
-                                               .setMessage(String() << "File '" << editorTopWin->getFileName() << "' has unsaved data.")
-                                               .setDefaultButton    ("S]ave",     newCallback(this, &WindowCloser::handleSaveFileButton))
-                                               .setAlternativeButton("D]iscard",  newCallback(this, &WindowCloser::handleDiscardButton))
-                                               .setCancelButton     ("C]ancel",   newCallback(this, &WindowCloser::handleCancelButton)));
+                editorTopWin->setMessageBox(MessageBoxParameter()
+                                            .setTitle("Unsaved Data")
+                                            .setMessage(String() << "File '" << editorTopWin->getFileName() << "' has unsaved data.")
+                                            .setDefaultButton    ("S]ave",     newCallback(this, &WindowCloser::handleSaveFileButton))
+                                            .setAlternativeButton("D]iscard",  newCallback(this, &WindowCloser::handleDiscardButton))
+                                            .setCancelButton     ("C]ancel",   newCallback(this, &WindowCloser::handleCancelButton)));
                 this->referingTopWin = editorTopWin;
                 break;
             }

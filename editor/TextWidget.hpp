@@ -88,13 +88,13 @@ public:
     enum VerticalAdjustmentStrategy {
            STRICT_TOP_LINE_ANCHOR,
        NOT_STRICT_TOP_LINE_ANCHOR,
-               BOTTOM_LINE_ANCHOR,
+               BOTTOM_LINE_ANCHOR
     };
     
     enum HorizontalAdjustmentStrategy {
            STRICT_LEFT_COLUMN_ANCHOR,
        NOT_STRICT_LEFT_COLUMN_ANCHOR,
-                 RIGHT_COLUMN_ANCHOR,
+                 RIGHT_COLUMN_ANCHOR
     };
     
     void setVerticalAdjustmentStrategy(VerticalAdjustmentStrategy verticalAdjustmentStrategy);
@@ -102,7 +102,7 @@ public:
     
     enum LastEmptyLineStrategy {
         DO_NOT_IGNORE_EMPTY_LAST_LINE,
-        IGNORE_EMPTY_LAST_LINE,
+        IGNORE_EMPTY_LAST_LINE
     };
     
     void setLastEmptyLineStrategy(LastEmptyLineStrategy lastEmptyLineStrategy);

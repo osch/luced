@@ -38,7 +38,7 @@
 namespace LucED {
 
 #ifdef DEBUG
-class HeapObjectChecker : NonCopyable
+class HeapObjectChecker : private NonCopyable
 {
 public:
     static void assertAllCleared();
@@ -54,7 +54,7 @@ private:
 };
 #endif // DEBUG
 
-class HeapObjectCounters : NonCopyable
+class HeapObjectCounters : private NonCopyable
 {
 private:
     friend class HeapObject;
@@ -95,7 +95,7 @@ public:
     }
 };
 
-class HeapObject : NonCopyable
+class HeapObject : private NonCopyable
 {
 protected:
 
@@ -143,7 +143,7 @@ private:
 class HeapObjectRefManipulator
 {
 protected:
-    static int obtainInitialOwnership(const HeapObject *obj) {
+    static void obtainInitialOwnership(const HeapObject *obj) {
 #ifdef DEBUG
         if (obj != NULL) {
             #ifdef PRINT_MALLOCS

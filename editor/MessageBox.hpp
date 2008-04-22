@@ -19,6 +19,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "MessageBoxQueue.hpp"
+#include "MessageBoxParameter.hpp"
+
 #ifndef MESSAGEBOX_HPP
 #define MESSAGEBOX_HPP
 
@@ -29,7 +32,6 @@
 #include "DialogWin.hpp"
 #include "PanelDialogWin.hpp"
 #include "TopWinList.hpp"
-#include "MessageBoxParameter.hpp"
 
 namespace LucED
 {
@@ -39,7 +41,7 @@ class MessageBox : public PanelDialogWin
 public:
     typedef WeakPtr<MessageBox> Ptr;
     
-    static MessageBox::Ptr create(TopWin* referingWindow, MessageBoxParameter p)
+    static MessageBox::Ptr create(TopWin* referingWindow, const MessageBoxParameter& p)
     {
         return transferOwnershipTo(new MessageBox(referingWindow, p),
                                    referingWindow);
@@ -51,10 +53,12 @@ public:
                                    TopWinList::getInstance());
     }
     
+    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    
     virtual void requestCloseWindow();
 
 private:
-    MessageBox(TopWin* referingWindow, MessageBoxParameter p);
+    MessageBox(TopWin* referingWindow, const MessageBoxParameter& p);
     
     
     void handleButtonPressed(Button* button);
@@ -67,6 +71,7 @@ private:
     Callback<>::Ptr cancelButtonCallback;
     Callback<>::Ptr closeCallback;
     bool wasClosed;
+    KeyMapping::Ptr keyMapping;
 };
 
 } // namespace LucED

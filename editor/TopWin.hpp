@@ -19,16 +19,15 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "OwnedTopWins.hpp"
+
 #ifndef TOP_WIN_HPP
 #define TOP_WIN_HPP
-
-#include <iostream>
 
 #include "GuiWidget.hpp"
 #include "WeakPtr.hpp"
 #include "OwningPtr.hpp"
 #include "ObjectArray.hpp"
-#include "OwnedTopWins.hpp"
 #include "CallbackContainer.hpp"
 
 namespace LucED
@@ -36,7 +35,7 @@ namespace LucED
 
 class KeyPressRepeater;
 
-class TopWin : public GuiWidget, private OwnedTopWinsAccessForTopWin
+class TopWin : public GuiWidget
 {
 public:
     typedef WeakPtr<TopWin> Ptr;
@@ -75,9 +74,8 @@ public:
     
     static void checkTopWinFocus();
 
-    class KeyPressRepeaterAccess
+    class AccessForKeyPressRepeater
     {
-    private:
         friend class KeyPressRepeater;
         
         static void repeat(TopWin* topWin, const XEvent* event) {
@@ -126,6 +124,7 @@ private:
     CallbackContainer<TopWin*> requestForCloseNotifyCallbacks;
 
     OwnedTopWins::Ptr ownedTopWins;
+    Atom raiseWindowAtom;
 };
 
 
@@ -138,7 +137,7 @@ template
 WeakPtr<T> TopWin::transferOwnershipTo(T* topWin, OwnerPtr owner)
 {
     OwningPtr<T>  rslt(topWin);
-    OwnedTopWinsAccessForTopWin::appendTopWinToOwnedTopWins(rslt, owner->getOwnedTopWins());
+    OwnedTopWins::AccessForTopWin::appendTopWinToOwnedTopWins(rslt, owner->getOwnedTopWins());
     topWin->myOwner = owner->getOwnedTopWins();
     return rslt;
 }

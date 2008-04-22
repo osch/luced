@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef KEYMAPPING_HPP
-#define KEYMAPPING_HPP
+#ifndef KEY_MAPPING_HPP
+#define KEY_MAPPING_HPP
 
 #include "debug.hpp"
 #include "HeapObject.hpp"
@@ -33,9 +33,14 @@
 namespace LucED
 {
 
-class KeyMapping : private NonCopyable
+class KeyMapping : public HeapObject
 {
 public:
+    typedef OwningPtr<KeyMapping> Ptr;
+    
+    static Ptr create() {
+        return Ptr(new KeyMapping());
+    }
     
     class Id
     {
@@ -72,9 +77,12 @@ public:
         KeyId keyId;
     };
 
-    Callback<>::Ptr find(KeyModifier keyState, KeyId keyId)        { return find(Id(keyState, keyId)); }
+    Callback<>::Ptr find(KeyModifier keyState, KeyId keyId) {
+        return find(Id(keyState, keyId));
+    }
 
-    Callback<>::Ptr find(Id id) {
+    Callback<>::Ptr find(Id id)
+    {
         Callback<>::Ptr rslt;
         
         MyMap::Value foundCallback = map.get(id);
@@ -84,19 +92,19 @@ public:
         return rslt;
     }
 
-    void set(KeyModifier keyState, KeyId keyId, Callback<>::Ptr cb) { set(Id(keyState, keyId), cb); }
+    void set(KeyModifier keyState, KeyId keyId, Callback<>::Ptr cb) {
+        set(Id(keyState, keyId), cb);
+    }
     
-
-    void set(Id id, Callback<>::Ptr cb)
-    {
+    void set(Id id, Callback<>::Ptr cb) {
         map.set(id, cb);
     }
     
-
 private:
-
     typedef HashMap<Id, Callback<>::Ptr, Id::HashFunction>  MyMap;
 
+    KeyMapping()
+    {}
 
     MyMap map;
 };
@@ -111,4 +119,4 @@ public:
 
 } // namespace LucED
 
-#endif // KEYMAPPING_HPP
+#endif // KEY_MAPPING_HPP

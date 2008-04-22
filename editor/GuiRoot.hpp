@@ -83,7 +83,14 @@ public:
     bool hasDetectableAutorepeat() const {
         return detecableAutorepeatFlag;
     }
-
+    
+    String getX11ServerVendorString() const {
+        return x11ServerVendorString;
+    }
+    int getX11ServerVendorRelease() const {
+        return x11ServerVendorRelease;
+    }
+    
 private:
     friend class SingletonInstance<GuiRoot>;
     static SingletonInstance<GuiRoot> instance;
@@ -111,6 +118,9 @@ private:
     bool xkbExtensionFlag;
     bool hadDetecableAutorepeatFlag;
     bool detecableAutorepeatFlag;
+    
+    String x11ServerVendorString;
+    int    x11ServerVendorRelease;
 };
 
 

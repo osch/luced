@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -24,9 +24,13 @@
 
 #include "String.hpp"
 #include "Callback.hpp"
+#include "KeyMapping.hpp"
+#include "WeakPtrQueue.hpp"
 
 namespace LucED
 {
+
+class MessageBoxQueue;
 
 class MessageBoxParameter
 {
@@ -64,6 +68,16 @@ public:
         closeCallback= callback;
         return *this;
     }
+
+    MessageBoxParameter& addKeyMapping(KeyModifier keyState, KeyId keyId, Callback<>::Ptr cb) {
+        if (!keyMapping.isValid()) {
+            keyMapping = KeyMapping::create();
+        }
+        keyMapping->set(keyState, keyId, cb);
+        return *this;
+    }
+    
+    MessageBoxParameter& setMessageBoxQueue(OwningPtr<MessageBoxQueue> messageBoxQueue);
     
 private:
     friend class MessageBox;
@@ -81,7 +95,25 @@ private:
     Callback<>::Ptr   cancelButtonCallback;
     
     Callback<>::Ptr   closeCallback;
+    
+    KeyMapping::Ptr   keyMapping;
+    
+    OwningPtr<MessageBoxQueue> messageBoxQueue;
 };
+
+} // namespace LucED
+
+#include "MessageBoxQueue.hpp"
+
+namespace LucED
+{
+
+inline MessageBoxParameter& MessageBoxParameter::setMessageBoxQueue(OwningPtr<MessageBoxQueue> messageBoxQueue)
+{
+    this->messageBoxQueue = messageBoxQueue;
+    return *this;
+}
+
 
 } // namespace LucED
 

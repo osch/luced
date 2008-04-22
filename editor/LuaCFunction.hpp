@@ -66,6 +66,8 @@ private:
         }
         if (wasError) {
             lua_error(L);
+            ASSERT(false);
+            return 0;
         } else {
             return numberOfResults;
         }

@@ -32,7 +32,7 @@
 #undef   WIN_GUI
 
 #define  USE_X11_XKB_EXTENSION
-
+#define  USE_X11_XPM_LIB
 
 #include "sandbox_options.hpp"
 

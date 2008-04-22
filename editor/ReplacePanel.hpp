@@ -36,10 +36,11 @@
 #include "ReplaceUtil.hpp"
 #include "EditFieldGroup.hpp"
 #include "FindPanel.hpp"
+#include "MessageBoxQueue.hpp"
 
-namespace LucED {
 
-
+namespace LucED
+{
 
 class ReplacePanel : public  DialogPanel,
                      private FindPanelAccess
@@ -48,9 +49,9 @@ public:
     typedef OwningPtr<ReplacePanel> Ptr;
 
     static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
-                      Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                      Callback<DialogPanel*>::Ptr        panelInvoker,
-                      Callback<GuiWidget*>::Ptr          requestCloseCallback)
+                      Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                      Callback<DialogPanel*>::Ptr               panelInvoker,
+                      Callback<GuiWidget*>::Ptr                 requestCloseCallback)
     {
         return Ptr(new ReplacePanel(parent, editorWidget, findPanel, messageBoxInvoker, 
                                                                      panelInvoker,
@@ -79,9 +80,9 @@ public:
     
 private:
     ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
-                 Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                 Callback<DialogPanel*>::Ptr        panelInvoker,
-                 Callback<GuiWidget*>::Ptr          requestCloseCallback);
+                 Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                 Callback<DialogPanel*>::Ptr               panelInvoker,
+                 Callback<GuiWidget*>::Ptr                 requestCloseCallback);
 
     void executeFind(bool isWrapping, Callback<>::Ptr  handleContinueSearchButton);
 
@@ -121,8 +122,8 @@ private:
     CheckBox::Ptr caseSensitiveCheckBox;
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
-    Callback<MessageBoxParameter>::Ptr messageBoxInvoker;
-    Callback<DialogPanel*>::Ptr        panelInvoker;
+    Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
+    Callback<DialogPanel*>::Ptr               panelInvoker;
     BasicRegex regex;
     Direction::Type defaultDirection;
     int historyIndex;
@@ -131,6 +132,9 @@ private:
     EditFieldGroup::Ptr editFieldGroup;
     ReplaceUtil         replaceUtil;
     String rememberedSelection;
+
+    WeakPtr<FindPanel> findPanel;
+    MessageBoxQueue::Ptr messageBoxQueue;
 };
 
 } // namespace LucED

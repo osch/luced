@@ -29,8 +29,8 @@
 using namespace LucED;
 
 SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget, 
-                                            Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                            Callback<GuiWidget*>::Ptr          requestCloseCallback)
+                                            Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                            Callback<GuiWidget*>::Ptr                 requestCloseCallback)
     : DialogPanel(parent, requestCloseCallback),
       editorWidget(editorWidget),
       messageBoxInvoker(messageBoxInvoker)

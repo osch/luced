@@ -24,7 +24,7 @@
 using namespace LucED;
 
 
-const char* SubstitutionException::what()
+const char* SubstitutionException::what() const throw()
 {
     static const char* whatString = "SubstitutionException";
     return whatString;

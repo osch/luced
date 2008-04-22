@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -35,6 +35,8 @@
 #include "types.hpp"
 #include "FindUtil.hpp"
 #include "PasteDataReceiver.hpp"
+#include "KeyMapping.hpp"
+#include "MessageBoxQueue.hpp"
 
 namespace LucED
 {
@@ -44,9 +46,9 @@ class FindPanel : public DialogPanel
 public:
     typedef OwningPtr<FindPanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                                                                  Callback<DialogPanel*>::Ptr        panelInvoker,
-                                                                                  Callback<GuiWidget*>::Ptr          requestCloseCallback)
+    static Ptr create(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                                                                Callback<DialogPanel*>::Ptr               panelInvoker,
+                                                                                Callback<GuiWidget*>::Ptr                 requestCloseCallback)
     {
         return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker, requestCloseCallback));
     }
@@ -66,21 +68,21 @@ public:
     void findSelectionForward();
     void findSelectionBackward();
 
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
-    virtual ProcessingResult processEvent(const XEvent *event);
+    virtual ProcessingResult processKeyboardEvent(const XEvent* event);
+    virtual ProcessingResult processEvent(const XEvent* event);
     
     virtual void show();
     
 private:
     friend class FindPanelAccess;
     
-    FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                                                          Callback<DialogPanel*>::Ptr        panelInvoker,
-                                                                          Callback<GuiWidget*>::Ptr          requestCloseCallback);
+    FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                                                        Callback<DialogPanel*>::Ptr               panelInvoker,
+                                                                        Callback<GuiWidget*>::Ptr                 requestCloseCallback);
 
     void handleException();
     
-    void executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearchButton);
+    void executeFind(bool isWrapping, bool autoContinue, Callback<>::Ptr handleContinueSearchButton);
 
     void handleButtonPressed(Button* button);
     void handleButtonDefaultKey(Button* button);
@@ -88,10 +90,16 @@ private:
     void handleContinueAtBeginningButton();
     void handleContinueAtEndButton();
     
+    void internalFindAgainForward(bool autoContinueAtEnd);
+    void findAgainForwardAndAutoContinueAtEnd();
+
+    void internalFindAgainBackward(bool autoContinueAtBegin);
+    void findAgainBackwardAndAutoContinueAtBegin();
+
     void handleContinueSelectionFindAtBeginningButton();
     void handleContinueSelectionFindAtEndButton();
     
-    void internalFindNext(bool wrapping);
+    void internalFindNext(bool wrapping, bool autoContinue);
     
     void handleModifiedEditField(bool modifiedFlag);
 
@@ -109,8 +117,8 @@ private:
     CheckBox::Ptr caseSensitiveCheckBox;
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
-    Callback<MessageBoxParameter>::Ptr messageBoxInvoker;
-    Callback<DialogPanel*>::Ptr        panelInvoker;
+    Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
+    Callback<DialogPanel*>::Ptr               panelInvoker;
     BasicRegex regex;
     Direction::Type defaultDirection;
     int historyIndex;
@@ -122,6 +130,8 @@ private:
 
     class PasteDataContentHandler;
     PasteDataReceiver::Ptr pasteDataReceiver;
+    
+    MessageBoxQueue::Ptr messageBoxQueue;
 };
 
 class FindPanelAccess

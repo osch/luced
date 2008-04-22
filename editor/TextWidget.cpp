@@ -272,7 +272,7 @@ public:
     int getSpaceWidth() const { return spaceWidth; }
     int getBackground() const { ASSERT(doBackgroundFlag == true); return background; }
 
-    int setDoBackground(bool flag)
+    void setDoBackground(bool flag)
     {
         doBackgroundFlag = flag; 
         if (flag) {

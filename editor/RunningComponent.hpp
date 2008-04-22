@@ -31,10 +31,6 @@ namespace LucED
 
 class RunningComponent : public HeapObject
 {
-public:
-    typedef OwningPtr<RunningComponent> OwningPtr;
-    typedef WeakPtr  <RunningComponent> WeakPtr;
-    
 protected:
     RunningComponent()
     {}

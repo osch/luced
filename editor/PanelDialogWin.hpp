@@ -40,7 +40,7 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
     
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processKeyboardEvent(const XEvent* event);
     virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
     virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
     void setRootElement(OwningPtr<GuiElement> rootElement);

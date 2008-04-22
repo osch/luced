@@ -89,7 +89,7 @@ static inline void disableSignals()
 
 static inline int internalSelect(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal)
 {
-#ifdef DEBUG
+#if 0
   TimeVal diffTimeVal;
   if (timeVal != NULL) {
     diffTimeVal = *timeVal;
@@ -101,7 +101,7 @@ static inline int internalSelect(int n, fd_set *readfds, fd_set *writefds, fd_se
     int rslt = System::select(n, readfds, writefds, exceptfds, timeVal);
     disableSignals();
 
-#ifdef DEBUG
+#if 0
   if (timeVal != NULL)
   {
     TimeVal newTimeVal = TimeVal::NOW;
@@ -127,8 +127,10 @@ static inline int internalSelect(int n, fd_set *readfds, fd_set *writefds, fd_se
 
 EventDispatcher::EventDispatcher()
     : doQuit(false),
-      hasRootPropertyListeners(false)
+      hasRootPropertyListeners(false),
+      lastX11EventTime(CurrentTime)
 {
+    
     x11FileDescriptor = ConnectionNumber(GuiRoot::getInstance()->getDisplay());
 
     System::setCloseOnExecFlag(x11FileDescriptor);
@@ -216,7 +218,7 @@ EventDispatcher::TimerRegistration EventDispatcher::getNextTimer()
 }
 
 
-bool EventDispatcher::processEvent(XEvent *event)
+bool EventDispatcher::processEvent(XEvent* event)
 {
     bool hasSomethingDone = false;
     
@@ -231,6 +233,7 @@ bool EventDispatcher::processEvent(XEvent *event)
         if (hasRootPropertyListeners && widgetId == rootWid
                                      && event->type == PropertyNotify)
         {
+            lastX11EventTime = event->xproperty.time;
             GuiRootProperty property(event->xproperty.atom);
             RootPropertiesMap::Value foundListener = rootPropertyListeners.get(property);
             if (foundListener.isValid()) {
@@ -245,6 +248,25 @@ bool EventDispatcher::processEvent(XEvent *event)
         }
         else
         {
+            switch (event->type) {
+                case KeyPress:
+                case KeyRelease:       lastX11EventTime = event->xkey.time; 
+                                       break;
+                case ButtonPress:
+                case ButtonRelease:    lastX11EventTime = event->xbutton.time; 
+                                       break;
+                case MotionNotify:     lastX11EventTime = event->xmotion.time; 
+                                       break;
+                case EnterNotify:
+                case LeaveNotify:      lastX11EventTime = event->xcrossing.time; 
+                                       break;
+                case SelectionNotify:  lastX11EventTime = event->xselection.time; 
+                                       break;
+                case SelectionClear:   lastX11EventTime = event->xselectionclear.time; 
+                                       break;
+                case SelectionRequest: lastX11EventTime = event->xselectionrequest.time; 
+                                       break;
+            }
             WidgetMap::Value foundWidget = widgetMap.get(widgetId);
             if (foundWidget.isValid()) {
                 foundWidget.get()->processEvent(event);
@@ -267,9 +289,9 @@ void EventDispatcher::doEventLoop()
     fd_set             writefds;
     fd_set             exceptfds;
 
+    XEvent             event;
     TimeVal            remainingTime;
     Display*           display = GuiRoot::getInstance()->getDisplay();
-    XEvent             event;
     
     bool hasSomethingDone = true;
     
@@ -535,7 +557,7 @@ void EventDispatcher::registerEventReceiverForRootProperty(GuiRootProperty prope
 
 
 
-void EventDispatcher::registerRunningComponent(RunningComponent::OwningPtr runningComponent)
+void EventDispatcher::registerRunningComponent(OwningPtr<RunningComponent> runningComponent)
 {
     runningComponents.append(runningComponent);
 }

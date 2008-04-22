@@ -31,7 +31,7 @@ namespace LucED {
  * Gap-buffer based array for objects that do not need constructors 
  * and destructors and can be copied by memmove.
  */
-template<typename T> class MemBuffer : NonCopyable
+template<typename T> class MemBuffer : private NonCopyable
 {
 public:
 

@@ -46,13 +46,13 @@ public:
         ACTION_UNSPECIFIED,
         ACTION_TABULATOR,
         ACTION_NEWLINE,
-        ACTION_KEYBOARD_INPUT,
+        ACTION_KEYBOARD_INPUT
     };
     
     enum PasteParameter
     {
         CURSOR_TO_BEGIN_OF_PASTED_DATA,
-        CURSOR_TO_END_OF_PASTED_DATA,
+        CURSOR_TO_END_OF_PASTED_DATA
     };
 
     static Ptr create(GuiWidget*       parent,
@@ -102,11 +102,11 @@ public:
     bool isWordCharacter(unsigned char c);
     
     template<class T> void setEditAction(KeyModifier keyState, KeyId keyId, T* object, void (T::*method)()) {
-        keyMapping.set(keyState, keyId, newCallback(object, method));
+        keyMapping->set(keyState, keyId, newCallback(object, method));
     }
     
     void setEditAction(KeyModifier keyState, KeyId keyId, Callback<>::Ptr callback) {
-        keyMapping.set(keyState, keyId, callback);
+        keyMapping->set(keyState, keyId, callback);
     }
     
     bool scrollUp();
@@ -248,7 +248,7 @@ private:
     void setNewMousePositionForMovingSelection(int x, int y);
     
     bool hasFocusFlag;
-    KeyMapping keyMapping;
+    KeyMapping::Ptr keyMapping;
     long rememberedCursorPixX;
     
     bool hasMovingSelection;

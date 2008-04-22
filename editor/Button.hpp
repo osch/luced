@@ -118,10 +118,10 @@ private:
 
     bool isDefaultButton;
     bool isExplicitDefaultButton;
-    bool hasFocus;
+    bool hasFocusFlag;
     TimeVal earliestButtonReleaseTime;
-    bool hasHotKey;
-    bool showHotKey;
+    bool hasHotKeyFlag;
+    bool showHotKeyFlag;
     char hotKeyChar;
     int hotKeyPixX;
     int hotKeyPixW;

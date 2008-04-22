@@ -34,9 +34,9 @@
 using namespace LucED;
 
 ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel, 
-                           Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                           Callback<DialogPanel*>::Ptr        panelInvoker,
-                           Callback<GuiWidget*>::Ptr          requestCloseCallback)
+                           Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                           Callback<DialogPanel*>::Ptr               panelInvoker,
+                           Callback<GuiWidget*>::Ptr                 requestCloseCallback)
     : DialogPanel(parent, requestCloseCallback),
       e(editorWidget),
       messageBoxInvoker(messageBoxInvoker),
@@ -44,7 +44,9 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
       defaultDirection(Direction::DOWN),
       historyIndex(-1),
       selectSearchRegexFlag(false),
-      replaceUtil(e->getTextData())
+      replaceUtil(e->getTextData()),
+      findPanel(findPanel),
+      messageBoxQueue(MessageBoxQueue::create())
 {
     GuiLayoutColumn::Ptr  c0 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr  c1 = GuiLayoutColumn::create();
@@ -276,18 +278,25 @@ void ReplacePanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSe
                                         .setTitle("Not found")
                                         .setMessage("Continue search from beginning of file?")
                                         .setDefaultButton("C]ontinue", handleContinueSearchButton)
-                                        .setCancelButton("Ca]ncel"));
+                                        .setCancelButton("Ca]ncel")
+                                        .addKeyMapping(KeyModifier("Ctrl"),       KeyId("g"), handleContinueSearchButton)
+                                        .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("g"), newCallback(findPanel, &FindPanel::findAgainBackward))
+                                        .setMessageBoxQueue(messageBoxQueue));
             } else {
                 messageBoxInvoker->call(MessageBoxParameter()
                                         .setTitle("Not found")
                                         .setMessage("Continue search from end of file?")
                                         .setDefaultButton("C]ontinue", handleContinueSearchButton)
-                                        .setCancelButton("Ca]ncel"));
+                                        .setCancelButton("Ca]ncel")
+                                        .addKeyMapping(KeyModifier("Ctrl"),       KeyId("g"), newCallback(findPanel, &FindPanel::findAgainForward))
+                                        .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("g"), handleContinueSearchButton)
+                                        .setMessageBoxQueue(messageBoxQueue));
             }
         } else {
                 messageBoxInvoker->call(MessageBoxParameter()
                                         .setTitle("Not found")
-                                        .setMessage("String was not found"));
+                                        .setMessage("String was not found")
+                                        .setMessageBoxQueue(messageBoxQueue));
         }
     }
 }
@@ -317,6 +326,8 @@ void ReplacePanel::internalFindNext(bool isWrapping)
 
 void ReplacePanel::handleButtonPressed(Button* button)
 {
+    messageBoxQueue->closeQueued();
+
     if (button == cancelButton)
     {
         requestClose();
@@ -935,7 +946,8 @@ void ReplacePanel::handleException()
         panelInvoker->call(this);
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Replace Error")
-                                .setMessage(String() << "Error within replace string: " << ex.getMessage()));
+                                .setMessage(String() << "Error within replace string: " << ex.getMessage())
+                                .setMessageBoxQueue(messageBoxQueue));
     }
     catch (RegexException& ex)
     {
@@ -947,14 +959,16 @@ void ReplacePanel::handleException()
         panelInvoker->call(this);
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Regex Error")
-                                .setMessage(String() << "Error within regular expression: " << ex.getMessage()));
+                                .setMessage(String() << "Error within regular expression: " << ex.getMessage())
+                                .setMessageBoxQueue(messageBoxQueue));
     }
     catch (LuaException& ex)
     {
         panelInvoker->call(this);
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Lua Error")
-                                .setMessage(ex.getMessage()));
+                                .setMessage(ex.getMessage())
+                                .setMessageBoxQueue(messageBoxQueue));
     }
 }
 

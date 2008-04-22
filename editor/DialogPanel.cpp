@@ -29,20 +29,26 @@
 
 using namespace LucED;
 
-DialogPanel::DialogPanel(GuiWidget* parent, Callback<GuiWidget*>::Ptr requestCloseCallback)
+DialogPanel::DialogPanel(GuiWidget*                parent, 
+                         Callback<GuiWidget*>::Ptr requestCloseCallback)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       wasNeverShown(true),
+      
+      keyMapping1(KeyMapping::create()),
+      keyMapping2(KeyMapping::create()),
+      hotKeyMapping(HotKeyMapping::create()),
+      
       hasFocus(false),
       requestCloseCallback(requestCloseCallback)
 {
     addToXEventMask(ExposureMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    keyMapping1.set(            0, KeyId("Tab"),      newCallback(this, &DialogPanel::switchFocusToNextWidget));
-    keyMapping1.set(    ShiftMask, KeyId("Tab"),      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
-    keyMapping2.set(            0, KeyId("Left"),      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
-    keyMapping2.set(            0, KeyId("Right"),     newCallback(this, &DialogPanel::switchFocusToNextWidget));
-    keyMapping2.set(            0, KeyId("KP_Left"),   newCallback(this, &DialogPanel::switchFocusToPrevWidget));
-    keyMapping2.set(            0, KeyId("KP_Right"),  newCallback(this, &DialogPanel::switchFocusToNextWidget));
+    keyMapping1->set(            0, KeyId("Tab"),      newCallback(this, &DialogPanel::switchFocusToNextWidget));
+    keyMapping1->set(    ShiftMask, KeyId("Tab"),      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
+    keyMapping2->set(            0, KeyId("Left"),      newCallback(this, &DialogPanel::switchFocusToPrevWidget));
+    keyMapping2->set(            0, KeyId("Right"),     newCallback(this, &DialogPanel::switchFocusToNextWidget));
+    keyMapping2->set(            0, KeyId("KP_Left"),   newCallback(this, &DialogPanel::switchFocusToPrevWidget));
+    keyMapping2->set(            0, KeyId("KP_Right"),  newCallback(this, &DialogPanel::switchFocusToNextWidget));
 }
 
 void DialogPanel::setRootElement(OwningPtr<GuiElement> rootElement)
@@ -139,7 +145,7 @@ void DialogPanel::treatFocusIn()
     if (focusedElement.isValid()) {
         focusedElement->treatFocusIn();
     }
-    for (HotKeyMapping::Iterator i = hotKeyMapping.getIterator(); !i.isAtEnd(); i.gotoNext()) {
+    for (HotKeyMapping::Iterator i = hotKeyMapping->getIterator(); !i.isAtEnd(); i.gotoNext()) {
         WidgetQueue::Ptr widgets = i.getValue();
         ASSERT(widgets.isValid());
         GuiWidget* w = widgets->getLast();
@@ -156,7 +162,7 @@ void DialogPanel::treatFocusOut()
     if (focusedElement.isValid()) {
         focusedElement->treatFocusOut();
     }
-    for (HotKeyMapping::Iterator i = hotKeyMapping.getIterator(); !i.isAtEnd(); i.gotoNext()) {
+    for (HotKeyMapping::Iterator i = hotKeyMapping->getIterator(); !i.isAtEnd(); i.gotoNext()) {
         WidgetQueue::Ptr widgets = i.getValue();
         ASSERT(widgets.isValid());
         GuiWidget* w = widgets->getLast();
@@ -231,10 +237,10 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
                 case 1: keyMappingId = KeyMapping::Id(       Mod1Mask, pressedKey);
                         break;
             }
-            HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping.get(keyMappingId);
+            HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping->get(keyMappingId);
             
             if (i == 0 && !foundHotKeyWidgets.isValid() && pressedModifier.containsModifier1()) {
-                foundHotKeyWidgets = hotKeyMapping.get(KeyMapping::Id(Mod1Mask, pressedKey));
+                foundHotKeyWidgets = hotKeyMapping->get(KeyMapping::Id(Mod1Mask, pressedKey));
             }
             
             if (foundHotKeyWidgets.isValid()) {
@@ -251,7 +257,7 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
                 }
             } 
             if (!hotKeyProcessed) {
-                Callback<>::Ptr keyAction = keyMapping1.find(keyMappingId);
+                Callback<>::Ptr keyAction = keyMapping1->find(keyMappingId);
                 if (keyAction->isEnabled()) {
                     keyAction->call();
                     processed = true;
@@ -263,7 +269,7 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
                         }
                     }
                     if (!processed) {
-                        Callback<>::Ptr keyAction = keyMapping2.find(keyMappingId);
+                        Callback<>::Ptr keyAction = keyMapping2->find(keyMappingId);
                         if (keyAction->isEnabled()) {
                             keyAction->call();
                             processed = true;
@@ -306,7 +312,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
 {
     ASSERT(w != NULL);
     
-    HotKeyMapping::Value foundWidgets = hotKeyMapping.get(id);
+    HotKeyMapping::Value foundWidgets = hotKeyMapping->get(id);
     WidgetQueue::Ptr widgets;
 
     if (foundWidgets.isValid()) {
@@ -318,7 +324,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
         }
     } else {
         widgets = WidgetQueue::create();
-        this->hotKeyMapping.set(id, widgets);
+        this->hotKeyMapping->set(id, widgets);
     }
     widgets->append(w);
     if (hasFocus) {
@@ -329,7 +335,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
 void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w)
 {
     ASSERT(w != NULL);
-    HotKeyMapping::Value foundWidgets = hotKeyMapping.get(id);
+    HotKeyMapping::Value foundWidgets = hotKeyMapping->get(id);
     if (foundWidgets.isValid()) {
         WidgetQueue::Ptr widgets = foundWidgets.get();
         ASSERT(widgets.isValid());

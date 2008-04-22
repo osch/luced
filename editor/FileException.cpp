@@ -24,7 +24,7 @@
 
 using namespace LucED;
 
-const char* FileException::what()
+const char* FileException::what() const throw()
 {
     static const char* whatString = "FileException";
     return whatString;

@@ -24,7 +24,7 @@
 
 using namespace LucED;
 
-const char* ConfigException::what()
+const char* ConfigException::what() const throw()
 {
     static const char* whatString = "ConfigException";
     return whatString;

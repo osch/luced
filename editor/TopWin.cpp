@@ -19,8 +19,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "headers.hpp"
+
+#ifdef USE_X11_XPM_LIB
 #include <X11/xpm.h>
 #include <X11/Xutil.h>
+#endif
+
 
 #include "TopWin.hpp"
 #include "KeyPressRepeater.hpp"
@@ -36,7 +41,9 @@ TopWin::TopWin()
       ownedTopWins(OwnedTopWins::create()),
       mapped(false),
       requestFocusAfterMapped(false),
-      focusFlag(false)
+      focusFlag(false),
+      raiseWindowAtom(XInternAtom(getDisplay(), "_NET_ACTIVE_WINDOW", False))
+
 {
     setWindowManagerHints();
 
@@ -204,17 +211,15 @@ printf("TakeFocus\n");
                 {
                     if (KeyPressRepeater::getInstance()->isRepeating())
                     {
-                        if (!KeyPressRepeater::getInstance()->addKeyModifier(event)) {
-                            if (!KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
-                                KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
-                                ProcessingResult processed = processKeyboardEvent(event);
-                                return processed;
-                            } else {
-                                return EVENT_PROCESSED;
-                            }
-                        } else {
+                        if (KeyPressRepeater::getInstance()->addKeyModifier(event)) {
                             return EVENT_PROCESSED;
                         }
+                        if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
+                            return EVENT_PROCESSED;
+                        }
+                        KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
+                        ProcessingResult processed = processKeyboardEvent(event);
+                        return processed;
                     }
                     else {
                         KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
@@ -250,11 +255,28 @@ printf("TakeFocus\n");
             case KeyRelease: {
                 if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
                 {
-                    if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
-                        KeyPressRepeater::getInstance()->reset();
+                    bool isTrueRelease = true;
+                    
+                    if (   !GuiRoot::getInstance()->hasDetectableAutorepeat()
+                        && XEventsQueued(getDisplay(), QueuedAlready) > 0)
+                    {
+                        XEvent nextEvent;
+                        XPeekEvent(getDisplay(), &nextEvent);
+                        if (   nextEvent.type == KeyPress
+                            && nextEvent.xkey.keycode == event->xkey.keycode
+                            && nextEvent.xkey.time    == event->xkey.time)
+                        {
+                            isTrueRelease = false;
+                        }
                     }
-                    if (KeyPressRepeater::getInstance()->isRepeating()) {
-                       KeyPressRepeater::getInstance()->removeKeyModifier(event);
+                    if (isTrueRelease)
+                    {
+                        if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
+                            KeyPressRepeater::getInstance()->reset();
+                        }
+                        if (KeyPressRepeater::getInstance()->isRepeating()) {
+                           KeyPressRepeater::getInstance()->removeKeyModifier(event);
+                        }
                     }
                 }
                 return EVENT_PROCESSED;
@@ -297,9 +319,11 @@ printf("TakeFocus\n");
                 if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
                 {
                     KeyPressRepeater::getInstance()->reset();
+#if 0
                     if (!GuiRoot::getInstance()->hasDetectableAutorepeat()) {
                         GuiRoot::getInstance()->setKeyboardAutoRepeatOff();
                     }
+#endif
                 }
                 if (expectedFocusTopWin != NULL && expectedFocusTopWin != this)
                 {
@@ -334,9 +358,11 @@ void TopWin::handleConfigChanged()
     {
         if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
         {
+#if 0
             if (!GuiRoot::getInstance()->hasDetectableAutorepeat()) {
                 GuiRoot::getInstance()->setKeyboardAutoRepeatOff();
             }
+#endif
         }
         else
         {
@@ -352,7 +378,9 @@ void TopWin::setTitle(const char* title)
 }
    
 
-#include "luced.xpm"
+#ifdef USE_X11_XPM_LIB
+    #include "luced.xpm"
+#endif
 
 class TopWinSingletonData : public HeapObject
 {
@@ -366,11 +394,17 @@ private:
     {
         pixMap = 0;
 
-        if (XpmCreatePixmapFromData(
-                GuiRoot::getInstance()->getDisplay(),
-                GuiRoot::getInstance()->getRootWid(), luced_xpm, &pixMap, NULL, NULL) != 0) {
+#ifdef USE_X11_XPM_LIB
+        if (XpmCreatePixmapFromData(GuiRoot::getInstance()->getDisplay(),
+                                    GuiRoot::getInstance()->getRootWid(), 
+                                    const_cast<char**>(luced_xpm), 
+                                    &pixMap, 
+                                    NULL, 
+                                    NULL) != 0)
+        {
             pixMap = 0;
         }
+#endif
         if (GuiRoot::getInstance()->hasXkbExtension()) {
             GuiRoot::getInstance()->setDetectableAutorepeat(true);
         }
@@ -410,23 +444,24 @@ void TopWin::setWindowManagerHints()
     }
     XClassHint* classHint = XAllocClassHint();
 
-    if (classHint != NULL) {
-        MemArray<char> buffer;
+    if (classHint != NULL)
+    {
+        String resName;
 
         String instanceName = EditorServer::getInstance()->getInstanceName();
         if (instanceName.getLength() > 0) {
-            buffer.append(instanceName.toCString(), instanceName.getLength() + 1);
+            resName = instanceName;
         } else {
             const char* envString = ::getenv("RESOURCE_NAME");
             if (envString != NULL) {
-                buffer.append(envString, ::strlen(envString) + 1);
+                resName = envString;
             } else {
                 String programName = EditorServer::getInstance()->getProgramName();
-                buffer.append(programName.toCString(), programName.getLength() + 1);
+                resName = programName;
             }
         }
-        classHint->res_name  = buffer.getPtr(); // use buffer because res_name is not const char*
-        classHint->res_class = "LucED";
+        classHint->res_name  = const_cast<char*>(resName.toCString());
+        classHint->res_class = const_cast<char*>("LucED");
         XSetClassHint(getDisplay(), getWid(), classHint);
         XFree(classHint);
     }
@@ -441,6 +476,32 @@ void TopWin::requestCloseWindow()
 
 void TopWin::raise()
 {
+    {
+        // This is needed to raise the Window under Gnome-Desktop or KDE with
+        // Focus Stealing Prevention Level set to "normal".
+        // (see http://standards.freedesktop.org/wm-spec/wm-spec-latest.html)
+        
+        XEvent event;
+        
+        memset(&event, 0, sizeof(event));
+        event.xclient.type = ClientMessage;
+        //unsigned long serial;     /* # of last request processed by server */
+        event.xclient.send_event = true;        /* true if this came from a SendEvent request */
+        event.xclient.display = getDisplay();       /* Display the event was read from */
+        event.xclient.window = getWid();
+        event.xclient.message_type = raiseWindowAtom;
+        event.xclient.format = 32;
+        event.xclient.data.l[0] = 1;
+        event.xclient.data.l[1] = EventDispatcher::getInstance()->getLastX11Timestamp();
+        event.xclient.data.l[2] = 0;
+
+        XSendEvent(getDisplay(), getRootWid(), false, 
+                                               SubstructureNotifyMask|SubstructureRedirectMask,
+                                               &event);
+    }
+
+    // older Windowmanager only need XRaiseWindow
+        
     XRaiseWindow(getGuiRoot()->getDisplay(), this->getWid());
     this->requestFocus();
 }

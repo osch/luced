@@ -31,6 +31,7 @@ using namespace LucED;
 DialogWin::DialogWin(TopWin* referingWindow)
     : wasNeverShown(true),
       referingWindow(referingWindow),
+      keyMapping(KeyMapping::create()),
       shouldBeMapped(false)
 {
     if (referingWindow != NULL) {
@@ -38,7 +39,7 @@ DialogWin::DialogWin(TopWin* referingWindow)
         referingWindow->registerMappingNotifyCallback(newCallback(this, &DialogWin::notifyAboutReferingWindowMapping));
     }
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    keyMapping.set(            0, KeyId("Escape"),   newCallback(this, &DialogWin::requestCloseWindow));
+    keyMapping->set(            0, KeyId("Escape"),   newCallback(this, &DialogWin::requestCloseWindow));
 }
 
 void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
@@ -111,7 +112,7 @@ GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const XEvent *event
     bool processed = false;
 
     KeyMapping::Id keyMappingId(event->xkey.state, pressedKey);
-    Callback<>::Ptr keyAction = keyMapping.find(keyMappingId);
+    Callback<>::Ptr keyAction = keyMapping->find(keyMappingId);
     if (keyAction->isEnabled()) {
         keyAction->call();
         processed = true;

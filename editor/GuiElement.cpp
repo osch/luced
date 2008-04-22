@@ -24,7 +24,7 @@
 using namespace LucED;
 
 
-const char* GuiElement::DesiredMeasuresChangedException::what()
+const char* GuiElement::DesiredMeasuresChangedException::what() const throw()
 {
     static const char* whatString = "DesiredMeasuresChangedException";
     return whatString;

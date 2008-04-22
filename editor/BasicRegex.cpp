@@ -87,6 +87,7 @@ BasicRegex& BasicRegex::operator=(const BasicRegex& src)
             pcre_free(oldRe);
         }
     }
+    return *this;
 }
 
 

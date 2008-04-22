@@ -60,9 +60,9 @@ private:
 
 
 
-FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                                                                 Callback<DialogPanel*>::Ptr        panelInvoker,
-                                                                                 Callback<GuiWidget*>::Ptr          requestCloseCallback)
+FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                                                               Callback<DialogPanel*>::Ptr               panelInvoker,
+                                                                               Callback<GuiWidget*>::Ptr                 requestCloseCallback)
     : DialogPanel(parent, requestCloseCallback),
 
       pasteDataReceiver(PasteDataReceiver::create(this,
@@ -75,7 +75,8 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
       historyIndex(-1),
       selectSearchRegexFlag(false),
       selectionSearchForwardFlag(true),
-      findUtil(e->getTextData())
+      findUtil(e->getTextData()),
+      messageBoxQueue(MessageBoxQueue::create())
 {
     GuiLayoutColumn::Ptr  c0 = GuiLayoutColumn::create();
     GuiLayoutColumn::Ptr  c1 = GuiLayoutColumn::create();
@@ -192,7 +193,7 @@ void FindPanel::treatFocusIn()
 }
 
 
-void FindPanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearchButton)
+void FindPanel::executeFind(bool isWrapping, bool autoContinue, Callback<>::Ptr handleContinueSearchButton)
 {
 /*        {
             if (e->hasSelectionOwnership()) {
@@ -231,24 +232,39 @@ void FindPanel::executeFind(bool isWrapping, Callback<>::Ptr handleContinueSearc
         } else {
             e->releaseSelection();
         }
-    } else if (!isWrapping) {
+    }
+    else if (isWrapping)
+    {
+            messageBoxInvoker->call(MessageBoxParameter()
+                                    .setTitle("Not found")
+                                    .setMessage("String was not found")
+                                    .setMessageBoxQueue(messageBoxQueue));
+    }
+    else if (autoContinue)
+    {
+        handleContinueSearchButton->call();
+    }
+    else
+    {
         if (findUtil.isSearchingForward()) {
             messageBoxInvoker->call(MessageBoxParameter()
                                     .setTitle("Not found")
                                     .setMessage("Continue search from beginning of file?")
                                     .setDefaultButton("C]ontinue", handleContinueSearchButton)
-                                    .setCancelButton("Ca]ncel"));
+                                    .setCancelButton("Ca]ncel")
+                                    .addKeyMapping(KeyModifier("Ctrl"),       KeyId("g"), newCallback(this, &FindPanel::findAgainForwardAndAutoContinueAtEnd))
+                                    .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("g"), newCallback(this, &FindPanel::findAgainBackward))
+                                    .setMessageBoxQueue(messageBoxQueue));
         } else {
             messageBoxInvoker->call(MessageBoxParameter()
                                     .setTitle("Not found")
                                     .setMessage("Continue search from end of file?")
                                     .setDefaultButton("C]ontinue", handleContinueSearchButton)
-                                    .setCancelButton("Ca]ncel"));
+                                    .setCancelButton("Ca]ncel")
+                                    .addKeyMapping(KeyModifier("Ctrl"),       KeyId("g"), newCallback(this, &FindPanel::findAgainForward))
+                                    .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("g"), newCallback(this, &FindPanel::findAgainBackwardAndAutoContinueAtBegin))
+                                    .setMessageBoxQueue(messageBoxQueue));
         }
-    } else {
-            messageBoxInvoker->call(MessageBoxParameter()
-                                    .setTitle("Not found")
-                                    .setMessage("String was not found"));
     }
 }
 
@@ -292,7 +308,7 @@ void FindPanel::findSelectionBackward()
 
 }
 
-void FindPanel::internalFindNext(bool isWrapping)
+void FindPanel::internalFindNext(bool isWrapping, bool autoContinue)
 {
     if (findUtil.getSearchString().getLength() <= 0) {
         return;
@@ -307,7 +323,8 @@ void FindPanel::internalFindNext(bool isWrapping)
 
     bool forward = findUtil.getSearchForwardFlag();
 
-    executeFind(isWrapping, forward ? newCallback(this, &FindPanel::handleContinueAtBeginningButton,
+    executeFind(isWrapping, autoContinue,
+                            forward ? newCallback(this, &FindPanel::handleContinueAtBeginningButton,
                                                         &FindPanel::handleException)
                                     : newCallback(this, &FindPanel::handleContinueAtEndButton,
                                                         &FindPanel::handleException));
@@ -315,6 +332,8 @@ void FindPanel::internalFindNext(bool isWrapping)
 
 void FindPanel::handleButtonPressed(Button* button)
 {
+    messageBoxQueue->closeQueued();
+    
     if (button == cancelButton)
     {
         requestClose();
@@ -360,7 +379,7 @@ void FindPanel::handleButtonPressed(Button* button)
         editField->getTextData()->setModifiedFlag(false);
 
 
-        internalFindNext(false);
+        internalFindNext(false, false);
     }
 }
 
@@ -381,7 +400,9 @@ void FindPanel::handleContinueSelectionFindAtBeginningButton()
     findUtil.setWholeWordFlag    (false);
     findUtil.setSearchString     (selectionSearchString);
     findUtil.setTextPosition     (0);
-    executeFind(true, newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton,
+    bool autoContinue = false;
+    executeFind(true, autoContinue,
+                      newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton,
                                         &FindPanel::handleException));
 }
 
@@ -389,7 +410,7 @@ void FindPanel::handleContinueAtBeginningButton()
 {
     ASSERT(findUtil.getSearchForwardFlag() == true);
     findUtil.setTextPosition(0);
-    internalFindNext(true);
+    internalFindNext(true, false);
 }
 
 
@@ -401,7 +422,9 @@ void FindPanel::handleContinueSelectionFindAtEndButton()
     findUtil.setWholeWordFlag    (false);
     findUtil.setSearchString     (selectionSearchString);
     findUtil.setTextPosition     (e->getTextData()->getLength());
-    executeFind(true, newCallback(this, &FindPanel::handleContinueSelectionFindAtEndButton,
+    bool autoContinue = false;
+    executeFind(true, autoContinue,
+                      newCallback(this, &FindPanel::handleContinueSelectionFindAtEndButton,
                                         &FindPanel::handleException));
 }
 
@@ -409,11 +432,20 @@ void FindPanel::handleContinueAtEndButton()
 {
     ASSERT(findUtil.getSearchForwardFlag() == false);
     findUtil.setTextPosition(e->getTextData()->getLength());
-    internalFindNext(true);
+    internalFindNext(true, false);
 }
 
-
 void FindPanel::findAgainForward()
+{
+    internalFindAgainForward(false);
+}
+
+void FindPanel::findAgainForwardAndAutoContinueAtEnd()
+{
+    internalFindAgainForward(true);
+}
+
+void FindPanel::internalFindAgainForward(bool autoContinueAtEnd)
 {
     try
     {
@@ -453,7 +485,7 @@ void FindPanel::findAgainForward()
         
         findUtil.setSearchForwardFlag(true);
         
-        internalFindNext(false);
+        internalFindNext(false, autoContinueAtEnd);
     }
     catch (...)
     {
@@ -464,6 +496,16 @@ void FindPanel::findAgainForward()
 
 
 void FindPanel::findAgainBackward()
+{
+    internalFindAgainBackward(false);
+}
+
+void FindPanel::findAgainBackwardAndAutoContinueAtBegin()
+{
+    internalFindAgainBackward(true);
+}
+
+void FindPanel::internalFindAgainBackward(bool autoContinueAtBegin)
 {
     try
     {
@@ -504,7 +546,7 @@ void FindPanel::findAgainBackward()
     
         findUtil.setSearchForwardFlag(false);
         
-        internalFindNext(false);
+        internalFindNext(false, autoContinueAtBegin);
     }
     catch (...)
     {
@@ -709,11 +751,14 @@ void FindPanel::notifyAboutEndOfPastingData()
             } else {
                 findUtil.setTextPosition(e->getCursorTextPosition());
             }
+            bool autoContinue = false;
             if (selectionSearchForwardFlag) {
-                executeFind(false, newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton,
+                executeFind(false, autoContinue,
+                                   newCallback(this, &FindPanel::handleContinueSelectionFindAtBeginningButton,
                                                      &FindPanel::handleException));
             } else {
-                executeFind(false, newCallback(this, &FindPanel::handleContinueSelectionFindAtEndButton,
+                executeFind(false, autoContinue,
+                                   newCallback(this, &FindPanel::handleContinueSelectionFindAtEndButton,
                                                      &FindPanel::handleException));
             }
         }
@@ -739,7 +784,8 @@ void FindPanel::handleException()
         }
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Regex Error")
-                                .setMessage(String() << "Error within regular expression: " << ex.getMessage()));
+                                .setMessage(String() << "Error within regular expression: " << ex.getMessage())
+                                .setMessageBoxQueue(messageBoxQueue));
     }
     catch (LuaException& ex)
     {
@@ -749,7 +795,8 @@ void FindPanel::handleException()
 
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Lua Error")
-                                .setMessage(ex.getMessage()));
+                                .setMessage(ex.getMessage())
+                                .setMessageBoxQueue(messageBoxQueue));
     }
 }
 

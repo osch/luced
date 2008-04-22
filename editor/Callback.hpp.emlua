@@ -39,9 +39,12 @@ namespace LucED
 
 template
 <
-    class A1 = EmptyClass,
-    class A2 = EmptyClass,
-    class A3 = EmptyClass
+@ for i = 1, MAX_TEMPLATE_ARGS do
+    class A@(i) = EmptyClass
+@  if i < MAX_TEMPLATE_ARGS then 
+    ,
+@  end
+@ end
 >
 class Callback;
 
@@ -279,11 +282,17 @@ private:
 
     template<class T> static T* getRawPtr(T* ptr)           { return ptr; }
     template<class T> static T* getRawPtr(OwningPtr<T> ptr) { return ptr.getRawPtr(); }
+    template<class T> static T* getRawPtr(WeakPtr<T> ptr)   { return ptr.getRawPtr(); }
 
 public:
-    typedef CallbackPtr<Callback> Ptr;
+    typedef CallbackPtr< Callback
+@                              if argCount < MAX_TEMPLATE_ARGS then
+                                  <@(filledArgList('A','EmptyClass',argCount,MAX_TEMPLATE_ARGS))>
+@                              end
+                      
+                       > Ptr;
 
-@ for _, ptrType in ipairs({'T*', 'OwningPtr<T>'}) do
+@ for _, ptrType in ipairs({'T*', 'OwningPtr<T>', 'WeakPtr<T>'}) do
     template<class T, class S> static Ptr create(@(ptrType) objectPtr, 
                                                  void (S::*methodPtr)(@(argList('A',argCount))))
     {
@@ -337,7 +346,12 @@ public:
     }
 
 private:
-    friend class CallbackPtr<Callback>;
+    friend class CallbackPtr< Callback
+@                              if argCount < MAX_TEMPLATE_ARGS then
+                                  <@(filledArgList('A','EmptyClass',argCount,MAX_TEMPLATE_ARGS))>
+@                              end
+                      
+                            >;
 
     Callback()
     {}
@@ -358,7 +372,7 @@ private:
 
 
 @ for argCount = 0, MAX_TEMPLATE_ARGS do
-@   for _, ptrType in ipairs({'OwningPtr<T>', 'T*'}) do
+@   for _, ptrType in ipairs({'OwningPtr<T>', 'WeakPtr<T>', 'T*'}) do
 
 template
 <

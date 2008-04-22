@@ -38,11 +38,12 @@ SingletonInstance<GuiRoot> GuiRoot::instance;
 
 static char buffer[4000];
 
-static int myX11ErrorHandler(Display *display, XErrorEvent *errorEvent)
+static int myX11ErrorHandler(Display* display, XErrorEvent* errorEvent)
 {
     XGetErrorText(display, errorEvent->error_code, buffer, sizeof(buffer));
     buffer[sizeof(buffer) - 1] = '\0';
     fprintf(stderr, "LucED: xlib error: %s\n", buffer);
+    return 0;
 }
 
 static const char* KEYBOARD_WAS_AUTOREPEAT_PROPERTY_NAME = "LUCED_KEYBOARD_WAS_AUTOREPEAT";
@@ -115,6 +116,9 @@ GuiRoot::GuiRoot()
     screen = XScreenOfDisplay(display, screenId);
     rootWid = WidgetId(XRootWindow(display, screenId));
 
+    x11ServerVendorString  = XServerVendor(display);
+    x11ServerVendorRelease = XVendorRelease(display);
+    
     evaluateConfig();
 
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &GuiRoot::evaluateConfig));

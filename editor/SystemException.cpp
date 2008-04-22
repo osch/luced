@@ -24,7 +24,7 @@
 
 using namespace LucED;
 
-const char* SystemException::what()
+const char* SystemException::what() const throw()
 {
     static const char* whatString = "SystemException";
     return whatString;

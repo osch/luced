@@ -91,6 +91,7 @@ public:
             }
             index = src.index;
             textData = src.textData;
+            return *this;
         }
         void moveToLineAndColumn(long line, long column) {
             textData->moveMarkToLineAndColumn(*this, line, column);

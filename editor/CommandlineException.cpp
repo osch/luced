@@ -24,7 +24,7 @@
 
 using namespace LucED;
 
-const char* CommandlineException::what()
+const char* CommandlineException::what() const throw()
 {
     static const char* whatString = "CommandlineException";
     return whatString;

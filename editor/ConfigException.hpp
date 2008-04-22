@@ -61,7 +61,7 @@ public:
     virtual ~ConfigException() throw()
     {}
     
-    virtual const char *what();
+    virtual const char* what() const throw();
 
     ErrorList::Ptr getErrorList() {
         return errorList;

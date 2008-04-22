@@ -1,6 +1,6 @@
 sandbox.mk
 sandbox_options.hpp
-build
+build*
 luced
 test.cpp
 lc

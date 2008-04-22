@@ -44,11 +44,11 @@ public:
     {
     public:
     
-        Parameter(RawPtr<GuiWidget>                parentWidget, 
-                  RawPtr<TextEditorWidget>         editorWidget, 
-                  Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                  Callback<DialogPanel*>::Ptr        panelInvoker,
-                  Callback<GuiWidget*>::Ptr          requestCloseCallback)
+        Parameter(RawPtr<GuiWidget>                         parentWidget, 
+                  RawPtr<TextEditorWidget>                  editorWidget, 
+                  Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                  Callback<DialogPanel*>::Ptr               panelInvoker,
+                  Callback<GuiWidget*>::Ptr                 requestCloseCallback)
             : parentWidget(parentWidget),
               editorWidget(editorWidget),
               messageBoxInvoker(messageBoxInvoker),
@@ -57,11 +57,11 @@ public:
         {}
 
     protected:
-        RawPtr<GuiWidget>                parentWidget;
-        RawPtr<TextEditorWidget>         editorWidget;
-        Callback<MessageBoxParameter>::Ptr messageBoxInvoker;
-        Callback<DialogPanel*>::Ptr        panelInvoker;
-        Callback<GuiWidget*>::Ptr          requestCloseCallback;
+        RawPtr<GuiWidget>                         parentWidget;
+        RawPtr<TextEditorWidget>                  editorWidget;
+        Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
+        Callback<DialogPanel*>::Ptr               panelInvoker;
+        Callback<GuiWidget*>::Ptr                 requestCloseCallback;
     };
 
     class Handler : public HeapObject

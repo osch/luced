@@ -61,6 +61,7 @@ public:
             index = src.index;
             hiliting = src.hiliting;
             hiliting->getIteratorData(*this)->inUseCounter += 1;
+            return *this;
         }
     private:
         friend class HilitingBase;

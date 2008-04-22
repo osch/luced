@@ -38,9 +38,9 @@ Button::Button(GuiWidget* parent, String buttonText)
         isMouseButtonPressed(false),
         isMouseOverButton(false),
         isDefaultButton(false),
-        hasFocus(false),
-        hasHotKey(false),
-        showHotKey(false),
+        hasFocusFlag(false),
+        hasHotKeyFlag(false),
+        showHotKeyFlag(false),
         isExplicitDefaultButton(false),
         hasForcedMeasuresFlag(false)
 {
@@ -51,11 +51,11 @@ Button::Button(GuiWidget* parent, String buttonText)
 
 void Button::setButtonText(String buttonText)
 {
-    if (hasHotKey) {
+    if (hasHotKeyFlag) {
         String keySymString;
         keySymString.appendLowerChar(hotKeyChar);
         requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
-        hasHotKey = false;
+        hasHotKeyFlag = false;
     }
     int p1 = buttonText.findFirstOf(']', 1);
     
@@ -67,8 +67,8 @@ void Button::setButtonText(String buttonText)
         this->buttonText = String() << buttonText.getSubstring(0, p1) << buttonText.getTail(p1 + 1);
         hotKeyPixX = getGuiTextStyle()->getTextWidth(buttonText.getSubstring(0, p1 - 1));
         hotKeyPixW = getGuiTextStyle()->getCharWidth(hotKeyChar);
-        hasHotKey = true;
-        // showHotKey = true;
+        hasHotKeyFlag = true;
+        // showHotKeyFlag = true;
         String keySymString;
         keySymString.appendLowerChar(hotKeyChar);
         requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
@@ -153,7 +153,7 @@ void Button::drawButton()
         const int d = BUTTON_OUTER_BORDER - 1;
         undrawFrame(d + guiSpacing, d + guiSpacing, position.w - 2 * d - guiSpacing, position.h - 2 * d - guiSpacing);
     }
-    if (hasFocus) {
+    if (hasFocusFlag) {
         const int d = BUTTON_OUTER_BORDER + 1;
         if (isButtonPressed) {
             drawDottedFrame(d+1 + guiSpacing, d+1 + guiSpacing, position.w - 2 * d - 1 - guiSpacing, position.h - 2 * d - 1 - guiSpacing);
@@ -166,7 +166,7 @@ void Button::drawButton()
     if (x < BUTTON_OUTER_BORDER + guiSpacing) { x = BUTTON_OUTER_BORDER + guiSpacing; }
     int y = (position.h - 2*BUTTON_OUTER_BORDER - getGuiTextHeight() - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
     if (y < BUTTON_OUTER_BORDER + guiSpacing) { y = BUTTON_OUTER_BORDER + guiSpacing; }
-    if (showHotKey) {
+    if (showHotKeyFlag) {
         //drawLine(x + textOffset + hotKeyPixX, y + textOffset + getGuiTextHeight(), hotKeyPixW, 0);
         int lineY = getGuiTextStyle()->getLineAscent() + 1;
         if (lineY > getGuiTextHeight() - 1) {
@@ -249,15 +249,17 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                     XSync(getDisplay(), False);
                     int x = event->xbutton.x;
                     int y = event->xbutton.y;
-                    if (isMouseInsideButtonArea(x, y)) {
+                    if (isMouseInsideButtonArea(x, y))
+                    {
                         if (event->xbutton.button == Button1) {
                             if (pressedCallback0->isEnabled()) {
                                 pressedCallback0->call();
                             } else {
                                 pressedCallback1->call(this);
                             }
-                        } else {
-                            ASSERT(event->xbutton.button == Button3);
+                        }
+                        else if (event->xbutton.button == Button3) 
+                        {
                             if (rightClickedCallback0->isEnabled()) {
                                 rightClickedCallback0->call();
                             } else {
@@ -363,8 +365,8 @@ void Button::treatLostHotKeyRegistration(const KeyMapping::Id& id)
             drawButton();
         }
     } else {
-        if (showHotKey) {
-            showHotKey = false;
+        if (showHotKeyFlag) {
+            showHotKeyFlag = false;
             drawButton();
         }
     }
@@ -381,8 +383,8 @@ void Button::treatNewHotKeyRegistration(const KeyMapping::Id& id)
             drawButton();
         }
     } else {
-        if (!showHotKey) {
-            showHotKey = true;
+        if (!showHotKeyFlag) {
+            showHotKeyFlag = true;
             drawButton();
         }
     }
@@ -395,8 +397,8 @@ void Button::treatFocusIn()
         requestHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("Return")),   this);
         requestHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("KP_Enter")), this);
     }
-    if (!hasFocus) {
-        hasFocus = true;
+    if (!hasFocusFlag) {
+        hasFocusFlag = true;
         drawButton();
     }
 }
@@ -404,7 +406,7 @@ void Button::treatFocusIn()
 
 void Button::treatFocusOut()
 {
-    hasFocus = false;
+    hasFocusFlag = false;
     if (!isExplicitDefaultButton) {
         requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("Return")),   this);
         requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(0, KeyId("KP_Enter")), this);

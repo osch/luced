@@ -36,8 +36,8 @@ public:
     typedef OwningPtr<SaveAsPanel> Ptr;
 
     static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, 
-                                         Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                         Callback<GuiWidget*>::Ptr          requestCloseCallback)
+                                         Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                         Callback<GuiWidget*>::Ptr                 requestCloseCallback)
     {
         return Ptr(new SaveAsPanel(parent, editorWidget, messageBoxInvoker, requestCloseCallback));
     }
@@ -52,8 +52,8 @@ public:
     
 private:
     SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget,
-                                   Callback<MessageBoxParameter>::Ptr messageBoxInvoker,
-                                   Callback<GuiWidget*>::Ptr          requestCloseCallback);
+                                   Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                   Callback<GuiWidget*>::Ptr                 requestCloseCallback);
 
     void handleButtonPressed(Button* button);
     
@@ -65,7 +65,7 @@ private:
   
     WeakPtr<TextEditorWidget> editorWidget;
     Callback<>::Ptr saveCallback;
-    Callback<MessageBoxParameter>::Ptr messageBoxInvoker;
+    Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
 };
 
 } // namespace LucED

@@ -92,9 +92,9 @@ public:
     }
     
     void setModalMessageBox(const MessageBoxParameter& messageBoxParameter);
-    void closeModalMessageBox();
+    void closeMessageBox();
 
-    void invokeMessageBox(MessageBoxParameter p);
+    void setMessageBox(const MessageBoxParameter& p);
     
     bool hasUnsavedData() const {
         return textData->getModifiedFlag();
@@ -135,7 +135,8 @@ private:
     void setWindowTitle();
     
     void notifyRequestCloseChildWindow(TopWin *topWin);
-    void invokeNewModalMessageBox();
+    void internalInvokeNewMessageBox();
+    void internalSetMessageBox(const MessageBoxParameter& messageBoxParameter);
 
     void executeTestScript();
     void finishedTestScript(ProgramExecutor::Result result);
@@ -144,8 +145,8 @@ private:
     RawPtr<TextData>         textData;
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
-    KeyMapping keyMapping1;
-    KeyMapping keyMapping2;
+    KeyMapping::Ptr keyMapping1;
+    KeyMapping::Ptr keyMapping2;
     GotoLinePanel::Ptr gotoLinePanel;
     bool flagForSetSizeHintAtFirstShow;
 
@@ -156,17 +157,19 @@ private:
     
     WeakPtr<DialogPanel> invokedPanel;
     int                  invokedPanelIndex;
-    MessageBox::Ptr messageBox;
 
-    MessageBox::Ptr     modalMessageBox;
-    bool                hasModalMessageBox;
-    MessageBoxParameter modalMessageBoxParameter;
+    MessageBox::Ptr     messageBox;
+    MessageBoxParameter messageBoxParameter;
+    bool                hasMessageBox;
+    bool                isMessageBoxModal;
     
     SaveAsPanel::Ptr    saveAsPanel;
     
     bool isClosingFlag;
 
     ScrollableTextGuiCompound::Ptr scrollableTextCompound;
+    
+    bool shouldRaise;
 };
 
 } // namespace LucED

@@ -37,7 +37,7 @@ public:
         : BaseException(message),
           position(-1)
     {}
-    virtual const char *what();
+    virtual const char* what() const throw();
 
     int getPosition() const {
         return position;

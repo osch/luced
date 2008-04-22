@@ -116,10 +116,12 @@ public:
     }
     ObjectArray<T>& remove(long pos) {
         removeAmount(pos, 1);
+        return *this;
     }
     ObjectArray<T>& removeLast() {
         ASSERT(getLength() > 0);
         removeAmount(getLength() - 1, 1);
+        return *this;
     }
     ObjectArray<T>& removeBetween(long pos1, long pos2) {
         removeAmount(pos1, pos2 - pos1);

@@ -20,8 +20,10 @@
 ####################################################################################
 
 
-CPPCOMP_PRG     := g++
-LINK_PRG         = $(CPPCOMP_PRG)
+CPPCOMP_PRG         := g++
+LINK_PRG             = $(CPPCOMP_PRG)
+CPPCOMP_INVOKE_OPTS := -g
+LINK_INVOKE_OPTS    := -g
 
 CPPCOMP_FAST_OPTS := -O2
 CPPCOMP_SLOW_OPTS := -Os
@@ -86,7 +88,7 @@ GEN_HDRS  := $(patsubst %, $(BUILD_DIR)/%.hpp,      $(GENERATED_HEADERS))
 
 MAKECMDGOALS   ?=
 NONBUILD_GOALS := clean
-.PHONY:           clean default
+.PHONY:           clean default complink
 
 default: luced
 
@@ -95,6 +97,9 @@ clean:
 
 luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
 	$(LINK_RUN)
+
+complink: luced.cpp $(patsubst %, %.cpp, $(MODULES))
+	$(call COMPILE_LINK_RUN,,luced,$^)
 
 
 ###############################################################
@@ -174,12 +179,18 @@ endef
 
 define COMPILE_RUN
 	@mkdir -p $(@D) && mkdir -p $(BUILD_DIR)/deps
-	$(CPPCOMP_PRG) -g -I . -I $(BUILD_DIR) $1 $(CPP_DEFINES) $(INCL_OPTS) -c $<  -o "$@" \
+	$(CPPCOMP_PRG) $(CPPCOMP_INVOKE_OPTS) -I . -I $(BUILD_DIR) $1 $(CPP_DEFINES) $(INCL_OPTS) \
+	-c $<  -o "$@" \
 	-MMD -MF $(BUILD_DIR)/deps/$(*F).dep 
 endef
 
 define LINK_RUN
 	@mkdir -p $(@D)
-	$(LINK_PRG) -g $^ $(LINK_OPTS) -o $@
+	$(LINK_PRG) $(LINK_INVOKE_OPTS) $^ $(LINK_OPTS) -o $@
 endef
 
+define COMPILE_LINK_RUN
+	$(CPPCOMP_PRG) $(CPPCOMP_INVOKE_OPTS) -I . -I $(BUILD_DIR) $1 $(CPP_DEFINES) $(INCL_OPTS) \
+	$(LINK_OPTS) \
+	$3 -o "$2"
+endef

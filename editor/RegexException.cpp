@@ -24,7 +24,7 @@
 using namespace LucED;
 
 
-const char* RegexException::what()
+const char* RegexException::what() const throw()
 {
     static const char* whatString = "RegexException";
     return whatString;

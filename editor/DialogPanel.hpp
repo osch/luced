@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,17 +19,18 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef DIALOGPANEL_H
-#define DIALOGPANEL_H
+#ifndef DIALOG_PANEL_HPP
+#define DIALOG_PANEL_HPP
 
 #include "GuiWidget.hpp"
 #include "KeyMapping.hpp"
 #include "HeapObjectArray.hpp"
 #include "WeakPtrQueue.hpp"
 #include "Callback.hpp"
+#include "HeapHashMap.hpp"
 
-namespace LucED {
-
+namespace LucED
+{
 
 class DialogPanel : public GuiWidget
 {
@@ -73,11 +74,12 @@ private:
     OwningPtr<GuiElement> rootElement;
     bool wasNeverShown;
     
-    KeyMapping keyMapping1;
-    KeyMapping keyMapping2;
+    KeyMapping::Ptr keyMapping1;
+    KeyMapping::Ptr keyMapping2;
+    
     typedef WeakPtrQueue<GuiWidget> WidgetQueue;
-    typedef HashMap< KeyMapping::Id, WidgetQueue::Ptr > HotKeyMapping;
-    HotKeyMapping hotKeyMapping;
+    typedef HeapHashMap< KeyMapping::Id, WidgetQueue::Ptr > HotKeyMapping;
+    HotKeyMapping::Ptr hotKeyMapping;
     
     WeakPtr<GuiWidget> focusedElement;
     
@@ -88,4 +90,4 @@ private:
 
 } // namespace LucED
 
-#endif // DIALOGPANEL_H
+#endif // DIALOG_PANEL_HPP

@@ -113,6 +113,9 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
                                    
       : TextWidget(parent, textStyles, hilitedText, borderWidth, options),
 
+        hasFocusFlag(false),
+        keyMapping(KeyMapping::create()),
+
         selectionOwner(SelectionOwner::create(this, 
                                               SelectionOwner::TYPE_PRIMARY,
                                               SelectionContentHandler::create(this))),
@@ -133,7 +136,6 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
         pasteDataReceiver = PasteDataReceiver::create(this,
                                                       PasteDataContentHandler::create(this));
     }
-    hasFocusFlag = false;
     addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
     textData->activateHistory();
 }
@@ -734,7 +736,7 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
     }
     
     unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
-    Callback<>::Ptr m = keyMapping.find(buttonState, pressedKey);
+    Callback<>::Ptr m = keyMapping->find(buttonState, pressedKey);
 
     if (m->isEnabled())
     {

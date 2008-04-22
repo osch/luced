@@ -45,7 +45,7 @@ public:
             return 0;
         } else {
             if (beginSelection.getPos() <= textPos && textPos < endSelection.getPos()) {
-                return isSecondarySelection ? 2 : 1;
+                return isSecondarySelection ? (byte) 2 : (byte) 1;
             } else {
                 return 0;
             }

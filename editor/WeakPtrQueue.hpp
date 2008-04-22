@@ -26,7 +26,8 @@
 #include "OwningPtr.hpp"
 #include "WeakPtr.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 
 template<class T> class WeakPtrQueue : public HeapObject
@@ -67,9 +68,10 @@ public:
     }
     int getLength() { return ptrArray.getLength(); }
     
-private:
+protected:
     WeakPtrQueue() {}
     
+private:
     mutable ObjectArray< WeakPtr<T> > ptrArray;
 };
 

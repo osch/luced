@@ -100,7 +100,7 @@ public:
         DesiredMeasuresChangedException()
             : BaseException("internal DesiredMeasuresChangedException")
         {}
-        virtual const char* what();
+        virtual const char* what() const throw();
     };
 
     class LayoutedElement

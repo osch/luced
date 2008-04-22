@@ -39,7 +39,7 @@ public:
     }
     virtual ~BaseException() throw() {}
 
-    virtual const char *what() = 0;
+    virtual const char* what() const throw() = 0;
 
     BaseException(const String& message)
         : message(message)

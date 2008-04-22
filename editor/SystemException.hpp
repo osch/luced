@@ -32,7 +32,7 @@ public:
     SystemException(String message)
         : BaseException(message)
     {}
-    virtual const char *what();
+    virtual const char* what() const throw();
 };
 
 } // namespace LucED

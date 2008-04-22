@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FILEEXCEPTION_H
-#define FILEEXCEPTION_H
+#ifndef FILE_EXCEPTION_HPP
+#define FILE_EXCEPTION_HPP
 
 #include "BaseException.hpp"
 
@@ -36,11 +36,12 @@ public:
     int getErrno() const {
         return errnum;
     }
-    virtual const char *what();
+    virtual const char* what() const throw();
+                               
 private:
     int errnum;
 };
 
 } // namespace LucED
 
-#endif // FILEEXCEPTION_H
+#endif // FILE_EXCEPTION_HPP

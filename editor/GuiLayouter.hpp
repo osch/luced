@@ -54,10 +54,10 @@ public:
     int getMaxCoValue()  { return m.maxHeight;  }
     int getIncrCoValue() { return m.incrHeight; }
 
-    int setMinCoValue(int v)  { m.minHeight  = v; }
-    int setBestCoValue(int v) { m.bestHeight  = v; }
-    int setMaxCoValue(int v)  { m.maxHeight  = v; }
-    int setIncrCoValue(int v) { m.incrHeight  = v; }
+    void setMinCoValue(int v)  { m.minHeight  = v; }
+    void setBestCoValue(int v) { m.bestHeight  = v; }
+    void setMaxCoValue(int v)  { m.maxHeight  = v; }
+    void setIncrCoValue(int v) { m.incrHeight  = v; }
 
 private:
     GuiElement::Measures& m;
@@ -84,10 +84,10 @@ public:
     int getMaxCoValue()  { return m.maxWidth;  }
     int getIncrCoValue() { return m.incrWidth; }
 
-    int setMinCoValue(int v)  { m.minWidth  = v; }
-    int setBestCoValue(int v) { m.bestWidth  = v; }
-    int setMaxCoValue(int v)  { m.maxWidth  = v; }
-    int setIncrCoValue(int v) { m.incrWidth  = v; }
+    void setMinCoValue(int v)  { m.minWidth  = v; }
+    void setBestCoValue(int v) { m.bestWidth  = v; }
+    void setMaxCoValue(int v)  { m.maxWidth  = v; }
+    void setIncrCoValue(int v) { m.incrWidth  = v; }
 
 private:
     GuiElement::Measures& m;
