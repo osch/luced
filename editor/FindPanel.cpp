@@ -46,10 +46,9 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
       panelInvoker(panelInvoker),
       defaultDirection(Direction::DOWN),
       historyIndex(-1),
-      messageBoxQueue(MessageBoxQueue::create()),
 
       interactionCallbacks(messageBoxInvoker,
-                           messageBoxQueue,
+                           SearchHistory::getInstance()->getMessageBoxQueue(),
                            newCallback(this, &FindPanel::requestCloseFromInteraction),
                            newCallback(this, &FindPanel::requestCurrentSelectionForInteraction),
                            newCallback(this, &FindPanel::handleException))
@@ -190,7 +189,7 @@ void FindPanel::requestCloseFromInteraction(SearchInteraction* interaction)
 
 void FindPanel::handleButtonPressed(Button* button)
 {
-    messageBoxQueue->closeQueued();
+    SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
     
     if (button == cancelButton)
     {
@@ -254,6 +253,8 @@ void FindPanel::internalFindAgain(bool forwardFlag)
             return;
         }
         
+        SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
+
         SearchParameter p;
         
         if (this->isVisible()) {
@@ -302,6 +303,8 @@ void FindPanel::internalFindSelection(bool forwardFlag)
         if (this->isVisible()) {
             requestClose();
         }
+
+        SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
 
         SearchParameter p;
                         p.setSearchForwardFlag(forwardFlag);
@@ -502,7 +505,7 @@ void FindPanel::handleException()
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Regex Error")
                                 .setMessage(String() << "Error within regular expression: " << ex.getMessage())
-                                .setMessageBoxQueue(messageBoxQueue));
+                                .setMessageBoxQueue(SearchHistory::getInstance()->getMessageBoxQueue()));
     }
     catch (LuaException& ex)
     {
@@ -515,7 +518,7 @@ void FindPanel::handleException()
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Lua Error")
                                 .setMessage(ex.getMessage())
-                                .setMessageBoxQueue(messageBoxQueue));
+                                .setMessageBoxQueue(SearchHistory::getInstance()->getMessageBoxQueue()));
     }
 }
 

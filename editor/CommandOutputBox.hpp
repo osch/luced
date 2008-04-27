@@ -51,7 +51,7 @@ public:
                                    TopWinList::getInstance());
     }
     
-    virtual void requestCloseWindow();
+    virtual void requestCloseWindow(TopWin::CloseReason reason);
 
 private:
     CommandOutputBox(TopWin* referingWindow, TextData::Ptr textData);

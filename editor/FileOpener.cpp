@@ -35,7 +35,7 @@ void FileOpener::handleSkipFileButton()
         numberAndFileList->remove(0);
     }
     if (lastTopWin.isValid()) {
-        lastTopWin->requestCloseWindow();
+        lastTopWin->requestCloseWindow(TopWin::CLOSED_SILENTLY);
         lastTopWin = NULL;
     }
     isWaitingForMessageBox = false;
@@ -57,7 +57,7 @@ void FileOpener::handleCreateFileButton()
 void FileOpener::handleAbortButton()
 {
     if (lastTopWin.isValid()) {
-        lastTopWin->requestCloseWindow();
+        lastTopWin->requestCloseWindow(TopWin::CLOSED_SILENTLY);
         lastTopWin = NULL;
     }
     numberAndFileList.invalidate();

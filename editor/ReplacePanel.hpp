@@ -35,7 +35,6 @@
 #include "types.hpp"
 #include "EditFieldGroup.hpp"
 #include "FindPanel.hpp"
-#include "MessageBoxQueue.hpp"
 #include "PasteDataCollector.hpp"
 #include "SearchInteraction.hpp"
 
@@ -147,8 +146,6 @@ private:
     WeakPtr<FindPanel> findPanel;
 
     Callback<String>::Ptr selectionRequestedCallback;
-
-    MessageBoxQueue::Ptr messageBoxQueue;
 
     SearchInteraction::Ptr         currentInteraction;
     SearchInteraction::Callbacks   interactionCallbacks;

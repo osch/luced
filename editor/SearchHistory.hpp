@@ -28,6 +28,7 @@
 #include "ObjectArray.hpp"
 #include "SingletonInstance.hpp"
 #include "SearchParameter.hpp"
+#include "MessageBoxQueue.hpp"
 
 namespace LucED
 {
@@ -143,6 +144,10 @@ public:
     SearchParameter getSearchParameterFromLastEntry() const {
         return getSearchParameterFromEntry(getEntryCount() - 1);
     }
+
+    MessageBoxQueue::Ptr getMessageBoxQueue() const {
+        return messageBoxQueue;
+    }
     
 private:
     friend class SingletonInstance<SearchHistory>;
@@ -151,6 +156,7 @@ private:
     SearchHistory();
     
     ObjectArray<Entry> entries;
+    MessageBoxQueue::Ptr messageBoxQueue;
 };
 
 } // namespace LucED

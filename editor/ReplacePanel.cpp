@@ -51,10 +51,9 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
       historyIndex(-1),
       selectSearchRegexFlag(false),
       findPanel(findPanel),
-      messageBoxQueue(MessageBoxQueue::create()),
 
       interactionCallbacks(messageBoxInvoker,
-                           messageBoxQueue,
+                           SearchHistory::getInstance()->getMessageBoxQueue(),
                            newCallback(this, &ReplacePanel::requestCloseFromInteraction),
                            newCallback(this, &ReplacePanel::requestCurrentSelectionForInteraction),
                            newCallback(this, &ReplacePanel::handleException))
@@ -267,7 +266,7 @@ GuiElement::ProcessingResult ReplacePanel::processEvent(const XEvent* event)
 
 void ReplacePanel::handleButtonPressed(Button* button)
 {
-    messageBoxQueue->closeQueued();
+    SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
 
     if (button == cancelButton)
     {
@@ -379,6 +378,8 @@ void ReplacePanel::internalFindAgain(bool forwardFlag)
             return;
         }
         
+        SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
+
         SearchParameter p;
         
         if (this->isVisible()) {
@@ -427,6 +428,8 @@ void ReplacePanel::internalReplaceAgain(bool forwardFlag)
             return;
         }
     
+        SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
+
         SearchParameter p;
         
         if (this->isVisible()) {
@@ -673,7 +676,7 @@ void ReplacePanel::handleException()
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Replace Error")
                                 .setMessage(String() << "Error within replace string: " << ex.getMessage())
-                                .setMessageBoxQueue(messageBoxQueue));
+                                .setMessageBoxQueue(SearchHistory::getInstance()->getMessageBoxQueue()));
     }
     catch (RegexException& ex)
     {
@@ -686,7 +689,7 @@ void ReplacePanel::handleException()
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Regex Error")
                                 .setMessage(String() << "Error within regular expression: " << ex.getMessage())
-                                .setMessageBoxQueue(messageBoxQueue));
+                                .setMessageBoxQueue(SearchHistory::getInstance()->getMessageBoxQueue()));
     }
     catch (LuaException& ex)
     {
@@ -694,7 +697,7 @@ void ReplacePanel::handleException()
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Lua Error")
                                 .setMessage(ex.getMessage())
-                                .setMessageBoxQueue(messageBoxQueue));
+                                .setMessageBoxQueue(SearchHistory::getInstance()->getMessageBoxQueue()));
     }
 }
 

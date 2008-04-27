@@ -79,8 +79,8 @@ public:
     void invokeReplacePanelBackward();
     void invokeReplacePanelForward();
 
-    virtual void requestCloseWindow();
-    
+    virtual void requestCloseWindow(TopWin::CloseReason reason);
+
     String getFileName() const;
     
     TextStyles::Ptr getTextStyles() {
@@ -115,6 +115,8 @@ private:
 
     void requestCloseFor(GuiWidget* w);
 
+    void requestCloseWindowByUser();
+
     void handleEscapeKey();
     void handleSaveKey();
     void handleSaveAsKey();
@@ -134,7 +136,7 @@ private:
     
     void setWindowTitle();
     
-    void notifyRequestCloseChildWindow(TopWin *topWin);
+    void notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseReason reason);
     void internalInvokeNewMessageBox();
     void internalSetMessageBox(const MessageBoxParameter& messageBoxParameter);
 

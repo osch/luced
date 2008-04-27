@@ -27,14 +27,16 @@ using namespace LucED;
 
 SingletonInstance<SearchHistory> SearchHistory::instance;
 
+SearchHistory::SearchHistory()
+    : messageBoxQueue(MessageBoxQueue::create())
+{
+    entries.append(Entry());
+}
+
+
 SearchHistory* SearchHistory::getInstance()
 {
     return instance.getPtr();
-}
-
-SearchHistory::SearchHistory()
-{
-    entries.append(Entry());
 }
 
 

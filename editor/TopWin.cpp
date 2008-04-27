@@ -192,7 +192,7 @@ GuiElement::ProcessingResult TopWin::processEvent(const XEvent* event)
 
             case ClientMessage: {
                 if (event->xclient.data.l[0] == this->x11InternAtomForDeleteWindow) {
-                    this->requestCloseWindow();
+                    this->requestCloseWindow(TopWin::CLOSED_BY_USER);
                     return EVENT_PROCESSED;
 /*                } else if (event->xclient.data.l[0] == this->x11InternAtomForTakeFocus) {
 printf("TakeFocus\n");
@@ -467,10 +467,10 @@ void TopWin::setWindowManagerHints()
     }
 }
 
-void TopWin::requestCloseWindow()
+void TopWin::requestCloseWindow(TopWin::CloseReason reason)
 {
     myOwner->requestCloseChildWindow(this);
-    requestForCloseNotifyCallbacks.invokeAllCallbacks(this);
+    requestForCloseNotifyCallbacks.invokeAllCallbacks(this, reason);
 }
 
 

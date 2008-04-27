@@ -86,12 +86,12 @@ void WindowCloser::closeWindows()
             }
             else
             {
-                editorTopWin->requestCloseWindow();
+                editorTopWin->requestCloseWindow(TopWin::CLOSED_SILENTLY);
             }
         }
         else
         {
-            topWin->requestCloseWindow();
+            topWin->requestCloseWindow(TopWin::CLOSED_SILENTLY);
         }
     }
     

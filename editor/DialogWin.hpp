@@ -50,6 +50,8 @@ protected:
     
     
 private:
+    void requestCloseWindowByUser();
+    
     void prepareSizeHints();
     
     void notifyAboutReferingWindowMapping(bool isReferingWindowMapped);

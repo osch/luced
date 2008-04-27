@@ -42,7 +42,7 @@ TopWinList* TopWinList::getInstance()
 }
 
 
-void TopWinList::notifyRequestCloseChildWindow(TopWin* topWin)
+void TopWinList::notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseReason reason)
 {
     if (ownedTopWins->getNumberOfTopWins() == 0)
     {

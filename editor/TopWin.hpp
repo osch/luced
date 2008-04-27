@@ -40,12 +40,21 @@ class TopWin : public GuiWidget
 public:
     typedef WeakPtr<TopWin> Ptr;
     
+    enum CloseReason
+    {
+        CLOSED_BY_USER,
+        CLOSED_SILENTLY
+    };
+    
     virtual ~TopWin();
 
     virtual ProcessingResult processEvent(const XEvent* event);
 
     virtual void requestFocus();
-    virtual void requestCloseWindow();
+    virtual void requestCloseWindow(TopWin::CloseReason reason);
+    void requestCloseWindow() {
+        requestCloseWindow(CLOSED_SILENTLY);
+    }
     virtual void treatNewWindowPosition(Position newPosition) {}
     virtual void treatFocusIn() {}
     virtual void treatFocusOut() {}
@@ -60,7 +69,7 @@ public:
         return mapped;
     }
 
-    void registerRequestForCloseNotifyCallback(Callback<TopWin*>::Ptr callback) {
+    void registerRequestForCloseNotifyCallback(Callback<TopWin*,CloseReason>::Ptr callback) {
         requestForCloseNotifyCallbacks.registerCallback(callback);
     }
 
@@ -121,7 +130,7 @@ private:
     bool focusFlag;
     
     CallbackContainer<bool> mappingNotifyCallbacks;
-    CallbackContainer<TopWin*> requestForCloseNotifyCallbacks;
+    CallbackContainer<TopWin*,CloseReason> requestForCloseNotifyCallbacks;
 
     OwnedTopWins::Ptr ownedTopWins;
     Atom raiseWindowAtom;

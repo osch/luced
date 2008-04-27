@@ -55,7 +55,7 @@ public:
     
     virtual ProcessingResult processKeyboardEvent(const XEvent *event);
     
-    virtual void requestCloseWindow();
+    virtual void requestCloseWindow(TopWin::CloseReason reason);
 
 private:
     MessageBox(TopWin* referingWindow, const MessageBoxParameter& p);

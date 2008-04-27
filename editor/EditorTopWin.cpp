@@ -167,7 +167,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("f"),      newCallback(this,      &EditorTopWin::invokeFindPanelBackward));
     keyMapping1->set( KeyModifier("Ctrl"),       KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
     keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelBackward));
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("w"),      newCallback(this,      &EditorTopWin::requestCloseWindow));
+    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("w"),      newCallback(this,      &EditorTopWin::requestCloseWindowByUser));
     keyMapping1->set( KeyModifier(),             KeyId("Escape"), newCallback(this,      &EditorTopWin::handleEscapeKey));
     keyMapping1->set( KeyModifier("Ctrl"),       KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveKey));
     keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveAsKey));
@@ -406,7 +406,7 @@ void EditorTopWin::internalSetMessageBox(const MessageBoxParameter& p)
         MessageBox::Ptr oldBox = messageBox;
                                  messageBox.invalidate();
         oldBox->hide();
-        oldBox->requestCloseWindow();
+        oldBox->requestCloseWindow(TopWin::CLOSED_SILENTLY);
     }
     if (isVisible())
     {
@@ -435,12 +435,12 @@ void EditorTopWin::closeMessageBox()
         }
         if (messageBox.isValid()) {
             messageBox->hide();
-            messageBox->requestCloseWindow();
+            messageBox->requestCloseWindow(TopWin::CLOSED_SILENTLY);
         }
     }
 }
 
-void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin)
+void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseReason reason)
 {
     if (hasMessageBox && topWin == messageBox)
     {
@@ -450,14 +450,18 @@ void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin)
             isMessageBoxModal = false;
             textEditor->enableCursorChanges();
         }
-        this->requestFocus();
-        this->raise();
         
-        if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
-            && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100)
+        if (reason == TopWin::CLOSED_BY_USER)
         {
-            // vendor <Hummingbird Communications Ltd.> <6100>
-            this->shouldRaise = true; // delayed raise is Workaround for Exceed X11-Server
+            this->requestFocus();
+            this->raise();
+            
+            if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
+                && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100)
+            {
+                // vendor <Hummingbird Communications Ltd.> <6100>
+                this->shouldRaise = true; // delayed raise is Workaround for Exceed X11-Server
+            }
         }
     }
 }
@@ -540,7 +544,7 @@ void EditorTopWin::requestCloseFor(GuiWidget* w)
 {
     if (w == invokedPanel) {
         if (messageBox.isValid()) {
-            messageBox->requestCloseWindow();
+            messageBox->requestCloseWindow(TopWin::CLOSED_SILENTLY);
         }
         rootElement->removeElementAtPosition(this->invokedPanelIndex);
         w->hide();
@@ -644,7 +648,7 @@ void EditorTopWin::saveAndClose()
         else {
             textData->save();
             GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
-            requestCloseWindow();
+            requestCloseWindow(TopWin::CLOSED_SILENTLY);
         }
     } catch (FileException& ex) {
         setMessageBox(MessageBoxParameter().setTitle("File Error")
@@ -658,7 +662,12 @@ void EditorTopWin::saveAndClose()
     }
 }
 
-void EditorTopWin::requestCloseWindow()
+void EditorTopWin::requestCloseWindowByUser()
+{
+    requestCloseWindow(TopWin::CLOSED_BY_USER);
+}
+
+void EditorTopWin::requestCloseWindow(TopWin::CloseReason reason)
 {
     File file(textData->getFileName());
 
@@ -674,14 +683,14 @@ void EditorTopWin::requestCloseWindow()
     }
     else
     {
-        TopWin::requestCloseWindow();
+        TopWin::requestCloseWindow(reason);
         isClosingFlag = true;
     }
 }
 
 void EditorTopWin::requestCloseWindowAndDiscardChanges()
 {
-    TopWin::requestCloseWindow();
+    TopWin::requestCloseWindow(TopWin::CLOSED_SILENTLY);
 }
 
 void EditorTopWin::createEmptyWindow()

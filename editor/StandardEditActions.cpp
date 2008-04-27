@@ -1789,14 +1789,40 @@ void StandardEditActions::openCorrespondingFile()
             } else if (ext == "hpp") {
                 newExt = "cpp";
             }                                  
-            correspondingFile << currentFile.getSubstring(r.getCaptureBegin(1),
-                                                          r.getCaptureLength(1))
-                              << newExt
-                              << currentFile.getSubstring(r.getCaptureBegin(3),
-                                                          r.getCaptureLength(3));
+            correspondingFile = String() << currentFile.getSubstring(r.getCaptureBegin(1),
+                                                                     r.getCaptureLength(1))
+                                         << newExt
+                                         << currentFile.getSubstring(r.getCaptureBegin(3),
+                                                                     r.getCaptureLength(3));
             if (File(correspondingFile).exists())
             {
                 FileOpener::start(correspondingFile);
+            }
+            else
+            {
+                Regex r2("(.*)(1\\.c|2\\.h)((?:\\.emlua)|)");
+
+                if (r2.matches(currentFile))
+                {
+                    String ext = currentFile.getSubstring(r2.getCaptureBegin(2),
+                                                          r2.getCaptureLength(2));
+                    String newExt;
+                    
+                    if (ext == "1.c") {
+                        newExt = "2.h";
+                    } else if (ext == "2.h") {
+                        newExt = "1.c";
+                    }                                  
+                    correspondingFile = String() << currentFile.getSubstring(r2.getCaptureBegin(1),
+                                                                             r2.getCaptureLength(1))
+                                                 << newExt
+                                                 << currentFile.getSubstring(r2.getCaptureBegin(3),
+                                                                             r2.getCaptureLength(3));
+                    if (File(correspondingFile).exists())
+                    {
+                        FileOpener::start(correspondingFile);
+                    }
+                }
             }
         }
     }

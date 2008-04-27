@@ -64,8 +64,6 @@ void SearchInteraction::internalStartFind(bool findSelection)
     
             replaceUtil.setParameter(p);
             
-            SearchHistory::getInstance()->append(p);
-    
             setTextPositionForSearchStart();
             internalExecute(false, false);
         }
@@ -191,8 +189,6 @@ void SearchInteraction::continueWithFindSelection(String currentSelection, bool 
                 p.setRegexFlag(selectSearchRegexFlag);
                 p.setFindString(currentSelection);
                 
-                SearchHistory::getInstance()->append(p);
-        
                 replaceUtil.setParameter(p);
 
                 setTextPositionForSearchStart();
@@ -311,6 +307,8 @@ void SearchInteraction::internalExecute(bool isWrapping, bool autoContinue)
     {
         GuiRoot::getInstance()->flushDisplay();
     
+        SearchHistory::getInstance()->append(p);
+        
         replaceUtil.setAllowMatchAtStartOfSearchFlag(isWrapping);
         replaceUtil.findNext();
     

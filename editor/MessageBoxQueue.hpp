@@ -3,6 +3,7 @@
 
 #include "WeakPtrQueue.hpp"
 #include "OwningPtr.hpp"
+#include "TopWin.hpp"
 
 namespace LucED
 {
@@ -18,7 +19,7 @@ public:
         return Ptr(new MessageBoxQueue());
     }
     
-    void closeQueued();
+    void closeQueued(TopWin::CloseReason reason = TopWin::CLOSED_SILENTLY);
 };
 
 } // namespace LucED
@@ -28,12 +29,12 @@ public:
 namespace LucED
 {
 
-inline void MessageBoxQueue::closeQueued()
+inline void MessageBoxQueue::closeQueued(TopWin::CloseReason reason)
 {
     while (getLength() > 0) {
         WeakPtr<MessageBox> m = getLast();
         if (m.isValid()) {
-            m->requestCloseWindow();
+            m->requestCloseWindow(reason);
         }
         removeLast();
     }

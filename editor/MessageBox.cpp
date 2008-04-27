@@ -157,21 +157,21 @@ void MessageBox::handleButtonPressed(Button* button)
     {
 
         if (button == button1 && defaultButtonCallback->isEnabled()) {
-                PanelDialogWin::requestCloseWindow();
+                PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
                 wasClosed = true;
                 defaultButtonCallback->call();
         } else {
             if (button == button1 && button3.isInvalid()) {
-                PanelDialogWin::requestCloseWindow();
+                PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
                 wasClosed = true;
             }
             else if (button == button3 && button3.isValid()) {
-                PanelDialogWin::requestCloseWindow();
+                PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
                 wasClosed = true;
                 cancelButtonCallback->call();
             }
             else if (button == button2) {
-                PanelDialogWin::requestCloseWindow();
+                PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
                 wasClosed = true;
                 alternativeButtonCallback->call();
             }
@@ -179,9 +179,9 @@ void MessageBox::handleButtonPressed(Button* button)
     }
 }
 
-void MessageBox::requestCloseWindow()
+void MessageBox::requestCloseWindow(TopWin::CloseReason reason)
 {
-    PanelDialogWin::requestCloseWindow();
+    PanelDialogWin::requestCloseWindow(reason);
     if (!wasClosed) {
         if (closeCallback->isEnabled()) {
             closeCallback->call();
@@ -207,7 +207,7 @@ GuiElement::ProcessingResult MessageBox::processKeyboardEvent(const XEvent* even
         
         if (keyAction.isEnabled()) {
             keyAction->call();
-            PanelDialogWin::requestCloseWindow();
+            PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
             rslt = EVENT_PROCESSED;
         }
     }

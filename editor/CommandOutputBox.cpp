@@ -116,9 +116,9 @@ void CommandOutputBox::handleButtonPressed(Button* button)
 #endif
 }
 
-void CommandOutputBox::requestCloseWindow()
+void CommandOutputBox::requestCloseWindow(TopWin::CloseReason reason)
 {
-    PanelDialogWin::requestCloseWindow();
+    PanelDialogWin::requestCloseWindow(reason);
 #if 0
     if (!wasClosed) {
         if (closeCallback->isEnabled()) {

@@ -80,7 +80,7 @@ private:
         return ownedTopWins;
     }
 
-    void notifyRequestCloseChildWindow(TopWin* topWin);
+    void notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseReason reason);
 
     void checkIfEmpty();
     

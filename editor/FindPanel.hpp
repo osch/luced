@@ -35,7 +35,6 @@
 #include "types.hpp"
 #include "PasteDataReceiver.hpp"
 #include "KeyMapping.hpp"
-#include "MessageBoxQueue.hpp"
 #include "SearchInteraction.hpp"
 #include "PasteDataCollector.hpp"
 
@@ -126,8 +125,6 @@ private:
     PasteDataReceiver::Ptr pasteDataReceiver;
     
     Callback<String>::Ptr selectionRequestedCallback;
-
-    MessageBoxQueue::Ptr messageBoxQueue;
 
     SearchInteraction::Ptr         currentInteraction;
     SearchInteraction::Callbacks   interactionCallbacks;

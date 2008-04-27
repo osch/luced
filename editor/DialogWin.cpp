@@ -39,7 +39,12 @@ DialogWin::DialogWin(TopWin* referingWindow)
         referingWindow->registerMappingNotifyCallback(newCallback(this, &DialogWin::notifyAboutReferingWindowMapping));
     }
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    keyMapping->set(            0, KeyId("Escape"),   newCallback(this, &DialogWin::requestCloseWindow));
+    keyMapping->set(            0, KeyId("Escape"),   newCallback(this, &DialogWin::requestCloseWindowByUser));
+}
+
+void DialogWin::requestCloseWindowByUser()
+{
+    requestCloseWindow(TopWin::CLOSED_BY_USER);
 }
 
 void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
