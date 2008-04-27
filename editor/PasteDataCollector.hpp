@@ -19,33 +19,48 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REPLACE_UTIL_HPP
-#define REPLACE_UTIL_HPP
+#ifndef PASTE_DATA_COLLECTOR_HPP
+#define PASTE_DATA_COLLECTOR_HPP
 
-#include "FindUtil.hpp"
+#include "String.hpp"
+#include "PasteDataReceiver.hpp"
+#include "OwningPtr.hpp"
 
 namespace LucED
 {
 
-class ReplaceUtil : public FindUtil
+template
+<
+    class T
+>
+class PasteDataCollector : public PasteDataReceiver::ContentHandler
 {
 public:
+    typedef OwningPtr<PasteDataCollector> Ptr;
+
+    static Ptr create(RawPtr<T> referingWidget) {
+        return Ptr(new PasteDataCollector(referingWidget));
+    }
     
-    ReplaceUtil(RawPtr<TextData> textData)
-        : FindUtil(textData)
+    virtual void notifyAboutBeginOfPastingData() {
+        collectedData.clear();
+    }
+    virtual void notifyAboutReceivedPasteData(const byte* data, long length) {
+        collectedData.append(data, length);
+    }
+    virtual void notifyAboutEndOfPastingData() {
+        String rslt = collectedData;
+                      collectedData.clear();
+        referingWidget->notifyAboutCollectedPasteData(rslt);
+    }
+private:
+    PasteDataCollector(RawPtr<T> referingWidget)
+        : referingWidget(referingWidget)
     {}
-    
-    void setReplaceString(const String& replaceString) {
-        p.setReplaceString(replaceString);
-    }
-    String getReplaceString() const {
-        return p.getReplaceString();
-    }
-    String getSubstitutedString();
-    
-    bool replaceAllBetween(long spos, long epos);
+    RawPtr<T> referingWidget;
+    String collectedData;
 };
 
 } // namespace LucED
 
-#endif // REPLACE_UTIL_HPP
+#endif // PASTE_DATA_COLLECTOR_HPP

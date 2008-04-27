@@ -19,33 +19,29 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REPLACE_UTIL_HPP
-#define REPLACE_UTIL_HPP
+#ifndef SEARCH_PARAMETER_TYPES_HPP
+#define SEARCH_PARAMETER_TYPES_HPP
 
-#include "FindUtil.hpp"
+#include "Flags.hpp"
 
 namespace LucED
 {
 
-class ReplaceUtil : public FindUtil
+class SearchParameterTypes
 {
 public:
+    enum Option
+    {
+        REGEX,
+        WHOLE_WORD,
+        IGNORE_CASE,
+        BACKWARD,
+        NOT_AT_START
+    };
     
-    ReplaceUtil(RawPtr<TextData> textData)
-        : FindUtil(textData)
-    {}
-    
-    void setReplaceString(const String& replaceString) {
-        p.setReplaceString(replaceString);
-    }
-    String getReplaceString() const {
-        return p.getReplaceString();
-    }
-    String getSubstitutedString();
-    
-    bool replaceAllBetween(long spos, long epos);
+    typedef Flags<Option> Options;
 };
 
 } // namespace LucED
 
-#endif // REPLACE_UTIL_HPP
+#endif // SEARCH_PARAMETER_TYPES_HPP

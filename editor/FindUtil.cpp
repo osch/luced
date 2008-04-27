@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -29,22 +29,15 @@ using namespace LucED;
 
 
 FindUtil::FindUtil(RawPtr<TextData> textData)
-    : searchForwardFlag(true),
-      ignoreCaseFlag(false),
-      regexFlag(false),
-      wholeWordFlag(false),
-      wasFoundFlag(false),
+    : wasFoundFlag(false),
       textPosition(0),
       maximalEndOfMatchPosition(-1),
       textData(textData),
       wasError(false),
       luaException(""),
       wasInitializedFlag(false),
-      maxRegexAssertionLength(GlobalConfig::getInstance()->getMaxRegexAssertionLength()),
-      allowMatchAtStartOfSearchFlag(true)
-{
-    setOptions(Options());
-}
+      maxRegexAssertionLength(GlobalConfig::getInstance()->getMaxRegexAssertionLength())
+{}
 
 
 LuaObject FindUtil::evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
@@ -164,29 +157,29 @@ String FindUtil::quoteRegexCharacters(const String& s)
     return rslt;
 }
 
-FindUtil::PreparsedCallout::PreparsedCallout(const String& searchString, const int startPosParameter)
+FindUtil::PreparsedCallout::PreparsedCallout(const String& findString, const int startPosParameter)
     : startPosition(startPosParameter)
 {
     try
     {
         int pos = startPosition;
 
-        ASSERT(searchString[pos] == '(' && searchString[pos+1] == '*');
+        ASSERT(findString[pos] == '(' && findString[pos+1] == '*');
 
-        const int n = searchString.getLength();
+        const int n = findString.getLength();
 
         int parenCounter = 1;
         int j;
         int lastParen = -1;
         for (j = pos+2; parenCounter > 0 && j < n; ++j) {
-            if (searchString[j] == '(') {
+            if (findString[j] == '(') {
                 if (parenCounter == 1) {
                     lastParen = j;
                 } else {
                     lastParen = -1;
                 }
                 ++parenCounter;
-            } else if (searchString[j] == ')') {
+            } else if (findString[j] == ')') {
                 --parenCounter;
             }
         }
@@ -204,7 +197,7 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& searchString, const i
             throw RegexException(String() << "Missing Lua callout expression within '(*...)'.", 
                                  pos+2);
         }
-        String varName = searchString.getSubstring(pos+2, varEnd - (pos+2));
+        String varName = findString.getSubstring(pos+2, varEnd - (pos+2));
 
         LuaInterpreter::Result exprResult = lua->executeExpression(varName);
 
@@ -223,12 +216,12 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& searchString, const i
         if (lastParen != -1) {
             for (int p = lastParen + 1; p < j; ++p) {
                 int p2 = p;
-                while (p2 < n && searchString[p2] != ',' && searchString[p2] != ')') {
+                while (p2 < n && findString[p2] != ',' && findString[p2] != ')') {
                     ++p2;
                 }
                 if (p2 > p)
                 {
-                    String paramString = searchString.getSubstring(p, p2 - p);
+                    String paramString = findString.getSubstring(p, p2 - p);
                     arguments.append(paramString);
                     positions.append(p);
                 }
@@ -279,29 +272,31 @@ void FindUtil::initialize()
     
     calloutObjects.clear();
 
-    if (searchString.getLength() <= 0) {
+    String findString = p.getFindString();
+
+    if (findString.getLength() <= 0) {
         regex = BasicRegex();
         wasInitializedFlag = true;
         return;
     }
 
     BasicRegex::CreateOptions opts = BasicRegex::MULTILINE;
-    if (ignoreCaseFlag) {
+    if (p.hasIgnoreCaseFlag()) {
         opts |= BasicRegex::IGNORE_CASE;
     }
 
     String searchPattern;
-    if (wholeWordFlag) {
+    if (p.hasWholeWordFlag()) {
         searchPattern.append("\\b");             expressionPositions.append(0);
     }
 
-    if (regexFlag)
+    if (p.hasRegexFlag())
     {
         int calloutCounter = 1;
-        for (int i = 0, n = searchString.getLength(); i < n; ++i)
+        for (int i = 0, n = findString.getLength(); i < n; ++i)
         {
-            if ((i == 0 || searchString[i-1] != '\\')
-             && searchString[i] == '(' && i+1 < n && searchString[i+1] == '*')
+            if ((i == 0 || findString[i-1] != '\\')
+             && findString[i] == '(' && i+1 < n && findString[i+1] == '*')
             {
                 {
                     char counterString[20];
@@ -318,7 +313,7 @@ void FindUtil::initialize()
                 }
                 try
                 {
-	            PreparsedCallout::Ptr preparsedCallout = PreparsedCallout::parse(searchString, i);
+	            PreparsedCallout::Ptr preparsedCallout = PreparsedCallout::parse(findString, i);
                     i = preparsedCallout->getLastPosition();
                     preparsedCallouts.append(preparsedCallout);
                 }
@@ -327,32 +322,32 @@ void FindUtil::initialize()
                     throw MyRegexException(ex.getMessage(), ex.getPosition());
                 }
             }
-            else if ((i == 0 || searchString[i-1] != '\\')
-                    && searchString[i] == '(' && i+3 < n && searchString[i+1] == '?' && searchString[i+2] == 'C')
+            else if ((i == 0 || findString[i-1] != '\\')
+                    && findString[i] == '(' && i+3 < n && findString[i+1] == '?' && findString[i+2] == 'C')
             {
                 throw MyRegexException("Callout pattern '(?C...)' not allowed.", i);
             }
             else
             {
-                searchPattern.append(searchString[i]);           expressionPositions.append(i);
+                searchPattern.append(findString[i]);           expressionPositions.append(i);
             }
         }
     }
     else {
-        for (int i = 0, n = searchString.getLength(); i < n; ++i) {
-            switch (searchString[i]) {
+        for (int i = 0, n = findString.getLength(); i < n; ++i) {
+            switch (findString[i]) {
                 case '\\': case '^': case '$': case '.': case '[': case ']': case '|':
                 case '(':  case ')': case '?': case '*': case '+': case '{':
                 case '}':  case '-': searchPattern.append('\\'); expressionPositions.append(i);
             }
-            searchPattern.append(searchString[i]);               expressionPositions.append(i);
+            searchPattern.append(findString[i]);               expressionPositions.append(i);
         }
     }
-    if (wholeWordFlag) {
-        searchPattern.append("\\b");                             expressionPositions.append(searchString.getLength());
+    if (p.hasWholeWordFlag()) {
+        searchPattern.append("\\b");                             expressionPositions.append(findString.getLength());
     }
     
-    expressionPositions.append(searchString.getLength());
+    expressionPositions.append(findString.getLength());
 
     regex = BasicRegex(searchPattern, opts);
 
@@ -426,7 +421,7 @@ void FindUtil::findNext()
 
         ++doItCounter;
 
-        if (searchForwardFlag) 
+        if (p.hasSearchForwardFlag()) 
         {
             long epos;
             if (maximalEndOfMatchPosition == -1) {
@@ -453,7 +448,7 @@ void FindUtil::findNext()
                 }
                 if (ovector[1] <= epos)
                 {
-                    if (allowMatchAtStartOfSearchFlag || doItCounter > 1 || startingTextPosition < ovector[1])
+                    if (p.hasAllowMatchAtStartOfSearchFlag() || doItCounter > 1 || startingTextPosition < ovector[1])
                     {
                         wasFoundFlag = true;
                         textPosition = ovector[0];
@@ -482,7 +477,7 @@ void FindUtil::findNext()
                 {
                     if (ovector[1] <= epos) 
                     {
-                        if (allowMatchAtStartOfSearchFlag || doItCounter > 1 || ovector[0] < startingTextPosition)
+                        if (p.hasAllowMatchAtStartOfSearchFlag() || doItCounter > 1 || ovector[0] < startingTextPosition)
                         {
                             wasFoundFlag = true;
                         }

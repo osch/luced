@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef PASTEDATARECEIVER_H
-#define PASTEDATARECEIVER_H
+#ifndef PASTE_DATA_RECEIVER_H
+#define PASTE_DATA_RECEIVER_H
 
 #include "ByteArray.hpp"
 #include "GuiWidget.hpp"
@@ -30,7 +30,8 @@
 #include "OwningPtr.hpp"
 #include "RawPtr.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class PasteDataReceiver : public HeapObject,
                           public GuiWidgetAccessForEventProcessors, 
@@ -60,7 +61,7 @@ public:
     void requestClipboardPasting();
     bool isReceivingPasteData();
 
-    GuiElement::ProcessingResult processPasteDataReceiverEvent(const XEvent *event);
+    GuiElement::ProcessingResult processPasteDataReceiverEvent(const XEvent* event);
 
 private:
     PasteDataReceiver(RawPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler);
@@ -81,4 +82,4 @@ private:
 
 } // namespace LucED
 
-#endif // PASTEDATARECEIVER_H
+#endif // PASTE_DATA_RECEIVER_H

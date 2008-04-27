@@ -47,7 +47,12 @@ void SearchHistory::append(const Entry& newEntry)
 
     Entry& last = entries.getLast();
 
-    if (last.getFindString() == "" || last.getFindString() == newEntry.getFindString())
+    if (   last.getFindString() == "" 
+        || last.getFindString() == newEntry.getFindString()
+        || (    last.getIgnoreCaseFlag() &&  newEntry.getIgnoreCaseFlag()
+            && !last.getRegexFlag()      && !newEntry.getRegexFlag()
+            &&  last.getWholeWordFlag()  ==  newEntry.getWholeWordFlag()
+            &&  last.getFindString().equalsIgnoreCase(newEntry.getFindString())))
     {
         if (!last.hasReplaceString() || !newEntry.hasReplaceString()
           || last.getReplaceString() == newEntry.getReplaceString())

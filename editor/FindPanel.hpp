@@ -33,10 +33,11 @@
 #include "Callback.hpp"
 #include "BasicRegex.hpp"
 #include "types.hpp"
-#include "FindUtil.hpp"
 #include "PasteDataReceiver.hpp"
 #include "KeyMapping.hpp"
 #include "MessageBoxQueue.hpp"
+#include "SearchInteraction.hpp"
+#include "PasteDataCollector.hpp"
 
 namespace LucED
 {
@@ -75,6 +76,7 @@ public:
     
 private:
     friend class FindPanelAccess;
+    friend class PasteDataCollector<FindPanel>;
     
     FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
                                                                         Callback<DialogPanel*>::Ptr               panelInvoker,
@@ -82,30 +84,26 @@ private:
 
     void handleException();
     
-    void executeFind(bool isWrapping, bool autoContinue, Callback<>::Ptr handleContinueSearchButton);
-
     void handleButtonPressed(Button* button);
     void handleButtonDefaultKey(Button* button);
 
-    void handleContinueAtBeginningButton();
-    void handleContinueAtEndButton();
+    void internalFindAgain(bool forwardFlag);
+    void internalFindSelection(bool forwardFlag);
     
-    void internalFindAgainForward(bool autoContinueAtEnd);
-    void findAgainForwardAndAutoContinueAtEnd();
-
-    void internalFindAgainBackward(bool autoContinueAtBegin);
-    void findAgainBackwardAndAutoContinueAtBegin();
-
-    void handleContinueSelectionFindAtBeginningButton();
-    void handleContinueSelectionFindAtEndButton();
-    
-    void internalFindNext(bool wrapping, bool autoContinue);
     
     void handleModifiedEditField(bool modifiedFlag);
 
-    void notifyAboutBeginOfPastingData();
-    void notifyAboutReceivedPasteData(const byte* data, long length);
-    void notifyAboutEndOfPastingData();
+    void notifyAboutCollectedPasteData(String collectedSelectionData);
+    
+    void requestCurrentSelectionForInteraction(SearchInteraction* interaction, Callback<String>::Ptr selectionRequestedCallback);
+    void requestCloseFromInteraction(SearchInteraction* interaction);
+
+    SearchParameter getSearchParameterFromGuiControls() const {
+        return SearchParameter().setIgnoreCaseFlag (!caseSensitiveCheckBox->isChecked())
+                                .setRegexFlag      (regularExprCheckBox->isChecked())
+                                .setWholeWordFlag  (wholeWordCheckBox->isChecked())
+                                .setFindString     (editField->getTextData()->getAsString());
+    }
 
     RawPtr<TextEditorWidget> e;
 
@@ -122,16 +120,17 @@ private:
     BasicRegex regex;
     Direction::Type defaultDirection;
     int historyIndex;
-    String selectionSearchString;
-    bool   selectionSearchForwardFlag;
-    bool selectSearchRegexFlag;
-    TextData::Ptr editFieldTextData;
-    FindUtil      findUtil;
 
-    class PasteDataContentHandler;
+    TextData::Ptr editFieldTextData;
+
     PasteDataReceiver::Ptr pasteDataReceiver;
     
+    Callback<String>::Ptr selectionRequestedCallback;
+
     MessageBoxQueue::Ptr messageBoxQueue;
+
+    SearchInteraction::Ptr         currentInteraction;
+    SearchInteraction::Callbacks   interactionCallbacks;
 };
 
 class FindPanelAccess

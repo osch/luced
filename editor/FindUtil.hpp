@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -35,60 +35,50 @@
 #include "BasicRegex.hpp"
 #include "Flags.hpp"
 #include "RawPtr.hpp"
+#include "SearchParameter.hpp"
+#include "SearchParameterTypes.hpp"
 
 namespace LucED
 {
 
-
-
-class FindUtil : public NonCopyable
+class FindUtil : public NonCopyable,
+                 public SearchParameterTypes
 {
 public:
-
-    enum Option
-    {
-        REGEX,
-        WHOLE_WORD,
-        IGNORE_CASE,
-        BACKWARD,
-        NOT_AT_START
-    };
-    
-    typedef Flags<Option> Options;
-
-
     FindUtil(RawPtr<TextData> textData);
     
+    void setParameter(const SearchParameter& p) {
+        wasInitializedFlag = false;
+        this->p = p;
+    }
+    
     void setOptions(Options options) {
-        setRegexFlag                     ( options.contains(REGEX));
-        setWholeWordFlag                 ( options.contains(WHOLE_WORD));
-        setIgnoreCaseFlag                ( options.contains(IGNORE_CASE));
-        setSearchForwardFlag             (!options.contains(BACKWARD));
-        setAllowMatchAtStartOfSearchFlag (!options.contains(NOT_AT_START));
+        wasInitializedFlag = false;
+        p.setOptions(options);
     }
 
     void setSearchForwardFlag(bool flag) {
         wasInitializedFlag = false;
-        searchForwardFlag = flag;
+        p.setSearchForwardFlag(flag);
     }
     bool isSearchingForward() const {
-        return searchForwardFlag;
+        return p.hasSearchForwardFlag();
     }
     void setIgnoreCaseFlag(bool flag) {
         wasInitializedFlag = false;
-        ignoreCaseFlag = flag;
+        p.setIgnoreCaseFlag(flag);
     }
     void setRegexFlag(bool flag) {
         wasInitializedFlag = false;
-        regexFlag = flag;
+        p.setRegexFlag(flag);
     }
     void setWholeWordFlag(bool flag) {
         wasInitializedFlag = false;
-        wholeWordFlag = flag;
+        p.setWholeWordFlag(flag);
     }
-    void setSearchString(const String& searchString) {
+    void setFindString(const String& findString) {
         wasInitializedFlag = false;
-        this->searchString = searchString;
+        p.setFindString(findString);
     }
     void setTextPosition(long pos) {
         textPosition = pos;
@@ -100,24 +90,24 @@ public:
         this->textData = textData;
     }
     void setAllowMatchAtStartOfSearchFlag(bool flag) {
-        allowMatchAtStartOfSearchFlag = flag;
+        p.setAllowMatchAtStartOfSearchFlag(flag);
     }
 
     bool doesMatch();
     
-    bool doesMatch(const String& searchString, long textPosition, Options options) {
+    bool doesMatch(const String& findString, long textPosition, Options options) {
         setOptions(options);
         setTextPosition(textPosition);
-        setSearchString(searchString);
+        setFindString(findString);
         return doesMatch();
     }
         
     void findNext();
     
-    long find(const String& searchString, long textPosition, Options options) {
+    long find(const String& findString, long textPosition, Options options) {
         setOptions(options);
         setTextPosition(textPosition);
-        setSearchString(searchString);
+        setFindString(findString);
         findNext();
         if (wasFound()) {
             return getMatchBeginPos();
@@ -145,20 +135,20 @@ public:
         ASSERT(wasFoundFlag);
         return ovector[1] - ovector[0];
     }
-    String getSearchString() const {
-        return searchString;
+    String getFindString() const {
+        return p.getFindString();
     }
     bool getWholeWordFlag() const {
-        return wholeWordFlag;
+        return p.hasWholeWordFlag();
     }
     bool getRegexFlag() const {
-        return regexFlag;
+        return p.hasRegexFlag();
     }
     bool getIgnoreCaseFlag() const {
-        return ignoreCaseFlag;
+        return p.hasIgnoreCaseFlag();
     }
     bool getSearchForwardFlag() const {
-        return searchForwardFlag;
+        return p.hasSearchForwardFlag();
     }
 
     static String quoteRegexCharacters(const String& s);
@@ -275,17 +265,15 @@ private:
     LuaObject evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
                               long startMatch, long pos, int lastCaptured, int topCaptured);
 
-    
-    bool searchForwardFlag;
-    bool ignoreCaseFlag;
-    bool regexFlag;
-    bool wholeWordFlag;  
+protected:
+    SearchParameter p;
+
+private:        
     bool wasFoundFlag;
     long textPosition;
     long maximalEndOfMatchPosition;
     RawPtr<TextData> textData;
     
-    String searchString;
     MemArray<int> ovector;
     
     ObjectArray<CalloutObject::Ptr> calloutObjects;
@@ -298,8 +286,6 @@ private:
     BasicRegex regex;
 
     long maxRegexAssertionLength;
-    
-    bool allowMatchAtStartOfSearchFlag;
 };
 
 } // namespace LucED

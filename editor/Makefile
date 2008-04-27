@@ -67,7 +67,8 @@ SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget        
                 SelectionOwner          PasteDataReceiver      Clipboard              FileOpener \
                 ConfigErrorHandler      WindowCloser           SaveAsPanel            KeyModifier \
 		CurrentDirectoryKeeper  ProgramExecutor        TextDisplayGuiCompound CommandOutputBox \
-		FramedGuiCompound       BuiltinTopWinActions   TopWinActionsRegistry  ScrollableTextGuiCompound
+		FramedGuiCompound       BuiltinTopWinActions   TopWinActionsRegistry  ScrollableTextGuiCompound \
+		SearchInteraction
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

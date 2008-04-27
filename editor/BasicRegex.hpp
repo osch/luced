@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -22,39 +22,19 @@
 #ifndef BASIC_REGEX_HPP
 #define BASIC_REGEX_HPP
 
-#include "String.hpp"
 #include <pcre.h>
 
+#include "String.hpp"
 #include "MemArray.hpp"
 #include "ByteArray.hpp"
-#include "OptionBits.hpp"
+#include "BasicRegexTypes.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-class BasicRegexEnums
+class BasicRegex : public BasicRegexTypes
 {
 public:
-    enum CreateOption {
-        MULTILINE = PCRE_MULTILINE,
-        EXTENDED = PCRE_EXTENDED,
-        IGNORE_CASE = PCRE_CASELESS
-    };
-    typedef OptionBits<CreateOption> CreateOptions;
-    
-    enum MatchOption {
-        NOTBOL = PCRE_NOTBOL,
-        NOTEOL = PCRE_NOTEOL,
-        ANCHORED = PCRE_ANCHORED,
-        NOTEMPTY = PCRE_NOTEMPTY
-    };
-    typedef OptionBits<MatchOption> MatchOptions;
-};
-
-
-class BasicRegex : public BasicRegexEnums
-{
-public:
-
     BasicRegex() : re(NULL) {
         pcre_callout = pcreCalloutCallback;
     }

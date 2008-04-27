@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,14 +19,15 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SEARCHHISTORY_H
-#define SEARCHHISTORY_H
+#ifndef SEARCH_HISTORY_HPP
+#define SEARCH_HISTORY_HPP
 
 #include "String.hpp"
 
 #include "HeapObject.hpp"
 #include "ObjectArray.hpp"
 #include "SingletonInstance.hpp"
+#include "SearchParameter.hpp"
 
 namespace LucED
 {
@@ -98,6 +99,18 @@ public:
     };
 
     void append(const Entry& newEntry);
+    
+    void append(const SearchParameter& p) {
+        Entry e;
+              e.setIgnoreCaseFlag(p.hasIgnoreCaseFlag());
+              e.setRegexFlag     (p.hasRegexFlag());
+              e.setWholeWordFlag (p.hasWholeWordFlag());
+              e.setFindString    (p.getFindString());
+        if (p.hasReplaceString()) {
+              e.setReplaceString (p.getReplaceString());
+        }
+        append(e);
+    }
 
     const Entry& getLast() const {
         return entries.getLast();
@@ -107,12 +120,28 @@ public:
         return entries.getLength();
     }
     
+    bool hasEntries() const {
+        return (entries.getLength() > 0);
+    }
+    
     const Entry& getEntry(int index) const {
         return entries[index];
     }
     
     Entry& getEntry(int index) {
         return entries[index];
+    }
+    
+    SearchParameter getSearchParameterFromEntry(int index) const {
+        const Entry& entry = entries[index];
+        return SearchParameter().setIgnoreCaseFlag   (entry.getIgnoreCaseFlag())
+                                .setRegexFlag        (entry.getRegexFlag())
+                                .setWholeWordFlag    (entry.getWholeWordFlag())
+                                .setFindString       (entry.getFindString());
+    }
+    
+    SearchParameter getSearchParameterFromLastEntry() const {
+        return getSearchParameterFromEntry(getEntryCount() - 1);
     }
     
 private:
@@ -126,4 +155,4 @@ private:
 
 } // namespace LucED
 
-#endif // SEARCHHISTORY_H
+#endif // SEARCH_HISTORY_HPP

@@ -25,13 +25,14 @@
 #include "String.hpp"
 #include "MemArray.hpp"
 #include "ByteArray.hpp"
+#include "BasicRegexTypes.hpp"
 #include "BasicRegex.hpp"
 
 
 namespace LucED
 {
 
-class Regex : public BasicRegexEnums
+class Regex : public BasicRegexTypes
 {
 public:
 

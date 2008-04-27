@@ -33,11 +33,11 @@
 #include "Callback.hpp"
 #include "BasicRegex.hpp"
 #include "types.hpp"
-#include "ReplaceUtil.hpp"
 #include "EditFieldGroup.hpp"
 #include "FindPanel.hpp"
 #include "MessageBoxQueue.hpp"
-
+#include "PasteDataCollector.hpp"
+#include "SearchInteraction.hpp"
 
 namespace LucED
 {
@@ -79,33 +79,45 @@ public:
     virtual void hide();
     
 private:
+    friend class PasteDataCollector<ReplacePanel>;
+    
     ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
                  Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
                  Callback<DialogPanel*>::Ptr               panelInvoker,
                  Callback<GuiWidget*>::Ptr                 requestCloseCallback);
 
-    void executeFind(bool isWrapping, Callback<>::Ptr  handleContinueSearchButton);
+    SearchParameter getSearchParameterFromGuiControls() const {
+        return SearchParameter().setIgnoreCaseFlag (!caseSensitiveCheckBox->isChecked())
+                                .setRegexFlag      (regularExprCheckBox->isChecked())
+                                .setWholeWordFlag  (wholeWordCheckBox->isChecked())
+                                .setFindString     (   findEditField->getTextData()->getAsString())
+                                .setReplaceString  (replaceEditField->getTextData()->getAsString());
+    }
 
+    void notifyAboutCollectedPasteData(String collectedSelectionData);
+
+    void requestCurrentSelectionForInteraction(SearchInteraction* interaction, Callback<String>::Ptr selectionRequestedCallback);
+    void requestCloseFromInteraction(SearchInteraction* interaction);
+
+    ProcessingResult processEvent(const XEvent* event);
+    
     void handleException();
     
     void handleButtonPressed(Button* button);
     void handleButtonRightClicked(Button* button);
 
-    void handleContinueAtBeginningButton();
-    void handleContinueAtEndButton();
-    
-    void handleContinueSelectionFindAtBeginningButton();
-    void handleContinueSelectionFindAtEndButton();
-    
-    void internalFindNext(bool wrapping);
-    
     void handleModifiedEditField(bool modifiedFlag);
     
     void findAgainForward();
     void findAgainBackward();
     
+    void internalFindAgain(bool forwardFlag);
+    void internalReplaceAgain(bool forwardFlag);
+
     void forgetRememberedSelection();
 
+    PasteDataReceiver::Ptr pasteDataReceiver;
+    
     WeakPtr<TextEditorWidget> e;
 
     SingleLineEditField::Ptr findEditField;
@@ -130,11 +142,16 @@ private:
     String selectionSearchString;
     bool selectSearchRegexFlag;
     EditFieldGroup::Ptr editFieldGroup;
-    ReplaceUtil         replaceUtil;
     String rememberedSelection;
 
     WeakPtr<FindPanel> findPanel;
+
+    Callback<String>::Ptr selectionRequestedCallback;
+
     MessageBoxQueue::Ptr messageBoxQueue;
+
+    SearchInteraction::Ptr         currentInteraction;
+    SearchInteraction::Callbacks   interactionCallbacks;
 };
 
 } // namespace LucED

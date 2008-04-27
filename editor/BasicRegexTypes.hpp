@@ -19,33 +19,37 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REPLACE_UTIL_HPP
-#define REPLACE_UTIL_HPP
+#ifndef BASIC_REGEX_TYPES_HPP
+#define BASIC_REGEX_TYPES_HPP
 
-#include "FindUtil.hpp"
+#include <pcre.h>
+
+#include "OptionBits.hpp"
 
 namespace LucED
 {
 
-class ReplaceUtil : public FindUtil
+class BasicRegexTypes
 {
 public:
+    enum CreateOption
+    {
+        MULTILINE = PCRE_MULTILINE,
+        EXTENDED = PCRE_EXTENDED,
+        IGNORE_CASE = PCRE_CASELESS
+    };
+    typedef OptionBits<CreateOption> CreateOptions;
     
-    ReplaceUtil(RawPtr<TextData> textData)
-        : FindUtil(textData)
-    {}
-    
-    void setReplaceString(const String& replaceString) {
-        p.setReplaceString(replaceString);
-    }
-    String getReplaceString() const {
-        return p.getReplaceString();
-    }
-    String getSubstitutedString();
-    
-    bool replaceAllBetween(long spos, long epos);
+    enum MatchOption
+    {
+        NOTBOL = PCRE_NOTBOL,
+        NOTEOL = PCRE_NOTEOL,
+        ANCHORED = PCRE_ANCHORED,
+        NOTEMPTY = PCRE_NOTEMPTY
+    };
+    typedef OptionBits<MatchOption> MatchOptions;
 };
 
 } // namespace LucED
 
-#endif // REPLACE_UTIL_HPP
+#endif // BASIC_REGEX_TYPES_HPP
