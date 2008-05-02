@@ -148,8 +148,16 @@ MessageBox::MessageBox(TopWin* referingWindow, const MessageBoxParameter& p)
     if (p.messageBoxQueue.isValid()) {
         p.messageBoxQueue->append(this);
     }
+    
+    this->invokeNotifyCallback = p.invokeNotifyCallback;
+    this->closeNotifyCallback  = p.closeNotifyCallback;
 }
 
+void MessageBox::show()
+{
+    PanelDialogWin::show();
+    invokeNotifyCallback->call(this);
+}
 
 void MessageBox::handleButtonPressed(Button* button)
 {
@@ -189,6 +197,7 @@ void MessageBox::requestCloseWindow(TopWin::CloseReason reason)
             cancelButtonCallback->call();
         }
         wasClosed = true;
+        closeNotifyCallback->call(this);
     }
 }
 

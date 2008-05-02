@@ -57,6 +57,8 @@ public:
     
     virtual void requestCloseWindow(TopWin::CloseReason reason);
 
+    virtual void show();
+
 private:
     MessageBox(TopWin* referingWindow, const MessageBoxParameter& p);
     
@@ -72,6 +74,9 @@ private:
     Callback<>::Ptr closeCallback;
     bool wasClosed;
     KeyMapping::Ptr keyMapping;
+
+    Callback<TopWin*>::Ptr invokeNotifyCallback;
+    Callback<TopWin*>::Ptr closeNotifyCallback;
 };
 
 } // namespace LucED

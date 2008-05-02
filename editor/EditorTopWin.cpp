@@ -88,9 +88,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
       keyMapping2(KeyMapping::create()),
       flagForSetSizeHintAtFirstShow(true),
       hasMessageBox(false),
-      isMessageBoxModal(false),
-      isClosingFlag(false),
-      shouldRaise(false)
+      isMessageBoxModal(false)
 {
     addToXEventMask(ButtonPressMask);
     
@@ -318,12 +316,7 @@ void EditorTopWin::treatFocusIn()
         }
         messageBox->raise();
         messageBox->requestFocus();
-        shouldRaise = false;
     } else {
-        if (shouldRaise) {
-            shouldRaise = false;
-            raise();
-        }
         if (invokedPanel.isValid()) {
             invokedPanel->treatFocusIn();
         } else {
@@ -442,7 +435,7 @@ void EditorTopWin::closeMessageBox()
 
 void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseReason reason)
 {
-    if (hasMessageBox && topWin == messageBox)
+    if (!isClosing() && hasMessageBox && topWin == messageBox)
     {
         hasMessageBox = false;
         
@@ -455,13 +448,6 @@ void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseRe
         {
             this->requestFocus();
             this->raise();
-            
-            if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
-                && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100)
-            {
-                // vendor <Hummingbird Communications Ltd.> <6100>
-                this->shouldRaise = true; // delayed raise is Workaround for Exceed X11-Server
-            }
         }
     }
 }
@@ -684,7 +670,6 @@ void EditorTopWin::requestCloseWindow(TopWin::CloseReason reason)
     else
     {
         TopWin::requestCloseWindow(reason);
-        isClosingFlag = true;
     }
 }
 

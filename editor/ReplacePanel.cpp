@@ -266,8 +266,6 @@ GuiElement::ProcessingResult ReplacePanel::processEvent(const XEvent* event)
 
 void ReplacePanel::handleButtonPressed(Button* button)
 {
-    SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
-
     if (button == cancelButton)
     {
         requestClose();
@@ -282,17 +280,44 @@ void ReplacePanel::handleButtonPressed(Button* button)
         findEditField   ->getTextData()->setModifiedFlag(false);
         replaceEditField->getTextData()->setModifiedFlag(false);
 
-        historyIndex = -1;
- 
-        currentInteraction = SearchInteraction::create(p, e, interactionCallbacks);
-        
-        if (   button == replaceNextButton 
-            || button == replacePrevButton)
+        if (   (button == findNextButton || button == findPrevButton)
+            && currentInteraction.isValid()
+            && currentInteraction->isWaitingForContinue() 
+            && currentInteraction->getSearchParameter().findsSameThan(p))
         {
-            currentInteraction->replaceAndContinueWithFind();
+            if (button == findNextButton) {
+                currentInteraction->continueForwardAndKeepInvokingPanel();
+            } else {
+                currentInteraction->continueBackwardAndKeepInvokingPanel();
+            }
         }
-        else {   
-            currentInteraction->startFind();
+        else if (   (button == replaceNextButton || button == replacePrevButton)
+                 && currentInteraction.isValid()
+                 && currentInteraction->isWaitingForContinue() 
+                 && currentInteraction->getSearchParameter().findsAndReplacesSameThan(p))
+        {
+            if (button == replaceNextButton) {
+                currentInteraction->replaceAndContinueForwardAndKeepInvokingPanel();
+            } else {
+                currentInteraction->replaceAndContinueBackwardAndKeepInvokingPanel();
+            }
+        }
+        else
+        {
+            SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
+
+            historyIndex = -1;
+     
+            currentInteraction = SearchInteraction::create(p, e, interactionCallbacks);
+            
+            if (   button == replaceNextButton 
+                || button == replacePrevButton)
+            {
+                currentInteraction->replaceAndContinueWithFind();
+            }
+            else {   
+                currentInteraction->startFind();
+            }
         }
     }
     else if ((button == replaceSelectionButton && e->hasSelection())

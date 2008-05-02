@@ -81,11 +81,11 @@ public:
     }
     
     void replaceAndDontContinueWithFind() {
-        internalReplaceAndFind(false);
+        internalReplaceAndFind(false, false);
     }
     
     void replaceAndContinueWithFind() {
-        internalReplaceAndFind(false);
+        internalReplaceAndFind(true, false);
     }
     
     String getFindString() const {
@@ -102,6 +102,19 @@ public:
     bool replaceAllBetween(long spos, long epos) {
         return replaceUtil.replaceAllBetween(spos, epos);
     }
+    
+    SearchParameter getSearchParameter() const {
+        return p;
+    }
+    
+    bool isWaitingForContinue() const {
+        return waitingForContinueFlag && waitingMessageBox.isValid();
+    }
+    
+    void continueForwardAndKeepInvokingPanel();
+    void continueBackwardAndKeepInvokingPanel();
+    void replaceAndContinueForwardAndKeepInvokingPanel();
+    void replaceAndContinueBackwardAndKeepInvokingPanel();
 
 private:
     SearchInteraction(const SearchParameter& p, TextEditorWidget* e,
@@ -110,7 +123,9 @@ private:
           e(e),
           cb(cb),
           textData(e->getTextData()),
-          replaceUtil(textData)
+          replaceUtil(textData),
+          waitingForContinueFlag(false),
+          continueForwardFlag(false)
     {}
     
     void setTextPositionForSearchStart();
@@ -127,7 +142,7 @@ private:
     void internalStartFind(bool findSelection);
     void internalExecute(bool isWrapping, bool autoContinue);
     
-    void internalReplaceAndFind(bool continueWithFind);
+    void internalReplaceAndFind(bool continueWithFind, bool autoContinue);
     
     void handleContinueAtBeginButton();
     void handleContinueAtEndButton();
@@ -137,6 +152,10 @@ private:
     void findAgainBackward();
     void findAgainBackwardAndAutoContinue();
     
+    
+    void notifyAboutInvokedMessageBox(TopWin* messageBox);
+    void notifyAboutClosedMessageBox (TopWin* messageBox);
+    
     SearchParameter p;
     RawPtr<TextEditorWidget> e;
     
@@ -144,6 +163,11 @@ private:
 
     TextData::Ptr textData;
     ReplaceUtil replaceUtil;
+    
+    bool waitingForContinueFlag;
+    bool continueForwardFlag;
+
+    WeakPtr<TopWin> waitingMessageBox;
 };
 
 } // namespace LucED

@@ -189,8 +189,6 @@ void FindPanel::requestCloseFromInteraction(SearchInteraction* interaction)
 
 void FindPanel::handleButtonPressed(Button* button)
 {
-    SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
-    
     if (button == cancelButton)
     {
         requestClose();
@@ -211,16 +209,31 @@ void FindPanel::handleButtonPressed(Button* button)
             findNextButton->setAsDefaultButton(false);
         }
 
-        historyIndex = -1;
-
         SearchParameter p = getSearchParameterFromGuiControls()
                             .setSearchForwardFlag(button == findNextButton);
                             
-        editField->getTextData()->setModifiedFlag(false);
+        if (   currentInteraction.isValid()
+            && currentInteraction->isWaitingForContinue() 
+            && currentInteraction->getSearchParameter().findsSameThan(p))
+        {
+            if (button == findNextButton) {
+                currentInteraction->continueForwardAndKeepInvokingPanel();
+            } else {
+                currentInteraction->continueBackwardAndKeepInvokingPanel();
+            }
+        }
+        else
+        {
+            SearchHistory::getInstance()->getMessageBoxQueue()->closeQueued();
 
-        currentInteraction = SearchInteraction::create(p, e, interactionCallbacks);
-        
-        currentInteraction->startFind();
+            historyIndex = -1;
+    
+            editField->getTextData()->setModifiedFlag(false);
+    
+            currentInteraction = SearchInteraction::create(p, e, interactionCallbacks);
+            
+            currentInteraction->startFind();
+        }
     }
 }
 

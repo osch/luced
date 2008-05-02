@@ -92,6 +92,10 @@ public:
         }
     };
     
+    bool isClosing() const {
+        return isClosingFlag;
+    }
+
 protected:
     TopWin();
     
@@ -111,6 +115,8 @@ protected:
     virtual void notifyAboutBeingUnmapped()
     {}
 
+    void internalRaise();
+    
 private:
     void setWindowManagerHints();
     void handleConfigChanged();
@@ -134,6 +140,9 @@ private:
 
     OwnedTopWins::Ptr ownedTopWins;
     Atom raiseWindowAtom;
+    
+    bool shouldRaiseAfterFocusIn;
+    bool isClosingFlag;
 };
 
 

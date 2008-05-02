@@ -42,8 +42,9 @@ TopWin::TopWin()
       mapped(false),
       requestFocusAfterMapped(false),
       focusFlag(false),
-      raiseWindowAtom(XInternAtom(getDisplay(), "_NET_ACTIVE_WINDOW", False))
-
+      raiseWindowAtom(XInternAtom(getDisplay(), "_NET_ACTIVE_WINDOW", False)),
+      shouldRaiseAfterFocusIn(false),
+      isClosingFlag(false)
 {
     setWindowManagerHints();
 
@@ -336,6 +337,10 @@ printf("TakeFocus\n");
                         expectedFocusTopWin->treatFocusOut();
                     }
                 }
+                if (shouldRaiseAfterFocusIn) {
+                    shouldRaiseAfterFocusIn = false;
+                    internalRaise();
+                }
                 expectedFocusTopWin = this;
                 if (!focusFlag) {
                     focusFlag = true;
@@ -469,13 +474,39 @@ void TopWin::setWindowManagerHints()
 
 void TopWin::requestCloseWindow(TopWin::CloseReason reason)
 {
+    this->isClosingFlag = true;
     myOwner->requestCloseChildWindow(this);
     requestForCloseNotifyCallbacks.invokeAllCallbacks(this, reason);
+#if 0
+    if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
+        && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100
+        && expectedFocusTopWin != NULL
+        && expectedFocusTopWin != this
+        && reason == CLOSED_SILENTLY)
+    {
+        // vendor <Hummingbird Communications Ltd.> <6100>
+        this->internalRaise(); // strange workaround for exceed
+        expectedFocusTopWin->internalRaise();
+    }
+#endif
 }
 
 
 void TopWin::raise()
 {
+    if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
+        && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100)
+    {
+        // vendor <Hummingbird Communications Ltd.> <6100>
+        this->shouldRaiseAfterFocusIn = true; // delayed raise is Workaround for Exceed X11-Server
+    }
+    internalRaise();
+}
+
+void TopWin::internalRaise()
+{
+    this->requestFocus();
+
     {
         // This is needed to raise the Window under Gnome-Desktop or KDE with
         // Focus Stealing Prevention Level set to "normal".
@@ -503,6 +534,5 @@ void TopWin::raise()
     // older Windowmanager only need XRaiseWindow
         
     XRaiseWindow(getGuiRoot()->getDisplay(), this->getWid());
-    this->requestFocus();
 }
 

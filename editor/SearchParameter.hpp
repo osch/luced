@@ -114,6 +114,21 @@ public:
         return replaceStringFlag;
     }
 
+    bool findsSameThan(const SearchParameter& rhs) const
+    {
+        return this->ignoreCaseFlag == rhs.ignoreCaseFlag
+            && this->regexFlag      == rhs.regexFlag
+            && this->wholeWordFlag  == rhs.wholeWordFlag
+            && this->findString     == rhs.findString;
+    }
+    
+    bool findsAndReplacesSameThan(const SearchParameter& rhs) const
+    {
+        return findsSameThan(rhs)
+            && this->replaceStringFlag == rhs.replaceStringFlag
+            && this->replaceString     == rhs.replaceString;
+    }
+
 private:
     bool searchForwardFlag;
     bool ignoreCaseFlag;

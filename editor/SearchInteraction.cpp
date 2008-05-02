@@ -74,7 +74,7 @@ void SearchInteraction::internalStartFind(bool findSelection)
     }
 }
 
-void SearchInteraction::internalReplaceAndFind(bool continueWithFind)
+void SearchInteraction::internalReplaceAndFind(bool continueWithFind, bool autoContinue)
 {
     try
     {
@@ -154,7 +154,9 @@ void SearchInteraction::internalReplaceAndFind(bool continueWithFind)
             }
             replaceUtil.setTextPosition(textPosition);
             
-            internalExecute(false, false);
+            autoContinue = autoContinue && !wasReplaced;
+            
+            internalExecute(false, autoContinue);
         }
     }
     catch (...) 
@@ -201,6 +203,71 @@ void SearchInteraction::continueWithFindSelection(String currentSelection, bool 
     {
         cb.exceptionHandler->call();
     }
+}
+
+
+void SearchInteraction::continueForwardAndKeepInvokingPanel()
+{
+    ASSERT(isWaitingForContinue());
+    if (waitingMessageBox.isValid()) {
+        waitingMessageBox->requestCloseWindow();
+    }
+    if (continueForwardFlag)
+    {
+        replaceUtil.setSearchForwardFlag(true);
+    
+        setTextPositionForSearchStart();
+        internalExecute(false, true);
+    }
+    else {
+        replaceUtil.setSearchForwardFlag(true);
+    
+        setTextPositionForSearchStart();
+        internalExecute(false, false);
+    }
+}
+
+void SearchInteraction::continueBackwardAndKeepInvokingPanel()
+{
+    ASSERT(isWaitingForContinue());
+    if (waitingMessageBox.isValid()) {
+        waitingMessageBox->requestCloseWindow();
+    }
+    if (continueForwardFlag)
+    {
+        replaceUtil.setSearchForwardFlag(false);
+    
+        setTextPositionForSearchStart();
+        internalExecute(false, false);
+    }
+    else {
+        replaceUtil.setSearchForwardFlag(false);
+    
+        setTextPositionForSearchStart();
+        internalExecute(false, true);
+    }
+}
+
+void SearchInteraction::replaceAndContinueForwardAndKeepInvokingPanel()
+{
+    ASSERT(isWaitingForContinue());
+    if (waitingMessageBox.isValid()) {
+        waitingMessageBox->requestCloseWindow();
+    }
+    bool autoContinue = (replaceUtil.getSearchForwardFlag() == true);
+    replaceUtil.setSearchForwardFlag(true);
+    internalReplaceAndFind(true, autoContinue);
+}
+void SearchInteraction::replaceAndContinueBackwardAndKeepInvokingPanel()
+{
+    ASSERT(isWaitingForContinue());
+    if (waitingMessageBox.isValid()) {
+        waitingMessageBox->requestCloseWindow();
+    }
+
+    bool autoContinue = (replaceUtil.getSearchForwardFlag() == false);
+    replaceUtil.setSearchForwardFlag(false);
+    internalReplaceAndFind(true, autoContinue);
 }
 
 
@@ -303,6 +370,8 @@ void SearchInteraction::findSelectionBackwardAndAutoContinue()
 
 void SearchInteraction::internalExecute(bool isWrapping, bool autoContinue)
 {
+    waitingForContinueFlag = false;
+
     try
     {
         GuiRoot::getInstance()->flushDisplay();
@@ -353,7 +422,12 @@ void SearchInteraction::internalExecute(bool isWrapping, bool autoContinue)
         }
         else
         {
-            if (replaceUtil.isSearchingForward()) {
+            this->waitingMessageBox.invalidate();
+            waitingForContinueFlag = true;
+            
+            if (replaceUtil.isSearchingForward())
+            {
+                continueForwardFlag = true;    
                 cb.messageBoxInvoker->call(MessageBoxParameter()
                                           .setTitle("Not found")
                                           .setMessage("Continue search from beginning of file?")
@@ -363,8 +437,11 @@ void SearchInteraction::internalExecute(bool isWrapping, bool autoContinue)
                                           .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("g"), newCallback(this, &ThisClass::findAgainBackward))
                                           .addKeyMapping(KeyModifier("Ctrl"),       KeyId("h"), newCallback(this, &ThisClass::findSelectionForwardAndAutoContinue))
                                           .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("h"), newCallback(this, &ThisClass::findSelectionBackward))
-                                          .setMessageBoxQueue(cb.messageBoxQueue));
+                                          .setMessageBoxQueue(cb.messageBoxQueue)
+                                          .setInvokeNotifyCallback(newCallback(this, &ThisClass::notifyAboutInvokedMessageBox))
+                                          .setCloseNotifyCallback (newCallback(this, &ThisClass::notifyAboutClosedMessageBox)));
             } else {
+                continueForwardFlag = false;    
                 cb.messageBoxInvoker->call(MessageBoxParameter()
                                           .setTitle("Not found")
                                           .setMessage("Continue search from end of file?")
@@ -374,7 +451,9 @@ void SearchInteraction::internalExecute(bool isWrapping, bool autoContinue)
                                           .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("g"), newCallback(this, &ThisClass::findAgainBackwardAndAutoContinue))
                                           .addKeyMapping(KeyModifier("Ctrl"),       KeyId("h"), newCallback(this, &ThisClass::findSelectionForward))
                                           .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("h"), newCallback(this, &ThisClass::findSelectionBackwardAndAutoContinue))
-                                          .setMessageBoxQueue(cb.messageBoxQueue));
+                                          .setMessageBoxQueue(cb.messageBoxQueue)
+                                          .setInvokeNotifyCallback(newCallback(this, &ThisClass::notifyAboutInvokedMessageBox))
+                                          .setCloseNotifyCallback (newCallback(this, &ThisClass::notifyAboutClosedMessageBox)));
             }
         }
     }
@@ -384,4 +463,17 @@ void SearchInteraction::internalExecute(bool isWrapping, bool autoContinue)
     }
 }
 
+void SearchInteraction::notifyAboutInvokedMessageBox(TopWin* messageBox)
+{
+    if (waitingForContinueFlag) {
+        this->waitingMessageBox = messageBox;
+    }
+}
+void SearchInteraction::notifyAboutClosedMessageBox (TopWin* messageBox)
+{
+    if (waitingForContinueFlag && this->waitingMessageBox == messageBox) {
+        waitingForContinueFlag = false;
+        this->waitingMessageBox.invalidate();
+    }
+}
 

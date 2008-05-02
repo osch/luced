@@ -102,9 +102,6 @@ public:
 
     void requestCloseWindowAndDiscardChanges();
     void saveAndClose();
-    bool isClosing() const {
-        return isClosingFlag;
-    }
     
     bool checkForFileModifications();
 
@@ -167,11 +164,7 @@ private:
     
     SaveAsPanel::Ptr    saveAsPanel;
     
-    bool isClosingFlag;
-
     ScrollableTextGuiCompound::Ptr scrollableTextCompound;
-    
-    bool shouldRaise;
 };
 
 } // namespace LucED

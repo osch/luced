@@ -31,6 +31,7 @@ namespace LucED
 {
 
 class MessageBoxQueue;
+class TopWin;
 
 class MessageBoxParameter
 {
@@ -79,6 +80,15 @@ public:
     
     MessageBoxParameter& setMessageBoxQueue(OwningPtr<MessageBoxQueue> messageBoxQueue);
     
+    MessageBoxParameter& setInvokeNotifyCallback(Callback<TopWin*>::Ptr invokeNotifyCallback) {
+        this->invokeNotifyCallback = invokeNotifyCallback;
+        return *this;
+    }
+    MessageBoxParameter& setCloseNotifyCallback(Callback<TopWin*>::Ptr closeNotifyCallback) {
+        this->closeNotifyCallback = closeNotifyCallback;
+        return *this;
+    }
+    
 private:
     friend class MessageBox;
 
@@ -99,6 +109,9 @@ private:
     KeyMapping::Ptr   keyMapping;
     
     OwningPtr<MessageBoxQueue> messageBoxQueue;
+
+    Callback<TopWin*>::Ptr invokeNotifyCallback;
+    Callback<TopWin*>::Ptr closeNotifyCallback;
 };
 
 } // namespace LucED

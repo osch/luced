@@ -42,6 +42,8 @@ public:
     
     void setReferingWindowForPositionHintsOnly(TopWin* referingWindow);
 
+    virtual void requestCloseWindow(TopWin::CloseReason reason);
+    
 protected:
     DialogWin(TopWin* referingWindow);
     

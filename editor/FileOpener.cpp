@@ -144,6 +144,7 @@ void FileOpener::openFiles()
 
                 lastTopWin = EditorTopWin::create(textStyles, hilitedText);
                 lastTopWin->show();
+                lastTopWin->raise();
 
                 numberOfRaisedWindows += 1;
             }
