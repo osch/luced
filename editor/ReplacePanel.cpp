@@ -56,7 +56,8 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
                            SearchHistory::getInstance()->getMessageBoxQueue(),
                            newCallback(this, &ReplacePanel::requestCloseFromInteraction),
                            newCallback(this, &ReplacePanel::requestCurrentSelectionForInteraction),
-                           newCallback(this, &ReplacePanel::handleException))
+                           newCallback(this, &ReplacePanel::handleException),
+                           this)
       
 {
     GuiLayoutColumn::Ptr  c0 = GuiLayoutColumn::create();
@@ -99,6 +100,12 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     wholeWordCheckBox       = CheckBox::create   (this, "Wh]ole Word");
     regularExprCheckBox     = CheckBox::create   (this, "R]egular Expression");
     
+    Callback<CheckBox*>::Ptr checkBoxCallback = newCallback(this, &ReplacePanel::handleCheckBoxPressed);
+
+    caseSensitiveCheckBox->setButtonPressedCallback(checkBoxCallback);
+    wholeWordCheckBox    ->setButtonPressedCallback(checkBoxCallback);
+    regularExprCheckBox  ->setButtonPressedCallback(checkBoxCallback);
+
     label0   ->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
     label1   ->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
     findEditField   ->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
@@ -358,6 +365,23 @@ void ReplacePanel::handleButtonPressed(Button* button)
                                                                         &ReplacePanel::handleException));
         }
     }
+}
+
+void ReplacePanel::invalidateOutdatedInteraction()
+{
+    SearchParameter p = getSearchParameterFromGuiControls();
+
+    if (   currentInteraction.isValid()
+        && currentInteraction->isWaitingForContinue() 
+        && !currentInteraction->getSearchParameter().findsAndReplacesSameThan(p))
+    {
+        currentInteraction.invalidate();
+    }
+}
+
+void ReplacePanel::handleCheckBoxPressed(CheckBox* checkBox)
+{
+    invalidateOutdatedInteraction();
 }
 
 void ReplacePanel::forgetRememberedSelection()
@@ -680,6 +704,8 @@ void ReplacePanel::handleModifiedEditField(bool modifiedFlag)
     {
         rememberedSelection = String();
         historyIndex = -1;
+        
+        invalidateOutdatedInteraction();
     }
 }
 

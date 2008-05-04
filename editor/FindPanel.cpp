@@ -51,7 +51,8 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
                            SearchHistory::getInstance()->getMessageBoxQueue(),
                            newCallback(this, &FindPanel::requestCloseFromInteraction),
                            newCallback(this, &FindPanel::requestCurrentSelectionForInteraction),
-                           newCallback(this, &FindPanel::handleException))
+                           newCallback(this, &FindPanel::handleException),
+                           this)
       
 {
     GuiLayoutColumn::Ptr  c0 = GuiLayoutColumn::create();
@@ -80,6 +81,12 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
     caseSensitiveCheckBox   = CheckBox::create   (this, "C]ase Sensitive");
     wholeWordCheckBox       = CheckBox::create   (this, "Wh]ole Word");
     regularExprCheckBox     = CheckBox::create   (this, "R]egular Expression");
+    
+    Callback<CheckBox*>::Ptr checkBoxCallback = newCallback(this, &FindPanel::handleCheckBoxPressed);
+    
+    caseSensitiveCheckBox->setButtonPressedCallback(checkBoxCallback);
+    wholeWordCheckBox    ->setButtonPressedCallback(checkBoxCallback);
+    regularExprCheckBox  ->setButtonPressedCallback(checkBoxCallback);
     
     label0   ->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
     editField->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
@@ -236,6 +243,24 @@ void FindPanel::handleButtonPressed(Button* button)
         }
     }
 }
+
+void FindPanel::invalidateOutdatedInteraction()
+{
+    SearchParameter p = getSearchParameterFromGuiControls();
+
+    if (   currentInteraction.isValid()
+        && currentInteraction->isWaitingForContinue() 
+        && !currentInteraction->getSearchParameter().findsSameThan(p))
+    {
+        currentInteraction.invalidate();
+    }
+}
+
+void FindPanel::handleCheckBoxPressed(CheckBox* checkBox)
+{
+    invalidateOutdatedInteraction();
+}
+
 
 void FindPanel::handleButtonDefaultKey(Button* button)
 {
@@ -487,6 +512,7 @@ void FindPanel::handleModifiedEditField(bool modifiedFlag)
     if (modifiedFlag == true)
     {
         historyIndex = -1;
+        invalidateOutdatedInteraction();
     }
 }
 

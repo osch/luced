@@ -93,6 +93,8 @@ private:
                                 .setReplaceString  (replaceEditField->getTextData()->getAsString());
     }
 
+    void invalidateOutdatedInteraction();
+    
     void notifyAboutCollectedPasteData(String collectedSelectionData);
 
     void requestCurrentSelectionForInteraction(SearchInteraction* interaction, Callback<String>::Ptr selectionRequestedCallback);
@@ -104,6 +106,7 @@ private:
     
     void handleButtonPressed(Button* button);
     void handleButtonRightClicked(Button* button);
+    void handleCheckBoxPressed(CheckBox* checkBox);
 
     void handleModifiedEditField(bool modifiedFlag);
     

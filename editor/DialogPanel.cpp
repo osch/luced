@@ -145,7 +145,12 @@ void DialogPanel::treatFocusIn()
     if (focusedElement.isValid()) {
         focusedElement->treatFocusIn();
     }
-    for (HotKeyMapping::Iterator i = hotKeyMapping->getIterator(); !i.isAtEnd(); i.gotoNext()) {
+    for (HotKeyMapping::Iterator i =   hotKeyPredecessor.isValid()
+                                     ? hotKeyPredecessor->hotKeyMapping->getIterator()
+                                     : this             ->hotKeyMapping->getIterator();
+         !i.isAtEnd(); 
+          i.gotoNext())
+    {
         WidgetQueue::Ptr widgets = i.getValue();
         ASSERT(widgets.isValid());
         GuiWidget* w = widgets->getLast();
@@ -162,13 +167,21 @@ void DialogPanel::treatFocusOut()
     if (focusedElement.isValid()) {
         focusedElement->treatFocusOut();
     }
-    for (HotKeyMapping::Iterator i = hotKeyMapping->getIterator(); !i.isAtEnd(); i.gotoNext()) {
-        WidgetQueue::Ptr widgets = i.getValue();
-        ASSERT(widgets.isValid());
-        GuiWidget* w = widgets->getLast();
-        if (w != NULL) {
-            w->treatLostHotKeyRegistration(i.getKey());
-        }        
+    if (hotKeySuccessor.isInvalid())
+    {
+        for (HotKeyMapping::Iterator i =   hotKeyPredecessor.isValid()
+                                         ? hotKeyPredecessor->hotKeyMapping->getIterator()
+                                         : this             ->hotKeyMapping->getIterator();
+             !i.isAtEnd();
+              i.gotoNext())
+        {
+            WidgetQueue::Ptr widgets = i.getValue();
+            ASSERT(widgets.isValid());
+            GuiWidget* w = widgets->getLast();
+            if (w != NULL) {
+                w->treatLostHotKeyRegistration(i.getKey());
+            }        
+        }
     }
 }
 
@@ -221,11 +234,15 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
     if (focusedElement.isValid() && focusedElement->getFocusType() == TOTAL_FOCUS) {
         focusedElement->processKeyboardEvent(event);
         processed = true;
-    } else
+    }
+    else
     {
-        
         KeyId       pressedKey      = KeyId      (XLookupKeysym((XKeyEvent*)&event->xkey, 0));
         KeyModifier pressedModifier = KeyModifier(event->xkey.state);
+        
+        HotKeyMapping::Ptr mapping =   hotKeyPredecessor.isValid()
+                                     ? hotKeyPredecessor->hotKeyMapping
+                                     : this             ->hotKeyMapping;
         
         for (int i = 0; !processed && i < 2; ++i)
         {
@@ -237,10 +254,10 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
                 case 1: keyMappingId = KeyMapping::Id(       Mod1Mask, pressedKey);
                         break;
             }
-            HotKeyMapping::Value foundHotKeyWidgets = hotKeyMapping->get(keyMappingId);
+            HotKeyMapping::Value foundHotKeyWidgets = mapping->get(keyMappingId);
             
             if (i == 0 && !foundHotKeyWidgets.isValid() && pressedModifier.containsModifier1()) {
-                foundHotKeyWidgets = hotKeyMapping->get(KeyMapping::Id(Mod1Mask, pressedKey));
+                foundHotKeyWidgets = mapping->get(KeyMapping::Id(Mod1Mask, pressedKey));
             }
             
             if (foundHotKeyWidgets.isValid()) {
@@ -314,12 +331,12 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
     
     HotKeyMapping::Value foundWidgets = hotKeyMapping->get(id);
     WidgetQueue::Ptr widgets;
-
+    
     if (foundWidgets.isValid()) {
         widgets = foundWidgets.get();
         ASSERT(widgets.isValid());
         GuiWidget* activeWidget = widgets->getLast();
-        if (activeWidget != NULL) {
+        if (hotKeyPredecessor.isInvalid() && activeWidget != NULL) {
             activeWidget->treatLostHotKeyRegistration(id);
         }
     } else {
@@ -330,23 +347,36 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
     if (hasFocus) {
         w->treatNewHotKeyRegistration(id);
     }
+    if (hotKeyPredecessor.isValid())
+    {
+        hotKeyPredecessor->requestHotKeyRegistrationFor(id, w);
+    }
 }
 
 void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w)
 {
     ASSERT(w != NULL);
     HotKeyMapping::Value foundWidgets = hotKeyMapping->get(id);
+
+    bool doIt = !hotKeyPredecessor.isValid();
+
     if (foundWidgets.isValid()) {
         WidgetQueue::Ptr widgets = foundWidgets.get();
         ASSERT(widgets.isValid());
         if (widgets->getLast() == w) {
             widgets->removeLast();
-            w->treatLostHotKeyRegistration(id);
+            if (doIt) {
+                w->treatLostHotKeyRegistration(id);
+            }
             GuiWidget* newActive = widgets->getLast();
-            if (newActive != NULL && hasFocus) {
+            if (doIt && newActive != NULL && hasFocus) {
                 newActive->treatNewHotKeyRegistration(id);
             }
         }
+    }
+    if (hotKeyPredecessor.isValid())
+    {
+        hotKeyPredecessor->requestRemovalOfHotKeyRegistrationFor(id, w);
     }
 }
 

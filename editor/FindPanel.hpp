@@ -81,10 +81,13 @@ private:
                                                                         Callback<DialogPanel*>::Ptr               panelInvoker,
                                                                         Callback<GuiWidget*>::Ptr                 requestCloseCallback);
 
+    void invalidateOutdatedInteraction();
+    
     void handleException();
     
     void handleButtonPressed(Button* button);
     void handleButtonDefaultKey(Button* button);
+    void handleCheckBoxPressed(CheckBox* checkBox);
 
     void internalFindAgain(bool forwardFlag);
     void internalFindSelection(bool forwardFlag);

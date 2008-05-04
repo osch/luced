@@ -40,12 +40,18 @@ public:
     static Ptr create(GuiWidget* parent) {
         return Ptr(new DialogPanel(parent, Callback<GuiWidget*>::Ptr()));
     }
+    
+    void setHotKeyPredecessor(DialogPanel* hotKeyPredecessor) {
+        ASSERT(this->hotKeyMapping->isEmpty());
+        this->hotKeyPredecessor = hotKeyPredecessor;
+        hotKeyPredecessor->setHotKeySuccessor(this);
+    }
 
     virtual Measures getDesiredMeasures();
 
     virtual void treatNewWindowPosition(Position newPosition);
-    virtual ProcessingResult processEvent(const XEvent *event);
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent* event);
+    virtual ProcessingResult processKeyboardEvent(const XEvent* event);
 
     virtual void treatFocusIn();
     virtual void treatFocusOut();
@@ -71,6 +77,11 @@ protected:
     virtual void requestClose();
     
 private:
+    void setHotKeySuccessor(DialogPanel* hotKeySuccessor) {
+        ASSERT(hotKeySuccessor->hotKeyMapping->isEmpty());
+        this->hotKeySuccessor = hotKeySuccessor;
+    }
+
     OwningPtr<GuiElement> rootElement;
     bool wasNeverShown;
     
@@ -86,6 +97,9 @@ private:
     bool hasFocus;
     
     Callback<GuiWidget*>::Ptr requestCloseCallback;
+    
+    WeakPtr<DialogPanel> hotKeySuccessor;
+    WeakPtr<DialogPanel> hotKeyPredecessor;
 };
 
 } // namespace LucED

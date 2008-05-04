@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef PANELDIALOGWIN_H
-#define PANELDIALOGWIN_H
+#ifndef PANEL_DIALOG_WIN_HPP
+#define PANEL_DIALOG_WIN_HPP
 
 #include "TopWin.hpp"
 #include "EventDispatcher.hpp"
@@ -30,7 +30,8 @@
 #include "SingleLineEditField.hpp"
 #include "DialogPanel.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class PanelDialogWin : public DialogWin
 {
@@ -49,10 +50,14 @@ protected:
     PanelDialogWin(TopWin* referingWindow);
     void setFocus(GuiWidget* element);
 
+    DialogPanel* getRootPanel() {
+        return dialogPanel;
+    }
+
 private:
     DialogPanel::Ptr dialogPanel;
 };
 
 } // namespace LucED
 
-#endif // PANELDIALOGWIN_H
+#endif // PANEL_DIALOG_WIN_HPP

@@ -153,6 +153,9 @@ public:
     void remove(const K& key) {
         map.erase(key);
     }
+    bool isEmpty() const {
+        return getIterator().isAtEnd();
+    }
 private:
     hash_map<K,V,H> map;
 };

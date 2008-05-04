@@ -182,9 +182,11 @@ GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
                     if (isMouseInsideButtonArea(x, y))
                     {
                         isBoxChecked = !isBoxChecked;
+                        draw();
+                        pressedCallback->call(this);
                     } else {
+                        draw();
                     }
-                    draw();
                     return EVENT_PROCESSED;
                 }
                 break;
@@ -260,6 +262,7 @@ GuiElement::ProcessingResult CheckBox::processKeyboardEvent(const XEvent *event)
     if (KeyMapping::Id(0, KeyId("space")) == keyMappingId) {
         isBoxChecked = !isBoxChecked;
         draw();
+        pressedCallback->call(this);
         processed = true;
     }
     return processed ? EVENT_PROCESSED : NOT_PROCESSED;
@@ -304,6 +307,7 @@ void CheckBox::treatHotKeyEvent(const KeyMapping::Id& id)
 {
     isBoxChecked = !isBoxChecked;
     draw();
+    pressedCallback->call(this);
 }
 
 void CheckBox::setChecked(bool checked)

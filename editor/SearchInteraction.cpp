@@ -410,7 +410,14 @@ void SearchInteraction::internalExecute(bool isWrapping, bool autoContinue)
                 cb.messageBoxInvoker->call(MessageBoxParameter()
                                           .setTitle("Not found")
                                           .setMessage("String was not found")
-                                          .setMessageBoxQueue(cb.messageBoxQueue));
+                                          .setMessageBoxQueue(cb.messageBoxQueue)
+                                          .setHotKeyPredecessor(cb.hotKeyPredecessor)
+                                          .addKeyMapping(KeyModifier("Ctrl"),       KeyId("g"), newCallback(this, &ThisClass::closeLastMessageBox))
+                                          .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("g"), newCallback(this, &ThisClass::closeLastMessageBox))
+                                          .addKeyMapping(KeyModifier("Ctrl"),       KeyId("h"), newCallback(this, &ThisClass::closeLastMessageBox))
+                                          .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("h"), newCallback(this, &ThisClass::closeLastMessageBox))
+                                          .setInvokeNotifyCallback(newCallback(this, &ThisClass::notifyAboutInvokedMessageBox))
+                                          .setCloseNotifyCallback (newCallback(this, &ThisClass::notifyAboutClosedMessageBox)));
         }
         else if (autoContinue)
         {
@@ -439,7 +446,8 @@ void SearchInteraction::internalExecute(bool isWrapping, bool autoContinue)
                                           .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("h"), newCallback(this, &ThisClass::findSelectionBackward))
                                           .setMessageBoxQueue(cb.messageBoxQueue)
                                           .setInvokeNotifyCallback(newCallback(this, &ThisClass::notifyAboutInvokedMessageBox))
-                                          .setCloseNotifyCallback (newCallback(this, &ThisClass::notifyAboutClosedMessageBox)));
+                                          .setCloseNotifyCallback (newCallback(this, &ThisClass::notifyAboutClosedMessageBox))
+                                          .setHotKeyPredecessor(cb.hotKeyPredecessor));
             } else {
                 continueForwardFlag = false;    
                 cb.messageBoxInvoker->call(MessageBoxParameter()
@@ -453,7 +461,8 @@ void SearchInteraction::internalExecute(bool isWrapping, bool autoContinue)
                                           .addKeyMapping(KeyModifier("Ctrl+Shift"), KeyId("h"), newCallback(this, &ThisClass::findSelectionBackwardAndAutoContinue))
                                           .setMessageBoxQueue(cb.messageBoxQueue)
                                           .setInvokeNotifyCallback(newCallback(this, &ThisClass::notifyAboutInvokedMessageBox))
-                                          .setCloseNotifyCallback (newCallback(this, &ThisClass::notifyAboutClosedMessageBox)));
+                                          .setCloseNotifyCallback (newCallback(this, &ThisClass::notifyAboutClosedMessageBox))
+                                          .setHotKeyPredecessor(cb.hotKeyPredecessor));
             }
         }
     }
@@ -477,3 +486,9 @@ void SearchInteraction::notifyAboutClosedMessageBox (TopWin* messageBox)
     }
 }
 
+void SearchInteraction::closeLastMessageBox()
+{
+    if (waitingMessageBox.isValid()) {
+        waitingMessageBox->requestCloseWindow(TopWin::CLOSED_SILENTLY);
+    }
+}

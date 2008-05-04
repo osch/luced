@@ -33,6 +33,9 @@ MessageBox::MessageBox(TopWin* referingWindow, const MessageBoxParameter& p)
     : PanelDialogWin(referingWindow),
       wasClosed(false)
 {
+    if (p.hotKeyPredecessor.isValid()) {
+        getRootPanel()->setHotKeyPredecessor(p.hotKeyPredecessor);
+    }
     if (p.defaultButtonLabel == "" && p.cancelButtonLabel == "") {
         button1 = Button::create(this, "O]K");
     } else {

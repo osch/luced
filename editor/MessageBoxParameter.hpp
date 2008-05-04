@@ -26,6 +26,7 @@
 #include "Callback.hpp"
 #include "KeyMapping.hpp"
 #include "WeakPtrQueue.hpp"
+#include "DialogPanel.hpp"
 
 namespace LucED
 {
@@ -88,6 +89,10 @@ public:
         this->closeNotifyCallback = closeNotifyCallback;
         return *this;
     }
+    MessageBoxParameter& setHotKeyPredecessor(DialogPanel* hotKeyPredecessor) {
+        this->hotKeyPredecessor = hotKeyPredecessor;
+        return *this;
+    }
     
 private:
     friend class MessageBox;
@@ -112,6 +117,8 @@ private:
 
     Callback<TopWin*>::Ptr invokeNotifyCallback;
     Callback<TopWin*>::Ptr closeNotifyCallback;
+    
+    WeakPtr<DialogPanel> hotKeyPredecessor;
 };
 
 } // namespace LucED

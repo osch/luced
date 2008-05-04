@@ -49,12 +49,14 @@ public:
                   MessageBoxQueue::Ptr                             messageBoxQueue,
                   Callback<ThisClass*>::Ptr                        requestCloseOfInvokingPanel,
                   Callback<ThisClass*,Callback<String>::Ptr>::Ptr  requestCurrentSelectionCallback,
-                  Callback<>::Ptr                                  exceptionHandler)
+                  Callback<>::Ptr                                  exceptionHandler,
+                  DialogPanel*                                     hotKeyPredecessor)
             : messageBoxInvoker(messageBoxInvoker),
               messageBoxQueue(messageBoxQueue),
               requestCloseOfInvokingPanel(requestCloseOfInvokingPanel),
               requestCurrentSelectionCallback(requestCurrentSelectionCallback),
-              exceptionHandler(exceptionHandler)
+              exceptionHandler(exceptionHandler),
+              hotKeyPredecessor(hotKeyPredecessor)
         {}
     private:
         friend class SearchInteraction;
@@ -64,6 +66,7 @@ public:
         Callback<ThisClass*>::Ptr                       requestCloseOfInvokingPanel;
         Callback<ThisClass*,Callback<String>::Ptr>::Ptr requestCurrentSelectionCallback;
         Callback<>::Ptr                                 exceptionHandler;
+        WeakPtr<DialogPanel>                            hotKeyPredecessor;
     };
     
     static Ptr create(const SearchParameter& p, TextEditorWidget* e,
@@ -72,6 +75,9 @@ public:
         return Ptr(new SearchInteraction(p, e, cb));
     }
     
+    ~SearchInteraction() {
+        closeLastMessageBox();
+    }
     void startFindSelection() {
         internalStartFind(true);
     }
@@ -155,6 +161,8 @@ private:
     
     void notifyAboutInvokedMessageBox(TopWin* messageBox);
     void notifyAboutClosedMessageBox (TopWin* messageBox);
+    
+    void closeLastMessageBox();
     
     SearchParameter p;
     RawPtr<TextEditorWidget> e;
