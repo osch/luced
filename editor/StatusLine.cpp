@@ -31,7 +31,8 @@ StatusLine::StatusLine(GuiWidget* parent)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
       fileLength(0), selectionLength(0),
-      lengthPos(0), line(0), column(0), pos(0), lineAndColumnWidth(0)
+      lengthPos(0), line(0), column(0), pos(0), lineAndColumnWidth(0),
+      hasMessage(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -100,27 +101,36 @@ GuiElement::ProcessingResult StatusLine::processEvent(const XEvent *event)
 
 void StatusLine::drawFileName()
 {
+    String displayText;
+    if (hasMessage) {
+        displayText = message;
+    } else {
+        displayText = fileName;
+    }
     GuiClipping c = obtainGuiClipping(
             getRaisedBoxBorderWidth(), getRaisedBoxBorderWidth(), 
             position.w - 2 * getRaisedBoxBorderWidth(), position.h - 2 * getRaisedBoxBorderWidth());
     
-    drawGuiText(  4, 2, fileName.toCString(), fileName.getLength());
-    lengthPos = getGuiTextStyle()->getTextWidth(fileName.toCString(), fileName.getLength())
+    drawGuiText(  4, 2, displayText.toCString(), displayText.getLength());
+    lengthPos = getGuiTextStyle()->getTextWidth(displayText.toCString(), displayText.getLength())
             + 3 * getGuiTextStyle()->getSpaceWidth();
 }
 
 
 void StatusLine::drawFileLength()
 {
-    GuiClipping c = obtainGuiClipping(
-            getRaisedBoxBorderWidth(), getRaisedBoxBorderWidth(), 
-            position.w - 2 * getRaisedBoxBorderWidth(), position.h - 2 * getRaisedBoxBorderWidth());
-
-    char buffer[100];
-    sprintf(buffer, "%ld bytes", fileLength);
-
-    drawRaisedSurface(lengthPos, 2, getGuiTextStyle()->getTextWidth(buffer, strlen(buffer)), getGuiTextHeight());
-    drawGuiText(      lengthPos, 2, buffer, strlen(buffer));
+    if (!hasMessage)
+    {
+        GuiClipping c = obtainGuiClipping(
+                getRaisedBoxBorderWidth(), getRaisedBoxBorderWidth(), 
+                position.w - 2 * getRaisedBoxBorderWidth(), position.h - 2 * getRaisedBoxBorderWidth());
+    
+        char buffer[100];
+        sprintf(buffer, "%ld bytes", fileLength);
+    
+        drawRaisedSurface(lengthPos, 2, getGuiTextStyle()->getTextWidth(buffer, strlen(buffer)), getGuiTextHeight());
+        drawGuiText(      lengthPos, 2, buffer, strlen(buffer));
+    }
 }
 
 int StatusLine::calcWidth(long value)
@@ -187,6 +197,21 @@ void StatusLine::setFileName(const String& fileName)
 {
     this->fileName = fileName;
     drawArea();
+}
+
+void StatusLine::setMessage(const String& message)
+{
+    this->message = message;
+    hasMessage = true;
+    drawArea();
+}
+
+void StatusLine::clearMessage()
+{
+    if (hasMessage) {
+        hasMessage = false;
+        drawArea();
+    }
 }
 
 void StatusLine::setFileLength(long fileLength)

@@ -68,7 +68,7 @@ SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget        
                 ConfigErrorHandler      WindowCloser           SaveAsPanel            KeyModifier \
 		CurrentDirectoryKeeper  ProgramExecutor        TextDisplayGuiCompound CommandOutputBox \
 		FramedGuiCompound       BuiltinTopWinActions   TopWinActionsRegistry  ScrollableTextGuiCompound \
-		SearchInteraction
+		SearchInteraction       UnknownActionNameException
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

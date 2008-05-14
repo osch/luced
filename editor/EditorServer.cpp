@@ -34,6 +34,8 @@
 #include "FileException.hpp"
 #include "FileOpener.hpp"
 #include "ConfigErrorHandler.hpp"
+#include "TopWinActionsRegistry.hpp"
+#include "BuiltinTopWinActions.hpp"
 
 using namespace LucED;
 
@@ -43,8 +45,9 @@ SingletonInstance<EditorServer> EditorServer::instance;
 EditorServer::EditorServer()
     : isStarted(false)
 {
-    GuiRoot::getInstance();         // assure that GuiRoot         instance lives longer than EditorServer
-    EventDispatcher::getInstance(); // assure that EventDispatcher instance lives longer than EditorServer
+    GuiRoot              ::getInstance();  // assure that GuiRoot         instance lives longer than EditorServer
+    EventDispatcher      ::getInstance();  // assure that EventDispatcher instance lives longer than EditorServer
+    TopWinActionsRegistry::getInstance()->registerActions("builtin", BuiltinTopWinActions::create());
 }
 
 EditorServer::~EditorServer()

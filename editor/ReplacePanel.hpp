@@ -37,6 +37,7 @@
 #include "FindPanel.hpp"
 #include "PasteDataCollector.hpp"
 #include "SearchInteraction.hpp"
+#include "PanelInvoker.hpp"
 
 namespace LucED
 {
@@ -49,16 +50,16 @@ public:
 
     static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
                       Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                      Callback<DialogPanel*>::Ptr               panelInvoker,
-                      Callback<GuiWidget*>::Ptr                 requestCloseCallback)
+                      PanelInvoker::Ptr                         panelInvoker)
     {
         return Ptr(new ReplacePanel(parent, editorWidget, findPanel, messageBoxInvoker, 
-                                                                     panelInvoker,
-                                                                     requestCloseCallback));
+                                                                     panelInvoker));
     }
     
     void replaceAgainForward();
     void replaceAgainBackward();
+    void findAgainForward();
+    void findAgainBackward();
     
     virtual void treatFocusIn();
     virtual void treatFocusOut();
@@ -82,8 +83,7 @@ private:
     
     ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
                  Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                 Callback<DialogPanel*>::Ptr               panelInvoker,
-                 Callback<GuiWidget*>::Ptr                 requestCloseCallback);
+                 PanelInvoker::Ptr                         panelInvoker);
 
     SearchParameter getSearchParameterFromGuiControls() const {
         return SearchParameter().setIgnoreCaseFlag (!caseSensitiveCheckBox->isChecked())
@@ -110,9 +110,6 @@ private:
 
     void handleModifiedEditField(bool modifiedFlag);
     
-    void findAgainForward();
-    void findAgainBackward();
-    
     void internalFindAgain(bool forwardFlag);
     void internalReplaceAgain(bool forwardFlag);
 
@@ -137,7 +134,7 @@ private:
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
     Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
-    Callback<DialogPanel*>::Ptr               panelInvoker;
+    PanelInvoker::Ptr                         panelInvoker;
     BasicRegex regex;
     Direction::Type defaultDirection;
     int historyIndex;

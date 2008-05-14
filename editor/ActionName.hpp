@@ -19,46 +19,49 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GOTO_LINE_PANEL_HPP
-#define GOTO_LINE_PANEL_HPP
+#ifndef ACTION_NAMEP_HPP
+#define ACTION_NAMEP_HPP
 
-#include "DialogPanel.hpp"
-#include "Button.hpp"
-#include "CheckBox.hpp"
-#include "TextEditorWidget.hpp"
-#include "SingleLineEditField.hpp"
-#include "PanelInvoker.hpp"
+#include "String.hpp"
+#include "ConfigException.hpp"
 
 namespace LucED
 {
 
-class GotoLinePanel : public DialogPanel
+class ActionName
 {
 public:
-    typedef OwningPtr<GotoLinePanel> Ptr;
+    ActionName()
+    {}
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, PanelInvoker::Ptr panelInvoker) {
-        return Ptr(new GotoLinePanel(parent, editorWidget, panelInvoker));
+    ActionName(const String& className,
+               const String& methodName)
+        : className(className),
+          methodName(methodName)
+    {}
+    
+    explicit ActionName(const String& name) {
+        int p = name.findFirstOf('.');
+        if (p < 0) {
+            throw ConfigException(String() << "Invalid action name: '" << name << "'");
+        }
+        className  = name.getSubstringBetween(0, p);
+        methodName = name.getTail(p + 1);
     }
     
-    virtual void treatFocusIn();
+    String getClassName() const {
+        return className;
+    }
     
+    String getMethodName() const {
+        return methodName;
+    }
+
 private:
-    GotoLinePanel(GuiWidget* parent, TextEditorWidget*   editorWidget, 
-                                     PanelInvoker::Ptr   panelInvoker);
-
-    void handleButtonPressed(Button* button);
-
-    void filterInsert(const byte** buffer, long* length);
-
-    Button::Ptr gotoButton;
-    Button::Ptr cancelButton;
-    SingleLineEditField::Ptr editField;
-  
-    WeakPtr<TextEditorWidget> editorWidget;
-    ByteArray filterBuffer;
+    String className;
+    String methodName;
 };
 
 } // namespace LucED
 
-#endif // GOTO_LINE_PANEL_HPP
+#endif // ACTION_NAMEP_HPP

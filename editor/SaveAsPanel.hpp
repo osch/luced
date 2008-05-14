@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -27,8 +27,10 @@
 #include "TextEditorWidget.hpp"
 #include "SingleLineEditField.hpp"
 #include "MessageBox.hpp"
+#include "PanelInvoker.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class SaveAsPanel : public DialogPanel
 {
@@ -37,9 +39,11 @@ public:
 
     static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, 
                                          Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                         Callback<GuiWidget*>::Ptr                 requestCloseCallback)
+                                         PanelInvoker::Ptr                         panelInvoker)
     {
-        return Ptr(new SaveAsPanel(parent, editorWidget, messageBoxInvoker, requestCloseCallback));
+        return Ptr(new SaveAsPanel(parent, editorWidget, 
+                                           messageBoxInvoker, 
+                                           panelInvoker));
     }
     
     virtual void treatFocusIn();
@@ -53,7 +57,7 @@ public:
 private:
     SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget,
                                    Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                   Callback<GuiWidget*>::Ptr                 requestCloseCallback);
+                                   PanelInvoker::Ptr                         panelInvoker);
 
     void handleButtonPressed(Button* button);
     

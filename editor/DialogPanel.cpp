@@ -29,8 +29,8 @@
 
 using namespace LucED;
 
-DialogPanel::DialogPanel(GuiWidget*                parent, 
-                         Callback<GuiWidget*>::Ptr requestCloseCallback)
+DialogPanel::DialogPanel(GuiWidget*                  parent, 
+                         Callback<DialogPanel*>::Ptr requestCloseCallback)
     : GuiWidget(parent, 0, 0, 1, 1, 0),
       wasNeverShown(true),
       
@@ -38,7 +38,7 @@ DialogPanel::DialogPanel(GuiWidget*                parent,
       keyMapping2(KeyMapping::create()),
       hotKeyMapping(HotKeyMapping::create()),
       
-      hasFocus(false),
+      hasFocusFlag(false),
       requestCloseCallback(requestCloseCallback)
 {
     addToXEventMask(ExposureMask);
@@ -141,7 +141,7 @@ GuiElement::ProcessingResult DialogPanel::processEvent(const XEvent *event)
 
 void DialogPanel::treatFocusIn()
 {
-    hasFocus = true;
+    hasFocusFlag = true;
     if (focusedElement.isValid()) {
         focusedElement->treatFocusIn();
     }
@@ -163,7 +163,7 @@ void DialogPanel::treatFocusIn()
 
 void DialogPanel::treatFocusOut()
 {
-    hasFocus = false;
+    hasFocusFlag = false;
     if (focusedElement.isValid()) {
         focusedElement->treatFocusOut();
     }
@@ -304,7 +304,7 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const XEvent *eve
 void DialogPanel::setFocus(GuiWidget* element)
 {
     if (focusedElement != element) {
-        if (hasFocus) {
+        if (hasFocusFlag) {
             if (focusedElement.isValid()) {
                 focusedElement->treatFocusOut();
             }
@@ -344,7 +344,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
         this->hotKeyMapping->set(id, widgets);
     }
     widgets->append(w);
-    if (hasFocus) {
+    if (hasFocusFlag) {
         w->treatNewHotKeyRegistration(id);
     }
     if (hotKeyPredecessor.isValid())
@@ -369,7 +369,7 @@ void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id
                 w->treatLostHotKeyRegistration(id);
             }
             GuiWidget* newActive = widgets->getLast();
-            if (doIt && newActive != NULL && hasFocus) {
+            if (doIt && newActive != NULL && hasFocusFlag) {
                 newActive->treatNewHotKeyRegistration(id);
             }
         }

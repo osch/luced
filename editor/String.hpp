@@ -139,7 +139,7 @@ public:
         return *this;
     }
     String& appendLowerChar(char c) {
-        s.push_back((char)tolower(c));
+        s.push_back((char)::tolower(c));
         return *this;
     }
     String& append(int rhs) {
@@ -157,6 +157,22 @@ public:
     
     int toInt() const {
         return atoi(s.c_str());
+    }
+    
+    String toUpper() const {
+        String rslt;
+        for (int i = 0, n = getLength(); i < n; ++i) {
+            rslt << (char) ::toupper((*this)[i]);
+        }
+        return rslt;
+    }
+    
+    String toLower() const {
+        String rslt;
+        for (int i = 0, n = getLength(); i < n; ++i) {
+            rslt << (char) ::tolower((*this)[i]);
+        }
+        return rslt;
     }
     
     bool equals(const char* rhs, long len) const
@@ -189,7 +205,7 @@ public:
             return false;
         }
         for (int i = 0; i < j; ++i) {
-            if (tolower(s[i]) != tolower(rhs[i])) {
+            if (::tolower(s[i]) != ::tolower(rhs[i])) {
                 return false;
             }
         }

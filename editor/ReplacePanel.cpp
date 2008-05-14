@@ -37,9 +37,8 @@ using namespace LucED;
 
 ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel, 
                            Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                           Callback<DialogPanel*>::Ptr               panelInvoker,
-                           Callback<GuiWidget*>::Ptr                 requestCloseCallback)
-    : DialogPanel(parent, requestCloseCallback),
+                           PanelInvoker::Ptr                         panelInvoker)
+    : DialogPanel(parent, panelInvoker->getCloseCallback()),
 
       pasteDataReceiver(PasteDataReceiver::create(this,
                                                   PasteDataCollector<ReplacePanel>::create(this))),
@@ -723,7 +722,7 @@ void ReplacePanel::handleException()
             replaceEditField->setCursorPosition(position);
             setFocus(replaceEditField);
         }
-        panelInvoker->call(this);
+        panelInvoker->invokePanel(this);
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Replace Error")
                                 .setMessage(String() << "Error within replace string: " << ex.getMessage())
@@ -736,7 +735,7 @@ void ReplacePanel::handleException()
             findEditField->setCursorPosition(position);
             setFocus(findEditField);
         }
-        panelInvoker->call(this);
+        panelInvoker->invokePanel(this);
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Regex Error")
                                 .setMessage(String() << "Error within regular expression: " << ex.getMessage())
@@ -744,7 +743,7 @@ void ReplacePanel::handleException()
     }
     catch (LuaException& ex)
     {
-        panelInvoker->call(this);
+        panelInvoker->invokePanel(this);
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Lua Error")
                                 .setMessage(ex.getMessage())

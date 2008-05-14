@@ -34,14 +34,14 @@
 #include "TopWinList.hpp"
 #include "KeyMapping.hpp"
 #include "GotoLinePanel.hpp"
-#include "FindPanel.hpp"
-#include "ReplacePanel.hpp"
 #include "MessageBox.hpp"
 #include "SaveAsPanel.hpp"
 #include "ProgramExecutor.hpp"
 #include "RawPtr.hpp"
 #include "ScrollableTextGuiCompound.hpp"
-
+#include "TopWinActionBinder.hpp"
+#include "TopWinKeyBinding.hpp"
+                     
 namespace LucED
 {
 
@@ -71,13 +71,7 @@ public:
     virtual void setSize(int width, int height);
     virtual void show();
     
-    void invokeGotoLinePanel();
     void invokeSaveAsPanel(Callback<>::Ptr saveCallback);
-    void invokeFindPanelBackward();
-    void invokeFindPanelForward();
-
-    void invokeReplacePanelBackward();
-    void invokeReplacePanelForward();
 
     virtual void requestCloseWindow(TopWin::CloseReason reason);
 
@@ -106,6 +100,9 @@ public:
     bool checkForFileModifications();
 
 private:
+           class PanelInvoker;
+    friend class PanelInvoker;
+    
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
 
     void treatConfigUpdate();
@@ -114,15 +111,12 @@ private:
 
     void requestCloseWindowByUser();
 
-    void handleEscapeKey();
     void handleSaveKey();
     void handleSaveAsKey();
     void invokePanel(DialogPanel* panel);
     void createEmptyWindow();
     void createCloneWindow();
     void executeLuaScript();
-    
-    void requestProgramQuit();
     
     void handleNewFileName(const String& fileName);
     void handleChangedModifiedFlag(bool modifiedFlag);
@@ -149,8 +143,6 @@ private:
     GotoLinePanel::Ptr gotoLinePanel;
     bool flagForSetSizeHintAtFirstShow;
 
-    FindPanel::Ptr findPanel;
-    ReplacePanel::Ptr replacePanel;
     int upperPanelIndex;
     int lowerPanelIndex;
     
@@ -165,6 +157,14 @@ private:
     SaveAsPanel::Ptr    saveAsPanel;
     
     ScrollableTextGuiCompound::Ptr scrollableTextCompound;
+    
+    TopWinActionBinder::Ptr actionBinder;
+    TopWinKeyBinding::Ptr   rootKeyBinding;
+    TopWinKeyBinding::Ptr   currentKeyBinding;
+    KeyModifier             combinationKeyModifier;
+    String                  combinationKeys;
+    
+    OwningPtr<PanelInvoker> panelInvoker;
 };
 
 } // namespace LucED

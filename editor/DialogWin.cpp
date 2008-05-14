@@ -49,17 +49,19 @@ void DialogWin::requestCloseWindowByUser()
 
 void DialogWin::requestCloseWindow(TopWin::CloseReason reason)
 {
-    TopWin::requestCloseWindow(reason);
 
     if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
         && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100
         && reason == CLOSED_SILENTLY
         && !this->hasFocus()
-        && referingWindow.isValid() && !referingWindow->isClosing())
+        && referingWindow.isValid() && !referingWindow->isClosing()
+        && !this->isClosing())
     {
         // strange workaround for exceed (vendor = <Hummingbird Communications Ltd.> <6100>)
         XSetInputFocus(getDisplay(), getWid(), RevertToNone, CurrentTime);
     }
+
+    TopWin::requestCloseWindow(reason);
 }
 
 void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)

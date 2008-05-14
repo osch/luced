@@ -37,6 +37,7 @@
 #include "KeyMapping.hpp"
 #include "SearchInteraction.hpp"
 #include "PasteDataCollector.hpp"
+#include "PanelInvoker.hpp"
 
 namespace LucED
 {
@@ -47,10 +48,9 @@ public:
     typedef OwningPtr<FindPanel> Ptr;
 
     static Ptr create(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                                                                Callback<DialogPanel*>::Ptr               panelInvoker,
-                                                                                Callback<GuiWidget*>::Ptr                 requestCloseCallback)
+                                                                                PanelInvoker::Ptr                         panelInvoker)
     {
-        return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker, requestCloseCallback));
+        return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker));
     }
     
     virtual void treatFocusIn();
@@ -78,8 +78,7 @@ private:
     friend class PasteDataCollector<FindPanel>;
     
     FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                                                        Callback<DialogPanel*>::Ptr               panelInvoker,
-                                                                        Callback<GuiWidget*>::Ptr                 requestCloseCallback);
+                                                                        PanelInvoker::Ptr                         panelInvoker);
 
     void invalidateOutdatedInteraction();
     
@@ -118,7 +117,7 @@ private:
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
     Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
-    Callback<DialogPanel*>::Ptr               panelInvoker;
+    PanelInvoker::Ptr                         panelInvoker;
     BasicRegex regex;
     Direction::Type defaultDirection;
     int historyIndex;

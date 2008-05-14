@@ -27,10 +27,10 @@
 
 using namespace LucED;
 
-typedef TopWinActions::Handler Handler;
+typedef TopWinActions::Binding Binding;
 
 
-class BuiltinTopWinActions::HandlerImpl : public  Handler, 
+class BuiltinTopWinActions::BindingImpl : public  Binding, 
                                           private TopWinActions::Parameter
 {
 public:
@@ -38,46 +38,48 @@ public:
     void invokeGotoLinePanel()
     {
         if (gotoLinePanel.isInvalid()) {
-            gotoLinePanel = GotoLinePanel::create(parentWidget, editorWidget, requestCloseCallback);
+            gotoLinePanel = GotoLinePanel::create(parentWidget, editorWidget, panelInvoker);
         }
-        panelInvoker->call(gotoLinePanel);
+        panelInvoker->invokePanel(gotoLinePanel);
     }
     
     void invokeFindPanelForward()
     {
         ASSERT(findPanel.isValid());
         findPanel->setDefaultDirection(Direction::DOWN);
-        panelInvoker->call(findPanel);
+        panelInvoker->invokePanel(findPanel);
     }
     
     void invokeFindPanelBackward()
     {
         ASSERT(findPanel.isValid());
         findPanel->setDefaultDirection(Direction::UP);
-        panelInvoker->call(findPanel);
+        panelInvoker->invokePanel(findPanel);
     }
     
     void invokeReplacePanelForward()
     {
         ASSERT(replacePanel.isValid());
         replacePanel->setDefaultDirection(Direction::DOWN);
-        panelInvoker->call(replacePanel);
+        panelInvoker->invokePanel(replacePanel);
     }
     
     void invokeReplacePanelBackward()
     {
         ASSERT(replacePanel.isValid());
         replacePanel->setDefaultDirection(Direction::UP);
-        panelInvoker->call(replacePanel);
+        panelInvoker->invokePanel(replacePanel);
     }
     
     void findSelectionForward()
     {
+        panelInvoker->closeInvokedPanel();
         findPanel->findSelectionForward();
     }
     
     void findSelectionBackward()
     {
+        panelInvoker->closeInvokedPanel();
         findPanel->findSelectionBackward();
     }
     
@@ -93,12 +95,20 @@ public:
     
     void findAgainForward()
     {
-        findPanel->findAgainForward();
+        if (replacePanel->isVisible()) {
+            replacePanel->findAgainForward();
+        } else {
+            findPanel->findAgainForward();
+        }
     }
     
     void findAgainBackward()
     {
-        findPanel->findAgainBackward();
+        if (replacePanel->isVisible()) {
+            replacePanel->findAgainBackward();
+        } else {
+            findPanel->findAgainBackward();
+        }
     }
 
     void createCloneWindow()
@@ -106,9 +116,16 @@ public:
     
     }
     
-    void requestProgramQuit()
+    void requestProgramTermination()
     {
         WindowCloser::start();
+    }
+
+    void handleEscapeKey()
+    {
+        if (panelInvoker->hasInvokedPanel()) {
+            panelInvoker->closeInvokedPanel();
+        }
     }
     
     virtual bool execute(const String& methodName)
@@ -125,39 +142,58 @@ public:
             return false;
         }
     }
+    
+    virtual Callback<>::Ptr getCallback(const String& methodName)
+    {
+        Callback<>::Ptr rslt;
+        
+        CallbackMap::Value foundValue = callbackMap.get(methodName);
+        if (foundValue.isValid()) {
+            rslt = foundValue.get();
+        } else {
+            MethodMap::Value foundMethod = methodMap->get(methodName);
+            if (foundMethod.isValid()) {
+                rslt = newCallback(this, foundMethod.get());
+                callbackMap.set(methodName, rslt);
+            }
+        }
+        return rslt;
+    }
 
 private:
     friend class BuiltinTopWinActions;
     
-    typedef OwningPtr<HandlerImpl> Ptr;
+    typedef OwningPtr<BindingImpl> Ptr;
     
-    HandlerImpl(MethodMap::Ptr methodMap, 
+    BindingImpl(MethodMap::Ptr methodMap, 
                 const TopWinActions::Parameter& parameter)
         : TopWinActions::Parameter(parameter),
           methodMap(methodMap)
     {
         findPanel = FindPanel::create(parentWidget, editorWidget, 
                                       messageBoxInvoker,
-                                      panelInvoker,
-                                      requestCloseCallback);
+                                      panelInvoker);
 
         replacePanel = ReplacePanel::create(parentWidget, editorWidget, findPanel,
                                             messageBoxInvoker,
-                                            panelInvoker,
-                                            requestCloseCallback);
+                                            panelInvoker);
     }
 
-    MethodMap::Ptr                     methodMap;
+    MethodMap::Ptr                           methodMap;
 
-    FindPanel::Ptr                     findPanel;
-    ReplacePanel::Ptr                  replacePanel;
-    GotoLinePanel::Ptr                 gotoLinePanel;
+    typedef HashMap<String, Callback<>::Ptr> CallbackMap;
+    CallbackMap                              callbackMap;
+
+    
+    FindPanel::Ptr                           findPanel;
+    ReplacePanel::Ptr                        replacePanel;
+    GotoLinePanel::Ptr                       gotoLinePanel;
 };
 
 
-Handler::Ptr BuiltinTopWinActions::createNewHandler(const TopWinActions::Parameter& parameter)
+Binding::Ptr BuiltinTopWinActions::createNewBinding(const TopWinActions::Parameter& parameter)
 {
-    HandlerImpl::Ptr rslt(new HandlerImpl(methodMap, parameter));
+    BindingImpl::Ptr rslt(new BindingImpl(methodMap, parameter));
     return rslt;
 }
 
@@ -166,23 +202,25 @@ BuiltinTopWinActions::BuiltinTopWinActions()
 {
     methodMap = MethodMap::create();
     
-    methodMap->set("invokeGotoLinePanel",        &HandlerImpl::invokeGotoLinePanel);
+    methodMap->set("invokeGotoLinePanel",        &BindingImpl::invokeGotoLinePanel);
 
-    methodMap->set("invokeFindPanelForward",     &HandlerImpl::invokeFindPanelForward);
-    methodMap->set("invokeFindPanelBackward",    &HandlerImpl::invokeFindPanelBackward);
+    methodMap->set("invokeFindPanelForward",     &BindingImpl::invokeFindPanelForward);
+    methodMap->set("invokeFindPanelBackward",    &BindingImpl::invokeFindPanelBackward);
 
-    methodMap->set("invokeReplacePanelForward",  &HandlerImpl::invokeReplacePanelForward);
-    methodMap->set("invokeReplacePanelBackward", &HandlerImpl::invokeReplacePanelBackward);
+    methodMap->set("invokeReplacePanelForward",  &BindingImpl::invokeReplacePanelForward);
+    methodMap->set("invokeReplacePanelBackward", &BindingImpl::invokeReplacePanelBackward);
 
-    methodMap->set("findSelectionForward",       &HandlerImpl::findSelectionForward);
-    methodMap->set("findSelectionBackward",      &HandlerImpl::findSelectionBackward);
+    methodMap->set("findSelectionForward",       &BindingImpl::findSelectionForward);
+    methodMap->set("findSelectionBackward",      &BindingImpl::findSelectionBackward);
 
-    methodMap->set("replaceAgainForward",        &HandlerImpl::replaceAgainForward);
-    methodMap->set("replaceAgainBackward",       &HandlerImpl::replaceAgainBackward);
+    methodMap->set("replaceAgainForward",        &BindingImpl::replaceAgainForward);
+    methodMap->set("replaceAgainBackward",       &BindingImpl::replaceAgainBackward);
 
-    methodMap->set("findAgainForward",           &HandlerImpl::findAgainForward);
-    methodMap->set("findAgainBackward",          &HandlerImpl::findAgainBackward);
+    methodMap->set("findAgainForward",           &BindingImpl::findAgainForward);
+    methodMap->set("findAgainBackward",          &BindingImpl::findAgainBackward);
     
-    methodMap->set("requestProgramQuit",         &HandlerImpl::requestProgramQuit);
+    methodMap->set("requestProgramTermination",  &BindingImpl::requestProgramTermination);
+
+    methodMap->set("handleEscapeKey",            &BindingImpl::handleEscapeKey);
 }
 

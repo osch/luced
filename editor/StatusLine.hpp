@@ -53,6 +53,9 @@ public:
     void setFileName(const String& fileName);
     void setFileLength(long length);
     
+    void setMessage(const String& message);
+    void clearMessage();
+    
 private:
 
     StatusLine(GuiWidget* parent);
@@ -84,6 +87,9 @@ private:
     int labelLWidth;
     int labelCWidth;
     int spaceWidth;
+    
+    String message;
+    bool hasMessage;
 };
 
 

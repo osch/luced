@@ -42,8 +42,12 @@
 #include "ProgramExecutor.hpp"
 #include "CommandOutputBox.hpp"
 #include "EditorServer.hpp"
+#include "PanelInvoker.hpp"
 
 using namespace LucED;
+
+namespace // anonymous namespace
+{
 
 class PanelLayoutAdapter : public GuiElement
 {
@@ -80,7 +84,42 @@ private:
     RawPtr<GuiElement> panel;
 };
 
+} // anonymous namespace
 
+
+class EditorTopWin::PanelInvoker : public LucED::PanelInvoker
+{
+public:
+    typedef OwningPtr<PanelInvoker> Ptr;
+    
+    static Ptr create(RawPtr<EditorTopWin> editorTopWin)
+    {
+        return Ptr(new PanelInvoker(editorTopWin));
+    }
+
+    virtual void invokePanel(DialogPanel* panel) {
+        editorTopWin->invokePanel(panel);
+    }
+    virtual bool hasInvokedPanel() {
+        return editorTopWin->invokedPanel.isValid();
+    }
+    virtual void closeInvokedPanel() {
+        if (editorTopWin->invokedPanel.isValid()) {
+            editorTopWin->requestCloseFor(editorTopWin->invokedPanel);
+        }
+    }
+    virtual void closePanel(DialogPanel* panel) {
+        if (panel != NULL) {
+            editorTopWin->requestCloseFor(panel);
+        }
+    }
+
+private:
+    PanelInvoker(RawPtr<EditorTopWin> editorTopWin)
+        : editorTopWin(editorTopWin)
+    {}
+    RawPtr<EditorTopWin> editorTopWin;
+};
 
 EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
@@ -147,37 +186,13 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 
     flagForSetSizeHintAtFirstShow = true;
     
-    Callback<GuiWidget*>::Ptr requestClosePanelCallback = newCallback(this, &EditorTopWin::requestCloseFor);
 
-    findPanel = FindPanel::create(this, textEditor, 
-                                  newCallback(this, &EditorTopWin::setMessageBox),
-                                  newCallback(this, &EditorTopWin::invokePanel),
-                                  requestClosePanelCallback);
-
-    replacePanel = ReplacePanel::create(this, textEditor, findPanel,
-                                  newCallback(this, &EditorTopWin::setMessageBox),
-                                  newCallback(this, &EditorTopWin::invokePanel),
-                                  requestClosePanelCallback);
-
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("q"),      newCallback(this,      &EditorTopWin::requestProgramQuit));
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("l"),      newCallback(this,      &EditorTopWin::invokeGotoLinePanel));
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("f"),      newCallback(this,      &EditorTopWin::invokeFindPanelForward));
-    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("f"),      newCallback(this,      &EditorTopWin::invokeFindPanelBackward));
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
-    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelBackward));
+//    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
     keyMapping1->set( KeyModifier("Ctrl"),       KeyId("w"),      newCallback(this,      &EditorTopWin::requestCloseWindowByUser));
-    keyMapping1->set( KeyModifier(),             KeyId("Escape"), newCallback(this,      &EditorTopWin::handleEscapeKey));
     keyMapping1->set( KeyModifier("Ctrl"),       KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveKey));
     keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveAsKey));
     keyMapping1->set( KeyModifier("Ctrl"),       KeyId("n"),      newCallback(this,      &EditorTopWin::createEmptyWindow));
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("h"),      newCallback(findPanel, &FindPanel::findSelectionForward));
-    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("h"),      newCallback(findPanel, &FindPanel::findSelectionBackward));
 
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("t"),      newCallback(replacePanel, &ReplacePanel::replaceAgainForward));
-    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("t"),      newCallback(replacePanel, &ReplacePanel::replaceAgainBackward));
-
-    keyMapping2->set( KeyModifier("Ctrl"),       KeyId("g"),      newCallback(findPanel, &FindPanel::findAgainForward));
-    keyMapping2->set( KeyModifier("Ctrl+Shift"), KeyId("g"),      newCallback(findPanel, &FindPanel::findAgainBackward));
 
     keyMapping2->set( KeyModifier("Alt"),        KeyId("c"),      newCallback(this,      &EditorTopWin::createCloneWindow));
     keyMapping2->set( KeyModifier("Alt"),        KeyId("l"),      newCallback(this,      &EditorTopWin::executeLuaScript));
@@ -187,6 +202,22 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 /////////////
     
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &EditorTopWin::treatConfigUpdate));
+
+
+    Callback<GuiWidget*>::Ptr requestClosePanelCallback = newCallback(this, &EditorTopWin::requestCloseFor);
+
+    panelInvoker = PanelInvoker::create(this);
+
+    actionBinder = TopWinActionBinder::create(
+                        TopWinActions::Parameter(this, 
+                                                 textEditor,
+                                                 newCallback(this, &EditorTopWin::setMessageBox),
+                                                 panelInvoker));
+
+    rootKeyBinding = TopWinKeyBinding::create(GlobalConfig::getInstance()->getTopWinKeyBindingConfig(),
+                                              actionBinder);
+    currentKeyBinding = rootKeyBinding;
+
 }
 
 EditorTopWin::~EditorTopWin()
@@ -236,51 +267,127 @@ void EditorTopWin::treatNewWindowPosition(Position newPosition)
     rootElement->setPosition(Position(0, 0, newPosition.w, newPosition.h));
 }
 
-GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent *event)
+GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent* event)
 {
-    KeyId       pressedKey  = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-    KeyModifier keyModifier = KeyModifier(event->xkey.state);
-
-    ProcessingResult rslt = NOT_PROCESSED;
-
-    Callback<>::Ptr m = keyMapping1->find(keyModifier, pressedKey);
-
-    if (m.isValid())
+    try
     {
-        if (event->type == KeyPress && !pressedKey.isModifierKey()) {
-            textEditor->hideMousePointer();
-        }
-
-        m->call();
-        rslt = EVENT_PROCESSED;
-    } 
-
-    if (rslt == NOT_PROCESSED && invokedPanel.isValid()) {
-        rslt = invokedPanel->processKeyboardEvent(event);
-    }
+        KeyId       pressedKey  = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+        KeyModifier keyModifier = KeyModifier(event->xkey.state);
     
-    if (rslt == NOT_PROCESSED)
-    {
-       m = keyMapping2->find(keyModifier, pressedKey);
-
-       if (m.isValid())
-       {
-           if (event->type == KeyPress) {
-               textEditor->hideMousePointer();
-           }
-
-           m->call();
-           rslt = EVENT_PROCESSED;
-       } 
-       else
-       {
-            rslt = textEditor->processKeyboardEvent(event);
-            if (rslt == EVENT_PROCESSED && invokedPanel.isValid()) {
-                invokedPanel->notifyAboutHotKeyEventForOtherWidget();
+        ProcessingResult rslt = NOT_PROCESSED;
+    
+        Callback<>::Ptr m = keyMapping1->find(keyModifier, pressedKey);
+    
+        if (m.isValid())
+        {
+            if (event->type == KeyPress && !pressedKey.isModifierKey()) {
+                textEditor->hideMousePointer();
             }
-       }
+    
+            if (currentKeyBinding != rootKeyBinding) {
+                currentKeyBinding = rootKeyBinding;
+                if (invokedPanel.isValid()) {
+                    invokedPanel->treatFocusIn();
+                } else {
+                    textEditor->treatFocusIn();
+                }
+                statusLine->clearMessage();
+            }
+            m->call();
+            rslt = EVENT_PROCESSED;
+        }
+        else if (event->type == KeyPress && !pressedKey.isModifierKey())
+        {
+            textEditor->hideMousePointer();
+
+            TopWinKeyBinding::FoundValue foundBinding;
+            
+            if (currentKeyBinding != rootKeyBinding) {
+                foundBinding = currentKeyBinding->find(combinationKeyModifier, pressedKey);
+            } else {
+                foundBinding = currentKeyBinding->find(keyModifier,            pressedKey);
+            }
+            if (foundBinding.isValid())
+            {
+                if (foundBinding.get().isCallable())
+                {
+                    foundBinding.get().call();
+                    currentKeyBinding = rootKeyBinding;
+                    rslt = EVENT_PROCESSED;
+                }
+                else if (foundBinding.get().hasNext())
+                {
+                    if (currentKeyBinding == rootKeyBinding) {
+                        combinationKeyModifier = keyModifier;
+                        combinationKeys = pressedKey.toString().toUpper();
+                    } else {
+                        combinationKeys << "," << pressedKey.toString().toUpper();
+                    }
+                    currentKeyBinding = foundBinding.get().getNext();
+                    rslt = EVENT_PROCESSED;
+                }
+            }
+            if (   currentKeyBinding != rootKeyBinding 
+                && rslt != EVENT_PROCESSED)
+            {
+                currentKeyBinding = rootKeyBinding;
+                rslt = EVENT_PROCESSED;
+            }
+            if (currentKeyBinding != rootKeyBinding) {
+                if (invokedPanel.isValid()) {
+                    invokedPanel->treatFocusOut();
+                } else {
+                    textEditor->treatFocusOut();
+                }
+                statusLine->setMessage(String() << "Key combination: " 
+                                                << (  combinationKeyModifier.toString().getLength() > 0
+                                                    ? (combinationKeyModifier.toString() << "+")
+                                                    : "")
+                                                << combinationKeys
+                                                << ", ...");
+            } else {
+                if (invokedPanel.isValid()) {
+                    invokedPanel->treatFocusIn();
+                } else {
+                    textEditor->treatFocusIn();
+                }
+                statusLine->clearMessage();
+            }
+        }
+        
+        if (rslt == NOT_PROCESSED && invokedPanel.isValid()) {
+            rslt = invokedPanel->processKeyboardEvent(event);
+        }
+        
+        if (rslt == NOT_PROCESSED)
+        {
+           m = keyMapping2->find(keyModifier, pressedKey);
+    
+           if (m.isValid())
+           {
+               if (event->type == KeyPress) {
+                   textEditor->hideMousePointer();
+               }
+    
+               m->call();
+               rslt = EVENT_PROCESSED;
+           } 
+           else
+           {
+                rslt = textEditor->processKeyboardEvent(event);
+                if (rslt == EVENT_PROCESSED && invokedPanel.isValid()) {
+                    invokedPanel->notifyAboutHotKeyEventForOtherWidget();
+                }
+           }
+        }
+        return rslt;
     }
-    return rslt;
+    catch (UnknownActionNameException& ex)
+    {
+        setMessageBox(MessageBoxParameter().setTitle("Config Error")
+                                           .setMessage(ex.getMessage()));
+        return NOT_PROCESSED;
+    }
 }
 
 
@@ -370,6 +477,15 @@ void EditorTopWin::doNotReloadFile()
 
 void EditorTopWin::treatFocusOut()
 {
+    if (currentKeyBinding != rootKeyBinding) {
+        currentKeyBinding = rootKeyBinding;
+        if (invokedPanel.isValid()) {
+            invokedPanel->treatFocusIn();
+        } else {
+            textEditor->treatFocusIn();
+        }
+        statusLine->clearMessage();
+    }
     if (invokedPanel.isValid()) {
         invokedPanel->treatFocusOut();
     } else {
@@ -452,53 +568,17 @@ void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseRe
     }
 }
 
-void EditorTopWin::invokeGotoLinePanel()
-{
-    if (gotoLinePanel.isInvalid()) {
-        gotoLinePanel = GotoLinePanel::create(this, textEditor, newCallback(this, &EditorTopWin::requestCloseFor));
-    }
-    invokePanel(gotoLinePanel);
-}
-
 void EditorTopWin::invokeSaveAsPanel(Callback<>::Ptr saveCallback)
 {
     if (saveAsPanel.isInvalid()) {
         saveAsPanel = SaveAsPanel::create(this, textEditor, 
                                                 newCallback(this, &EditorTopWin::setMessageBox),
-                                                newCallback(this, &EditorTopWin::requestCloseFor));
+                                                panelInvoker);
     }
     saveAsPanel->setSaveCallback(saveCallback);
     invokePanel(saveAsPanel);
 }
 
-
-void EditorTopWin::invokeFindPanelForward()
-{
-    ASSERT(findPanel.isValid());
-    findPanel->setDefaultDirection(Direction::DOWN);
-    invokePanel(findPanel);
-}
-
-void EditorTopWin::invokeFindPanelBackward()
-{
-    ASSERT(findPanel.isValid());
-    findPanel->setDefaultDirection(Direction::UP);
-    invokePanel(findPanel);
-}
-
-void EditorTopWin::invokeReplacePanelForward()
-{
-    ASSERT(replacePanel.isValid());
-    replacePanel->setDefaultDirection(Direction::DOWN);
-    invokePanel(replacePanel);
-}
-
-void EditorTopWin::invokeReplacePanelBackward()
-{
-    ASSERT(replacePanel.isValid());
-    replacePanel->setDefaultDirection(Direction::UP);
-    invokePanel(replacePanel);
-}
 
 void EditorTopWin::invokePanel(DialogPanel* panel)
 {
@@ -540,13 +620,6 @@ void EditorTopWin::requestCloseFor(GuiWidget* w)
         Position p = getPosition();
         rootElement->setPosition(Position(0, 0, p.w, p.h));
         textEditor->setVerticalAdjustmentStrategy(TextWidget::STRICT_TOP_LINE_ANCHOR);
-    }
-}
-
-void EditorTopWin::handleEscapeKey()
-{
-    if (invokedPanel.isValid()) {
-        requestCloseFor(invokedPanel);
     }
 }
 
@@ -811,11 +884,6 @@ void EditorTopWin::executeLuaScript()
 String EditorTopWin::getFileName() const
 {
     return textData->getFileName();
-}
-
-void EditorTopWin::requestProgramQuit()
-{
-    WindowCloser::start();
 }
 
 void EditorTopWin::executeTestScript()

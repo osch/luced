@@ -19,38 +19,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef BUILTIN_TOP_WIN_ACTIONS_HPP
-#define BUILTIN_TOP_WIN_ACTIONS_HPP
+#include "UnknownActionNameException.hpp"
 
-#include "TopWinActions.hpp"
-#include "HeapHashMap.hpp"
+using namespace LucED;
 
-namespace LucED
+const char* UnknownActionNameException::what() const throw()
 {
+    static const char* whatString = "UnknownActionNameException";
+    return whatString;
+}
 
-class BuiltinTopWinActions : public TopWinActions
-{
-public:
-    typedef OwningPtr<BuiltinTopWinActions> Ptr;
-    typedef TopWinActions::Binding          Binding;
-    
-    static Ptr create() {
-        return Ptr(new BuiltinTopWinActions());
-    }
-    
-    virtual Binding::Ptr createNewBinding(const TopWinActions::Parameter& parameter);
-
-private:
-    BuiltinTopWinActions();
-
-    class BindingImpl;
-    typedef void (BindingImpl::*MethodPtr)();
-
-    typedef HeapHashMap< String, MethodPtr > MethodMap;
-    
-    MethodMap::Ptr methodMap;
-};
-
-} // namespace LucED
-
-#endif // BUILTIN_TOP_WIN_ACTIONS_HPP

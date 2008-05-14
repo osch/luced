@@ -19,46 +19,51 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GOTO_LINE_PANEL_HPP
-#define GOTO_LINE_PANEL_HPP
+#ifndef KEY_COMBINATION_HPP
+#define KEY_COMBINATION_HPP
 
-#include "DialogPanel.hpp"
-#include "Button.hpp"
-#include "CheckBox.hpp"
-#include "TextEditorWidget.hpp"
-#include "SingleLineEditField.hpp"
-#include "PanelInvoker.hpp"
+#include "String.hpp"
+#include "KeyModifier.hpp"
+#include "ConfigException.hpp"
 
 namespace LucED
 {
 
-class GotoLinePanel : public DialogPanel
+class KeyCombination
 {
 public:
-    typedef OwningPtr<GotoLinePanel> Ptr;
-
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, PanelInvoker::Ptr panelInvoker) {
-        return Ptr(new GotoLinePanel(parent, editorWidget, panelInvoker));
+    KeyCombination(const String& keyModifier, const String& keyIds)
+        : keyModifier(keyModifier),
+          keyIds(keyIds)
+    {}
+    KeyModifier getKeyModifier() const {
+        return keyModifier;
+    }
+    bool hasKeyIds() const {
+        return keyIds.getLength() > 0;
+    }
+    KeyId getFirstKeyId() const {
+        int p = keyIds.findFirstOf(',');
+        if (p <= 0) {
+            return KeyId(keyIds);
+        } else {
+            return KeyId(keyIds.getSubstringBetween(0, p));
+        }
+    }
+    void removeFirstKeyId() {
+        int p = keyIds.findFirstOf(',', 1);
+        if (p <= 0) {
+            keyIds = "";
+        } else {
+            keyIds = keyIds.getTail(p + 1);
+        }
     }
     
-    virtual void treatFocusIn();
-    
 private:
-    GotoLinePanel(GuiWidget* parent, TextEditorWidget*   editorWidget, 
-                                     PanelInvoker::Ptr   panelInvoker);
-
-    void handleButtonPressed(Button* button);
-
-    void filterInsert(const byte** buffer, long* length);
-
-    Button::Ptr gotoButton;
-    Button::Ptr cancelButton;
-    SingleLineEditField::Ptr editField;
-  
-    WeakPtr<TextEditorWidget> editorWidget;
-    ByteArray filterBuffer;
+    KeyModifier keyModifier;
+    String keyIds;
 };
 
 } // namespace LucED
 
-#endif // GOTO_LINE_PANEL_HPP
+#endif // KEY_COMBINATION_HPP

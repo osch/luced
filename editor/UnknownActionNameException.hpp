@@ -19,46 +19,27 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GOTO_LINE_PANEL_HPP
-#define GOTO_LINE_PANEL_HPP
+#ifndef UNKNOWN_ACTION_NAME_EXCEPTION_HPP
+#define UNKNOWN_ACTION_NAME_EXCEPTION_HPP
 
-#include "DialogPanel.hpp"
-#include "Button.hpp"
-#include "CheckBox.hpp"
-#include "TextEditorWidget.hpp"
-#include "SingleLineEditField.hpp"
-#include "PanelInvoker.hpp"
+#include "BaseException.hpp"
 
 namespace LucED
 {
 
-class GotoLinePanel : public DialogPanel
+class UnknownActionNameException : public BaseException
 {
 public:
-    typedef OwningPtr<GotoLinePanel> Ptr;
+    UnknownActionNameException(const String& message)
+        : BaseException(message)
+    {}
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, PanelInvoker::Ptr panelInvoker) {
-        return Ptr(new GotoLinePanel(parent, editorWidget, panelInvoker));
-    }
+    virtual ~UnknownActionNameException() throw()
+    {}
     
-    virtual void treatFocusIn();
-    
-private:
-    GotoLinePanel(GuiWidget* parent, TextEditorWidget*   editorWidget, 
-                                     PanelInvoker::Ptr   panelInvoker);
-
-    void handleButtonPressed(Button* button);
-
-    void filterInsert(const byte** buffer, long* length);
-
-    Button::Ptr gotoButton;
-    Button::Ptr cancelButton;
-    SingleLineEditField::Ptr editField;
-  
-    WeakPtr<TextEditorWidget> editorWidget;
-    ByteArray filterBuffer;
+    virtual const char* what() const throw();
 };
 
 } // namespace LucED
 
-#endif // GOTO_LINE_PANEL_HPP
+#endif // UNKNOWN_ACTION_NAME_EXCEPTION_HPP

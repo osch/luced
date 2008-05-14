@@ -474,21 +474,12 @@ void TopWin::setWindowManagerHints()
 
 void TopWin::requestCloseWindow(TopWin::CloseReason reason)
 {
-    this->isClosingFlag = true;
-    myOwner->requestCloseChildWindow(this);
-    requestForCloseNotifyCallbacks.invokeAllCallbacks(this, reason);
-#if 0
-    if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
-        && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100
-        && expectedFocusTopWin != NULL
-        && expectedFocusTopWin != this
-        && reason == CLOSED_SILENTLY)
+    if (!isClosingFlag)
     {
-        // vendor <Hummingbird Communications Ltd.> <6100>
-        this->internalRaise(); // strange workaround for exceed
-        expectedFocusTopWin->internalRaise();
+        isClosingFlag = true;
+        myOwner->requestCloseChildWindow(this);
+        requestForCloseNotifyCallbacks.invokeAllCallbacks(this, reason);
     }
-#endif
 }
 
 

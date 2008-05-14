@@ -19,46 +19,41 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GOTO_LINE_PANEL_HPP
-#define GOTO_LINE_PANEL_HPP
+#ifndef PANEL_INVOKER_HPP
+#define PANEL_INVOKER_HPP
 
+#include "HeapObject.hpp"
+#include "OwningPtr.hpp"
 #include "DialogPanel.hpp"
-#include "Button.hpp"
-#include "CheckBox.hpp"
-#include "TextEditorWidget.hpp"
-#include "SingleLineEditField.hpp"
-#include "PanelInvoker.hpp"
+#include "Callback.hpp"
 
 namespace LucED
 {
 
-class GotoLinePanel : public DialogPanel
+class PanelInvoker : public HeapObject
 {
 public:
-    typedef OwningPtr<GotoLinePanel> Ptr;
+    typedef OwningPtr<PanelInvoker> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, PanelInvoker::Ptr panelInvoker) {
-        return Ptr(new GotoLinePanel(parent, editorWidget, panelInvoker));
+    virtual void invokePanel(DialogPanel* panel) = 0;
+    virtual bool hasInvokedPanel() = 0;
+    virtual void closeInvokedPanel() = 0;
+    virtual void closePanel(DialogPanel* panel) = 0;
+    
+    Callback<DialogPanel*>::Ptr getCloseCallback() {
+        if (!closeCallback.isValid()) {
+            closeCallback = newCallback(this, &PanelInvoker::closePanel);
+        }
+        return closeCallback;
     }
     
-    virtual void treatFocusIn();
+protected:
+    PanelInvoker()
+    {}
     
-private:
-    GotoLinePanel(GuiWidget* parent, TextEditorWidget*   editorWidget, 
-                                     PanelInvoker::Ptr   panelInvoker);
-
-    void handleButtonPressed(Button* button);
-
-    void filterInsert(const byte** buffer, long* length);
-
-    Button::Ptr gotoButton;
-    Button::Ptr cancelButton;
-    SingleLineEditField::Ptr editField;
-  
-    WeakPtr<TextEditorWidget> editorWidget;
-    ByteArray filterBuffer;
+    Callback<DialogPanel*>::Ptr closeCallback;    
 };
 
 } // namespace LucED
 
-#endif // GOTO_LINE_PANEL_HPP
+#endif // PANEL_INVOKER_HPP

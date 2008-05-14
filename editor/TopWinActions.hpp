@@ -31,6 +31,7 @@
 #include "MessageBoxParameter.hpp"
 #include "DialogPanel.hpp"
 #include "HeapHashMap.hpp"
+#include "PanelInvoker.hpp"
 
 namespace LucED
 {
@@ -47,39 +48,36 @@ public:
         Parameter(RawPtr<GuiWidget>                         parentWidget, 
                   RawPtr<TextEditorWidget>                  editorWidget, 
                   Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                  Callback<DialogPanel*>::Ptr               panelInvoker,
-                  Callback<GuiWidget*>::Ptr                 requestCloseCallback)
+                  PanelInvoker::Ptr                         panelInvoker)
             : parentWidget(parentWidget),
               editorWidget(editorWidget),
               messageBoxInvoker(messageBoxInvoker),
-              panelInvoker(panelInvoker),
-              requestCloseCallback(requestCloseCallback)
+              panelInvoker(panelInvoker)
         {}
 
     protected:
         RawPtr<GuiWidget>                         parentWidget;
         RawPtr<TextEditorWidget>                  editorWidget;
         Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
-        Callback<DialogPanel*>::Ptr               panelInvoker;
-        Callback<GuiWidget*>::Ptr                 requestCloseCallback;
+        PanelInvoker::Ptr                         panelInvoker;
     };
 
-    class Handler : public HeapObject
+    class Binding : public HeapObject
     {
     public:
-        typedef OwningPtr<Handler> Ptr;
+        typedef OwningPtr<Binding> Ptr;
 
-        virtual bool execute(const String& methodName) = 0;
-
+        virtual bool            execute    (const String& methodName) = 0;
+        virtual Callback<>::Ptr getCallback(const String& methodName) = 0;
     protected:
-        Handler()
+        Binding()
         {}
     };
     
-    typedef HeapHashMap< String, TopWinActions::Handler::Ptr > HandlerMap;
+    typedef HeapHashMap< String, TopWinActions::Binding::Ptr > BindingMap;
     typedef HeapHashMap< String, TopWinActions::Ptr >          ActionsMap;
 
-    virtual Handler::Ptr createNewHandler(const Parameter& parameter) = 0;
+    virtual Binding::Ptr createNewBinding(const Parameter& parameter) = 0;
 
 protected:
     TopWinActions()

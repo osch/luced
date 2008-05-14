@@ -34,9 +34,8 @@ using namespace LucED;
 
 
 FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                                                               Callback<DialogPanel*>::Ptr               panelInvoker,
-                                                                               Callback<GuiWidget*>::Ptr                 requestCloseCallback)
-    : DialogPanel(parent, requestCloseCallback),
+                                                                               PanelInvoker::Ptr                         panelInvoker)
+    : DialogPanel(parent, panelInvoker->getCloseCallback()),
 
       pasteDataReceiver(PasteDataReceiver::create(this,
                                                   PasteDataCollector<FindPanel>::create(this))),
@@ -474,16 +473,6 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent* event
         }
         processed = true;
     }
-    else if (KeyMapping::Id(ControlMask, KeyId("g")) == keyMappingId)
-    {
-        findAgainForward();
-        processed = true;
-    }
-    else if (KeyMapping::Id(ShiftMask|ControlMask, KeyId("g")) == keyMappingId)
-    {
-        findAgainBackward();
-        processed = true;
-    }
     
     if (!processed) {
         return DialogPanel::processKeyboardEvent(event);
@@ -533,7 +522,7 @@ void FindPanel::handleException()
     {
         if (currentInteraction.isValid())
         {
-            panelInvoker->call(this);
+            panelInvoker->invokePanel(this);
     
             editField->getTextData()->setToString(currentInteraction->getFindString());
             int position = ex.getPosition();
@@ -550,7 +539,7 @@ void FindPanel::handleException()
     {
         if (currentInteraction.isValid())
         {
-            panelInvoker->call(this);
+            panelInvoker->invokePanel(this);
     
             editField->getTextData()->setToString(currentInteraction->getFindString());
         }

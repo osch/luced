@@ -31,71 +31,38 @@
 namespace LucED
 {
 
+class TopWinActionBinder;
+
 class TopWinActionsRegistry : public HeapObject
 {
 public:
     static RawPtr<TopWinActionsRegistry> getInstance();
 
     typedef HashMapValue<TopWinActions::Ptr> FoundActions;
-    typedef TopWinActions::HandlerMap HandlerMap;
-    typedef TopWinActions::ActionsMap ActionsMap;
+    typedef TopWinActions::BindingMap        BindingMap;
+    typedef TopWinActions::ActionsMap        ActionsMap;
 
     void registerActions(const String& id, TopWinActions::Ptr actions) {
         actionsMap->set(id, actions);
     }
-    
-    class Handler : public HeapObject
+
+    class BinderAccess
     {
-    public:
-        typedef OwningPtr<Handler> Ptr;
-        
-        bool execute(const String& className, const String& methodName)
-        {
-            HandlerMap::Value foundHandler = handlerMap->get(className);
-            if (foundHandler.isValid())
-            {
-                return foundHandler.get()->execute(methodName);
-            }
-            else {
-                ActionsMap::Value foundActions = actionsMap->get(className);
-                if (foundActions.isValid())
-                {
-                    TopWinActions::Handler::Ptr newHandler = foundActions.get()->createNewHandler(parameter);
-                    handlerMap->set(className, newHandler);
-                    return newHandler->execute(methodName);
-                }
-                else {
-                    return false;
-                }
-            }
-        }
-        
-    private:
-        friend class TopWinActionsRegistry;
-        
-        Handler(const TopWinActions::Parameter& parameter,
-                ActionsMap::Ptr                 actionsMap)
-            : parameter(parameter),
-              actionsMap(actionsMap),
-              handlerMap(HandlerMap::create())
-        {}
-        TopWinActions::Parameter parameter;
-        ActionsMap::Ptr          actionsMap;
-        HandlerMap::Ptr          handlerMap;
-    };
-    
-    Handler::Ptr createNewHandler(const TopWinActions::Parameter& parameter)
-    {
-        return Handler::Ptr(new Handler(parameter, actionsMap));
-    }
+        friend class TopWinActionBinder;
+
+        static ActionsMap::Ptr getActionsMap() {
+            return TopWinActionsRegistry::getInstance()->actionsMap;
+        }    
+    };    
     
 private:
+    static       SingletonInstance<TopWinActionsRegistry> instance;
     friend class SingletonInstance<TopWinActionsRegistry>;
-    static SingletonInstance<TopWinActionsRegistry> instance;
 
     TopWinActionsRegistry()
         : actionsMap(ActionsMap::create())
     {}
+    
     ActionsMap::Ptr actionsMap;
 };
 

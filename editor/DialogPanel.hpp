@@ -38,7 +38,7 @@ public:
     typedef OwningPtr<DialogPanel> Ptr;
     
     static Ptr create(GuiWidget* parent) {
-        return Ptr(new DialogPanel(parent, Callback<GuiWidget*>::Ptr()));
+        return Ptr(new DialogPanel(parent, Callback<DialogPanel*>::Ptr()));
     }
     
     void setHotKeyPredecessor(DialogPanel* hotKeyPredecessor) {
@@ -65,8 +65,12 @@ public:
 
     virtual void setPosition(Position newPosition);
     
+    bool hasFocus() const {
+        return hasFocusFlag;
+    }
+    
 protected:
-    DialogPanel(GuiWidget* parent, Callback<GuiWidget*>::Ptr requestCloseCallback);
+    DialogPanel(GuiWidget* parent, Callback<DialogPanel*>::Ptr requestCloseCallback);
     
     GuiElement* getRootElement() {return rootElement.getRawPtr();}
     
@@ -94,9 +98,9 @@ private:
     
     WeakPtr<GuiWidget> focusedElement;
     
-    bool hasFocus;
+    bool hasFocusFlag;
     
-    Callback<GuiWidget*>::Ptr requestCloseCallback;
+    Callback<DialogPanel*>::Ptr requestCloseCallback;
     
     WeakPtr<DialogPanel> hotKeySuccessor;
     WeakPtr<DialogPanel> hotKeyPredecessor;

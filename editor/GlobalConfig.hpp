@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GLOBALCONFIG_H
-#define GLOBALCONFIG_H
+#ifndef GLOBAL_CONFIG_HPP
+#define GLOBAL_CONFIG_HPP
 
 #include "String.hpp"
 
@@ -34,10 +34,10 @@
 #include "CallbackContainer.hpp"
 #include "MicroSeconds.hpp"
 #include "SyntaxPatternsConfig.hpp"
+#include "TopWinKeyBindingConfig.hpp"
 
-namespace LucED {
-
-
+namespace LucED
+{
 
 class GlobalConfig : public HeapObject
 {
@@ -47,6 +47,10 @@ public:
     static GlobalConfig* getInstance();
     
     void readConfig();
+    
+    TopWinKeyBindingConfig::Ptr getTopWinKeyBindingConfig() const {
+        return topWinKeyBindingConfig;
+    }
     
     bool getUseOwnKeyPressRepeater() const {
         return useOwnKeyPressRepeater;
@@ -205,8 +209,10 @@ private:
     
     String generalConfigFileName;
     String syntaxPatternDirectory;
+    
+    TopWinKeyBindingConfig::Ptr topWinKeyBindingConfig;
 };
 
 } // namespace LucED
 
-#endif // GLOBALCONFIG_H
+#endif // GLOBAL_CONFIG_HPP
