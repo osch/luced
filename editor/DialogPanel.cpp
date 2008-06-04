@@ -337,6 +337,9 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
         ASSERT(widgets.isValid());
         GuiWidget* activeWidget = widgets->getLast();
         if (hotKeyPredecessor.isInvalid() && activeWidget != NULL) {
+            if (activeWidget == w) {
+                return;
+            }
             activeWidget->treatLostHotKeyRegistration(id);
         }
     } else {

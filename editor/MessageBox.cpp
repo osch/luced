@@ -82,7 +82,7 @@ MessageBox::MessageBox(TopWin* referingWindow, const MessageBoxParameter& p)
     if (p.defaultButtonCallback.isValid()) {
         defaultButtonCallback = p.defaultButtonCallback;
     }
-    Callback<Button*>::Ptr buttonCallback = newCallback(this, &MessageBox::handleButtonPressed);
+    Callback<Button*,Button::ActivationVariant>::Ptr buttonCallback = newCallback(this, &MessageBox::handleButtonPressed);
     
     if (button1.isValid()) {
         button1->setButtonPressedCallback(buttonCallback);
@@ -162,11 +162,10 @@ void MessageBox::show()
     invokeNotifyCallback->call(this);
 }
 
-void MessageBox::handleButtonPressed(Button* button)
+void MessageBox::handleButtonPressed(Button* button, Button::ActivationVariant variant)
 {
     if (!wasClosed)
     {
-
         if (button == button1 && defaultButtonCallback->isEnabled()) {
                 PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
                 wasClosed = true;

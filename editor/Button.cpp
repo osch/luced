@@ -255,7 +255,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                             if (pressedCallback0->isEnabled()) {
                                 pressedCallback0->call();
                             } else {
-                                pressedCallback1->call(this);
+                                pressedCallback1->call(this, WAS_MOUSE_CLICK);
                             }
                         }
                         else if (event->xbutton.button == Button3) 
@@ -263,7 +263,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
                             if (rightClickedCallback0->isEnabled()) {
                                 rightClickedCallback0->call();
                             } else {
-                                rightClickedCallback1->call(this);
+                                rightClickedCallback1->call(this, WAS_MOUSE_CLICK);
                             }
                         }
                     }
@@ -436,17 +436,17 @@ void Button::emulateButtonPress(bool isDefaultKey, bool isRightClicked)
         if (rightClickedCallback0->isEnabled()) {
             rightClickedCallback0->call();
         } else {
-            rightClickedCallback1->call(this);
+            rightClickedCallback1->call(this, isDefaultKey ? WAS_DEFAULT_KEY
+                                                           : WAS_HOT_KEY);
         }
     }
     else
     {
-        if (isDefaultKey && buttonDefaultKeyCallback->isEnabled()) {
-            buttonDefaultKeyCallback->call(this);
-        } else if (pressedCallback0->isEnabled()) {
+        if (pressedCallback0->isEnabled()) {
             pressedCallback0->call();
         } else {
-            pressedCallback1->call(this);
+            pressedCallback1->call(this, isDefaultKey ? WAS_DEFAULT_KEY
+                                                      : WAS_HOT_KEY);
         }
     }
 }

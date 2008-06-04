@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -32,8 +32,11 @@
 #include "OwningPtr.hpp"
 #include "KeyMapping.hpp"
 #include "RawPtr.hpp"
+#include "ObjectArray.hpp"
+#include "ActionMethods.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class EventDispatcher;
 class GuiRoot;
@@ -90,6 +93,28 @@ public:
     
     void setWinGravity(int winGravity);
     
+    void addActionMethods(ActionMethods::Ptr methods) {
+        actionMethods.append(methods);
+    }
+    
+    ActionMethods::Ptr getActionMethodsWith(ActionId actionId) const {
+        for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
+            if (actionMethods[i]->hasActionMethod(actionId)) {
+                return actionMethods[i];
+            }
+        }
+        return ActionMethods::Ptr();
+    }
+    
+    bool invokeActionMethod(ActionId actionId) const {
+        for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
+            if (actionMethods[i]->invokeActionMethod(actionId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 protected:
 
     GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width);
@@ -183,11 +208,14 @@ private:
     bool isTopWindow;
     WidgetId wid;
     long eventMask;
-    WeakPtr<GuiWidget> parent;
     Position position;
+    GC gcid;
+
+    WeakPtr<GuiWidget> parent;
+
     WeakPtr<GuiWidget> nextFocusWidget;
     WeakPtr<GuiWidget> prevFocusWidget;
-    GC gcid;
+    ObjectArray<ActionMethods::Ptr> actionMethods;
 };
 
 class GuiWidgetAccessForEventProcessors

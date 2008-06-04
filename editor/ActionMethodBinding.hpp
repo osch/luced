@@ -19,38 +19,50 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef BUILTIN_TOP_WIN_ACTIONS_HPP
-#define BUILTIN_TOP_WIN_ACTIONS_HPP
+#ifndef ACTION_METHOD_BINDING_HPP
+#define ACTION_METHOD_BINDING_HPP
 
-#include "TopWinActions.hpp"
-#include "HeapHashMap.hpp"
+#include "ActionMethods.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {
 
-class BuiltinTopWinActions : public TopWinActions
+template < class T
+         >
+class ActionMethodBinding : public ActionMethods
 {
 public:
-    typedef OwningPtr<BuiltinTopWinActions> Ptr;
-    typedef TopWinActions::Binding          Binding;
+    typedef void (T::*MethodPtr)();
+
+    virtual bool hasActionMethod(ActionId actionId)
+    {
+        return (getActionMethod(actionId) != NULL);
+    }
+
+    virtual bool invokeActionMethod(ActionId actionId)
+    {
+        MethodPtr methodPtr = getActionMethod(actionId);
     
-    static Ptr create() {
-        return Ptr(new BuiltinTopWinActions());
+        if (methodPtr != NULL) {
+            (impl->*methodPtr)(); // invoke Method
+            return true;
+        } else {
+            return false;
+        }
     }
     
-    virtual Binding::Ptr createNewBinding(const TopWinActions::Parameter& parameter);
-
+protected:
+    ActionMethodBinding(T* impl)
+        : impl(impl)
+    {}       
+        
 private:
-    BuiltinTopWinActions();
+    static MethodPtr getActionMethod(ActionId actionId);
 
-    class BindingImpl;
-    typedef void (BindingImpl::*MethodPtr)();
-
-    typedef HeapHashMap< String, MethodPtr > MethodMap;
-    
-    MethodMap::Ptr methodMap;
+    RawPtr<T> impl;
 };
 
 } // namespace LucED
 
-#endif // BUILTIN_TOP_WIN_ACTIONS_HPP
+#endif // ACTION_METHOD_BINDING_HPP

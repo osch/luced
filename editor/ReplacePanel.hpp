@@ -61,9 +61,6 @@ public:
     void findAgainForward();
     void findAgainBackward();
     
-    virtual void treatFocusIn();
-    virtual void treatFocusOut();
-    
     void setDefaultDirection(Direction::Type direction) {
         ASSERT(direction == Direction::UP || direction == Direction::DOWN);
         defaultDirection = direction;
@@ -104,8 +101,8 @@ private:
     
     void handleException();
     
-    void handleButtonPressed(Button* button);
-    void handleButtonRightClicked(Button* button);
+    void handleButtonPressed(Button* button,      Button::ActivationVariant variant);
+    void handleButtonRightClicked(Button* button, Button::ActivationVariant variant);
     void handleCheckBoxPressed(CheckBox* checkBox);
 
     void handleModifiedEditField(bool modifiedFlag);
@@ -121,7 +118,6 @@ private:
 
     SingleLineEditField::Ptr findEditField;
     SingleLineEditField::Ptr replaceEditField;
-    SingleLineEditField::Ptr lastFocusedEditField;
     
     Button::Ptr findNextButton;
     Button::Ptr findPrevButton;

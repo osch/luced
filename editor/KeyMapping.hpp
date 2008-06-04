@@ -62,6 +62,10 @@ public:
         KeyModifier getKeyModifier() const { return keyState; }
         KeyId       getKeyId() const { return keyId; }
 
+        String toString() const {
+            return String() << keyState.toString() << ":" << keyId.toString();
+        }
+
         class HashFunction
         {
         public:

@@ -19,14 +19,14 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TOP_WIN_KEY_BINDING_CONFIG_HPP
-#define TOP_WIN_KEY_BINDING_CONFIG_HPP
+#ifndef ACTION_KEY_CONFIG_HPP
+#define ACTION_KEY_CONFIG_HPP
 
 #include "HeapObject.hpp"
 #include "OwningPtr.hpp"
 #include "KeyMapping.hpp"
 #include "String.hpp"
-#include "ActionName.hpp"
+#include "ActionId.hpp"
 #include "HashMap.hpp"
 #include "ConfigException.hpp"
 #include "KeyCombination.hpp"
@@ -34,46 +34,66 @@
 namespace LucED
 {
 
-class TopWinKeyBindingConfig : public HeapObject
+class ActionKeyConfig : public HeapObject
 {
 public:
-    typedef OwningPtr<TopWinKeyBindingConfig> Ptr;
+    typedef OwningPtr<ActionKeyConfig> Ptr;
+    
+    typedef HeapObjectArray<ActionId> ActionIds;
     
     static Ptr create() {
-        return Ptr(new TopWinKeyBindingConfig());
+        return Ptr(new ActionKeyConfig());
     }
     
-    class Node
+    class Node : public HeapObject
     {
     public:
-        Node()
-        {}
+        typedef OwningPtr<Node> Ptr;
+        
         bool hasNext() const {
             return next.isValid();
         }
-        const ActionName& getActionName() const {
-            ASSERT(!hasNext());
-            return actionName;
+        bool hasActionIds() const {
+            return (actionIds.isValid() && actionIds->getLength() > 0);
         }
-        TopWinKeyBindingConfig::Ptr getNext() const {
-            ASSERT(hasNext());
+        ActionIds::Ptr getActionIds() const {
+            return actionIds;
+        }
+        ActionKeyConfig::Ptr getNext() const {
             return next;
         }
     private:
-        friend class TopWinKeyBindingConfig;
+        friend class ActionKeyConfig;
         
-        Node(const ActionName& actionName)
-            : actionName(actionName)
+        static Ptr create(ActionIds::Ptr actionIds) {
+            return Ptr(new Node(actionIds));
+        }
+        static Ptr create(ActionKeyConfig::Ptr next) {
+            return Ptr(new Node(next));
+        }
+
+        explicit Node(ActionIds::Ptr actionIds)
+            : actionIds(actionIds)
         {}
-        Node(TopWinKeyBindingConfig::Ptr next)
+        explicit Node(ActionKeyConfig::Ptr next)
             : next(next)
         {}
-        ActionName actionName;
-        TopWinKeyBindingConfig::Ptr next;
+        void appendActionId(ActionId actionId) {
+            if (!actionIds.isValid()) {
+                actionIds = ActionIds::create();
+            }
+            actionIds->append(actionId);
+        }
+        void setNext(ActionKeyConfig::Ptr next) {
+            this->next = next;
+        }
+
+        ActionIds::Ptr       actionIds;
+        ActionKeyConfig::Ptr next;
     };
     
-    typedef HashMap<KeyMapping::Id, Node> NodeMap;
-    typedef NodeMap::Value                FoundValue;
+    typedef HashMap<KeyMapping::Id, Node::Ptr> NodeMap;
+    typedef NodeMap::Value                     FoundValue;
     
     FoundValue find(KeyMapping::Id id)
     {
@@ -87,31 +107,10 @@ public:
     }
     
     void set(KeyCombination    keyCombination,
-             const ActionName& actionName)
-    {
-        if (!keyCombination.hasKeyIds()) {
-            throw ConfigException(String() << "Invalid empty key combination");
-        }
-        
-        KeyId keyId = keyCombination.getFirstKeyId();
-                      keyCombination.removeFirstKeyId();
-                
-        if (keyCombination.hasKeyIds())
-        {
-            KeyMapping::Id id(keyCombination.getKeyModifier(), 
-                              keyId);
-            TopWinKeyBindingConfig::Ptr next = TopWinKeyBindingConfig::create();
-            nodeMap.set(id, next);
-            next->set(keyCombination, actionName);
-        } else {
-            KeyMapping::Id id(keyCombination.getKeyModifier(), 
-                              keyId);
-            nodeMap.set(id, actionName);
-        }
-    }
+             ActionId          actionId);
         
 private:
-    TopWinKeyBindingConfig()
+    ActionKeyConfig()
     {}
     
     NodeMap nodeMap;
@@ -119,4 +118,4 @@ private:
 
 } // namespace LucED
 
-#endif // TOP_WIN_KEY_BINDING_CONFIG_HPP
+#endif // ACTION_KEY_CONFIG_HPP

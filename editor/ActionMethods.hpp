@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,30 +19,31 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HEAPHASHMAP_H
-#define HEAPHASHMAP_H
+#ifndef ACTION_METHODS_HPP
+#define ACTION_METHODS_HPP
 
 #include "HeapObject.hpp"
-#include "HashMap.hpp"
 #include "OwningPtr.hpp"
+#include "ActionId.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-template<class K, class V, class H = HashFunction<K> > class HeapHashMap
-        : public HeapObject, public HashMap<K,V,H>
+class ActionMethods : public HeapObject
 {
 public:
-    typedef OwningPtr<HeapHashMap> Ptr;
-    typedef OwningPtr<const HeapHashMap> ConstPtr;
-    
-    static Ptr create() {
-        return Ptr(new HeapHashMap());
-    }
-    
+    typedef OwningPtr<ActionMethods> Ptr;
+
+    virtual bool hasActionMethod(ActionId actionId) = 0;
+
+    virtual bool invokeActionMethod(ActionId actionId) = 0;
+
 protected:
-    HeapHashMap() {}
+    ActionMethods()
+    {}
 };
+
 
 } // namespace LucED
 
-#endif // HEAPHASHMAP_H
+#endif // ACTION_METHODS_HPP

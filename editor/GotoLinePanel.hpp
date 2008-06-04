@@ -40,14 +40,14 @@ public:
     static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, PanelInvoker::Ptr panelInvoker) {
         return Ptr(new GotoLinePanel(parent, editorWidget, panelInvoker));
     }
-    
-    virtual void treatFocusIn();
+
+    virtual void show();
     
 private:
     GotoLinePanel(GuiWidget* parent, TextEditorWidget*   editorWidget, 
                                      PanelInvoker::Ptr   panelInvoker);
 
-    void handleButtonPressed(Button* button);
+    void handleButtonPressed(Button* button, Button::ActivationVariant variant);
 
     void filterInsert(const byte** buffer, long* length);
 

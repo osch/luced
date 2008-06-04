@@ -1,0 +1,89 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+@ local actions   = require("BuiltinActionDefinitions")
+@ local functions = require("functions")
+
+#include "debug.hpp"
+#include "String.hpp"
+
+#ifndef ACTION_ID_HPP
+#define ACTION_ID_HPP
+
+namespace LucED
+{
+
+class ActionId
+{
+public:
+    static const int MAX_BUILTIN = @(#actions);
+    
+    enum BuiltinValue {
+        UNDEFINED = 0,
+@ for i, a in ipairs(actions) do
+        @(functions.upperize(a.name)) = @(i)@(i < #actions and ",")
+@ end
+    };
+    
+    ActionId()
+        : value(UNDEFINED)
+    {}
+    
+    ActionId(BuiltinValue value)
+        : value(value)
+    {}
+    
+    explicit ActionId(int value)
+        : value(value)
+    {
+        ASSERT(MAX_BUILTIN < value);
+    }
+    
+    operator int() const {
+        return value;
+    }
+    
+    int toInt() const {
+        return value;
+    }
+    
+    bool isBuiltin() const {
+        return UNDEFINED <= value && value <= MAX_BUILTIN;
+    }
+    
+    bool isValid() const {
+        return UNDEFINED < value;
+    }
+    
+    BuiltinValue toBuiltinValue() const {
+        ASSERT(isBuiltin());
+        return (BuiltinValue) value;
+    }
+    
+    String toString() const;
+
+private:
+    int value;
+};
+
+} // namespace LucED
+
+#endif // ACTION_ID_HPP

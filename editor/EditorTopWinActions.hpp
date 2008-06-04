@@ -19,22 +19,31 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "BuiltinTopWinActions.hpp"
+#ifndef EDITOR_TOP_WIN_ACTIONS_HPP
+#define EDITOR_TOP_WIN_ACTIONS_HPP
+
 #include "FindPanel.hpp"
 #include "ReplacePanel.hpp"
 #include "GotoLinePanel.hpp"
 #include "WindowCloser.hpp"
+#include "LuaInterpreter.hpp"
+#include "MethodMap.hpp"
+#include "ActionMethodBinding.hpp"
+#include "TopWinActionsParameter.hpp"
 
-using namespace LucED;
+namespace LucED
+{
 
-typedef TopWinActions::Binding Binding;
-
-
-class BuiltinTopWinActions::BindingImpl : public  Binding, 
-                                          private TopWinActions::Parameter
+class EditorTopWinActions : public  ActionMethodBinding<EditorTopWinActions>,
+                            private TopWinActionsParameter
 {
 public:
+    typedef OwningPtr<EditorTopWinActions> Ptr;
     
+    static Ptr create(const TopWinActionsParameter& parameter) {
+        return Ptr(new EditorTopWinActions(parameter));
+    }
+
     void invokeGotoLinePanel()
     {
         if (gotoLinePanel.isInvalid()) {
@@ -113,7 +122,12 @@ public:
 
     void createCloneWindow()
     {
+        topWinActionInterface->createCloneWindow();
+    }
     
+    void createEmptyWindow()
+    {
+        topWinActionInterface->createEmptyWindow();
     }
     
     void requestProgramTermination()
@@ -128,47 +142,29 @@ public:
         }
     }
     
-    virtual bool execute(const String& methodName)
+    void requestCloseWindow()
     {
-        MethodMap::Value foundMethod = methodMap->get(methodName);
-        if (foundMethod.isValid())
-        {
-            MethodPtr methodPtr = foundMethod.get();
-            
-            (this->*methodPtr)(); // invoke Method
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-    
-    virtual Callback<>::Ptr getCallback(const String& methodName)
-    {
-        Callback<>::Ptr rslt;
-        
-        CallbackMap::Value foundValue = callbackMap.get(methodName);
-        if (foundValue.isValid()) {
-            rslt = foundValue.get();
-        } else {
-            MethodMap::Value foundMethod = methodMap->get(methodName);
-            if (foundMethod.isValid()) {
-                rslt = newCallback(this, foundMethod.get());
-                callbackMap.set(methodName, rslt);
-            }
-        }
-        return rslt;
+        topWinActionInterface->requestCloseWindowByUser();
     }
 
+    void handleSaveKey()
+    {
+        topWinActionInterface->handleSaveKey();
+    }
+    
+    void handleSaveAsKey()
+    {
+        topWinActionInterface->handleSaveAsKey();
+    }
+    
+    void executeLuaScript();
+    
 private:
-    friend class BuiltinTopWinActions;
-    
-    typedef OwningPtr<BindingImpl> Ptr;
-    
-    BindingImpl(MethodMap::Ptr methodMap, 
-                const TopWinActions::Parameter& parameter)
-        : TopWinActions::Parameter(parameter),
-          methodMap(methodMap)
+ 
+    EditorTopWinActions(const TopWinActionsParameter& parameter)
+ 
+        : ActionMethodBinding<EditorTopWinActions>(this),
+          TopWinActionsParameter(parameter)
     {
         findPanel = FindPanel::create(parentWidget, editorWidget, 
                                       messageBoxInvoker,
@@ -179,48 +175,12 @@ private:
                                             panelInvoker);
     }
 
-    MethodMap::Ptr                           methodMap;
-
-    typedef HashMap<String, Callback<>::Ptr> CallbackMap;
-    CallbackMap                              callbackMap;
-
-    
     FindPanel::Ptr                           findPanel;
     ReplacePanel::Ptr                        replacePanel;
     GotoLinePanel::Ptr                       gotoLinePanel;
 };
 
 
-Binding::Ptr BuiltinTopWinActions::createNewBinding(const TopWinActions::Parameter& parameter)
-{
-    BindingImpl::Ptr rslt(new BindingImpl(methodMap, parameter));
-    return rslt;
-}
+} // namespace LucED
 
-
-BuiltinTopWinActions::BuiltinTopWinActions()
-{
-    methodMap = MethodMap::create();
-    
-    methodMap->set("invokeGotoLinePanel",        &BindingImpl::invokeGotoLinePanel);
-
-    methodMap->set("invokeFindPanelForward",     &BindingImpl::invokeFindPanelForward);
-    methodMap->set("invokeFindPanelBackward",    &BindingImpl::invokeFindPanelBackward);
-
-    methodMap->set("invokeReplacePanelForward",  &BindingImpl::invokeReplacePanelForward);
-    methodMap->set("invokeReplacePanelBackward", &BindingImpl::invokeReplacePanelBackward);
-
-    methodMap->set("findSelectionForward",       &BindingImpl::findSelectionForward);
-    methodMap->set("findSelectionBackward",      &BindingImpl::findSelectionBackward);
-
-    methodMap->set("replaceAgainForward",        &BindingImpl::replaceAgainForward);
-    methodMap->set("replaceAgainBackward",       &BindingImpl::replaceAgainBackward);
-
-    methodMap->set("findAgainForward",           &BindingImpl::findAgainForward);
-    methodMap->set("findAgainBackward",          &BindingImpl::findAgainBackward);
-    
-    methodMap->set("requestProgramTermination",  &BindingImpl::requestProgramTermination);
-
-    methodMap->set("handleEscapeKey",            &BindingImpl::handleEscapeKey);
-}
-
+#endif // EDITOR_TOP_WIN_ACTIONS_HPP

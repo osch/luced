@@ -34,7 +34,7 @@
 #include "CallbackContainer.hpp"
 #include "MicroSeconds.hpp"
 #include "SyntaxPatternsConfig.hpp"
-#include "TopWinKeyBindingConfig.hpp"
+#include "ActionKeyConfig.hpp"
 
 namespace LucED
 {
@@ -48,8 +48,8 @@ public:
     
     void readConfig();
     
-    TopWinKeyBindingConfig::Ptr getTopWinKeyBindingConfig() const {
-        return topWinKeyBindingConfig;
+    ActionKeyConfig::Ptr getActionKeyConfig() const {
+        return actionKeyConfig;
     }
     
     bool getUseOwnKeyPressRepeater() const {
@@ -210,7 +210,7 @@ private:
     String generalConfigFileName;
     String syntaxPatternDirectory;
     
-    TopWinKeyBindingConfig::Ptr topWinKeyBindingConfig;
+    ActionKeyConfig::Ptr        actionKeyConfig;
 };
 
 } // namespace LucED

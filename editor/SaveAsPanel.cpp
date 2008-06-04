@@ -57,7 +57,7 @@ SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget,
     row0->addElement(cancelButton);
     row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
     
-    Callback<Button*>::Ptr buttonCallback = newCallback(this, &SaveAsPanel::handleButtonPressed);
+    Callback<Button*,Button::ActivationVariant>::Ptr buttonCallback = newCallback(this, &SaveAsPanel::handleButtonPressed);
     saveButton->setButtonPressedCallback(buttonCallback);
     cancelButton->setButtonPressedCallback(buttonCallback);
 
@@ -75,12 +75,6 @@ SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget,
     label0->setMiddleMouseButtonCallback(newCallback(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
-
-void SaveAsPanel::treatFocusIn()
-{
-    setFocus(editField);
-    DialogPanel::treatFocusIn();
-}
 
 
 void SaveAsPanel::continueSave()
@@ -101,7 +95,7 @@ void SaveAsPanel::continueSave()
 }
 
 
-void SaveAsPanel::handleButtonPressed(Button* button)
+void SaveAsPanel::handleButtonPressed(Button* button, Button::ActivationVariant variant)
 {
     if (button == saveButton)
     {
@@ -140,6 +134,8 @@ void SaveAsPanel::show()
     editField->getTextData()->setToString(newContent);
     editField->getTextData()->clearHistory();
     editField->setCursorPosition(newContent.getLength());
+
+    setFocus(editField);
 
     DialogPanel::show();
 }

@@ -54,7 +54,7 @@ GotoLinePanel::GotoLinePanel(GuiWidget* parent, TextEditorWidget* editorWidget, 
     row0->addElement(cancelButton);
     row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
     
-    Callback<Button*>::Ptr buttonCallback = newCallback(this, &GotoLinePanel::handleButtonPressed);
+    Callback<Button*,Button::ActivationVariant>::Ptr buttonCallback = newCallback(this, &GotoLinePanel::handleButtonPressed);
     gotoButton->setButtonPressedCallback(buttonCallback);
     cancelButton->setButtonPressedCallback(buttonCallback);
 
@@ -74,15 +74,9 @@ GotoLinePanel::GotoLinePanel(GuiWidget* parent, TextEditorWidget* editorWidget, 
     label0->setMiddleMouseButtonCallback(newCallback(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
-void GotoLinePanel::treatFocusIn()
-{
-    setFocus(editField);
-    DialogPanel::treatFocusIn();
-}
 
 
-
-void GotoLinePanel::handleButtonPressed(Button* button)
+void GotoLinePanel::handleButtonPressed(Button* button, Button::ActivationVariant variant)
 {
     if (button == gotoButton)
     {
@@ -159,5 +153,11 @@ void GotoLinePanel::filterInsert(const byte** buffer, long* length)
     }
     *buffer = filterBuffer.getPtr(0);
     *length = filterBuffer.getLength();
+}
+
+void GotoLinePanel::show()
+{
+    setFocus(editField);
+    DialogPanel::show();
 }
 

@@ -128,7 +128,7 @@ local languageModes = {
     
     {
       name            = "makefile",
-      fileNameRegex   =  [[^.*/(Makefile|.*\.h?mk)$]],
+      fileNameRegex   =  [[^.*/(Makefile|.*\.h?mk|.*\.dep)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,

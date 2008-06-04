@@ -144,7 +144,7 @@ void TopWin::requestFocus()
         this->show();
         this->requestFocusAfterMapped = true;
     } else {
-        XSetInputFocus(getDisplay(), getWid(), RevertToNone, CurrentTime);
+        XSetInputFocus(getDisplay(), getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
     }
 }
 
@@ -169,7 +169,7 @@ GuiElement::ProcessingResult TopWin::processEvent(const XEvent* event)
                 if (event->xmap.window == getWid()) {
                     mapped = true;
                     if (requestFocusAfterMapped) {
-                        XSetInputFocus(getDisplay(), getWid(), RevertToNone, CurrentTime);
+                        XSetInputFocus(getDisplay(), getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
                         requestFocusAfterMapped = false;
                     }
                     notifyAboutBeingMapped();
@@ -485,45 +485,51 @@ void TopWin::requestCloseWindow(TopWin::CloseReason reason)
 
 void TopWin::raise()
 {
-    if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
-        && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100)
+    if (!isClosingFlag)
     {
-        // vendor <Hummingbird Communications Ltd.> <6100>
-        this->shouldRaiseAfterFocusIn = true; // delayed raise is Workaround for Exceed X11-Server
+        if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
+            && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100)
+        {
+            // vendor <Hummingbird Communications Ltd.> <6100>
+            this->shouldRaiseAfterFocusIn = true; // delayed raise is Workaround for Exceed X11-Server
+        }
+        internalRaise();
     }
-    internalRaise();
 }
 
 void TopWin::internalRaise()
 {
-    this->requestFocus();
-
+    if (!isClosingFlag)
     {
-        // This is needed to raise the Window under Gnome-Desktop or KDE with
-        // Focus Stealing Prevention Level set to "normal".
-        // (see http://standards.freedesktop.org/wm-spec/wm-spec-latest.html)
-        
-        XEvent event;
-        
-        memset(&event, 0, sizeof(event));
-        event.xclient.type = ClientMessage;
-        //unsigned long serial;     /* # of last request processed by server */
-        event.xclient.send_event = true;        /* true if this came from a SendEvent request */
-        event.xclient.display = getDisplay();       /* Display the event was read from */
-        event.xclient.window = getWid();
-        event.xclient.message_type = raiseWindowAtom;
-        event.xclient.format = 32;
-        event.xclient.data.l[0] = 1;
-        event.xclient.data.l[1] = EventDispatcher::getInstance()->getLastX11Timestamp();
-        event.xclient.data.l[2] = 0;
-
-        XSendEvent(getDisplay(), getRootWid(), false, 
-                                               SubstructureNotifyMask|SubstructureRedirectMask,
-                                               &event);
+        this->requestFocus();
+    
+        {
+            // This is needed to raise the Window under Gnome-Desktop or KDE with
+            // Focus Stealing Prevention Level set to "normal".
+            // (see http://standards.freedesktop.org/wm-spec/wm-spec-latest.html)
+            
+            XEvent event;
+            
+            memset(&event, 0, sizeof(event));
+            event.xclient.type = ClientMessage;
+            //unsigned long serial;     /* # of last request processed by server */
+            event.xclient.send_event = true;        /* true if this came from a SendEvent request */
+            event.xclient.display = getDisplay();       /* Display the event was read from */
+            event.xclient.window = getWid();
+            event.xclient.message_type = raiseWindowAtom;
+            event.xclient.format = 32;
+            event.xclient.data.l[0] = 1;
+            event.xclient.data.l[1] = EventDispatcher::getInstance()->getLastX11Timestamp();
+            event.xclient.data.l[2] = 0;
+    
+            XSendEvent(getDisplay(), getRootWid(), false, 
+                                                   SubstructureNotifyMask|SubstructureRedirectMask,
+                                                   &event);
+        }
+    
+        // older Windowmanager only need XRaiseWindow
+            
+        XRaiseWindow(getGuiRoot()->getDisplay(), this->getWid());
     }
-
-    // older Windowmanager only need XRaiseWindow
-        
-    XRaiseWindow(getGuiRoot()->getDisplay(), this->getWid());
 }
 

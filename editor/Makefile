@@ -48,27 +48,31 @@ include sandbox.mk
 LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_LUA_OPTS) $(LINK_EXTRA_OPTS)
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 
-GENERATED_HEADERS := \
-                CallbackContainer       Callback
+LUA_MODULES            := functions             BuiltinActionDefinitions
+GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId
+GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultActionKeyConfig
 
-SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget              SystemException \
-                TextEditorWidget        TextStyle              KeyPressRepeater       ScrollBar \
-                System                  LuaException           TopWin                 \
-                LuaObject               LuaInterpreter         ConfigException        GlobalConfig \
-                LanguageModes           RegexException         StatusLine             \
+GENERATED_FAST_MODULES :=
+
+
+SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget                  SystemException \
+                TextEditorWidget        TextStyle              KeyPressRepeater           ScrollBar \
+                System                  LuaException           TopWin                     \
+                LuaObject               LuaInterpreter         ConfigException            GlobalConfig \
+                LanguageModes           RegexException         StatusLine                 \
                 Button                  GuiLayoutWidget        LuaStoredObject \
-                GotoLinePanel           SingletonKeeper        TopWinList             OwnedTopWins \
-                DialogWin               GuiLayoutSpacer        MultiLineEditorWidget  SubstitutionException \
+                GotoLinePanel           SingletonKeeper        TopWinList                 OwnedTopWins \
+                DialogWin               GuiLayoutSpacer        MultiLineEditorWidget      SubstitutionException \
                 SingleLineEditorWidget  StandardEditActions    LuaStackChecker \
-                SingleLineEditField     LabelWidget            DialogPanel            PanelDialogWin \
-                FindPanel               CheckBox               MessageBox             SearchHistory \
-                FileException           EditorServer           ClientServerUtil       EditorClient  \
-                CommandlineException    ReplacePanel           LuaFunctionArguments   GuiElement \
-                SelectionOwner          PasteDataReceiver      Clipboard              FileOpener \
-                ConfigErrorHandler      WindowCloser           SaveAsPanel            KeyModifier \
-		CurrentDirectoryKeeper  ProgramExecutor        TextDisplayGuiCompound CommandOutputBox \
-		FramedGuiCompound       BuiltinTopWinActions   TopWinActionsRegistry  ScrollableTextGuiCompound \
-		SearchInteraction       UnknownActionNameException
+                SingleLineEditField     LabelWidget            DialogPanel                PanelDialogWin \
+                FindPanel               CheckBox               MessageBox                 SearchHistory \
+                FileException           EditorServer           ClientServerUtil           EditorClient  \
+                CommandlineException    ReplacePanel           LuaFunctionArguments       GuiElement \
+                SelectionOwner          PasteDataReceiver      Clipboard                  FileOpener \
+                ConfigErrorHandler      WindowCloser           SaveAsPanel                KeyModifier \
+		CurrentDirectoryKeeper  ProgramExecutor        TextDisplayGuiCompound     CommandOutputBox \
+		FramedGuiCompound       EditorTopWinActions    UnknownActionNameException ScrollableTextGuiCompound \
+		SearchInteraction       ActionKeyConfig
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \
@@ -78,14 +82,29 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 
 PRG_MODULES  := luced
 
-MODULES   := $(FAST_MODULES) $(SLOW_MODULES)
 
-LIB_MBRS  := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o), $(MODULES))
-LIB_OBJS  := $(patsubst %, $(BUILD_DIR)/%.o,             $(MODULES))
-FAST_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,             $(FAST_MODULES))
-SLOW_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,             $(SLOW_MODULES))
- PRG_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,              $(PRG_MODULES))
-GEN_HDRS  := $(patsubst %, $(BUILD_DIR)/%.hpp,      $(GENERATED_HEADERS))
+GENERATED_MODULES  := $(GENERATED_SLOW_MODULES) $(GENERATED_FAST_MODULES)
+
+MODULES            :=           $(FAST_MODULES)           $(SLOW_MODULES) \
+                      $(GENERATED_FAST_MODULES) $(GENERATED_SLOW_MODULES)
+
+LIB_MBRS      := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
+LIB_OBJS      := $(patsubst %, $(BUILD_DIR)/%.o,                $(MODULES))
+FAST_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(FAST_MODULES))
+SLOW_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(SLOW_MODULES))
+ PRG_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
+
+GEN_HDRS      := $(patsubst %, $(BUILD_DIR)/%.hpp,         $(GENERATED_HEADERS))
+GEN_HDRS_DEPS := $(patsubst %, $(BUILD_DIR)/%.hpp.gen.dep, $(GENERATED_HEADERS))
+
+GEN_SRC       := $(patsubst %, $(BUILD_DIR)/%.cpp,         $(GENERATED_MODULES))
+GEN_SRC_DEPS  := $(patsubst %, $(BUILD_DIR)/%.cpp.gen.dep, $(GENERATED_MODULES))
+
+GEN_FAST_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,      $(GENERATED_FAST_MODULES))
+GEN_SLOW_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,      $(GENERATED_SLOW_MODULES))
+
+
+LUA_FILES     := $(patsubst %, %.lua, $(LUA_MODULES))
 
 MAKECMDGOALS   ?=
 NONBUILD_GOALS := clean
@@ -111,28 +130,65 @@ complink: luced.cpp $(patsubst %, %.cpp, $(MODULES))
 ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)           #
 #                                                             #
 -include $(BUILD_DIR)/headers_generated                       #
-$(BUILD_DIR)/headers_generated: $(GEN_HDRS)                   #
+$(BUILD_DIR)/headers_generated: $(GEN_HDRS) $(GEN_HDRS_DEPS)  #
 	@mkdir -p $(@D); touch $@                             #
 #                                                             #
 endif                                                         #
 ###############################################################
 
+##########################################################################
+#
+# Code Generating Rules
+#
+#  Header files are new generated if the *.lua files have been changed. 
+#  However the new generated headers are only relevant if they are 
+#  different from the previously generated headers (for this *.hpp.gen.dep
+#  is used).
+#
 
-$(GEN_HDRS): $(BUILD_DIR)/%.hpp: %.hpp.emlua functions.lua
-	$(call EMLUA_RUN)
-	
+$(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_FILES)
+	$(call EMLUA_RUN,                   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<))
+	$(call CONDITIONAL_DEPENDECY_RUN,   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.hpp.gen.dep,$<), \
+	                                    $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<),     \
+	                                    $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.hpp,$<) )
+	                                    
+
+
+$(BUILD_DIR)/%.cpp.gen.dep $(BUILD_DIR)/%.new.cpp: %.cpp.emlua $(LUA_FILES)
+	$(call EMLUA_RUN,                   $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.new.cpp,$<))
+	$(call CONDITIONAL_DEPENDECY_RUN,   $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.cpp.gen.dep,$<), \
+	                                    $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.new.cpp,$<),     \
+	                                    $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.cpp,$<) )
+	                                    
+
+
+##########################################################################
+#
+# Generic Rules
+#
+
 $(FAST_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
+
+$(GEN_FAST_OBJS): $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.cpp
+	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
+
 
 $(SLOW_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(call COMPILE_RUN,$(CPPCOMP_SLOW_OPTS))
 
+$(GEN_SLOW_OBJS): $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.cpp
+	$(call COMPILE_RUN,$(CPPCOMP_SLOW_OPTS))
+
+
 $(PRG_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(call COMPILE_RUN,$(CPPCOMP_SLOW_OPTS))
+
 
 $(BUILD_DIR)/libluced.a: $(LIB_OBJS)
 	@rm -f $@; 
 	ar -r $@ $^
+
 
 ##
 # no rules for member creation within archive files
@@ -149,7 +205,7 @@ $(BUILD_DIR)/libluced.a: $(LIB_OBJS)
 
 ##########################################################################
 #
-# Dependencies
+# Generic Dependencies
 #
 
 %.h: ;
@@ -158,7 +214,7 @@ $(BUILD_DIR)/libluced.a: $(LIB_OBJS)
 
 
 ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)
-  DEPS := $(wildcard $(BUILD_DIR)/deps/*.dep)
+  DEPS := $(wildcard $(BUILD_DIR)/deps/*.dep) $(GEN_HDRS_DEPS) $(GEN_SRC_DEPS)
   ifneq ($(DEPS),)
     -include $(DEPS)
   endif
@@ -169,14 +225,6 @@ endif
 #
 # Runs
 #
-
-define EMLUA_RUN
-	@echo "Generating $< --> $@"; \
-	mkdir -p $(@D); \
-	lua em.lua $< > $@; rc=$$?; \
-	if [ 0 -ne $$rc ]; then rm -f $@; fi; \
-	exit $$rc
-endef
 
 define COMPILE_RUN
 	@mkdir -p $(@D) && mkdir -p $(BUILD_DIR)/deps
@@ -195,3 +243,39 @@ define COMPILE_LINK_RUN
 	$(LINK_OPTS) \
 	$3 -o "$2"
 endef
+
+
+###################
+# Parameters:
+#
+# $1:  target file
+#
+define EMLUA_RUN
+	@echo "Generating $< --> $(strip $1)"; \
+	mkdir -p $(@D); \
+	rm -f $1; \
+	lua em.lua $< > $1; rc=$$?; \
+	if [ 0 -ne $$rc ]; then rm -f $1; else chmod a-w $1; fi; \
+	exit $$rc
+endef
+
+
+###################
+# Parameters:
+#
+# $1:  target dependency file
+# $2:  target new intermediate file
+# $3:  real target file
+#
+define CONDITIONAL_DEPENDECY_RUN
+	@( printf "%s\n"    '$3: $2'; \
+	   printf "\t@%s\n"        'echo      "Comparing $(strip $2) ---> $(strip $3)"; \
+	                            if [ ! -f $3 ] || ! diff $2 $3 >/dev/null 2>&1; \
+	                            then echo "Copying   $(strip $2) ---> $(strip $3)"; \
+	                                 rm -f $3; cp $2 $3; chmod a-w $3; \
+	                            fi; \
+	                            echo " " > $1; \
+	                           '; \
+	 ) > $1
+endef
+

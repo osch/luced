@@ -31,6 +31,7 @@
 #include "System.hpp"
 #include "File.hpp"
 #include "CurrentDirectoryKeeper.hpp"
+#include "DefaultActionKeyConfig.hpp"
 
 using namespace LucED;
 
@@ -70,29 +71,11 @@ GlobalConfig::GlobalConfig()
           keepRunningIfOwningClipboard(false),
           maxRegexAssertionLength(3000),
           syntaxPatternsConfig(SyntaxPatternsConfig::create()),
-          topWinKeyBindingConfig(TopWinKeyBindingConfig::create())
+          actionKeyConfig(DefaultActionKeyConfig::create())
 {
     setlocale(LC_CTYPE, "");
-
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl",       "q"),      ActionName("builtin.requestProgramTermination"));
-
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl",       "l"),      ActionName("builtin.invokeGotoLinePanel"));
-
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl",       "f"),      ActionName("builtin.invokeFindPanelForward"));
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl+Shift", "f"),      ActionName("builtin.invokeFindPanelBackward"));
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl",       "r"),      ActionName("builtin.invokeReplacePanelForward"));
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl+Shift", "r"),      ActionName("builtin.invokeReplacePanelBackward"));
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl",       "h"),      ActionName("builtin.findSelectionForward"));
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl+Shift", "h"),      ActionName("builtin.findSelectionBackward"));
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl",       "g"),      ActionName("builtin.findAgainForward"));
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl+Shift", "g"),      ActionName("builtin.findAgainBackward"));
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl",       "t"),      ActionName("builtin.replaceAgainForward"));
-    topWinKeyBindingConfig->set(KeyCombination("Ctrl+Shift", "t"),      ActionName("builtin.replaceAgainBackward"));
-
-    topWinKeyBindingConfig->set(KeyCombination("",           "Escape"), ActionName("builtin.handleEscapeKey"));
-
-    topWinKeyBindingConfig->set(KeyCombination("Alt",        "x,t"),    ActionName("blub.blah"));
 }
+
 
 
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String& languageModeName,

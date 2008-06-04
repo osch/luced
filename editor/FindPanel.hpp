@@ -53,8 +53,6 @@ public:
         return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker));
     }
     
-    virtual void treatFocusIn();
-    
     void setDefaultDirection(Direction::Type direction) {
         ASSERT(direction == Direction::UP || direction == Direction::DOWN);
         defaultDirection = direction;
@@ -84,8 +82,7 @@ private:
     
     void handleException();
     
-    void handleButtonPressed(Button* button);
-    void handleButtonDefaultKey(Button* button);
+    void handleButtonPressed(Button* button, Button::ActivationVariant variant);
     void handleCheckBoxPressed(CheckBox* checkBox);
 
     void internalFindAgain(bool forwardFlag);

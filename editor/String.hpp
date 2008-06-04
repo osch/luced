@@ -269,6 +269,19 @@ public:
         return append(rhs);
     }
     
+    bool operator==(const char* rhs) const {
+        if (rhs == NULL) {
+            return false;
+        }
+        int len = strlen(rhs);
+        if (this->getLength() != len) {
+            return false;
+        }
+        return (memcmp(this->toCString(), rhs, len) == 0);
+    }
+    bool operator!=(const char* rhs) const {
+        return !(s == rhs);
+    }
     bool operator==(const String& rhs) const {
         return s == rhs.s;
     }
@@ -329,6 +342,14 @@ private:
     
     std::string s;
 };
+
+inline bool operator==(const char* lhs, const String& rhs) {
+    return rhs == lhs;
+}
+
+inline bool operator!=(const char* lhs, const String& rhs) {
+    return rhs != lhs;
+}
 
 } // namespace LucED
 

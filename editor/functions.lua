@@ -71,9 +71,42 @@ local function classList(pref, number)
     return buildList(number, function(i) return "class "..pref..i end)
 end
 
+local function capitalize(s)
+    return string.upper(string.sub(s, 1, 1)) .. string.sub(s, 2)
+end
+
+local function upperize(s)
+    local rslt = {}
+    local lastUpper = ""
+    for lowers, digits1, upper, digits2, pos in string.gmatch(s, "(%l*)(%d*)(%u*)(%d*)()") do
+        if #lastUpper + #lowers > 0 then
+            append(rslt, lastUpper..string.upper(lowers))
+        end
+        if #digits1 > 0 then
+            append(rslt, digits1)
+        end
+        if #upper > 1 then
+            if pos < #s then
+                append(rslt, string.sub(upper, 1, -2))
+                lastUpper =  string.sub(upper, -1, -1)
+            else
+                append(rslt, upper)
+                lastUpper = ""
+            end
+        else
+            lastUpper = upper
+        end
+        if #digits2 > 0 then
+            append(rslt, digits2)
+        end
+    end
+    return concat(rslt, "_")
+end
+
 return  {
-            argList       = argList,
-            filledArgList = filledArgList,
-            typedArgList  = typedArgList,
-            classList     = classList
+            argList        = argList,
+            filledArgList  = filledArgList,
+            typedArgList   = typedArgList,
+            classList      = classList,
+            upperize       = upperize
         }

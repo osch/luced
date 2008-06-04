@@ -63,7 +63,7 @@ CommandOutputBox::CommandOutputBox(TopWin* referingWindow, TextData::Ptr textDat
     }
     row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
     
-    Callback<Button*>::Ptr buttonCallback = newCallback(this, &CommandOutputBox::handleButtonPressed);
+    Callback<Button*,Button::ActivationVariant>::Ptr buttonCallback = newCallback(this, &CommandOutputBox::handleButtonPressed);
     
     if (button1.isValid()) {
         button1->setButtonPressedCallback(buttonCallback);
@@ -86,7 +86,7 @@ CommandOutputBox::CommandOutputBox(TopWin* referingWindow, TextData::Ptr textDat
 }
 
 
-void CommandOutputBox::handleButtonPressed(Button* button)
+void CommandOutputBox::handleButtonPressed(Button* button, Button::ActivationVariant variant)
 {
 #if 0
     if (!wasClosed)

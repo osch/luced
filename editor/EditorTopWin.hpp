@@ -39,8 +39,8 @@
 #include "ProgramExecutor.hpp"
 #include "RawPtr.hpp"
 #include "ScrollableTextGuiCompound.hpp"
-#include "TopWinActionBinder.hpp"
-#include "TopWinKeyBinding.hpp"
+#include "TopWinActionInterface.hpp"
+#include "ActionKeyConfig.hpp"
                      
 namespace LucED
 {
@@ -100,6 +100,8 @@ public:
     bool checkForFileModifications();
 
 private:
+           class ActionInterface;
+    friend class ActionInterface;
            class PanelInvoker;
     friend class PanelInvoker;
     
@@ -109,14 +111,7 @@ private:
 
     void requestCloseFor(GuiWidget* w);
 
-    void requestCloseWindowByUser();
-
-    void handleSaveKey();
-    void handleSaveAsKey();
     void invokePanel(DialogPanel* panel);
-    void createEmptyWindow();
-    void createCloneWindow();
-    void executeLuaScript();
     
     void handleNewFileName(const String& fileName);
     void handleChangedModifiedFlag(bool modifiedFlag);
@@ -158,13 +153,14 @@ private:
     
     ScrollableTextGuiCompound::Ptr scrollableTextCompound;
     
-    TopWinActionBinder::Ptr actionBinder;
-    TopWinKeyBinding::Ptr   rootKeyBinding;
-    TopWinKeyBinding::Ptr   currentKeyBinding;
+    ActionKeyConfig::Ptr    rootActionKeyConfig;
+    ActionKeyConfig::Ptr    currentActionKeyConfig;
+
     KeyModifier             combinationKeyModifier;
     String                  combinationKeys;
     
-    OwningPtr<PanelInvoker> panelInvoker;
+    OwningPtr<PanelInvoker>    panelInvoker;
+    OwningPtr<ActionInterface> actionInterface;
 };
 
 } // namespace LucED

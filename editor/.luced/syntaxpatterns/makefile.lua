@@ -2,7 +2,7 @@
 --
 --   LucED - The Lucid Editor
 --
---   Copyright (C) 2005-2006 Oliver Schmidt, oliver at luced dot de
+--   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 --
 --   This program is free software; you can redistribute it and/or modify it
 --   under the terms of the GNU General Public License Version 2 as published
@@ -19,41 +19,66 @@
 --
 -------------------------------------------------------------------------------------
 
-
-
 return 
 {
-	root = {
-        	style = "default",
-                childPatterns = {"comment", "assignment", "define", "keywords", 
-                                 "command", 
-                                 "specialDependenyLine", "dependenyLine", "varSubst1", "varSubst2", "varSubst3" },
+        root = {
+                style = "default",
+                childPatterns = { "emlualine", "comment", "assignment", "define", 
+                                  "keywords",  "command", 
+                                  "specialDependencyLine", "dependencyLine", 
+                                  "varSubst1", "varSubst2", "varSubst3",
+                                  "emluaexpr", 
+                                },
         },
 
+        emlualine = {
+                style = "regex",
+                beginPattern     = [[^@(?!\()]],
+                endPattern       = [[\n]],
+                maxBeginExtend   = 2,
+                maxEndExtend     = 1,
+        }, 
+
+        emluaexpr = {
+                style = "regex",
+                beginPattern     = [[@\(]],
+                endPattern       = [[\)|$]],
+                maxBeginExtend   = 2,
+                maxEndExtend     = 1,
+                childPatterns    = { "emluaexpr2" },
+        }, 
+        emluaexpr2 = {
+                style = "regex",
+                beginPattern     = [[\(]],
+                endPattern       = [[\)|$]],
+                maxBeginExtend   = 1,
+                maxEndExtend     = 1,
+                childPatterns    = { "emluaexpr2" },
+        }, 
         comment = {
-        	style = "comment",
+                style = "comment",
                 beginPattern     = [=[ (?>\s*) [#] ]=],
                 endPattern       = [[ $ ]],
                 maxBeginExtend   = 1,
                 maxEndExtend     = 1,
-                childPatterns    = { "backslashInComment", "continuation" },
+                childPatterns    = { "backslashInComment", "continuation", "emluaexpr" },
         },
-        
+ 
         backslashInComment = {
                 style = "comment",
                 pattern = [[ \\ \\ ]],
                 maxExtend = 2,
         },
-        
+ 
         command = {
-        	style = "command",
+                style = "command",
                 beginPattern     = [[^ [\t>] ]],
                 endPattern       = [[ $ ]],
                 maxBeginExtend   = 1,
                 maxEndExtend     = 1,
                 childPatterns    = {"backslashInCommand", "continuation", "varSubst1", "varSubst2", "varSubst3"},
         }, 
-        
+ 
         backslashInCommand = {
                 style = "command",
                 pattern = [[ \\ \\ ]],
@@ -61,7 +86,7 @@ return
         },
 
         define = {
-        	style = "command",
+                style = "command",
                 beginPattern     = [[^(?P<defineBegin>[ ]*define\b)(?P<defineIdent>[^\n]*$) ]],
                 endPattern       = [[\n(?P<defineEnd>[ ]*endef\b)]],
                 maxBeginExtend   = 100,
@@ -70,42 +95,45 @@ return
                 endSubstyles     = { defineEnd = "keyword" },
                 childPatterns    = {"backslashInNormal", "continuation", "varSubst1", "varSubst2", "varSubst3"},
         },
-        
+ 
         backslashInNormal = {
                 style = "default",
                 pattern = [[ \\ \\ ]],
                 maxExtend = 2,
         },
-        
+ 
         assignment = {
-        	style = "preproc",
+                style = "preproc",
                 beginPattern     = [[^(?>[ ]*\w+\s*)[:+?]?= ]],
                 endPattern       = [[\n]],
                 maxBeginExtend   = 100,
                 maxEndExtend     = 1,
-                childPatterns    = {"backslashInAssignment", "continuation", "comment"},
+                childPatterns    = {"backslashInAssignment", "continuation", "comment", "emluaexpr"},
         },
-        
+ 
         backslashInAssignment = {
                 style = "preproc",
                 pattern = [[ \\ \\ ]],
                 maxExtend = 2,
         },
-        
+ 
         continuation = {
                 style = "keyword",
-                pattern = [[ \\ \n ]],
-                maxExtend = 2,
+                beginPattern  = [[ \\ \n ]],
+                endPattern    = [[    (?=.|\n) ]],
+                maxBeginExtend   = 2,
+                maxEndExtend     = 2,
+                childPatterns    = {"emluaexpr", "emlualine"},
         },
-        
+ 
 
         keywords = {
                 style = "keyword",
                 pattern      = [[ \b(?> include | ifeq | ifdef | ifndef| else | ifneq | define | endef | endif )\b ]],
                 maxExtend    = 20,
         },
-        
-        specialDependenyLine = {
+ 
+        specialDependencyLine = {
             style = "textKey1",
             beginPattern     = [[^(?>[ ]*(?:\.PHONY|\.INTERMEDIATE)\s*)[:](?!=) ]],
             endPattern       = [[ \n ]],
@@ -113,18 +141,34 @@ return
             maxEndExtend     = 1,
             childPatterns    = {"varSubst1", "varSubst2", "varSubst3", "backslashInDependency", "continuation"},
         },
-        
+ 
 
-        dependenyLine = {
+        dependencyLine = {
             style = "textKey1",
             beginPattern     = [[^(?P<target>(?>[ ]*(?>(?:\\\\)*\\\n|[^\n:])+))[:](?!=) ]],
             endPattern       = [[ \n ]],
             maxBeginExtend   = 100,
             maxEndExtend     = 1,
             beginSubstyles   = { target = "textKey" },
-            childPatterns    = {"varSubst1", "varSubst2", "varSubst3", "backslashInDependency", "continuation"},
+            childPatterns    = {"errorinDependency", "varSubst1", "varSubst2", "varSubst3", "backslashInDependency", "continuation",
+                                "emluaexpr"},
         },
-        
+ 
+        errorinDependency = {
+            style = "error",
+            beginPattern     = [[^([ ]*\>|\t) ]],
+            endPattern       = [[ \n ]],
+            maxBeginExtend   = 5,
+            maxEndExtend     = 1,
+            childPatterns    = {"backslashInError", "continuation"},
+        },
+ 
+        backslashInError = {
+                style = "error",
+                pattern = [[ \\ \\ ]],
+                maxExtend = 2,
+        },
+
         backslashInDependency = {
                 style = "textKey1",
                 pattern = [[ \\ \\ ]],
@@ -137,7 +181,7 @@ return
             endPattern       = [[ \) | (?=\n) ]],
             maxBeginExtend   = 2,
             maxEndExtend     = 1,
-            childPatterns    = {"varSubst1", "varSubst2", "varSubst4", "varSubst5", "backslashInAssignment", "continuation"},
+            childPatterns    = {"emluaexpr", "varSubst1", "varSubst2", "varSubst4", "varSubst5", "backslashInAssignment", "continuation"},
         },
 
         varSubst2 = {
@@ -146,7 +190,7 @@ return
             endPattern       = [[ \} | (?=\n) ]],
             maxBeginExtend   = 2,
             maxEndExtend     = 1,
-            childPatterns    = {"varSubst1", "varSubst2", "varSubst4", "varSubst5", "backslashInAssignment", "continuation"},
+            childPatterns    = {"emluaexpr", "varSubst1", "varSubst2", "varSubst4", "varSubst5", "backslashInAssignment", "continuation"},
         },
 
         varSubst3 = {
@@ -174,4 +218,3 @@ return
         },
 
 }
-

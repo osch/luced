@@ -1,0 +1,62 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+@ local actions   = require("BuiltinActionDefinitions")
+@ local functions = require("functions")
+
+@ local classes  = {}
+@ local classToActions = {}
+
+@ for i, a in ipairs(actions) do
+@   for j, c in ipairs(a.classes or {}) do
+@       if not classToActions[c] then
+@           table.insert(classes, c)
+@           classToActions[c] = {}
+@       end
+@       table.insert(classToActions[c], a)
+@   end
+@ end
+                                    
+#include "ActionMethodBinding.hpp"
+@ for i, c in ipairs(classes) do
+#include "@(c).hpp"
+@ end
+
+namespace LucED // extra namespace is needed for template specialization of static methods
+{
+
+@ for i, c in ipairs(classes) do 
+
+template<>
+ActionMethodBinding<@(c)>::MethodPtr ActionMethodBinding<@(c)>::getActionMethod(ActionId actionId)
+{
+    switch (actionId)
+    {
+@   for j, a in ipairs(classToActions[c]) do
+        case ActionId::@(functions.upperize(a.name)): return &@(c)::@(a.name);
+@   end
+    }
+    return NULL;
+}
+@ end
+
+} // namespace LucED
+

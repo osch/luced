@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,18 +19,18 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef OWNINGPTR_H
-#define OWNINGPTR_H
+#ifndef OWNING_PTR_HPP
+#define OWNING_PTR_HPP
 
 #include "HeapObject.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 template<class T> class OwningPtr : private HeapObjectRefManipulator
 {
 public:
-    
-    explicit OwningPtr(T *ptr = NULL) : ptr(ptr) {
+    explicit OwningPtr(T* ptr = NULL) : ptr(ptr) {
         if (ptr != NULL) {
             obtainInitialOwnership(ptr);
         }
@@ -127,12 +127,10 @@ public:
     }
     
 private:
-    
-    T *ptr;
+    T* ptr;
     
 };
 
-
 } // namespace LucED
 
-#endif // OWNINGPTR_H
+#endif // OWNING_PTR_HPP

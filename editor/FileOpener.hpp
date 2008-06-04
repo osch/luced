@@ -91,7 +91,6 @@ private:
     
     EditorTopWin::Ptr lastTopWin;
     int numberOfRaisedWindows;
-    String lastErrorMessage;
 };
 
 } // namespace LucED

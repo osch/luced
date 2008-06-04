@@ -153,28 +153,31 @@ void TextData::reloadFile()
 
 void TextData::checkFileInfo()
 {
-    TimeVal lastModifiedTimeValSinceEpoche;
-    bool fileExisted = false;
-    
-    if (fileInfo.exists())
+    if (fileNamePseudoFlag == false)
     {
-        fileExisted = true;
-        lastModifiedTimeValSinceEpoche = fileInfo.getLastModifiedTimeValSinceEpoche();
-    }
-
-    this->fileInfo = File(this->fileName).getInfo();
-    
-    if (fileInfo.exists())
-    {
-        if (isReadOnlyFlag != !fileInfo.isWritable()) {
-            isReadOnlyFlag = !fileInfo.isWritable();
-            readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
-        }
+        TimeVal lastModifiedTimeValSinceEpoche;
+        bool fileExisted = false;
         
-        if ( fileExisted 
-         && !fileInfo.getLastModifiedTimeValSinceEpoche().isEqualTo(lastModifiedTimeValSinceEpoche))
+        if (fileInfo.exists())
         {
-            modifiedOnDiskFlag = true;
+            fileExisted = true;
+            lastModifiedTimeValSinceEpoche = fileInfo.getLastModifiedTimeValSinceEpoche();
+        }
+    
+        this->fileInfo = File(this->fileName).getInfo();
+        
+        if (fileInfo.exists())
+        {
+            if (isReadOnlyFlag != !fileInfo.isWritable()) {
+                isReadOnlyFlag = !fileInfo.isWritable();
+                readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
+            }
+            
+            if ( fileExisted 
+             && !fileInfo.getLastModifiedTimeValSinceEpoche().isEqualTo(lastModifiedTimeValSinceEpoche))
+            {
+                modifiedOnDiskFlag = true;
+            }
         }
     }
 }

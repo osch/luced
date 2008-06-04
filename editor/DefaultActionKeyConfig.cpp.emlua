@@ -19,14 +19,23 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "TopWinActionsRegistry.hpp"
+@ local actions   = require("BuiltinActionDefinitions")
+@ local functions = require("functions")
+
+#include "ActionId.hpp"
+#include "DefaultActionKeyConfig.hpp"
 
 using namespace LucED;
 
-SingletonInstance<TopWinActionsRegistry> TopWinActionsRegistry::instance;
-
-RawPtr<TopWinActionsRegistry> TopWinActionsRegistry::getInstance()
+ActionKeyConfig::Ptr DefaultActionKeyConfig::create()
 {
-    return instance.getPtr();
+    ActionKeyConfig::Ptr rslt = ActionKeyConfig::create();
+    {
+@ for i, a in ipairs(actions) do
+@   for j, k in ipairs(a.defaultKeys or {}) do
+        rslt->set(KeyCombination("@(k)"), ActionId::@(functions.upperize(a.name)));
+@   end
+@ end
+    }
+    return rslt;
 }
-

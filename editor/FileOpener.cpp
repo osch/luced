@@ -68,6 +68,15 @@ void FileOpener::handleAbortButton()
 
 void FileOpener::openFiles()
 {
+    if (isWaitingForMessageBox) {
+        isWaitingForMessageBox = false;
+        ASSERT(lastTopWin.isValid());
+        if (lastTopWin.isValid()) {
+            lastTopWin->requestCloseWindow(TopWin::CLOSED_SILENTLY);
+            lastTopWin = NULL;
+        }
+    }
+
     ASSERT(!isWaitingForMessageBox)
 
     TextStyles::Ptr  textStyles = GlobalConfig::getInstance()->getTextStyles();
@@ -113,8 +122,15 @@ void FileOpener::openFiles()
                 catch (FileException& ex)
                 {
                     isWaitingForMessageBox = true;
-                    lastErrorMessage = ex.getMessage();
-                    textData->setRealFileName(fileName);
+                    
+                    if (ex.getErrno() == ENOENT)
+                    {
+                        textData->setRealFileName(fileName);
+                    }
+                    else {
+                        textData->setPseudoFileName(fileName);
+                    }
+                    
                     lastTopWin = EditorTopWin::create(textStyles, hilitedText);
 
                     MessageBoxParameter p;
@@ -127,6 +143,8 @@ void FileOpener::openFiles()
                                          .setCancelButton     ("S]kip to next file",    newCallback(this, &FileOpener::handleSkipFileButton));
                         if (ex.getErrno() == ENOENT) {
                                         p.setDefaultButton    ("C]reate this file",     newCallback(this, &FileOpener::handleCreateFileButton));
+                        } else {
+                                        p.setDefaultButton    ("R]etry",                newCallback(this, &FileOpener::openFiles));
                         }
                     } 
                     else {
@@ -135,6 +153,8 @@ void FileOpener::openFiles()
                                          .setCancelButton     ("Ca]ncel",               newCallback(this, &FileOpener::handleAbortButton));
                         if (ex.getErrno() == ENOENT) {
                                         p.setDefaultButton    ("C]reate this file",     newCallback(this, &FileOpener::handleCreateFileButton));
+                        } else {
+                                        p.setDefaultButton    ("R]etry",                newCallback(this, &FileOpener::openFiles));
                         }
                     }
                     lastTopWin->setModalMessageBox(p);

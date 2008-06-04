@@ -36,6 +36,24 @@ public:
         : keyModifier(keyModifier),
           keyIds(keyIds)
     {}
+
+    explicit KeyCombination(const String& combination)
+    {
+        int p = -1;
+        for (int i = combination.getLength() - 1; i > 0; --i) {
+            if (combination[i] == '+') {
+                p = i;
+                break;
+            }
+        }
+        if (p >= 0) {
+            keyModifier = KeyModifier(combination.getSubstringBetween(0, p));
+            keyIds      = combination.getTail(p + 1);
+        } else {
+            keyIds = combination;
+        }
+    }
+
     KeyModifier getKeyModifier() const {
         return keyModifier;
     }
@@ -44,11 +62,16 @@ public:
     }
     KeyId getFirstKeyId() const {
         int p = keyIds.findFirstOf(',');
+        String rslt;
         if (p <= 0) {
-            return KeyId(keyIds);
+            rslt = keyIds;
         } else {
-            return KeyId(keyIds.getSubstringBetween(0, p));
+            rslt = keyIds.getSubstringBetween(0, p);
         }
+        if (rslt.getLength() == 1) {
+            rslt = rslt.toLower();
+        }
+        return KeyId(rslt);
     }
     void removeFirstKeyId() {
         int p = keyIds.findFirstOf(',', 1);

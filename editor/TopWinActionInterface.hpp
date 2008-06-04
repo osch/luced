@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,30 +19,28 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HEAPHASHMAP_H
-#define HEAPHASHMAP_H
+#ifndef TOP_WIN_ACTION_INTERFACE_HPP
+#define TOP_WIN_ACTION_INTERFACE_HPP
 
-#include "HeapObject.hpp"
-#include "HashMap.hpp"
-#include "OwningPtr.hpp"
+namespace LucED
+{
 
-namespace LucED {
-
-template<class K, class V, class H = HashFunction<K> > class HeapHashMap
-        : public HeapObject, public HashMap<K,V,H>
+class TopWinActionInterface : public HeapObject
 {
 public:
-    typedef OwningPtr<HeapHashMap> Ptr;
-    typedef OwningPtr<const HeapHashMap> ConstPtr;
-    
-    static Ptr create() {
-        return Ptr(new HeapHashMap());
-    }
-    
+    typedef OwningPtr<TopWinActionInterface> Ptr;
+
+    virtual void requestCloseWindowByUser() = 0;
+    virtual void handleSaveKey()            = 0;
+    virtual void handleSaveAsKey()          = 0;
+    virtual void createEmptyWindow()        = 0;
+    virtual void createCloneWindow()        = 0;
+
 protected:
-    HeapHashMap() {}
+    TopWinActionInterface()
+    {}
 };
 
 } // namespace LucED
 
-#endif // HEAPHASHMAP_H
+#endif // TOP_WIN_ACTION_INTERFACE_HPP

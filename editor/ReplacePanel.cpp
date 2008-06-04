@@ -116,10 +116,12 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     label0->setDesiredMeasures(labelMeasures);
     label1->setDesiredMeasures(labelMeasures);
 
-    Callback<Button*>::Ptr buttonPressedCallback      = newCallback(this, &ReplacePanel::handleButtonPressed,
-                                                                          &ReplacePanel::handleException);
-    Callback<Button*>::Ptr buttonRightClickedCallback = newCallback(this, &ReplacePanel::handleButtonRightClicked,
-                                                                          &ReplacePanel::handleException);
+    typedef Callback<Button*,Button::ActivationVariant> ButtonCallback;
+
+    ButtonCallback::Ptr buttonPressedCallback      = newCallback(this, &ReplacePanel::handleButtonPressed,
+                                                                       &ReplacePanel::handleException);
+    ButtonCallback::Ptr buttonRightClickedCallback = newCallback(this, &ReplacePanel::handleButtonRightClicked,
+                                                                       &ReplacePanel::handleException);
 
     findNextButton        ->setButtonPressedCallback(buttonPressedCallback);
     findPrevButton        ->setButtonPressedCallback(buttonPressedCallback);
@@ -210,32 +212,6 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     label1->setMiddleMouseButtonCallback(newCallback(replaceEditField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
-void ReplacePanel::treatFocusOut()
-{
-    if (isVisible()) {
-        if (editFieldGroup->getLastFocusObject() == findEditField) {
-            lastFocusedEditField = findEditField;
-        } else if (editFieldGroup->getLastFocusObject() == replaceEditField) {
-            lastFocusedEditField = replaceEditField;
-        } else {
-            lastFocusedEditField.invalidate();
-        }
-    } else {
-        lastFocusedEditField.invalidate();
-    }
-    DialogPanel::treatFocusOut();
-}
-
-void ReplacePanel::treatFocusIn()
-{
-    if (lastFocusedEditField.isValid()) {
-        setFocus(lastFocusedEditField);
-    } else {
-        setFocus(findEditField);
-    }
-    DialogPanel::treatFocusIn();
-}
-
 
 void ReplacePanel::requestCurrentSelectionForInteraction(SearchInteraction* interaction, Callback<String>::Ptr selectionRequestedCallback)
 {
@@ -269,15 +245,15 @@ GuiElement::ProcessingResult ReplacePanel::processEvent(const XEvent* event)
 
 
 
-
-void ReplacePanel::handleButtonPressed(Button* button)
+void ReplacePanel::handleButtonPressed(Button* button, Button::ActivationVariant variant)
 {
-    if (button == cancelButton)
+    if (variant == Button::WAS_DEFAULT_KEY || button == cancelButton)
     {
         requestClose();
     }
-    else if (button == findNextButton    || button == findPrevButton
-          || button == replaceNextButton || button == replacePrevButton)
+    
+    if (button == findNextButton    || button == findPrevButton
+     || button == replaceNextButton || button == replacePrevButton)
     {
         SearchParameter p = getSearchParameterFromGuiControls();
                         p.setSearchForwardFlag(   button == findNextButton 
@@ -388,7 +364,7 @@ void ReplacePanel::forgetRememberedSelection()
     rememberedSelection = String();
 }
 
-void ReplacePanel::handleButtonRightClicked(Button* button)
+void ReplacePanel::handleButtonRightClicked(Button* button, Button::ActivationVariant variant)
 {
     if (button == replaceSelectionButton && rememberedSelection.getLength() > 0) 
     {
@@ -655,13 +631,14 @@ void ReplacePanel::hide()
 {
     rememberedSelection = String();
     
-    lastFocusedEditField.invalidate();
     DialogPanel::hide();
 }
 
 
 void ReplacePanel::show()
 {
+    setFocus(findEditField);
+
     findPrevButton->setAsDefaultButton(defaultDirection != Direction::DOWN);
     findNextButton->setAsDefaultButton(defaultDirection == Direction::DOWN);
     replacePrevButton->setAsDefaultButton(false);

@@ -63,7 +63,7 @@ private:
     MessageBox(TopWin* referingWindow, const MessageBoxParameter& p);
     
     
-    void handleButtonPressed(Button* button);
+    void handleButtonPressed(Button* button, Button::ActivationVariant variant);
 
     Button::Ptr button1;
     Button::Ptr button2;

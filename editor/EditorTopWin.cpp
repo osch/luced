@@ -43,6 +43,9 @@
 #include "CommandOutputBox.hpp"
 #include "EditorServer.hpp"
 #include "PanelInvoker.hpp"
+#include "SaveAsPanel.hpp"
+#include "EditorTopWinActions.hpp"
+#include "UnknownActionNameException.hpp"
 
 using namespace LucED;
 
@@ -121,6 +124,91 @@ private:
     RawPtr<EditorTopWin> editorTopWin;
 };
 
+class EditorTopWin::ActionInterface : public LucED::TopWinActionInterface
+{
+public:
+    typedef OwningPtr<ActionInterface> Ptr;
+    
+    static Ptr create(RawPtr<EditorTopWin> editorTopWin)
+    {
+        return Ptr(new ActionInterface(editorTopWin));
+    }
+    
+    virtual void requestCloseWindowByUser()
+    {
+        editorTopWin->requestCloseWindow(TopWin::CLOSED_BY_USER);
+    }
+    
+    virtual void handleSaveKey()
+    {
+        try {
+            RawPtr<TextData> textData = editorTopWin->textData;
+            
+            if (textData->isFileNamePseudo()) {
+                editorTopWin->invokeSaveAsPanel(newCallback(this, &ActionInterface::handleSaveKey));
+            }
+            else {
+                textData->save();
+                GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
+            }
+        } catch (FileException& ex) {
+            editorTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                                             .setMessage(ex.getMessage()));
+        } catch (LuaException& ex) {
+            editorTopWin->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                                             .setMessage(ex.getMessage()));
+        } catch (ConfigException& ex)
+        {
+            if (ex.getErrorList().isValid() && ex.getErrorList()->getLength() > 0) {
+                ConfigErrorHandler::start(ex.getErrorList());
+            } else {
+                editorTopWin->setMessageBox(MessageBoxParameter().setTitle("Config Error")
+                                                                 .setMessage(ex.getMessage()));
+            }
+        }
+    }
+    
+    virtual void handleSaveAsKey()
+    {
+        editorTopWin->invokeSaveAsPanel(newCallback(this, &ActionInterface::handleSaveKey));
+    }
+    
+    virtual void createEmptyWindow()
+    {
+        TextStyles::Ptr   textStyles   = GlobalConfig::getInstance()->getTextStyles();
+        LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
+     
+        String untitledFileName = File(String() << editorTopWin->textData->getFileName()).getDirName() << "/Untitled";
+        TextData::Ptr     emptyTextData     = TextData::create();
+                          emptyTextData->setPseudoFileName(untitledFileName);
+     
+        HilitedText::Ptr  hilitedText  = HilitedText::create(emptyTextData, languageMode);
+     
+        EditorTopWin::Ptr win          = EditorTopWin::create(textStyles, hilitedText);
+                          win->show();
+    }
+    
+    virtual void createCloneWindow()
+    {
+        Position myPosition = editorTopWin->getPosition();
+      
+        EditorTopWin::Ptr newWin = EditorTopWin::create(editorTopWin->textEditor->getTextStyles(), 
+                                                        editorTopWin->textEditor->getHilitedText(),
+                                                        myPosition.w, 
+                                                        myPosition.h);
+        newWin->textEditor->moveCursorToTextMark(editorTopWin->textEditor->createNewMarkFromCursor());
+        newWin->textEditor->setTopLineNumber(    editorTopWin->textEditor->getTopLineNumber());
+        newWin->textEditor->setLeftPix(          editorTopWin->textEditor->getLeftPix());
+        newWin->show();
+    }
+    
+private:
+    ActionInterface(RawPtr<EditorTopWin> editorTopWin)
+        : editorTopWin(editorTopWin)
+    {}
+    RawPtr<EditorTopWin> editorTopWin;
+};
+
 EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
       keyMapping1(KeyMapping::create()),
@@ -188,14 +276,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     
 
 //    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("w"),      newCallback(this,      &EditorTopWin::requestCloseWindowByUser));
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveKey));
-    keyMapping1->set( KeyModifier("Ctrl+Shift"), KeyId("s"),      newCallback(this,      &EditorTopWin::handleSaveAsKey));
-    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("n"),      newCallback(this,      &EditorTopWin::createEmptyWindow));
 
-
-    keyMapping2->set( KeyModifier("Alt"),        KeyId("c"),      newCallback(this,      &EditorTopWin::createCloneWindow));
-    keyMapping2->set( KeyModifier("Alt"),        KeyId("l"),      newCallback(this,      &EditorTopWin::executeLuaScript));
 
 ///////////// TODO
     keyMapping1->set( KeyModifier("Modifier5"),  KeyId("e"),      newCallback(this,      &EditorTopWin::executeTestScript));
@@ -206,18 +287,19 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 
     Callback<GuiWidget*>::Ptr requestClosePanelCallback = newCallback(this, &EditorTopWin::requestCloseFor);
 
+    actionInterface = EditorTopWin::ActionInterface::create(this);
+
     panelInvoker = PanelInvoker::create(this);
 
-    actionBinder = TopWinActionBinder::create(
-                        TopWinActions::Parameter(this, 
-                                                 textEditor,
-                                                 newCallback(this, &EditorTopWin::setMessageBox),
-                                                 panelInvoker));
+    GuiWidget::addActionMethods(EditorTopWinActions::create(
+                                TopWinActionsParameter(this, 
+                                                       textEditor,
+                                                       newCallback(this, &EditorTopWin::setMessageBox),
+                                                       panelInvoker,
+                                                       actionInterface)));
 
-    rootKeyBinding = TopWinKeyBinding::create(GlobalConfig::getInstance()->getTopWinKeyBindingConfig(),
-                                              actionBinder);
-    currentKeyBinding = rootKeyBinding;
-
+    rootActionKeyConfig    = GlobalConfig::getInstance()->getActionKeyConfig();
+    currentActionKeyConfig = rootActionKeyConfig;
 }
 
 EditorTopWin::~EditorTopWin()
@@ -283,9 +365,9 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent* ev
             if (event->type == KeyPress && !pressedKey.isModifierKey()) {
                 textEditor->hideMousePointer();
             }
-    
-            if (currentKeyBinding != rootKeyBinding) {
-                currentKeyBinding = rootKeyBinding;
+
+            if (currentActionKeyConfig != rootActionKeyConfig) {
+                currentActionKeyConfig = rootActionKeyConfig;
                 if (invokedPanel.isValid()) {
                     invokedPanel->treatFocusIn();
                 } else {
@@ -293,6 +375,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent* ev
                 }
                 statusLine->clearMessage();
             }
+
             m->call();
             rslt = EVENT_PROCESSED;
         }
@@ -300,40 +383,47 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent* ev
         {
             textEditor->hideMousePointer();
 
-            TopWinKeyBinding::FoundValue foundBinding;
+            ActionKeyConfig::FoundValue foundNode;
             
-            if (currentKeyBinding != rootKeyBinding) {
-                foundBinding = currentKeyBinding->find(combinationKeyModifier, pressedKey);
+            if (currentActionKeyConfig != rootActionKeyConfig) {
+                foundNode = currentActionKeyConfig->find(combinationKeyModifier, pressedKey);
             } else {
-                foundBinding = currentKeyBinding->find(keyModifier,            pressedKey);
+                foundNode = currentActionKeyConfig->find(keyModifier,            pressedKey);
             }
-            if (foundBinding.isValid())
+            if (foundNode.isValid())
             {
-                if (foundBinding.get().isCallable())
+                if (foundNode.get()->hasActionIds())
                 {
-                    foundBinding.get().call();
-                    currentKeyBinding = rootKeyBinding;
-                    rslt = EVENT_PROCESSED;
+                    ActionKeyConfig::ActionIds::Ptr actionIds = foundNode.get()->getActionIds();
+                    
+                    for (int i = 0, n = actionIds->getLength(); i < n; ++i)
+                    {
+                        if (this->invokeActionMethod(actionIds->get(i))) {
+                            currentActionKeyConfig = rootActionKeyConfig;
+                            rslt = EVENT_PROCESSED;
+                            break;
+                        }
+                    }
                 }
-                else if (foundBinding.get().hasNext())
+                if (rslt != EVENT_PROCESSED && foundNode.get()->hasNext())
                 {
-                    if (currentKeyBinding == rootKeyBinding) {
+                    if (currentActionKeyConfig == rootActionKeyConfig) {
                         combinationKeyModifier = keyModifier;
                         combinationKeys = pressedKey.toString().toUpper();
                     } else {
                         combinationKeys << "," << pressedKey.toString().toUpper();
                     }
-                    currentKeyBinding = foundBinding.get().getNext();
+                    currentActionKeyConfig = foundNode.get()->getNext();
                     rslt = EVENT_PROCESSED;
                 }
             }
-            if (   currentKeyBinding != rootKeyBinding 
+            if (   currentActionKeyConfig != rootActionKeyConfig 
                 && rslt != EVENT_PROCESSED)
             {
-                currentKeyBinding = rootKeyBinding;
+                currentActionKeyConfig = rootActionKeyConfig;
                 rslt = EVENT_PROCESSED;
             }
-            if (currentKeyBinding != rootKeyBinding) {
+            if (currentActionKeyConfig != rootActionKeyConfig) {
                 if (invokedPanel.isValid()) {
                     invokedPanel->treatFocusOut();
                 } else {
@@ -429,8 +519,8 @@ void EditorTopWin::treatFocusIn()
         } else {
             textEditor->treatFocusIn();
         }
+        checkForFileModifications();
     }
-    checkForFileModifications();
 }
 
 bool EditorTopWin::checkForFileModifications()
@@ -477,8 +567,8 @@ void EditorTopWin::doNotReloadFile()
 
 void EditorTopWin::treatFocusOut()
 {
-    if (currentKeyBinding != rootKeyBinding) {
-        currentKeyBinding = rootKeyBinding;
+    if (currentActionKeyConfig != rootActionKeyConfig) {
+        currentActionKeyConfig = rootActionKeyConfig;
         if (invokedPanel.isValid()) {
             invokedPanel->treatFocusIn();
         } else {
@@ -486,6 +576,7 @@ void EditorTopWin::treatFocusOut()
         }
         statusLine->clearMessage();
     }
+
     if (invokedPanel.isValid()) {
         invokedPanel->treatFocusOut();
     } else {
@@ -568,16 +659,6 @@ void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseRe
     }
 }
 
-void EditorTopWin::invokeSaveAsPanel(Callback<>::Ptr saveCallback)
-{
-    if (saveAsPanel.isInvalid()) {
-        saveAsPanel = SaveAsPanel::create(this, textEditor, 
-                                                newCallback(this, &EditorTopWin::setMessageBox),
-                                                panelInvoker);
-    }
-    saveAsPanel->setSaveCallback(saveCallback);
-    invokePanel(saveAsPanel);
-}
 
 
 void EditorTopWin::invokePanel(DialogPanel* panel)
@@ -666,38 +747,6 @@ void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
     setWindowTitle();
 }
 
-void EditorTopWin::handleSaveKey()
-{
-    try {
-        if (textData->isFileNamePseudo()) {
-            invokeSaveAsPanel(newCallback(this, &EditorTopWin::handleSaveKey));
-        }
-        else {
-            textData->save();
-            GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
-        }
-    } catch (FileException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("File Error")
-                                           .setMessage(ex.getMessage()));
-    } catch (LuaException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                           .setMessage(ex.getMessage()));
-    } catch (ConfigException& ex)
-    {
-        if (ex.getErrorList().isValid() && ex.getErrorList()->getLength() > 0) {
-            ConfigErrorHandler::start(ex.getErrorList());
-        } else {
-            setMessageBox(MessageBoxParameter().setTitle("Config Error")
-                                               .setMessage(ex.getMessage()));
-        }
-    }
-}
-
-void EditorTopWin::handleSaveAsKey()
-{
-    invokeSaveAsPanel(newCallback(this, &EditorTopWin::handleSaveKey));
-}
-
 void EditorTopWin::saveAndClose()
 {
     try {
@@ -721,9 +770,15 @@ void EditorTopWin::saveAndClose()
     }
 }
 
-void EditorTopWin::requestCloseWindowByUser()
+void EditorTopWin::invokeSaveAsPanel(Callback<>::Ptr saveCallback)
 {
-    requestCloseWindow(TopWin::CLOSED_BY_USER);
+    if (saveAsPanel.isInvalid()) {
+        saveAsPanel = SaveAsPanel::create(this, this->textEditor, 
+                                          newCallback(this, &EditorTopWin::setMessageBox),
+                                          panelInvoker);
+    }
+    saveAsPanel->setSaveCallback(saveCallback);
+    invokePanel(saveAsPanel);
 }
 
 void EditorTopWin::requestCloseWindow(TopWin::CloseReason reason)
@@ -751,20 +806,6 @@ void EditorTopWin::requestCloseWindowAndDiscardChanges()
     TopWin::requestCloseWindow(TopWin::CLOSED_SILENTLY);
 }
 
-void EditorTopWin::createEmptyWindow()
-{
-    TextStyles::Ptr   textStyles   = GlobalConfig::getInstance()->getTextStyles();
-    LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
-
-    String untitledFileName = File(String() << textData->getFileName()).getDirName() << "/Untitled";
-    TextData::Ptr     emptyTextData     = TextData::create();
-                      emptyTextData->setPseudoFileName(untitledFileName);
-
-    HilitedText::Ptr  hilitedText  = HilitedText::create(emptyTextData, languageMode);
-
-    EditorTopWin::Ptr win          = EditorTopWin::create(textStyles, hilitedText);
-                      win->show();
-}
 
 void EditorTopWin::setSize(int width, int height)
 {
@@ -772,114 +813,7 @@ void EditorTopWin::setSize(int width, int height)
     TopWin::setSize(width, height);
 }
 
-void EditorTopWin::createCloneWindow()
-{
-    Position myPosition = this->getPosition();
 
-    EditorTopWin::Ptr newWin = EditorTopWin::create(textEditor->getTextStyles(), 
-                                                    textEditor->getHilitedText(),
-                                                    myPosition.w, 
-                                                    myPosition.h);
-    newWin->textEditor->moveCursorToTextMark(this->textEditor->createNewMarkFromCursor());
-    newWin->textEditor->setTopLineNumber(    this->textEditor->getTopLineNumber());
-    newWin->textEditor->setLeftPix(          this->textEditor->getLeftPix());
-    newWin->show();
-}
-
-void EditorTopWin::executeLuaScript()
-{
-    if (textEditor->areCursorChangesDisabled())
-    {
-        return;
-    }
-    try
-    {
-        if (textEditor->hasSelection())
-        {
-            long selBegin  = textEditor->getBeginSelectionPos();
-            long selLength = textEditor->getEndSelectionPos() - selBegin;
-            
-            LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeScript((const char*) textData->getAmount(selBegin, selLength),
-                                                                                               selLength);
-            String output = scriptResult.output;
-            
-            TextData::HistorySection::Ptr historySectionHolder = textData->createHistorySection();
-            
-            textEditor->hideCursor();
-            textEditor->moveCursorToTextPosition(selBegin + selLength);
-            if (output.getLength() > 0) {
-                textEditor->insertAtCursor((const byte*) output.toCString(), output.getLength());
-                textEditor->setPrimarySelection(selBegin + selLength, 
-                                                selBegin + selLength + output.getLength());
-
-                textEditor->moveCursorToTextPosition(selBegin + selLength + output.getLength());
-                textEditor->assureCursorVisible();
-                textEditor->moveCursorToTextPosition(selBegin + selLength);
-            } else {
-                textEditor->releaseSelection();
-            }
-            textEditor->assureCursorVisible();
-            textEditor->rememberCursorPixX();
-            textEditor->showCursor();
-        }
-        else
-        {
-            long cursorPos = textEditor->getCursorTextPosition();
-            long spos = cursorPos;
-            int parenCounter = 0;
-            
-            while (spos > 0)
-            {
-                byte c = textData->getChar(spos - 1);
-                if (parenCounter > 0)
-                {
-                    if (c == '(') {
-                        --parenCounter;
-                    } else if (c == ')') {
-                        ++parenCounter;
-                    }
-                    --spos;
-                }
-                else if (textEditor->isWordCharacter(c) || c == '.') {
-                    --spos;
-                }
-                else if (c == ')') {
-                    ++parenCounter;
-                    --spos;
-                } else {
-                    break;
-                }
-            }
-            if (spos < cursorPos)
-            {
-                LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeExpression((const char*) textData->getAmount(spos, cursorPos - spos),
-                                                                                                       cursorPos - spos);
-                String output = scriptResult.output;
-                for (int i = 0, n = scriptResult.objects.getLength(); i < n; ++i) {
-                    output << scriptResult.objects[i].toString();
-                }
-                if (output.getLength() > 0) 
-                {
-                    TextData::HistorySection::Ptr historySectionHolder = textData->createHistorySection();
-                    
-                    textEditor->hideCursor();
-                    textEditor->moveCursorToTextPosition(spos);
-                    textEditor->removeAtCursor(cursorPos - spos);
-                    textEditor->insertAtCursor((const byte*) output.toCString(), output.getLength());
-                    textEditor->moveCursorToTextPosition(spos + output.getLength());
-                    textEditor->assureCursorVisible();
-                    textEditor->rememberCursorPixX();
-                    textEditor->showCursor();
-                }
-            }
-        }
-    }
-    catch (LuaException& ex)
-    {
-        setMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                           .setMessage(ex.getMessage()));
-    }
-}
 
 String EditorTopWin::getFileName() const
 {

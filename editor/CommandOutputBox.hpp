@@ -57,11 +57,9 @@ private:
     CommandOutputBox(TopWin* referingWindow, TextData::Ptr textData);
     
     
-    void handleButtonPressed(Button* button);
+    void handleButtonPressed(Button* button, Button::ActivationVariant variant);
 
     Button::Ptr button1;
-    Callback<>::Ptr defaultButtonCallback;
-    Callback<>::Ptr alternativeButtonCallback;
     Callback<>::Ptr cancelButtonCallback;
     Callback<>::Ptr closeCallback;
     bool wasClosed;

@@ -22,10 +22,11 @@
 #ifndef CALLBACK_HPP
 #define CALLBACK_HPP
 
+#include "EmptyClass.hpp"
 #include "HeapObject.hpp"
 #include "OwningPtr.hpp"
 #include "WeakPtr.hpp"
-#include "EmptyClass.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {
@@ -282,7 +283,8 @@ private:
 
     template<class T> static T* getRawPtr(T* ptr)           { return ptr; }
     template<class T> static T* getRawPtr(OwningPtr<T> ptr) { return ptr.getRawPtr(); }
-    template<class T> static T* getRawPtr(WeakPtr<T> ptr)   { return ptr.getRawPtr(); }
+    template<class T> static T* getRawPtr(WeakPtr<T>   ptr) { return ptr.getRawPtr(); }
+    template<class T> static T* getRawPtr(RawPtr<T>    ptr) { return ptr.getRawPtr(); }
 
 public:
     typedef CallbackPtr< Callback
@@ -292,7 +294,7 @@ public:
                       
                        > Ptr;
 
-@ for _, ptrType in ipairs({'T*', 'OwningPtr<T>', 'WeakPtr<T>'}) do
+@ for _, ptrType in ipairs({'T*', 'OwningPtr<T>', 'WeakPtr<T>', 'RawPtr<T>'}) do
     template<class T, class S> static Ptr create(@(ptrType) objectPtr, 
                                                  void (S::*methodPtr)(@(argList('A',argCount))))
     {
@@ -372,7 +374,7 @@ private:
 
 
 @ for argCount = 0, MAX_TEMPLATE_ARGS do
-@   for _, ptrType in ipairs({'OwningPtr<T>', 'WeakPtr<T>', 'T*'}) do
+@   for _, ptrType in ipairs({'OwningPtr<T>', 'WeakPtr<T>', 'T*', 'RawPtr<T>'}) do
 
 template
 <

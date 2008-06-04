@@ -36,6 +36,12 @@ namespace LucED {
 class Button : public GuiWidget
 {
 public:
+    enum ActivationVariant {
+        WAS_MOUSE_CLICK,
+        WAS_HOT_KEY,
+        WAS_DEFAULT_KEY
+    };
+
     typedef OwningPtr<Button> Ptr;
     
     static Ptr create(GuiWidget* parent, String buttonText) {
@@ -46,7 +52,7 @@ public:
     
     int getStandardHeight();
 
-    void setButtonPressedCallback(Callback<Button*>::Ptr callback) {
+    void setButtonPressedCallback(Callback<Button*, ActivationVariant>::Ptr callback) {
         pressedCallback1 = callback;
         pressedCallback0.invalidate();
     }
@@ -56,7 +62,7 @@ public:
         pressedCallback1.invalidate();
     }
     
-    void setButtonRightClickedCallback(Callback<Button*>::Ptr callback) {
+    void setButtonRightClickedCallback(Callback<Button*, ActivationVariant>::Ptr callback) {
         rightClickedCallback1 = callback;
         rightClickedCallback0.invalidate();
     }
@@ -70,9 +76,6 @@ public:
         rightClickedCallback1.invalidate();
     }
     
-    void setButtonDefaultKeyCallback(Callback<Button*>::Ptr callback) {
-        buttonDefaultKeyCallback = callback;
-    }
     
     virtual void treatFocusIn();
     virtual void treatFocusOut();
@@ -107,15 +110,12 @@ private:
     bool isMouseButtonPressed;
     bool isMouseOverButton;
     
-    Callback<Button*>::Ptr pressedCallback1;
-    Callback<>::Ptr        pressedCallback0;
+    Callback<Button*, ActivationVariant>::Ptr pressedCallback1;
+    Callback<>::Ptr                           pressedCallback0;
     
-    Callback<Button*>::Ptr rightClickedCallback1;
-    Callback<>::Ptr        rightClickedCallback0;
+    Callback<Button*, ActivationVariant>::Ptr rightClickedCallback1;
+    Callback<>::Ptr                           rightClickedCallback0;
     
-    
-    Callback<Button*>::Ptr buttonDefaultKeyCallback;
-
     bool isDefaultButton;
     bool isExplicitDefaultButton;
     bool hasFocusFlag;

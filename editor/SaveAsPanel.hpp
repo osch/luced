@@ -46,8 +46,6 @@ public:
                                            panelInvoker));
     }
     
-    virtual void treatFocusIn();
-    
     virtual void show();
     
     void setSaveCallback(Callback<>::Ptr saveCallback) {
@@ -59,7 +57,7 @@ private:
                                    Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
                                    PanelInvoker::Ptr                         panelInvoker);
 
-    void handleButtonPressed(Button* button);
+    void handleButtonPressed(Button* button, Button::ActivationVariant variant);
     
     void continueSave();
 

@@ -90,16 +90,10 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
     label0   ->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
     editField->setLayoutHeight(findPrevButton->getStandardHeight(), VerticalAdjustment::CENTER);
  
-    Callback<Button*>::Ptr buttonCallback           = newCallback(this, &FindPanel::handleButtonPressed,
-                                                                        &FindPanel::handleException);
-    Callback<Button*>::Ptr buttonDefaultKeyCallback = newCallback(this, &FindPanel::handleButtonDefaultKey,
-                                                                        &FindPanel::handleException);
-    
+    Callback<Button*,Button::ActivationVariant>::Ptr buttonCallback = newCallback(this, &FindPanel::handleButtonPressed,
+                                                                                        &FindPanel::handleException);
     findNextButton->setButtonPressedCallback(buttonCallback);
     findPrevButton->setButtonPressedCallback(buttonCallback);
-
-    findNextButton->setButtonDefaultKeyCallback(buttonDefaultKeyCallback);
-    findPrevButton->setButtonDefaultKeyCallback(buttonDefaultKeyCallback);
 
     //goBackButton->setButtonPressedCallback(buttonCallback);
     cancelButton->setButtonPressedCallback(buttonCallback);
@@ -168,12 +162,6 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
     label0->setMiddleMouseButtonCallback(newCallback(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
 
-void FindPanel::treatFocusIn()
-{
-    setFocus(editField);
-    DialogPanel::treatFocusIn();
-}
-
 
 void FindPanel::requestCurrentSelectionForInteraction(SearchInteraction* interaction, Callback<String>::Ptr selectionRequestedCallback)
 {
@@ -193,17 +181,14 @@ void FindPanel::requestCloseFromInteraction(SearchInteraction* interaction)
 
 
 
-void FindPanel::handleButtonPressed(Button* button)
+void FindPanel::handleButtonPressed(Button* button, Button::ActivationVariant variant)
 {
-    if (button == cancelButton)
+    if (variant == Button::WAS_DEFAULT_KEY || button == cancelButton)
     {
         requestClose();
     }
-//    else if (button == goBackButton)
-//    {
-//        messageBoxInvoker->call(MessageBoxParameter().setTitle("xxx title xxx").setMessage("xxx message xxx"));
-//    }
-    else if (button == findNextButton || button == findPrevButton)
+    
+    if (button == findNextButton || button == findPrevButton)
     {
         if (button == findNextButton) 
         {
@@ -259,17 +244,6 @@ void FindPanel::handleCheckBoxPressed(CheckBox* checkBox)
 {
     invalidateOutdatedInteraction();
 }
-
-
-void FindPanel::handleButtonDefaultKey(Button* button)
-{
-    if (button == findNextButton || button == findPrevButton) {
-        requestClose();
-    }
-    handleButtonPressed(button);
-}
-
-
 
 
 void FindPanel::findAgainForward()
@@ -485,6 +459,7 @@ GuiElement::ProcessingResult FindPanel::processKeyboardEvent(const XEvent* event
 
 void FindPanel::show()
 {
+    setFocus(editField);
     DialogPanel::show();
     if (editField->getTextData()->getModifiedFlag() == false) {
         editField->getTextData()->clear();

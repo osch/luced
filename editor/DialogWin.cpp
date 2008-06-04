@@ -25,6 +25,7 @@
 #include "Callback.hpp"
 #include "DialogWin.hpp"
 #include "Button.hpp"
+#include "EventDispatcher.hpp"
 
 using namespace LucED;
 
@@ -55,10 +56,11 @@ void DialogWin::requestCloseWindow(TopWin::CloseReason reason)
         && reason == CLOSED_SILENTLY
         && !this->hasFocus()
         && referingWindow.isValid() && !referingWindow->isClosing()
+        &&  this->isMapped()
         && !this->isClosing())
     {
         // strange workaround for exceed (vendor = <Hummingbird Communications Ltd.> <6100>)
-        XSetInputFocus(getDisplay(), getWid(), RevertToNone, CurrentTime);
+        XSetInputFocus(getDisplay(), getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
     }
 
     TopWin::requestCloseWindow(reason);
