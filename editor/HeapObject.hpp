@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HEAPOBJECT_H
-#define HEAPOBJECT_H
+#ifndef HEAP_OBJECT_HPP
+#define HEAP_OBJECT_HPP
 
 #include <stdio.h>
 #include <stddef.h>
@@ -33,9 +33,10 @@
 #include "String.hpp"
 
 #undef HEAP_OBJECT_USES_DYNAMIC_CAST
-// #define PRINT_MALLOCS
+//#define PRINT_MALLOCS
 
-namespace LucED {
+namespace LucED
+{
 
 #ifdef DEBUG
 class HeapObjectChecker : private NonCopyable
@@ -117,6 +118,7 @@ protected:
         new(allocated) HeapObjectCounters();
     #ifdef PRINT_MALLOCS
         printf("----> HeapObject %p : allocating %8.d bytes \n", allocated + 1, size);
+        printf("***** HeapObjects allocated: %d \n", HeapObjectChecker::allocCounter - HeapObjectChecker::destructCounter);
     #endif
     #ifdef DEBUG
         HeapObjectChecker::allocCounter += 1;
@@ -255,7 +257,6 @@ protected:
     }
 };
 
-
 } // namespace LucED
 
-#endif // HEAPOBJECT_H
+#endif // HEAP_OBJECT_HPP

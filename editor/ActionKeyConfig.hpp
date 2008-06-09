@@ -39,7 +39,8 @@ class ActionKeyConfig : public HeapObject
 public:
     typedef OwningPtr<ActionKeyConfig> Ptr;
     
-    typedef HeapObjectArray<ActionId> ActionIds;
+    typedef HeapObjectArray<KeyCombination> KeyCombinations;
+    typedef HeapObjectArray<ActionId>       ActionIds;
     
     static Ptr create() {
         return Ptr(new ActionKeyConfig());
@@ -93,27 +94,57 @@ public:
     };
     
     typedef HashMap<KeyMapping::Id, Node::Ptr> NodeMap;
-    typedef NodeMap::Value                     FoundValue;
     
-    FoundValue find(KeyMapping::Id id)
+    Node::Ptr find(KeyMapping::Id id)
     {
-        FoundValue rslt = nodeMap.get(id);
-    
+        Node::Ptr      rslt;
+        NodeMap::Value foundNode = nodeMap.get(id);
+        if (foundNode.isValid()) {
+            rslt = foundNode.get();
+        }
         return rslt;    
     }
-    FoundValue find(KeyModifier keyState, KeyId keyId)
+    
+    Node::Ptr find(KeyModifier keyState, KeyId keyId)
     {
-        return find (KeyMapping::Id(keyState, keyId));
+        return find(KeyMapping::Id(keyState, keyId));
     }
     
     void set(KeyCombination    keyCombination,
              ActionId          actionId);
-        
+
+  
+    KeyCombinations::Ptr getKeyCombinationsForAction(ActionId actionId)
+    {
+        KeyCombinations::Ptr rslt;
+        ActionsToKeysMap::Value foundValue = actionsToKeysMap.get(actionId);
+        if (foundValue.isValid()) {
+            rslt = foundValue.get();
+        }
+        return rslt;
+    }
+    
+    ActionIds::Ptr getActionIdsForKeyCombination(KeyCombination keyCombination)
+    {
+        ActionIds::Ptr rslt;
+        KeysToActionsMap::Value foundValue = keysToActionsMap.get(keyCombination);
+        if (foundValue.isValid()) {
+            rslt = foundValue.get();
+        }
+        return rslt;
+    }
+    
 private:
     ActionKeyConfig()
     {}
     
     NodeMap nodeMap;
+    
+    typedef HashMap<ActionId, KeyCombinations::Ptr> ActionsToKeysMap;
+    typedef HashMap<KeyCombination, ActionIds::Ptr> KeysToActionsMap;
+
+    ActionsToKeysMap actionsToKeysMap;
+    KeysToActionsMap keysToActionsMap;
 };
 
 } // namespace LucED

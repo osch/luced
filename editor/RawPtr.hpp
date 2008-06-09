@@ -127,6 +127,7 @@ public:
     }
     
     T* operator->() const {
+        ASSERT(getRawPtr() != NULL);
         return getRawPtr();
     }
     

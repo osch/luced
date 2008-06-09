@@ -589,4 +589,38 @@ void GuiWidget::setBitGravity(int bitGravity)
             CWBitGravity, &at);
 }
 
+void GuiWidget::addActionMethods(ActionMethods::Ptr methods)
+{
+    actionMethods.append(methods);
+}
+
+bool GuiWidget::invokeActionMethod(ActionId actionId)
+{
+    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
+        if (actionMethods[i]->invokeActionMethod(actionId)) {
+            ASSERT(hasActionMethod(actionId));
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GuiWidget::hasActionMethod(ActionId actionId)
+{
+    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
+        if (actionMethods[i]->hasActionMethod(actionId)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+ActionKeyConfig::Ptr GuiWidget::getActionKeyConfig()
+{
+    ActionKeyConfig::Ptr rslt;
+    if (parent.isValid()) {
+        rslt = parent->getActionKeyConfig();;
+    }
+    return rslt;
+}
 

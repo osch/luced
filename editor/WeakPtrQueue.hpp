@@ -42,6 +42,16 @@ public:
     void append(T* x) {
         ptrArray.append(x);
     }
+
+    void removeAll(T* x) {
+        for (int i = 0; i < ptrArray.getLength();) {
+            if (ptrArray[i] == x) {
+                ptrArray.remove(i);
+            } else {
+                ++i;
+            }
+        }
+    }
     
     WeakPtr<T> getLast() const {
         WeakPtr<T> rslt;

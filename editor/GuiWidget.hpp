@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GUIWIDGET_HPP
-#define GUIWIDGET_HPP
+#ifndef GUI_WIDGET_HPP
+#define GUI_WIDGET_HPP
 
 #include "headers.hpp"
 #include "types.hpp"
@@ -34,6 +34,8 @@
 #include "RawPtr.hpp"
 #include "ObjectArray.hpp"
 #include "ActionMethods.hpp"
+#include "KeyPressEvent.hpp"
+#include "ActionKeyConfig.hpp"
 
 namespace LucED
 {
@@ -79,7 +81,11 @@ public:
     virtual FocusType getFocusType() { return NO_FOCUS; }
     virtual void treatFocusIn() {}
     virtual void treatFocusOut() {}
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event) { return NOT_PROCESSED; }
+    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent) { return NOT_PROCESSED; }
+
+    virtual bool handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent) { return false; }
+    virtual bool handleLowPriorityKeyPress (const KeyPressEvent& keyPressEvent) { return false; }
+
     virtual void notifyAboutHotKeyEventForOtherWidget() {}
 
     virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id) {}
@@ -93,27 +99,12 @@ public:
     
     void setWinGravity(int winGravity);
     
-    void addActionMethods(ActionMethods::Ptr methods) {
-        actionMethods.append(methods);
-    }
+    virtual void addActionMethods(ActionMethods::Ptr methods);
     
-    ActionMethods::Ptr getActionMethodsWith(ActionId actionId) const {
-        for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
-            if (actionMethods[i]->hasActionMethod(actionId)) {
-                return actionMethods[i];
-            }
-        }
-        return ActionMethods::Ptr();
-    }
-    
-    bool invokeActionMethod(ActionId actionId) const {
-        for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
-            if (actionMethods[i]->invokeActionMethod(actionId)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    virtual bool invokeActionMethod(ActionId actionId);
+    virtual bool hasActionMethod(ActionId actionId);
+
+    virtual ActionKeyConfig::Ptr getActionKeyConfig();
 
 protected:
 
@@ -234,5 +225,4 @@ protected:
 
 } // namespace LucED
 
-
-#endif // GUIWIDGET_HPP
+#endif // GUI_WIDGET_HPP

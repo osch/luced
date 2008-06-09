@@ -202,12 +202,16 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
     caseSensitiveCheckBox ->show();
     regularExprCheckBox   ->show();
     wholeWordCheckBox     ->show();
-    
+
     findEditField   ->getTextData()->registerModifiedFlagListener(newCallback(this, &ReplacePanel::handleModifiedEditField,
                                                                                     &ReplacePanel::handleException));
     replaceEditField->getTextData()->registerModifiedFlagListener(newCallback(this, &ReplacePanel::handleModifiedEditField,
                                                                                     &ReplacePanel::handleException));
+    EditFieldActions::Ptr editFieldActions = EditFieldActions::create(this);
 
+    findEditField   ->addActionMethods(editFieldActions);
+    replaceEditField->addActionMethods(editFieldActions);
+                      
     label0->setMiddleMouseButtonCallback(newCallback(findEditField,    &SingleLineEditField::replaceTextWithPrimarySelection));
     label1->setMiddleMouseButtonCallback(newCallback(replaceEditField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }
@@ -486,143 +490,114 @@ void ReplacePanel::internalReplaceAgain(bool forwardFlag)
     }
 }
 
-
-
-GuiElement::ProcessingResult ReplacePanel::processKeyboardEvent(const XEvent *event)
+void ReplacePanel::executeHistoryBackwardAction()
 {
-    KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    SearchHistory* history = SearchHistory::getInstance();
 
-    bool processed = false;
-    KeyMapping::Id keyMappingId(event->xkey.state, pressedKey);
+    if (historyIndex < 0) {
+        String editFieldContent = findEditField->getTextData()->getAsString();
 
-    if (KeyMapping::Id(0, KeyId("Up"))    == keyMappingId
-     || KeyMapping::Id(0, KeyId("KP_Up")) == keyMappingId)
-    {
-        SearchHistory* history = SearchHistory::getInstance();
+        SearchHistory::Entry newEntry;
+                             newEntry.setFindString    (editFieldContent);
+                             newEntry.setReplaceString (replaceEditField->getTextData()->getAsString());
+                             newEntry.setWholeWordFlag (wholeWordCheckBox->isChecked());
+                             newEntry.setRegexFlag     (regularExprCheckBox->isChecked());
+                             newEntry.setIgnoreCaseFlag(!caseSensitiveCheckBox->isChecked());
 
-        if (historyIndex < 0) {
-            String editFieldContent = findEditField->getTextData()->getAsString();
+        history->append(newEntry);
+    }
 
-            SearchHistory::Entry newEntry;
-                                 newEntry.setFindString    (editFieldContent);
-                                 newEntry.setReplaceString (replaceEditField->getTextData()->getAsString());
-                                 newEntry.setWholeWordFlag (wholeWordCheckBox->isChecked());
-                                 newEntry.setRegexFlag     (regularExprCheckBox->isChecked());
-                                 newEntry.setIgnoreCaseFlag(!caseSensitiveCheckBox->isChecked());
+    int h = historyIndex;
+    if (h < 0) {
+        h = history->getEntryCount();
+    }
+    --h;
+    String findFieldContent    = findEditField->getTextData()->getAsString();
+    String replaceFieldContent = replaceEditField->getTextData()->getAsString();
+    while (h >= 0) {
+        SearchHistory::Entry entry = history->getEntry(h);
+        String lastFindString    = entry.getFindString();
+        String lastReplaceString = entry.getReplaceString();
+        if (lastFindString != findFieldContent || lastReplaceString != replaceFieldContent)
+        {
+            RawPtr<TextData> textData = findEditField->getTextData();
+            textData->setToString(lastFindString);
+            textData->clearHistory();
+            textData->setModifiedFlag(false);
 
-            history->append(newEntry);
-        }
-
-        int h = historyIndex;
-        if (h < 0) {
-            h = history->getEntryCount();
+            textData = replaceEditField->getTextData();
+            textData->setToString(lastReplaceString);
+            textData->clearHistory();
+            textData->setModifiedFlag(false);
+            
+            historyIndex = h;
+            wholeWordCheckBox->setChecked(entry.getWholeWordFlag());
+            regularExprCheckBox->setChecked(entry.getRegexFlag());
+            caseSensitiveCheckBox->setChecked(!entry.getIgnoreCaseFlag());
+            break;
         }
         --h;
-        String findFieldContent    = findEditField->getTextData()->getAsString();
+    }
+}
+
+
+void ReplacePanel::executeHistoryForwardAction()
+{
+    SearchHistory* history = SearchHistory::getInstance();
+
+    if (historyIndex < 0) {
+        String editFieldContent = findEditField->getTextData()->getAsString();
+
+        SearchHistory::Entry newEntry;
+                             newEntry.setFindString    (editFieldContent);
+                             newEntry.setReplaceString (replaceEditField->getTextData()->getAsString());
+                             newEntry.setWholeWordFlag (wholeWordCheckBox->isChecked());
+                             newEntry.setRegexFlag     (regularExprCheckBox->isChecked());
+                             newEntry.setIgnoreCaseFlag(!caseSensitiveCheckBox->isChecked());
+
+        history->append(newEntry);
+
+        historyIndex = history->getEntryCount() - 1;
+    }
+
+    if (historyIndex >= 0) {
+        String findFieldContent    = findEditField   ->getTextData()->getAsString();
         String replaceFieldContent = replaceEditField->getTextData()->getAsString();
-        while (h >= 0) {
+        int h = historyIndex;
+        bool found = false;
+        while (h + 1 < history->getEntryCount()) {
+            ++h;
             SearchHistory::Entry entry = history->getEntry(h);
-            String lastFindString    = entry.getFindString();
-            String lastReplaceString = entry.getReplaceString();
-            if (lastFindString != findFieldContent || lastReplaceString != replaceFieldContent)
+            String nextFindString    = entry.getFindString();
+            String nextReplaceString = entry.getReplaceString();
+            if (nextFindString != findFieldContent || nextReplaceString != replaceFieldContent)
             {
                 RawPtr<TextData> textData = findEditField->getTextData();
-                textData->setToString(lastFindString);
+                textData->setToString(nextFindString);
                 textData->clearHistory();
                 textData->setModifiedFlag(false);
-
+            
                 textData = replaceEditField->getTextData();
-                textData->setToString(lastReplaceString);
+                textData->setToString(nextReplaceString);
                 textData->clearHistory();
                 textData->setModifiedFlag(false);
                 
                 historyIndex = h;
+                found = true;
                 wholeWordCheckBox->setChecked(entry.getWholeWordFlag());
                 regularExprCheckBox->setChecked(entry.getRegexFlag());
                 caseSensitiveCheckBox->setChecked(!entry.getIgnoreCaseFlag());
                 break;
             }
-            --h;
         }
-        processed = true;
-    }
-    else if (KeyMapping::Id(0, KeyId("Down"))    == keyMappingId
-          || KeyMapping::Id(0, KeyId("KP_Down")) == keyMappingId)
-    {
-        SearchHistory* history = SearchHistory::getInstance();
-
-        if (historyIndex < 0) {
-            String editFieldContent = findEditField->getTextData()->getAsString();
-
-            SearchHistory::Entry newEntry;
-                                 newEntry.setFindString    (editFieldContent);
-                                 newEntry.setReplaceString (replaceEditField->getTextData()->getAsString());
-                                 newEntry.setWholeWordFlag (wholeWordCheckBox->isChecked());
-                                 newEntry.setRegexFlag     (regularExprCheckBox->isChecked());
-                                 newEntry.setIgnoreCaseFlag(!caseSensitiveCheckBox->isChecked());
-
-            history->append(newEntry);
-
-            historyIndex = history->getEntryCount() - 1;
+        if (!found) {
+            historyIndex = -1;
+               findEditField->getTextData()->clear();
+            replaceEditField->getTextData()->clear();
+            caseSensitiveCheckBox->setChecked(false);
+            regularExprCheckBox->setChecked(false);
+            wholeWordCheckBox->setChecked(false);
         }
-
-        if (historyIndex >= 0) {
-            String findFieldContent    = findEditField   ->getTextData()->getAsString();
-            String replaceFieldContent = replaceEditField->getTextData()->getAsString();
-            int h = historyIndex;
-            bool found = false;
-            while (h + 1 < history->getEntryCount()) {
-                ++h;
-                SearchHistory::Entry entry = history->getEntry(h);
-                String nextFindString    = entry.getFindString();
-                String nextReplaceString = entry.getReplaceString();
-                if (nextFindString != findFieldContent || nextReplaceString != replaceFieldContent)
-                {
-                    RawPtr<TextData> textData = findEditField->getTextData();
-                    textData->setToString(nextFindString);
-                    textData->clearHistory();
-                    textData->setModifiedFlag(false);
-                
-                    textData = replaceEditField->getTextData();
-                    textData->setToString(nextReplaceString);
-                    textData->clearHistory();
-                    textData->setModifiedFlag(false);
-                    
-                    historyIndex = h;
-                    found = true;
-                    wholeWordCheckBox->setChecked(entry.getWholeWordFlag());
-                    regularExprCheckBox->setChecked(entry.getRegexFlag());
-                    caseSensitiveCheckBox->setChecked(!entry.getIgnoreCaseFlag());
-                    break;
-                }
-            }
-            if (!found) {
-                historyIndex = -1;
-                   findEditField->getTextData()->clear();
-                replaceEditField->getTextData()->clear();
-                caseSensitiveCheckBox->setChecked(false);
-                regularExprCheckBox->setChecked(false);
-                wholeWordCheckBox->setChecked(false);
-            }
-        }
-        processed = true;
-    }
-    else if (KeyMapping::Id(ControlMask, KeyId("g")) == keyMappingId)
-    {
-        findAgainForward();
-        processed = true;
-    }
-    else if (KeyMapping::Id(ShiftMask|ControlMask, KeyId("g")) == keyMappingId)
-    {
-        findAgainBackward();
-        processed = true;
-    }
-    
-    if (!processed) {
-        return DialogPanel::processKeyboardEvent(event);
-    } else {
-        findEditField->showCursor();
-        return EVENT_PROCESSED;
     }
 }
 

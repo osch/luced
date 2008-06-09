@@ -91,7 +91,8 @@ String KeyModifier::toString() const
         rslt.add("Control");
     }
     if (keyState & Mod1Mask) {
-        rslt.add("Modifier1");
+        //rslt.add("Modifier1");
+        rslt.add("Alt");
     }
     if (keyState & Mod2Mask) {
         rslt.add("Modifier2");

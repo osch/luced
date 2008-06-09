@@ -28,6 +28,7 @@
 #include "WeakPtrQueue.hpp"
 #include "Callback.hpp"
 #include "HeapHashMap.hpp"
+#include "ActionMethodBinding.hpp"
 
 namespace LucED
 {
@@ -51,8 +52,11 @@ public:
 
     virtual void treatNewWindowPosition(Position newPosition);
     virtual ProcessingResult processEvent(const XEvent* event);
-    virtual ProcessingResult processKeyboardEvent(const XEvent* event);
 
+    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
+    virtual bool handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent);
+    virtual bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
+    
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
@@ -68,35 +72,63 @@ public:
     bool hasFocus() const {
         return hasFocusFlag;
     }
+
+    virtual bool invokeActionMethod(ActionId actionId);
+    virtual bool hasActionMethod(ActionId actionId);
     
 protected:
     DialogPanel(GuiWidget* parent, Callback<DialogPanel*>::Ptr requestCloseCallback);
     
     GuiElement* getRootElement() {return rootElement.getRawPtr();}
     
-    void switchFocusToNextWidget();
-    void switchFocusToPrevWidget();
     virtual void requestFocusFor(GuiWidget* w);
     
     virtual void requestClose();
     
 private:
+    class Actions : public ActionMethodBinding<Actions>
+    {
+    public:
+        typedef OwningPtr<Actions> Ptr;
+
+        static Ptr create(RawPtr<DialogPanel> thisPanel) {
+            return Ptr(new Actions(thisPanel));
+        }
+
+        void focusNext();
+        void focusPrevious();
+        void pressDefaultButton();
+        
+    private:
+        
+        Actions(RawPtr<DialogPanel> thisPanel)
+            : ActionMethodBinding<Actions>(this),
+              thisPanel(thisPanel)
+        {}
+        
+        RawPtr<DialogPanel> thisPanel;
+    };
+    friend class ActionMethodBinding<Actions>;
+
     void setHotKeySuccessor(DialogPanel* hotKeySuccessor) {
         ASSERT(hotKeySuccessor->hotKeyMapping->isEmpty());
         this->hotKeySuccessor = hotKeySuccessor;
     }
+    
+    bool takesAwayDefaultKey(GuiWidget* widget);
+    
+    bool processHotKey(KeyMapping::Id keyMappingId);
 
     OwningPtr<GuiElement> rootElement;
     bool wasNeverShown;
-    
-    KeyMapping::Ptr keyMapping1;
-    KeyMapping::Ptr keyMapping2;
     
     typedef WeakPtrQueue<GuiWidget> WidgetQueue;
     typedef HeapHashMap< KeyMapping::Id, WidgetQueue::Ptr > HotKeyMapping;
     HotKeyMapping::Ptr hotKeyMapping;
     
     WeakPtr<GuiWidget> focusedElement;
+    bool               focusedElementTakesAwayDefaultKey;
+    WidgetQueue::Ptr   defaultKeyWidgets;
     
     bool hasFocusFlag;
     
@@ -104,6 +136,7 @@ private:
     
     WeakPtr<DialogPanel> hotKeySuccessor;
     WeakPtr<DialogPanel> hotKeyPredecessor;
+    
 };
 
 } // namespace LucED

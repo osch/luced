@@ -24,9 +24,9 @@
 
 #include "String.hpp"
 #include "Callback.hpp"
-#include "KeyMapping.hpp"
 #include "WeakPtrQueue.hpp"
 #include "DialogPanel.hpp"
+#include "ActionMethods.hpp"
 
 namespace LucED
 {
@@ -71,14 +71,10 @@ public:
         return *this;
     }
 
-    MessageBoxParameter& addKeyMapping(KeyModifier keyState, KeyId keyId, Callback<>::Ptr cb) {
-        if (!keyMapping.isValid()) {
-            keyMapping = KeyMapping::create();
-        }
-        keyMapping->set(keyState, keyId, cb);
+    MessageBoxParameter& setActionMethods(ActionMethods::Ptr actionMethods) {
+        this->actionMethods = actionMethods;
         return *this;
     }
-    
     MessageBoxParameter& setMessageBoxQueue(OwningPtr<MessageBoxQueue> messageBoxQueue);
     
     MessageBoxParameter& setInvokeNotifyCallback(Callback<TopWin*>::Ptr invokeNotifyCallback) {
@@ -111,7 +107,7 @@ private:
     
     Callback<>::Ptr   closeCallback;
     
-    KeyMapping::Ptr   keyMapping;
+    ActionMethods::Ptr actionMethods;
     
     OwningPtr<MessageBoxQueue> messageBoxQueue;
 

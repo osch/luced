@@ -182,6 +182,7 @@ public:
     
     T* operator->() const {
         checkOwningReferences();
+        ASSERT(ptr != NULL);
         return ptr;
     }
     

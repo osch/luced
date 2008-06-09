@@ -55,24 +55,25 @@ GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       Defaul
 GENERATED_FAST_MODULES :=
 
 
-SLOW_MODULES := EditorTopWin            GuiRoot                GuiWidget                  SystemException \
-                TextEditorWidget        TextStyle              KeyPressRepeater           ScrollBar \
-                System                  LuaException           TopWin                     \
-                LuaObject               LuaInterpreter         ConfigException            GlobalConfig \
-                LanguageModes           RegexException         StatusLine                 \
-                Button                  GuiLayoutWidget        LuaStoredObject \
-                GotoLinePanel           SingletonKeeper        TopWinList                 OwnedTopWins \
-                DialogWin               GuiLayoutSpacer        MultiLineEditorWidget      SubstitutionException \
-                SingleLineEditorWidget  StandardEditActions    LuaStackChecker \
-                SingleLineEditField     LabelWidget            DialogPanel                PanelDialogWin \
-                FindPanel               CheckBox               MessageBox                 SearchHistory \
-                FileException           EditorServer           ClientServerUtil           EditorClient  \
-                CommandlineException    ReplacePanel           LuaFunctionArguments       GuiElement \
-                SelectionOwner          PasteDataReceiver      Clipboard                  FileOpener \
-                ConfigErrorHandler      WindowCloser           SaveAsPanel                KeyModifier \
-		CurrentDirectoryKeeper  ProgramExecutor        TextDisplayGuiCompound     CommandOutputBox \
-		FramedGuiCompound       EditorTopWinActions    UnknownActionNameException ScrollableTextGuiCompound \
-		SearchInteraction       ActionKeyConfig
+SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget                  SystemException \
+                TextEditorWidget         TextStyle              KeyPressRepeater           ScrollBar \
+                System                   LuaException           TopWin                     \
+                LuaObject                LuaInterpreter         ConfigException            GlobalConfig \
+                LanguageModes            RegexException         StatusLine                 \
+                Button                   GuiLayoutWidget        LuaStoredObject \
+                GotoLinePanel            SingletonKeeper        TopWinList                 OwnedTopWins \
+                DialogWin                GuiLayoutSpacer        MultiLineEditorWidget      SubstitutionException \
+                SingleLineEditorWidget   LuaStackChecker \
+                SingleLineEditField      LabelWidget            DialogPanel                PanelDialogWin \
+                FindPanel                CheckBox               MessageBox                 SearchHistory \
+                FileException            EditorServer           ClientServerUtil           EditorClient  \
+                CommandlineException     ReplacePanel           LuaFunctionArguments       GuiElement \
+                SelectionOwner           PasteDataReceiver      Clipboard                  FileOpener \
+                ConfigErrorHandler       WindowCloser           SaveAsPanel                KeyModifier \
+		CurrentDirectoryKeeper   ProgramExecutor        TextDisplayGuiCompound     CommandOutputBox \
+		FramedGuiCompound        EditorTopWinActions    UnknownActionNameException ScrollableTextGuiCompound \
+		SearchInteraction        ActionKeyConfig        SingleLineEditActions      MultiLineEditActions \
+		ActionKeySequenceHandler
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

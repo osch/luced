@@ -147,13 +147,18 @@ MessageBox::MessageBox(TopWin* referingWindow, const MessageBoxParameter& p)
         this->closeCallback = p.closeCallback;
     }
     
-    keyMapping = p.keyMapping;
     if (p.messageBoxQueue.isValid()) {
         p.messageBoxQueue->append(this);
     }
     
     this->invokeNotifyCallback = p.invokeNotifyCallback;
     this->closeNotifyCallback  = p.closeNotifyCallback;
+
+    PanelDialogWin::addActionMethods(Actions::create(this));
+    
+    if (p.actionMethods.isValid()) {
+        PanelDialogWin::addActionMethods(p.actionMethods);
+    }
 }
 
 void MessageBox::show()
@@ -204,30 +209,13 @@ void MessageBox::requestCloseWindow(TopWin::CloseReason reason)
 }
 
 
-GuiElement::ProcessingResult MessageBox::processKeyboardEvent(const XEvent* event)
+bool MessageBox::invokeActionMethod(ActionId actionId)
 {
-    ProcessingResult rslt = NOT_PROCESSED;
-
-    if (keyMapping.isValid())
-    {
-        KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-        
-        KeyMapping::Id keyMappingId(event->xkey.state, pressedKey);
-        
-        Callback<>::Ptr keyAction = keyMapping->find(keyMappingId);
-        
-        if (keyAction.isEnabled()) {
-            keyAction->call();
-            PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
-            rslt = EVENT_PROCESSED;
-        }
+    bool rslt = PanelDialogWin::invokeActionMethod(actionId);
+    if (rslt) {
+        PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
     }
-    
-    if (rslt == NOT_PROCESSED)
-    {
-        rslt = PanelDialogWin::processKeyboardEvent(event);
-    }
-
     return rslt;
 }
+
 

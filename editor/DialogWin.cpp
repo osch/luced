@@ -26,21 +26,24 @@
 #include "DialogWin.hpp"
 #include "Button.hpp"
 #include "EventDispatcher.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 
 DialogWin::DialogWin(TopWin* referingWindow)
     : wasNeverShown(true),
       referingWindow(referingWindow),
-      keyMapping(KeyMapping::create()),
-      shouldBeMapped(false)
+      shouldBeMapped(false),
+      actionKeySequenceHandler(this)
 {
+    actionKeyConfig = GlobalConfig::getInstance()->getActionKeyConfig();
+    actionKeySequenceHandler.setActionKeyConfig(actionKeyConfig);
+
     if (referingWindow != NULL) {
         XSetTransientForHint(getDisplay(), getWid(), referingWindow->getWid());
         referingWindow->registerMappingNotifyCallback(newCallback(this, &DialogWin::notifyAboutReferingWindowMapping));
     }
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    keyMapping->set(            0, KeyId("Escape"),   newCallback(this, &DialogWin::requestCloseWindowByUser));
 }
 
 void DialogWin::requestCloseWindowByUser()
@@ -66,7 +69,7 @@ void DialogWin::requestCloseWindow(TopWin::CloseReason reason)
     TopWin::requestCloseWindow(reason);
 }
 
-void DialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
+void DialogWin::setRootElement(OwningPtr<GuiWidget> rootElement)
 {
     this->rootElement = rootElement;
 }
@@ -129,18 +132,20 @@ void DialogWin::treatNewWindowPosition(Position newPosition)
 
 
 
-GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const XEvent *event)
+GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
 {
-    KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-    
     bool processed = false;
 
-    KeyMapping::Id keyMappingId(event->xkey.state, pressedKey);
-    Callback<>::Ptr keyAction = keyMapping->find(keyMappingId);
-    if (keyAction->isEnabled()) {
-        keyAction->call();
+    if (!processed) {
+        processed = actionKeySequenceHandler.handleKeyPress(keyPressEvent, rootElement);
+    }
+
+    if (!processed && actionKeySequenceHandler.isWithinSequence())
+    {
+        actionKeySequenceHandler.reset();
         processed = true;
     }
+
     return processed ? EVENT_PROCESSED : NOT_PROCESSED;
 }
 
@@ -155,6 +160,17 @@ void DialogWin::setReferingWindowForPositionHintsOnly(TopWin* referingWindow)
         this->referingWindow = referingWindow;
         referingWindow->registerMappingNotifyCallback(newCallback(this, &DialogWin::notifyAboutReferingWindowMapping));
     }
+}
+
+
+void DialogWin::treatFocusOut()
+{
+    actionKeySequenceHandler.reset();
+}
+
+void DialogWin::treatFocusIn()
+{
+    actionKeySequenceHandler.reset();
 }
 
 

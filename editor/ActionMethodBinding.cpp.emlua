@@ -37,7 +37,7 @@
                                     
 #include "ActionMethodBinding.hpp"
 @ for i, c in ipairs(classes) do
-#include "@(c).hpp"
+#include "@(string.match(c, "^[^:]*")).hpp"
 @ end
 
 namespace LucED // extra namespace is needed for template specialization of static methods
@@ -46,16 +46,31 @@ namespace LucED // extra namespace is needed for template specialization of stat
 @ for i, c in ipairs(classes) do 
 
 template<>
-ActionMethodBinding<@(c)>::MethodPtr ActionMethodBinding<@(c)>::getActionMethod(ActionId actionId)
+bool ActionMethodBinding<@(c)>::invokeActionMethod(ActionId actionId)
 {
     switch (actionId)
     {
 @   for j, a in ipairs(classToActions[c]) do
-        case ActionId::@(functions.upperize(a.name)): return &@(c)::@(a.name);
+        case ActionId::@(functions.upperize(a.name)): return invoke(&@(c)::@(a.name)); 
 @   end
     }
-    return NULL;
+
+    return false;
 }
+
+template<>
+bool ActionMethodBinding<@(c)>::hasActionMethod(ActionId actionId)
+{
+    switch (actionId)
+    {
+@   for j, a in ipairs(classToActions[c]) do
+        case ActionId::@(functions.upperize(a.name)): return true; 
+@   end
+    }
+
+    return false;
+}
+
 @ end
 
 } // namespace LucED

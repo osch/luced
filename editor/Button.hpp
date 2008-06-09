@@ -28,10 +28,10 @@
 #include "OwningPtr.hpp"
 #include "Callback.hpp"
 #include "TimeVal.hpp"
+#include "ActionMethodBinding.hpp"
 
-namespace LucED {
-
-
+namespace LucED
+{
 
 class Button : public GuiWidget
 {
@@ -80,8 +80,7 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    virtual ProcessingResult processEvent(const XEvent *event);
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent* event);
     
     Measures getOwnDesiredMeasures();
     void setDesiredMeasures(Measures m);
@@ -97,13 +96,34 @@ public:
     
     void setAsDefaultButton(bool isDefault = true);
     
-    
 private:
+    class Actions : public ActionMethodBinding<Actions>
+    {
+    public:
+        typedef OwningPtr<Actions> Ptr;
+
+        static Ptr create(RawPtr<Button> thisButton) {
+            return Ptr(new Actions(thisButton));
+        }
+        void pressFocusedButton() {
+            thisButton->emulateButtonPress(false, false);
+        }
+    private:
+        Actions(RawPtr<Button> thisButton)
+            : ActionMethodBinding<Actions>(this),
+              thisButton(thisButton)
+        {}
+        RawPtr<Button> thisButton;
+    };
+    friend class ActionMethodBinding<Actions>;
+
+
+    Button(GuiWidget* parent, String buttonText);
+
     void emulateButtonPress(bool isDefaultKey, bool isRightClicked);
     void drawButton();
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
-    Button(GuiWidget* parent, String buttonText);
     Position position;
     String buttonText;
     bool isButtonPressed;

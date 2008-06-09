@@ -215,10 +215,14 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
       keyMapping2(KeyMapping::create()),
       flagForSetSizeHintAtFirstShow(true),
       hasMessageBox(false),
-      isMessageBoxModal(false)
+      isMessageBoxModal(false),
+      actionKeySequenceHandler(this)
 {
     addToXEventMask(ButtonPressMask);
     
+    actionKeyConfig = GlobalConfig::getInstance()->getActionKeyConfig();
+    actionKeySequenceHandler.setActionKeyConfig(actionKeyConfig);
+
     statusLine = StatusLine::create(this);
     int statusLineIndex = rootElement->addElement(statusLine);
     upperPanelIndex = statusLineIndex + 1;
@@ -297,9 +301,6 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
                                                        newCallback(this, &EditorTopWin::setMessageBox),
                                                        panelInvoker,
                                                        actionInterface)));
-
-    rootActionKeyConfig    = GlobalConfig::getInstance()->getActionKeyConfig();
-    currentActionKeyConfig = rootActionKeyConfig;
 }
 
 EditorTopWin::~EditorTopWin()
@@ -349,12 +350,12 @@ void EditorTopWin::treatNewWindowPosition(Position newPosition)
     rootElement->setPosition(Position(0, 0, newPosition.w, newPosition.h));
 }
 
-GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent* event)
+GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
 {
     try
     {
-        KeyId       pressedKey  = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-        KeyModifier keyModifier = KeyModifier(event->xkey.state);
+        KeyId       pressedKey  = keyPressEvent.getKeyId();
+        KeyModifier keyModifier = keyPressEvent.getKeyModifier();
     
         ProcessingResult rslt = NOT_PROCESSED;
     
@@ -362,12 +363,13 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent* ev
     
         if (m.isValid())
         {
-            if (event->type == KeyPress && !pressedKey.isModifierKey()) {
+            if (!pressedKey.isModifierKey()) {
                 textEditor->hideMousePointer();
             }
 
-            if (currentActionKeyConfig != rootActionKeyConfig) {
-                currentActionKeyConfig = rootActionKeyConfig;
+            if (actionKeySequenceHandler.isWithinSequence())
+            {
+                actionKeySequenceHandler.reset();
                 if (invokedPanel.isValid()) {
                     invokedPanel->treatFocusIn();
                 } else {
@@ -379,61 +381,36 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent* ev
             m->call();
             rslt = EVENT_PROCESSED;
         }
-        else if (event->type == KeyPress && !pressedKey.isModifierKey())
+        else if (!pressedKey.isModifierKey())
         {
             textEditor->hideMousePointer();
-
-            ActionKeyConfig::FoundValue foundNode;
             
-            if (currentActionKeyConfig != rootActionKeyConfig) {
-                foundNode = currentActionKeyConfig->find(combinationKeyModifier, pressedKey);
+            RawPtr<GuiWidget> focusedWidget;
+            
+            if (invokedPanel.isValid()) {
+                focusedWidget = invokedPanel;
             } else {
-                foundNode = currentActionKeyConfig->find(keyModifier,            pressedKey);
+                focusedWidget = textEditor;
             }
-            if (foundNode.isValid())
+            if (actionKeySequenceHandler.handleKeyPress(keyPressEvent, focusedWidget))
             {
-                if (foundNode.get()->hasActionIds())
-                {
-                    ActionKeyConfig::ActionIds::Ptr actionIds = foundNode.get()->getActionIds();
-                    
-                    for (int i = 0, n = actionIds->getLength(); i < n; ++i)
-                    {
-                        if (this->invokeActionMethod(actionIds->get(i))) {
-                            currentActionKeyConfig = rootActionKeyConfig;
-                            rslt = EVENT_PROCESSED;
-                            break;
-                        }
-                    }
-                }
-                if (rslt != EVENT_PROCESSED && foundNode.get()->hasNext())
-                {
-                    if (currentActionKeyConfig == rootActionKeyConfig) {
-                        combinationKeyModifier = keyModifier;
-                        combinationKeys = pressedKey.toString().toUpper();
-                    } else {
-                        combinationKeys << "," << pressedKey.toString().toUpper();
-                    }
-                    currentActionKeyConfig = foundNode.get()->getNext();
-                    rslt = EVENT_PROCESSED;
-                }
-            }
-            if (   currentActionKeyConfig != rootActionKeyConfig 
-                && rslt != EVENT_PROCESSED)
-            {
-                currentActionKeyConfig = rootActionKeyConfig;
                 rslt = EVENT_PROCESSED;
             }
-            if (currentActionKeyConfig != rootActionKeyConfig) {
+
+            if (   actionKeySequenceHandler.isWithinSequence() 
+                && rslt != EVENT_PROCESSED)
+            {
+                actionKeySequenceHandler.reset();
+                rslt = EVENT_PROCESSED;
+            }
+            if (actionKeySequenceHandler.isWithinSequence()) {
                 if (invokedPanel.isValid()) {
                     invokedPanel->treatFocusOut();
                 } else {
                     textEditor->treatFocusOut();
                 }
                 statusLine->setMessage(String() << "Key combination: " 
-                                                << (  combinationKeyModifier.toString().getLength() > 0
-                                                    ? (combinationKeyModifier.toString() << "+")
-                                                    : "")
-                                                << combinationKeys
+                                                << actionKeySequenceHandler.getKeySequenceAsString()
                                                 << ", ...");
             } else {
                 if (invokedPanel.isValid()) {
@@ -445,31 +422,32 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const XEvent* ev
             }
         }
         
+#if 0
         if (rslt == NOT_PROCESSED && invokedPanel.isValid()) {
-            rslt = invokedPanel->processKeyboardEvent(event);
+            rslt = invokedPanel->processKeyboardEvent(keyPressEvent);
         }
-        
+#endif
+#if 0
         if (rslt == NOT_PROCESSED)
         {
            m = keyMapping2->find(keyModifier, pressedKey);
     
            if (m.isValid())
            {
-               if (event->type == KeyPress) {
-                   textEditor->hideMousePointer();
-               }
+               textEditor->hideMousePointer();
     
                m->call();
                rslt = EVENT_PROCESSED;
            } 
            else
            {
-                rslt = textEditor->processKeyboardEvent(event);
+                rslt = textEditor->processKeyboardEvent(keyPressEvent);
                 if (rslt == EVENT_PROCESSED && invokedPanel.isValid()) {
                     invokedPanel->notifyAboutHotKeyEventForOtherWidget();
                 }
            }
         }
+#endif
         return rslt;
     }
     catch (UnknownActionNameException& ex)
@@ -567,8 +545,9 @@ void EditorTopWin::doNotReloadFile()
 
 void EditorTopWin::treatFocusOut()
 {
-    if (currentActionKeyConfig != rootActionKeyConfig) {
-        currentActionKeyConfig = rootActionKeyConfig;
+    if (actionKeySequenceHandler.isWithinSequence())
+    {
+        actionKeySequenceHandler.reset();
         if (invokedPanel.isValid()) {
             invokedPanel->treatFocusIn();
         } else {

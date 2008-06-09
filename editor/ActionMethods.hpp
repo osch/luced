@@ -34,9 +34,8 @@ class ActionMethods : public HeapObject
 public:
     typedef OwningPtr<ActionMethods> Ptr;
 
-    virtual bool hasActionMethod(ActionId actionId) = 0;
-
     virtual bool invokeActionMethod(ActionId actionId) = 0;
+    virtual bool hasActionMethod(ActionId actionId) = 0;
 
 protected:
     ActionMethods()

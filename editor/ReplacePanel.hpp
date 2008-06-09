@@ -38,6 +38,7 @@
 #include "PasteDataCollector.hpp"
 #include "SearchInteraction.hpp"
 #include "PanelInvoker.hpp"
+#include "ActionMethodBinding.hpp"
 
 namespace LucED
 {
@@ -70,17 +71,41 @@ public:
         replaceNextButton->setAsDefaultButton(false);
     }
     
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
-    
     virtual void show();
     virtual void hide();
     
 private:
+    class EditFieldActions : public ActionMethodBinding<EditFieldActions>
+    {
+    public:
+        typedef OwningPtr<EditFieldActions> Ptr;
+
+        static Ptr create(RawPtr<ReplacePanel> thisReplacePanel) {
+            return Ptr(new EditFieldActions(thisReplacePanel));
+        }
+        void historyBackward() {
+            thisReplacePanel->executeHistoryBackwardAction();
+        }
+        void historyForward() {
+            thisReplacePanel->executeHistoryForwardAction();
+        }
+    private:
+        EditFieldActions(RawPtr<ReplacePanel> thisReplacePanel)
+            : ActionMethodBinding<EditFieldActions>(this),
+              thisReplacePanel(thisReplacePanel)
+        {}
+        RawPtr<ReplacePanel> thisReplacePanel;
+    };
+
+    friend class ActionMethodBinding<EditFieldActions>;
     friend class PasteDataCollector<ReplacePanel>;
     
     ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
                  Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
                  PanelInvoker::Ptr                         panelInvoker);
+
+    void executeHistoryBackwardAction();
+    void executeHistoryForwardAction();
 
     SearchParameter getSearchParameterFromGuiControls() const {
         return SearchParameter().setIgnoreCaseFlag (!caseSensitiveCheckBox->isChecked())

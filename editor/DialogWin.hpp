@@ -23,9 +23,9 @@
 #define DIALOG_WIN_HPP
 
 #include "TopWin.hpp"
-#include "KeyMapping.hpp"
 #include "HeapObjectArray.hpp"
 #include "WeakPtrQueue.hpp"
+#include "ActionKeySequenceHandler.hpp"
 
 namespace LucED
 {
@@ -36,19 +36,27 @@ public:
     typedef WeakPtr<DialogWin> Ptr;
 
     virtual void treatNewWindowPosition(Position newPosition);
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+
+    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
 
     virtual void show();
     
     void setReferingWindowForPositionHintsOnly(TopWin* referingWindow);
 
     virtual void requestCloseWindow(TopWin::CloseReason reason);
+
+    virtual void treatFocusIn();
+    virtual void treatFocusOut();
+
+    virtual ActionKeyConfig::Ptr getActionKeyConfig() {
+        return actionKeyConfig;
+    }
     
 protected:
     DialogWin(TopWin* referingWindow);
     
-    void setRootElement(OwningPtr<GuiElement> rootElement);
-    GuiElement* getRootElement() {return rootElement.getRawPtr();}
+    void setRootElement(OwningPtr<GuiWidget> rootElement);
+    GuiWidget* getRootElement() {return rootElement.getRawPtr();}
     
     
 private:
@@ -58,13 +66,14 @@ private:
     
     void notifyAboutReferingWindowMapping(bool isReferingWindowMapped);
 
-    OwningPtr<GuiElement> rootElement;
+    OwningPtr<GuiWidget> rootElement;
     bool wasNeverShown;
     WeakPtr<TopWin> referingWindow;
     
-    KeyMapping::Ptr keyMapping;
-    
     bool shouldBeMapped;
+    
+    ActionKeyConfig::Ptr     actionKeyConfig;
+    ActionKeySequenceHandler actionKeySequenceHandler;
 };
 
 } // namespace LucED

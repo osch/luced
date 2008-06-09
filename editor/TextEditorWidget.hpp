@@ -23,7 +23,6 @@
 #define TEXT_EDITOR_WIDGET_HPP
 
 #include "TextWidget.hpp"
-#include "KeyMapping.hpp"
 #include "SelectionOwner.hpp"
 #include "PasteDataReceiver.hpp"
 #include "OwningPtr.hpp"
@@ -32,7 +31,8 @@
 #include "KeyModifier.hpp" 
 #include "Flags.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class TextEditorWidget : public TextWidget
 {
@@ -41,7 +41,7 @@ public:
     
     static const int BORDER_WIDTH = 4;
     
-    enum ActionId
+    enum ActionCategory
     {
         ACTION_UNSPECIFIED,
         ACTION_TABULATOR,
@@ -76,8 +76,8 @@ public:
         this->setScrollBarHorizontalValueRangeChangedCallback(newCallback(scrollBar, &ScrollBar::setValueRange));
     }
 
-    ActionId getLastAction() const;
-    void setCurrentAction(ActionId action);
+    ActionCategory getLastActionCategory() const;
+    void setCurrentActionCategory(ActionCategory action);
     
     bool isCursorVisible();
     void assureCursorVisible();
@@ -90,8 +90,11 @@ public:
     void hideCursor();
 
     virtual ProcessingResult processEvent(const XEvent* event);
-    virtual ProcessingResult processKeyboardEvent(const XEvent* event);
 
+    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
+    virtual bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
+    virtual bool invokeActionMethod(ActionId actionId);
+    
     void treatFocusIn();
     void treatFocusOut();
     void disableCursorChanges();
@@ -100,14 +103,6 @@ public:
     void rememberCursorPixX()        { rememberedCursorPixX = getCursorPixX(); }
     int  getRememberedCursorPixX()   { return rememberedCursorPixX; }
     bool isWordCharacter(unsigned char c);
-    
-    template<class T> void setEditAction(KeyModifier keyState, KeyId keyId, T* object, void (T::*method)()) {
-        keyMapping->set(keyState, keyId, newCallback(object, method));
-    }
-    
-    void setEditAction(KeyModifier keyState, KeyId keyId, Callback<>::Ptr callback) {
-        keyMapping->set(keyState, keyId, callback);
-    }
     
     bool scrollUp();
     bool scrollDown();
@@ -244,11 +239,9 @@ protected:
     void notifyAboutBeginOfPastingData();
 
 private:
-
     void setNewMousePositionForMovingSelection(int x, int y);
     
     bool hasFocusFlag;
-    KeyMapping::Ptr keyMapping;
     long rememberedCursorPixX;
     
     bool hasMovingSelection;
@@ -263,8 +256,8 @@ private:
     Time lastButtonPressedTime;
     int buttonPressedCounter;
     bool wasDoubleClick;
-    ActionId lastActionId;
-    ActionId currentActionId;
+    ActionCategory lastActionCategory;
+    ActionCategory currentActionCategory;
     TextData::TextMark beginPastingTextMark;
     TextData::TextMark pastingTextMark;
     TextData::HistorySection::Ptr pastingDataHistorySectionHolder;

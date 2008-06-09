@@ -56,6 +56,8 @@ CheckBox::CheckBox(GuiWidget* parent, String buttonText)
     } else {
         this->buttonText = buttonText;
     }
+    
+    GuiWidget::addActionMethods(Actions::create(this));
 }
 
 GuiElement::Measures CheckBox::getDesiredMeasures()
@@ -249,23 +251,6 @@ GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
         }
         return propagateEventToParentWidget(event);
     }
-}
-
-
-GuiElement::ProcessingResult CheckBox::processKeyboardEvent(const XEvent *event)
-{
-    KeyId       pressedKey  = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-    KeyModifier keyModifier = KeyModifier(event->xkey.state);
-
-    bool processed = false;
-    KeyMapping::Id keyMappingId(keyModifier, pressedKey);
-    if (KeyMapping::Id(0, KeyId("space")) == keyMappingId) {
-        isBoxChecked = !isBoxChecked;
-        draw();
-        pressedCallback->call(this);
-        processed = true;
-    }
-    return processed ? EVENT_PROCESSED : NOT_PROCESSED;
 }
 
 

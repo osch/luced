@@ -31,6 +31,8 @@
 namespace LucED
 {
 
+template<class T> class HashFunction;
+
 class ActionId
 {
 public:
@@ -79,9 +81,19 @@ public:
     }
     
     String toString() const;
-
+    
 private:
+    friend class HashFunction<ActionId>;
+
     int value;
+};
+
+template<> class HashFunction<ActionId>
+{
+public:
+    size_t operator()(const ActionId& key) const {
+        return key.value;
+    }
 };
 
 } // namespace LucED

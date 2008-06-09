@@ -38,6 +38,7 @@
 #include "SearchInteraction.hpp"
 #include "PasteDataCollector.hpp"
 #include "PanelInvoker.hpp"
+#include "ActionMethodBinding.hpp"
 
 namespace LucED
 {
@@ -66,17 +67,40 @@ public:
     void findSelectionForward();
     void findSelectionBackward();
 
-    virtual ProcessingResult processKeyboardEvent(const XEvent* event);
     virtual ProcessingResult processEvent(const XEvent* event);
     
     virtual void show();
     
 private:
+    class EditFieldActions : public ActionMethodBinding<EditFieldActions>
+    {
+    public:
+        typedef OwningPtr<EditFieldActions> Ptr;
+
+        static Ptr create(RawPtr<FindPanel> thisFindPanel) {
+            return Ptr(new EditFieldActions(thisFindPanel));
+        }
+        void historyBackward() {
+            thisFindPanel->executeHistoryBackwardAction();
+        }
+        void historyForward() {
+            thisFindPanel->executeHistoryForwardAction();
+        }
+    private:
+        EditFieldActions(RawPtr<FindPanel> thisFindPanel)
+            : ActionMethodBinding<EditFieldActions>(this),
+              thisFindPanel(thisFindPanel)
+        {}
+        RawPtr<FindPanel> thisFindPanel;
+    };
+    friend class ActionMethodBinding<EditFieldActions>;
     friend class FindPanelAccess;
     friend class PasteDataCollector<FindPanel>;
     
     FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
                                                                         PanelInvoker::Ptr                         panelInvoker);
+    void executeHistoryBackwardAction();
+    void executeHistoryForwardAction();
 
     void invalidateOutdatedInteraction();
     

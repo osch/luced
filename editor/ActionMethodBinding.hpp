@@ -33,24 +33,8 @@ template < class T
 class ActionMethodBinding : public ActionMethods
 {
 public:
-    typedef void (T::*MethodPtr)();
-
-    virtual bool hasActionMethod(ActionId actionId)
-    {
-        return (getActionMethod(actionId) != NULL);
-    }
-
-    virtual bool invokeActionMethod(ActionId actionId)
-    {
-        MethodPtr methodPtr = getActionMethod(actionId);
-    
-        if (methodPtr != NULL) {
-            (impl->*methodPtr)(); // invoke Method
-            return true;
-        } else {
-            return false;
-        }
-    }
+    virtual bool invokeActionMethod(ActionId actionId);
+    virtual bool hasActionMethod(ActionId actionId);
     
 protected:
     ActionMethodBinding(T* impl)
@@ -58,7 +42,17 @@ protected:
     {}       
         
 private:
-    static MethodPtr getActionMethod(ActionId actionId);
+
+    bool invoke(bool (T::*methodPtr)())
+    {
+        return (impl->*methodPtr)();
+    }
+    
+    bool invoke(void (T::*methodPtr)())
+    {
+        (impl->*methodPtr)();
+        return true;
+    }
 
     RawPtr<T> impl;
 };

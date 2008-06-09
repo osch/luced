@@ -151,7 +151,7 @@ void TopWin::requestFocus()
 void TopWin::repeatKeyPress(const XEvent* event)
 {
     KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
-    processKeyboardEvent(event);
+    processKeyboardEvent(KeyPressEvent(event));
 }
 
 
@@ -219,18 +219,18 @@ printf("TakeFocus\n");
                             return EVENT_PROCESSED;
                         }
                         KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
-                        ProcessingResult processed = processKeyboardEvent(event);
+                        ProcessingResult processed = processKeyboardEvent(KeyPressEvent(event));
                         return processed;
                     }
                     else {
                         KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
-                        ProcessingResult processed = processKeyboardEvent(event);
+                        ProcessingResult processed = processKeyboardEvent(KeyPressEvent(event));
                         return processed;
                     }
                 }
                 else
                 {
-                    return processKeyboardEvent(event);
+                    return processKeyboardEvent(KeyPressEvent(event));
                 }
             
 /*                if (KeyPressRepeater::getInstance()->isRepeating())

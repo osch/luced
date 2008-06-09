@@ -94,6 +94,7 @@ public:
     }
     
     T* operator->() const {
+        ASSERT(ptr != NULL);
         return ptr;
     }
     

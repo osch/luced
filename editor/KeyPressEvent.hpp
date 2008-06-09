@@ -19,61 +19,64 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef KEY_MODIFIER_HPP
-#define KEY_MODIFIER_HPP
+#ifndef KEY_PRESS_EVENT_HPP
+#define KEY_PRESS_EVENT_HPP
 
 #include "headers.hpp"
+#include "KeyId.hpp"
+#include "KeyModifier.hpp"
 #include "String.hpp"
 
 namespace LucED
 {
 
-class KeyModifier
+class KeyPressEvent
 {
 public:
-
-#ifdef X11_GUI
-    KeyModifier()
-        : keyState(0)
+    KeyPressEvent(KeyModifier keyModifier, KeyId keyId)
+        : keyModifier(keyModifier),
+          keyId(keyId)
     {}
-    
-    KeyModifier(const String& asString);
-    
-    explicit KeyModifier(int keyState)
-        : keyState(keyState)
-    {}
-    
-    String toString() const;
 
-    bool operator==(const KeyModifier& rhs) const {
-        return keyState == rhs.keyState;
-    }
-    bool operator<(const KeyModifier& rhs) const {
-        return keyState < rhs.keyState;
-    }
-    
-    int toHashValue() const {
-        return keyState;
-    }
-    
-    bool containsShift() const {
-        return keyState & ShiftMask;
-    }
-    
-    bool containsModifier1() const {
-        return keyState & Mod1Mask;
+    KeyPressEvent(const XEvent* event) 
+    {
+        char buffer[1000];
+        KeySym keySym;
+        
+        int len = XLookupString(&((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+
+        // not "keyId = KeyId(keySym);" because this gives Shift+ISO_Left_Tab instead of Shift+Tab
+        
+        keyId       = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+        keyModifier = KeyModifier(event->xkey.state);
+        
+        if (len > 0) {
+            input = String(buffer, len);
+        }
     }
     
-#endif
+    KeyId getKeyId() const {
+        return keyId;
+    }
+    
+    KeyModifier getKeyModifier() const {
+        return keyModifier;
+    }
+    
+    String getInputString() const {
+        return input;
+    }
+    
+    bool hasInputString() const {
+        return input.getLength() > 0;
+    }
     
 private:
-
-#ifdef X11_GUI
-    int keyState;
-#endif
-
-};      
+    KeyId       keyId;
+    KeyModifier keyModifier;
+    String      input;
+};
 
 } // namespace LucED
 
-#endif // KEY_MODIFIER_HPP
+#endif // KEY_PRESS_EVENT_HPP

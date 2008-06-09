@@ -31,6 +31,31 @@ void ActionKeyConfig::set(KeyCombination    keyCombination,
         throw ConfigException(String() << "Invalid empty key combination");
     }
     
+    {
+        KeyCombinations::Ptr keys;
+        
+        ActionsToKeysMap::Value foundValue = actionsToKeysMap.get(actionId);
+        if (foundValue.isValid()) {
+            keys = foundValue.get();
+        } else {
+            keys = KeyCombinations::create();
+            actionsToKeysMap.set(actionId, keys);
+        }
+        keys->append(keyCombination);
+    }
+    {
+        ActionIds::Ptr actions;
+        
+        KeysToActionsMap::Value foundValue = keysToActionsMap.get(keyCombination);
+        if (foundValue.isValid()) {
+            actions = foundValue.get();
+        } else {
+            actions = ActionIds::create();
+            keysToActionsMap.set(keyCombination, actions);
+        }
+        actions->append(actionId);
+    }
+    
     KeyId keyId = keyCombination.getFirstKeyId();
                   keyCombination.removeFirstKeyId();
 

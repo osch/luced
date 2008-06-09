@@ -114,7 +114,6 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
       : TextWidget(parent, textStyles, hilitedText, borderWidth, options),
 
         hasFocusFlag(false),
-        keyMapping(KeyMapping::create()),
 
         selectionOwner(SelectionOwner::create(this, 
                                               SelectionOwner::TYPE_PRIMARY,
@@ -125,8 +124,8 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
         hasMovingSelection(false),
         cursorChangesDisabled(false),
         buttonPressedCounter(0),
-        lastActionId(ACTION_UNSPECIFIED),
-        currentActionId(ACTION_UNSPECIFIED),
+        lastActionCategory(ACTION_UNSPECIFIED),
+        currentActionCategory(ACTION_UNSPECIFIED),
         pasteParameter(CURSOR_TO_END_OF_PASTED_DATA),
         isSelectionPersistent(false),
         textData(getTextData()),
@@ -431,7 +430,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                         this->hasMovingSelection = true;
                         this->isMovingSelectionScrolling = false;
                         lastButtonPressedTime = event->xbutton.time;
-                        currentActionId = ACTION_UNSPECIFIED;
+                        currentActionCategory = ACTION_UNSPECIFIED;
                     }
                     return EVENT_PROCESSED;
                 }
@@ -447,7 +446,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                         pastingDataHistorySectionHolder = textData->createHistorySection();
                         
                         requestSelectionPasting(createNewMarkFromCursor());
-                        currentActionId = ACTION_UNSPECIFIED;
+                        currentActionCategory = ACTION_UNSPECIFIED;
                     }
                     assureCursorVisible();
                     rememberedCursorPixX = getCursorPixX();
@@ -481,7 +480,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                     if (hasMovingSelection) {
                         hasMovingSelection = false;
                         isMovingSelectionScrolling = false;
-                        currentActionId = ACTION_UNSPECIFIED;
+                        currentActionCategory = ACTION_UNSPECIFIED;
                         return EVENT_PROCESSED;
                     }
                 }
@@ -501,7 +500,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                     int x = event->xmotion.x;
                     int y = event->xmotion.y;
                     setNewMousePositionForMovingSelection(x, y);
-                    currentActionId = ACTION_UNSPECIFIED;
+                    currentActionCategory = ACTION_UNSPECIFIED;
                     return EVENT_PROCESSED;
                 } else {
                     removeFromXEventMask(PointerMotionMask);
@@ -523,7 +522,7 @@ void TextEditorWidget::replaceTextWithPrimarySelection()
         textData->clear();
         
         requestSelectionPasting(createNewMarkFromCursor());
-        currentActionId = ACTION_UNSPECIFIED;
+        currentActionCategory = ACTION_UNSPECIFIED;
     }
     assureCursorVisible();
     rememberedCursorPixX = getCursorPixX();
@@ -726,35 +725,48 @@ void TextEditorWidget::handleScrollRepeating()
 }
 
 
-GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent *event)
+GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
 {
-    KeyId pressedKey = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    if (handleLowPriorityKeyPress(keyPressEvent)) {
+        return EVENT_PROCESSED;
+    } else {
+        return NOT_PROCESSED;
+    }
+}
+
+bool TextEditorWidget::invokeActionMethod(ActionId actionId)
+{
+    ActionCategory oldLastActionCategory    = lastActionCategory;
+    ActionCategory oldCurrentActionCategory = currentActionCategory;
     
-    if (hasFocusFlag && event->type == KeyPress && !pressedKey.isModifierKey())
+    lastActionCategory    = currentActionCategory;
+    currentActionCategory = ACTION_UNSPECIFIED;
+
+    bool rslt = TextWidget::invokeActionMethod(actionId);
+
+    if (!rslt) {
+        lastActionCategory    = oldLastActionCategory;
+        currentActionCategory = oldCurrentActionCategory;
+    }
+    return rslt;
+}
+
+bool TextEditorWidget::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent)
+{
+    
+    if (hasFocusFlag && !keyPressEvent.getKeyId().isModifierKey())
     {
         hideMousePointer();
     }
     
-    unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
-    Callback<>::Ptr m = keyMapping->find(buttonState, pressedKey);
+    //unsigned int buttonState = event->xkey.state & (ControlMask|Mod1Mask|ShiftMask);
 
-    if (m->isEnabled())
     {
-        lastActionId = currentActionId;
-        currentActionId = ACTION_UNSPECIFIED;
-    
-        m->call();
-        return EVENT_PROCESSED;
-    }
-    else
-    {
-        char buffer[100];
-        int len = XLookupString(&((XEvent*)event)->xkey, buffer, 100, NULL, NULL);
-        if (len > 0) {
+        if (keyPressEvent.hasInputString()) {
             if (!cursorChangesDisabled && !isReadOnly())
             {
-                lastActionId = currentActionId;
-                currentActionId = ACTION_KEYBOARD_INPUT;
+                lastActionCategory = currentActionCategory;
+                currentActionCategory = ACTION_KEYBOARD_INPUT;
                 
                 textData->setMergableHistorySeparator();
                 TextData::HistorySection::Ptr historySectionHolder = textData->getHistorySectionHolder();
@@ -770,7 +782,7 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
                 }
                 else if (getBackliteBuffer()->hasActiveSelection())
                 {
-                    if (   (lastActionId != ACTION_KEYBOARD_INPUT && lastActionId != ACTION_TABULATOR)
+                    if (   (lastActionCategory != ACTION_KEYBOARD_INPUT && lastActionCategory != ACTION_TABULATOR)
                         || getCursorTextPosition() != getBackliteBuffer()->getEndSelectionPos())
                     {
                         getBackliteBuffer()->deactivateSelection();
@@ -781,7 +793,7 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const XEvent
                     getBackliteBuffer()->activateSelection(getCursorTextPosition());
                     getBackliteBuffer()->makeSelectionToSecondarySelection();
                 }
-                long insertedLength = insertAtCursor(buffer[0]);
+                long insertedLength = insertAtCursor(keyPressEvent.getInputString()[0]);
                 moveCursorToTextPosition(getCursorTextPosition() + insertedLength);
 
                 getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
@@ -973,13 +985,13 @@ void TextEditorWidget::scrollPageRight()
     this->setLeftPix(newLeft);
 }
 
-TextEditorWidget::ActionId TextEditorWidget::getLastAction() const
+TextEditorWidget::ActionCategory TextEditorWidget::getLastActionCategory() const
 {
-    return lastActionId;
+    return lastActionCategory;
 }
 
-void TextEditorWidget::setCurrentAction(TextEditorWidget::ActionId actionId)
+void TextEditorWidget::setCurrentActionCategory(TextEditorWidget::ActionCategory actionCategory)
 {
-    this->currentActionId = actionId;
+    this->currentActionCategory = actionCategory;
 }
 

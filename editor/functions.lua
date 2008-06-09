@@ -108,5 +108,6 @@ return  {
             filledArgList  = filledArgList,
             typedArgList   = typedArgList,
             classList      = classList,
+            capitalize     = capitalize,
             upperize       = upperize
         }

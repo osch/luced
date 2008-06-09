@@ -32,6 +32,7 @@
 #include "TextEditorWidget.hpp"
 #include "MessageBoxParameter.hpp"
 #include "MessageBoxQueue.hpp"
+#include "ActionMethodBinding.hpp"
 
 namespace LucED
 {
@@ -123,6 +124,58 @@ public:
     void replaceAndContinueBackwardAndKeepInvokingPanel();
 
 private:
+    class MessageBoxActions : public ActionMethodBinding<MessageBoxActions>
+    {
+    public:
+        enum Variant {
+            VARIANT_NOT_FOUND,
+            VARIANT_AUTO_CONTINUE_AT_END,
+            VARIANT_AUTO_CONTINUE_AT_BEGIN
+        };
+        typedef OwningPtr<MessageBoxActions> Ptr;
+
+        static Ptr create(RawPtr<SearchInteraction> thisInteraction, Variant variant) {
+            return Ptr(new MessageBoxActions(thisInteraction, variant));
+        }
+        void findAgainForward() {
+            switch (variant) {
+                case VARIANT_NOT_FOUND:              thisInteraction->closeLastMessageBox(); return;
+                case VARIANT_AUTO_CONTINUE_AT_END:   thisInteraction->findAgainForwardAndAutoContinue(); return;
+                case VARIANT_AUTO_CONTINUE_AT_BEGIN: thisInteraction->findAgainForward(); return;
+            }
+        }
+        void findAgainBackward() {
+            switch (variant) {
+                case VARIANT_NOT_FOUND:              thisInteraction->closeLastMessageBox(); return;
+                case VARIANT_AUTO_CONTINUE_AT_END:   thisInteraction->findAgainBackward();   return;
+                case VARIANT_AUTO_CONTINUE_AT_BEGIN: thisInteraction->findAgainBackwardAndAutoContinue(); return;
+            }
+        }
+        void findSelectionForward() {
+            switch (variant) {
+                case VARIANT_NOT_FOUND:              thisInteraction->closeLastMessageBox(); return;
+                case VARIANT_AUTO_CONTINUE_AT_END:   thisInteraction->findSelectionForwardAndAutoContinue(); return;
+                case VARIANT_AUTO_CONTINUE_AT_BEGIN: thisInteraction->findSelectionForward(); return;
+            }
+        }
+        void findSelectionBackward() {
+            switch (variant) {
+                case VARIANT_NOT_FOUND:              thisInteraction->closeLastMessageBox(); return;
+                case VARIANT_AUTO_CONTINUE_AT_END:   thisInteraction->findSelectionBackward(); return;
+                case VARIANT_AUTO_CONTINUE_AT_BEGIN: thisInteraction->findSelectionBackwardAndAutoContinue(); return;
+            }
+        }        
+    private:
+        MessageBoxActions(RawPtr<SearchInteraction> thisInteraction, Variant variant)
+            : ActionMethodBinding<MessageBoxActions>(this),
+              thisInteraction(thisInteraction),
+              variant(variant)
+        {}
+        RawPtr<SearchInteraction> thisInteraction;
+        Variant variant;
+    };
+    friend class ActionMethodBinding<MessageBoxActions>;
+
     SearchInteraction(const SearchParameter& p, TextEditorWidget* e,
                                                 const Callbacks& cb)
         : p(p),

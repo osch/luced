@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,24 +19,25 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLELINEEDITORWIDGET_H
-#define SINGLELINEEDITORWIDGET_H
+#ifndef SINGLE_LINE_EDITOR_WIDGET_HPP
+#define SINGLE_LINE_EDITOR_WIDGET_HPP
 
 #include "ByteArray.hpp"
-#include "StandardEditActions.hpp"
 #include "TextEditorWidget.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class SingleLineEditorWidget : public TextEditorWidget
 {
 public:
     typedef OwningPtr<SingleLineEditorWidget> Ptr;
 
-    static SingleLineEditorWidget::Ptr create(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText)
+    static SingleLineEditorWidget::Ptr create(GuiWidget* parent, TextStyles::Ptr  textStyles, 
+                                                                 HilitedText::Ptr hilitedText)
     {
-        return SingleLineEditorWidget::Ptr(new SingleLineEditorWidget(parent, textStyles, hilitedText));
+        return SingleLineEditorWidget::Ptr(new SingleLineEditorWidget(parent, textStyles, 
+                                                                              hilitedText));
     }
 
     virtual bool isFocusable() { return true; }
@@ -44,16 +45,15 @@ public:
     
 
 protected:
-    SingleLineEditorWidget(GuiWidget *parent, 
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText);
+    SingleLineEditorWidget(GuiWidget* parent, TextStyles::Ptr  textStyles, 
+                                              HilitedText::Ptr hilitedText);
     
 private:
     void filterInsert(const byte** buffer, long* length);
     
     ByteArray filterBuffer;
-    StandardEditActions::Ptr standardActions;
 };
 
 } // namespapce LucED
 
-#endif // SINGLELINEEDITORWIDGET_H
+#endif // SINGLE_LINE_EDITOR_WIDGET_HPP

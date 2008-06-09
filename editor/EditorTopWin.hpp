@@ -41,7 +41,8 @@
 #include "ScrollableTextGuiCompound.hpp"
 #include "TopWinActionInterface.hpp"
 #include "ActionKeyConfig.hpp"
-                     
+#include "ActionKeySequenceHandler.hpp"
+                    
 namespace LucED
 {
 
@@ -62,8 +63,9 @@ public:
     
     ~EditorTopWin();
     
-    virtual ProcessingResult processEvent(const XEvent *event);
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent* event);
+    
+    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
 
     virtual void treatNewWindowPosition(Position newPosition);
     virtual void treatFocusIn();
@@ -98,6 +100,10 @@ public:
     void saveAndClose();
     
     bool checkForFileModifications();
+
+    virtual ActionKeyConfig::Ptr getActionKeyConfig() {
+        return actionKeyConfig;
+    }
 
 private:
            class ActionInterface;
@@ -153,14 +159,14 @@ private:
     
     ScrollableTextGuiCompound::Ptr scrollableTextCompound;
     
-    ActionKeyConfig::Ptr    rootActionKeyConfig;
-    ActionKeyConfig::Ptr    currentActionKeyConfig;
-
     KeyModifier             combinationKeyModifier;
     String                  combinationKeys;
     
     OwningPtr<PanelInvoker>    panelInvoker;
     OwningPtr<ActionInterface> actionInterface;
+
+    ActionKeyConfig::Ptr     actionKeyConfig;    
+    ActionKeySequenceHandler actionKeySequenceHandler;
 };
 
 } // namespace LucED

@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLELINEEDITFIELD_H
-#define SINGLELINEEDITFIELD_H
+#ifndef SINGLE_LINE_EDIT_FIELD_HPP
+#define SINGLE_LINE_EDIT_FIELD_HPP
 
 #include "SingleLineEditorWidget.hpp"
 #include "TextData.hpp"
@@ -85,16 +85,21 @@ public:
         editorWidget->replaceTextWithPrimarySelection();
     }
 
+    virtual void addActionMethods(ActionMethods::Ptr methods);
+    virtual bool invokeActionMethod(ActionId actionId);
+    virtual bool hasActionMethod(ActionId actionId);
 
-    virtual ProcessingResult processEvent(const XEvent *event);
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent* event);
+
+    virtual bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
+
     virtual void notifyAboutHotKeyEventForOtherWidget();
     
 protected:    
     virtual void requestFocusFor(GuiWidget* w);
 
 private:
-    SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr languageMode, TextData::Ptr textData);
+    SingleLineEditField(GuiWidget* parent, LanguageMode::Ptr languageMode, TextData::Ptr textData);
     SingleLineEditorWidget::Ptr editorWidget;
     void draw();
     bool hasFocusFlag;
@@ -106,8 +111,6 @@ private:
     bool cursorStaysHidden;
 };
 
-
 } // namespace LucED
 
-
-#endif // SINGLELINEEDITFIELD_H
+#endif // SINGLE_LINE_EDIT_FIELD_HPP

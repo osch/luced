@@ -305,7 +305,8 @@ void EventDispatcher::doEventLoop()
         if (XEventsQueued(display, QueuedAfterFlush) > 0) {
             XNextEvent(display, &event);
             hasSomethingDone = processEvent(&event);
-        } else 
+        } 
+        else if (stoppingComponents.getLength() == 0)
         {
             XFlush(display);
             //XSync(display, False); <-- not this here!

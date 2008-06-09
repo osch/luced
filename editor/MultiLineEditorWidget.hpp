@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,13 +19,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef MULTILINEEDITORWIDGET_H
-#define MULTILINEEDITORWIDGET_H
+#ifndef MULTI_LINE_EDITOR_WIDGET_HPP
+#define MULTI_LINE_EDITOR_WIDGET_HPP
 
-#include "StandardEditActions.hpp"
 #include "TextEditorWidget.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class MultiLineEditorWidget : public TextEditorWidget
 {
@@ -47,9 +47,8 @@ private:
                           HilitedText::Ptr hilitedText,
                           CreateOptions    options);
 
-    StandardEditActions::Ptr standardActions;
 };
 
 } // namespapce LucED
 
-#endif // MULTILINEEDITORWIDGET_H
+#endif // MULTI_LINE_EDITOR_WIDGET_HPP

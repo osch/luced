@@ -29,6 +29,8 @@
 namespace LucED
 {
 
+template<class T> class HashFunction;
+
 class KeyCombination
 {
 public:
@@ -52,6 +54,11 @@ public:
         } else {
             keyIds = combination;
         }
+    }
+
+    String toString() const {
+        String km = keyModifier.toString();
+        return String() << km << (km.getLength() > 0 ? "+" : "") << keyIds;
     }
 
     KeyModifier getKeyModifier() const {
@@ -82,10 +89,34 @@ public:
         }
     }
     
+    bool operator==(const KeyCombination& rhs) const {
+        return    this->keyModifier == rhs.keyModifier
+               && this->keyIds      == rhs.keyIds;
+    }
+
+    bool operator!=(const KeyCombination& rhs) const {
+        return !(*this == rhs);
+    }
+    
 private:
+    friend class HashFunction<KeyCombination>;
+
     KeyModifier keyModifier;
     String keyIds;
 };
+
+template<> class HashFunction<KeyCombination>
+{
+public:
+    size_t operator()(const KeyCombination& key) const {
+        size_t rslt = key.keyModifier.toHashValue();
+        for (int i = 0, n = key.keyIds.getLength(); i < n; ++i) {
+            rslt = 5 * rslt + key.keyIds[i];
+        }
+        return rslt;
+    }
+};
+
 
 } // namespace LucED
 

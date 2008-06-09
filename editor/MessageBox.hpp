@@ -47,19 +47,40 @@ public:
                                    referingWindow);
     }
     
-    static MessageBox::Ptr create(MessageBoxParameter p)
+    static MessageBox::Ptr create(const MessageBoxParameter& p)
     {
         return transferOwnershipTo(new MessageBox(NULL, p),
                                    TopWinList::getInstance());
     }
     
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual bool invokeActionMethod(ActionId actionId);
     
     virtual void requestCloseWindow(TopWin::CloseReason reason);
 
     virtual void show();
 
 private:
+    class Actions : public ActionMethodBinding<Actions>
+    {
+    public:
+        typedef OwningPtr<Actions> Ptr;
+
+        static Ptr create(RawPtr<MessageBox> thisMessageBox) {
+            return Ptr(new Actions(thisMessageBox));
+        }
+        void closeMessageBox() {
+            thisMessageBox->requestCloseWindow(TopWin::CLOSED_BY_USER);
+        }
+    private:
+        Actions(RawPtr<MessageBox> thisMessageBox)
+            : ActionMethodBinding<Actions>(this),
+              thisMessageBox(thisMessageBox)
+        {}
+        
+        RawPtr<MessageBox> thisMessageBox;
+    };
+    friend class ActionMethodBinding<Actions>;
+
     MessageBox(TopWin* referingWindow, const MessageBoxParameter& p);
     
     
@@ -73,7 +94,6 @@ private:
     Callback<>::Ptr cancelButtonCallback;
     Callback<>::Ptr closeCallback;
     bool wasClosed;
-    KeyMapping::Ptr keyMapping;
 
     Callback<TopWin*>::Ptr invokeNotifyCallback;
     Callback<TopWin*>::Ptr closeNotifyCallback;

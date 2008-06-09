@@ -51,15 +51,6 @@ void PanelDialogWin::treatFocusOut()
     dialogPanel->treatFocusOut();
 }
 
-GuiElement::ProcessingResult PanelDialogWin::processKeyboardEvent(const XEvent* event)
-{
-    if (DialogWin::processKeyboardEvent(event) != EVENT_PROCESSED) {
-        return dialogPanel->processKeyboardEvent(event);
-    } else {
-        return EVENT_PROCESSED;
-    }
-}
-
 void PanelDialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
 {
     dialogPanel->setRootElement(rootElement);

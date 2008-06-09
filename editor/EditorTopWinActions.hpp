@@ -135,7 +135,7 @@ public:
         WindowCloser::start();
     }
 
-    void handleEscapeKey()
+    void closePanel()
     {
         if (panelInvoker->hasInvokedPanel()) {
             panelInvoker->closeInvokedPanel();

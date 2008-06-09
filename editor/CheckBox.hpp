@@ -28,10 +28,10 @@
 #include "OwningPtr.hpp"
 #include "Callback.hpp"
 #include "TimeVal.hpp"
+#include "ActionMethodBinding.hpp"
 
-namespace LucED {
-
-
+namespace LucED
+{
 
 class CheckBox : public GuiWidget
 {
@@ -50,8 +50,8 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    virtual ProcessingResult processEvent(const XEvent *event);
-    virtual ProcessingResult processKeyboardEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent* event);
+
     virtual Measures getDesiredMeasures();
     virtual void setPosition(Position newPosition);
     virtual bool isFocusable() { return true; }
@@ -67,10 +67,33 @@ public:
     bool isChecked() const;
     
 private:
+    class Actions : public ActionMethodBinding<Actions>
+    {
+    public:
+        typedef OwningPtr<Actions> Ptr;
+
+        static Ptr create(RawPtr<CheckBox> thisCheckBox) {
+            return Ptr(new Actions(thisCheckBox));
+        }
+        void pressFocusedButton() {
+            thisCheckBox->isBoxChecked = !thisCheckBox->isBoxChecked;
+            thisCheckBox->draw();
+            thisCheckBox->pressedCallback->call(thisCheckBox);
+        }
+    private:
+        Actions(RawPtr<CheckBox> thisCheckBox)
+            : ActionMethodBinding<Actions>(this),
+              thisCheckBox(thisCheckBox)
+        {}
+        RawPtr<CheckBox> thisCheckBox;
+    };
+    friend class ActionMethodBinding<Actions>;
+
+    CheckBox(GuiWidget* parent, String buttonText);
+
     void draw();
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
-    CheckBox(GuiWidget* parent, String buttonText);
     Position position;
     String buttonText;
     bool isBoxChecked;
