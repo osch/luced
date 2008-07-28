@@ -91,6 +91,13 @@ public:
         return lastX11EventTime;
     }
     
+    void registerBeforeMouseClickListener(Callback<>::Ptr callback) {
+        beforeMouseClickCallbackContainer.registerCallback(callback);
+    }
+    void deregisterBeforeMouseClickListenerFor(HeapObject* object) {
+        beforeMouseClickCallbackContainer.deregisterAllCallbacksFor(object);
+    }
+
 private:
     friend class SingletonInstance<EventDispatcher>;
     static SingletonInstance<EventDispatcher> instance;
@@ -148,6 +155,8 @@ private:
     typedef HashMap< pid_t, Callback<int>::Ptr > ProcessListenerMap;
     ProcessListenerMap childProcessListeners;
     Time               lastX11EventTime;
+
+    CallbackContainer<> beforeMouseClickCallbackContainer;
 };
 
 

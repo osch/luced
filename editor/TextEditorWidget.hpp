@@ -97,6 +97,9 @@ public:
     
     void treatFocusIn();
     void treatFocusOut();
+    bool hasFocus() const {
+        return hasFocusFlag;
+    }
     void disableCursorChanges();
     void enableCursorChanges();
     bool areCursorChangesDisabled()  { return cursorChangesDisabled; }
@@ -226,7 +229,7 @@ public:
     void registerListenerForNextSelectionChange(Callback<>::Ptr callback) {
         getBackliteBuffer()->registerListenerForNextChange(callback);
     }
-
+    
 protected:
     TextEditorWidget(GuiWidget*       parent, 
                      TextStyles::Ptr  textStyles, 

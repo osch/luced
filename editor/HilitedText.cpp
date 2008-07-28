@@ -168,48 +168,47 @@ bool HilitedText::fillWithBreaks(IteratorHandle iterator,
 }
 
 
+inline int HilitedText::getReparseDistance(IteratorHandle iterator)
+{
+    BreakType type = getBreakType(iterator);
+    
+    int rslt = 0;
+    PatternStack patternStack;
+    copyBreakStackTo(iterator, patternStack);
+    
+    if (type == Break_BEGIN && patternStack.getLength() > 0) {
+        patternStack.removeLast();
+    }
+    while (patternStack.getLength() > 0)
+    {
+        byte patternId = patternStack.getLast();
+        SyntaxPattern* pattern = syntaxPatterns->get(patternId);
+        util::maximize(&rslt, pattern->maxREBytesExtend);
+        patternStack.removeLast();
+    }
+    return rslt;
+}
+
+
 void HilitedText::gotoReparseStart(long textPos, IteratorHandle iterator)
 {
     moveIteratorToNextBefore(iterator, textPos);
+    int reparseDistance = getReparseDistance(iterator);
     while (true)
     {
         if (isFirstBreak(iterator)) {
             return;
         }
-        BreakType type = getBreakType(iterator);
-        if (type == Break_BEGIN) {
-            byte parentPatternId = getParentBreakStackByte(iterator);
-            SyntaxPattern* parentPattern = syntaxPatterns->get(parentPatternId);
-            if (textPos - getBreakStartPos(iterator) <= parentPattern->maxREBytesExtend) {
-                // noch weiter vorne Reparsen
-                decIterator(iterator);
-                continue;
-            } else {
-                return;
-            }
-        } else if (type == Break_INTER) {
-            byte patternId = getLastBreakStackByte(iterator);
-            SyntaxPattern *pattern = syntaxPatterns->get(patternId);
-            if (textPos - getBreakStartPos(iterator) <= pattern->maxREBytesExtend) {
-                // noch weiter vorne Reparsen
-                decIterator(iterator);
-                continue;
-            } else {
-                return;
-            }
-        } else if (type == Break_END) {
-            byte patternId = getLastBreakStackByte(iterator);
-            SyntaxPattern *pattern = syntaxPatterns->get(patternId);
-            if (textPos - getBreakStartPos(iterator) <= pattern->maxREBytesExtend) {
-                // noch weiter vorne Reparsen
-                decIterator(iterator);
-                continue;
-            } else {
-                return;
-            }
+        if (textPos - getBreakStartPos(iterator) <= reparseDistance) {
+            // noch weiter vorne Reparsen
+            decIterator(iterator);
+            continue;
+        } else {
+            return;
         }
     }
 }
+
 
 bool HilitedText::needsProcessing()
 {
@@ -224,7 +223,15 @@ void HilitedText::treatTextDataUpdate(TextData::UpdateInfo u)
     HilitingBase::treatTextDataUpdate(rememberedLastProcessingRestartedIterator, 
             u.beginChangedPos, u.oldEndChangedPos, u.changedAmount);
 
+#if 0
+printf("------HilitedText::gotoReparseStart davor!!\n");
+#endif
     gotoReparseStart(u.beginChangedPos, rememberedLastProcessingRestartedIterator);
+#if 0
+printf("------HilitedText::gotoReparseStart start = %ld / %ld  --> %d\n", getBreakStartPos(rememberedLastProcessingRestartedIterator),
+                                                                u.beginChangedPos, 
+                                                                getLastBreakStackByte(rememberedLastProcessingRestartedIterator));
+#endif
 
     if (!processingEndBeforeRestartFlag) {
         processingEndBeforeRestartFlag = true;
@@ -318,8 +325,9 @@ int HilitedText::process(int requestedProcessingAmount)
     long searchEndPos = pos + processAmountUnit * requestedProcessingAmount;
 
 #if 0
-printf("------HilitedText::process start = %ld / %ld .. %ld\n", getBreakStartPos(startNextProcessIterator),
-                                                                pos, searchEndPos);
+printf("------HilitedText::process start = %ld / %ld .. %ld --> %d\n", getBreakStartPos(startNextProcessIterator),
+                                                                pos, searchEndPos, 
+                                                                getLastBreakStackByte(startNextProcessIterator));
 #endif
 
     util::minimize(&searchEndPos, textData->getLength());
@@ -482,8 +490,9 @@ printf("------HilitedText::process start = %ld / %ld .. %ld\n", getBreakStartPos
             decIterator(startNextProcessIterator);
         }
 #if 0
-printf("------HilitedText::process can be stoppend = %ld / %ld  --> %d\n", getBreakStartPos(startNextProcessIterator),
-                                                                   getBreakEndPos(startNextProcessIterator), processedAmount);
+printf("------HilitedText::process can be stoppend = %ld / %ld (%d) --> %d\n", getBreakStartPos(startNextProcessIterator),
+                                                                   getBreakEndPos(startNextProcessIterator), processedAmount, 
+                                                                   getLastBreakStackByte(startNextProcessIterator));
 #endif
     }
     else
@@ -508,8 +517,9 @@ printf("------HilitedText::process can be stoppend = %ld / %ld  --> %d\n", getBr
             util::maximize(&this->endChangedPos, searchEndPos);
         }
 #if 0
-printf("------HilitedText::process cannot be stoppend = %ld / %ld  --> %d\n", getBreakStartPos(startNextProcessIterator),
-                                                                   getBreakEndPos(startNextProcessIterator), processedAmount);
+printf("------HilitedText::process cannot be stoppend = %ld / %ld  (%d) --> %d\n", getBreakStartPos(startNextProcessIterator),
+                                                                   getBreakEndPos(startNextProcessIterator), processedAmount, 
+                                                                   getLastBreakStackByte(startNextProcessIterator));
 #endif
     }
 

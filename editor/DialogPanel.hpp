@@ -97,8 +97,15 @@ private:
 
         void focusNext();
         void focusPrevious();
+
+        void focusRight();
+        void focusLeft();
+
+        void focusUp();        
+        void focusDown();        
+
         void pressDefaultButton();
-        
+
     private:
         
         Actions(RawPtr<DialogPanel> thisPanel)

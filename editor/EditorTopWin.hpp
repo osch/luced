@@ -122,7 +122,8 @@ private:
     void handleNewFileName(const String& fileName);
     void handleChangedModifiedFlag(bool modifiedFlag);
     void handleChangedReadOnlyFlag(bool readOnlyFlag);
-    
+    void handleBeforeMouseClick();
+        
     void reloadFile();
     void doNotReloadFile();
     

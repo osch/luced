@@ -37,7 +37,9 @@ class ActionKeySequenceHandler
 {
 public:
     ActionKeySequenceHandler(RawPtr<GuiWidget> thisWidget)
-        : thisWidget(thisWidget)
+        : thisWidget(thisWidget),
+          hasJustQuitSequenceFlag(false),
+          hasJustEnteredSequenceFlag(false)
     {}
     
     void setActionKeyConfig(ActionKeyConfig::Ptr actionKeyConfig) {
@@ -46,11 +48,21 @@ public:
     }
     
     void reset() {
-        currentActionKeyConfig = rootActionKeyConfig;
+        hasJustQuitSequenceFlag    = (currentActionKeyConfig != rootActionKeyConfig);
+        hasJustEnteredSequenceFlag = false;
+        currentActionKeyConfig     = rootActionKeyConfig;
     }
     
     bool isWithinSequence() const {
         return currentActionKeyConfig != rootActionKeyConfig;
+    }
+    
+    bool hasJustQuitSequence() const {
+        return hasJustQuitSequenceFlag;
+    }
+    
+    bool hasJustEnteredSequence() const {
+        return hasJustEnteredSequenceFlag;
     }
     
     String getKeySequenceAsString() const {
@@ -69,6 +81,8 @@ private:
 
     KeyModifier             sequenceKeyModifier;
     String                  combinationKeys;
+    bool                    hasJustQuitSequenceFlag;
+    bool                    hasJustEnteredSequenceFlag;
 };
 
 } // LucED

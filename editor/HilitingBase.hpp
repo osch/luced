@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HILITINGBASE_H
-#define HILITINGBASE_H
+#ifndef HILITING_BASE_HPP
+#define HILITING_BASE_HPP
 
 #include "HeapObject.hpp"
 #include "ObjectArray.hpp"
@@ -29,7 +29,8 @@
 #include "ByteBuffer.hpp"
 #include "PatternStack.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class HilitingBase : public HeapObject
 {
@@ -65,12 +66,12 @@ public:
         }
     private:
         friend class HilitingBase;
-        Iterator(HilitingBase *hiliting, long index) {
+        Iterator(HilitingBase* hiliting, long index) {
             this->index = index;
             this->hiliting = hiliting;
             hiliting->getIteratorData(*this)->inUseCounter += 1;
         }
-        HilitingBase *hiliting;
+        HilitingBase* hiliting;
     };
     
     class IteratorData
@@ -138,13 +139,13 @@ public:
         }
     }
     long getPrevBreakStartPos(IteratorHandle iterator) const {
-        const IteratorData *I   = getIteratorData(iterator);
+        const IteratorData* I   = getIteratorData(iterator);
         ASSERT(I->breakIndex <= breaks.getLength());
         ASSERT(0 < I->breakIndex);
         return I->textStartPos - breaks[I->breakIndex - 1].nextStartOffset;
     }
     long getPrevBreakEndPos(IteratorHandle iterator) const {
-        const IteratorData *I   = getIteratorData(iterator);
+        const IteratorData* I   = getIteratorData(iterator);
         ASSERT(I->breakIndex <= breaks.getLength());
         ASSERT(0 < I->breakIndex);
         return I->textStartPos - breaks[I->breakIndex - 1].nextStartOffset + breaks[I->breakIndex - 1].breakLength;
@@ -195,7 +196,7 @@ public:
         }
     }
     long getPrevBreakStackBegin(IteratorHandle iterator) const {
-        const IteratorData *I   = getIteratorData(iterator);
+        const IteratorData* I   = getIteratorData(iterator);
         ASSERT(I->breakIndex <= breaks.getLength());
         ASSERT(0 < I->breakIndex);
         return I->stackStartPos - breaks[I->breakIndex - 1].stackLength;
@@ -222,7 +223,7 @@ public:
     }
     void incIterator(IteratorHandle iterator) {
         ASSERT(!isEndOfBreaks(iterator));
-        IteratorData *I   = getIteratorData(iterator);
+        IteratorData* I   = getIteratorData(iterator);
         I->stackStartPos += breaks[I->breakIndex].stackLength;
         I->textStartPos  += breaks[I->breakIndex].nextStartOffset;
         I->breakIndex    += 1;
@@ -232,7 +233,7 @@ public:
         return getIteratorData(iterator)->breakIndex == 0;
     }
     void decIterator(IteratorHandle iterator) {
-        IteratorData *I   = getIteratorData(iterator);
+        IteratorData* I   = getIteratorData(iterator);
         ASSERT(0 < I->breakIndex);
         ASSERT(getIteratorData(iterator)->textStartPos >= 0);
         I->stackStartPos -= breaks[I->breakIndex - 1].stackLength;
@@ -285,4 +286,4 @@ private:
 
 } // namespace LucED
 
-#endif // HILITINGBASE_H
+#endif // HILITING_BASE_HPP

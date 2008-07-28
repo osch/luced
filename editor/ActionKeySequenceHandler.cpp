@@ -27,6 +27,9 @@ using namespace LucED;
 bool ActionKeySequenceHandler::handleKeyPress(const KeyPressEvent& keyPressEvent, 
                                               RawPtr<GuiWidget>    focusedWidget)
 {
+    hasJustQuitSequenceFlag    = false;
+    hasJustEnteredSequenceFlag = false;
+    
     bool keyProcessed = false;
 
     if (   !isWithinSequence() && focusedWidget.isValid()
@@ -70,6 +73,7 @@ bool ActionKeySequenceHandler::handleKeyPress(const KeyPressEvent& keyPressEvent
                 combinationKeys << "," << keyPressEvent.getKeyId().toString().toUpper();
             }
             currentActionKeyConfig = node->getNext();
+            hasJustEnteredSequenceFlag = true;
             keyProcessed = true;
         }
     }

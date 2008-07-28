@@ -259,6 +259,11 @@ void ReplacePanel::handleButtonPressed(Button* button, Button::ActivationVariant
     if (button == findNextButton    || button == findPrevButton
      || button == replaceNextButton || button == replacePrevButton)
     {
+        findPrevButton->setAsDefaultButton(button == findPrevButton);
+        findNextButton->setAsDefaultButton(button == findNextButton);
+        replacePrevButton->setAsDefaultButton(button == replacePrevButton);
+        replaceNextButton->setAsDefaultButton(button == replaceNextButton);
+
         SearchParameter p = getSearchParameterFromGuiControls();
                         p.setSearchForwardFlag(   button == findNextButton 
                                                || button == replaceNextButton);

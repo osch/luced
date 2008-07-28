@@ -252,7 +252,7 @@ bool EventDispatcher::processEvent(XEvent* event)
                 case KeyPress:
                 case KeyRelease:       lastX11EventTime = event->xkey.time; 
                                        break;
-                case ButtonPress:
+                case ButtonPress:      beforeMouseClickCallbackContainer.invokeAllCallbacks();
                 case ButtonRelease:    lastX11EventTime = event->xbutton.time; 
                                        break;
                 case MotionNotify:     lastX11EventTime = event->xmotion.time; 

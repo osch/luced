@@ -302,12 +302,12 @@ return
     { name = "historyBackward",                   description = "", 
                                                   classes     = {    "FindPanel::EditFieldActions",
                                                                   "ReplacePanel::EditFieldActions" },
-                                                  defaultKeys = { "Up", "KP_Up" }
+                                                  defaultKeys = { "Ctrl+Up", "Ctrl+KP_Up" }
     },
     { name = "historyForward",                    description = "", 
                                                   classes     = {    "FindPanel::EditFieldActions",
                                                                   "ReplacePanel::EditFieldActions" },
-                                                  defaultKeys = { "Down", "KP_Down" }
+                                                  defaultKeys = { "Ctrl+Down", "Ctrl+KP_Down" }
     },
     
     { name = "closeMessageBox",                   description = "", 
@@ -321,11 +321,27 @@ return
 
     { name = "focusNext",                         description = "", 
                                                   classes     = { "DialogPanel::Actions" },
-                                                  defaultKeys = { "Tab", "Right", "KP_Right" }
+                                                  defaultKeys = { "Tab" }
     },
     { name = "focusPrevious",                     description = "", 
                                                   classes     = { "DialogPanel::Actions" },
-                                                  defaultKeys = { "Shift+Tab", "Left", "KP_Left" }
+                                                  defaultKeys = { "Shift+Tab" }
+    },
+    { name = "focusRight",                        description = "", 
+                                                  classes     = { "DialogPanel::Actions" },
+                                                  defaultKeys = { "Right", "KP_Right" }
+    },
+    { name = "focusLeft",                         description = "", 
+                                                  classes     = { "DialogPanel::Actions" },
+                                                  defaultKeys = { "Left", "KP_Left" }
+    },
+    { name = "focusUp",                           description = "", 
+                                                  classes     = { "DialogPanel::Actions" },
+                                                  defaultKeys = { "Up", "KP_Up" }
+    },
+    { name = "focusDown",                         description = "", 
+                                                  classes     = { "DialogPanel::Actions" },
+                                                  defaultKeys = { "Down", "KP_Down" }
     },
     { name = "pressDefaultButton",                description = "", 
                                                   classes     = { "DialogPanel::Actions" },

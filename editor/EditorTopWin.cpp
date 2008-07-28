@@ -403,16 +403,20 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
                 actionKeySequenceHandler.reset();
                 rslt = EVENT_PROCESSED;
             }
-            if (actionKeySequenceHandler.isWithinSequence()) {
+            if (actionKeySequenceHandler.hasJustEnteredSequence())
+            {
                 if (invokedPanel.isValid()) {
                     invokedPanel->treatFocusOut();
                 } else {
                     textEditor->treatFocusOut();
                 }
+                EventDispatcher::getInstance()->registerBeforeMouseClickListener(newCallback(this, &EditorTopWin::handleBeforeMouseClick));
                 statusLine->setMessage(String() << "Key combination: " 
                                                 << actionKeySequenceHandler.getKeySequenceAsString()
                                                 << ", ...");
-            } else {
+            }
+            else if (actionKeySequenceHandler.hasJustQuitSequence()) 
+            {
                 if (invokedPanel.isValid()) {
                     invokedPanel->treatFocusIn();
                 } else {
@@ -458,8 +462,24 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
     }
 }
 
+void EditorTopWin::handleBeforeMouseClick()
+{
+    if (actionKeySequenceHandler.isWithinSequence())
+    {
+        actionKeySequenceHandler.reset();
+        statusLine->clearMessage();
+        if (hasFocus()) {
+            if (invokedPanel.isValid()) {
+                invokedPanel->treatFocusIn();
+            } else {
+                textEditor->treatFocusIn();
+            }
+        }
+    }
+    EventDispatcher::getInstance()->deregisterBeforeMouseClickListenerFor(this);
+}
 
-GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent *event)
+GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent* event)
 {
     if (TopWin::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;

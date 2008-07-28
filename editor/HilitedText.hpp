@@ -91,6 +91,8 @@ private:
     
     void treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns);
 
+    int getReparseDistance(IteratorHandle iterator);
+
     void gotoReparseStart(long textPos, IteratorHandle iterator);
     bool fillWithBreaks(IteratorHandle iterator, 
             long fillStart, long fillEnd,

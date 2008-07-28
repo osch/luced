@@ -231,6 +231,202 @@ void DialogPanel::Actions::focusPrevious()
     }
 }
 
+void DialogPanel::Actions::focusRight()
+{
+    if (thisPanel->focusedElement.isValid())
+    {
+        GuiWidget* e = thisPanel->focusedElement;
+        GuiWidget* best = NULL;
+        int minX = e->getPosition().x + e->getPosition().w;
+        int minY = e->getPosition().y;
+        int maxY = e->getPosition().y + e->getPosition().h;
+        int bestX = INT_MAX;
+        int bestY = INT_MAX;
+//printf("\n-----           %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+        do {
+            e = e->getNextFocusWidget();
+            if (e != NULL && e->isFocusable())
+            {
+//printf("                %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+
+                if (   (e->getPosition().x < bestX && e->getPosition().x + e->getPosition().w > minX)
+                    && (e->getPosition().y + e->getPosition().h > minY  && e->getPosition().y < maxY 
+                        && e->getPosition().y < bestY))
+                {
+//printf("best            %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+                    best = e;
+                    bestY = e->getPosition().y;
+                    bestX = e->getPosition().x;
+                }
+            }
+        } while (e != thisPanel->focusedElement && e != NULL);
+
+        if (best == NULL)
+        {
+            int bestX = INT_MAX;
+            int bestY = INT_MAX;
+            int bestH = 0;
+            
+            e = thisPanel->focusedElement;
+            do {
+                e = e->getNextFocusWidget();
+                if (e != NULL && e->isFocusable())
+                {
+    //printf("                %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+    
+                    if (   (e->getPosition().x < bestX)
+                        && (e->getPosition().y >= maxY 
+                            && e->getPosition().y < bestY + bestH))
+                    {
+    //printf("best            %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+                        best = e;
+                        bestY = e->getPosition().y;
+                        bestX = e->getPosition().x;
+                        bestH = e->getPosition().h;
+                    }
+                }
+            } while (e != thisPanel->focusedElement && e != NULL);
+        }
+        if (best != NULL) {
+            thisPanel->setFocus(best);
+        }
+    }
+}
+
+
+void DialogPanel::Actions::focusLeft()
+{
+    if (thisPanel->focusedElement.isValid())
+    {
+        GuiWidget* e = thisPanel->focusedElement;
+        GuiWidget* best = NULL;
+        int maxX = e->getPosition().x;
+        int minY = e->getPosition().y;
+        int maxY = e->getPosition().y + e->getPosition().h;
+        int bestX = -1;
+        int bestY = -1;
+//printf("\n-----           %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+        do {
+            e = e->getPrevFocusWidget();
+            if (e != NULL && e->isFocusable())
+            {
+//printf("                %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+
+                if (   (e->getPosition().x + e->getPosition().w > bestX && e->getPosition().x < maxX)
+                    && (e->getPosition().y + e->getPosition().h > minY  && e->getPosition().y < maxY 
+                        && e->getPosition().y + e->getPosition().h > bestY))
+                {
+//printf("best            %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+                    best = e;
+                    bestY = e->getPosition().y + e->getPosition().h;
+                    bestX = e->getPosition().x + e->getPosition().w;
+                }
+            }
+        } while (e != thisPanel->focusedElement && e != NULL);
+
+        if (best == NULL)
+        {
+            int bestX = 0;
+            int bestY = 0;
+            int bestH = 0;
+            
+            e = thisPanel->focusedElement;
+            do {
+                e = e->getPrevFocusWidget();
+                if (e != NULL && e->isFocusable())
+                {
+    //printf("                %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+    
+                    if (   (e->getPosition().x + e->getPosition().w > bestX)
+                        && (e->getPosition().y < minY 
+                            && e->getPosition().y + e->getPosition().h > bestY + bestH))
+                    {
+    //printf("best            %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
+                        best = e;
+                        bestY = e->getPosition().y;
+                        bestH = e->getPosition().h;
+                        bestX = e->getPosition().x + e->getPosition().w;
+                    }
+                }
+            } while (e != thisPanel->focusedElement && e != NULL);
+        }
+        if (best != NULL) {
+            thisPanel->setFocus(best);
+        }
+    }
+}
+
+
+void DialogPanel::Actions::focusUp()
+{
+    if (thisPanel->focusedElement.isValid())
+    {
+        GuiWidget* e = thisPanel->focusedElement;
+        GuiWidget* best = NULL;
+        int maxY = e->getPosition().y;
+        int minX = e->getPosition().x;
+        int maxX = e->getPosition().x + e->getPosition().w;
+        int bestY = -1;
+        int bestX = -1;
+//printf("\n-----           %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
+        do {
+            e = e->getPrevFocusWidget();
+            if (e != NULL && e->isFocusable())
+            {
+//printf("                %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
+
+                if (   (e->getPosition().y + e->getPosition().h > bestY && e->getPosition().y < maxY)
+                    && (e->getPosition().x + e->getPosition().w > minX  && e->getPosition().x < maxX 
+                        && e->getPosition().x + e->getPosition().w > bestX))
+                {
+//printf("best            %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
+                    best = e;
+                    bestX = e->getPosition().x + e->getPosition().w;
+                    bestY = e->getPosition().y + e->getPosition().h;
+                }
+            }
+        } while (e != thisPanel->focusedElement && e != NULL);
+        if (best != NULL) {
+            thisPanel->setFocus(best);
+        }
+    }
+}
+
+void DialogPanel::Actions::focusDown()
+{
+    if (thisPanel->focusedElement.isValid())
+    {
+        GuiWidget* e = thisPanel->focusedElement;
+        GuiWidget* best = NULL;
+        int minY = e->getPosition().y + e->getPosition().h;
+        int minX = e->getPosition().x;
+        int maxX = e->getPosition().x + e->getPosition().w;
+        int bestY = INT_MAX;
+        int bestX = INT_MAX;
+//printf("\n-----           %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
+        do {
+            e = e->getNextFocusWidget();
+            if (e != NULL && e->isFocusable())
+            {
+//printf("                %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
+
+                if (   (e->getPosition().y < bestY && e->getPosition().y + e->getPosition().h > minY)
+                    && (e->getPosition().x + e->getPosition().w > minX  && e->getPosition().x < maxX 
+                        && e->getPosition().x < bestX))
+                {
+//printf("best            %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
+                    best = e;
+                    bestX = e->getPosition().x;
+                    bestY = e->getPosition().y;
+                }
+            }
+        } while (e != thisPanel->focusedElement && e != NULL);
+        if (best != NULL) {
+            thisPanel->setFocus(best);
+        }
+    }
+}
+
 
 bool DialogPanel::processHotKey(KeyMapping::Id keyMappingId)
 {
@@ -474,7 +670,9 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
             if (last != NULL) {
                 last->treatLostHotKeyRegistration(id);
             }
-            w->treatNewHotKeyRegistration(id);
+            if (hasFocusFlag) {
+                w->treatNewHotKeyRegistration(id);
+            }
         }
         return;
     }
@@ -518,7 +716,7 @@ void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id
         w->treatLostHotKeyRegistration(id);
         defaultKeyWidgets->removeAll(w);
 
-        if (!focusedElementTakesAwayDefaultKey) {
+        if (hasFocusFlag && !focusedElementTakesAwayDefaultKey) {
             GuiWidget* last = defaultKeyWidgets->getLast();
             if (last != NULL) {
                 last->treatNewHotKeyRegistration(id);

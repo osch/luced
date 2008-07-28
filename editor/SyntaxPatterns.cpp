@@ -235,24 +235,25 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static inline void maximize(int *ptr, int i) {
+static inline void maximize(int* ptr, int i)
+{
     if (*ptr < i) {
         *ptr = i;
     }
 }
 
-void SyntaxPatterns::compile(int i) {
+void SyntaxPatterns::compile(int i)
+{
     String patStr;
     bool first = true;
-    const char *errortxt;
     int errorpos;
-    SyntaxPattern *sp = get(i);
+    SyntaxPattern* sp = get(i);
     
     sp->maxREBytesExtend = 0;
     
     for (int i = 0; i < sp->childList.getLength(); ++i) {
-        ChildPatternDescriptor *cdescr = sp->childList.getPtr(i);
-        SyntaxPattern *cpat = get(cdescr->id);
+        ChildPatternDescriptor* cdescr = sp->childList.getPtr(i);
+        SyntaxPattern* cpat = get(cdescr->id);
         if (!first) {
             patStr.append("|");
         }
@@ -339,8 +340,8 @@ void SyntaxPatterns::compile(int i) {
 
         for (int ci = 0; ci < sp->childList.getLength(); ++ci)
         {
-            ChildPatternDescriptor *cdescr = sp->childList.getPtr(ci);
-            SyntaxPattern *cpat = get(cdescr->id);
+            ChildPatternDescriptor* cdescr = sp->childList.getPtr(ci);
+            SyntaxPattern* cpat = get(cdescr->id);
 
             cdescr->substrNo = sp->re.getStringNumber(cpat->name);
             
@@ -377,7 +378,8 @@ void SyntaxPatterns::compile(int i) {
     maximize(&this->totalMaxREBytesExtend, sp->maxREBytesExtend);
 }
 
-void SyntaxPatterns::compileAll() {
+void SyntaxPatterns::compileAll()
+{
     int i;
     for (i=0; i < allPatterns.getLength(); ++i) {
         compile(i);
@@ -388,7 +390,7 @@ int SyntaxPattern::getMatchedChild(const MemArray<int>& ovector)
 {
     int rslt = 0;
     for (int i = 0; i < this->childList.getLength(); ++i) {
-        ChildPatternDescriptor *cdescr = this->childList.getPtr(i);
+        ChildPatternDescriptor* cdescr = this->childList.getPtr(i);
         if (ovector[2 * cdescr->substrNo] != -1) {
             return rslt;
         }
