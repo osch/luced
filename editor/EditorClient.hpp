@@ -30,6 +30,7 @@
 #include "HeapObjectArray.hpp"
 #include "WeakPtr.hpp"
 #include "RawPtr.hpp"
+#include "Commandline.hpp"
 
 namespace LucED
 {
@@ -45,7 +46,7 @@ public:
     
     ~EditorClient();
 
-    void startWithCommandline(HeapObjectArray<String>::Ptr commandline);
+    void startWithCommandline(Commandline::Ptr commandline);
     
     bool isServerStartupNeeded() const {
         return isServerStartupNeededFlag;

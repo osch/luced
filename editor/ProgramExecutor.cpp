@@ -27,7 +27,6 @@
 #include "SystemException.hpp"
 #include "MemArray.hpp"
 
-extern char **environ;
 
 using namespace LucED;
 
@@ -73,7 +72,18 @@ void ProgramExecutor::startExecuting()
 
         char* const argv[] = { filenameBuffer.getPtr(), NULL };
         
-        ::execve(programName.toCString(), argv, environ);
+        if (additionalEnvironment.isValid())
+        {
+            HashMap<String,String>::Iterator iterator = additionalEnvironment->getIterator();
+            for (; !iterator.isAtEnd(); iterator.gotoNext()) {
+                const bool overwrite = true;
+                ::setenv(iterator.getKey().toCString(), 
+                         iterator.getValue().toCString(), 
+                         overwrite);
+            }
+        }
+        
+        ::execv(programName.toCString(), argv);
         
         throw SystemException(String() << "Could not execute process: " << strerror(errno));
     }
@@ -107,11 +117,11 @@ void ProgramExecutor::startExecuting()
     
 void ProgramExecutor::writeToChild(int fileDescriptor)
 {
-    printf("writing\n");
+    //printf("writing\n");
     
     int writeCounter = ::write(fileDescriptor, input.toCString() + inputPosition, 
                                                input.getLength() - inputPosition);
-    printf("written %d\n", writeCounter);
+    //printf("written %d\n", writeCounter);
     
     if (writeCounter >= 0)
     {
@@ -122,14 +132,14 @@ void ProgramExecutor::writeToChild(int fileDescriptor)
         }
     }
     else {
-        printf("Eror while writing %s\n", strerror(errno));
+        //printf("Eror while writing %s\n", strerror(errno));
     }
 }
 
 
 void ProgramExecutor::readFromChild(int fileDescriptor)
 {
-    printf("reading\n");
+    //printf("reading\n");
 
     if (output.getLength() - outputPosition < 30000) {
         output.increaseTo(output.getLength() + 30000);
@@ -137,26 +147,26 @@ void ProgramExecutor::readFromChild(int fileDescriptor)
 
     int readCounter = ::read(fileDescriptor, output.getPtr()    + outputPosition,
                                              output.getLength() - outputPosition);
-    printf("read %d\n", readCounter);
+    //printf("read %d\n", readCounter);
 
     if (readCounter > 0) {
         outputPosition += readCounter;
     }
     else if (readCounter == 0)
     {
-        printf("reading finished\n");
+        //printf("reading finished\n");
         childOutputListener->close();
         output.removeTail(outputPosition);
     }
     else {
-        printf("Eror while reading %s\n", strerror(errno));
+        //printf("Eror while reading %s\n", strerror(errno));
     }
 }
 
 
 void ProgramExecutor::catchTerminatedChild(int returnCode)
 {
-    printf("Catched return code %d\n", returnCode);
+    //printf("Catched return code %d\n", returnCode);
     
     childInputListener->close();
     childOutputListener->close();

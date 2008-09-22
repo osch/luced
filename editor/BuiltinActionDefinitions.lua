@@ -44,22 +44,22 @@ return
     },
     
     { name = "scrollLeft",                        description = "",
-                                                  classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Alt+Left", "Ctrl+Alt+KP_Left" }
+                                                  classes = { "SingleLineDisplayActions" },
+                                                  defaultKeys = { "Left", "Ctrl+Alt+Left", "Ctrl+Alt+KP_Left" }
     },
     { name = "scrollRight",                       description = "",
-                                                  classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Alt+Right", "Ctrl+Alt+KP_Right" }
+                                                  classes = { "SingleLineDisplayActions" },
+                                                  defaultKeys = { "Right", "Ctrl+Alt+Right", "Ctrl+Alt+KP_Right" }
     },
     
     
     { name = "cursorBeginOfText",                 description = "",
-                                                  classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Home", "Ctrl+Begin" }
+                                                  classes = { "SingleLineDisplayActions" },
+                                                  defaultKeys = { "Home", "Ctrl+Home", "Ctrl+Begin" }
     },
     { name = "cursorEndOfText",                   description = "",
-                                                  classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+End" }
+                                                  classes = { "SingleLineDisplayActions" },
+                                                  defaultKeys = { "End", "Ctrl+End" }
     },
     
     
@@ -76,7 +76,7 @@ return
     
     
     { name = "copyToClipboard",                   description = "",
-                                                  classes = { "SingleLineEditActions" },
+                                                  classes = { "SingleLineDisplayActions" },
                                                   defaultKeys = { "Ctrl+C" }
     },
     { name = "cutToClipboard",                    description = "",
@@ -92,7 +92,7 @@ return
                                                   defaultKeys = { "Ctrl+Shift+V" }
     },
     { name = "selectAll",                         description = "",
-                                                  classes = { "SingleLineEditActions" },
+                                                  classes = { "SingleLineDisplayActions" },
                                                   defaultKeys = { "Ctrl+A" }
     },
     
@@ -182,11 +182,20 @@ return
         
     { name = "cursorPageDown",                    description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Page_Down" }
+                                                  defaultKeys = { "Control+Down", "Page_Down" }
     },
     { name = "cursorPageUp",                      description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Page_Up" }
+                                                  defaultKeys = { "Control+Up", "Page_Up" }
+    },
+    
+    { name = "scrollPageDown",                    description = "",
+                                                  classes = { "MultiLineDisplayActions" },
+                                                  defaultKeys = { "Control+Down", "Page_Down" }
+    },
+    { name = "scrollPageUp",                      description = "",
+                                                  classes = { "MultiLineDisplayActions" },
+                                                  defaultKeys = { "Control+Up", "Page_Up" }
     },
     
     
@@ -200,16 +209,14 @@ return
                                                   defaultKeys = { "Alt+Down", "Alt+KP_Down" }
     },
     
-    
-    
         
     { name = "scrollUp",                          description = "",
-                                                  classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Alt+Up", "Ctrl+Alt+KP_Up" }
+                                                  classes = { "MultiLineDisplayActions" },
+                                                  defaultKeys = { "Up", "Alt+Up", "Ctrl+Alt+Up", "Ctrl+Alt+KP_Up" }
     },
     { name = "scrollDown",                        description = "",
-                                                  classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Alt+Down", "Ctrl+Alt+KP_Down" }
+                                                  classes = { "MultiLineDisplayActions" },
+                                                  defaultKeys = { "Down", "Alt+Down", "Ctrl+Alt+Down", "Ctrl+Alt+KP_Down" }
     },
     
     
@@ -311,9 +318,11 @@ return
     },
     
     { name = "closeMessageBox",                   description = "", 
-                                                  classes     = { "MessageBox::Actions" },
+                                                  classes     = { "MessageBox::Actions",
+                                                                  "CommandOutputBox::Actions" },
                                                   defaultKeys = { "Escape" }
     },
+
     { name = "closePanel",                        description = "", 
                                                   classes     = { "EditorTopWinActions", },
                                                   defaultKeys = { "Escape" }

@@ -36,9 +36,6 @@ DialogWin::DialogWin(TopWin* referingWindow)
       shouldBeMapped(false),
       actionKeySequenceHandler(this)
 {
-    actionKeyConfig = GlobalConfig::getInstance()->getActionKeyConfig();
-    actionKeySequenceHandler.setActionKeyConfig(actionKeyConfig);
-
     if (referingWindow != NULL) {
         XSetTransientForHint(getDisplay(), getWid(), referingWindow->getWid());
         referingWindow->registerMappingNotifyCallback(newCallback(this, &DialogWin::notifyAboutReferingWindowMapping));

@@ -38,11 +38,18 @@ public:
         return Ptr(new Commandline(argc, argv));
     }
     
+    static Ptr createFromQuotedString(const String& commandline);
+    
+    String toQuotedString() const;
+    
 private:
-
+    Commandline()
+    {}
+    
     Commandline(int argc, char** argv)
     {
-        for (int i = 0; i < argc; ++i) {
+        // ignore executable name argv[0]
+        for (int i = 1; i < argc; ++i) {
             this->append(String(argv[i]));
         }
     }

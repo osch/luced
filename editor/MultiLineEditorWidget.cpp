@@ -20,8 +20,12 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "MultiLineEditorWidget.hpp"
-#include "MultiLineEditActions.hpp"
+
+#include "SingleLineDisplayActions.hpp"
 #include "SingleLineEditActions.hpp"
+
+#include "MultiLineDisplayActions.hpp"
+#include "MultiLineEditActions.hpp"
 
 using namespace LucED;
 
@@ -32,8 +36,11 @@ MultiLineEditorWidget::MultiLineEditorWidget(GuiWidget*       parent,
 
     : TextEditorWidget(parent, textStyles, hilitedText, options)
 {
-    GuiWidget::addActionMethods(SingleLineEditActions::create(this));
-    GuiWidget::addActionMethods(MultiLineEditActions::create(this));
+    TextEditorWidget::addActionMethods(SingleLineDisplayActions::create(this));
+    TextEditorWidget::addActionMethods(MultiLineDisplayActions::create(this));
+
+    TextEditorWidget::addActionMethods(SingleLineEditActions::create(this));
+    TextEditorWidget::addActionMethods(MultiLineEditActions::create(this));
 }
 
 

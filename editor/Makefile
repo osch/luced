@@ -57,13 +57,13 @@ GENERATED_FAST_MODULES :=
 
 SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget                  SystemException \
                 TextEditorWidget         TextStyle              KeyPressRepeater           ScrollBar \
-                System                   LuaException           TopWin                     \
+                System                   LuaException           TopWin                     ProgramName \
                 LuaObject                LuaInterpreter         ConfigException            GlobalConfig \
                 LanguageModes            RegexException         StatusLine                 \
                 Button                   GuiLayoutWidget        LuaStoredObject \
                 GotoLinePanel            SingletonKeeper        TopWinList                 OwnedTopWins \
                 DialogWin                GuiLayoutSpacer        MultiLineEditorWidget      SubstitutionException \
-                SingleLineEditorWidget   LuaStackChecker \
+                SingleLineEditorWidget   LuaStackChecker        Commandline \
                 SingleLineEditField      LabelWidget            DialogPanel                PanelDialogWin \
                 FindPanel                CheckBox               MessageBox                 SearchHistory \
                 FileException            EditorServer           ClientServerUtil           EditorClient  \
@@ -73,7 +73,8 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
 		CurrentDirectoryKeeper   ProgramExecutor        TextDisplayGuiCompound     CommandOutputBox \
 		FramedGuiCompound        EditorTopWinActions    UnknownActionNameException ScrollableTextGuiCompound \
 		SearchInteraction        ActionKeyConfig        SingleLineEditActions      MultiLineEditActions \
-		ActionKeySequenceHandler
+		ActionKeySequenceHandler StackTrace             ActionIdRegistry           MultiLineDisplayActions \
+		SingleLineDisplayActions
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

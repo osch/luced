@@ -61,8 +61,9 @@ public:
     }
 
     void extendSelectionTo(long textPos);
+
     bool hasActiveSelection() {
-        return hasSelection;
+        return hasSelection && getBeginSelectionPos() != getEndSelectionPos();
     }
 
     void registerUpdateListener(Callback<HilitingBuffer::UpdateInfo>::Ptr updateCallback);

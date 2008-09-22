@@ -23,19 +23,36 @@
 @ local functions = require("functions")
 
 #include "ActionId.hpp"
+#include "ActionIdRegistry.hpp"
 
 using namespace LucED;
 
 const int ActionId::MAX_BUILTIN;
 
+void ActionId::setBuiltinMappingInto(HashMap<String, ActionId>& nameToIdMap,
+                                     HashMap<ActionId, String>& idToNameMap)
+{
+@ for i, a in ipairs(actions) do
+    nameToIdMap.set("builtin.@(a.name)", @(functions.upperize(a.name)));
+    idToNameMap.set(@(functions.upperize(a.name)), "builtin.@(a.name)");
+@ end
+}
+
 String ActionId::toString() const
 {
-    switch (value)
+    if (isBuiltin())
     {
-        case UNDEFINED: return "undefined";
+        switch (value)
+        {
+            case UNDEFINED:                     return "undefined";
 @ for i, a in ipairs(actions) do
-        case @(functions.upperize(a.name)): return "builtin.@(a.name)";
+            case @(functions.upperize(a.name)): return "builtin.@(a.name)";
 @ end
+        }
+    }
+    else
+    {
+        ActionIdRegistry::getInstance()->toString(*this);
     }
     return "undefined";
 }

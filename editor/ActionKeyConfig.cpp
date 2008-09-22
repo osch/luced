@@ -24,8 +24,8 @@
 using namespace LucED;
 
 
-void ActionKeyConfig::set(KeyCombination    keyCombination,
-                          ActionId          actionId)
+void ActionKeyConfig::append(KeyCombination    keyCombination,
+                             ActionId          actionId)
 {
     if (!keyCombination.hasKeyIds()) {
         throw ConfigException(String() << "Invalid empty key combination");
@@ -79,7 +79,7 @@ void ActionKeyConfig::set(KeyCombination    keyCombination,
             next = ActionKeyConfig::create();
             nodeMap.set(id, Node::create(next));
         }
-        next->set(keyCombination, actionId);
+        next->append(keyCombination, actionId);
     }
     else
     {

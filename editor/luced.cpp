@@ -34,6 +34,7 @@
 #include "Commandline.hpp"
 #include "CommandlineException.hpp"
 #include "GlobalConfig.hpp"
+#include "ProgramName.hpp"
 
 using namespace LucED;
 
@@ -43,6 +44,8 @@ int main(int argc, char** argv)
     
     try
     {
+        ProgramName::set(argv[0]);
+        
         bool isServerStartupNeeded = false;
         {
             SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();

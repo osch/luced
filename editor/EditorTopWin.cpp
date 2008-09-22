@@ -209,10 +209,31 @@ private:
     RawPtr<EditorTopWin> editorTopWin;
 };
 
+
+class EditorTopWin::ShellscriptActionMethods : public ActionMethods
+{
+public:
+    typedef OwningPtr<ShellscriptActionMethods> Ptr;
+    
+    static Ptr create(RawPtr<EditorTopWin> thisTopWin) {
+        return Ptr(new ShellscriptActionMethods(thisTopWin));
+    }
+    virtual bool invokeActionMethod(ActionId actionId);
+
+    virtual bool hasActionMethod(ActionId actionId) {
+        String script = GlobalConfig::getInstance()->getShellscriptFor(actionId);
+        return script.getLength() > 0;
+    }
+    
+private:
+    ShellscriptActionMethods(RawPtr<EditorTopWin> thisTopWin)
+        : thisTopWin(thisTopWin)
+    {}
+    RawPtr<EditorTopWin> thisTopWin;
+};
+
 EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
-      keyMapping1(KeyMapping::create()),
-      keyMapping2(KeyMapping::create()),
       flagForSetSizeHintAtFirstShow(true),
       hasMessageBox(false),
       isMessageBoxModal(false),
@@ -220,9 +241,6 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
 {
     addToXEventMask(ButtonPressMask);
     
-    actionKeyConfig = GlobalConfig::getInstance()->getActionKeyConfig();
-    actionKeySequenceHandler.setActionKeyConfig(actionKeyConfig);
-
     statusLine = StatusLine::create(this);
     int statusLineIndex = rootElement->addElement(statusLine);
     upperPanelIndex = statusLineIndex + 1;
@@ -279,13 +297,6 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     flagForSetSizeHintAtFirstShow = true;
     
 
-//    keyMapping1->set( KeyModifier("Ctrl"),       KeyId("r"),      newCallback(this,      &EditorTopWin::invokeReplacePanelForward));
-
-
-///////////// TODO
-    keyMapping1->set( KeyModifier("Modifier5"),  KeyId("e"),      newCallback(this,      &EditorTopWin::executeTestScript));
-/////////////
-    
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &EditorTopWin::treatConfigUpdate));
 
 
@@ -301,6 +312,10 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
                                                        newCallback(this, &EditorTopWin::setMessageBox),
                                                        panelInvoker,
                                                        actionInterface)));
+
+    
+    shellscriptActionMethods = ShellscriptActionMethods::create(this);
+    GuiWidget::addActionMethods(shellscriptActionMethods);
 }
 
 EditorTopWin::~EditorTopWin()
@@ -359,29 +374,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
     
         ProcessingResult rslt = NOT_PROCESSED;
     
-        Callback<>::Ptr m = keyMapping1->find(keyModifier, pressedKey);
-    
-        if (m.isValid())
-        {
-            if (!pressedKey.isModifierKey()) {
-                textEditor->hideMousePointer();
-            }
-
-            if (actionKeySequenceHandler.isWithinSequence())
-            {
-                actionKeySequenceHandler.reset();
-                if (invokedPanel.isValid()) {
-                    invokedPanel->treatFocusIn();
-                } else {
-                    textEditor->treatFocusIn();
-                }
-                statusLine->clearMessage();
-            }
-
-            m->call();
-            rslt = EVENT_PROCESSED;
-        }
-        else if (!pressedKey.isModifierKey())
+        if (!pressedKey.isModifierKey())
         {
             textEditor->hideMousePointer();
             
@@ -819,16 +812,52 @@ String EditorTopWin::getFileName() const
     return textData->getFileName();
 }
 
-void EditorTopWin::executeTestScript()
+bool EditorTopWin::ShellscriptActionMethods::invokeActionMethod(ActionId actionId)
 {
-    printf("-------------------------\n");
-    ProgramExecutor::start("/bin/sh",
-                           "echo 1234567890; ls|head; exit 12",
-                           newCallback(this, &EditorTopWin::finishedTestScript));
+    try
+    {
+        String script = GlobalConfig::getInstance()->getShellscriptFor(actionId);
+        if (script.getLength() > 0)
+        {
+            if (thisTopWin->textData->getModifiedFlag() == true) {
+                if (!thisTopWin->textData->isFileNamePseudo()) {
+                    thisTopWin->textData->save();
+                }
+            }
+            HeapHashMap<String,String>::Ptr env = HeapHashMap<String,String>::create();
+                                            env->set("FILE", thisTopWin->getFileName());
+            ProgramExecutor::start("/bin/sh",
+                                   script,
+                                   env,
+                                   newCallback(thisTopWin, &EditorTopWin::finishedShellscript));
+            return true;    
+        } else {
+            return false;
+        }
+    } catch (FileException& ex) {
+        thisTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                                       .setMessage(ex.getMessage()));
+    } catch (LuaException& ex) {
+        thisTopWin->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                                       .setMessage(ex.getMessage()));
+    } catch (ConfigException& ex)
+    {
+        if (ex.getErrorList().isValid() && ex.getErrorList()->getLength() > 0) {
+            ConfigErrorHandler::start(ex.getErrorList());
+        } else {
+            thisTopWin->setMessageBox(MessageBoxParameter().setTitle("Config Error")
+                                                           .setMessage(ex.getMessage()));
+        }
+    }
+    return true;
 }
 
-void EditorTopWin::finishedTestScript(ProgramExecutor::Result rslt)
+void EditorTopWin::finishedShellscript(ProgramExecutor::Result rslt)
 {
+    textData->checkFileInfo();
+    if (textData->wasFileModifiedOnDisk()) {
+        reloadFile();
+    }
     if (rslt.outputLength > 0)
     {
         TextData::Ptr textData = TextData::create();

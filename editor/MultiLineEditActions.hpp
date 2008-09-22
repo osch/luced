@@ -43,12 +43,8 @@ public:
     void cursorUp();
     void cursorPageDown();
     void cursorPageUp();
-    void scrollDown();
-    void scrollUp();
     void scrollCursorDown();
     void scrollCursorUp();
-    void scrollPageUp();
-    void scrollPageDown();
     void insertNewLineAutoIndent();
     void appendNewLineAutoIndent();
     void newLineFixedColumnIndentForward();

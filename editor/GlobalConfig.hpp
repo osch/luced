@@ -158,6 +158,15 @@ public:
     void registerConfigChangedCallback(Callback<>::Ptr callback) {
         configChangedCallbackContainer.registerCallback(callback);
     }
+    
+    String getShellscriptFor(ActionId actionId) const {
+        Nullable<String> foundValue = actionIdToShellscriptMap.get(actionId);
+        if (foundValue.isValid()) {
+            return foundValue.get();
+        } else {
+            return String();
+        }
+    }
 
 private:
     friend class SingletonInstance<GlobalConfig>;
@@ -209,6 +218,8 @@ private:
     
     String generalConfigFileName;
     String syntaxPatternDirectory;
+    
+    HashMap<ActionId, String> actionIdToShellscriptMap;
     
     ActionKeyConfig::Ptr        actionKeyConfig;
 };

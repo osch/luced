@@ -19,26 +19,39 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CLIENT_SERVER_UTIL_HPP
-#define CLIENT_SERVER_UTIL_HPP
+#include <iostream>
 
-#include "String.hpp"
+#include <X11/keysym.h>
+#include <X11/Xatom.h>
 
-#include "GuiRootProperty.hpp"
-#include "HeapObjectArray.hpp"
+#include "Clipboard.hpp"
+#include "FindUtil.hpp"
+#include "KeyModifier.hpp"
+#include "FileOpener.hpp"
+#include "Regex.hpp"
+#include "MultiLineDisplayActions.hpp"
 
-namespace LucED
+using namespace LucED;
+
+
+void MultiLineDisplayActions::scrollDown()
 {
+    e->scrollDown();
+}
 
-class ClientServerUtil
+
+void MultiLineDisplayActions::scrollUp()
 {
-public:
-    static GuiRootProperty getServerRunningProperty(const String& instanceName);
-    
-    static GuiRootProperty getServerCommandProperty(const String& instanceName);
-};
+    e->scrollUp();
+}
 
-} // namespace LucED
+void MultiLineDisplayActions::scrollPageUp()
+{
+    e->scrollPageUp();
+}
 
-#endif // CLIENT_SERVER_UTIL_HPP
 
+void MultiLineDisplayActions::scrollPageDown()
+{
+    e->scrollPageDown();
+}

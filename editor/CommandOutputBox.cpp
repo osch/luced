@@ -51,11 +51,8 @@ CommandOutputBox::CommandOutputBox(TopWin* referingWindow, TextData::Ptr textDat
                                        | GuiLayoutColumn::DO_NOT_REPORT_HORIZONTAL_RASTERING
                                        | GuiLayoutColumn::DO_NOT_REPORT_VERTICAL_RASTERING);
                                                                                  
-    column0->addElement(GuiLayoutSpacer::create(0, 0, 0,  0, INT_MAX, INT_MAX));
     column0->addElement(multiLineOut, GuiElement::LayoutOptions() | GuiElement::LAYOUT_VERTICAL_RASTERING);
-    column0->addElement(GuiLayoutSpacer::create(0, 0, 0, 10, INT_MAX, INT_MAX));
     column0->addElement(row0);
-    column0->addSpacer();
 
     row0->addElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, 0));
     if (button1.isValid()) {
@@ -83,52 +80,35 @@ CommandOutputBox::CommandOutputBox(TopWin* referingWindow, TextData::Ptr textDat
         setFocus(button1);
     }
     multiLineOut->show();
+
+
+    PanelDialogWin::addActionMethods(Actions::create(this));
 }
 
 
 void CommandOutputBox::handleButtonPressed(Button* button, Button::ActivationVariant variant)
 {
-#if 0
-    if (!wasClosed)
-    {
-
-        if (button == button1 && defaultButtonCallback->isEnabled()) {
-                PanelDialogWin::requestCloseWindow();
-                wasClosed = true;
-                defaultButtonCallback->call();
-        } else {
-            if (button == button1 && button3.isInvalid()) {
-                PanelDialogWin::requestCloseWindow();
-                wasClosed = true;
-            }
-            else if (button == button3 && button3.isValid()) {
-                PanelDialogWin::requestCloseWindow();
-                wasClosed = true;
-                cancelButtonCallback->call();
-            }
-            else if (button == button2) {
-                PanelDialogWin::requestCloseWindow();
-                wasClosed = true;
-                alternativeButtonCallback->call();
-            }
-        }
+    if (button == button1) {
+        PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
     }
-#endif
 }
 
 void CommandOutputBox::requestCloseWindow(TopWin::CloseReason reason)
 {
     PanelDialogWin::requestCloseWindow(reason);
-#if 0
-    if (!wasClosed) {
-        if (closeCallback->isEnabled()) {
-            closeCallback->call();
-        } else {
-            cancelButtonCallback->call();
-        }
-        wasClosed = true;
-    }
-#endif
+}
+
+
+bool CommandOutputBox::invokeActionMethod(ActionId actionId)
+{
+    return     multiLineOut->invokeActionMethod(actionId)
+          || PanelDialogWin::invokeActionMethod(actionId);
+}
+
+bool CommandOutputBox::hasActionMethod(ActionId actionId)
+{
+    return     multiLineOut->hasActionMethod(actionId)
+          || PanelDialogWin::hasActionMethod(actionId);
 }
 
 

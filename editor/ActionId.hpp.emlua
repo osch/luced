@@ -24,6 +24,7 @@
 
 #include "debug.hpp"
 #include "String.hpp"
+#include "HashMap.hpp"
 
 #ifndef ACTION_ID_HPP
 #define ACTION_ID_HPP
@@ -32,6 +33,7 @@ namespace LucED
 {
 
 template<class T> class HashFunction;
+class ActionIdRegistry;
 
 class ActionId
 {
@@ -52,12 +54,6 @@ public:
     ActionId(BuiltinValue value)
         : value(value)
     {}
-    
-    explicit ActionId(int value)
-        : value(value)
-    {
-        ASSERT(MAX_BUILTIN < value);
-    }
     
     operator int() const {
         return value;
@@ -84,7 +80,17 @@ public:
     
 private:
     friend class HashFunction<ActionId>;
+    friend class ActionIdRegistry;
 
+    explicit ActionId(int value)
+        : value(value)
+    {
+        ASSERT(MAX_BUILTIN < value);
+    }
+    
+    static void setBuiltinMappingInto(HashMap<String, ActionId>& nameToIdMap,
+                                      HashMap<ActionId, String>& idToNameMap);
+    
     int value;
 };
 

@@ -32,14 +32,12 @@
 #include "GuiLayoutColumn.hpp"
 #include "OwningPtr.hpp"
 #include "TopWinList.hpp"
-#include "KeyMapping.hpp"
 #include "GotoLinePanel.hpp"
 #include "MessageBox.hpp"
 #include "SaveAsPanel.hpp"
 #include "ProgramExecutor.hpp"
 #include "RawPtr.hpp"
 #include "ScrollableTextGuiCompound.hpp"
-#include "TopWinActionInterface.hpp"
 #include "ActionKeyConfig.hpp"
 #include "ActionKeySequenceHandler.hpp"
                     
@@ -101,15 +99,10 @@ public:
     
     bool checkForFileModifications();
 
-    virtual ActionKeyConfig::Ptr getActionKeyConfig() {
-        return actionKeyConfig;
-    }
-
 private:
-           class ActionInterface;
-    friend class ActionInterface;
-           class PanelInvoker;
-    friend class PanelInvoker;
+    class PanelInvoker;
+    class ActionInterface;
+    class ShellscriptActionMethods;
     
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
 
@@ -133,15 +126,12 @@ private:
     void internalInvokeNewMessageBox();
     void internalSetMessageBox(const MessageBoxParameter& messageBoxParameter);
 
-    void executeTestScript();
-    void finishedTestScript(ProgramExecutor::Result result);
+    void finishedShellscript(ProgramExecutor::Result result);
     
     MultiLineEditorWidget::Ptr textEditor;
     RawPtr<TextData>         textData;
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
-    KeyMapping::Ptr keyMapping1;
-    KeyMapping::Ptr keyMapping2;
     GotoLinePanel::Ptr gotoLinePanel;
     bool flagForSetSizeHintAtFirstShow;
 
@@ -163,10 +153,10 @@ private:
     KeyModifier             combinationKeyModifier;
     String                  combinationKeys;
     
-    OwningPtr<PanelInvoker>    panelInvoker;
-    OwningPtr<ActionInterface> actionInterface;
+    OwningPtr<PanelInvoker>             panelInvoker;
+    OwningPtr<ActionInterface>          actionInterface;
+    OwningPtr<ShellscriptActionMethods> shellscriptActionMethods;
 
-    ActionKeyConfig::Ptr     actionKeyConfig;    
     ActionKeySequenceHandler actionKeySequenceHandler;
 };
 

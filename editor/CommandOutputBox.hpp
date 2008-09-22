@@ -53,7 +53,31 @@ public:
     
     virtual void requestCloseWindow(TopWin::CloseReason reason);
 
+    virtual bool invokeActionMethod(ActionId actionId);
+    virtual bool hasActionMethod(ActionId actionId);
+
 private:
+    class Actions : public ActionMethodBinding<Actions>
+    {
+    public:
+        typedef OwningPtr<Actions> Ptr;
+
+        static Ptr create(RawPtr<CommandOutputBox> thisCommandOutputBox) {
+            return Ptr(new Actions(thisCommandOutputBox));
+        }
+        void closeMessageBox() {
+            thisCommandOutputBox->requestCloseWindow(TopWin::CLOSED_BY_USER);
+        }
+    private:
+        Actions(RawPtr<CommandOutputBox> thisCommandOutputBox)
+            : ActionMethodBinding<Actions>(this),
+              thisCommandOutputBox(thisCommandOutputBox)
+        {}
+        
+        RawPtr<CommandOutputBox> thisCommandOutputBox;
+    };
+    friend class ActionMethodBinding<Actions>;
+
     CommandOutputBox(TopWin* referingWindow, TextData::Ptr textData);
     
     

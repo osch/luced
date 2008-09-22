@@ -33,6 +33,7 @@
 #include "ConfigException.hpp"
 #include "WeakPtr.hpp"
 #include "RawPtr.hpp"
+#include "Commandline.hpp"
 
 namespace LucED
 {
@@ -49,20 +50,16 @@ public:
     
     ~EditorServer();
     
-    void startWithCommandlineAndErrorList(HeapObjectArray<String>::Ptr    commandline,
+    void startWithCommandlineAndErrorList(Commandline::Ptr                commandline,
                                           ConfigException::ErrorList::Ptr errorList);
     
-    void startWithCommandline(HeapObjectArray<String>::Ptr commandLine)
+    void startWithCommandline(Commandline::Ptr commandLine)
     {
         startWithCommandlineAndErrorList(commandLine, ConfigException::ErrorList::Ptr());
     }
     
     String getInstanceName() const {
         return instanceName;
-    }
-    
-    String getProgramName() const {
-        return programName;
     }
     
 private:
@@ -73,15 +70,14 @@ private:
 
     void processEventForServerProperty(XEvent* event);
     void processEventForCommandProperty(XEvent* event);
-    void processCommandline(HeapObjectArray<String>::Ptr    commandline, 
-                            bool isStarting,
+    void processCommandline(Commandline::Ptr  commandline, 
+                            bool              isStarting,
                             ConfigException::ErrorList::Ptr errorList    = ConfigException::ErrorList::Ptr());
 
     bool isStarted;
     GuiRootProperty serverProperty;
     GuiRootProperty commandProperty;
     String instanceName;
-    String programName;
 };
 
 } // namespace LucED

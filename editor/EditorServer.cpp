@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -55,7 +55,7 @@ EditorServer::~EditorServer()
     }
 }
 
-void EditorServer::startWithCommandlineAndErrorList(HeapObjectArray<String>::Ptr    commandline,
+void EditorServer::startWithCommandlineAndErrorList(Commandline::Ptr                commandline,
                                                     ConfigException::ErrorList::Ptr errorList)
 {
     isStarted = true;
@@ -91,7 +91,7 @@ void EditorServer::processEventForCommandProperty(XEvent* event)
         String commandline = commandProperty.getValueAndRemove();
 //        printf(" *********** Event: command newValue <%s>\n", commandline.toCString());
         if (commandline.getLength() > 0) {
-            processCommandline(ClientServerUtil::unquoteCommandline(commandline), false);
+            processCommandline(Commandline::createFromQuotedString(commandline), false);
         }
     }
     else
@@ -131,7 +131,7 @@ namespace // anonymous namespace
 
 
 
-void EditorServer::processCommandline(HeapObjectArray<String>::Ptr commandline,
+void EditorServer::processCommandline(Commandline::Ptr commandline,
                                       bool isStarting,
                                       ConfigException::ErrorList::Ptr errorList)
 {
@@ -140,10 +140,6 @@ void EditorServer::processCommandline(HeapObjectArray<String>::Ptr commandline,
     CommandlineInterpreter<Actor> commandInterpreter;
     commandInterpreter.doCommandline(commandline);
 
-    if (commandline->getLength() > 0 && programName.getLength() == 0) {
-        programName = File(commandline->get(0)).getBaseName();
-    }
-    
     if (isStarting)
     {
         if (commandInterpreter.hasInstanceName()) {

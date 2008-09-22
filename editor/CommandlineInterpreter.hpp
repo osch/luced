@@ -46,7 +46,7 @@ public:
     {
         const int argc = commandline->getLength();
         
-        for (int i = 1; i < argc; ++i)
+        for (int i = 0; i < argc; ++i)
         {
             String  fileName;
             int     numberOfWindowsForThisFile = -1;

@@ -27,6 +27,7 @@
 #include "OwningPtr.hpp"
 #include "WeakPtr.hpp"
 #include "EventDispatcher.hpp"
+#include "HeapHashMap.hpp"
 
 namespace LucED
 {
@@ -50,14 +51,16 @@ public:
         int         outputLength;
     };
 
-    static WeakPtr start(const String& programName,
-                         const String& input,
-                         Callback<Result>::Ptr finishedCallback)
+    static WeakPtr start(const String&                   programName,
+                         const String&                   input,
+                         HeapHashMap<String,String>::Ptr additionalEnvironment,
+                         Callback<Result>::Ptr           finishedCallback)
     {
         OwningPtr rslt(new ProgramExecutor());
-        rslt->programName = programName;
-        rslt->input       = input;
-        rslt->finishedCallback = finishedCallback;
+        rslt->programName           = programName;
+        rslt->additionalEnvironment = additionalEnvironment;
+        rslt->input                 = input;
+        rslt->finishedCallback      = finishedCallback;
         EventDispatcher::getInstance()->registerRunningComponent(rslt);
         rslt->startExecuting();
         return rslt;
@@ -77,6 +80,9 @@ private:
     void catchTerminatedChild(int returnCode);
     
     String         programName;
+    
+    HeapHashMap<String,String>::Ptr additionalEnvironment;
+    
     String         input;
     int            inputPosition;
     MemArray<char> output;

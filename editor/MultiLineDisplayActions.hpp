@@ -19,26 +19,40 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CLIENT_SERVER_UTIL_HPP
-#define CLIENT_SERVER_UTIL_HPP
+#ifndef MULTI_LINE_DISPLAY_ACTIONS_HPP
+#define MULTI_LINE_DISPLAY_ACTIONS_HPP
 
-#include "String.hpp"
-
-#include "GuiRootProperty.hpp"
-#include "HeapObjectArray.hpp"
+#include "RawPtr.hpp"
+#include "OwningPtr.hpp"
+#include "TextEditorWidget.hpp"
+#include "ActionMethodBinding.hpp"
 
 namespace LucED
 {
 
-class ClientServerUtil
+class MultiLineDisplayActions : public ActionMethodBinding<MultiLineDisplayActions>
 {
 public:
-    static GuiRootProperty getServerRunningProperty(const String& instanceName);
+    typedef OwningPtr<MultiLineDisplayActions> Ptr;
     
-    static GuiRootProperty getServerCommandProperty(const String& instanceName);
+    static Ptr create(RawPtr<TextEditorWidget> editWidget) {
+        return Ptr(new MultiLineDisplayActions(editWidget));
+    }
+
+    void scrollDown();
+    void scrollUp();
+    void scrollPageUp();
+    void scrollPageDown();
+
+private:
+    MultiLineDisplayActions(RawPtr<TextEditorWidget> editWidget)
+        : ActionMethodBinding<MultiLineDisplayActions>(this),
+          e(editWidget)
+    {}
+
+    RawPtr<TextEditorWidget> e;
 };
 
 } // namespace LucED
 
-#endif // CLIENT_SERVER_UTIL_HPP
-
+#endif // MULTI_LINE_DISPLAY_ACTIONS_HPP

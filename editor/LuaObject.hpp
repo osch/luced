@@ -320,8 +320,8 @@ public:
             lua_gettable(LuaObject::L, tableStackIndex);
             int rhsLength = strlen(rhs);
             bool rslt = isString()
-                     && rhsLength == lua_strlen(L, stackIndex)
-                     && memcmp(lua_tostring(L, stackIndex), rhs, rhsLength) == 0;
+                     && rhsLength == lua_strlen(L, -1)
+                     && memcmp(lua_tostring(L, -1), rhs, rhsLength) == 0;
             lua_pop(LuaObject::L, 1);
             return rslt;
         }
@@ -333,8 +333,8 @@ public:
             push(key);
             lua_gettable(LuaObject::L, tableStackIndex);
             bool rslt = isString() 
-                && rhs.getLength() == lua_strlen(L, stackIndex)
-                && memcmp(lua_tostring(L, stackIndex), rhs.toCString(), rhs.getLength()) == 0;
+                && rhs.getLength() == lua_strlen(L, -1)
+                && memcmp(lua_tostring(L, -1), rhs.toCString(), rhs.getLength()) == 0;
             lua_pop(LuaObject::L, 1);
             return rslt;
         }

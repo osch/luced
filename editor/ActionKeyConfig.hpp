@@ -110,8 +110,8 @@ public:
         return find(KeyMapping::Id(keyState, keyId));
     }
     
-    void set(KeyCombination    keyCombination,
-             ActionId          actionId);
+    void append(KeyCombination    keyCombination,
+                ActionId          actionId);
 
   
     KeyCombinations::Ptr getKeyCombinationsForAction(ActionId actionId)

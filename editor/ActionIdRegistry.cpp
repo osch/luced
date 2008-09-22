@@ -19,26 +19,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CLIENT_SERVER_UTIL_HPP
-#define CLIENT_SERVER_UTIL_HPP
+#include "ActionIdRegistry.hpp"
 
-#include "String.hpp"
+using namespace LucED;
 
-#include "GuiRootProperty.hpp"
-#include "HeapObjectArray.hpp"
+SingletonInstance<ActionIdRegistry> ActionIdRegistry::instance;
 
-namespace LucED
+ActionIdRegistry* ActionIdRegistry::getInstance()
 {
-
-class ClientServerUtil
-{
-public:
-    static GuiRootProperty getServerRunningProperty(const String& instanceName);
-    
-    static GuiRootProperty getServerCommandProperty(const String& instanceName);
-};
-
-} // namespace LucED
-
-#endif // CLIENT_SERVER_UTIL_HPP
-
+    return instance.getPtr();
+}

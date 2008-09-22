@@ -19,26 +19,20 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CLIENT_SERVER_UTIL_HPP
-#define CLIENT_SERVER_UTIL_HPP
+#include "ProgramName.hpp"
 
-#include "String.hpp"
+using namespace LucED;
 
-#include "GuiRootProperty.hpp"
-#include "HeapObjectArray.hpp"
+String ProgramName::name;
 
-namespace LucED
+#ifdef DEBUG
+static bool wasSet = false;
+#endif
+
+void ProgramName::set(const String& name)
 {
-
-class ClientServerUtil
-{
-public:
-    static GuiRootProperty getServerRunningProperty(const String& instanceName);
-    
-    static GuiRootProperty getServerCommandProperty(const String& instanceName);
-};
-
-} // namespace LucED
-
-#endif // CLIENT_SERVER_UTIL_HPP
+    ASSERT(!wasSet);
+    wasSet = true;
+    ProgramName::name = name;
+}
 

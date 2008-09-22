@@ -615,12 +615,3 @@ bool GuiWidget::hasActionMethod(ActionId actionId)
     return false;
 }
 
-ActionKeyConfig::Ptr GuiWidget::getActionKeyConfig()
-{
-    ActionKeyConfig::Ptr rslt;
-    if (parent.isValid()) {
-        rslt = parent->getActionKeyConfig();;
-    }
-    return rslt;
-}
-

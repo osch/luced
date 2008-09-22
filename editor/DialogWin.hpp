@@ -48,10 +48,6 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    virtual ActionKeyConfig::Ptr getActionKeyConfig() {
-        return actionKeyConfig;
-    }
-    
 protected:
     DialogWin(TopWin* referingWindow);
     
@@ -72,7 +68,6 @@ private:
     
     bool shouldBeMapped;
     
-    ActionKeyConfig::Ptr     actionKeyConfig;
     ActionKeySequenceHandler actionKeySequenceHandler;
 };
 

@@ -32,6 +32,7 @@
 #include "File.hpp"
 #include "CurrentDirectoryKeeper.hpp"
 #include "DefaultActionKeyConfig.hpp"
+#include "ActionIdRegistry.hpp"
 
 using namespace LucED;
 
@@ -71,9 +72,10 @@ GlobalConfig::GlobalConfig()
           keepRunningIfOwningClipboard(false),
           maxRegexAssertionLength(3000),
           syntaxPatternsConfig(SyntaxPatternsConfig::create()),
-          actionKeyConfig(DefaultActionKeyConfig::create())
+          actionKeyConfig(ActionKeyConfig::create())
 {
     setlocale(LC_CTYPE, "");
+    DefaultActionKeyConfig::appendTo(actionKeyConfig);
 }
 
 
@@ -414,6 +416,62 @@ void GlobalConfig::readConfig()
                 languageModes->append(o);
             }
         }
+        ActionKeyConfig::Ptr newActionKeyConfig = ActionKeyConfig::create();
+        LuaObject actions = configTable["actions"];
+        if (actions.isValid())
+        {
+            if (!actions.isTable()) {
+                throw ConfigException("invalid actions");
+            }
+            HashMap<String, bool> hasNameMap;
+            for (int i = 0; o = actions[i + 1], o.isValid(); ++i)
+            {
+                LuaObject n = o["name"];
+                if (!n.isValid() || !n.isString()) {
+                    throw ConfigException("missing name element for action");
+                }
+                String name = n.toString();
+                
+                if (hasNameMap.hasKey(name)) {
+                    throw ConfigException(String() << "duplicated action name '" << name <<"'");
+                }
+                hasNameMap.set(name, true);
+                
+                ActionId actionId = ActionIdRegistry::getInstance()->getActionId(name);
+                
+                if (o["type"] == "shell") {
+                    LuaObject script = o["script"];
+                    if (!script.isString()) {
+                        throw ConfigException(String() << "invalid element 'script' for action '" << name <<"'");
+                    }
+                    actionIdToShellscriptMap.set(actionId, script.toString());
+                }
+                
+                LuaObject keys = o["keys"];
+                if (!keys.isValid() || (!keys.isString() && !keys.isTable())) {
+                    throw ConfigException(String() << "Invalid element 'keys' for action = '" << name << "'");
+                }
+                if (keys.isString())
+                {
+                    newActionKeyConfig->append(KeyCombination(keys.toString()), 
+                                               actionId);
+                }
+                else
+                {
+                    LuaObject k;
+                    for (int i = 0; k = keys[i + 1], k.isValid(); ++i)
+                    {
+                        if (!k.isString()) {
+                            throw ConfigException(String() << "Invalid element 'keys' for action = '" << name << "'");
+                        }
+                        newActionKeyConfig->append(KeyCombination(k.toString()), 
+                                                   actionId);
+                    }
+                }
+            }
+        }
+        DefaultActionKeyConfig::appendTo(newActionKeyConfig);
+        actionKeyConfig = newActionKeyConfig;
     }
     catch (BaseException& ex) {
         errorList->appendNew(configFileName, ex.getMessage());

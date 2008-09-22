@@ -82,7 +82,7 @@ namespace // anonymous namespace
 } // anonymous namespace
 
 
-void EditorClient::startWithCommandline(HeapObjectArray<String>::Ptr commandline)
+void EditorClient::startWithCommandline(Commandline::Ptr commandline)
 {
     isStarted = true;
     wasCommandSet = false;
@@ -108,7 +108,7 @@ void EditorClient::startWithCommandline(HeapObjectArray<String>::Ptr commandline
 
         if (serverProperty.exists())
         {
-            commandProperty.setValue(ClientServerUtil::quoteCommandline(commandline));
+            commandProperty.setValue(commandline->toQuotedString());
             wasCommandSet = true;
 
             EventDispatcher::getInstance()

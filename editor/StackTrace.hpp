@@ -19,26 +19,20 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CLIENT_SERVER_UTIL_HPP
-#define CLIENT_SERVER_UTIL_HPP
-
-#include "String.hpp"
-
-#include "GuiRootProperty.hpp"
-#include "HeapObjectArray.hpp"
+#ifndef STACK_TRACE_HPP
+#define STACK_TRACE_HPP
 
 namespace LucED
 {
 
-class ClientServerUtil
+class StackTrace
 {
 public:
-    static GuiRootProperty getServerRunningProperty(const String& instanceName);
-    
-    static GuiRootProperty getServerCommandProperty(const String& instanceName);
+    static void print();
+private:
 };
 
 } // namespace LucED
 
-#endif // CLIENT_SERVER_UTIL_HPP
+#endif // STACK_TRACE_HPP
 

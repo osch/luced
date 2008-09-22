@@ -402,52 +402,6 @@ void SingleLineEditActions::selectionCursorEndOfLine()
 }
 
 
-void SingleLineEditActions::cursorBeginOfText()
-{
-    if (!e->areCursorChangesDisabled())
-    {
-        e->releaseSelection();
-        e->moveCursorToTextPosition(0);
-    }
-    e->assureCursorVisible();
-    e->rememberCursorPixX();
-}
-
-
-void SingleLineEditActions::cursorEndOfText()
-{
-    if (!e->areCursorChangesDisabled())
-    {
-        e->releaseSelection();
-        e->moveCursorToTextPosition(e->getTextData()->getLength());
-    }
-    e->assureCursorVisible();
-    e->rememberCursorPixX();
-}
-
-void SingleLineEditActions::scrollLeft()
-{
-    e->scrollLeft();
-}
-
-
-void SingleLineEditActions::scrollRight()
-{
-    e->scrollRight();
-}
-
-
-void SingleLineEditActions::scrollPageLeft()
-{
-    e->scrollPageLeft();
-}
-
-
-void SingleLineEditActions::scrollPageRight()
-{
-    e->scrollPageRight();
-}
-
 void SingleLineEditActions::tabForward()
 {
     if (!e->areCursorChangesDisabled() && !e->isReadOnly())
@@ -638,22 +592,6 @@ void SingleLineEditActions::deleteKey()
 }
 
 
-void SingleLineEditActions::copyToClipboard()
-{
-    if (!e->areCursorChangesDisabled())
-    {
-        TextData::HistorySection::Ptr historySectionHolder = e->getTextData()->createHistorySection();
-
-        if (e->hasPrimarySelection()) {
-            long selBegin  = e->getBeginSelectionPos();
-            long selLength = e->getEndSelectionPos() - selBegin;
-            Clipboard::getInstance()->copyToClipboard(e->getTextData()->getAmount(selBegin, selLength), selLength);
-        } else {
-            Clipboard::getInstance()->copyActiveSelectionToClipboard();
-        }
-    }
-}
-
 void SingleLineEditActions::cutToClipboard()
 {
     if (!e->areCursorChangesDisabled() && !e->isReadOnly())
@@ -674,19 +612,6 @@ void SingleLineEditActions::cutToClipboard()
         }
     }
 }
-
-void SingleLineEditActions::selectAll()
-{
-    if (!e->areCursorChangesDisabled() && e->getTextData()->getLength() > 0)
-    {
-        if (e->hasPseudoSelection()) {
-            e->makePseudoSelectionToPrimary();
-        } else {
-            e->setPrimarySelection(0, e->getTextData()->getLength());
-        }
-    }
-}
-
 
 void SingleLineEditActions::pasteFromClipboardForward()
 {

@@ -19,26 +19,32 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CLIENT_SERVER_UTIL_HPP
-#define CLIENT_SERVER_UTIL_HPP
-
-#include "String.hpp"
-
-#include "GuiRootProperty.hpp"
-#include "HeapObjectArray.hpp"
+#ifndef NULLABLE_HPP
+#define NULLABLE_HPP
 
 namespace LucED
 {
 
-class ClientServerUtil
+template
+<
+    class V
+>
+class Nullable
 {
 public:
-    static GuiRootProperty getServerRunningProperty(const String& instanceName);
-    
-    static GuiRootProperty getServerCommandProperty(const String& instanceName);
+    Nullable()           : valid(false), v()  {}
+    Nullable(const V& v) : valid(true),  v(v) {}
+
+    bool     isValid() const { return valid; }
+    bool     isNull()  const { return !valid; }
+    operator V()       const { return v; }
+    V        get()     const { return v; }
+
+private:
+    bool valid;
+    V v;
 };
 
 } // namespace LucED
 
-#endif // CLIENT_SERVER_UTIL_HPP
-
+#endif // NULLABLE_HPP

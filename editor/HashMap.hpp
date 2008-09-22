@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,15 +19,17 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HASHMAP_H
-#define HASHMAP_H
+#ifndef HASHMAP_HPP
+#define HASHMAP_HPP
 
 #include <sys/types.h>
 #include <ext/hash_map>
 
 #include "String.hpp"
+#include "Nullable.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 #if defined(HASH_MAP_UNDER_STD)
 using std::hash_map;
@@ -76,23 +78,6 @@ public:
     }
 };
 
-template
-<
-    class V
->
-class HashMapValue
-{
-public:
-    HashMapValue() : valid(false) {}
-    HashMapValue(const V& v) : valid(true), v(v) {}
-    bool isValid() const { return valid; }
-    operator V()   const { return v; }
-    V get()   const { return v; }
-private:
-    bool valid;
-    V v;
-};
-
 
 template
 <
@@ -103,7 +88,7 @@ template
 class HashMap
 {
 public:
-    typedef HashMapValue<V> Value;
+    typedef Nullable<V> Value;
  
     class Iterator
     {
@@ -163,5 +148,5 @@ private:
 
 } // namespace LucED
 
-#endif // HASHMAP_H
+#endif // HASHMAP_HPP
 

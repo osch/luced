@@ -20,6 +20,8 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "SingleLineEditorWidget.hpp"
+
+#include "SingleLineDisplayActions.hpp"
 #include "SingleLineEditActions.hpp"
 
 using namespace LucED;
@@ -31,6 +33,8 @@ SingleLineEditorWidget::SingleLineEditorWidget(GuiWidget* parent, TextStyles::Pt
     : TextEditorWidget(parent, textStyles, hilitedText, TextEditorWidget::CreateOptions(), ::BORDER_WIDTH)
 {
     getTextData()->setInsertFilterCallback(newCallback(this, &SingleLineEditorWidget::filterInsert));
+
+    TextEditorWidget::addActionMethods(SingleLineDisplayActions::create(this));
     GuiWidget::addActionMethods(SingleLineEditActions::create(this));
 }
 

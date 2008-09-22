@@ -580,7 +580,7 @@ bool DialogPanel::takesAwayDefaultKey(GuiWidget* widget)
     if (widget == NULL) {
         return false;
     }
-    ActionKeyConfig::Ptr config = getActionKeyConfig();
+    ActionKeyConfig::Ptr config = GlobalConfig::getInstance()->getActionKeyConfig();
     
     ActionKeyConfig::KeyCombinations::Ptr keys = config->getKeyCombinationsForAction(ActionId::PRESS_DEFAULT_BUTTON);
 

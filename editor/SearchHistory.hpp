@@ -135,10 +135,14 @@ public:
     
     SearchParameter getSearchParameterFromEntry(int index) const {
         const Entry& entry = entries[index];
-        return SearchParameter().setIgnoreCaseFlag   (entry.getIgnoreCaseFlag())
-                                .setRegexFlag        (entry.getRegexFlag())
-                                .setWholeWordFlag    (entry.getWholeWordFlag())
-                                .setFindString       (entry.getFindString());
+        SearchParameter rslt =  SearchParameter().setIgnoreCaseFlag(entry.getIgnoreCaseFlag())
+                                                 .setRegexFlag     (entry.getRegexFlag())
+                                                 .setWholeWordFlag (entry.getWholeWordFlag())
+                                                 .setFindString    (entry.getFindString());
+        if (entry.hasReplaceString()) {
+            rslt.setReplaceString(entry.getReplaceString());
+        }
+        return rslt;
     }
     
     SearchParameter getSearchParameterFromLastEntry() const {

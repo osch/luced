@@ -30,7 +30,7 @@ namespace LucED
 class DefaultActionKeyConfig
 {
 public:
-    static ActionKeyConfig::Ptr create();
+    static void appendTo(ActionKeyConfig::Ptr config);
 };
 
 } // namespace LucED

@@ -173,8 +173,9 @@ void TextData::checkFileInfo()
                 readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
             }
             
-            if ( fileExisted 
-             && !fileInfo.getLastModifiedTimeValSinceEpoche().isEqualTo(lastModifiedTimeValSinceEpoche))
+            if (  (    fileExisted 
+                   && !fileInfo.getLastModifiedTimeValSinceEpoche().isEqualTo(lastModifiedTimeValSinceEpoche))
+               || (!fileExisted))
             {
                 modifiedOnDiskFlag = true;
             }

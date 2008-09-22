@@ -29,6 +29,7 @@
 #include "KeyModifier.hpp"
 #include "KeyId.hpp"
 #include "KeyPressEvent.hpp"
+#include "GlobalConfig.hpp"
 
 namespace LucED
 {
@@ -39,17 +40,18 @@ public:
     ActionKeySequenceHandler(RawPtr<GuiWidget> thisWidget)
         : thisWidget(thisWidget),
           hasJustQuitSequenceFlag(false),
-          hasJustEnteredSequenceFlag(false)
+          hasJustEnteredSequenceFlag(false),
+
+          rootActionKeyConfig(GlobalConfig::getInstance()->getActionKeyConfig()),
+          currentActionKeyConfig(rootActionKeyConfig)
     {}
     
-    void setActionKeyConfig(ActionKeyConfig::Ptr actionKeyConfig) {
-        rootActionKeyConfig    = actionKeyConfig;
-        currentActionKeyConfig = actionKeyConfig;
-    }
     
     void reset() {
         hasJustQuitSequenceFlag    = (currentActionKeyConfig != rootActionKeyConfig);
         hasJustEnteredSequenceFlag = false;
+
+        rootActionKeyConfig        = GlobalConfig::getInstance()->getActionKeyConfig();
         currentActionKeyConfig     = rootActionKeyConfig;
     }
     

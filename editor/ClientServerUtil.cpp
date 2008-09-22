@@ -53,67 +53,6 @@ GuiRootProperty ClientServerUtil::getServerCommandProperty(const String& instanc
     return GuiRootProperty(name);
 }
 
-String ClientServerUtil::quoteCommandline(HeapObjectArray<String>::Ptr commandline)
-{
-    const int argc = commandline->getLength();
-    String rslt;
-    
-    for (int i = 1; i < argc; ++i)
-    {
-        const String argument = commandline->get(i);
-        
-        for (int j = 0; j < argument.getLength(); ++j)
-        {
-            if (j == 0 && i > 1) {
-                rslt << ' ';
-            }
-            switch (argument[j]) {
-                case ' ': {
-                    rslt << "\\ ";
-                    break;
-                }
-                case '\\': {
-                    rslt << "\\\\";
-                    break;
-                }
-                default: {
-                    rslt << argument[j];
-                    break;
-                }
-            }
-        }
-    }
-    return rslt;
-}
 
-
-HeapObjectArray<String>::Ptr ClientServerUtil::unquoteCommandline(const String& commandline)
-{
-    HeapObjectArray<String>::Ptr  rslt = HeapObjectArray<String>::create();
-    String s;
-    
-    rslt->append("luced"); // fake arg0 as program name
-    
-    for (int i = 0; i < commandline.getLength(); ++i)
-    {
-        if (commandline[i] == ' ' && s.getLength() > 0) {
-            rslt->append(s);
-            s = "";
-        }
-        else {
-            if (commandline[i] == '\\' && i + 1 < commandline.getLength()) {
-                s << commandline[i + 1];
-                i += 1;
-            } else {
-                s << commandline[i];
-            }
-        }
-    }
-    if (s.getLength() > 0)
-    {
-        rslt->append(s);
-    }
-    return rslt;
-}
 
 

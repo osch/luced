@@ -22,6 +22,8 @@
 #include "util.hpp"
 #include "GlobalConfig.hpp"
 #include "TextDisplayGuiCompound.hpp"
+#include "MultiLineDisplayActions.hpp"
+#include "SingleLineDisplayActions.hpp"
 
 using namespace LucED;
 
@@ -59,7 +61,7 @@ TextDisplayGuiCompound::Ptr TextDisplayGuiCompound::create(GuiWidget* parent, St
     
     textWidget->setDesiredMeasuresInChars(10, util::minimum(numberOfLines,  4L),
                                           80, util::minimum(numberOfLines, 25L),
-                                          INT_MAX, numberOfLines);
+                                          INT_MAX, /*numberOfLines*/ INT_MAX);
 
     textWidget->setVerticalAdjustmentStrategy  (TextWidget::NOT_STRICT_TOP_LINE_ANCHOR);
     textWidget->setHorizontalAdjustmentStrategy(TextWidget::NOT_STRICT_LEFT_COLUMN_ANCHOR);
@@ -67,6 +69,7 @@ TextDisplayGuiCompound::Ptr TextDisplayGuiCompound::create(GuiWidget* parent, St
 
     textWidget->hideCursor();
     textWidget->show();
+
 
     return Ptr(new TextDisplayGuiCompound(parent, textWidget,   ScrollableTextGuiCompound::Options() 
                                                               | ScrollableTextGuiCompound::DYNAMIC_SCROLL_BAR_DISPLAY));
@@ -78,5 +81,35 @@ TextDisplayGuiCompound::TextDisplayGuiCompound(GuiWidget*                       
                                                ScrollableTextGuiCompound::Options options)
 
     : ScrollableTextGuiCompound(parent, textWidget, options)
-{}
+{
+    addActionMethods(SingleLineDisplayActions::create(textWidget));
+    addActionMethods(MultiLineDisplayActions::create(textWidget));
+}
+
+
+void TextDisplayGuiCompound::addActionMethods(ActionMethods::Ptr methods)
+{
+    actionMethods.append(methods);
+}
+
+bool TextDisplayGuiCompound::invokeActionMethod(ActionId actionId)
+{
+    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
+        if (actionMethods[i]->invokeActionMethod(actionId)) {
+            ASSERT(hasActionMethod(actionId));
+            return true;
+        }
+    }
+    return false;
+}
+
+bool TextDisplayGuiCompound::hasActionMethod(ActionId actionId)
+{
+    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
+        if (actionMethods[i]->hasActionMethod(actionId)) {
+            return true;
+        }
+    }
+    return false;
+}
 

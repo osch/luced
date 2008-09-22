@@ -410,11 +410,6 @@ void MultiLineEditActions::selectionCursorPageUp()
     e->assureCursorVisible();
 }
 
-void MultiLineEditActions::scrollDown()
-{
-    e->scrollDown();
-}
-
 void MultiLineEditActions::scrollCursorDown()
 {
     e->assureCursorVisible();
@@ -437,11 +432,6 @@ void MultiLineEditActions::scrollCursorDown()
 }
 
 
-void MultiLineEditActions::scrollUp()
-{
-    e->scrollUp();
-}
-
 void MultiLineEditActions::scrollCursorUp()
 {
     e->assureCursorVisible();
@@ -458,19 +448,6 @@ void MultiLineEditActions::scrollCursorUp()
         e->showCursor();
     }
 }
-
-
-void MultiLineEditActions::scrollPageUp()
-{
-    e->scrollPageUp();
-}
-
-
-void MultiLineEditActions::scrollPageDown()
-{
-    e->scrollPageDown();
-}
-
 
 
 void MultiLineEditActions::insertNewLineAutoIndent()

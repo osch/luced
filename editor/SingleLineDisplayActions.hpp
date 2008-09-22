@@ -19,26 +19,46 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CLIENT_SERVER_UTIL_HPP
-#define CLIENT_SERVER_UTIL_HPP
+#ifndef SINGLE_LINE_DISPLAY_ACTIONS_HPP
+#define SINGLE_LINE_DISPLAY_ACTIONS_HPP
 
-#include "String.hpp"
-
-#include "GuiRootProperty.hpp"
-#include "HeapObjectArray.hpp"
+#include "RawPtr.hpp"
+#include "OwningPtr.hpp"
+#include "TextEditorWidget.hpp"
+#include "ActionMethodBinding.hpp"
 
 namespace LucED
 {
 
-class ClientServerUtil
+class SingleLineDisplayActions : public  ActionMethodBinding<SingleLineDisplayActions>
 {
 public:
-    static GuiRootProperty getServerRunningProperty(const String& instanceName);
+    typedef OwningPtr<SingleLineDisplayActions> Ptr;
     
-    static GuiRootProperty getServerCommandProperty(const String& instanceName);
+    static Ptr create(RawPtr<TextEditorWidget> editWidget) {
+        return Ptr(new SingleLineDisplayActions(editWidget));
+    }
+
+    void scrollLeft();
+    void scrollRight();
+    void scrollPageLeft();
+    void scrollPageRight();
+
+    void cursorBeginOfText();
+    void cursorEndOfText();
+
+    void copyToClipboard();
+    void selectAll();
+
+private:
+    SingleLineDisplayActions(RawPtr<TextEditorWidget> editWidget)
+        : ActionMethodBinding<SingleLineDisplayActions>(this),
+          e(editWidget)
+    {}
+    
+    RawPtr<TextEditorWidget> e;
 };
 
 } // namespace LucED
 
-#endif // CLIENT_SERVER_UTIL_HPP
-
+#endif // SINGLE_LINE_DISPLAY_ACTIONS_HPP

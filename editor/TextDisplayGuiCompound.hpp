@@ -47,11 +47,18 @@ public:
     };
 
     static Ptr create(GuiWidget* parent, Style style, TextData::Ptr textData);
+
+    virtual bool invokeActionMethod(ActionId actionId);
+    virtual bool hasActionMethod(ActionId actionId);
     
 private:
     TextDisplayGuiCompound(GuiWidget*                         parent, 
                            TextEditorWidget::Ptr              textWidget, 
                            ScrollableTextGuiCompound::Options options);
+
+    virtual void addActionMethods(ActionMethods::Ptr methods);
+
+    ObjectArray<ActionMethods::Ptr> actionMethods;
 };
 
 } // namespace LucED

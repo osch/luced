@@ -32,6 +32,8 @@
 #include "GlobalConfig.hpp"
 #include "SingletonInstance.hpp"
 #include "EditorServer.hpp"
+#include "File.hpp"
+#include "ProgramName.hpp"
 
 using namespace LucED;
 
@@ -461,7 +463,7 @@ void TopWin::setWindowManagerHints()
             if (envString != NULL) {
                 resName = envString;
             } else {
-                String programName = EditorServer::getInstance()->getProgramName();
+                String programName = File(ProgramName::get()).getBaseName();
                 resName = programName;
             }
         }

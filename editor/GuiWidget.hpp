@@ -104,8 +104,6 @@ public:
     virtual bool invokeActionMethod(ActionId actionId);
     virtual bool hasActionMethod(ActionId actionId);
 
-    virtual ActionKeyConfig::Ptr getActionKeyConfig();
-
 protected:
 
     GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width);
