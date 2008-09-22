@@ -31,8 +31,10 @@ static bool wasSet = false;
 
 void ProgramName::set(const String& name)
 {
+#ifdef DEBUG
     ASSERT(!wasSet);
     wasSet = true;
+#endif
     ProgramName::name = name;
 }
 
