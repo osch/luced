@@ -21,11 +21,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <execinfo.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+
+#include "options.hpp"
+
+#ifdef HAS_STACKTRACE
+#include <execinfo.h>
+#endif
 
 #include "debug.hpp"
 #include "util.hpp"
@@ -43,6 +48,7 @@ static int childInpFd = -1;
 
 void StackTrace::print()
 {
+#ifdef HAS_STACKTRACE
     String message;
            message << "\n****** StackTrace:\n";
 
@@ -115,7 +121,7 @@ void StackTrace::print()
     String data;
     {
         void*  array[2000];
-        int size = backtrace(array, 2000);
+        int size = ::backtrace(array, 2000);
         
         for (int i = 0; i < size; ++i)
         {
@@ -162,5 +168,6 @@ void StackTrace::print()
     }
     message << "******\n";
     printf("%s", message.toCString());
+#endif
 }
 

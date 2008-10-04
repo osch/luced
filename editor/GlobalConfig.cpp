@@ -26,7 +26,7 @@
 #include "ConfigException.hpp"
 #include "DirectoryReader.hpp"
 #include "RegexException.hpp"
-#include "LuaInterpreter.hpp"
+#include "GlobalLuaInterpreter.hpp"
 #include "LuaObject.hpp"
 #include "System.hpp"
 #include "File.hpp"
@@ -128,7 +128,7 @@ void GlobalConfig::readConfig()
         configDirectory = File(homeDirectory, ".luced").getAbsoluteName();
     }
 
-    LuaInterpreter* lua = LuaInterpreter::getInstance();
+    LuaAccess luaAccess = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
 
     this->generalConfigFileName = File(configDirectory, "config.lua").getAbsoluteName();
     String configFileName = generalConfigFileName;
@@ -141,7 +141,7 @@ void GlobalConfig::readConfig()
     {
         CurrentDirectoryKeeper currentDirectoryKeeper(configDirectory);
         
-        LuaInterpreter::Result luaRslt = lua->executeFile(configFileName);
+        LuaAccess::Result luaRslt = luaAccess.executeFile(configFileName);
         
         if (luaRslt.objects.getLength() < 1) {
             throw ConfigException("config file does not return table");
@@ -370,7 +370,8 @@ void GlobalConfig::readConfig()
             throw ConfigException("invalid textstyles");
         }
 
-        LuaObject o;
+        LuaObject o(luaAccess);
+        
         for (int i = 0; o = ts[i + 1], o.isValid(); ++i) {
             LuaObject n = o["name"];
             if (!n.isString()) {
@@ -458,7 +459,8 @@ void GlobalConfig::readConfig()
                 }
                 else
                 {
-                    LuaObject k;
+                    LuaObject k(luaAccess);
+                    
                     for (int i = 0; k = keys[i + 1], k.isValid(); ++i)
                     {
                         if (!k.isString()) {
@@ -506,7 +508,7 @@ void GlobalConfig::readConfig()
 
                 try
                 {
-                    LuaInterpreter::Result luaRslt = lua->executeFile(configFileName);
+                    LuaAccess::Result luaRslt = luaAccess.executeFile(configFileName);
 
                     if (luaRslt.objects.getLength() <= 0 || !luaRslt.objects[0].isTable()) {
                         throw ConfigException(String() << "Syntaxpattern '" << languageModeName << "' returns invalid element");
@@ -558,7 +560,9 @@ void GlobalConfig::readConfig()
 
 SyntaxPatterns::Ptr GlobalConfig::loadSyntaxPatterns(const String& absoluteFileName)
 {
-    LuaInterpreter::Result luaRslt = LuaInterpreter::getInstance()->executeFile(absoluteFileName);
+    LuaAccess         luaAccess = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
+    
+    LuaAccess::Result luaRslt   = luaAccess.executeFile(absoluteFileName);
     
     if (luaRslt.objects.getLength() <= 0 || !luaRslt.objects[0].isTable()) {
         throw ConfigException(String() << "Syntaxpattern '" << absoluteFileName << "' returns invalid element");

@@ -114,7 +114,7 @@ local languageModes =
     
     {
       name            = "lua",
-      fileNameRegex   =  [[.*\.lua]],
+      fileNameRegex   =  [[^.*\.lua$|^.*\.lua\.emlua$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
@@ -123,6 +123,26 @@ local languageModes =
     },
     
     {
+      name            = "rexx",
+      fileNameRegex   =  [[.*\.rexx?|.*\.r]],
+      approximateUnknownHiliting = true,
+      approximateUnknownHilitingReparseRange = 2000,
+      hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 4,
+    },
+    
+    {
+      name            = "emlua",
+      fileNameRegex   =  [[^(.*\.emlua|.*\.(jcl))$]],
+      approximateUnknownHiliting = true,
+      approximateUnknownHilitingReparseRange = 2000,
+      hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 4,
+    },
+
+    {
       name            = "makefile",
       fileNameRegex   =  [[^.*/(Makefile|.*\.h?mk|.*\.dep)$]],
       approximateUnknownHiliting = true,
@@ -130,16 +150,6 @@ local languageModes =
       hilitingBreakPointDistance = 50,
       hardTabWidth = 8,
       softTabWidth = 0,
-    },
-
-    {
-      name            = "emlua",
-      fileNameRegex   =  [[^(.*\.emlua|.*\.(jcl|rexx?))$]],
-      approximateUnknownHiliting = true,
-      approximateUnknownHilitingReparseRange = 2000,
-      hilitingBreakPointDistance = 50,
-      hardTabWidth = 8,
-      softTabWidth = 4,
     },
 
     {
@@ -156,6 +166,46 @@ local languageModes =
 
 local actions = 
 {
+    {
+        name  = "cvs edit",
+        keys  = "Alt+S,E",
+        type  = "shell",
+        script = [[ set -e
+                    cd "`dirname $FILE`"
+                    fn="`basename $FILE`"
+                    cvs update "$fn"
+                    rev=`cat CVS/Entries | grep "/$fn/" | cut -d/ -f3` 
+                    cvs editors "$fn" 
+                    cvs edit -a none "$fn" ]],
+    },
+    {
+        name  = "cvs unedit",
+        keys  = "Alt+S,U",
+        type  = "shell",
+        script = [[ set -e
+                    cd "`dirname $FILE`" 
+                    fn="`basename $FILE`" 
+                    rev="`cat CVS/Entries | grep /$fn/ | cut -d/ -f3`" 
+                    (echo "yes"|cvs unedit "$fn" 1>/dev/null 2>&1) 
+                    touch "$fn" ]],
+    },
+    {
+        name  = "cvs commit",
+        keys  = "Alt+S,C",
+        type  = "shell",
+        script = [[ set -e
+                    cd `dirname $FILE` 
+                    rxvt -e cvs commit `basename $FILE` ]],
+    },
+    {
+        name  = "cvs diff",
+        keys  = "Alt+S,D",
+        type  = "shell",
+        script = [[ set -e
+                    cd `dirname $FILE` 
+                    fn=`basename $FILE` 
+                    tkdiff $fn ]],
+    },
     {
         name  = "test1",
         keys  = "Alt+S,T",

@@ -30,13 +30,14 @@
 #include "MemArray.hpp"
 #include "ObjectArray.hpp"
 #include "NonCopyable.hpp"
-#include "LuaStoredObject.hpp"
+#include "LuaStoredObjectReference.hpp"
 #include "LuaException.hpp"
 #include "BasicRegex.hpp"
 #include "Flags.hpp"
 #include "RawPtr.hpp"
 #include "SearchParameter.hpp"
 #include "SearchParameterTypes.hpp"
+#include "LuaObject.hpp"
 
 namespace LucED
 {
@@ -183,12 +184,8 @@ protected:
             return Ptr(new PreparsedCallout(expression, startPosition));
         }
         
-        LuaObject getLuaObject() const {
-            return luaObject->retrieve();
-        }
-        
-        LuaStoredObject::Ptr getStoredLuaObject() const {
-            return luaObject;
+        LuaStoredObjectReference getStoredLuaObjectReference() const {
+            return storeReference;
         }
         
         int getNumberOfArguments() const {
@@ -214,7 +211,7 @@ protected:
     private:
         PreparsedCallout(const String& expression, int startPosition);
         
-        LuaStoredObject::Ptr luaObject;
+        LuaStoredObjectReference storeReference;
         ObjectArray<String>  arguments;
         MemArray<int>        positions;
         int                  startPosition;
@@ -226,8 +223,8 @@ protected:
     public:
         typedef OwningPtr<CalloutObject> Ptr;
 
-        LuaObject getCallableObject() const {
-            return luaObject->retrieve();
+        LuaStoredObjectReference getCallableObjectReference() const {
+            return storeReference;
         }
         
         int getNumberOfArguments() const {
@@ -241,14 +238,14 @@ protected:
     private:
         friend class FindUtil;
         
-        static Ptr create(LuaStoredObject::Ptr luaObject) {
-            return Ptr(new CalloutObject(luaObject));
+        static Ptr create(const LuaStoredObjectReference& storeReference) {
+            return Ptr(new CalloutObject(storeReference));
         }
         
-        CalloutObject(LuaStoredObject::Ptr luaObject) : luaObject(luaObject)
+        CalloutObject(const LuaStoredObjectReference& storeReference) : storeReference(storeReference)
         {}
-        LuaStoredObject::Ptr luaObject;
-        MemArray<int>        args;
+        LuaStoredObjectReference storeReference;
+        MemArray<int>            args;
     };
     
     void initialize();

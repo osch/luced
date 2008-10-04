@@ -24,8 +24,9 @@
 
 #include <limits.h>
 
-#include "SingletonInstance.hpp"
 #include "MemArray.hpp"
+#include "OwningPtr.hpp"
+#include "ObjectArray.hpp"
 
 namespace LucED
 {
@@ -34,10 +35,10 @@ namespace LucED
 class LuaStackChecker : public HeapObject
 {
 public:
-
-    static LuaStackChecker* getInstance()
-    {
-        return instance.getPtr();
+    typedef OwningPtr<LuaStackChecker> Ptr;
+    
+    static Ptr create() {
+        return Ptr(new LuaStackChecker());
     }
     
     int getHighestStackIndexForGeneration(int generation)
@@ -75,10 +76,6 @@ public:
     void truncateGenerationsAtStackIndex(int stackIndex);
 
 private:
-    friend class SingletonInstance<LuaStackChecker>;
-
-    static SingletonInstance<LuaStackChecker> instance;
-    
     LuaStackChecker()
         : newestGeneration(0),
           generationOffset(0)

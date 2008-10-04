@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,14 +19,30 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUACFUNCTIONARGUMENTS_H
-#define LUACFUNCTIONARGUMENTS_H
+#ifndef LUA_C_FUNCTION_ARGUMENTS_HPP
+#define LUA_C_FUNCTION_ARGUMENTS_HPP
 
 #include "NonCopyable.hpp"
 #include "LuaObject.hpp"
 
 namespace LucED
 {
+
+class LuaCFunctionArguments;
+class LuaCFunctionResult;
+template
+<
+    LuaCFunctionResult F(const LuaCFunctionArguments& args)
+>
+class LuaCFunction;
+
+template
+<
+    class C,
+    LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+>
+class LuaCMethod;
+
 
 class LuaCFunctionArguments : public NonCopyable
 {
@@ -40,38 +56,55 @@ public:
         return argArray.getLength();
     }
     
+    LuaAccess getLuaAccess() const {
+        return luaAccess;
+    }
+    
 private:
     
-    template<class ImplFunction>
+    template
+    <
+        LuaCFunctionResult F(const LuaCFunctionArguments& args)
+    >
     friend class LuaCFunction;
     
-    LuaCFunctionArguments(lua_State* L)
+    template
+    <
+        class C,
+        LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+    >
+    friend class LuaCMethod;
+    
+
+    LuaCFunctionArguments(const LuaAccess& luaAccess)
+        : luaAccess(luaAccess)
     {
-        int numberArgs = lua_gettop(L);
+        int numberArgs = lua_gettop(luaAccess.L);
             
         argArray.appendAmount(numberArgs);
         
         ASSERT(argArray.getLength() == numberArgs);
         
         for (int i = 0; i < numberArgs; ++i) {
-            argArray[i].stackIndex = i + 1;
-        #ifdef DEBUG
-            argArray[i].stackGeneration = LuaStackChecker::getInstance()->registerAndGetGeneration(i + 1);
-        #endif
+            new (&argArray[i]) LuaObject(luaAccess, i + 1);
         }
     }
     
-    ~LuaCFunctionArguments() {
+    ~LuaCFunctionArguments()
+    {
     #ifdef DEBUG
         for (int i = 0; i < argArray.getLength(); ++i) {
-            LuaStackChecker::getInstance()->truncateGenerationAtStackIndex(argArray[i].stackGeneration, 
-                                                                           argArray[i].stackIndex);
+            luaAccess.luaStackChecker->truncateGenerationAtStackIndex(argArray[i].stackGeneration, 
+                                                                      argArray[i].stackIndex);
         }
     #endif
     }
     MemArray<LuaObject> argArray;
+
+    LuaAccess luaAccess;
 };
 
 } // namespace LucED
 
-#endif // LUACFUNCTIONARGUMENTS_H
+
+#endif // LUA_C_FUNCTION_ARGUMENTS_HPP

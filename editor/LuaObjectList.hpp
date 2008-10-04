@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,13 +19,15 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUAOBJECTLIST_H
-#define LUAOBJECTLIST_H
+#ifndef LUA_OBJECT_LIST_HPP
+#define LUA_OBJECT_LIST_HPP
 
 #include "LuaObject.hpp"
 #include "HeapObjectArray.hpp"
+#include "LuaAccess.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class LuaObjectList
 {
@@ -42,10 +44,10 @@ public:
         return objects->getLength();
     }
 private:
-    friend class LuaInterpreter;
+    friend class LuaAccess;
     
-    void appendObjectWithStackIndex(int stackIndex) {
-        objects->appendNew(stackIndex);
+    void appendObjectWithStackIndex(const LuaAccess& luaAccess, int stackIndex) {
+        objects->appendNew(luaAccess, stackIndex);
     }
     
     HeapObjectArray<LuaObject>::Ptr objects;
@@ -53,4 +55,4 @@ private:
 
 } // namespace LucED
 
-#endif // LUAOBJECTLIST_H
+#endif // LUA_OBJECT_LIST_HPP

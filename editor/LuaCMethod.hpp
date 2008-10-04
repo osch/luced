@@ -20,41 +20,49 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "LuaAccess.hpp"
+#include "LuaObject.hpp"
 #include "LuaInterpreter.hpp"
 
-#ifndef LUA_C_FUNCTION_HPP
-#define LUA_C_FUNCTION_HPP
+#ifndef LUA_C_METHOD_HPP
+#define LUA_C_METHOD_HPP
 
-#include <exception>
+#include <typeinfo>
 
+#include "LuaException.hpp"
+#include "HeapObject.hpp"
+#include "WeakPtr.hpp"
 #include "LuaCFunctionArguments.hpp"
 #include "LuaCFunctionResult.hpp"
-#include "BaseException.hpp"
 
 namespace LucED
 {
 
+
+class LuaCMethodBase
+{
+protected:
+    static HeapObject* getCheckedObjectPtr(LuaObject methodLuaObject, const std::type_info& typeInfo);
+    static void handleException(lua_State* L);
+};
+
 template
 <
-    LuaCFunctionResult F(const LuaCFunctionArguments& args)
+    class C,
+    LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
 >
-class LuaCFunction
+class LuaCMethod : public LuaCMethodBase
 {
 public:
-    static LuaCFunction createWrapper()
+    static LuaCMethod createWrapper()
     {
-        return LuaCFunction();
+        return LuaCMethod();
     }
 
 private:
     friend class LuaAccess;
     friend class LuaObject;
     
-    template<class KeyType
-            >
-    friend class LuaObject::LuaObjectTableElementRef;
-    
-    LuaCFunction()
+    LuaCMethod()
     {}
     
     static int invokeFunction(lua_State* L)
@@ -68,25 +76,19 @@ private:
         int numberOfResults = 0;
         bool wasError = false;
         {
-            LuaCFunctionArguments args(luaAccess);
-
             try
             {
-                numberOfResults = F(args).numberOfResults;
-            }
-            catch (BaseException& ex)
-            {
-                lua_pushstring(L, ex.getMessage().toCString());
-                wasError = true;
-            }
-            catch (std::exception& ex)
-            {
-                lua_pushstring(L, ex.what());
-                wasError = true;
+                LuaCFunctionArguments args(luaAccess);
+            
+                LuaObject object = args[0];
+
+                HeapObject* rawObjectPtr = LuaCMethodBase::getCheckedObjectPtr(object, typeid(C));
+                
+                numberOfResults = (static_cast<C*>(rawObjectPtr)->*M)(args).numberOfResults;
             }
             catch (...)
             {
-                lua_pushstring(L, "unknown error");
+                LuaCMethodBase::handleException(L);
                 wasError = true;
             }
         }
@@ -101,8 +103,7 @@ private:
         }
     }
 };
-
-
+ 
 } // namespace LucED
 
-#endif // LUA_C_FUNCTION_HPP
+#endif // LUA_C_METHOD_HPP

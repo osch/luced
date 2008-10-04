@@ -27,9 +27,6 @@ using namespace LucED;
 
 #ifdef DEBUG
 
-SingletonInstance<LuaStackChecker> LuaStackChecker::instance;
-
-
 
 int LuaStackChecker::registerAndGetGeneration(int stackIndex)
 {

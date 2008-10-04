@@ -23,12 +23,4 @@
 
 using namespace LucED;
 
-#ifdef DEBUG
-int  LuaFunctionArguments::startStackIndex = 0;
-#endif
-
-bool LuaFunctionArguments::isOnStack = false;
-int  LuaFunctionArguments::numberArguments = 0;
-int  LuaFunctionArguments::refCounter      = 0;
-
 

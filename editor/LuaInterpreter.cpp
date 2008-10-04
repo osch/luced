@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,136 +19,147 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
-
 #include "LuaInterpreter.hpp"
 #include "File.hpp"
 #include "ByteBuffer.hpp"
 #include "LuaException.hpp"
 #include "LuaObject.hpp"
-#include "LuaStoredObject.hpp"
 #include "LuaStackChecker.hpp"
 #include "NonCopyable.hpp"
+#include "LuaStateAccess.hpp"
+#include "LuaCMethod.hpp"
+#include "LuaFunctionArguments.hpp"
 
 using namespace LucED;
 
-namespace LucED
+
+LuaCFunctionResult LuaInterpreter::printFunction(const LuaCFunctionArguments& args)
 {
+    LuaAccess              luaAccess      = args.getLuaAccess();
+    RawPtr<LuaInterpreter> luaInterpreter = luaAccess.getLuaInterpreter();
+    
+    int       numberOfArguments = args.getLength();
+    LuaObject toStringFunction  = luaAccess.retrieve(luaInterpreter->storedObjects->originalToStringFunction);
+    
+    ASSERT(toStringFunction.isFunction());
 
-
-class LuaPrintFunction
-{
-public:
-
-    LuaCFunctionResult operator()(const LuaCFunctionArguments& args)
+    for (int i = 0; i < numberOfArguments; ++i)
     {
-        int numberOfArguments = args.getLength();
-        LuaInterpreter* luaInterpreter = LuaInterpreter::getInstance();
-        LuaObject toStringFunction = luaInterpreter->storedObjects->originalToStringFunction->retrieve();
-        
-        ASSERT(toStringFunction.isFunction());
-
-        for (int i = 0; i < numberOfArguments; ++i)
-        {
-            if (i >= 1) {
-                luaInterpreter->printBuffer.append("\t");
-            }
-            LuaObject s = toStringFunction.call(args[i]);
-            luaInterpreter->printBuffer.append(s.toString());
+        if (i >= 1) {
+            luaInterpreter->printBuffer.append("\t");
         }
-        luaInterpreter->printBuffer.append("\n");
-
-        return LuaCFunctionResult();
+        LuaObject s = toStringFunction.call(args[i]);
+        luaInterpreter->printBuffer.append(s.toString());
     }
-};
+    luaInterpreter->printBuffer.append("\n");
 
-class LuaStdoutWriteFunction
+    return LuaCFunctionResult(luaAccess);
+}
+
+LuaCFunctionResult LuaInterpreter::stdoutWriteFunction(const LuaCFunctionArguments& args)
 {
-public:
+    LuaAccess              luaAccess      = args.getLuaAccess();
+    RawPtr<LuaInterpreter> luaInterpreter = luaAccess.getLuaInterpreter();
 
-    LuaCFunctionResult operator()(const LuaCFunctionArguments& args)
+    int numberOfArguments = args.getLength();
+
+    for (int i = 1; i < numberOfArguments; ++i) // args[0] is "this"-Table
     {
-        int numberOfArguments = args.getLength();
+        luaInterpreter->printBuffer.append(args[i].toString());
+    }
+    return LuaCFunctionResult(luaAccess);
+}
 
-        LuaInterpreter* luaInterpreter = LuaInterpreter::getInstance();
+LuaCFunctionResult LuaInterpreter::ioWriteFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess              luaAccess      = args.getLuaAccess();
+    RawPtr<LuaInterpreter> luaInterpreter = luaAccess.getLuaInterpreter();
 
-        for (int i = 1; i < numberOfArguments; ++i) // args[0] is "this"-Table
+    int numberOfArguments = args.getLength();
+
+    if (luaInterpreter->isLucedStdoutActive) {
+        for (int i = 0; i < numberOfArguments; ++i)
         {
             luaInterpreter->printBuffer.append(args[i].toString());
         }
-        return LuaCFunctionResult();
+    } else {
+        LuaObject originalIoWriteFunction = luaAccess.retrieve(luaInterpreter->storedObjects->originalIoWriteFunction);
+        for (int i = 0; i < numberOfArguments; ++i)
+        {
+            originalIoWriteFunction.call(args[i]);
+        }
     }
-};
+    return LuaCFunctionResult(luaAccess);
+}
 
-class LuaIoWriteFunction
+LuaCFunctionResult LuaInterpreter::ioOutputFunction(const LuaCFunctionArguments& args)
 {
-public:
+    LuaAccess              luaAccess      = args.getLuaAccess();
+    RawPtr<LuaInterpreter> luaInterpreter = luaAccess.getLuaInterpreter();
 
-    LuaCFunctionResult operator()(const LuaCFunctionArguments& args)
-    {
-        int numberOfArguments = args.getLength();
+    int numberOfArguments = args.getLength();
 
-        LuaInterpreter* luaInterpreter = LuaInterpreter::getInstance();
-
+    LuaObject lucedStdout = luaAccess.retrieve(luaInterpreter->storedObjects->lucedStdout);
+    
+    if (numberOfArguments >= 1) {
+        if (args[0] == lucedStdout) {
+            luaInterpreter->isLucedStdoutActive = true;
+            return LuaCFunctionResult(luaAccess) << lucedStdout;
+        } else {
+            luaInterpreter->isLucedStdoutActive = false;
+            LuaObject originalIoOutput = luaAccess.retrieve(luaInterpreter->storedObjects->originalIoOutputFunction);
+            return LuaCFunctionResult(luaAccess) << originalIoOutput.call(args[0]);
+        }
+    } else {
         if (luaInterpreter->isLucedStdoutActive) {
-            for (int i = 0; i < numberOfArguments; ++i)
-            {
-                luaInterpreter->printBuffer.append(args[i].toString());
-            }
+            return LuaCFunctionResult(luaAccess) << lucedStdout;
         } else {
-            LuaObject originalIoWriteFunction = luaInterpreter->storedObjects->originalIoWriteFunction->retrieve();
-            for (int i = 0; i < numberOfArguments; ++i)
-            {
-                originalIoWriteFunction.call(args[i]);
-            }
-        }
-        return LuaCFunctionResult();
-    }
-};
-
-class LuaIoOutputFunction
-{
-public:
-
-    LuaCFunctionResult operator()(const LuaCFunctionArguments& args)
-    {
-        int numberOfArguments = args.getLength();
-
-        LuaInterpreter* luaInterpreter = LuaInterpreter::getInstance();
-        LuaObject lucedStdout = luaInterpreter->storedObjects->lucedStdout->retrieve();
-        if (numberOfArguments >= 1) {
-            if (args[0] == lucedStdout) {
-                luaInterpreter->isLucedStdoutActive = true;
-                return LuaCFunctionResult() << lucedStdout;
-            } else {
-                luaInterpreter->isLucedStdoutActive = false;
-                LuaObject originalIoOutput = luaInterpreter->storedObjects->originalIoOutputFunction->retrieve();
-                return LuaCFunctionResult() << originalIoOutput.call(args[0]);
-            }
-        } else {
-            if (luaInterpreter->isLucedStdoutActive) {
-                return LuaCFunctionResult() << lucedStdout;
-            } else {
-                LuaObject originalIoOutput = luaInterpreter->storedObjects->originalIoOutputFunction->retrieve();
-                return LuaCFunctionResult() << originalIoOutput.call();
-            }
+            LuaObject originalIoOutput = luaAccess.retrieve(luaInterpreter->storedObjects->originalIoOutputFunction);
+            return LuaCFunctionResult(luaAccess) << originalIoOutput.call();
         }
     }
-};
+}
 
-class LuaTestFunction
+LuaCFunctionResult LuaInterpreter::testFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess              luaAccess      = args.getLuaAccess();
+
+    int numberOfArguments = args.getLength();
+
+    LuaCFunctionResult rslt(luaAccess);
+    for (int i = 0; i < numberOfArguments; ++i)
+    {
+        String value = args[i].toString();
+        rslt << args[i];
+    }
+    return rslt;
+}
+
+LuaCFunctionResult LuaInterpreter::doNothingFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess  luaAccess = args.getLuaAccess();
+    
+    return LuaCFunctionResult(luaAccess);
+}
+
+
+namespace LucED
+{
+class LuaInterpreter::TestClass : public HeapObject
 {
 public:
-
-    LuaCFunctionResult operator()(const LuaCFunctionArguments& args)
+    static OwningPtr<TestClass> create(String name) {
+        return OwningPtr<TestClass>(new TestClass(name));
+    }
+    LuaCFunctionResult testMethod(const LuaCFunctionArguments& args)
     {
+        LuaAccess luaAccess = args.getLuaAccess();
+        
         int numberOfArguments = args.getLength();
-
-        LuaCFunctionResult rslt;
+    
+        LuaCFunctionResult rslt(luaAccess);
+        
+        rslt << luaAccess.newObject(String() << "name=" << name);
         for (int i = 0; i < numberOfArguments; ++i)
         {
             String value = args[i].toString();
@@ -156,147 +167,104 @@ public:
         }
         return rslt;
     }
+private:
+    TestClass(String name)
+        : name(name)
+    {}
+    String name;
 };
-
-class LuaDoNothingFunction
+class LuaInterpreter::TestClass2 : public HeapObject
 {
 public:
-
-    LuaCFunctionResult operator()(const LuaCFunctionArguments& args)
-    {
-        return LuaCFunctionResult();
+    static OwningPtr<TestClass2> create(String name) {
+        return OwningPtr<TestClass2>(new TestClass2(name));
     }
+    LuaCFunctionResult testMethod(const LuaCFunctionArguments& args)
+    {
+        LuaAccess luaAccess = args.getLuaAccess();
+
+        int numberOfArguments = args.getLength();
+    
+        LuaCFunctionResult rslt(luaAccess);
+        
+        rslt << luaAccess.newObject(String() << "name=" << name);
+        for (int i = 0; i < numberOfArguments; ++i)
+        {
+            String value = args[i].toString();
+            rslt << args[i];
+        }
+        return rslt;
+    }
+private:
+    TestClass2(String name)
+        : name(name)
+    {}
+    String name;
 };
-
-} // namespace LucED
-
-SingletonInstance<LuaInterpreter> LuaInterpreter::instance;;
-
+}
 
 LuaInterpreter::LuaInterpreter()
+    : rootAccess(luaL_newstate()),
+      currentAccess(rootAccess.L)
 {
-#ifdef DEBUG
-    LuaStackChecker::getInstance(); // assure that StackChecker exists for all LuaObjects
-#endif
-    
-    L = luaL_newstate();
+    luaL_openlibs(currentAccess.L);
 
-    LuaObject::L       = L;
-    LuaStoredObject::L = L;
-    
-    luaL_openlibs(L);
+    LuaStateAccess::setLuaInterpreter(currentAccess.L, this);
 
     storedObjects = StoredObjects::create();
-    storedObjects->originalToStringFunction = LuaStoredObject::store(getGlobal("tostring"));
-    storedObjects->originalIoOutputFunction = LuaStoredObject::store(getGlobal("io")["output"]);
-    storedObjects->originalIoWriteFunction  = LuaStoredObject::store(getGlobal("io")["write"]);
+    storedObjects->originalToStringFunction = currentAccess.getGlobal("tostring")    .store();
+    storedObjects->originalIoOutputFunction = currentAccess.getGlobal("io")["output"].store();
+    storedObjects->originalIoWriteFunction  = currentAccess.getGlobal("io")["write"] .store();
 
-    setGlobal("print", LuaCFunction<LuaPrintFunction>());
-    setGlobal("trt",   LuaCFunction<LuaTestFunction>());
+    currentAccess.setGlobal("print", LuaCFunction<printFunction>::createWrapper());
+    currentAccess.setGlobal("trt",   LuaCFunction<testFunction>::createWrapper());
     
-    LuaObject lucedStdout = LuaObject::Table();
+    testClassPtr   = TestClass::create("testClassObject1");
+    testClassPtr2  = TestClass::create("testClassObject2");
+    testClass2Ptr = TestClass2::create("testClass2Object1");
     
-    lucedStdout["write"] = LuaCFunction<LuaStdoutWriteFunction>();
-    lucedStdout["close"] = LuaCFunction<LuaDoNothingFunction>();
-    lucedStdout["flush"] = LuaCFunction<LuaDoNothingFunction>();
+    currentAccess.setGlobal("ttt",   currentAccess.newObject(testClassPtr));
+    currentAccess.setGlobal("t22",   currentAccess.newObject(testClassPtr2));
+
+    currentAccess.setGlobal("tmt",    LuaCMethod<TestClass, &TestClass::testMethod>::createWrapper());
+    currentAccess.setGlobal("tmt2",   LuaCMethod<TestClass2, &TestClass2::testMethod>::createWrapper());
+
+        
+    LuaObject metaTable   = currentAccess.newTable();
+    LuaObject methodTable = currentAccess.newTable();
     
-    LuaObject io = getGlobal("io");
+    methodTable["m1"] = currentAccess.getGlobal("tmt");
+    methodTable["m2"] = currentAccess.getGlobal("tmt2");
+
+    metaTable["__index"] = methodTable;
+    
+    currentAccess.getGlobal("ttt").setMetaTable(metaTable);
+    currentAccess.getGlobal("t22").setMetaTable(metaTable);
+    
+    LuaObject lucedStdout = currentAccess.newTable();
+    
+    lucedStdout["write"] = LuaCFunction<stdoutWriteFunction>::createWrapper();
+    lucedStdout["close"] = LuaCFunction<doNothingFunction>::createWrapper();
+    lucedStdout["flush"] = LuaCFunction<doNothingFunction>::createWrapper();
+    
+    LuaObject io = currentAccess.getGlobal("io");
     ASSERT(io.isTable());
 
     io["stdout"] = lucedStdout;
-    io["output"] = LuaCFunction<LuaIoOutputFunction>();
-    io["write"]  = LuaCFunction<LuaIoWriteFunction>();
+    io["output"] = LuaCFunction<ioOutputFunction>::createWrapper();
+    io["write"]  = LuaCFunction<ioWriteFunction>::createWrapper();
     
-    storedObjects->lucedStdout = LuaStoredObject::store(lucedStdout);
+    storedObjects->lucedStdout = currentAccess.store(lucedStdout);
     isLucedStdoutActive = true;
 }
+
 
 LuaInterpreter::~LuaInterpreter()
 {
     storedObjects.invalidate();
     
-    lua_close(L);
-    
-    LuaObject::L       = NULL;
-    LuaStoredObject::L = NULL;
+    lua_close(rootAccess.L);
 }
 
 
-
-LuaInterpreter::Result LuaInterpreter::executeScript(const char* scriptBegin, long scriptLength, String name)
-{
-    printBuffer = "";
-    int oldTop = lua_gettop(L);
-    int error = luaL_loadbuffer(L, scriptBegin, scriptLength, name.toCString())
-            || lua_pcall(L, 0, LUA_MULTRET, 0);
-
-    if (error) {
-        LuaException ex(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        throw ex;
-    }
-    Result rslt;
-           rslt.output = printBuffer;
-    for (int i = oldTop + 1, n = lua_gettop(L); i <= n; ++i) {
-        rslt.objects.appendObjectWithStackIndex(i);
-    }
-    printBuffer = "";
-
-    return rslt;
-}
-
-LuaInterpreter::Result LuaInterpreter::executeExpression(const char* scriptBegin, long scriptLength, String name)
-{
-    printBuffer = "";
-    
-    String script = "return ";
-    script.append(scriptBegin, scriptLength);
-    
-    int oldTop = lua_gettop(L);
-    int error = luaL_loadbuffer(L, script.toCString(), script.getLength(), name.toCString())
-            || lua_pcall(L, 0, LUA_MULTRET, 0);
-
-    if (error) {
-        LuaException ex(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        throw ex;
-    }
-
-    Result rslt;
-           rslt.output = printBuffer;
-    for (int i = oldTop + 1, n = lua_gettop(L); i <= n; ++i) {
-        rslt.objects.appendObjectWithStackIndex(i);
-    }
-    printBuffer = "";
-
-    return rslt;
-}
-
-LuaInterpreter::Result LuaInterpreter::executeFile(String name)
-{
-    ByteBuffer buffer;
-    File(name).loadInto(buffer);
-    return executeScript((const char*) buffer.getTotalAmount(), buffer.getLength(), name);
-}
-
-
-LuaObject LuaInterpreter::getGlobal(const char* name)
-{
-    lua_getglobal(L, name);
-    return LuaObject(lua_gettop(L));
-}
-
-
-void LuaInterpreter::setGlobal(const char* name, LuaObject value)
-{
-    lua_pushvalue(L, value.stackIndex);
-    lua_setglobal(L, name);
-}
-
-
-void LuaInterpreter::clearGlobal(const char* name)
-{
-    lua_pushnil(L);
-    lua_setglobal(L, name);
-}
 

@@ -20,6 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "EditorTopWinActions.hpp"
+#include "GlobalLuaInterpreter.hpp"
 
 using namespace LucED;
 
@@ -39,8 +40,9 @@ void EditorTopWinActions::executeLuaScript()
             long selBegin  = editorWidget->getBeginSelectionPos();
             long selLength = editorWidget->getEndSelectionPos() - selBegin;
             
-            LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeScript((const char*) textData->getAmount(selBegin, selLength),
-                                                                                               selLength);
+            LuaAccess         luaAccess    = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
+            LuaAccess::Result scriptResult = luaAccess.executeScript((const char*) textData->getAmount(selBegin, selLength),
+                                                                     selLength);
             String output = scriptResult.output;
             
             TextData::HistorySection::Ptr historySectionHolder = textData->createHistorySection();
@@ -92,8 +94,9 @@ void EditorTopWinActions::executeLuaScript()
             }
             if (spos < cursorPos)
             {
-                LuaInterpreter::Result scriptResult = LuaInterpreter::getInstance()->executeExpression((const char*) textData->getAmount(spos, cursorPos - spos),
-                                                                                                       cursorPos - spos);
+                LuaAccess         luaAccess    = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
+                LuaAccess::Result scriptResult = luaAccess.executeExpression((const char*) textData->getAmount(spos, cursorPos - spos),
+                                                                             cursorPos - spos);
                 String output = scriptResult.output;
                 for (int i = 0, n = scriptResult.objects.getLength(); i < n; ++i) {
                     output << scriptResult.objects[i].toString();

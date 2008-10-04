@@ -139,7 +139,7 @@ GuiElement::ProcessingResult DialogPanel::processEvent(const XEvent* event)
 void DialogPanel::treatFocusIn()
 {
     {
-        KeyMapping::Id defaultKey(KeyModifier(), KeyId("Return"));
+        KeyMapping::Id defaultKey(KeyModifier::NONE, KeyId("Return"));
         GuiWidget*     last = defaultKeyWidgets->getLast();
 
         if (!focusedElementTakesAwayDefaultKey) {
@@ -172,7 +172,7 @@ void DialogPanel::treatFocusIn()
 void DialogPanel::treatFocusOut()
 {
     {
-        KeyMapping::Id defaultKey(KeyModifier(), KeyId("Return"));
+        KeyMapping::Id defaultKey(KeyModifier::NONE, KeyId("Return"));
         GuiWidget*     last = defaultKeyWidgets->getLast();
 
         if (!focusedElementTakesAwayDefaultKey) {
@@ -475,7 +475,7 @@ bool DialogPanel::processHotKey(KeyMapping::Id keyMappingId)
 
 void DialogPanel::Actions::pressDefaultButton()
 {
-    KeyMapping::Id defaultKey(KeyModifier(), KeyId("Return"));
+    KeyMapping::Id defaultKey(KeyModifier::NONE, KeyId("Return"));
     GuiWidget*     w = thisPanel->defaultKeyWidgets->getLast();
 
     if (w != NULL) {
@@ -620,7 +620,7 @@ void DialogPanel::setFocus(GuiWidget* element)
             focusedElement = element;
             if (focusedElement.isValid())
             {
-                KeyMapping::Id defaultKey(KeyModifier(), KeyId("Return"));
+                KeyMapping::Id defaultKey(KeyModifier::NONE, KeyId("Return"));
                 
                 bool newFocusedElementTakesAwayDefaultKey = takesAwayDefaultKey(focusedElement);
                 
@@ -660,7 +660,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
 {
     ASSERT(w != NULL);
     
-    KeyMapping::Id defaultKey(KeyModifier(), KeyId("Return"));
+    KeyMapping::Id defaultKey(KeyModifier::NONE, KeyId("Return"));
     
     if (id == defaultKey)
     {
@@ -709,7 +709,7 @@ void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id
 {
     ASSERT(w != NULL);
 
-    KeyMapping::Id defaultKey(KeyModifier(), KeyId("Return"));
+    KeyMapping::Id defaultKey(KeyModifier::NONE, KeyId("Return"));
     
     if (id == defaultKey)
     {

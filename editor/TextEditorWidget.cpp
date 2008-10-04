@@ -41,17 +41,19 @@ public:
     }
     virtual long initSelectionDataRequest()
     {
-        ASSERT(textEditorWidget->getBackliteBuffer()->hasActiveSelection());
-        
-        long selBegin  = textEditorWidget->getBackliteBuffer()->getBeginSelectionPos();
-        long selLength = textEditorWidget->getBackliteBuffer()->getEndSelectionPos() - selBegin;
-        textEditorWidget->disableCursorChanges();
-        return selLength;
+        if (textEditorWidget->getBackliteBuffer()->hasActiveSelection())
+        {
+            long selBegin  = textEditorWidget->getBackliteBuffer()->getBeginSelectionPos();
+            long selLength = textEditorWidget->getBackliteBuffer()->getEndSelectionPos() - selBegin;
+            textEditorWidget->disableCursorChanges();
+            return selLength;
+        }
+        else {
+            return 0;
+        }
     }
     virtual const byte* getSelectionDataChunk(long pos, long length)
     {
-        ASSERT(textEditorWidget->getBackliteBuffer()->hasActiveSelection());
-    
         long selBegin = textEditorWidget->getBackliteBuffer()->getBeginSelectionPos();
         return textEditorWidget->textData->getAmount(selBegin + pos, length);
     }

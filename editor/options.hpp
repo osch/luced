@@ -34,5 +34,7 @@
 #define  USE_X11_XKB_EXTENSION
 #define  USE_X11_XPM_LIB
 
+#undef   HAS_STACKTRACE
+
 #include "sandbox_options.hpp"
 

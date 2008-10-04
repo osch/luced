@@ -19,63 +19,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef KEY_MODIFIER_HPP
-#define KEY_MODIFIER_HPP
+#include "LuaStoredObjectReference.hpp"
+#include "LuaInterpreter.hpp"
 
-#include "headers.hpp"
-#include "String.hpp"
+using namespace LucED;
 
-namespace LucED
+LuaStoredObjectReference::Data::~Data()
 {
-
-class KeyModifier
-{
-public:
-
-#ifdef X11_GUI
-    static const KeyModifier NONE;
-
-    KeyModifier()
-        : keyState(0)
-    {}
-    
-    KeyModifier(const String& asString);
-    
-    explicit KeyModifier(int keyState)
-        : keyState(keyState)
-    {}
-    
-    String toString() const;
-
-    bool operator==(const KeyModifier& rhs) const {
-        return keyState == rhs.keyState;
-    }
-    bool operator<(const KeyModifier& rhs) const {
-        return keyState < rhs.keyState;
-    }
-    
-    int toHashValue() const {
-        return keyState;
-    }
-    
-    bool containsShift() const {
-        return keyState & ShiftMask;
-    }
-    
-    bool containsModifier1() const {
-        return keyState & Mod1Mask;
-    }
-    
-#endif
-    
-private:
-
-#ifdef X11_GUI
-    int keyState;
-#endif
-
-};      
-
-} // namespace LucED
-
-#endif // KEY_MODIFIER_HPP
+    lua_State* L = getL(luaInterpreter->getCurrentLuaAccess());
+    luaL_unref(L, LUA_REGISTRYINDEX, registryReference);
+}

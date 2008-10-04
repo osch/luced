@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,47 +19,29 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUASTOREDOBJECT_H
-#define LUASTOREDOBJECT_H
+#ifndef GLOBAL_LUA_INTERPRETER_HPP
+#define GLOBAL_LUA_INTERPRETER_HPP
 
-#include "HeapObject.hpp"
-#include "LuaObject.hpp"
-#include "OwningPtr.hpp"
+#include "SingletonInstance.hpp"
+#include "LuaInterpreter.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {
 
-class LuaStoredObject : public HeapObject
+class GlobalLuaInterpreter : public LuaInterpreter
 {
 public:
-    typedef OwningPtr<LuaStoredObject> Ptr;
-    
-    static Ptr store(const LuaObject& object) {
-        return Ptr(new LuaStoredObject(object));
-    }
-    
-    LuaObject retrieve() const {
-        lua_rawgeti(L, LUA_REGISTRYINDEX, registryReference);
-        return LuaObject(lua_gettop(L));
+    static RawPtr<GlobalLuaInterpreter> getInstance() {
+        return instance.getPtr();
     }
     
 private:
-    friend class LuaInterpreter;
+    friend class SingletonInstance<GlobalLuaInterpreter>;
     
-    static lua_State* L;    
-    
-    LuaStoredObject(const LuaObject& object) {
-        lua_pushvalue(L, object.stackIndex);
-        registryReference = luaL_ref(L, LUA_REGISTRYINDEX);
-    }
-    
-    ~LuaStoredObject() {
-        luaL_unref(L, LUA_REGISTRYINDEX, registryReference);
-    }
-    
-    int registryReference;
+    static SingletonInstance<GlobalLuaInterpreter> instance;
 };
 
 } // namespace LucED
 
-#endif // LUASTOREDOBJECT_H
+#endif // GLOBAL_LUA_INTERPRETER_HPP

@@ -160,6 +160,10 @@ public:
 
 private:
 
+    template< class S
+            >
+    friend class RawPtr;
+
 #ifdef DEBUG
     WeakPtr<T> ptr;
     bool       isValidFlag;

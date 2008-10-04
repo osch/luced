@@ -24,6 +24,7 @@ CPPCOMP_PRG         := g++
 LINK_PRG             = $(CPPCOMP_PRG)
 CPPCOMP_INVOKE_OPTS := -g
 LINK_INVOKE_OPTS    := -g
+CPP_DEFINES         := -DLUA_USE_LINUX
 
 CPPCOMP_FAST_OPTS := -O2
 CPPCOMP_SLOW_OPTS := -Os
@@ -32,11 +33,10 @@ BUILD_DIR       := build
 
 LINK_X11_OPTS   := -L /usr/X11R6/lib/ -lX11 -lXpm -lXext
 LINK_PCRE_OPTS  := -lpcre
-LINK_LUA_OPTS   := -llua5.1
 LINK_EXTRA_OPTS := 
 LINK_OPTS       :=
 
-INCL_LUA_OPTS   := -I /usr/include/lua5.1
+INCL_LUA_OPTS   := -I ../lua/src
 INCL_EXTRA_OPTS :=
 INCL_OPTS       :=
 
@@ -45,10 +45,10 @@ INCL_OPTS       :=
 #
 include sandbox.mk
 
-LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_LUA_OPTS) $(LINK_EXTRA_OPTS)
+LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_EXTRA_OPTS)
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 
-LUA_MODULES            := functions             BuiltinActionDefinitions
+LUA_SCRIPTS            := functions             BuiltinActionDefinitions
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId
 GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultActionKeyConfig
 
@@ -59,8 +59,8 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
                 TextEditorWidget         TextStyle              KeyPressRepeater           ScrollBar \
                 System                   LuaException           TopWin                     ProgramName \
                 LuaObject                LuaInterpreter         ConfigException            GlobalConfig \
-                LanguageModes            RegexException         StatusLine                 \
-                Button                   GuiLayoutWidget        LuaStoredObject \
+                LanguageModes            RegexException         StatusLine                 GlobalLuaInterpreter \
+                Button                   GuiLayoutWidget        LuaStoredObjectReference   \
                 GotoLinePanel            SingletonKeeper        TopWinList                 OwnedTopWins \
                 DialogWin                GuiLayoutSpacer        MultiLineEditorWidget      SubstitutionException \
                 SingleLineEditorWidget   LuaStackChecker        Commandline \
@@ -74,7 +74,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
 		FramedGuiCompound        EditorTopWinActions    UnknownActionNameException ScrollableTextGuiCompound \
 		SearchInteraction        ActionKeyConfig        SingleLineEditActions      MultiLineEditActions \
 		ActionKeySequenceHandler StackTrace             ActionIdRegistry           MultiLineDisplayActions \
-		SingleLineDisplayActions
+		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \
@@ -84,16 +84,23 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 
 PRG_MODULES  := luced
 
+LUA_MODULES  := lapi lcode ldebug ldo ldump lfunc lgc llex lmem \
+                lobject lopcodes lparser lstate lstring ltable ltm  \
+                lundump lvm lzio \
+                lauxlib lbaselib ldblib liolib lmathlib loslib ltablib \
+                lstrlib loadlib linit
 
 GENERATED_MODULES  := $(GENERATED_SLOW_MODULES) $(GENERATED_FAST_MODULES)
 
 MODULES            :=           $(FAST_MODULES)           $(SLOW_MODULES) \
-                      $(GENERATED_FAST_MODULES) $(GENERATED_SLOW_MODULES)
+                      $(GENERATED_FAST_MODULES) $(GENERATED_SLOW_MODULES) \
+                      $(LUA_MODULES)
 
 LIB_MBRS      := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
 LIB_OBJS      := $(patsubst %, $(BUILD_DIR)/%.o,                $(MODULES))
 FAST_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(FAST_MODULES))
 SLOW_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(SLOW_MODULES))
+ LUA_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(LUA_MODULES))
  PRG_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
 
 GEN_HDRS      := $(patsubst %, $(BUILD_DIR)/%.hpp,         $(GENERATED_HEADERS))
@@ -106,7 +113,7 @@ GEN_FAST_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,      $(GENERATED_FAST_MODULES))
 GEN_SLOW_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,      $(GENERATED_SLOW_MODULES))
 
 
-LUA_FILES     := $(patsubst %, %.lua, $(LUA_MODULES))
+LUA_SCRIPT_FILES := $(patsubst %, %.lua, $(LUA_SCRIPTS))
 
 MAKECMDGOALS   ?=
 NONBUILD_GOALS := clean
@@ -148,7 +155,7 @@ endif                                                         #
 #  is used).
 #
 
-$(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_FILES)
+$(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_SCRIPT_FILES)
 	$(call EMLUA_RUN,                   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<))
 	$(call CONDITIONAL_DEPENDECY_RUN,   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.hpp.gen.dep,$<), \
 	                                    $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<),     \
@@ -156,7 +163,7 @@ $(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_FILES)
 	                                    
 
 
-$(BUILD_DIR)/%.cpp.gen.dep $(BUILD_DIR)/%.new.cpp: %.cpp.emlua $(LUA_FILES)
+$(BUILD_DIR)/%.cpp.gen.dep $(BUILD_DIR)/%.new.cpp: %.cpp.emlua $(LUA_SCRIPT_FILES)
 	$(call EMLUA_RUN,                   $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.new.cpp,$<))
 	$(call CONDITIONAL_DEPENDECY_RUN,   $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.cpp.gen.dep,$<), \
 	                                    $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.new.cpp,$<),     \
@@ -181,6 +188,9 @@ $(SLOW_OBJS): $(BUILD_DIR)/%.o: %.cpp
 
 $(GEN_SLOW_OBJS): $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.cpp
 	$(call COMPILE_RUN,$(CPPCOMP_SLOW_OPTS))
+
+$(LUA_OBJS): $(BUILD_DIR)/%.o: ../lua/src/%.c
+	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
 
 
 $(PRG_OBJS): $(BUILD_DIR)/%.o: %.cpp

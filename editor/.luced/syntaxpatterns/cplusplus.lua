@@ -35,7 +35,7 @@ local topChildPatterns = {
                           "string",       "char",         "comment1",         "comment2",     "comment3", "comment4", "preprop",      "template",     
                           "sizeof",
                           "newcast",      "oldcast",      "namespace",        "struct1", "struct2",      "class",        "keywords",
-                          "typekeywords", "decl",      "operators"  
+                          "typekeywords", "decl",      "operators"
                          }
 
 return
@@ -54,7 +54,7 @@ return
                                             |do     |for      |return  |try       |catch    |public   |private  |protected |virtual  |while
                                             |switch |case     |break   |continue  |template |typename |struct   |explicit  |mutable  |throw
                                             |new    |operator |sizeof  |extern    |friend   |delete   |volatile
-                                            |default|goto
+                                            |default|goto     |typeid
                                        )\b
                                    ]],
                 maxExtend        = 15,
@@ -65,11 +65,11 @@ return
                 endPattern       = [[;]],
                 maxBeginExtend   = 100,
                 maxEndExtend     = 1,
-                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "comment3", "comment4", "preprop" },
+                childPatterns    = { "emluaexpr", "emlualine", "comment1", "comment2", "comment3", "comment4", "preprop" },
         },
         emlualine = {
         	style = "regex",
-                beginPattern     = [[^@]],
+                beginPattern     = [[^@(?:[^@*]|$)]],
                 endPattern       = [[\n]],
                 maxBeginExtend   = 1,
                 maxEndExtend     = 1,
@@ -137,7 +137,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {templateBegin = "keyword"},
                 endSubstyles     = {templateEnd   = "keyword"},
-                childPatterns    = {"comment1", "comment2", "emlualine", "emluaexpr", "template2", "templateKeywords", "keywords", "decl"},
+                childPatterns    = {"comment1", "comment2", "emluaexpr", "emlualine", "template2", "templateKeywords", "keywords", "decl"},
         },
         template2 = {
         	style = "type",
@@ -160,7 +160,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {classBegin = "keyword", classBegin2 = "default"},
                 endSubstyles     = {classEnd   = "keyword"},
-                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "keywords", "classoperators"},
+                childPatterns    = { "emluaexpr", "emlualine", "comment1", "comment2", "keywords", "classoperators"},
         },
         struct1 = {
         	style = "comment",
@@ -170,7 +170,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {structBegin = "keyword", structBegin2 = "type"},
                 endSubstyles     = {structEnd   = "keyword"},
-                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "keywords", "classoperators"},
+                childPatterns    = { "emluaexpr", "emlualine", "comment1", "comment2", "keywords", "classoperators"},
         },
         struct2 = {
         	style = "type",
@@ -180,7 +180,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {struct2Begin = "keyword", struct2Begin2 = "default"},
                 endSubstyles     = {struct2End   = "keyword"},
-                childPatterns    = { "emlualine", "emluaexpr", "comment1", "comment2", "keywords", "classoperators"},
+                childPatterns    = { "emluaexpr", "emlualine", "comment1", "comment2", "keywords", "classoperators"},
         },
         classoperators = {
         	style = "keyword",
@@ -193,7 +193,7 @@ return
                 endPattern       = [[\n]],
                 maxBeginExtend   = 2,
                 maxEndExtend     = 1,
-                childPatterns    = { "emlualine", "emluaexpr" },
+                childPatterns    = { "emluaexpr", "emlualine" },
         },
         
         comment2 = {
@@ -202,7 +202,7 @@ return
                 endPattern       = [[\*/]],
                 maxBeginExtend   = 2,
                 maxEndExtend     = 2,
-                childPatterns    = { "emlualine", "emluaexpr" },
+                childPatterns    = { "emluaexpr", "emlualine" },
         },
         
         comment3 = {
@@ -249,7 +249,7 @@ return
                 endPattern       = [[\n]],
                 maxBeginExtend   = 200,
                 maxEndExtend     = 1,
-                childPatterns    = {"emlualine", "emluaexpr", "comment1inpreprop", "comment2", "prepropescape"},
+                childPatterns    = {"emluaexpr", "emlualine", "comment1inpreprop", "comment2", "prepropescape"},
         },
         
         comment1inpreprop = {
@@ -258,7 +258,7 @@ return
                 endPattern       = [[(?=\n)]],
                 maxBeginExtend   = 2,
                 maxEndExtend     = 1,
-                childPatterns    = { "emlualine", "emluaexpr" },
+                childPatterns    = { "emluaexpr", "emlualine" },
         },
         
         prepropescape = {
@@ -321,7 +321,7 @@ return
                 endPattern       = [[(?P<stringEnd>")|\n]],
                 maxBeginExtend   = 1,
                 maxEndExtend     = 1,
-                childPatterns    = { "emlualine", "emluaexpr", "stringescape"},
+                childPatterns    = { "emluaexpr", "emlualine", "stringescape"},
                 beginSubstyles   = {stringBegin = "boldstring"},
                 endSubstyles     = {stringEnd   = "boldstring"},
         },
@@ -338,7 +338,7 @@ return
                 endPattern       = [=[(?P<sizeofEnd>[);])]=],
                 maxBeginExtend   = 100,
                 maxEndExtend     = 1,
-                childPatterns    = { "emlualine", "emluaexpr"},
+                childPatterns    = { "emluaexpr", "emlualine" },
                 beginSubstyles   = {sizeofBegin = "keyword"},
                 endSubstyles     = {sizeofEnd   = "keyword"},
         },

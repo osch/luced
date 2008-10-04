@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,86 +19,109 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUAINTERPRETER_H
-#define LUAINTERPRETER_H
+#include "LuaAccess.hpp"
+#include "LuaStoredObjectReference.hpp"
+#include "LuaObject.hpp"
 
-extern "C" {
+#ifndef LUA_INTERPRETER_HPP
+#define LUA_INTERPRETER_HPP
+
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-}
-
 
 #include "HeapObject.hpp"
 #include "ObjectArray.hpp"
 #include "OwningPtr.hpp"
-#include "SingletonInstance.hpp"
-#include "LuaObject.hpp"
-#include "LuaCFunctionArguments.hpp"
-#include "LuaCFunctionResult.hpp"
-#include "LuaCFunction.hpp"
-#include "LuaStoredObject.hpp"
 #include "LuaObjectList.hpp"
 #include "String.hpp"
+#include "LuaAccess.hpp"
 
 namespace LucED
 {
 
+class LuaCFunctionArguments;
+class LuaCFunctionResult;
+template
+<
+    LuaCFunctionResult F(const LuaCFunctionArguments& args)
+>
+class LuaCFunction;
+template
+<
+    class C,
+    LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+>
+class LuaCMethod;
+
+
 class LuaInterpreter : public HeapObject
 {
 public:
+    typedef OwningPtr<LuaInterpreter> Ptr;
+    
+    static Ptr create() {
+        return Ptr(new LuaInterpreter());
+    }
 
-    /**
-     * Gets the global LuaInterpreter.
-     */
-    static LuaInterpreter* getInstance() {
-        return instance.getPtr();
+    LuaAccess getCurrentLuaAccess() const {
+        return currentAccess;
     }
     
-    class Result
+    class LuaCFunctionAccess
     {
-    public:
-        String        output;
-        LuaObjectList objects;
-    };    
-    Result executeFile(String name);
-    Result executeScript(const char* beginScript, long scriptLength, String name = String());
-    Result executeExpression(const char* beginScript, long scriptLength, String name = String());
+    private:
+        template
+        <
+            LuaCFunctionResult F(const LuaCFunctionArguments& args)
+        >
+        friend class LuaCFunction;
 
-    Result executeExpression(const String& expr, String name = String()) {
-        return executeExpression(expr.toCString(), expr.getLength(), name);
-    }
-    Result executeScript(String script, String name = String()) {
-        return executeScript(script.toCString(), script.getLength(), name);
-    }
-    LuaObject getGlobal(const char* name);
-    LuaObject getGlobal(const String& name) {
-        return getGlobal(name.toCString());
-    }
-    void setGlobal(const char* name, LuaObject value);
-    void clearGlobal(const char* name);
+        template
+        <
+            class C,
+            LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+        >
+        friend class LuaCMethod;
+        
+        static void setCurrentLuaAccess(LuaInterpreter* luaInterpreter, const LuaAccess& luaAccess) {
+            luaInterpreter->currentAccess = luaAccess;
+        }
+    };
     
-    template<class ImplFunction> 
-    void setGlobal(const char* name, LuaCFunction<ImplFunction>)
+    class PrintBufferAccess
     {
-        lua_pushcfunction(L, &LuaCFunction<ImplFunction>::invokeFunction);
-        lua_setglobal(L, name);
+    private:
+        friend class LuaAccess;
+        
+        static String getPrintBuffer(LuaInterpreter* luaInterpreter) {
+            return luaInterpreter->printBuffer;
+        }
+        static void setPrintBuffer(LuaInterpreter* luaInterpreter, const String& printBuffer) {
+            luaInterpreter->printBuffer = printBuffer;
+        }
+    };
+
+#ifdef DEBUG
+    bool isCorrect() const {
+        return    (rootAccess.isCorrect())
+               && (rootAccess.getLuaInterpreter() == this)
+               && (currentAccess.isCorrect())
+               && (currentAccess.getLuaInterpreter() == this);
     }
+#endif
     
-private:
-    friend class SingletonInstance<LuaInterpreter>;
-    friend class LuaPrintFunction;
-    friend class LuaStdoutWriteFunction;
-    friend class LuaIoWriteFunction;
-    friend class LuaIoOutputFunction;
-    
+protected:
+    LuaInterpreter();
     ~LuaInterpreter();
 
-    static SingletonInstance<LuaInterpreter> instance;
-
-    LuaInterpreter();
-    
-    lua_State *L;
+private:
+    static LuaCFunctionResult printFunction      (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult stdoutWriteFunction(const LuaCFunctionArguments& args);
+    static LuaCFunctionResult ioWriteFunction    (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult ioOutputFunction   (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult testFunction       (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult doNothingFunction  (const LuaCFunctionArguments& args);
 
     class StoredObjects : public HeapObject
     {
@@ -109,10 +132,10 @@ private:
             return Ptr(new StoredObjects());
         }
       
-        LuaStoredObject::Ptr originalToStringFunction;
-        LuaStoredObject::Ptr originalIoOutputFunction;
-        LuaStoredObject::Ptr originalIoWriteFunction;
-        LuaStoredObject::Ptr lucedStdout;
+        LuaStoredObjectReference originalToStringFunction;
+        LuaStoredObjectReference originalIoOutputFunction;
+        LuaStoredObjectReference originalIoWriteFunction;
+        LuaStoredObjectReference lucedStdout;
 
     private:
         StoredObjects()
@@ -123,6 +146,17 @@ private:
     bool isLucedStdoutActive;
     
     String printBuffer;
+
+    LuaAccess rootAccess;
+    LuaAccess currentAccess;
+
+////////////////// TEST:
+    class TestClass;
+    class TestClass2;
+
+    OwningPtr<TestClass> testClassPtr;
+    OwningPtr<TestClass> testClassPtr2;
+    OwningPtr<TestClass2> testClass2Ptr;
 };
 
 
@@ -130,4 +164,5 @@ private:
 } // namespace LucED
 
 
-#endif // LUAINTERPRETER_H
+
+#endif // LUA_INTERPRETER_HPP

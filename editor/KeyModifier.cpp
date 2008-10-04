@@ -25,6 +25,8 @@
 
 using namespace LucED;
 
+const KeyModifier KeyModifier::NONE;
+
 KeyModifier::KeyModifier(const String& asString)
     : keyState(0)
 {

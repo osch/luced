@@ -22,10 +22,9 @@
 #include "LuaObject.hpp"
 #include "LuaException.hpp"
 #include "LuaObjectList.hpp"
+#include "LuaInterpreter.hpp"
 
 using namespace LucED;
-
-lua_State* LuaObject::L = NULL;
 
 /*
 LuaObject LuaObject::call()

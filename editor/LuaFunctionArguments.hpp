@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -20,78 +20,69 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "LuaObject.hpp"
+#include "NonCopyable.hpp"
 
-#ifndef LUA_FUNCTION_ARGUMENTS_H
-#define LUA_FUNCTION_ARGUMENTS_H
+#ifndef LUA_FUNCTION_ARGUMENTS_HPP
+#define LUA_FUNCTION_ARGUMENTS_HPP
 
 namespace LucED
 {
 
 
-
-class LuaFunctionArguments
+class LuaFunctionArguments : private LuaAccess,
+                             private NonCopyable
 {
 public:
 
-    LuaFunctionArguments()
+    explicit LuaFunctionArguments(const LuaAccess& luaAccess)
+        : LuaAccess(luaAccess),
+          numberArguments(0),
+          isOnStack(true)
     {
-        ++refCounter;
-        lua_checkstack(LuaObject::L, 20);
-        if (refCounter == 1) {
-            ASSERT(numberArguments == 0);
-            lua_pushnil(LuaObject::L); // placeholder for function
-            isOnStack = true;
-        }
+        lua_checkstack(L, 20);
+
+        lua_pushnil(L); // placeholder for function
     #ifdef DEBUG
-        if (refCounter == 1) {
-            startStackIndex  = lua_gettop(LuaObject::L);
-        } else {
-            checkStack();
-        }
+        startStackIndex  = lua_gettop(L);
     #endif
     }
 
-    LuaFunctionArguments(const LuaFunctionArguments& rhs)
+    LuaFunctionArguments(const LuaObject& arg)
+        : LuaAccess(arg.getLuaAccess()),
+          numberArguments(1),
+          isOnStack(true)
     {
+        lua_checkstack(L, 20);
+
+        lua_pushnil(L); // placeholder for function
     #ifdef DEBUG
-        checkStack();
+        startStackIndex  = lua_gettop(L);
     #endif
-        ++refCounter;
+        lua_pushvalue(L, arg.stackIndex);
     }
 
     ~LuaFunctionArguments() {
-        --refCounter;
-        if (refCounter == 0 && isOnStack) {
-            #ifdef DEBUG
-                LuaStackChecker::getInstance()->truncateGenerationsAtStackIndex(startStackIndex);
-            #endif
-            lua_pop(LuaObject::L, numberArguments + 1);
-            numberArguments = 0;
-            isOnStack = false;
+        if (isOnStack)
+        {
+        #ifdef DEBUG
+            luaStackChecker->truncateGenerationsAtStackIndex(startStackIndex);
+        #endif
+            lua_pop(L, numberArguments + 1);
         }
-    }
-    LuaFunctionArguments& operator<<(const LuaObject& arg)
-    {
-    #ifdef DEBUG
-        checkStack();
-    #endif
-        lua_pushvalue(LuaObject::L, arg.stackIndex);
-        ++numberArguments;
-        if (numberArguments % 10 == 0) {
-            lua_checkstack(LuaObject::L, 20);
-        }
-        return *this;
     }
 
-    LuaFunctionArguments& operator<<(const String& arg)
+    template
+    <
+        class T
+    >
+    LuaFunctionArguments& operator<<(const T& arg)
     {
-    #ifdef DEBUG
-        checkStack();
-    #endif
-        lua_pushlstring(LuaObject::L, arg.toCString(), arg.getLength());
+        ASSERT(isCorrect());
+
+        push(arg);
         ++numberArguments;
         if (numberArguments % 10 == 0) {
-            lua_checkstack(LuaObject::L, 20);
+            lua_checkstack(L, 20);
         }
         return *this;
     }
@@ -99,23 +90,35 @@ public:
     int getLength() const {
         return numberArguments;
     }
-
-private:
-    friend class LuaObject;
+    
+    class LuaObjectAccess
+    {
+    private:
+        friend class LuaObject;
+        
+        static void clearAfterCall(LuaFunctionArguments& args) {
+            args.isOnStack = false;
+            args.numberArguments = 0;
+        }
+    };
 
 #ifdef DEBUG
-    void checkStack() const {
-        ASSERT(startStackIndex + numberArguments == lua_gettop(LuaObject::L));
-        ASSERT(LuaStackChecker::getInstance()->getHighestStackIndexForNewestGeneration() < startStackIndex);
-        ASSERT(LuaStackChecker::getInstance()->getHighestStackIndex() <= startStackIndex + numberArguments);
+    bool isCorrect() const {
+        return    (LuaAccess::isCorrect())
+               && (startStackIndex + numberArguments == lua_gettop(L))
+               && (luaStackChecker->getHighestStackIndexForNewestGeneration() < startStackIndex)
+               && (luaStackChecker->getHighestStackIndex() <= startStackIndex + numberArguments);
     }
-    static int  startStackIndex;
 #endif
-    static int numberArguments;
-    static bool isOnStack;
-    static int refCounter;
+
+private:
+#ifdef DEBUG
+    int  startStackIndex;
+#endif
+    int numberArguments;
+    bool isOnStack;
 };
 
 } // namespace LucED
 
-#endif // LUA_FUNCTION_ARGUMENTS_H
+#endif // LUA_FUNCTION_ARGUMENTS_HPP

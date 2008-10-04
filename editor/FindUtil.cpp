@@ -21,7 +21,7 @@
 
 #include "FindUtil.hpp"
 #include "MemArray.hpp"
-#include "LuaInterpreter.hpp"
+#include "GlobalLuaInterpreter.hpp"
 #include "RegexException.hpp"
 #include "GlobalConfig.hpp"
 
@@ -43,12 +43,15 @@ FindUtil::FindUtil(RawPtr<TextData> textData)
 LuaObject FindUtil::evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
                                     long startMatch, long pos, int lastCaptured, int topCaptured)
 {
-    LuaObject rslt;
+    RawPtr<LuaInterpreter> luaInterpreter = GlobalLuaInterpreter::getInstance();
+    LuaAccess luaAccess = luaInterpreter->getCurrentLuaAccess();
+    
+    LuaObject rslt(luaAccess);
     {
-        LuaObject      o    = callout->luaObject->retrieve();
+        LuaObject      o    = luaAccess.retrieve(callout->storeReference);
         MemArray<int>& args = callout->args;
 
-        LuaFunctionArguments luaArgs;
+        LuaFunctionArguments luaArgs(luaAccess);
         String firstArg;
 
         if (args.getLength() == 0) {
@@ -183,7 +186,9 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& findString, const int
                 --parenCounter;
             }
         }
-        LuaInterpreter* lua = LuaInterpreter::getInstance();
+        RawPtr<LuaInterpreter> luaInterpreter = GlobalLuaInterpreter::getInstance();
+        LuaAccess              luaAccess      = luaInterpreter->getCurrentLuaAccess();
+        
         int varEnd;
         if (lastParen != -1) {
             varEnd = lastParen;
@@ -199,9 +204,9 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& findString, const int
         }
         String varName = findString.getSubstring(pos+2, varEnd - (pos+2));
 
-        LuaInterpreter::Result exprResult = lua->executeExpression(varName);
+        LuaAccess::Result exprResult = luaAccess.executeExpression(varName);
 
-        LuaObject g;
+        LuaObject g(luaAccess);
 
         if (exprResult.objects.getLength() > 0) {
             g = exprResult.objects[0];
@@ -211,7 +216,7 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& findString, const int
             throw RegexException(String() << "Lua expression '" << varName << "' must evaluate to table or function.", 
                                  pos+2);
         }
-        luaObject = LuaStoredObject::store(g);
+        storeReference = g.store();
 
         if (lastParen != -1) {
             for (int p = lastParen + 1; p < j; ++p) {
@@ -238,7 +243,7 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& findString, const int
 
 FindUtil::CalloutObject::Ptr FindUtil::buildCalloutObject(FindUtil::PreparsedCallout::Ptr preparsed)
 {
-    CalloutObject::Ptr rslt = CalloutObject::create(preparsed->getStoredLuaObject());
+    CalloutObject::Ptr rslt = CalloutObject::create(preparsed->getStoredLuaObjectReference());
         
     for (int j = 0, m = preparsed->getNumberOfArguments(); j < m; ++j)
     {

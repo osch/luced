@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,23 +19,29 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUACFUNCTIONRESULT_H
-#define LUACFUNCTIONRESULT_H
+#include "LuaAccess.hpp"
+
+#ifndef LUA_C_FUNCTION_RESULT_HPP
+#define LUA_C_FUNCTION_RESULT_HPP
 
 #include "LuaObject.hpp"
 
 namespace LucED
 {
 
+class LuaCFunctionArguments;
+
 class LuaCFunctionResult
 {
 public:
-    LuaCFunctionResult()
-        : numberOfResults(0)
+    LuaCFunctionResult(const LuaAccess& luaAccess)
+        : numberOfResults(0),
+          luaAccess(luaAccess)
     {}
 
     LuaCFunctionResult& operator<<(const LuaObject& rsltObject) {
-        lua_pushvalue(LuaObject::L, rsltObject.stackIndex);
+        ASSERT(luaAccess.L == rsltObject.L);
+        lua_pushvalue(luaAccess.L, rsltObject.stackIndex);
         ++numberOfResults;
         return *this;
     }
@@ -43,12 +49,23 @@ public:
 private:
     friend class LuaCFunctionArguments;
     
-    template<class ImplFunction>
+    template
+    <
+        LuaCFunctionResult F(const LuaCFunctionArguments& args)
+    >
     friend class LuaCFunction;
     
+    template
+    <
+        class C,
+        LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+    >
+    friend class LuaCMethod;
+
     int numberOfResults;
+    LuaAccess luaAccess;
 };
 
 } // namespace LucED
 
-#endif // LUACFUNCTIONRESULT_H
+#endif // LUA_C_FUNCTION_RESULT_HPP

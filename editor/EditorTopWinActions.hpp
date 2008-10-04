@@ -26,7 +26,6 @@
 #include "ReplacePanel.hpp"
 #include "GotoLinePanel.hpp"
 #include "WindowCloser.hpp"
-#include "LuaInterpreter.hpp"
 #include "ActionMethodBinding.hpp"
 #include "TopWinActionsParameter.hpp"
 

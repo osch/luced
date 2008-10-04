@@ -66,6 +66,8 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
 {
     ASSERT(config.isTable());
     
+    LuaAccess luaAccess = config.getLuaAccess();
+    
     LuaObject root = config["root"];
     if (!root.isTable()) {
         throw ConfigException("pattern 'root' not properly defined");
@@ -75,7 +77,7 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
     ObjectArray<String> patternNames;
 
     nameToIndexMap->set("root", 0);
-    for (LuaIterator i = 0; i.in(config);) {
+    for (LuaIterator i(luaAccess, 0); i.in(config);) {
         String patternName = i.key().toString();
         if (patternName != "root") {
             nameToIndexMap->set(patternName, i + 1);  // i+1, because 0 is index for "root"
@@ -153,7 +155,7 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 if (!o.isTable()) {
                     throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'beginSubstyles' element");
                 }
-                for (LuaIterator j; j.in(o);) {
+                for (LuaIterator j(luaAccess); j.in(o);) {
                     String k = j.key().toString();
                     if (!j.value().isString()) {
                         throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'beginSubstyles' element '" << k << "'");
@@ -171,7 +173,7 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 if (!o.isTable()) {
                     throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'endSubstyles' element");
                 }
-                for (LuaIterator j; j.in(o);) {
+                for (LuaIterator j(luaAccess); j.in(o);) {
                     String k = j.key().toString();
                     if (!j.value().isString()) {
                         throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'endSubstyles' element '" << k << "'");
@@ -214,7 +216,7 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
                 if (!o.isTable()) {
                     throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'substyles' element");
                 }
-                for (LuaIterator j; j.in(o);) {
+                for (LuaIterator j(luaAccess); j.in(o);) {
                     String k = j.key().toString();
                     if (!j.value().isString()) {
                         throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'substyles' element '" << k << "'");

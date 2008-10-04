@@ -22,6 +22,7 @@
 #include "ReplaceUtil.hpp"
 #include "SubstitutionException.hpp"
 #include "RegexException.hpp"
+#include "GlobalLuaInterpreter.hpp"
 
 using namespace LucED;
 
@@ -123,8 +124,10 @@ String ReplaceUtil::getSubstitutedString()
 	            PreparsedCallout::Ptr preparsedCallout = PreparsedCallout::parse(replaceString, i);
                     CalloutObject::Ptr callout = FindUtil::buildCalloutObject(preparsedCallout);
 
-                    LuaObject objectToCall = callout->getCallableObject();
-                    LuaObject callResult;
+                    LuaAccess luaAccess = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
+
+                    LuaObject objectToCall = luaAccess.retrieve(callout->getCallableObjectReference());
+                    LuaObject callResult(luaAccess);
                     
                     if (objectToCall.isTable())
                     {
@@ -136,7 +139,7 @@ String ReplaceUtil::getSubstitutedString()
                     }
                     else if (objectToCall.isFunction())
                     {
-                        LuaFunctionArguments args;
+                        LuaFunctionArguments args(luaAccess);
 
                         for (int i = 0; i < callout->getNumberOfArguments(); ++i)
                         {

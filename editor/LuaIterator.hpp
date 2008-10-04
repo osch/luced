@@ -19,21 +19,26 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUAITERATOR_H
-#define LUAITERATOR_H
+#ifndef LUA_ITERATOR_HPP
+#define LUA_ITERATOR_HPP
 
 #include "LuaObject.hpp"
 #include "LuaStackChecker.hpp"
+#include "LuaStateAccess.hpp"
 
 namespace LucED
 {
 
-class LuaIterator
+class LuaIterator : private LuaAccess
 {
 public:
-    LuaIterator(int startCounter = 0)
-        : counter(startCounter)
-    {}
+    LuaIterator(const LuaAccess& luaAccess, int startCounter = 0)
+        : LuaAccess(luaAccess),
+          keyObject(luaAccess),
+          valueObject(luaAccess),
+          counter(startCounter)
+    {
+    }
     
     LuaIterator& operator=(const int& newCounterValue) {
         counter = newCounterValue;
@@ -42,10 +47,10 @@ public:
     
     bool in(const LuaObject& table)
     {
-        ASSERT(  keyObject.stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(  keyObject.stackGeneration));
-        ASSERT(valueObject.stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(valueObject.stackGeneration));
+        isSameLuaAccess(table);
 
-        lua_State* L = LuaObject::L;
+        ASSERT(  keyObject.stackIndex <= luaStackChecker->getHighestStackIndexForGeneration(  keyObject.stackGeneration));
+        ASSERT(valueObject.stackIndex <= luaStackChecker->getHighestStackIndexForGeneration(valueObject.stackGeneration));
         
         lua_pushvalue(L, keyObject.stackIndex);
 
@@ -61,7 +66,7 @@ public:
         return rslt;
     }
     
-    LuaObject key() const
+    const LuaObject& key() const
     {
         return keyObject;
     }
@@ -107,4 +112,4 @@ private:
 
 } // namespace LucED
 
-#endif // LUAITERATOR_H
+#endif // LUA_ITERATOR_HPP

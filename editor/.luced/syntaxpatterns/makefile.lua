@@ -108,7 +108,7 @@ return
                 endPattern       = [[\n]],
                 maxBeginExtend   = 100,
                 maxEndExtend     = 1,
-                childPatterns    = {"backslashInAssignment", "continuation", "comment", "emluaexpr"},
+                childPatterns    = {"backslashInAssignment", "continuation", "emluaexpr", "comment" },
         },
  
         backslashInAssignment = {
