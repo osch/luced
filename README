@@ -2,7 +2,7 @@
 #
 #   LucED - The Lucid Editor
 #
-#   Copyright (C) 2005-2006 Oliver Schmidt, oliver at luced dot de
+#   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 #
 #   This program is free software; you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License Version 2 as published
@@ -27,10 +27,9 @@ Build instructions
 WARNING: This pre-release version of LucED is experimental and might not
 work as expected.
 
-Requirements: The external libs libpcre und liblua are needed, see
+Requirements: The external lib libpcre is needed, see
    
    * http://www.pcre.org/
-   * http://lua.org/
    
 Try the following commands for building LucED:
 
