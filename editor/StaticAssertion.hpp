@@ -19,36 +19,23 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUA_STATE_ACCESS_HPP
-#define LUA_STATE_ACCESS_HPP
-
-#include <lua.h>
-
-#include "debug.hpp"
-#include "LuaStackChecker.hpp"
-#include "RawPtr.hpp"
+#ifndef STATIC_ASSERTION_HPP
+#define STATIC_ASSERTION_HPP
 
 namespace LucED
 {
 
-class LuaInterpreter;
+template<bool
+        >
+class StaticAssertion;
 
-class LuaStateAccess
-{
-public:
-    static void setLuaInterpreter(lua_State* L, RawPtr<LuaInterpreter> luaInterpreter);
-    
-    static RawPtr<LuaInterpreter> getLuaInterpreter(lua_State* L);
 
-#ifdef DEBUG
-    static LuaStackChecker*           getLuaStackChecker(lua_State* L);
-    static OwningPtr<LuaStackChecker> replaceLuaStackChecker(lua_State* L, OwningPtr<LuaStackChecker> newStackChecker);
-#endif
+template<
+        >
+class StaticAssertion<true>
+{};
 
-private:
-    static lua_State* currentState;
-};
 
 } // namespace LucED
 
-#endif // LUA_STATE_ACCESS_HPP
+#endif // STATIC_ASSERTION_HPP

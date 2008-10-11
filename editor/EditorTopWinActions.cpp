@@ -37,26 +37,27 @@ void EditorTopWinActions::executeLuaScript()
         
         if (editorWidget->hasSelection())
         {
-            long selBegin  = editorWidget->getBeginSelectionPos();
-            long selLength = editorWidget->getEndSelectionPos() - selBegin;
+            TextData::TextMark selBegin  = editorWidget->getNewMarkToBeginOfSelection();
+            TextData::TextMark selEnd    = editorWidget->getNewMarkToEndOfSelection();
+            long               selLength = selEnd.getPos() - selBegin.getPos();
             
             LuaAccess         luaAccess    = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
-            LuaAccess::Result scriptResult = luaAccess.executeScript((const char*) textData->getAmount(selBegin, selLength),
+            LuaAccess::Result scriptResult = luaAccess.executeScript((const char*) textData->getAmount(selBegin.getPos(), selLength),
                                                                      selLength);
             String output = scriptResult.output;
             
             TextData::HistorySection::Ptr historySectionHolder = textData->createHistorySection();
             
             editorWidget->hideCursor();
-            editorWidget->moveCursorToTextPosition(selBegin + selLength);
+            editorWidget->moveCursorToTextMark(selEnd);
             if (output.getLength() > 0) {
-                editorWidget->insertAtCursor((const byte*) output.toCString(), output.getLength());
-                editorWidget->setPrimarySelection(selBegin + selLength, 
-                                                  selBegin + selLength + output.getLength());
+                long insertedLength = editorWidget->insertAtCursor((const byte*) output.toCString(), output.getLength());
+                editorWidget->setPrimarySelection(selEnd.getPos(), 
+                                                  selEnd.getPos() + insertedLength);
 
-                editorWidget->moveCursorToTextPosition(selBegin + selLength + output.getLength());
+                editorWidget->moveCursorToTextPosition(selEnd.getPos() + insertedLength);
                 editorWidget->assureCursorVisible();
-                editorWidget->moveCursorToTextPosition(selBegin + selLength);
+                editorWidget->moveCursorToTextMark(selEnd);
             } else {
                 editorWidget->releaseSelection();
             }
@@ -108,8 +109,8 @@ void EditorTopWinActions::executeLuaScript()
                     editorWidget->hideCursor();
                     editorWidget->moveCursorToTextPosition(spos);
                     editorWidget->removeAtCursor(cursorPos - spos);
-                    editorWidget->insertAtCursor((const byte*) output.toCString(), output.getLength());
-                    editorWidget->moveCursorToTextPosition(spos + output.getLength());
+                    long insertedLength = editorWidget->insertAtCursor((const byte*) output.toCString(), output.getLength());
+                    editorWidget->moveCursorToTextPosition(spos + insertedLength);
                     editorWidget->assureCursorVisible();
                     editorWidget->rememberCursorPixX();
                     editorWidget->showCursor();

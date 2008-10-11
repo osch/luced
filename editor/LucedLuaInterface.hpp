@@ -19,40 +19,42 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUA_OBJECT_LIST_HPP
-#define LUA_OBJECT_LIST_HPP
+#ifndef LUCED_LUA_INTERFACE_HPP
+#define LUCED_LUA_INTERFACE_HPP
 
-#include "LuaObject.hpp"
-#include "HeapObjectArray.hpp"
-#include "LuaAccess.hpp"
-
+#include "HeapObject.hpp"
+#include "SingletonInstance.hpp"
+#include "LuaCFunctionResult.hpp"
+#include "LuaCFunctionArguments.hpp"
+#include "ViewLuaInterface.hpp"
+          
 namespace LucED
 {
 
-class LuaObjectList
+class LucedLuaInterface : public HeapObject
 {
 public:
-    LuaObjectList() : objects(HeapObjectArray<LuaObject>::create()) {}
+    static LucedLuaInterface* getInstance();
 
-    void append(const LuaObject& object) {
-        objects->append(object);
+
+    LuaCFunctionResult getCurrentView(const LuaCFunctionArguments& args)
+    {
+        LuaAccess luaAccess = args.getLuaAccess();
+        
+        return LuaCFunctionResult(luaAccess) << currentView;
     }
-    const LuaObject& operator[](int index) const {
-        return objects->at(index);
+
+    void setCurrentView(RawPtr<ViewLuaInterface> view) {
+        currentView = view;
     }
-    int getLength() const {
-        return objects->getLength();
-    }
+
 private:
-    friend class LuaAccess;
+    friend class SingletonInstance<LucedLuaInterface>;
+    static       SingletonInstance<LucedLuaInterface> instance;
     
-    void appendObjectWithStackIndex(const LuaAccess& luaAccess, int stackIndex) {
-        objects->appendNew(luaAccess, stackIndex);
-    }
-    
-    HeapObjectArray<LuaObject>::Ptr objects;
+    WeakPtr<ViewLuaInterface> currentView;
 };
 
 } // namespace LucED
 
-#endif // LUA_OBJECT_LIST_HPP
+#endif // LUCED_LUA_INTERFACE_HPP

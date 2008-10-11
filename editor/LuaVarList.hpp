@@ -19,36 +19,40 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUA_STATE_ACCESS_HPP
-#define LUA_STATE_ACCESS_HPP
+#ifndef LUA_VAR_LIST_HPP
+#define LUA_VAR_LIST_HPP
 
-#include <lua.h>
-
-#include "debug.hpp"
-#include "LuaStackChecker.hpp"
-#include "RawPtr.hpp"
+#include "LuaVar.hpp"
+#include "HeapObjectArray.hpp"
+#include "LuaAccess.hpp"
 
 namespace LucED
 {
 
-class LuaInterpreter;
-
-class LuaStateAccess
+class LuaVarList
 {
 public:
-    static void setLuaInterpreter(lua_State* L, RawPtr<LuaInterpreter> luaInterpreter);
-    
-    static RawPtr<LuaInterpreter> getLuaInterpreter(lua_State* L);
+    LuaVarList() : objects(HeapObjectArray<LuaVar>::create()) {}
 
-#ifdef DEBUG
-    static LuaStackChecker*           getLuaStackChecker(lua_State* L);
-    static OwningPtr<LuaStackChecker> replaceLuaStackChecker(lua_State* L, OwningPtr<LuaStackChecker> newStackChecker);
-#endif
-
+    void append(const LuaVar& object) {
+        objects->append(object);
+    }
+    const LuaVar& operator[](int index) const {
+        return objects->at(index);
+    }
+    int getLength() const {
+        return objects->getLength();
+    }
 private:
-    static lua_State* currentState;
+    friend class LuaAccess;
+    
+    void appendObjectWithStackIndex(const LuaAccess& luaAccess, int stackIndex) {
+        objects->appendNew(luaAccess, stackIndex);
+    }
+    
+    HeapObjectArray<LuaVar>::Ptr objects;
 };
 
 } // namespace LucED
 
-#endif // LUA_STATE_ACCESS_HPP
+#endif // LUA_VAR_LIST_HPP

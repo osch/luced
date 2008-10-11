@@ -37,7 +37,7 @@
 #include "RawPtr.hpp"
 #include "SearchParameter.hpp"
 #include "SearchParameterTypes.hpp"
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 
 namespace LucED
 {
@@ -259,7 +259,7 @@ protected:
 private:
     static int pcreCalloutFunction(void* self, pcre_callout_block*);
 
-    LuaObject evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
+    LuaVar evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
                               long startMatch, long pos, int lastCaptured, int topCaptured);
 
 protected:

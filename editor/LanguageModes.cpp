@@ -22,11 +22,11 @@
 #include "LanguageModes.hpp"
 #include "ConfigException.hpp"
 #include "RegexException.hpp"
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 
 using namespace LucED;
 
-LanguageMode::Ptr LanguageMode::create(LuaObject config)
+LanguageMode::Ptr LanguageMode::create(LuaVar config)
 {
     return Ptr(new LanguageMode(config));
 }
@@ -41,14 +41,14 @@ LanguageMode::LanguageMode(const String& name, BasicRegex regex)
       softTabWidth(-1)
 {}
 
-LanguageMode::LanguageMode(LuaObject config)
+LanguageMode::LanguageMode(LuaVar config)
     : approximateUnknownHilitingFlag(true),
       approximateUnknownHilitingReparseRange(2000),
       hilitingBreakPointDistance(50),
       hardTabWidth(8),
       softTabWidth(-1)
 {
-    LuaObject o = config["name"];
+    LuaVar o = config["name"];
     if (!o.isString()) {
         throw ConfigException("invalid or missing element 'name' in languageMode");
     }
@@ -124,7 +124,7 @@ void LanguageModes::append(const String& name)
     nameToIndexMap.set(name, modes.getLength() - 1);
 }
 
-void LanguageModes::append(LuaObject config)
+void LanguageModes::append(LuaVar config)
 {
     LanguageMode::Ptr newMode = LanguageMode::create(config);
     modes.append(newMode);

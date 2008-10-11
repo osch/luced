@@ -23,7 +23,7 @@
 #define LUA_C_FUNCTION_ARGUMENTS_HPP
 
 #include "NonCopyable.hpp"
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 
 namespace LucED
 {
@@ -43,22 +43,47 @@ template
 >
 class LuaCMethod;
 
+template
+<
+    class C,
+    LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+>
+class LuaSingletonCMethod;
+
 
 class LuaCFunctionArguments : public NonCopyable
 {
 public:
 
-    const LuaObject& operator[](int i) const {
-        return argArray[i];
+    LuaVarRef operator[](int i) const
+    {
+        ASSERT(0 <= i && i < numberArgs);
+    #ifdef DEBUG
+        return LuaVarRef(luaAccess, i + 1, stackGeneration);
+    #else
+        return LuaVarRef(luaAccess, i + 1);
+    #endif
     }
     
     int getLength() const {
-        return argArray.getLength();
+        ASSERT(isCorrect());
+        return numberArgs;
     }
     
     LuaAccess getLuaAccess() const {
+        ASSERT(isCorrect());
         return luaAccess;
     }
+
+#ifdef DEBUG
+    bool isCorrect() const {
+        ASSERT(luaAccess.isCorrect());
+        if (numberArgs > 0) {
+            ASSERT(numberArgs <= luaAccess.luaStackChecker->getHighestStackIndexForGeneration(stackGeneration));
+        }
+        return true;
+    }
+#endif
     
 private:
     
@@ -75,33 +100,55 @@ private:
     >
     friend class LuaCMethod;
     
+    template
+    <
+        class C,
+        LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+    >
+    friend class LuaSingletonCMethod;
+    
 
     LuaCFunctionArguments(const LuaAccess& luaAccess)
-        : luaAccess(luaAccess)
+        : luaAccess(luaAccess),
+          numberArgs(lua_gettop(luaAccess.L))
     {
-        int numberArgs = lua_gettop(luaAccess.L);
-            
-        argArray.appendAmount(numberArgs);
-        
-        ASSERT(argArray.getLength() == numberArgs);
-        
-        for (int i = 0; i < numberArgs; ++i) {
-            new (&argArray[i]) LuaObject(luaAccess, i + 1);
+    #ifdef DEBUG
+        if (numberArgs > 1) {
+            int s1          = luaAccess.luaStackChecker->registerAndGetGeneration(1);
+            stackGeneration = luaAccess.luaStackChecker->registerAndGetGeneration(numberArgs);
+            ASSERT(s1 = stackGeneration);
+        } else if (numberArgs == 1) {
+            stackGeneration = luaAccess.luaStackChecker->registerAndGetGeneration(1);
         }
+    #endif
+        ASSERT(isCorrect());
     }
     
     ~LuaCFunctionArguments()
     {
+        ASSERT(isCorrect());
     #ifdef DEBUG
-        for (int i = 0; i < argArray.getLength(); ++i) {
-            luaAccess.luaStackChecker->truncateGenerationAtStackIndex(argArray[i].stackGeneration, 
-                                                                      argArray[i].stackIndex);
+        if (numberArgs > 0) {
+            luaAccess.luaStackChecker->truncateGenerationAtStackIndex(stackGeneration, 1);
         }
     #endif
     }
-    MemArray<LuaObject> argArray;
+    
+    void remove(int i) {
+        ASSERT(0 <= i && i < numberArgs);
+        lua_remove(luaAccess.L, i + 1);
+    #ifdef DEBUG
+        luaAccess.luaStackChecker->truncateGenerationAtStackIndex(stackGeneration, numberArgs);
+    #endif
+        numberArgs -= 1;
+    }
 
     LuaAccess luaAccess;
+    int       numberArgs;
+    
+#ifdef DEBUG
+    int stackGeneration;
+#endif
 };
 
 } // namespace LucED

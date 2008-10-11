@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,15 +19,15 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 #include "LuaException.hpp"
-#include "LuaObjectList.hpp"
+#include "LuaVarList.hpp"
 #include "LuaInterpreter.hpp"
 
 using namespace LucED;
 
 /*
-LuaObject LuaObject::call()
+LuaVar LuaVar::call()
 {
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
     lua_checkstack(L, 10);
@@ -40,11 +40,11 @@ LuaObject LuaObject::call()
         lua_pop(L, 1);
         throw ex;
     } else {    
-        return LuaObject(lua_gettop(L));
+        return LuaVar(lua_gettop(L));
     }
 }
 */
-/*LuaObject LuaObject::call(const LuaObject& arg) const
+/*LuaVar LuaVar::call(const LuaVar& arg) const
 {
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
     lua_checkstack(L, 10);
@@ -59,11 +59,11 @@ LuaObject LuaObject::call()
         lua_pop(L, 1);
         throw ex;
     } else {    
-        return LuaObject(lua_gettop(L));
+        return LuaVar(lua_gettop(L));
     }
 }
 
-LuaObject LuaObject::call(const LuaObjectList& list) const
+LuaVar LuaVar::call(const LuaVarList& list) const
 {
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
     lua_pushvalue(L, stackIndex);
@@ -78,7 +78,7 @@ LuaObject LuaObject::call(const LuaObjectList& list) const
         lua_pop(L, 1);
         throw ex;
     } else {    
-        return LuaObject(lua_gettop(L));
+        return LuaVar(lua_gettop(L));
     }
 }
 

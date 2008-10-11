@@ -32,16 +32,22 @@
 #include "SingletonInstance.hpp"
 #include "String.hpp"
 #include "RawPtr.hpp"
+#include "StaticAssertion.hpp"
 
 namespace LucED
 {
 
 class LuaCFunctionArguments;
 class LuaCFunctionResult;
-class LuaObject;
+class LuaVar;
+class LuaVarRef;
 class LuaStoredObjectReference;
 class LuaInterpreter;
-class LuaObjectList;
+class LuaVarList;
+
+template<class KeyType
+        >
+class LuaObjectTableElementRef;
 
 template
 <
@@ -56,6 +62,13 @@ template
 >
 class LuaCMethod;
 
+template
+<
+    class C,
+    LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+>
+class LuaSingletonCMethod;
+
 #ifdef DEBUG
 class LuaStackChecker;
 #endif
@@ -66,22 +79,34 @@ class LuaAccess
 public:
     explicit LuaAccess(lua_State* luaState);
     
-    LuaStoredObjectReference store(const LuaObject& object) const;
-    LuaObject retrieve(const LuaStoredObjectReference& storeReference) const;
+    static const long MAGIC = 547394;
     
-    LuaObject getGlobal(const char* name) const;
-    LuaObject getGlobal(const String& name) const;
+    struct UserData
+    {
+        long magic;
+        bool isOwningPtr;
+    };
+    
+    LuaStoredObjectReference store(const LuaVar& object) const;
+    LuaVar retrieve(const LuaStoredObjectReference& storeReference) const;
+    
+    LuaVar getGlobal(const char* name) const;
+    LuaVar getGlobal(const String& name) const;
 
-    LuaObject newNil() const;    
-    LuaObject newObject() const;    
-    LuaObject newTable() const;
+    LuaVar getTrue() const;    
+    LuaVar getFalse() const;    
+    LuaVar getNil() const;    
+
+    LuaVar newTable() const;
 
     template
     <
         class T
     >
-    LuaObject newObject(const T& rhs) const;
+    LuaVar toLua(const T& rhs) const;
     
+    LuaVar toLua(const char* ptr, long length) const;
+
     void clearGlobal(const char* name) const {
         ASSERT(isCorrect());
         lua_pushnil(L);
@@ -124,6 +149,10 @@ protected:
         ASSERT(isCorrect());
         lua_pushstring(L, arg);
     }
+    void push(const char* arg, long length) const {
+        ASSERT(isCorrect());
+        lua_pushlstring(L, arg, length);
+    }
     void push(const String& arg) const {
         ASSERT(isCorrect());
         lua_pushlstring(L, arg.toCString(), arg.getLength());
@@ -132,9 +161,54 @@ protected:
         ASSERT(isCorrect());
         lua_pushnumber(L, arg);
     }
-    void push(const LuaObject& arg) const;
+    void push(long arg) const {
+        ASSERT(isCorrect());
+        lua_pushnumber(L, arg);
+    }
+    void push(bool arg) const {
+        ASSERT(isCorrect());
+        lua_pushboolean(L, arg);
+    }
+    void push(const LuaVarRef& arg) const;
 
-    void push(const WeakPtr<HeapObject>& rhs) const;
+    template<class T
+            >
+    void push(const WeakPtr<T>& rhs) const;
+   
+    template<class T
+            >
+    void push(const OwningPtr<T>& rhs) const;
+
+    template<class T
+            >
+    void push(T* rhs) const;
+    
+    template<class T
+            >
+    void pushOwning(const OwningPtr<T>& rhs) const;
+    
+    template<class T
+            >
+    void pushWeak(T* rhs) const;
+
+    template<bool isOwning
+            >
+    struct IsOwning
+    {
+        template<class T
+                >
+        static void pushInternal(const LuaAccess& luaAccess, const OwningPtr<T>& rhs);
+
+        template<class T
+                >
+        static void pushInternal(const LuaAccess& luaAccess, T* rhs);
+    };
+
+    void push(void* voidPtr) const;
+
+    template<class KeyType
+            >
+    void push(const LuaObjectTableElementRef<KeyType>& rhs) const;
     
     template
     <
@@ -149,6 +223,13 @@ protected:
     >
     void push(LuaCMethod<C,M> wrapper) const;
 
+    template
+    <
+        class C,
+        LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+    >
+    void push(LuaSingletonCMethod<C,M> wrapper) const;
+
     lua_State* L;
 #ifdef DEBUG
     RawPtr<LuaStackChecker> luaStackChecker;
@@ -157,10 +238,12 @@ protected:
 
 } // namespace LucED
 
-#include "LuaObject.hpp"
+#include "LuaClassRegistry.hpp"
+#include "LuaVar.hpp"
 #include "LuaCFunctionArguments.hpp"
 #include "LuaCFunctionResult.hpp"
 #include "LuaCMethod.hpp"
+#include "LuaSingletonCMethod.hpp"
 #include "LuaCFunction.hpp"
 #include "LuaStackChecker.hpp"
 #include "LuaStateAccess.hpp"
@@ -177,14 +260,6 @@ inline LuaAccess::LuaAccess(lua_State* luaState)
 #endif
 {}
 
-inline void LuaAccess::push(const LuaObject& arg) const
-{
-    ASSERT(isCorrect());
-    ASSERT(isSameLuaAccess(arg));
-
-    lua_pushvalue(L, arg.stackIndex);
-}
-
 inline RawPtr<LuaInterpreter> LuaAccess::getLuaInterpreter() const
 {
     ASSERT(isCorrect());
@@ -192,7 +267,7 @@ inline RawPtr<LuaInterpreter> LuaAccess::getLuaInterpreter() const
     return  LuaStateAccess::getLuaInterpreter(L);
 }
 
-inline LuaStoredObjectReference LuaAccess::store(const LuaObject& object) const
+inline LuaStoredObjectReference LuaAccess::store(const LuaVar& object) const
 {
     ASSERT(isCorrect());
 
@@ -201,66 +276,253 @@ inline LuaStoredObjectReference LuaAccess::store(const LuaObject& object) const
     return LuaStoredObjectReference(registryReference, LuaStateAccess::getLuaInterpreter(L));
 }
 
-inline LuaObject LuaAccess::retrieve(const LuaStoredObjectReference& storeReference) const
+inline LuaVar LuaAccess::retrieve(const LuaStoredObjectReference& storeReference) const
 {
     ASSERT(isCorrect());
     ASSERT(storeReference.ptr->getLuaInterpreter() == getLuaInterpreter());
     lua_rawgeti(L, LUA_REGISTRYINDEX, storeReference.ptr->getRegistryReference());
-    return LuaObject(*this, lua_gettop(L));
+    return LuaVar(*this, lua_gettop(L));
 }
 
-inline LuaObject LuaAccess::newNil() const
+inline LuaVar LuaAccess::getNil() const
 {
     ASSERT(isCorrect());
     lua_pushnil(L);
-    return LuaObject(*this, lua_gettop(L));
+    return LuaVar(*this, lua_gettop(L));
 }
-
-inline LuaObject LuaAccess::newObject() const
+inline LuaVar LuaAccess::getTrue() const
 {
     ASSERT(isCorrect());
-    lua_pushnil(L);
-    return LuaObject(*this, lua_gettop(L));
+    lua_pushboolean(L, true);
+    return LuaVar(*this, lua_gettop(L));
+}
+inline LuaVar LuaAccess::getFalse() const
+{
+    ASSERT(isCorrect());
+    lua_pushboolean(L, false);
+    return LuaVar(*this, lua_gettop(L));
 }
 
-inline LuaObject LuaAccess::newTable() const
+
+inline LuaVar LuaAccess::newTable() const
 {
     ASSERT(isCorrect());
     lua_newtable(L);
-    return LuaObject(*this, lua_gettop(L));
+    return LuaVar(*this, lua_gettop(L));
 }
 
 template
 <
     class T
 >
-inline LuaObject LuaAccess::newObject(const T& rhs) const
+inline LuaVar LuaAccess::toLua(const T& rhs) const
 {
     ASSERT(isCorrect());
     push(rhs);
-    return LuaObject(*this, lua_gettop(L));
+    return LuaVar(*this, lua_gettop(L));
 }
 
-inline void LuaAccess::push(const WeakPtr<HeapObject>& rhs) const
+inline LuaVar LuaAccess::toLua(const char* ptr, long length) const
 {
     ASSERT(isCorrect());
-    WeakPtr<HeapObject>* userDataPtr = static_cast< WeakPtr<HeapObject>*
-                                                  >
-                                                  (lua_newuserdata(L, sizeof(WeakPtr<HeapObject>)));
-    if (userDataPtr != NULL) {
-        new (userDataPtr) WeakPtr<HeapObject>(rhs);
+    push(ptr, length);
+    return LuaVar(*this, lua_gettop(L));
+}
+
+inline void LuaAccess::push(const LuaVarRef& arg) const
+{
+    ASSERT(isCorrect());
+    ASSERT(arg.isCorrect());
+    ASSERT(isSameLuaAccess(arg));
+
+    lua_pushvalue(L, arg.stackIndex);
+}
+
+inline void LuaAccess::push(void* arg) const
+{
+    ASSERT(isCorrect());
+
+    lua_pushlightuserdata(L, arg);
+}
+
+template<
+        >
+template<class T
+        >
+inline void LuaAccess::IsOwning<true>::pushInternal(const LuaAccess& luaAccess, const OwningPtr<T>& rhs)
+{
+    luaAccess.pushOwning(rhs);
+}
+template<
+        >
+template<class T
+        >
+inline void LuaAccess::IsOwning<false>::pushInternal(const LuaAccess& luaAccess, const OwningPtr<T>& rhs)
+{
+    luaAccess.pushWeak(rhs.getRawPtr());
+}
+template<
+        >
+template<class T
+        >
+inline void LuaAccess::IsOwning<false>::pushInternal(const LuaAccess& luaAccess, T* rhs)
+{
+    luaAccess.pushWeak(rhs);
+}
+
+template<class T
+        >
+inline void LuaAccess::pushOwning(const OwningPtr<T>& rhs) const
+{
+    ASSERT(isCorrect());
+
+    StaticAssertion<LuaClassRegistry::ClassAttributes<T>::isOwningPtrType>();
+
+    {
+        RawPtr<LuaInterpreter> luaInterpreter = getLuaInterpreter();
+    
+        void*  voidPtr      = rhs.getRawPtr();
+        LuaVar owningPtrMap = retrieve(LuaInterpreter::ClassRegistryAccess::getOwningPtrMapStoreReference(luaInterpreter));
+        
+        LuaVar existingObject = owningPtrMap[voidPtr];
+        
+        if (existingObject.isValid())
+        {
+            push(existingObject);
+        }
+        else
+        {
+            UserData* userDataPtr = static_cast< UserData*
+                                               >
+                                               (lua_newuserdata(L, sizeof(UserData) + sizeof(OwningPtr<HeapObject>)));
+            if (userDataPtr != NULL)
+            {
+                LuaVar newObject(*this, lua_gettop(L));
+    
+                userDataPtr->magic       = MAGIC;
+                userDataPtr->isOwningPtr = true;
+            
+                OwningPtr<HeapObject>* owningPtrPtr = static_cast< OwningPtr<HeapObject>*
+                                                                 >
+                                                                 (static_cast<void*>(userDataPtr + 1));
+                new (owningPtrPtr) OwningPtr<HeapObject>(rhs);
+            
+                RawPtr<LuaInterpreter>   luaInterpreter = getLuaInterpreter();
+                LuaStoredObjectReference storeReference = LuaInterpreter::ClassRegistryAccess
+                                                                        ::getMetaTableStoreReference<T>(luaInterpreter);
+        
+                ASSERT(storeReference.ptr->getLuaInterpreter() == luaInterpreter);
+        
+                LuaVar metaTable = retrieve(storeReference);
+                newObject.setMetaTable(metaTable);
+
+                owningPtrMap[voidPtr] = newObject;
+                push(newObject);
+            }
+            else {
+                lua_pushnil(L);
+            }
+        }
     }
 }
 
-inline LuaObject LuaAccess::getGlobal(const char* name) const
+template<class T
+        >
+inline void LuaAccess::pushWeak(T* rhs) const
+{
+    ASSERT(isCorrect());
+    
+    StaticAssertion<!LuaClassRegistry::ClassAttributes<T>::isOwningPtrType>();
+
+    RawPtr<LuaInterpreter> luaInterpreter = getLuaInterpreter();
+
+    void*  voidPtr    = static_cast<void*>(rhs);
+    LuaVar weakPtrMap = retrieve(LuaInterpreter::ClassRegistryAccess::getWeakPtrMapStoreReference(luaInterpreter));
+    
+    LuaVar existingObject = weakPtrMap[voidPtr];
+    
+    if (existingObject.isValid())
+    {
+        push(existingObject);
+    }
+    else
+    {
+        UserData* userDataPtr = static_cast< UserData*
+                                           >
+                                           (lua_newuserdata(L, sizeof(UserData) + sizeof(WeakPtr<HeapObject>)));
+        if (userDataPtr != NULL)
+        {
+            LuaVar newObject(*this, lua_gettop(L));
+
+            userDataPtr->magic       = MAGIC;
+            userDataPtr->isOwningPtr = false;
+        
+            WeakPtr<HeapObject>* weakPtrPtr = static_cast< WeakPtr<HeapObject>*
+                                                         >
+                                                         (static_cast<void*>(userDataPtr + 1));
+            new (weakPtrPtr) WeakPtr<HeapObject>(rhs);
+        
+            LuaStoredObjectReference storeReference = LuaInterpreter::ClassRegistryAccess
+                                                                    ::getMetaTableStoreReference<T>(luaInterpreter);
+    
+            ASSERT(storeReference.ptr->getLuaInterpreter() == luaInterpreter);
+            
+            LuaVar metaTable = retrieve(storeReference);
+            newObject.setMetaTable(metaTable);
+
+            weakPtrMap[voidPtr] = newObject;
+            push(newObject);
+        }
+        else {
+            lua_pushnil(L);
+        }
+    }
+}
+
+
+template<class T
+        >
+inline void LuaAccess::push(const OwningPtr<T>& rhs) const
+{
+    IsOwning<LuaClassRegistry::ClassAttributes<T>::isOwningPtrType>::pushInternal(*this, rhs);
+}
+
+template<class T
+        >
+inline void LuaAccess::push(T* rhs) const
+{
+    pushWeak(rhs);
+}
+
+template<class T
+        >
+inline void LuaAccess::push(const WeakPtr<T>& rhs) const
+{
+    pushWeak(rhs.getRawPtr());
+}
+
+template<class KeyType
+        >
+inline void LuaAccess::push(const LuaObjectTableElementRef<KeyType>& rhs) const
+{
+    ASSERT(isCorrect());
+    ASSERT(rhs.isCorrect());
+    ASSERT(isSameLuaAccess(rhs));
+
+    push(rhs.key);
+    lua_gettable(L, rhs.tableStackIndex);
+}
+
+
+inline LuaVar LuaAccess::getGlobal(const char* name) const
 {
     ASSERT(isCorrect());
 
     lua_getglobal(L, name);
-    return LuaObject(*this, lua_gettop(L));
+    return LuaVar(*this, lua_gettop(L));
 }
 
-inline LuaObject LuaAccess::getGlobal(const String& name) const
+inline LuaVar LuaAccess::getGlobal(const String& name) const
 {
     ASSERT(isCorrect());
 
@@ -302,11 +564,23 @@ inline void LuaAccess::push(LuaCMethod<C,M> wrapper) const
     lua_pushcfunction(L, &(LuaCMethod<C,M>::invokeFunction));
 }
 
+template
+<
+    class C,
+    LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+>
+inline void LuaAccess::push(LuaSingletonCMethod<C,M> wrapper) const
+{
+    ASSERT(isCorrect());
+
+    lua_pushcfunction(L, &(LuaSingletonCMethod<C,M>::invokeFunction));
+}
+
 class LuaAccess::Result
 {
 public:
     String        output;
-    LuaObjectList objects;
+    LuaVarList objects;
 };    
 
 inline LuaAccess::Result LuaAccess::executeExpression(const String& expr, String name) const
@@ -321,9 +595,10 @@ inline LuaAccess::Result LuaAccess::executeScript(String script, String name) co
 #ifdef DEBUG
 inline bool LuaAccess::isCorrect() const
 {
-    return    (L != NULL)
-           && (luaStackChecker.isValid())
-           && (L == LuaStateAccess::getLuaInterpreter(L)->getCurrentLuaAccess().L);
+    ASSERT(L != NULL);
+    ASSERT(luaStackChecker.isValid());
+    ASSERT(L == LuaStateAccess::getLuaInterpreter(L)->getCurrentLuaAccess().L);
+    return true;
 }
 #endif
 

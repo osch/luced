@@ -73,6 +73,7 @@ private:
 
 } // namespace LucED
 
+#include "LuaClassRegistry.hpp"
 #include "LuaInterpreter.hpp"
 
 namespace LucED

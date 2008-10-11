@@ -32,7 +32,7 @@
 namespace LucED {
 
 
-class LuaObject;
+class LuaVar;
 
 struct SubPatternDescriptor
 {
@@ -95,7 +95,7 @@ public:
     typedef OwningPtr<SyntaxPatterns> Ptr;
     typedef HeapHashMap<String,int> NameToIndexMap;
     
-    static Ptr create(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap);
+    static Ptr create(LuaVar config, NameToIndexMap::ConstPtr textStyleToIndexMap);
 
     SyntaxPattern* get(int i) {
         return allPatterns.getPtr(i);
@@ -128,7 +128,7 @@ public:
     }
 private:
     
-    SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap);
+    SyntaxPatterns(LuaVar config, NameToIndexMap::ConstPtr textStyleToIndexMap);
 
     void compile(int i);
     void compileAll();

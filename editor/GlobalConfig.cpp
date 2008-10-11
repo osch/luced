@@ -27,7 +27,7 @@
 #include "DirectoryReader.hpp"
 #include "RegexException.hpp"
 #include "GlobalLuaInterpreter.hpp"
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 #include "System.hpp"
 #include "File.hpp"
 #include "CurrentDirectoryKeeper.hpp"
@@ -147,7 +147,7 @@ void GlobalConfig::readConfig()
             throw ConfigException("config file does not return table");
         }
         
-        LuaObject configTable = luaRslt.objects[0];
+        LuaVar configTable = luaRslt.objects[0];
 
         if (!configTable.isTable()) {
             throw ConfigException("config file does not return table");
@@ -156,7 +156,7 @@ void GlobalConfig::readConfig()
 
         // generalConfig
 
-        LuaObject generalConfig = configTable["generalConfig"];
+        LuaVar generalConfig = configTable["generalConfig"];
 
         if (generalConfig.isValid())
         {
@@ -164,7 +164,7 @@ void GlobalConfig::readConfig()
                 throw ConfigException("invalid generalConfig");
             }
 
-            LuaObject o = generalConfig["useOwnKeyPressRepeater"];
+            LuaVar o = generalConfig["useOwnKeyPressRepeater"];
             if (o.isValid()) {
                 if (!o.isBoolean()) {
                     throw ConfigException("invalid useOwnKeyPressRepeater");
@@ -365,15 +365,15 @@ void GlobalConfig::readConfig()
 
         // textStyles
 
-        LuaObject ts = configTable["textStyles"];
+        LuaVar ts = configTable["textStyles"];
         if (!ts.isTable()) {
             throw ConfigException("invalid textstyles");
         }
 
-        LuaObject o(luaAccess);
+        LuaVar o(luaAccess);
         
         for (int i = 0; o = ts[i + 1], o.isValid(); ++i) {
-            LuaObject n = o["name"];
+            LuaVar n = o["name"];
             if (!n.isString()) {
                 throw ConfigException("textstyle has invalid name");
             }
@@ -387,12 +387,12 @@ void GlobalConfig::readConfig()
 
             textStyleNameToIndexMap->set(name, i);
 
-            LuaObject f = o["font"];
+            LuaVar f = o["font"];
             if (!f.isString()) {
                 throw ConfigException(String() << "invalid font in textstyle '" << name << "'");
             }
             String fontname = f.toString();
-            LuaObject c = o["color"];
+            LuaVar c = o["color"];
             if (!c.isString()) {
                 throw ConfigException(String() << "invalid color in textstyle '" << name << "'");
             }
@@ -402,7 +402,7 @@ void GlobalConfig::readConfig()
 
         // LanguageModes
 
-        LuaObject lm = configTable["languageModes"];
+        LuaVar lm = configTable["languageModes"];
         if (lm.isValid())
         {
             if (!lm.isTable()) {
@@ -410,7 +410,7 @@ void GlobalConfig::readConfig()
             }
             for (int i = 0; o = lm[i+1], o.isValid(); ++i)
             {
-                LuaObject n = o["name"];
+                LuaVar n = o["name"];
                 if (!n.isString()) {
                     throw ConfigException("invalid or missing element 'name' in languageMode");
                 }
@@ -418,7 +418,7 @@ void GlobalConfig::readConfig()
             }
         }
         ActionKeyConfig::Ptr newActionKeyConfig = ActionKeyConfig::create();
-        LuaObject actions = configTable["actions"];
+        LuaVar actions = configTable["actions"];
         if (actions.isValid())
         {
             if (!actions.isTable()) {
@@ -427,7 +427,7 @@ void GlobalConfig::readConfig()
             HashMap<String, bool> hasNameMap;
             for (int i = 0; o = actions[i + 1], o.isValid(); ++i)
             {
-                LuaObject n = o["name"];
+                LuaVar n = o["name"];
                 if (!n.isValid() || !n.isString()) {
                     throw ConfigException("missing name element for action");
                 }
@@ -441,14 +441,14 @@ void GlobalConfig::readConfig()
                 ActionId actionId = ActionIdRegistry::getInstance()->getActionId(name);
                 
                 if (o["type"] == "shell") {
-                    LuaObject script = o["script"];
+                    LuaVar script = o["script"];
                     if (!script.isString()) {
                         throw ConfigException(String() << "invalid element 'script' for action '" << name <<"'");
                     }
                     actionIdToShellscriptMap.set(actionId, script.toString());
                 }
                 
-                LuaObject keys = o["keys"];
+                LuaVar keys = o["keys"];
                 if (!keys.isValid() || (!keys.isString() && !keys.isTable())) {
                     throw ConfigException(String() << "Invalid element 'keys' for action = '" << name << "'");
                 }
@@ -459,7 +459,7 @@ void GlobalConfig::readConfig()
                 }
                 else
                 {
-                    LuaObject k(luaAccess);
+                    LuaVar k(luaAccess);
                     
                     for (int i = 0; k = keys[i + 1], k.isValid(); ++i)
                     {
@@ -513,7 +513,7 @@ void GlobalConfig::readConfig()
                     if (luaRslt.objects.getLength() <= 0 || !luaRslt.objects[0].isTable()) {
                         throw ConfigException(String() << "Syntaxpattern '" << languageModeName << "' returns invalid element");
                     }
-                    LuaObject sp = luaRslt.objects[0];
+                    LuaVar sp = luaRslt.objects[0];
                     
                     try
                     {
@@ -567,7 +567,7 @@ SyntaxPatterns::Ptr GlobalConfig::loadSyntaxPatterns(const String& absoluteFileN
     if (luaRslt.objects.getLength() <= 0 || !luaRslt.objects[0].isTable()) {
         throw ConfigException(String() << "Syntaxpattern '" << absoluteFileName << "' returns invalid element");
     }
-    LuaObject sp = luaRslt.objects[0];
+    LuaVar sp = luaRslt.objects[0];
     SyntaxPatterns::Ptr rslt;
     try {
         rslt = SyntaxPatterns::create(sp, textStyleNameToIndexMap);

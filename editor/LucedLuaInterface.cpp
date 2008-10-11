@@ -19,32 +19,16 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef METHOD_MAP_HPP
-#define METHOD_MAP_HPP
+#include "LucedLuaInterface.hpp"
 
-#include "String.hpp"
-#include "HeapHashMap.hpp"
+using namespace LucED;
 
-namespace LucED
+SingletonInstance<LucedLuaInterface> LucedLuaInterface::instance;;
+
+
+LucedLuaInterface* LucedLuaInterface::getInstance()
 {
+    return instance.getPtr();
+}
 
-template < class T // implementation class
-         >
-class MethodMap : public HeapHashMap< String, void (T::*)() >
-{
-public:
-    typedef void (T::*MethodPtr)();
-    typedef OwningPtr<MethodMap> Ptr;
-    
-    static Ptr create() {
-        return Ptr(new MethodMap());
-    }
-    
-private:
-    MethodMap()
-    {}
-};
 
-} // namespace LucED
-
-#endif // METHOD_MAP_HPP

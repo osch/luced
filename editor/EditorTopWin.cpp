@@ -46,6 +46,8 @@
 #include "SaveAsPanel.hpp"
 #include "EditorTopWinActions.hpp"
 #include "UnknownActionNameException.hpp"
+#include "ViewLuaInterface.hpp"
+#include "LucedLuaInterface.hpp"
 
 using namespace LucED;
 
@@ -316,6 +318,8 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     
     shellscriptActionMethods = ShellscriptActionMethods::create(this);
     GuiWidget::addActionMethods(shellscriptActionMethods);
+    
+    viewLuaInterface = ViewLuaInterface::create(textEditor);
 }
 
 EditorTopWin::~EditorTopWin()
@@ -512,6 +516,7 @@ void EditorTopWin::treatFocusIn()
         }
         checkForFileModifications();
     }
+    LucedLuaInterface::getInstance()->setCurrentView(viewLuaInterface);
 }
 
 bool EditorTopWin::checkForFileModifications()

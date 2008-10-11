@@ -24,7 +24,7 @@
 #include "LuaAccess.hpp"
 #include "ByteBuffer.hpp"
 #include "File.hpp"
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 
 using namespace LucED;
 

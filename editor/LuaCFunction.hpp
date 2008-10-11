@@ -48,11 +48,11 @@ public:
 
 private:
     friend class LuaAccess;
-    friend class LuaObject;
+    friend class LuaVar;
     
     template<class KeyType
             >
-    friend class LuaObject::LuaObjectTableElementRef;
+    friend class LuaObjectTableElementRef;
     
     LuaCFunction()
     {}
@@ -64,6 +64,9 @@ private:
         LuaAccess              oldLuaAccess   = luaInterpreter->getCurrentLuaAccess();
         
         LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess(luaInterpreter, luaAccess);
+        #ifdef DEBUG
+            OwningPtr<LuaStackChecker> oldChecker = LuaStateAccess::replaceLuaStackChecker(L, LuaStackChecker::create());
+        #endif
         
         int numberOfResults = 0;
         bool wasError = false;
@@ -90,6 +93,9 @@ private:
                 wasError = true;
             }
         }
+        #ifdef DEBUG
+            LuaStateAccess::replaceLuaStackChecker(L, oldChecker);
+        #endif
         LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess(luaInterpreter, oldLuaAccess);
 
         if (wasError) {

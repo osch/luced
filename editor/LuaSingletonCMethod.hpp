@@ -23,11 +23,12 @@
 #include "LuaVar.hpp"
 #include "LuaInterpreter.hpp"
 
-#ifndef LUA_C_METHOD_HPP
-#define LUA_C_METHOD_HPP
+#ifndef LUA_SINGLETON_C_METHOD_HPP
+#define LUA_SINGLETON_C_METHOD_HPP
 
 #include <typeinfo>
 
+#include "LuaCMethod.hpp"
 #include "LuaException.hpp"
 #include "HeapObject.hpp"
 #include "WeakPtr.hpp"
@@ -39,55 +40,24 @@ namespace LucED
 {
 
 
-class LuaCMethodBase
-{
-protected:
-
-    static void throwInvalidNumberArgsError(const char* luaClassName);
-
-    template<class T
-            >
-    static T* castDynamicToValidPtr(const LuaVar& luaObject, const char* luaClassName)
-    {
-        HeapObject* ptr = luaObject.toWeakPtr();
-        if (ptr == NULL) {
-            trowInvalidArgumentError(luaObject, luaClassName);
-        }
-        T* rslt = dynamic_cast<T*>(ptr);
-        if (rslt == NULL) {
-            throwDynamicCastError(luaObject, luaClassName);
-        }
-        return rslt;
-    }
-
-    static void handleException(lua_State* L);
-
-private:    
-    static void trowInvalidArgumentError(const LuaVar& luaObject,
-                                         const char*   luaClassName);
-
-    static void throwDynamicCastError(const LuaVar& luaObject,
-                                      const char*   luaClassName);
-};
-
 template
 <
     class C,
     LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
 >
-class LuaCMethod : public LuaCMethodBase
+class LuaSingletonCMethod : public LuaCMethodBase
 {
 public:
-    static LuaCMethod createWrapper()
+    static LuaSingletonCMethod createWrapper()
     {
-        return LuaCMethod();
+        return LuaSingletonCMethod();
     }
 
 private:
     friend class LuaAccess;
     friend class LuaVar;
     
-    LuaCMethod()
+    LuaSingletonCMethod()
     {}
 
     static int invokeFunction(lua_State* L)
@@ -108,17 +78,7 @@ private:
             {
                 LuaCFunctionArguments args(luaAccess);
                 
-                const char* className = LuaClassRegistry::ClassAttributes<C>::getLuaClassName();
-                
-                if (args.getLength() < 1)
-                {
-                    LuaCMethodBase::throwInvalidNumberArgsError(className);
-                }
-                C* objectPtr = LuaCMethodBase::castDynamicToValidPtr<C>(args[0], 
-                                                                        className);
-                args.remove(0);
-                
-                numberOfResults = (objectPtr->*M)(args).numberOfResults;
+                numberOfResults = (C::getInstance()->*M)(args).numberOfResults;
             }
             catch (...)
             {
@@ -143,4 +103,4 @@ private:
  
 } // namespace LucED
 
-#endif // LUA_C_METHOD_HPP
+#endif // LUA_SINGLETON_C_METHOD_HPP

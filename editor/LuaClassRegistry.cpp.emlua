@@ -1,0 +1,246 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+@ local definitions = require("BuiltinClassDefinitions")
+
+#include "LuaClassRegistry.hpp"
+#include "LuaCMethod.hpp"
+#include "LuaSingletonCMethod.hpp"
+
+@ for _, def in ipairs(definitions) do
+#include "@(string.match(def.class, "^[^:]*")).hpp"
+@ end
+@
+@ local function lowerize(x)
+@   return string.lower(string.sub(x,1,1))..string.sub(x,2)
+@ end
+@
+@ local defByName = {}
+@ for _, def in ipairs(definitions) do
+@   assert(not defByName[def.name])
+@   defByName[def.name] = def
+@ end
+
+using namespace LucED;
+
+namespace // anonymous namespace
+{
+
+LuaCFunctionResult CompareFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    bool rslt = false;
+    
+    if (args.getLength() >= 2)
+    {
+        HeapObject* p1 = args[0].toWeakPtr();
+        HeapObject* p2 = args[1].toWeakPtr();
+        
+        rslt = (p1 == p2);
+    }
+    else {
+        throw LuaException("function needs two arguments");
+    }
+    return LuaCFunctionResult(luaAccess) << rslt;
+}
+
+LuaCFunctionResult LessThanFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    bool rslt = false;
+    
+    if (args.getLength() >= 2)
+    {
+        HeapObject* p1 = args[0].toWeakPtr();
+        HeapObject* p2 = args[1].toWeakPtr();
+        
+        rslt = (p1 < p2);
+    }
+    else {
+        throw LuaException("function needs two arguments");
+    }
+    return LuaCFunctionResult(luaAccess) << rslt;
+}
+
+LuaCFunctionResult LessOrEqualFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    bool rslt = false;
+    
+    if (args.getLength() >= 2)
+    {
+        HeapObject* p1 = args[0].toWeakPtr();
+        HeapObject* p2 = args[1].toWeakPtr();
+        
+        rslt = (p1 <= p2);
+    }
+    else {
+        throw LuaException("function needs two arguments");
+    }
+    return LuaCFunctionResult(luaAccess) << rslt;
+}
+
+LuaCFunctionResult TostringFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    String rslt = "";
+    
+    if (args.getLength() >= 1 && args[0].isPtr())
+    {
+        String type;
+        LuaVar typeObject = args[0]["type"];
+        if (typeObject.isString()) {
+            type = typeObject.toString();
+        } else {
+            type = "unknown";
+        }
+        
+        String hexPtr;
+        HeapObject* p = args[0].toWeakPtr();
+
+        if (p != NULL) {
+            char hexPtrBuffer[40]; sprintf(hexPtrBuffer, "%p", p);
+            hexPtr = hexPtrBuffer;
+        } else {
+            hexPtr = "invalid";
+        }
+        rslt = String() << type << ": " << hexPtr;
+    }
+    else {
+        throw LuaException("function needs LucED object argument");
+    }
+    return LuaCFunctionResult(luaAccess) << rslt;
+}
+
+LuaCFunctionResult GarbageCollectorFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (args.getLength() >= 1)
+    {
+        if (args[0].isOwningPtr())
+        {
+            static_cast<OwningPtr<HeapObject>*>(args[0].getRawPtrPtr())->~OwningPtr<HeapObject>();
+        }
+        else if (args[0].isWeakPtr())
+        {
+            static_cast<WeakPtr<HeapObject>*>(args[0].getRawPtrPtr())->~WeakPtr<HeapObject>();
+        }
+    }
+    return LuaCFunctionResult(luaAccess);
+}
+
+LuaCFunctionResult IsOwningFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (args.getLength() >= 1)
+    {
+        if (args[0].isPtr())
+        {
+            return LuaCFunctionResult(luaAccess) << args[0].isOwningPtr();
+        }
+        else {
+            return LuaCFunctionResult(luaAccess) << luaAccess.getNil();
+        }
+    }
+    else {
+        throw LuaException("function needs one object argument");
+    }
+}
+
+LuaCFunctionResult IsValidFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    bool rslt = false;
+    
+    if (args.getLength() >= 1)
+    {
+        if (args.getLength() >= 1)
+        {
+            if (args[0].toWeakPtr().isValid())
+            {
+                rslt = true;
+            }
+        }
+    }
+    else {
+        throw LuaException("function needs one object argument");
+    }
+    return LuaCFunctionResult(luaAccess) << rslt;
+}
+
+@ for i, def in ipairs(definitions) do
+
+
+inline LuaStoredObjectReference storeMetatableFor@(def.name)(const LuaAccess& luaAccess)
+{
+    LuaVar metaTable   = luaAccess.newTable();
+    LuaVar methodTable = luaAccess.newTable();
+    
+    metaTable["__index"]     = methodTable;
+    metaTable["__metatable"] = false;
+    metaTable["__eq"]        = LuaCFunction<CompareFunction>::createWrapper();
+    metaTable["__lt"]        = LuaCFunction<LessThanFunction>::createWrapper();
+    metaTable["__le"]        = LuaCFunction<LessOrEqualFunction>::createWrapper();
+    metaTable["__tostring"]  = LuaCFunction<TostringFunction>::createWrapper();
+    metaTable["__gc"]        = LuaCFunction<GarbageCollectorFunction>::createWrapper();
+    
+    
+    methodTable["type"]      = "@(def.name)";
+    methodTable["isOwning"]  = LuaCFunction<IsOwningFunction>::createWrapper();;
+    methodTable["isValid"]   = LuaCFunction<IsValidFunction>::createWrapper();;
+
+@   local function methods(def)
+@     if def.derived then
+@       local derivedDef = defByName[def.derived]
+@       assert((def.ptrType == derivedDef.ptrType) or (def.ptrType ~= "Singleton" and derivedDef.ptrType ~= "Singleton"))
+@       methods(derivedDef)
+@     end      
+@     for _, m in ipairs(def.methods or {}) do
+@       if def.ptrType == "Singleton" then
+        methodTable["@(m.name)"] = LuaSingletonCMethod<@(def.class), &@(def.class)::@(m.name)>::createWrapper();
+@       else
+        methodTable["@(m.name)"] =          LuaCMethod<@(def.class), &@(def.class)::@(m.name)>::createWrapper();
+@       end        
+@     end
+@   end
+@
+@   methods(def)
+
+    return luaAccess.store(metaTable);
+}
+@ end
+} // anonymous namespace
+
+LuaClassRegistry::LuaClassRegistry(LuaAccess luaAccess)
+    :
+@ for i, def in ipairs(definitions) do
+@     local comma = ((i == #definitions) and "" or ",")
+      @(lowerize(def.name))StoreReference(storeMetatableFor@(def.name)(luaAccess))@(comma)
+@ end
+{}
+

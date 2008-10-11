@@ -40,15 +40,15 @@ FindUtil::FindUtil(RawPtr<TextData> textData)
 {}
 
 
-LuaObject FindUtil::evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
+LuaVar FindUtil::evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
                                     long startMatch, long pos, int lastCaptured, int topCaptured)
 {
     RawPtr<LuaInterpreter> luaInterpreter = GlobalLuaInterpreter::getInstance();
     LuaAccess luaAccess = luaInterpreter->getCurrentLuaAccess();
     
-    LuaObject rslt(luaAccess);
+    LuaVar rslt(luaAccess);
     {
-        LuaObject      o    = luaAccess.retrieve(callout->storeReference);
+        LuaVar      o    = luaAccess.retrieve(callout->storeReference);
         MemArray<int>& args = callout->args;
 
         LuaFunctionArguments luaArgs(luaAccess);
@@ -101,7 +101,7 @@ int FindUtil::pcreCalloutFunction(void* selfVoidPtr, pcre_callout_block* callout
         {
             CalloutObject::Ptr callout = self->calloutObjects[calloutBlock->callout_number - 1];
             
-            LuaObject rslt = self->evaluateCallout(callout, 
+            LuaVar rslt = self->evaluateCallout(callout, 
                                                    calloutBlock->subject, 
                                                    calloutBlock->start_match, 
                                                    calloutBlock->current_position,
@@ -206,7 +206,7 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& findString, const int
 
         LuaAccess::Result exprResult = luaAccess.executeExpression(varName);
 
-        LuaObject g(luaAccess);
+        LuaVar g(luaAccess);
 
         if (exprResult.objects.getLength() > 0) {
             g = exprResult.objects[0];

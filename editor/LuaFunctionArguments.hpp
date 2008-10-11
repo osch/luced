@@ -19,7 +19,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 #include "NonCopyable.hpp"
 
 #ifndef LUA_FUNCTION_ARGUMENTS_HPP
@@ -47,7 +47,7 @@ public:
     #endif
     }
 
-    LuaFunctionArguments(const LuaObject& arg)
+    LuaFunctionArguments(const LuaVar& arg)
         : LuaAccess(arg.getLuaAccess()),
           numberArguments(1),
           isOnStack(true)
@@ -94,7 +94,7 @@ public:
     class LuaObjectAccess
     {
     private:
-        friend class LuaObject;
+        friend class LuaVarRef;
         
         static void clearAfterCall(LuaFunctionArguments& args) {
             args.isOnStack = false;

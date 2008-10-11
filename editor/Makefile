@@ -48,9 +48,11 @@ include sandbox.mk
 LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_EXTRA_OPTS)
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 
-LUA_SCRIPTS            := functions             BuiltinActionDefinitions
-GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId
-GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultActionKeyConfig
+LUA_SCRIPTS            := functions             BuiltinActionDefinitions  BuiltinClassDefinitions
+GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
+                          LuaClassRegistry
+GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultActionKeyConfig \
+                          LuaClassRegistry
 
 GENERATED_FAST_MODULES :=
 
@@ -58,7 +60,7 @@ GENERATED_FAST_MODULES :=
 SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget                  SystemException \
                 TextEditorWidget         TextStyle              KeyPressRepeater           ScrollBar \
                 System                   LuaException           TopWin                     ProgramName \
-                LuaObject                LuaInterpreter         ConfigException            GlobalConfig \
+                LuaVar                   LuaInterpreter         ConfigException            GlobalConfig \
                 LanguageModes            RegexException         StatusLine                 GlobalLuaInterpreter \
                 Button                   GuiLayoutWidget        LuaStoredObjectReference   \
                 GotoLinePanel            SingletonKeeper        TopWinList                 OwnedTopWins \
@@ -74,7 +76,8 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
 		FramedGuiCompound        EditorTopWinActions    UnknownActionNameException ScrollableTextGuiCompound \
 		SearchInteraction        ActionKeyConfig        SingleLineEditActions      MultiLineEditActions \
 		ActionKeySequenceHandler StackTrace             ActionIdRegistry           MultiLineDisplayActions \
-		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess
+		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess \
+		LucedLuaInterface
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

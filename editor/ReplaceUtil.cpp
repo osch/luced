@@ -126,8 +126,8 @@ String ReplaceUtil::getSubstitutedString()
 
                     LuaAccess luaAccess = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
 
-                    LuaObject objectToCall = luaAccess.retrieve(callout->getCallableObjectReference());
-                    LuaObject callResult(luaAccess);
+                    LuaVar objectToCall = luaAccess.retrieve(callout->getCallableObjectReference());
+                    LuaVar callResult(luaAccess);
                     
                     if (objectToCall.isTable())
                     {

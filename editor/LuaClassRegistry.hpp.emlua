@@ -1,0 +1,99 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+@ local definitions = require("BuiltinClassDefinitions")
+
+#include "LuaAccess.hpp"
+#include "LuaStoredObjectReference.hpp"
+
+#ifndef LUA_CLASS_REGISTRY_HPP
+#define LUA_CLASS_REGISTRY_HPP
+
+@ local function lowerize(x)
+@   return string.lower(string.sub(x,1,1))..string.sub(x,2)
+@ end
+
+namespace LucED
+{
+
+class LuaStoredObjectReference;
+
+@ for _, def in ipairs(definitions) do
+class @(def.class);
+@ end
+
+class LuaClassRegistry
+{
+public:
+    LuaClassRegistry(LuaAccess luaAccess);
+    
+    template<class T
+            >
+    LuaStoredObjectReference getMetaTableStoreReference() const;
+
+    template<class T
+            >
+    class ClassAttributes;
+
+private:
+@ for _, def in ipairs(definitions) do
+    LuaStoredObjectReference @(lowerize(def.name))StoreReference;
+@ end
+};
+
+} // namespace LucED
+
+
+
+
+namespace LucED
+{
+
+@ for _, def in ipairs(definitions) do
+template<
+        >
+inline LuaStoredObjectReference LuaClassRegistry::getMetaTableStoreReference<@(def.class)>() const
+{
+    return @(lowerize(def.name))StoreReference;
+}
+
+@ assert(   def.ptrType == "OwningPtr" 
+@        or def.ptrType == "WeakPtr"
+@        or def.ptrType == "Singleton")
+
+template<
+        >
+class LuaClassRegistry::ClassAttributes<@(def.class)>
+{
+public:
+    static const bool  isOwningPtrType = @(def.ptrType == "OwningPtr" and "true" or "false");
+    static const bool  isKnown         = true;
+
+    static const char* getLuaClassName() {
+        return "@(def.name)";
+    }
+};
+
+@ end
+
+} // namespace LucED
+
+#endif // LUA_CLASS_REGISTRY_HPP

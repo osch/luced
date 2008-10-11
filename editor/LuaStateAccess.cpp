@@ -45,6 +45,9 @@ public:
     static void decWeakCounter(const HeapObject* obj) {
         HeapObjectRefManipulator::decWeakCounter(obj);
     }
+    static void resetInitialOwnership(const HeapObject* obj) {
+        HeapObjectRefManipulator::resetInitialOwnership(obj);
+    }
 };
 } // anonymous namespace
 
@@ -56,7 +59,7 @@ LuaStackChecker* LuaStateAccess::getLuaStackChecker(lua_State* L)
     
     if (extra->stackChecker == NULL)
     {
-        LuaStackChecker::Ptr stackChecker = LuaStackChecker::create();
+        OwningPtr<LuaStackChecker> stackChecker = LuaStackChecker::create();
         LuaStateAccess_HeapObjectRefManipulator::incRefCounter(stackChecker);
         extra->stackChecker = stackChecker.getRawPtr();
     }
@@ -64,6 +67,28 @@ LuaStackChecker* LuaStateAccess::getLuaStackChecker(lua_State* L)
 }
 #endif
 
+#ifdef DEBUG
+OwningPtr<LuaStackChecker> LuaStateAccess::replaceLuaStackChecker(lua_State* L, OwningPtr<LuaStackChecker> newStackChecker)
+{
+    ExtraLuaStateData* extra = (ExtraLuaStateData*)((char*)(L) - sizeof(ExtraLuaStateData));
+    
+    OwningPtr<LuaStackChecker> oldStackChecker;
+    
+    if (extra->stackChecker != NULL)
+    {
+        {
+            LuaStackChecker* p = (LuaStackChecker*) extra->stackChecker;
+            LuaStateAccess_HeapObjectRefManipulator::resetInitialOwnership(p);
+            oldStackChecker = OwningPtr<LuaStackChecker>(p);
+            // no decRefCounter, because OwningPtr takes given Ownerchip
+        }
+        
+        LuaStateAccess_HeapObjectRefManipulator::incRefCounter(newStackChecker);
+        extra->stackChecker = newStackChecker.getRawPtr();
+    }
+    return oldStackChecker;
+}
+#endif
 
 void LucED::LuaStateAccess_freeExtraLuaStateData(ExtraLuaStateData* extraLuaStateData)
 {

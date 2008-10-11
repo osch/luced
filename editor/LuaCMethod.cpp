@@ -23,30 +23,35 @@
 
 using namespace LucED;
 
-HeapObject* LuaCMethodBase::getCheckedObjectPtr(LuaObject methodLuaObject, const std::type_info& typeInfo)
+
+void LuaCMethodBase::throwInvalidNumberArgsError(const char* luaClassName)
 {
-    if (!methodLuaObject.isUserData()) {
-        throw LuaException(String() << "method needs object of type " << typeInfo.name()
+    throw LuaException(String() << "method needs object of type " << luaClassName
+                                                                  << " as first argument");
+}
+
+
+void LuaCMethodBase::trowInvalidArgumentError(const LuaVar& luaObject, 
+                                              const char*   luaClassName)
+{
+    if (!luaObject.isPtr()) {
+        throw LuaException(String() << "method needs object of type " << luaClassName
                                                                       << " as first argument");
     }
     
-    WeakPtr<HeapObject> methodHeapObject = methodLuaObject.toUserDataPtr();
-
-    if (!methodHeapObject.isValid()) {
-        throw LuaException(String() << "method needs valdid object of type " << typeInfo.name()
-                                                                             << " as first argument");
-    }
-
-    HeapObject*         rawObjectPtr     = methodHeapObject.getRawPtr();
-    
-    if (typeid(*rawObjectPtr) != typeInfo) {
-        throw LuaException(String() << "method needs object of type " << typeInfo.name()
-                                                                      << " as first argument, "
-                                       " but has argument of type " << typeid(*rawObjectPtr).name());
-    }
-    
-    return rawObjectPtr;
+    throw LuaException(String() << "method needs valid object of type " << luaClassName
+                                                                        << " as first argument");
 }
+
+
+void LuaCMethodBase::throwDynamicCastError(const LuaVar& luaObject,
+                                           const char*   luaClassName)
+{
+    throw LuaException(String() << "method needs object of type " << luaClassName
+                                                                  << " as first argument, "
+                                   " but has argument of type "   << luaObject["type"].toString());
+}
+
 
 void LuaCMethodBase::handleException(lua_State* L)
 {

@@ -24,13 +24,13 @@
 #include "ConfigException.hpp"
 #include "HeapHashMap.hpp"
 #include "util.hpp"
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 #include "LuaIterator.hpp"
 
 using namespace LucED;
 
 
-SyntaxPatterns::Ptr SyntaxPatterns::create(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap)
+SyntaxPatterns::Ptr SyntaxPatterns::create(LuaVar config, NameToIndexMap::ConstPtr textStyleToIndexMap)
 {
     return Ptr(new SyntaxPatterns(config, textStyleToIndexMap));
 }
@@ -38,15 +38,15 @@ SyntaxPatterns::Ptr SyntaxPatterns::create(LuaObject config, NameToIndexMap::Con
 
 typedef HeapHashMap<String,int> NameToIndexMap;
 
-static void fillChildPatterns(SyntaxPattern *sp, LuaObject actPattern, NameToIndexMap::Ptr nameToIndexMap)
+static void fillChildPatterns(SyntaxPattern *sp, LuaVar actPattern, NameToIndexMap::Ptr nameToIndexMap)
 {
-    LuaObject o = actPattern["childPatterns"];
+    LuaVar o = actPattern["childPatterns"];
     if (o.isValid()) {
         if (!o.isTable()) {
             throw ConfigException(String() << "pattern '" << sp->name << "': invalid childPatterns");
         }
         for (int j = 1; o[j].isValid(); ++j) {
-            LuaObject n = o[j];
+            LuaVar n = o[j];
             if (!n.isString()) {
                 throw ConfigException(String() << "pattern '" << sp->name << "': invalid childPatterns");
             }
@@ -60,7 +60,7 @@ static void fillChildPatterns(SyntaxPattern *sp, LuaObject actPattern, NameToInd
 }
 
 
-SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textStyleToIndexMap)
+SyntaxPatterns::SyntaxPatterns(LuaVar config, NameToIndexMap::ConstPtr textStyleToIndexMap)
     : maxOvecSize(0),
       totalMaxREBytesExtend(0)
 {
@@ -68,7 +68,7 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
     
     LuaAccess luaAccess = config.getLuaAccess();
     
-    LuaObject root = config["root"];
+    LuaVar root = config["root"];
     if (!root.isTable()) {
         throw ConfigException("pattern 'root' not properly defined");
     }
@@ -90,7 +90,7 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
     {
         SyntaxPattern* sp = allPatterns.getPtr(0);
         sp->name = "root";
-        LuaObject o = root["style"];
+        LuaVar o = root["style"];
         if (!o.isString()) {
             throw ConfigException(String() << "pattern '" << sp->name << "': invalid style");
         }
@@ -106,11 +106,11 @@ SyntaxPatterns::SyntaxPatterns(LuaObject config, NameToIndexMap::ConstPtr textSt
         String name = patternNames[i];
         SyntaxPattern* sp = allPatterns.getPtr(i + 1);
         sp->name = name;
-        LuaObject p = config[name];
+        LuaVar p = config[name];
         if (!p.isTable()) {
             throw ConfigException(String() << "pattern '" << name << "' not properly defined");
         }
-        LuaObject o = p["style"];
+        LuaVar o = p["style"];
         if (!o.isString()) {
             throw ConfigException(String() << "pattern '" << sp->name << "': invalid style");
         }

@@ -67,9 +67,9 @@ private:
 #endif
     {}
     void clear() {
+#ifdef DEBUG
         weakCounter = 0;
         strongCounter = 0;
-#ifdef DEBUG
         magic = -1;
         wasNeverOwned = false;
 #endif
@@ -148,17 +148,26 @@ protected:
     static void obtainInitialOwnership(const HeapObject *obj) {
 #ifdef DEBUG
         if (obj != NULL) {
-            #ifdef PRINT_MALLOCS
+        #ifdef PRINT_MALLOCS
             printf("----> HeapObject %p : initial Ownership\n", obj);
             printf("----- New %s at %p\n", typeid(*obj).name(), dynamic_cast<const void*>(obj));
-            #endif
-            #ifdef DEBUG
+        #endif
+        #ifdef DEBUG
             HeapObjectChecker::initCounter += 1;
-            #endif
+        #endif
             HeapObjectCounters* heapObjectCounters = getHeapObjectCounters(obj);
             ASSERT(heapObjectCounters->wasNeverOwned);
-            ASSERT(heapObjectCounters->strongCounter == 1);
+            ASSERT(heapObjectCounters->strongCounter >= 1); // normal == 1, >= 1 after resetInitialOwnership
             heapObjectCounters->wasNeverOwned = false;
+        }
+#endif
+    }
+    static void resetInitialOwnership(const HeapObject *obj) {
+#ifdef DEBUG
+        if (obj != NULL) {
+            HeapObjectCounters* heapObjectCounters = getHeapObjectCounters(obj);
+            heapObjectCounters->wasNeverOwned = true;
+            HeapObjectChecker::initCounter -= 1;
         }
 #endif
     }

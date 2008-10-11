@@ -40,10 +40,12 @@
 #include "ScrollableTextGuiCompound.hpp"
 #include "ActionKeyConfig.hpp"
 #include "ActionKeySequenceHandler.hpp"
+#include "ViewLuaInterface.hpp"
                     
 namespace LucED
 {
 
+class ViewLuaInterface;
 
 class EditorTopWin : public  TopWin,
                      private ViewCounterTextDataAccess
@@ -60,6 +62,10 @@ public:
     }
     
     ~EditorTopWin();
+    
+    RawPtr<ViewLuaInterface> getViewLuaInterface() const {
+        return viewLuaInterface;
+    }
     
     virtual ProcessingResult processEvent(const XEvent* event);
     
@@ -158,6 +164,8 @@ private:
     OwningPtr<ShellscriptActionMethods> shellscriptActionMethods;
 
     ActionKeySequenceHandler actionKeySequenceHandler;
+    
+    OwningPtr<ViewLuaInterface> viewLuaInterface;
 };
 
 } // namespace LucED

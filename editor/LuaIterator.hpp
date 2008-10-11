@@ -22,7 +22,7 @@
 #ifndef LUA_ITERATOR_HPP
 #define LUA_ITERATOR_HPP
 
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 #include "LuaStackChecker.hpp"
 #include "LuaStateAccess.hpp"
 
@@ -45,7 +45,7 @@ public:
         return *this;
     }
     
-    bool in(const LuaObject& table)
+    bool in(const LuaVar& table)
     {
         isSameLuaAccess(table);
 
@@ -66,12 +66,12 @@ public:
         return rslt;
     }
     
-    const LuaObject& key() const
+    const LuaVar& key() const
     {
         return keyObject;
     }
     
-    const LuaObject& value() const
+    const LuaVar& value() const
     {
         return valueObject;
     }
@@ -106,8 +106,8 @@ public:
     
 private:
     int       counter;
-    LuaObject keyObject;
-    LuaObject valueObject;
+    LuaVar keyObject;
+    LuaVar valueObject;
 };
 
 } // namespace LucED

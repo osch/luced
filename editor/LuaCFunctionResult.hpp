@@ -24,7 +24,7 @@
 #ifndef LUA_C_FUNCTION_RESULT_HPP
 #define LUA_C_FUNCTION_RESULT_HPP
 
-#include "LuaObject.hpp"
+#include "LuaVar.hpp"
 
 namespace LucED
 {
@@ -38,10 +38,11 @@ public:
         : numberOfResults(0),
           luaAccess(luaAccess)
     {}
-
-    LuaCFunctionResult& operator<<(const LuaObject& rsltObject) {
-        ASSERT(luaAccess.L == rsltObject.L);
-        lua_pushvalue(luaAccess.L, rsltObject.stackIndex);
+    
+    template<class T
+            >
+    LuaCFunctionResult& operator<<(const T& rsltObject) {
+        luaAccess.push(rsltObject);
         ++numberOfResults;
         return *this;
     }
@@ -61,6 +62,13 @@ private:
         LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
     >
     friend class LuaCMethod;
+
+    template
+    <
+        class C,
+        LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+    >
+    friend class LuaSingletonCMethod;
 
     int numberOfResults;
     LuaAccess luaAccess;

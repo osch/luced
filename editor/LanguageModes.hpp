@@ -36,7 +36,7 @@ namespace LucED {
 
 
 
-class LuaObject;
+class LuaVar;
 
 class LanguageMode : public HeapObject
 {
@@ -46,7 +46,7 @@ public:
     static Ptr create(const String& name, BasicRegex regex = BasicRegex()) {
         return Ptr(new LanguageMode(name, regex));
     }
-    static Ptr create(LuaObject config);
+    static Ptr create(LuaVar config);
         
     String getName() const {
         return name;
@@ -74,7 +74,7 @@ private:
     friend class LanguageModes;
 
     LanguageMode(const String& name, BasicRegex regex = BasicRegex());
-    LanguageMode(LuaObject config);
+    LanguageMode(LuaVar config);
     
     String name;
     BasicRegex regex;
@@ -94,7 +94,7 @@ public:
     }
     
     void append(const String& name);
-    void append(LuaObject config);
+    void append(LuaVar config);
     
     LanguageMode::Ptr getLanguageModeForFile(const String& fileName);
     LanguageMode::Ptr getDefaultLanguageMode();
