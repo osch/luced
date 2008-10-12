@@ -905,12 +905,14 @@ inline RawPtr<LuaInterpreter> LuaVarRef::getLuaInterpreter() const
     return LuaStateAccess::getLuaInterpreter(L);
 }
 
+#ifdef DEBUG
 template<
         >
 inline bool LuaObjectTableElementRef<LuaVarRef>::isCorrect(const LuaVarRef& rhs)
 {
     return rhs.isCorrect();
 }
+#endif
 
 } // namespace LucED
 
