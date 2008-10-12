@@ -10,6 +10,7 @@
 
 #include <sys/stat.h>
 #include <sys/times.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <sys/wait.h>
@@ -463,7 +464,7 @@ static int runexec(lua_State *L, int use_shell)
 {
 	const char *path = luaL_checkstring(L, 1);
 	int i,n=lua_gettop(L);
-	char **argv = lua_newuserdata(L,(n+1)*sizeof(char*));
+	char **argv = (char**)lua_newuserdata(L,(n+1)*sizeof(char*));
 	argv[0] = (char*)path;
 	for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, i+1);
 	argv[n] = NULL;
@@ -736,7 +737,7 @@ static int Pgetlogin(lua_State *L)		/** getlogin() */
 
 static void Fgetpasswd(lua_State *L, int i, const void *data)
 {
-	const struct passwd *p=data;
+	const struct passwd *p = (const struct passwd *)data;
 	switch (i)
 	{
 		case 0: lua_pushstring(L, p->pw_name); break;
@@ -818,7 +819,7 @@ struct mytimes
 static void Ftimes(lua_State *L, int i, const void *data)
 {
     static long clk_tck = 0; 
-	const struct mytimes *t=data;
+	const struct mytimes *t = (const struct mytimes *)data;
 
     if( !clk_tck){ clk_tck= sysconf(_SC_CLK_TCK);}
 	switch (i)
@@ -843,6 +844,15 @@ static int Ptimes(lua_State *L)			/** times([options]) */
 	return doselection(L, 1, Stimes, Ftimes, &t);
 }
 
+static int Pgettimeofday(lua_State *L)			/** gettimeofday() */
+{
+	struct timeval t;
+	gettimeofday(&t, NULL);
+	double seconds = t.tv_sec + 0.000001 * t.tv_usec;
+	lua_pushnumber(L, seconds);
+	return 1;
+}
+
 
 static const char *filetype(mode_t m)
 {
@@ -858,7 +868,7 @@ static const char *filetype(mode_t m)
 
 static void Fstat(lua_State *L, int i, const void *data)
 {
-	const struct stat *s=data;
+	const struct stat *s = (const struct stat *)data;
 	switch (i)
 	{
 		case 0: pushmode(L, s->st_mode); break;
@@ -925,7 +935,7 @@ static const int Kpathconf[] =
 
 static void Fpathconf(lua_State *L, int i, const void *data)
 {
-	const char *path=data;
+	const char *path = (const char *)data;
 	lua_pushinteger(L, pathconf(path, Kpathconf[i]));
 }
 
@@ -1014,6 +1024,7 @@ static int Pcloselog(lua_State *L)		/** closelog() */
  */
 char *crypt(const char *, const char *);
 
+#if 0
 static int Pcrypt(lua_State *L)
 {
 	const char *str, *salt;
@@ -1029,6 +1040,7 @@ static int Pcrypt(lua_State *L)
 
 	return 1;
 }
+#endif
 
 static const luaL_reg R[] =
 {
@@ -1037,7 +1049,7 @@ static const luaL_reg R[] =
 	{"chdir",		Pchdir},
 	{"chmod",		Pchmod},
 	{"chown",		Pchown},
-	{"crypt",		Pcrypt},
+//	{"crypt",		Pcrypt},
 	{"ctermid",		Pctermid},
 	{"dirname",		Pdirname},
 	{"dir",			Pdir},
@@ -1055,6 +1067,7 @@ static const luaL_reg R[] =
 	{"getlogin",		Pgetlogin},
 	{"getpasswd",		Pgetpasswd},
 	{"getpid",		Pgetpid},
+	{"gettimeofday",	Pgettimeofday},
 	{"glob",		Pglob},
 	{"hostid",		Phostid},
 	{"kill",		Pkill},
