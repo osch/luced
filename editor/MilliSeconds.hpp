@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,43 +19,36 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUA_STATE_ACCESS_HPP
-#define LUA_STATE_ACCESS_HPP
+#ifndef MILLI_SECONDS_HPP
+#define MILLI_SECONDS_HPP
 
-#include <lua.h>
-
-#include "debug.hpp"
-#include "LuaStackChecker.hpp"
-#include "RawPtr.hpp"
+#include "MicroSeconds.hpp"
 
 namespace LucED
 {
 
-class LuaInterpreter;
-
-class LuaStateAccess
+class MilliSeconds
 {
 public:
-    static void setLuaInterpreter(lua_State* L, RawPtr<LuaInterpreter> luaInterpreter);
+
+    MilliSeconds()
+        : milliSeconds(0)
+    {}
     
-    static RawPtr<LuaInterpreter> getLuaInterpreter(lua_State* L)
-    {
-        ExtraLuaStateData* extra = (ExtraLuaStateData*)((char*)(L) - sizeof(ExtraLuaStateData));
-    
-        RawPtr<LuaInterpreter> ptr = (LuaInterpreter*) extra->luaInterpreter;
-    
-        return ptr;
+    explicit MilliSeconds(long milliSeconds)
+        : milliSeconds(milliSeconds)
+    {}
+
+    operator long() const {
+        return milliSeconds;
     }
-
-#ifdef DEBUG
-    static LuaStackChecker*           getLuaStackChecker(lua_State* L);
-    static OwningPtr<LuaStackChecker> replaceLuaStackChecker(lua_State* L, OwningPtr<LuaStackChecker> newStackChecker);
-#endif
-
+    operator MicroSeconds() const {
+        return MicroSeconds(milliSeconds * 1000);
+    }
 private:
-    static lua_State* currentState;
+    long milliSeconds;
 };
 
 } // namespace LucED
 
-#endif // LUA_STATE_ACCESS_HPP
+#endif // MILLI_SECONDS_HPP

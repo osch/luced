@@ -54,7 +54,7 @@ public:
         return HilitedText::Ptr(new HilitedText(textData, languageMode));
     }
 
-    int process(int requestedProcessingAmount);
+    int process(TimeVal endTime);
     bool needsProcessing();
     
     void registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback);

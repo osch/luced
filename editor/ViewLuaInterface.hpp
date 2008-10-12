@@ -79,7 +79,7 @@ public:
         
         TextData::TextMark m = e->createNewMarkFromCursor();
         
-        for (int i = 0; i < args.getLength(); ++i)
+        for (int i = 1; i < args.getLength(); ++i)
         {
             if (args[i].isString()) {
                 long insertedLength = e->getTextData()->insertAtMark(m, (const byte*)
@@ -123,8 +123,8 @@ public:
         long length = e->getTextData()->getLength();
         long amount = 1;
         
-        if (args.getLength() >= 1 && args[0].isNumber()) {
-            amount = args[0].toLong();
+        if (args.getLength() >= 2 && args[1].isNumber()) {
+            amount = args[1].toLong();
         }
         if (pos + amount > length) {
             amount = length - pos;

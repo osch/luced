@@ -21,7 +21,7 @@
 
 local generalConfig =
 {
-          useOwnKeyPressRepeater = false,  -- try this on systems with slow keyboard repeat rate
+          useOwnKeyPressRepeater = true,  -- try this on systems with slow keyboard repeat rate
           doNotUseX11XkbExtension = false, -- this should be set to false
           keyPressRepeatFirstMilliSecs = 200,
           keyPressRepeatNextMilliSecs  =  20,

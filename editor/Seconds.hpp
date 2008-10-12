@@ -22,6 +22,9 @@
 #ifndef SECONDS_HPP
 #define SECONDS_HPP
 
+#include "MilliSeconds.hpp"
+#include "MicroSeconds.hpp"
+
 namespace LucED
 {
 
@@ -39,6 +42,13 @@ public:
 
     operator long() const {
         return seconds;
+    }
+    
+    operator MilliSeconds() const {
+        return MilliSeconds(seconds * 1000);
+    }
+    operator MicroSeconds() const {
+        return MicroSeconds(seconds * 1000 * 1000);
     }
 private:
     long seconds;

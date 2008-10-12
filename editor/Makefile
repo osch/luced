@@ -51,10 +51,10 @@ INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 LUA_SCRIPTS            := functions             BuiltinActionDefinitions  BuiltinClassDefinitions
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
                           LuaClassRegistry
-GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultActionKeyConfig \
-                          LuaClassRegistry
-
-GENERATED_FAST_MODULES :=
+GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultActionKeyConfig
+                          
+                          
+GENERATED_FAST_MODULES := LuaClassRegistry
 
 
 SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget                  SystemException \
@@ -93,17 +93,20 @@ LUA_MODULES  := lapi lcode ldebug ldo ldump lfunc lgc llex lmem \
                 lauxlib lbaselib ldblib liolib lmathlib loslib ltablib \
                 lstrlib loadlib linit
 
+LPOSIX_MODULES :=  lposix
+
 GENERATED_MODULES  := $(GENERATED_SLOW_MODULES) $(GENERATED_FAST_MODULES)
 
 MODULES            :=           $(FAST_MODULES)           $(SLOW_MODULES) \
                       $(GENERATED_FAST_MODULES) $(GENERATED_SLOW_MODULES) \
-                      $(LUA_MODULES)
+                      $(LUA_MODULES) $(LPOSIX_MODULES)
 
 LIB_MBRS      := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
 LIB_OBJS      := $(patsubst %, $(BUILD_DIR)/%.o,                $(MODULES))
 FAST_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(FAST_MODULES))
 SLOW_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(SLOW_MODULES))
  LUA_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(LUA_MODULES))
+LPOSIX_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,              $(LPOSIX_MODULES))
  PRG_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
 
 GEN_HDRS      := $(patsubst %, $(BUILD_DIR)/%.hpp,         $(GENERATED_HEADERS))
@@ -193,6 +196,9 @@ $(GEN_SLOW_OBJS): $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.cpp
 	$(call COMPILE_RUN,$(CPPCOMP_SLOW_OPTS))
 
 $(LUA_OBJS): $(BUILD_DIR)/%.o: ../lua/src/%.c
+	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
+
+$(LPOSIX_OBJS): $(BUILD_DIR)/%.o: ../lposix/%.c
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
 
 

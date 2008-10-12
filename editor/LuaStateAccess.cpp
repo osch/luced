@@ -120,12 +120,4 @@ void LuaStateAccess::setLuaInterpreter(lua_State* L, RawPtr<LuaInterpreter> luaI
 }
 
 
-RawPtr<LuaInterpreter> LuaStateAccess::getLuaInterpreter(lua_State* L)
-{
-    ExtraLuaStateData* extra = (ExtraLuaStateData*)((char*)(L) - sizeof(ExtraLuaStateData));
-
-    RawPtr<LuaInterpreter> ptr = (LuaInterpreter*) extra->luaInterpreter;
-
-    return ptr;
-}
 

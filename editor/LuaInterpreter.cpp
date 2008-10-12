@@ -144,11 +144,13 @@ LuaCFunctionResult LuaInterpreter::doNothingFunction(const LuaCFunctionArguments
 }
 
 
+extern int luaopen_posix (lua_State *L);
 
 
 inline lua_State* LuaInterpreter::initState(LuaInterpreter* luaInterpreter, lua_State* L)
 {
     luaL_openlibs(L);
+    luaopen_posix(L);
     LuaStateAccess::setLuaInterpreter(L, luaInterpreter);
     return L;
 }

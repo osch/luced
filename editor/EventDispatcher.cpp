@@ -34,6 +34,8 @@
 #include "GuiRoot.hpp"
 #include "System.hpp"
 #include "SystemException.hpp"
+#include "MicroSeconds.hpp"
+#include "MilliSeconds.hpp"
 
 #ifdef DEBUG
     #include "TopWin.hpp"
@@ -369,20 +371,23 @@ void EventDispatcher::doEventLoop()
 #if 0
     TopWin::checkTopWinFocus();
 #endif
-                    if (hasWaitingProcess) {
+                    if (hasWaitingProcess)
+                    {
                         TimeVal now = TimeVal::now();
-                        if (nextTimer.when > now) {
-                            long diffTime = TimeVal::diffMicroSecs(now, nextTimer.when);
-                            if (diffTime > 100 * 1000) {
-                                diffTime = 100 * 1000;
-                            }
+                        if (nextTimer.when > now)
+                        {
                             ProcessHandler::Ptr h = processes[p];
                             processes.remove(p);
                             processes.append(h);
-                            h->execute(diffTime);
+                            TimeVal latest = now + MilliSeconds(20);
+                            if (nextTimer.when > latest ) {
+                                h->process(latest);
+                            } else {
+                                h->process(nextTimer.when);
+                            }
                             hasSomethingDone = true;
                             
-                            if (nextTimer.when < TimeVal::now() + MicroSeconds(100 * 1000)) {
+                            if (nextTimer.when < TimeVal::now() + MilliSeconds(20)) {
                                 remainingTime.setToRemainingTimeUntil(nextTimer.when);
                                 selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, &remainingTime);
                                 wasSelectInvoked = true;
@@ -404,7 +409,7 @@ void EventDispatcher::doEventLoop()
                         ProcessHandler::Ptr h = processes[p];
                         processes.remove(p);
                         processes.append(h);
-                        h->execute(100 * 1000);
+                        h->process(TimeVal::now() + MilliSeconds(20));
                         hasSomethingDone = true;
                     } else {
                     
@@ -519,10 +524,12 @@ void EventDispatcher::invokeAllUpdateCallbacks()
     updateCallbacks.invokeAllCallbacks();
 }
 
-void EventDispatcher::registerProcess(ProcessHandler::Ptr process)
+void EventDispatcher::registerProcess(ProcessHandler::Ptr h)
 {
-    processes.append(process);
-    if (process->needsProcessing()) {process->execute(100 * 1000); process->getMicroSecs();}
+    processes.append(h);
+    if (h->needsProcessing()) {
+        h->process(TimeVal::now() + MilliSeconds(20));
+    }
 }
 
 ProcessHandler::Ptr EventDispatcher::getNextWaitingProcess()

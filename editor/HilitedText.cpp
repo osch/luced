@@ -307,7 +307,7 @@ int HilitedText::pcreCalloutFunction(void* voidPtr, pcre_callout_block* calloutB
 
 
 
-int HilitedText::process(int requestedProcessingAmount)
+int HilitedText::process(TimeVal endTime)
 {
     if (!syntaxPatterns.isValid()) {
         needsProcessingFlag =  false;
@@ -320,17 +320,19 @@ int HilitedText::process(int requestedProcessingAmount)
     long lastSetBreakEnd = pos;
     SyntaxPattern* sp = syntaxPatterns->get(getLastBreakStackByte(startNextProcessIterator));
 
-    const long processAmountUnit = 10 * breakPointDistance;
+    long processAmountUnit = 10 * breakPointDistance;
 
-    long searchEndPos = pos + processAmountUnit * requestedProcessingAmount;
+    util::maximize(&processAmountUnit, (long)3000);
+
+    long searchEndPos = pos + processAmountUnit;
 
 #if 0
+TimeVal startTime = TimeVal::now();
 printf("------HilitedText::process start = %ld / %ld .. %ld --> %d\n", getBreakStartPos(startNextProcessIterator),
                                                                 pos, searchEndPos, 
                                                                 getLastBreakStackByte(startNextProcessIterator));
 #endif
 
-    util::minimize(&searchEndPos, textData->getLength());
     long oldBreakPos = pos;
     long foundStartPos = pos;
     long foundEndPos = pos;
@@ -341,130 +343,144 @@ printf("------HilitedText::process start = %ld / %ld .. %ld --> %d\n", getBreakS
     pushedSubstr = patternStack.getAdditionalDataAsString();
     
     bool wasZeroLengthMatch = false;
-
-    while (!canBeStopped && pos < searchEndPos)
+    bool loopFinished = false;
+    const long textDataLength = textData->getLength();
+    do
     {
-        ASSERT(sp == syntaxPatterns->get(patternStack.getLast()));
-        long extendedSearchEndPos = searchEndPos + sp->maxREBytesExtend;
-        BasicRegex::MatchOptions additionalOptions;
+        util::minimize(&searchEndPos, textDataLength);
         
-        util::minimize(&extendedSearchEndPos, textData->getLength());
-        if (!textData->isBeginOfLine(pos)) {
-            additionalOptions |= BasicRegex::NOTBOL;
-        }
-        if (!textData->isEndOfLine(extendedSearchEndPos)) {
-            additionalOptions |= BasicRegex::NOTEOL;
-        }
-        
-        bool matched = sp->re.findMatch(this, &HilitedText::pcreCalloutFunction,
-                                        (const char*) textData->getAmount(pos, extendedSearchEndPos - pos), 
-                    extendedSearchEndPos - pos, 0,
-                    additionalOptions /*| BasicRegex::NOTEMPTY*/, ovector);
-        
-        if (matched)
+        while (!canBeStopped && pos < searchEndPos)
         {
-            // something matched
-
-            if (ovector[1] == 0)
+            ASSERT(sp == syntaxPatterns->get(patternStack.getLast()));
+            long extendedSearchEndPos = searchEndPos + sp->maxREBytesExtend;
+            BasicRegex::MatchOptions additionalOptions;
+            
+            util::minimize(&extendedSearchEndPos, textDataLength);
+            if (!textData->isBeginOfLine(pos)) {
+                additionalOptions |= BasicRegex::NOTBOL;
+            }
+            if (!textData->isEndOfLine(extendedSearchEndPos)) {
+                additionalOptions |= BasicRegex::NOTEOL;
+            }
+            
+            bool matched = sp->re.findMatch(this, &HilitedText::pcreCalloutFunction,
+                                            (const char*) textData->getAmount(pos, extendedSearchEndPos - pos), 
+                        extendedSearchEndPos - pos, 0,
+                        additionalOptions /*| BasicRegex::NOTEMPTY*/, ovector);
+            
+            if (matched)
             {
-                if (wasZeroLengthMatch) {
-                    ovector[1] = 1; // prevent endless loop for second zero length match
-                    wasZeroLengthMatch = false;
+                // something matched
+    
+                if (ovector[1] == 0)
+                {
+                    if (wasZeroLengthMatch) {
+                        ovector[1] = 1; // prevent endless loop for second zero length match
+                        wasZeroLengthMatch = false;
+                    }
+                    else {
+                        wasZeroLengthMatch = true;
+                    }
                 }
                 else {
-                    wasZeroLengthMatch = true;
+                    wasZeroLengthMatch = false;
                 }
-            }
-            else {
-                wasZeroLengthMatch = false;
-            }
-
-            canBeStopped = fillWithBreaks(startNextProcessIterator, pos, pos + ovector[0], &lastSetBreakEnd, patternStack);
-            if (canBeStopped) break;
-            
-            int cid = sp->getMatchedChild(ovector);
-            if (cid == -1)
-            {
-                // EndPattern matched
- 
-                foundStartPos = pos + ovector[0];
-                foundEndPos = pos + ovector[1];
-                foundType = Break_END;
-
-                //memset(hb->buffer + pos + ovector[0], sp->style, ovector[1] - ovector[0]);
-                pos += ovector[1];
-                patternStack.removeLast();
-                sp = syntaxPatterns->get(patternStack.getLast());
-                pushedSubstr = patternStack.getAdditionalDataAsString();
+    
+                canBeStopped = fillWithBreaks(startNextProcessIterator, pos, pos + ovector[0], &lastSetBreakEnd, patternStack);
+                if (canBeStopped) break;
+                
+                int cid = sp->getMatchedChild(ovector);
+                if (cid == -1)
+                {
+                    // EndPattern matched
+     
+                    foundStartPos = pos + ovector[0];
+                    foundEndPos = pos + ovector[1];
+                    foundType = Break_END;
+    
+                    //memset(hb->buffer + pos + ovector[0], sp->style, ovector[1] - ovector[0]);
+                    pos += ovector[1];
+                    patternStack.removeLast();
+                    sp = syntaxPatterns->get(patternStack.getLast());
+                    pushedSubstr = patternStack.getAdditionalDataAsString();
+                }
+                else
+                {
+                    // normal Child matched
+                    
+                    SyntaxPattern* cpat = syntaxPatterns->getChildPattern(sp, cid);
+                        
+                    if (patternStack.getLength() >= STACK_SIZE
+                            && cpat->hasEndPattern) {
+    
+                        // New Begin-Child, but Stack is too big
+    
+                        foundStartPos = pos + ovector[1];
+                        foundEndPos   = foundStartPos;
+                        pos += ovector[1];
+                        foundType = Break_INTER;
+                        
+                    } else {
+                        
+                        // Stack is ok or doesn't need to grow
+    
+                        foundStartPos = pos + ovector[0];
+                        foundEndPos   = pos + ovector[1];
+    
+                        if (cpat->hasEndPattern) {
+                            if (!cpat->hasPushedSubstr) {
+                                pushedSubstr = String();
+                                patternStack.append(syntaxPatterns->getChildPatternId(sp, cid));
+                            } else {
+                                
+                                int pushedSubstrNo = syntaxPatterns->getPushedSubstrNo(sp, cid);
+                            
+                                pushedSubstr = textData->getSubstringBetween(pos + ovector[pushedSubstrNo * 2 + 0],
+                                                                             pos + ovector[pushedSubstrNo * 2 + 1]);
+    
+                                patternStack.append(syntaxPatterns->getChildPatternId(sp, cid),
+                                                    pushedSubstr);
+                            }
+                            sp = cpat;
+                            foundType = Break_BEGIN;
+                        } else {
+                            foundType = Break_INTER;
+                        }
+    
+                        pos += ovector[1];
+                    }
+                }
             }
             else
             {
-                // normal Child matched
-                
-                SyntaxPattern* cpat = syntaxPatterns->getChildPattern(sp, cid);
-                    
-                if (patternStack.getLength() >= STACK_SIZE
-                        && cpat->hasEndPattern) {
-
-                    // New Begin-Child, but Stack is too big
-
-                    foundStartPos = pos + ovector[1];
-                    foundEndPos   = foundStartPos;
-                    pos += ovector[1];
-                    foundType = Break_INTER;
-                    
-                } else {
-                    
-                    // Stack is ok or doesn't need to grow
-
-                    foundStartPos = pos + ovector[0];
-                    foundEndPos   = pos + ovector[1];
-
-                    if (cpat->hasEndPattern) {
-                        if (!cpat->hasPushedSubstr) {
-                            pushedSubstr = String();
-                            patternStack.append(syntaxPatterns->getChildPatternId(sp, cid));
-                        } else {
-                            
-                            int pushedSubstrNo = syntaxPatterns->getPushedSubstrNo(sp, cid);
-                        
-                            pushedSubstr = textData->getSubstringBetween(pos + ovector[pushedSubstrNo * 2 + 0],
-                                                                         pos + ovector[pushedSubstrNo * 2 + 1]);
-
-                            patternStack.append(syntaxPatterns->getChildPatternId(sp, cid),
-                                                pushedSubstr);
-                        }
-                        sp = cpat;
-                        foundType = Break_BEGIN;
-                    } else {
-                        foundType = Break_INTER;
-                    }
-
-                    pos += ovector[1];
-                }
+                // nothing matched
+    
+                canBeStopped = fillWithBreaks(startNextProcessIterator, pos, searchEndPos, &lastSetBreakEnd, patternStack);
+                if (canBeStopped) break;
+                //memset(hb->buffer + pos, sp->style, searchEndPos - pos);
+                pos = searchEndPos;
+                foundStartPos = foundEndPos = pos;
+                foundType = Break_INTER;
             }
+            if (foundEndPos >= getBreakEndPos(startNextProcessIterator) + breakPointDistance)
+            {
+                incIterator(startNextProcessIterator);
+                canBeStopped = setBreak(startNextProcessIterator, foundStartPos, foundStartPos, foundEndPos, 
+                        foundType, patternStack);
+                lastSetBreakEnd = getBreakEndPos(startNextProcessIterator);
+                if (canBeStopped) break;
+            }
+        }
+        if (canBeStopped || pos >= textDataLength || TimeVal::now() >= endTime) {
+            loopFinished = true;
         }
         else
         {
-            // nothing matched
-
-            canBeStopped = fillWithBreaks(startNextProcessIterator, pos, searchEndPos, &lastSetBreakEnd, patternStack);
-            if (canBeStopped) break;
-            //memset(hb->buffer + pos, sp->style, searchEndPos - pos);
-            pos = searchEndPos;
-            foundStartPos = foundEndPos = pos;
-            foundType = Break_INTER;
+            searchEndPos = pos + processAmountUnit;
         }
-        if (foundEndPos >= getBreakEndPos(startNextProcessIterator) + breakPointDistance)
-        {
-            incIterator(startNextProcessIterator);
-            canBeStopped = setBreak(startNextProcessIterator, foundStartPos, foundStartPos, foundEndPos, 
-                    foundType, patternStack);
-            lastSetBreakEnd = getBreakEndPos(startNextProcessIterator);
-            if (canBeStopped) break;
-        }
-    }
-    int processedAmount = (pos - wasStartPos)/processAmountUnit;
+    } while (!loopFinished);
+    
+    int processedAmount = (pos - wasStartPos);
     
     util::maximize(&this->endChangedPos, getBreakEndPos(startNextProcessIterator));
     util::maximize(&this->endChangedPos, lastSetBreakEnd);
@@ -477,9 +493,9 @@ printf("------HilitedText::process start = %ld / %ld .. %ld --> %d\n", getBreakS
         while (!isEndOfBreaks(tryToBeLastBreakIterator)) {
             incIterator(tryToBeLastBreakIterator);
         }
-        if (textData->getLength() - getBreakStartPos(tryToBeLastBreakIterator) < 2 * breakPointDistance) { 
+        if (textDataLength - getBreakStartPos(tryToBeLastBreakIterator) < 2 * breakPointDistance) { 
             this->needsProcessingFlag = false;
-            this->endChangedPos = textData->getLength();
+            this->endChangedPos = textDataLength;
         } else {
             this->needsProcessingFlag = true;
 
@@ -490,14 +506,15 @@ printf("------HilitedText::process start = %ld / %ld .. %ld --> %d\n", getBreakS
             decIterator(startNextProcessIterator);
         }
 #if 0
-printf("------HilitedText::process can be stoppend = %ld / %ld (%d) --> %d\n", getBreakStartPos(startNextProcessIterator),
+printf("------HilitedText::process can be stoppend = %ld / %ld (%d) --> %d  <%ld>\n", getBreakStartPos(startNextProcessIterator),
                                                                    getBreakEndPos(startNextProcessIterator), processedAmount, 
-                                                                   getLastBreakStackByte(startNextProcessIterator));
+                                                                   getLastBreakStackByte(startNextProcessIterator),
+                                                                   (long)startTime.getMicroSecsBefore(TimeVal::now())/1000);
 #endif
     }
     else
     {
-        if (searchEndPos >= textData->getLength())
+        if (searchEndPos >= textDataLength)
         {
             this->processingEndBeforeRestartFlag = false;
             this->needsProcessingFlag = false;
@@ -517,9 +534,15 @@ printf("------HilitedText::process can be stoppend = %ld / %ld (%d) --> %d\n", g
             util::maximize(&this->endChangedPos, searchEndPos);
         }
 #if 0
-printf("------HilitedText::process cannot be stoppend = %ld / %ld  (%d) --> %d\n", getBreakStartPos(startNextProcessIterator),
+long overTime = 0;
+if (TimeVal::now() > endTime) {
+    overTime = (long)endTime.getMicroSecsBefore(TimeVal::now())/1000;
+}
+printf("------HilitedText::process cannot be stoppend = %ld / %ld  (%d) --> %d  <%ld,  %ld>\n", getBreakStartPos(startNextProcessIterator),
                                                                    getBreakEndPos(startNextProcessIterator), processedAmount, 
-                                                                   getLastBreakStackByte(startNextProcessIterator));
+                                                                   getLastBreakStackByte(startNextProcessIterator),
+                                                                   (long)startTime.getMicroSecsBefore(TimeVal::now())/1000,
+                                                                   overTime);
 #endif
     }
 

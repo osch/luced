@@ -47,7 +47,7 @@ protected:
 
     template<class T
             >
-    static T* castDynamicToValidPtr(const LuaVar& luaObject, const char* luaClassName)
+    static T* castDynamicToValidPtr(const LuaVarRef& luaObject, const char* luaClassName)
     {
         HeapObject* ptr = luaObject.toWeakPtr();
         if (ptr == NULL) {
@@ -63,11 +63,11 @@ protected:
     static void handleException(lua_State* L);
 
 private:    
-    static void trowInvalidArgumentError(const LuaVar& luaObject,
-                                         const char*   luaClassName);
+    static void trowInvalidArgumentError(const LuaVarRef& luaObject,
+                                         const char*      luaClassName);
 
-    static void throwDynamicCastError(const LuaVar& luaObject,
-                                      const char*   luaClassName);
+    static void throwDynamicCastError(const LuaVarRef& luaObject,
+                                      const char*      luaClassName);
 };
 
 template
@@ -85,7 +85,7 @@ public:
 
 private:
     friend class LuaAccess;
-    friend class LuaVar;
+//    friend class LuaVar;
     
     LuaCMethod()
     {}
@@ -116,7 +116,6 @@ private:
                 }
                 C* objectPtr = LuaCMethodBase::castDynamicToValidPtr<C>(args[0], 
                                                                         className);
-                args.remove(0);
                 
                 numberOfResults = (objectPtr->*M)(args).numberOfResults;
             }
