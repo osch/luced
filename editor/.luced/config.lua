@@ -171,8 +171,9 @@ local actions =
         keys  = "Alt+S,E",
         type  = "shell",
         script = [[ set -e
-                    cd "`dirname $FILE`"
-                    fn="`basename $FILE`"
+                    file=`readlink -f $FILE`
+                    cd "`dirname $file`"
+                    fn="`basename $file`"
                     cvs update "$fn"
                     rev=`cat CVS/Entries | grep "/$fn/" | cut -d/ -f3` 
                     cvs editors "$fn" 
@@ -183,8 +184,9 @@ local actions =
         keys  = "Alt+S,U",
         type  = "shell",
         script = [[ set -e
-                    cd "`dirname $FILE`" 
-                    fn="`basename $FILE`" 
+                    file=`readlink -f $FILE`
+                    cd "`dirname $file`" 
+                    fn="`basename $file`" 
                     rev="`cat CVS/Entries | grep /$fn/ | cut -d/ -f3`" 
                     (echo "yes"|cvs unedit "$fn" 1>/dev/null 2>&1) 
                     touch "$fn" ]],
@@ -194,17 +196,29 @@ local actions =
         keys  = "Alt+S,C",
         type  = "shell",
         script = [[ set -e
-                    cd `dirname $FILE` 
-                    rxvt -e cvs commit `basename $FILE` ]],
+                    file=`readlink -f $FILE`
+                    cd `dirname $file` 
+                    rxvt -e cvs commit `basename $file` ]],
     },
     {
         name  = "cvs diff",
         keys  = "Alt+S,D",
         type  = "shell",
         script = [[ set -e
-                    cd `dirname $FILE` 
-                    fn=`basename $FILE` 
+                    file=`readlink -f $FILE`
+                    cd `dirname $file` 
+                    fn=`basename $file` 
                     tkdiff $fn ]],
+    },
+    {
+        name  = "cvs log",
+        keys  = "Alt+S,L",
+        type  = "shell",
+        script = [[ set -e
+                    file=`readlink -f $FILE`
+                    cd `dirname $file` 
+                    fn=`basename $file` 
+                    cvs log $fn ]],
     },
     {
         name  = "test1",
