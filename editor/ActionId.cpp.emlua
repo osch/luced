@@ -44,16 +44,16 @@ String ActionId::toString() const
     {
         switch (value)
         {
-            case UNDEFINED:                     return "undefined";
 @ for i, a in ipairs(actions) do
             case @(functions.upperize(a.name)): return "builtin.@(a.name)";
 @ end
+            case UNDEFINED:
+            default:                            return "undefined";
         }
     }
     else
     {
-        ActionIdRegistry::getInstance()->toString(*this);
+        return ActionIdRegistry::getInstance()->toString(*this);
     }
-    return "undefined";
 }
 

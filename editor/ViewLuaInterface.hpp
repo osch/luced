@@ -28,6 +28,8 @@
 #include "TextEditorWidget.hpp"
 #include "LuaCFunctionResult.hpp"
 #include "LuaCFunctionArguments.hpp"
+#include "FindUtil.hpp"
+#include "LuaException.hpp"
 
 namespace LucED
 {
@@ -41,115 +43,55 @@ public:
         return Ptr(new ViewLuaInterface(e));
     }
 
+    LuaCFunctionResult getFileName             (const LuaCFunctionArguments& args);
 
-    LuaCFunctionResult getFileName(const LuaCFunctionArguments& args)
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
-        return LuaCFunctionResult(luaAccess) << e->getTextData()->getFileName();
-    }
-    
+    LuaCFunctionResult getCursorPosition       (const LuaCFunctionArguments& args);
 
-    LuaCFunctionResult getCursorPosition(const LuaCFunctionArguments& args)
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
-        return LuaCFunctionResult(luaAccess) << e->getCursorTextPosition();
-    }
-    
+    LuaCFunctionResult setCursorPosition       (const LuaCFunctionArguments& args);
 
-    LuaCFunctionResult getCursorLine(const LuaCFunctionArguments& args)
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
-        return LuaCFunctionResult(luaAccess) << e->getCursorLineNumber();
-    }
-    
+    LuaCFunctionResult getCursorLine           (const LuaCFunctionArguments& args);    
 
-    LuaCFunctionResult getCursorColumn(const LuaCFunctionArguments& args)
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
-        return LuaCFunctionResult(luaAccess) << e->getCursorColumn();
-    }
+    LuaCFunctionResult getCursorColumn         (const LuaCFunctionArguments& args);
     
-    LuaCFunctionResult insertAtCursor(const LuaCFunctionArguments& args)
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
-        TextData::TextMark m = e->createNewMarkFromCursor();
-        
-        for (int i = 1; i < args.getLength(); ++i)
-        {
-            if (args[i].isString()) {
-                long insertedLength = e->getTextData()->insertAtMark(m, (const byte*)
-                                                                        args[i].getStringPtr(),
-                                                                        args[i].getStringLength());
-                m.moveForwardToPos(m.getPos() + insertedLength);
-            }
-            else if (args[i].isTable()) {
-            
-            }
-        } 
-        
-        e->moveCursorToTextMark(m);
-        
-        return LuaCFunctionResult(luaAccess);
-    }
+    LuaCFunctionResult getColumn               (const LuaCFunctionArguments& args);
     
-    LuaCFunctionResult getCharAtCursor(const LuaCFunctionArguments& args)
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
-        long pos = e->getCursorTextPosition();
-        LuaVar rslt(luaAccess);
-        
-        if (pos < e->getTextData()->getLength())
-        {
-            rslt.assign(luaAccess.toLua((const char*)(e->getTextData()->getAmount(pos, 1)),
-                                        1));
-        }
-        else {
-            rslt.assign("");
-        }
-        return LuaCFunctionResult(luaAccess) << rslt;
-    }
+    LuaCFunctionResult getCharAtCursor         (const LuaCFunctionArguments& args);
     
-    LuaCFunctionResult getCharsAtCursor(const LuaCFunctionArguments& args)
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
-        long pos    = e->getCursorTextPosition();
-        long length = e->getTextData()->getLength();
-        long amount = 1;
-        
-        if (args.getLength() >= 2 && args[1].isNumber()) {
-            amount = args[1].toLong();
-        }
-        if (pos + amount > length) {
-            amount = length - pos;
-        }
-        
-        LuaVar rslt(luaAccess);
-        
-        if (amount > 0)
-        {
-            rslt.assign(luaAccess.toLua((const char*)(e->getTextData()->getAmount(pos, amount)),
-                                        amount));
-        }
-        else {
-            rslt.assign("");
-        }
-        return LuaCFunctionResult(luaAccess) << rslt;
-    }
+    LuaCFunctionResult getCharsAtCursor        (const LuaCFunctionArguments& args);
+
+    LuaCFunctionResult getChars                (const LuaCFunctionArguments& args);
     
+    LuaCFunctionResult insertAtCursor          (const LuaCFunctionArguments& args);
+    
+    LuaCFunctionResult insert                  (const LuaCFunctionArguments& args);
+
+    LuaCFunctionResult find                    (const LuaCFunctionArguments& args);
+    
+    LuaCFunctionResult findMatch               (const LuaCFunctionArguments& args);
+
+    LuaCFunctionResult executeAction           (const LuaCFunctionArguments& args);
+
+    LuaCFunctionResult hasPrimarySelection     (const LuaCFunctionArguments& args);
+    LuaCFunctionResult hasPseudoSelection      (const LuaCFunctionArguments& args);
+
+    LuaCFunctionResult releaseSelection        (const LuaCFunctionArguments& args);
+    LuaCFunctionResult removeSelection         (const LuaCFunctionArguments& args);
+
+    LuaCFunctionResult assureCursorVisible     (const LuaCFunctionArguments& args);
+    LuaCFunctionResult setCurrentActionCategory(const LuaCFunctionArguments& args);
 
 private:
     ViewLuaInterface(RawPtr<TextEditorWidget> e)
-        : e(e)
+        : e(e),
+          findUtil(e->getTextData()),
+          m(e->getTextData()->createNewMark())
     {}
+    
+    void parseAndSetFindUtilOptions(const LuaCFunctionArguments& args);
 
     RawPtr<TextEditorWidget> e;
+    FindUtil                 findUtil;
+    TextData::TextMark       m;
 };
 
 } // namespace LucED

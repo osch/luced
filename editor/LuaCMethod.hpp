@@ -60,7 +60,8 @@ protected:
         return rslt;
     }
 
-    static void handleException(lua_State* L);
+    static void handleException(lua_State* L, const char* className,
+                                              const char* methodName);
 
 private:    
     static void trowInvalidArgumentError(const LuaVarRef& luaObject,
@@ -121,7 +122,8 @@ private:
             }
             catch (...)
             {
-                LuaCMethodBase::handleException(L);
+                LuaCMethodBase::handleException(L, LuaClassRegistry::ClassAttributes<C>::getLuaClassName(),
+                                                   LuaClassRegistry::getMethodName<C,M>());
                 wasError = true;
             }
         }

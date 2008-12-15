@@ -20,6 +20,10 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "LucedLuaInterface.hpp"
+#include "LuaCMethodArgChecker.hpp"
+#include "LuaArgException.hpp"
+#include "Regex.hpp"
+#include "GlobalLuaInterpreter.hpp"
 
 using namespace LucED;
 
@@ -32,3 +36,48 @@ LucedLuaInterface* LucedLuaInterface::getInstance()
 }
 
 
+LuaCFunctionResult LucedLuaInterface::getModulePrefix(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+
+    if (args.getLength() <= 0 || !args[0].isString()) {
+        throw LuaArgException();
+    }
+
+    String thisModuleName = args[0].toString();
+    
+    Regex  r("^(.*\\.)[^.]*?$");
+    
+    String rslt;
+    
+    if (r.matches(thisModuleName))
+    {
+        rslt = thisModuleName.getSubstring(r.getCaptureBegin(1),
+                                           r.getCaptureLength(1));
+    }
+    
+    return LuaCFunctionResult(luaAccess) << rslt;
+}
+
+LuaCFunctionResult LucedLuaInterface::resetModules(const LuaCFunctionArguments& args)
+{
+    if (args.getLength() > 0) {
+        throw LuaArgException();
+    }
+
+    GlobalLuaInterpreter::getInstance()->resetModules();
+
+    return LuaCFunctionResult(args.getLuaAccess());
+}
+
+
+LuaCFunctionResult LucedLuaInterface::getCurrentView(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (args.getLength() > 0) {
+        throw LuaArgException();
+    }
+    
+    return LuaCFunctionResult(luaAccess) << currentView;
+}

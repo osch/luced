@@ -20,8 +20,84 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "GlobalLuaInterpreter.hpp"
+#include "LucedLuaInterface.hpp"
+#include "GlobalConfig.hpp"
+#include "File.hpp"
+#include "LuaIterator.hpp"
 
 using namespace LucED;
 
 SingletonInstance<GlobalLuaInterpreter> GlobalLuaInterpreter::instance;;
+
+GlobalLuaInterpreter::GlobalLuaInterpreter()
+{
+    LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
+    
+    LuaVar luced = luaAccess.toLua(LucedLuaInterface::getInstance());
+
+    luaAccess.setGlobal("luced", luced);
+    
+    LuaVar package = luaAccess.getGlobal("package");
+    LuaVar loaded = package["loaded"];
+    loaded["luced"] = luced;
+
+    String packagesDir = File(GlobalConfig::getInstance()->getConfigDirectory(),
+                              "packages").getAbsoluteName();
+    
+    package["path"] = String() << packagesDir << "/?.lua;"
+                               << packagesDir << "/?/init.lua";
+
+
+    LuaVar initialModules = luaAccess.newTable();
+    
+    for (LuaIterator i(luaAccess); i.in(loaded);)
+    {
+        initialModules[i.key()] = i.value();
+    }
+
+    lucedLuaInterfaceStoreReference = luced.store();
+    packageStoreReference           = package.store();
+    packageLoadedStoreReference     = loaded.store();
+    initialModulesStoreReference    = initialModules.store();
+}
+
+
+void GlobalLuaInterpreter::resetModules()
+{
+    LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
+
+    LuaVar loadedModules  = luaAccess.retrieve(packageLoadedStoreReference);
+    LuaVar initialModules = luaAccess.retrieve(initialModulesStoreReference);
+
+    for (LuaIterator i(luaAccess); i.in(loadedModules);)
+    {
+        if (initialModules[i.key()].isNil())
+        {
+            loadedModules[i.key()].setNil();
+        }
+    }
+    for (LuaIterator i(luaAccess); i.in(initialModules);)
+    {
+        loadedModules[i.key()] = i.value();
+    }
+    GlobalConfig::getInstance()->readConfig();
+}
+
+
+void GlobalLuaInterpreter::resetModule(const String& moduleName)
+{
+    LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
+
+    LuaVar loadedModules  = luaAccess.retrieve(packageLoadedStoreReference);
+    LuaVar initialModules = luaAccess.retrieve(initialModulesStoreReference);
+
+    if (initialModules[moduleName].isNil())
+    {
+        loadedModules[moduleName].setNil();
+    }
+    if (GlobalConfig::getInstance()->dependsOnPackage(moduleName))
+    {
+        GlobalConfig::getInstance()->readConfig();
+    }
+}
 

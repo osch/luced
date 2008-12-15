@@ -24,199 +24,158 @@ return
     
     { name = "cursorLeft",                        description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Left", "KP_Left" }
     },
     { name = "cursorRight",                       description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Right", "KP_Right" }
     },
     
     
     { name = "cursorBeginOfLine",                 description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Alt+Left", "Alt+KP_Left", 
-                                                                  "Home", "Begin" }
     },
     { name = "cursorEndOfLine",                   description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Alt+Right", "Alt+KP_Right",
-                                                                  "End" }
     },
     
     { name = "scrollLeft",                        description = "",
                                                   classes = { "SingleLineDisplayActions" },
-                                                  defaultKeys = { "Left", "Ctrl+Alt+Left", "Ctrl+Alt+KP_Left" }
     },
     { name = "scrollRight",                       description = "",
                                                   classes = { "SingleLineDisplayActions" },
-                                                  defaultKeys = { "Right", "Ctrl+Alt+Right", "Ctrl+Alt+KP_Right" }
     },
     
     
     { name = "cursorBeginOfText",                 description = "",
                                                   classes = { "SingleLineDisplayActions" },
-                                                  defaultKeys = { "Home", "Ctrl+Home", "Ctrl+Begin" }
     },
     { name = "cursorEndOfText",                   description = "",
                                                   classes = { "SingleLineDisplayActions" },
-                                                  defaultKeys = { "End", "Ctrl+End" }
     },
     
     
     
     { name = "backSpace",                         description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "BackSpace" }
     },
     { name = "deleteKey",                         description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Delete" }
     },
     
     
     
     { name = "copyToClipboard",                   description = "",
                                                   classes = { "SingleLineDisplayActions" },
-                                                  defaultKeys = { "Ctrl+C" }
     },
     { name = "cutToClipboard",                    description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+X" }
     },
     { name = "pasteFromClipboardForward",         description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+V" }
     },
     { name = "pasteFromClipboardBackward",        description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Shift+V" }
     },
     { name = "selectAll",                         description = "",
                                                   classes = { "SingleLineDisplayActions" },
-                                                  defaultKeys = { "Ctrl+A" }
     },
     
     
     
     { name = "selectionCursorLeft",               description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Shift+Left", "Shift+KP_Left" }
     },
     { name = "selectionCursorRight",              description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Shift+Right", "Shift+KP_Right" }
     },
     
     
     { name = "cursorWordLeft",                    description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Left" }
     },
     { name = "cursorWordRight",                   description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Right" }
     },
     
     
     { name = "selectionCursorWordLeft",           description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Shift+Left" }
     },
     { name = "selectionCursorWordRight",          description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Shift+Right" }
     },
     
     
     
     { name = "selectionCursorBeginOfLine",        description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Shift+Home", "Shift+Begin" }
     },
     { name = "selectionCursorEndOfLine",          description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Shift+End" }
     },
     
     
     
     { name = "undo",                              description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Z" }
     },
     { name = "redo",                              description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Shift+Z" }
     },
     
     
     
     { name = "selectWordForward",                 description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+space" }
     },
     { name = "selectWordBackward",                description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Shift+space" }
     },
     
     
     { name = "spaceBackward",                     description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Insert" }
     },
     { name = "gotoMatchingBracket",               description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Ctrl+M" }
     },
     
     
     { name = "cursorUp",                          description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Up", "KP_Up" }
     },
     { name = "cursorDown",                        description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Down", "KP_Down" }
     },
         
     { name = "cursorPageDown",                    description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Control+Down", "Page_Down" }
     },
     { name = "cursorPageUp",                      description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Control+Up", "Page_Up" }
     },
     
     { name = "scrollPageDown",                    description = "",
                                                   classes = { "MultiLineDisplayActions" },
-                                                  defaultKeys = { "Control+Down", "Page_Down" }
     },
     { name = "scrollPageUp",                      description = "",
                                                   classes = { "MultiLineDisplayActions" },
-                                                  defaultKeys = { "Control+Up", "Page_Up" }
     },
     
     
     
     { name = "scrollCursorUp",                    description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Alt+Up", "Alt+KP_Up" }
     },
     { name = "scrollCursorDown",                  description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Alt+Down", "Alt+KP_Down" }
     },
     
         
     { name = "scrollUp",                          description = "",
                                                   classes = { "MultiLineDisplayActions" },
-                                                  defaultKeys = { "Up", "Alt+Up", "Ctrl+Alt+Up", "Ctrl+Alt+KP_Up" }
     },
     { name = "scrollDown",                        description = "",
                                                   classes = { "MultiLineDisplayActions" },
-                                                  defaultKeys = { "Down", "Alt+Down", "Ctrl+Alt+Down", "Ctrl+Alt+KP_Down" }
     },
     
     
@@ -224,242 +183,200 @@ return
     
     { name = "insertNewLineAutoIndent",           description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Return", "KP_Enter" }
     },
     
     
     { name = "appendNewLineAutoIndent",           description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Alt+Return", "Alt+KP_Enter" }
     },
     
     
     
     { name = "newLineFixedColumnIndentForward",   description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Return", "Ctrl+KP_Enter" }
     },
     
     
     
     { name = "newLineFixedColumnIndentBackward",  description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Shift+Return", "Ctrl+Shift+KP_Enter" }
     },
     
     
     { name = "selectionCursorDown",               description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Shift+Down", "Shift+KP_Down" }
     },
     { name = "selectionCursorUp",                 description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Shift+Up", "Shift+KP_Up" }
     },
     
     
     { name = "selectionLineCursorDown",           description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Shift+Down", "Ctrl+Shift+KP_Down" }
     },
     { name = "selectionLineCursorUp",             description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Ctrl+Shift+Up", "Ctrl+Shift+KP_Up" }
     },
     
     { name = "selectionCursorPageDown",           description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Shift+Page_Down" }
     },
     { name = "selectionCursorPageUp",             description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Shift+Page_Up" }
     },
     
     
     
     { name = "shiftBlockLeft",                    description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Ctrl+9" }
     },
     { name = "shiftBlockRight",                   description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Ctrl+0" }
     },
     
     
     
     { name = "findNextLuaStructureElement",       description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Alt+M" }
     },
     { name = "findPrevLuaStructureElement",       description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Alt+Shift+M" }
     },
     
     
     
     { name = "openCorrespondingFile",             description = "",
                                                   classes = { "MultiLineEditActions" },
-                                                  defaultKeys = { "Alt+H" }
     },
     
 
     { name = "historyBackward",                   description = "", 
                                                   classes     = {    "FindPanel::EditFieldActions",
                                                                   "ReplacePanel::EditFieldActions" },
-                                                  defaultKeys = { "Ctrl+Up", "Ctrl+KP_Up" }
     },
     { name = "historyForward",                    description = "", 
                                                   classes     = {    "FindPanel::EditFieldActions",
                                                                   "ReplacePanel::EditFieldActions" },
-                                                  defaultKeys = { "Ctrl+Down", "Ctrl+KP_Down" }
     },
     
     { name = "closeMessageBox",                   description = "", 
                                                   classes     = { "MessageBox::Actions",
                                                                   "CommandOutputBox::Actions" },
-                                                  defaultKeys = { "Escape" }
     },
 
     { name = "closePanel",                        description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Escape" }
     },
 
     { name = "focusNext",                         description = "", 
                                                   classes     = { "DialogPanel::Actions" },
-                                                  defaultKeys = { "Tab" }
     },
     { name = "focusPrevious",                     description = "", 
                                                   classes     = { "DialogPanel::Actions" },
-                                                  defaultKeys = { "Shift+Tab" }
     },
     { name = "focusRight",                        description = "", 
                                                   classes     = { "DialogPanel::Actions" },
-                                                  defaultKeys = { "Right", "KP_Right" }
     },
     { name = "focusLeft",                         description = "", 
                                                   classes     = { "DialogPanel::Actions" },
-                                                  defaultKeys = { "Left", "KP_Left" }
     },
     { name = "focusUp",                           description = "", 
                                                   classes     = { "DialogPanel::Actions" },
-                                                  defaultKeys = { "Up", "KP_Up" }
     },
     { name = "focusDown",                         description = "", 
                                                   classes     = { "DialogPanel::Actions" },
-                                                  defaultKeys = { "Down", "KP_Down" }
     },
     { name = "pressDefaultButton",                description = "", 
                                                   classes     = { "DialogPanel::Actions" },
-                                                  defaultKeys = { "Return", "KP_Enter" }
     },
     
     { name = "tabForward",                        description = "",
                                                   classes = { "SingleLineEditActions" },
-                                                  defaultKeys = { "Tab" }
     },
     
     { name = "pressFocusedButton",                description = "", 
                                                   classes     = {   "Button::Actions",
                                                                   "CheckBox::Actions" },
-                                                  defaultKeys = { "space" }
     },
     
     { name = "invokeGotoLinePanel",               description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+L", "Alt+X,Y,L" }
     },                                                                       ------- Test
     
     { name = "invokeFindPanelForward",            description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+F" }
     },
     
     { name = "invokeFindPanelBackward",           description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+Shift+F" }
     },
     
     { name = "invokeReplacePanelForward",         description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+R" }
     },
     
     { name = "invokeReplacePanelBackward",        description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+Shift+R" }
     },
     
     { name = "findSelectionForward",              description = "", 
                                                   classes     = { "EditorTopWinActions", 
                                                                   "SearchInteraction::MessageBoxActions" },
-                                                  defaultKeys = { "Ctrl+H" }
     },
         
     { name = "findSelectionBackward",             description = "", 
                                                   classes     = { "EditorTopWinActions",
                                                                   "SearchInteraction::MessageBoxActions" },
-                                                  defaultKeys = { "Ctrl+Shift+H" }
     },
         
     { name = "replaceAgainForward",               description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+T" }
     },
         
     { name = "replaceAgainBackward",              description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+Shift+T" }
     },
         
     { name = "findAgainForward",                  description = "", 
                                                   classes     = { "EditorTopWinActions",
                                                                   "SearchInteraction::MessageBoxActions" },
-                                                  defaultKeys = { "Ctrl+G" }
     },
         
     { name = "findAgainBackward",                 description = "", 
                                                   classes     = { "EditorTopWinActions",
                                                                   "SearchInteraction::MessageBoxActions" },
-                                                  defaultKeys = { "Ctrl+Shift+G" }
     },
         
     { name = "requestProgramTermination",         description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+Q" }
     },
         
     { name = "handleSaveKey",                     description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+S" }
     },
         
     { name = "handleSaveAsKey",                   description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+Shift+S" }
     },
         
     { name = "requestCloseWindow",                description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+W" }
     },
         
     { name = "createCloneWindow",                 description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Alt+C" }
     },
         
     { name = "createEmptyWindow",                 description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Ctrl+N" }
     },
         
     { name = "executeLuaScript",                  description = "", 
                                                   classes     = { "EditorTopWinActions", },
-                                                  defaultKeys = { "Alt+L" }
+    },
+        
+    { name = "resetLuaModules" ,                  description = "", 
+                                                  classes     = { "EditorTopWinActions", },
     },
         
         

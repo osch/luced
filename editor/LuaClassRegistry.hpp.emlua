@@ -34,6 +34,8 @@
 namespace LucED
 {
 
+class LuaCFunctionArguments;
+class LuaCFunctionResult;
 class LuaStoredObjectReference;
 
 @ for _, def in ipairs(definitions) do
@@ -52,6 +54,12 @@ public:
     template<class T
             >
     class ClassAttributes;
+    
+
+    template<class C,
+             LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+            >
+    static const char* getMethodName();
 
 private:
 @ for _, def in ipairs(definitions) do

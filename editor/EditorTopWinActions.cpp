@@ -124,3 +124,10 @@ void EditorTopWinActions::executeLuaScript()
                                                      .setMessage(ex.getMessage()));
     }
 }
+
+void EditorTopWinActions::resetLuaModules()
+{
+    GlobalLuaInterpreter::getInstance()->resetModules();
+}
+
+

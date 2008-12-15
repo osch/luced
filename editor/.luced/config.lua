@@ -104,6 +104,7 @@ local languageModes =
 {
     { 
       name            = "cplusplus",
+      syntaxName      = "default.cplusplus",
       fileNameRegex   = [[^.*\.(?:cpp|hpp|cxx|hxx|c|h|cc|hh)(?:\.emlua)?$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
@@ -114,6 +115,7 @@ local languageModes =
     
     {
       name            = "lua",
+      syntaxName      = "default.lua",
       fileNameRegex   =  [[^.*\.lua$|^.*\.lua\.emlua$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
@@ -124,6 +126,7 @@ local languageModes =
     
     {
       name            = "rexx",
+      syntaxName      = "default.rexx",
       fileNameRegex   =  [[.*\.rexx?|.*\.r]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
@@ -134,6 +137,7 @@ local languageModes =
     
     {
       name            = "emlua",
+      syntaxName      = "default.emlua",
       fileNameRegex   =  [[^(.*\.emlua|.*\.(jcl))$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
@@ -144,6 +148,7 @@ local languageModes =
 
     {
       name            = "makefile",
+      syntaxName      = "default.makefile",
       fileNameRegex   =  [[^.*/(Makefile|.*\.h?mk|.*\.dep)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
@@ -154,6 +159,7 @@ local languageModes =
 
     {
       name            = "java",
+      syntaxName      = "default.java",
       fileNameRegex   = [[^.*\.(?:java)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
@@ -164,91 +170,32 @@ local languageModes =
 }
 
 
-local actions = 
+local actionKeyBinding = 
 {
     {
-        name  = "cvs edit",
-        keys  = "Alt+S,E",
-        type  = "shell",
-        script = [[ set -e
-                    file=`readlink -f $FILE`
-                    cd "`dirname $file`"
-                    fn="`basename $file`"
-                    cvs update "$fn"
-                    rev=`cat CVS/Entries | grep "/$fn/" | cut -d/ -f3` 
-                    cvs editors "$fn" 
-                    cvs edit -a none "$fn" ]],
+        actionName = "default.test2",
+        keys       = { "Alt+S,T" },
     },
     {
-        name  = "cvs unedit",
-        keys  = "Alt+S,U",
-        type  = "shell",
-        script = [[ set -e
-                    file=`readlink -f $FILE`
-                    cd "`dirname $file`" 
-                    fn="`basename $file`" 
-                    rev="`cat CVS/Entries | grep /$fn/ | cut -d/ -f3`" 
-                    (echo "yes"|cvs unedit "$fn" 1>/dev/null 2>&1) 
-                    touch "$fn" ]],
+        actionName = "default.test3",
+        keys       = { "Alt+S,R" },
     },
     {
-        name  = "cvs commit",
-        keys  = "Alt+S,C",
-        type  = "shell",
-        script = [[ set -e
-                    file=`readlink -f $FILE`
-                    cd `dirname $file` 
-                    rxvt -e cvs commit `basename $file` ]],
+        actionName = "default.test1",
+        keys       = { "Alt+S,Z" },
     },
     {
-        name  = "cvs diff",
-        keys  = "Alt+S,D",
-        type  = "shell",
-        script = [[ set -e
-                    file=`readlink -f $FILE`
-                    cd `dirname $file` 
-                    fn=`basename $file` 
-                    tkdiff $fn ]],
-    },
-    {
-        name  = "cvs log",
-        keys  = "Alt+S,L",
-        type  = "shell",
-        script = [[ set -e
-                    file=`readlink -f $FILE`
-                    cd `dirname $file` 
-                    fn=`basename $file` 
-                    cvs log $fn ]],
-    },
-    {
-        name  = "test1",
-        keys  = "Alt+S,T",
-        type  = "shell",
-        script = [[ echo "<$FILE>"; ls|head -n3 ]],
-    },
-    {
-        name  = "test1a",
-        keys  = "Alt+S,R",
-        type  = "shell",
-        script = [[ echo "<$FILE>"
-                    ls
-                    echo -n "testeerituertiouertoiuretioreutoireutret ABC" ]],
-    },
-    {
-        name  = "test2",
-        keys  = "Alt+S,Z",
-        type  = "shell",
-        script = [[ echo "moin at `date`" > trt ]],
+        referToPackage = "default"
     },
 }
 
 
 local config =
 {
-    generalConfig  = generalConfig,
-    textStyles     = textStyles,
-    languageModes  = languageModes,
-    actions        = actions,
+    generalConfig    = generalConfig,
+    textStyles       = textStyles,
+    languageModes    = languageModes,
+    actionKeyBinding = actionKeyBinding,
 }
 
 local getOverrideFunction = loadfile("overrideConfig.lua")

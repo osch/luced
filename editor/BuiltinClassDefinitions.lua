@@ -28,8 +28,12 @@ return
         ptrType  = "Singleton",
         
         methods  = {
+                     { name = "getModulePrefix"
+                     },
+                     { name = "resetModules"
+                     },
                      { name = "getCurrentView"
-                     }
+                     },
                    }
     },
     {
@@ -43,15 +47,41 @@ return
                      },
                      { name = "getCursorPosition"
                      },
+                     { name = "setCursorPosition"
+                     },
                      { name = "getCursorLine"
                      },
                      { name = "getCursorColumn"
                      },
-                     { name = "insertAtCursor"
+                     { name = "getColumn"
                      },
                      { name = "getCharAtCursor"
                      },
                      { name = "getCharsAtCursor"
+                     },
+                     { name = "getChars"
+                     },
+                     { name = "insertAtCursor"
+                     },
+                     { name = "insert"
+                     },
+                     { name = "find"
+                     },
+                     { name = "findMatch"
+                     },
+                     { name = "executeAction"
+                     },
+                     { name = "hasPrimarySelection"
+                     },
+                     { name = "hasPseudoSelection"
+                     },
+                     { name = "releaseSelection"
+                     },
+                     { name = "removeSelection"
+                     },
+                     { name = "assureCursorVisible"
+                     },
+                     { name = "setCurrentActionCategory"
                      },
                    }
     },

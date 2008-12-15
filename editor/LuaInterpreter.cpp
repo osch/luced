@@ -20,7 +20,6 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "LuaInterpreter.hpp"
-#include "File.hpp"
 #include "ByteBuffer.hpp"
 #include "LuaException.hpp"
 #include "LuaVar.hpp"
@@ -29,7 +28,6 @@
 #include "LuaStateAccess.hpp"
 #include "LuaCMethod.hpp"
 #include "LuaFunctionArguments.hpp"
-#include "LucedLuaInterface.hpp"
 
 using namespace LucED;
 
@@ -161,10 +159,11 @@ LuaInterpreter::LuaInterpreter()
 {
     storedObjects = StoredObjects::create(currentAccess);
     
-    storedObjects->originalToStringFunction = currentAccess.getGlobal("tostring")    .store();
-    storedObjects->originalIoOutputFunction = currentAccess.getGlobal("io")["output"].store();
-    storedObjects->originalIoWriteFunction  = currentAccess.getGlobal("io")["write"] .store();
-
+    storedObjects->originalToStringFunction      = currentAccess.getGlobal("tostring")    .store();
+    storedObjects->originalIoOutputFunction      = currentAccess.getGlobal("io")["output"].store();
+    storedObjects->originalIoWriteFunction       = currentAccess.getGlobal("io")["write"] .store();
+    storedObjects->requireFunctionStoreReference = currentAccess.getGlobal("require")     .store();
+                   
     currentAccess.setGlobal("print", LuaCFunction<printFunction>::createWrapper());
     currentAccess.setGlobal("trt",   LuaCFunction<testFunction>::createWrapper());
 
@@ -194,12 +193,6 @@ LuaInterpreter::LuaInterpreter()
     
     storedObjects->owningPtrMapStoreReference = owningPtrMap.store();
     storedObjects->weakPtrMapStoreReference   =   weakPtrMap.store();
-
-    LuaVar luced = currentAccess.toLua(LucedLuaInterface::getInstance());
-    
-    storedObjects->lucedLuaInterface = luced.store();
-    
-    currentAccess.setGlobal("luced", luced);
 }
 
 
@@ -211,4 +204,16 @@ LuaInterpreter::~LuaInterpreter()
 }
 
 
+
+LuaVar LuaInterpreter::require(const String& packageName) const
+{
+    LuaVar rslt(currentAccess);
+    
+    {
+        LuaVar requireFunction = currentAccess.retrieve(storedObjects->requireFunctionStoreReference);
+        LuaVar packageLuaName  = currentAccess.toLua(packageName);
+        rslt = requireFunction.call(packageLuaName);
+    }
+    return rslt;
+}
 

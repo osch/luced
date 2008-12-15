@@ -36,7 +36,9 @@ FindUtil::FindUtil(RawPtr<TextData> textData)
       wasError(false),
       luaException(""),
       wasInitializedFlag(false),
-      maxRegexAssertionLength(GlobalConfig::getInstance()->getMaxRegexAssertionLength())
+      maxForwardAssertionLength(GlobalConfig::getInstance()->getMaxRegexAssertionLength()),
+      maxBackwardAssertionLength(GlobalConfig::getInstance()->getMaxRegexAssertionLength()),
+      noMatchBeforePosition(-1)
 {}
 
 
@@ -271,7 +273,8 @@ FindUtil::CalloutObject::Ptr FindUtil::buildCalloutObject(FindUtil::PreparsedCal
 
 void FindUtil::initialize()
 {
-    this->maxRegexAssertionLength = GlobalConfig::getInstance()->getMaxRegexAssertionLength();
+    this->maxForwardAssertionLength  = GlobalConfig::getInstance()->getMaxRegexAssertionLength();
+    this->maxBackwardAssertionLength = GlobalConfig::getInstance()->getMaxRegexAssertionLength();
 
     ObjectArray<PreparsedCallout::Ptr> preparsedCallouts;
     
@@ -434,12 +437,12 @@ void FindUtil::findNext()
             } else {
                 epos = maximalEndOfMatchPosition;
             }
-            long blockStartPos = (textPosition - maxRegexAssertionLength > 0)
-                               ? (textPosition - maxRegexAssertionLength) 
+            long blockStartPos = (textPosition - maxBackwardAssertionLength > 0)
+                               ? (textPosition - maxBackwardAssertionLength) 
                                : 0;
 
-            long blockLength   = (epos + maxRegexAssertionLength < textData->getLength()) 
-                               ? (epos + maxRegexAssertionLength - blockStartPos) 
+            long blockLength   = (epos + maxForwardAssertionLength < textData->getLength()) 
+                               ? (epos + maxForwardAssertionLength - blockStartPos) 
                                : (textData->getLength() - blockStartPos);
             
             byte* blockStartPtr = textData->getAmount(blockStartPos, blockLength);
@@ -475,8 +478,11 @@ void FindUtil::findNext()
             } else {
                 epos = maximalEndOfMatchPosition;
             }
-            
-            while (!wasFoundFlag && textPosition >= 0) {
+            long zpos = 0;
+            if (noMatchBeforePosition != -1) {
+                zpos = noMatchBeforePosition;
+            }
+            while (!wasFoundFlag && textPosition >= zpos) {
                 if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
                                     (char*)textStart, textLength, textPosition, BasicRegex::ANCHORED, ovector))
                 {

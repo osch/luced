@@ -230,10 +230,11 @@ protected:
     >
     void push(LuaSingletonCMethod<C,M> wrapper) const;
 
-    lua_State* L;
 #ifdef DEBUG
-    RawPtr<LuaStackChecker> luaStackChecker;
+    RawPtr<LuaStackChecker> getLuaStackChecker() const;
 #endif
+
+    lua_State* L;
 };
 
 } // namespace LucED
@@ -255,9 +256,6 @@ namespace LucED
 
 inline LuaAccess::LuaAccess(lua_State* luaState)
     : L(luaState)
-#ifdef DEBUG
-    , luaStackChecker(LuaStateAccess::getLuaStackChecker(L))
-#endif
 {}
 
 inline RawPtr<LuaInterpreter> LuaAccess::getLuaInterpreter() const
@@ -593,10 +591,14 @@ inline LuaAccess::Result LuaAccess::executeScript(String script, String name) co
 }
 
 #ifdef DEBUG
+inline RawPtr<LuaStackChecker> LuaAccess::getLuaStackChecker() const
+{
+    return LuaStateAccess::getLuaStackChecker(L);
+}
 inline bool LuaAccess::isCorrect() const
 {
     ASSERT(L != NULL);
-    ASSERT(luaStackChecker.isValid());
+    ASSERT(getLuaStackChecker().isValid());
     ASSERT(L == LuaStateAccess::getLuaInterpreter(L)->getCurrentLuaAccess().L);
     return true;
 }

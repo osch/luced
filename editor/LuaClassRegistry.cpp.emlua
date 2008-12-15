@@ -244,3 +244,19 @@ LuaClassRegistry::LuaClassRegistry(LuaAccess luaAccess)
 @ end
 {}
 
+
+namespace LucED // extra namespace is needed for template specialization of static methods
+{
+
+@ for i, def in ipairs(definitions) do
+@     for _, m in ipairs(def.methods or {}) do
+template<
+        >
+const char* LuaClassRegistry::getMethodName<@(def.class),&@(def.class)::@(m.name)>()
+{
+    return "@(m.name)";
+}
+@     end
+@ end
+
+} // namespace LucED

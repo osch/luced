@@ -20,7 +20,6 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "LuaAccess.hpp"
-#include "LuaVar.hpp"
 #include "LuaInterpreter.hpp"
 
 #ifndef LUA_SINGLETON_C_METHOD_HPP
@@ -55,7 +54,6 @@ public:
 
 private:
     friend class LuaAccess;
-    friend class LuaVar;
     
     LuaSingletonCMethod()
     {}
@@ -82,7 +80,8 @@ private:
             }
             catch (...)
             {
-                LuaCMethodBase::handleException(L);
+                LuaCMethodBase::handleException(L, LuaClassRegistry::ClassAttributes<C>::getLuaClassName(),
+                                                   LuaClassRegistry::getMethodName<C,M>());
                 wasError = true;
             }
         }

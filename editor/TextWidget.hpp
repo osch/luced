@@ -145,6 +145,8 @@ public:
         return textData->getColumnNumberOfMark(cursorMarkId);
     }
     long getOpticalCursorColumn() const;
+
+    long getOpticalColumn(long pos) const;
     
     int getNumberOfVisibleLines() const {
         return visibleLines;

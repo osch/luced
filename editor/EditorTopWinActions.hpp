@@ -157,6 +157,8 @@ public:
     
     void executeLuaScript();
     
+    void resetLuaModules();
+        
 private:
  
     EditorTopWinActions(const TopWinActionsParameter& parameter)

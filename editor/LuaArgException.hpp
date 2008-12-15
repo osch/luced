@@ -19,41 +19,27 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUCED_LUA_INTERFACE_HPP
-#define LUCED_LUA_INTERFACE_HPP
+#ifndef LUA_ARG_EXCEPTION_HPP
+#define LUA_ARG_EXCEPTION_HPP
 
-#include "HeapObject.hpp"
-#include "SingletonInstance.hpp"
-#include "LuaCFunctionResult.hpp"
-#include "LuaCFunctionArguments.hpp"
-#include "ViewLuaInterface.hpp"
-#include "LuaArgException.hpp"
+#include "BaseException.hpp"
+#include "LuaException.hpp"
 
 namespace LucED
 {
 
-class LucedLuaInterface : public HeapObject
+/**
+ * Wrong arguments in call from Lua to C++ functions/methods.
+ */
+class LuaArgException : public LuaException
 {
 public:
-    static LucedLuaInterface* getInstance();
-
-    LuaCFunctionResult getModulePrefix(const LuaCFunctionArguments& args);
-
-    LuaCFunctionResult getCurrentView(const LuaCFunctionArguments& args);
-
-    LuaCFunctionResult resetModules(const LuaCFunctionArguments& args);
-
-    void setCurrentView(RawPtr<ViewLuaInterface> view) {
-        currentView = view;
-    }
-
-private:
-    friend class SingletonInstance<LucedLuaInterface>;
-    static       SingletonInstance<LucedLuaInterface> instance;
-    
-    WeakPtr<ViewLuaInterface> currentView;
+    LuaArgException(const String& message = "")
+        : LuaException(message)
+    {}
+    virtual const char* what() const throw();
 };
 
 } // namespace LucED
 
-#endif // LUCED_LUA_INTERFACE_HPP
+#endif // LUA_ARG_EXCEPTION_HPP

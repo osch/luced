@@ -51,7 +51,7 @@ INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 LUA_SCRIPTS            := functions             BuiltinActionDefinitions  BuiltinClassDefinitions
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
                           LuaClassRegistry
-GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultActionKeyConfig
+GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       
                           
                           
 GENERATED_FAST_MODULES := LuaClassRegistry
@@ -62,7 +62,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
                 System                   LuaException           TopWin                     ProgramName \
                 LuaVar                   LuaInterpreter         ConfigException            GlobalConfig \
                 LanguageModes            RegexException         StatusLine                 GlobalLuaInterpreter \
-                Button                   GuiLayoutWidget        LuaStoredObjectReference   \
+                Button                   GuiLayoutWidget        LuaStoredObjectReference   LuaArgException \
                 GotoLinePanel            SingletonKeeper        TopWinList                 OwnedTopWins \
                 DialogWin                GuiLayoutSpacer        MultiLineEditorWidget      SubstitutionException \
                 SingleLineEditorWidget   LuaStackChecker        Commandline \
@@ -84,6 +84,7 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 HilitingBuffer          HeapMem                File                   BasicRegex  \
                 BackliteBuffer          GuiLayoutRow           GuiLayoutColumn        HeapObject  \
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
+                ViewLuaInterface        
                 
 PRG_MODULES  := luced
 

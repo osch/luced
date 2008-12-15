@@ -35,6 +35,7 @@
 #include "MicroSeconds.hpp"
 #include "SyntaxPatternsConfig.hpp"
 #include "ActionKeyConfig.hpp"
+#include "LuaVar.hpp"
 
 namespace LucED
 {
@@ -159,14 +160,11 @@ public:
         configChangedCallbackContainer.registerCallback(callback);
     }
     
-    String getShellscriptFor(ActionId actionId) const {
-        Nullable<String> foundValue = actionIdToShellscriptMap.get(actionId);
-        if (foundValue.isValid()) {
-            return foundValue.get();
-        } else {
-            return String();
-        }
+    String getConfigDirectory() const {
+        return configDirectory;
     }
+    
+    bool dependsOnPackage(const String& packageName) const;
 
 private:
     friend class SingletonInstance<GlobalConfig>;
@@ -176,6 +174,9 @@ private:
 
     SyntaxPatterns::Ptr loadSyntaxPatterns(const String& absoluteFileName);
 
+    void readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, 
+                              LuaVarRef            actionKeyBinding);
+                              
     bool         useOwnKeyPressRepeater;
     bool         doNotUseX11XkbExtension;
     MicroSeconds keyPressRepeatFirstMicroSecs;
@@ -219,9 +220,11 @@ private:
     String generalConfigFileName;
     String syntaxPatternDirectory;
     
-    HashMap<ActionId, String> actionIdToShellscriptMap;
-    
     ActionKeyConfig::Ptr        actionKeyConfig;
+    
+    String configDirectory;
+    
+    HashMap<String,bool> packagesMap;
 };
 
 } // namespace LucED

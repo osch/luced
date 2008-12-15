@@ -31,7 +31,6 @@
 #include "System.hpp"
 #include "File.hpp"
 #include "CurrentDirectoryKeeper.hpp"
-#include "DefaultActionKeyConfig.hpp"
 #include "ActionIdRegistry.hpp"
 
 using namespace LucED;
@@ -75,7 +74,6 @@ GlobalConfig::GlobalConfig()
           actionKeyConfig(ActionKeyConfig::create())
 {
     setlocale(LC_CTYPE, "");
-    DefaultActionKeyConfig::appendTo(actionKeyConfig);
 }
 
 
@@ -117,11 +115,78 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode() const
     return languageModes->getDefaultLanguageMode();
 }
 
+void GlobalConfig::readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, LuaVarRef actionKeyBinding)
+{
+    LuaAccess luaAccess = actionKeyBinding.getLuaAccess();
+    LuaVar o(luaAccess);
+    
+    for (int i = 0; o = actionKeyBinding[i + 1], o.isValid(); ++i)
+    {
+        if (!o.isTable()) {
+            throw ConfigException("actionKeyBinding entry must be table");
+        }
+        LuaVar n = o["actionName"];
+        if (n.isString())
+        {
+            String actionName = n.toString();
+            ActionId actionId = ActionIdRegistry::getInstance()->getActionId(actionName);
+            LuaVar keys = o["keys"];
+            if (!keys.isValid() || (!keys.isString() && !keys.isTable())) {
+                throw ConfigException(String() << "Invalid element 'keys' for action = '" << actionName << "'");
+            }
+            if (keys.isString())
+            {
+                actionKeyConfig->append(KeyCombination(keys.toString()), 
+                                        actionId);
+            }
+            else
+            {
+                LuaVar k(luaAccess);
+                
+                for (int i = 0; k = keys[i + 1], k.isValid(); ++i)
+                {
+                    if (!k.isString()) {
+                        throw ConfigException(String() << "Invalid element 'keys' for action = '" << actionName << "'");
+                    }
+                    actionKeyConfig->append(KeyCombination(k.toString()), 
+                                            actionId);
+                }
+            }
+            
+        }
+        else
+        {
+            n = o["referToPackage"];
+            if (!n.isString()) {
+                throw ConfigException("actionKeyBinding entry must have 'actionName' or 'referToPackage' field");
+            }
+            String packageName = n.toString();
+            packagesMap.set(packageName, true);
+            LuaVar package = GlobalLuaInterpreter::getInstance()->require(packageName);
+            if (package.isTable()) {
+                LuaVar getActionKeyBinding = package["getActionKeyBinding"];
+                if (!getActionKeyBinding.isFunction()) {
+                    throw ConfigException(String() << "'"<< packageName 
+                                                   << ".getActionKeyBinding' must be function");
+                }
+                LuaVar packageBinding = getActionKeyBinding.call();
+                if (!packageBinding.isTable()) {
+                    throw ConfigException(String() << "'"<< packageName 
+                                                   << ".getActionKeyBinding()' must return table");
+                }
+                readActionKeyBinding(actionKeyConfig, packageBinding);
+            }
+        }
+    }
+}
+
 void GlobalConfig::readConfig()
 {
+    packagesMap.clear();
+    
     ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::create();
     
-    String configDirectory = ".luced";
+    configDirectory = File(".luced").getAbsoluteName();
     
     if (!File(configDirectory).exists()) {
         String homeDirectory = System::getInstance()->getHomeDirectory();
@@ -418,61 +483,14 @@ void GlobalConfig::readConfig()
             }
         }
         ActionKeyConfig::Ptr newActionKeyConfig = ActionKeyConfig::create();
-        LuaVar actions = configTable["actions"];
-        if (actions.isValid())
+        LuaVar actionKeyBinding = configTable["actionKeyBinding"];
+        if (actionKeyBinding.isValid())
         {
-            if (!actions.isTable()) {
-                throw ConfigException("invalid actions");
+            if (!actionKeyBinding.isTable()) {
+                throw ConfigException("invalid actionKeyBinding");
             }
-            HashMap<String, bool> hasNameMap;
-            for (int i = 0; o = actions[i + 1], o.isValid(); ++i)
-            {
-                LuaVar n = o["name"];
-                if (!n.isValid() || !n.isString()) {
-                    throw ConfigException("missing name element for action");
-                }
-                String name = n.toString();
-                
-                if (hasNameMap.hasKey(name)) {
-                    throw ConfigException(String() << "duplicated action name '" << name <<"'");
-                }
-                hasNameMap.set(name, true);
-                
-                ActionId actionId = ActionIdRegistry::getInstance()->getActionId(name);
-                
-                if (o["type"] == "shell") {
-                    LuaVar script = o["script"];
-                    if (!script.isString()) {
-                        throw ConfigException(String() << "invalid element 'script' for action '" << name <<"'");
-                    }
-                    actionIdToShellscriptMap.set(actionId, script.toString());
-                }
-                
-                LuaVar keys = o["keys"];
-                if (!keys.isValid() || (!keys.isString() && !keys.isTable())) {
-                    throw ConfigException(String() << "Invalid element 'keys' for action = '" << name << "'");
-                }
-                if (keys.isString())
-                {
-                    newActionKeyConfig->append(KeyCombination(keys.toString()), 
-                                               actionId);
-                }
-                else
-                {
-                    LuaVar k(luaAccess);
-                    
-                    for (int i = 0; k = keys[i + 1], k.isValid(); ++i)
-                    {
-                        if (!k.isString()) {
-                            throw ConfigException(String() << "Invalid element 'keys' for action = '" << name << "'");
-                        }
-                        newActionKeyConfig->append(KeyCombination(k.toString()), 
-                                                   actionId);
-                    }
-                }
-            }
+            readActionKeyBinding(newActionKeyConfig, actionKeyBinding);
         }
-        DefaultActionKeyConfig::appendTo(newActionKeyConfig);
         actionKeyConfig = newActionKeyConfig;
     }
     catch (BaseException& ex) {
@@ -608,4 +626,11 @@ void GlobalConfig::notifyAboutNewFileContent(String absoluteFileName)
                                                loadSyntaxPatterns(absoluteFileName));
         }
     }
+}
+
+bool GlobalConfig::dependsOnPackage(const String& packageName) const
+{
+    Nullable<bool> flag = packagesMap.get(packageName);
+    
+    return flag.isValid() && flag.get();
 }

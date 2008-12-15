@@ -48,6 +48,8 @@
 #include "UnknownActionNameException.hpp"
 #include "ViewLuaInterface.hpp"
 #include "LucedLuaInterface.hpp"
+#include "Regex.hpp"
+#include "GlobalLuaInterpreter.hpp"
 
 using namespace LucED;
 
@@ -212,25 +214,79 @@ private:
 };
 
 
-class EditorTopWin::ShellscriptActionMethods : public ActionMethods
+class EditorTopWin::UserDefinedActionMethods : public ActionMethods
 {
 public:
-    typedef OwningPtr<ShellscriptActionMethods> Ptr;
+    typedef OwningPtr<UserDefinedActionMethods> Ptr;
     
     static Ptr create(RawPtr<EditorTopWin> thisTopWin) {
-        return Ptr(new ShellscriptActionMethods(thisTopWin));
+        return Ptr(new UserDefinedActionMethods(thisTopWin));
     }
     virtual bool invokeActionMethod(ActionId actionId);
 
     virtual bool hasActionMethod(ActionId actionId) {
-        String script = GlobalConfig::getInstance()->getShellscriptFor(actionId);
-        return script.getLength() > 0;
+        if (actionId.isBuiltin()) {
+            return false;
+        }
+        return !getLuaActionFunction(actionId).isNil();
     }
-    
 private:
-    ShellscriptActionMethods(RawPtr<EditorTopWin> thisTopWin)
+    UserDefinedActionMethods(RawPtr<EditorTopWin> thisTopWin)
         : thisTopWin(thisTopWin)
     {}
+    static String getModuleName(const String& actionName)
+    {
+        Regex  r("^(.*)\\.[^.]*?$");
+        String rslt;
+        if (r.matches(actionName))
+        {
+            rslt = actionName.getSubstring(r.getCaptureBegin(1),
+                                           r.getCaptureLength(1));
+        }
+        return rslt;
+    }
+    static String getActionNamePart(const String& actionName)
+    {
+        Regex  r("^.*\\.([^.]*?)$");
+        String rslt;
+        if (r.matches(actionName))
+        {
+            rslt = actionName.getSubstring(r.getCaptureBegin(1),
+                                           r.getCaptureLength(1));
+        }
+        return rslt;
+    }
+    LuaVar getLuaActionFunction(ActionId actionId)
+    {
+        String    actionName = actionId.toString();
+        String    moduleName = getModuleName(actionName);
+        LuaAccess luaAccess  = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
+        LuaVar    rslt(luaAccess);
+        
+        if (moduleName.getLength() > 0 && moduleName != "builtin")
+        {
+            LuaVar module(luaAccess);
+            try
+            {
+                module = GlobalLuaInterpreter::getInstance()->require(moduleName);
+            } 
+            catch (LuaException& ex) {
+            }
+            if (!module.isNil())
+            {
+                LuaVar actionGetter = module["getAction"];
+                if (!actionGetter.isNil()) {
+                    if (!actionGetter.isFunction()) {
+                        throw ConfigException(String() << "'" << moduleName 
+                                                       << ".getAction' must be function");
+                    }
+                    rslt = actionGetter.call(getActionNamePart(actionName));
+                }
+            }
+        }
+        return rslt;
+    }
+    
     RawPtr<EditorTopWin> thisTopWin;
 };
 
@@ -315,9 +371,8 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
                                                        panelInvoker,
                                                        actionInterface)));
 
-    
-    shellscriptActionMethods = ShellscriptActionMethods::create(this);
-    GuiWidget::addActionMethods(shellscriptActionMethods);
+    userDefinedActionMethods = UserDefinedActionMethods::create(this);
+    textEditor->addActionMethods(userDefinedActionMethods);
     
     viewLuaInterface = ViewLuaInterface::create(textEditor);
 }
@@ -817,35 +872,73 @@ String EditorTopWin::getFileName() const
     return textData->getFileName();
 }
 
-bool EditorTopWin::ShellscriptActionMethods::invokeActionMethod(ActionId actionId)
+
+bool EditorTopWin::UserDefinedActionMethods::invokeActionMethod(ActionId actionId)
 {
+    bool rslt = false;
+    
     try
     {
-        String script = GlobalConfig::getInstance()->getShellscriptFor(actionId);
-        if (script.getLength() > 0)
-        {
-            if (thisTopWin->textData->getModifiedFlag() == true) {
-                if (!thisTopWin->textData->isFileNamePseudo()) {
-                    thisTopWin->textData->save();
-                }
-            }
-            HeapHashMap<String,String>::Ptr env = HeapHashMap<String,String>::create();
-                                            env->set("FILE", thisTopWin->getFileName());
-            ProgramExecutor::start("/bin/sh",
-                                   script,
-                                   env,
-                                   newCallback(thisTopWin, &EditorTopWin::finishedShellscript));
-            return true;    
-        } else {
+        if (actionId.isBuiltin()) {
             return false;
         }
-    } catch (FileException& ex) {
+
+        LuaVar luaActionFunction = getLuaActionFunction(actionId);
+                
+        if (luaActionFunction.isFunction()) 
+        {
+            TextData::HistorySection::Ptr historySectionHolder = thisTopWin->textEditor->getTextData()->createHistorySection();
+
+            luaActionFunction.call(thisTopWin->viewLuaInterface);
+
+            rslt = true;
+        }
+        else if (luaActionFunction.isTable())
+        {
+            LuaVar shellScript = luaActionFunction["shellScript"];
+            if (shellScript.isString())
+            {
+                String script = shellScript.toString();
+
+                if (script.getLength() > 0)
+                {
+                    if (thisTopWin->textData->getModifiedFlag() == true) {
+                        if (!thisTopWin->textData->isFileNamePseudo()) {
+                            thisTopWin->textData->save();
+                        }
+                    }
+                    HeapHashMap<String,String>::Ptr env = HeapHashMap<String,String>::create();
+                                                    env->set("FILE", thisTopWin->getFileName());
+                    ProgramExecutor::start("/bin/sh",
+                                           script,
+                                           env,
+                                           newCallback(thisTopWin, &EditorTopWin::finishedShellscript));
+                    rslt = true;
+                }
+            }
+            else {
+                throw ConfigException(String() << "Action '" << actionId.toString() << "' is table but has no field 'shellScript'");
+            }
+        }
+        else {
+            throw ConfigException(String() << "Action '" << actionId.toString() << "' must be function or table");
+        }
+        
+        if (rslt)
+        {
+            thisTopWin->textEditor->showCursor();
+            thisTopWin->textEditor->rememberCursorPixX();
+        }
+    }
+    catch (FileException& ex) {
         thisTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
                                                        .setMessage(ex.getMessage()));
-    } catch (LuaException& ex) {
+    }
+    catch (LuaException& ex) {
         thisTopWin->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
                                                        .setMessage(ex.getMessage()));
-    } catch (ConfigException& ex)
+    }
+    catch (ConfigException& ex)
     {
         if (ex.getErrorList().isValid() && ex.getErrorList()->getLength() > 0) {
             ConfigErrorHandler::start(ex.getErrorList());
@@ -854,7 +947,7 @@ bool EditorTopWin::ShellscriptActionMethods::invokeActionMethod(ActionId actionI
                                                            .setMessage(ex.getMessage()));
         }
     }
-    return true;
+    return rslt;
 }
 
 void EditorTopWin::finishedShellscript(ProgramExecutor::Result rslt)

@@ -2098,6 +2098,22 @@ long TextWidget::getOpticalCursorColumn() const
 }
 
 
+long TextWidget::getOpticalColumn(long pos) const
+{
+    const long hardTabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth();
+    const long lineBegin    = textData->getThisLineBegin(pos);
+    long       opticalCursorColumn = 0;
+    for (long p = lineBegin; p < pos; ++p) {
+        if (textData->getChar(p) == '\t') {
+            opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
+        } else {
+            ++opticalCursorColumn;
+        }
+    }
+    return opticalCursorColumn;
+}
+
+
 void TextWidget::flushPendingUpdates()
 {
     if (updateVerticalScrollBar) {

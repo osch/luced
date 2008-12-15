@@ -49,8 +49,8 @@ public:
     {
         isSameLuaAccess(table);
 
-        ASSERT(  keyObject.stackIndex <= luaStackChecker->getHighestStackIndexForGeneration(  keyObject.stackGeneration));
-        ASSERT(valueObject.stackIndex <= luaStackChecker->getHighestStackIndexForGeneration(valueObject.stackGeneration));
+        ASSERT(  keyObject.stackIndex <= getLuaStackChecker()->getHighestStackIndexForGeneration(  keyObject.stackGeneration));
+        ASSERT(valueObject.stackIndex <= getLuaStackChecker()->getHighestStackIndexForGeneration(valueObject.stackGeneration));
         
         lua_pushvalue(L, keyObject.stackIndex);
 

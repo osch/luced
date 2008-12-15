@@ -108,7 +108,7 @@ public:
 private:
     class PanelInvoker;
     class ActionInterface;
-    class ShellscriptActionMethods;
+    class UserDefinedActionMethods;
     
     EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
 
@@ -161,7 +161,7 @@ private:
     
     OwningPtr<PanelInvoker>             panelInvoker;
     OwningPtr<ActionInterface>          actionInterface;
-    OwningPtr<ShellscriptActionMethods> shellscriptActionMethods;
+    OwningPtr<UserDefinedActionMethods> userDefinedActionMethods;
 
     ActionKeySequenceHandler actionKeySequenceHandler;
     

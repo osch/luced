@@ -65,7 +65,9 @@ public:
     void append(const String& languageModeName, const String& configFileName, SyntaxPatterns::Ptr syntaxPatterns)
     {
         allSyntaxPatterns.append(syntaxPatterns);
-        syntaxPatternCallbackContainers.appendNew();     ASSERT(allSyntaxPatterns.getLength() == syntaxPatternCallbackContainers.getLength());
+        syntaxPatternCallbackContainers.appendNew();
+        
+        ASSERT(allSyntaxPatterns.getLength() == syntaxPatternCallbackContainers.getLength());
         
         int i = allSyntaxPatterns.getLength() - 1;
         

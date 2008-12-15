@@ -83,6 +83,13 @@ public:
         lua_settable(L, tableStackIndex);
     }
 
+    void setNil() {
+        ASSERT(isCorrect());
+        push(key);
+        lua_pushnil(L);
+        lua_settable(L, tableStackIndex);
+    }
+
     bool isNil() const {
         ASSERT(isCorrect());
         push(key);
@@ -162,9 +169,17 @@ public:
         ASSERT(isCorrect());
         push(key);
         lua_gettable(L, tableStackIndex);
-        double rslt = lua_tonumber(L, -1);
+        long rslt = lua_tointeger(L, -1);
         lua_pop(L, 1);
-        return (long)(rslt + 0.5);
+        return rslt;
+    }
+    int toInt() const {
+        ASSERT(isCorrect());
+        push(key);
+        lua_gettable(L, tableStackIndex);
+        int rslt = lua_tointeger(L, -1);
+        lua_pop(L, 1);
+        return rslt;
     }
     String toString() const {
         ASSERT(isCorrect());
@@ -216,7 +231,7 @@ public:
 #ifdef DEBUG
     bool isCorrect() const {
         ASSERT(LuaAccess::isCorrect());
-        ASSERT(tableStackIndex <= luaStackChecker->getHighestStackIndexForGeneration(stackGeneration));
+        ASSERT(tableStackIndex <= getLuaStackChecker()->getHighestStackIndexForGeneration(stackGeneration));
         ASSERT(isCorrect(key));
         return true;
     }
@@ -333,8 +348,16 @@ public:
     }
     long toLong() const {
         ASSERT(isCorrect());
-        return (long)(lua_tonumber(L, stackIndex) + 0.5);
+        return (long)(lua_tointeger(L, stackIndex));
     }
+    int toInt() const {
+        ASSERT(isCorrect());
+        return (long)(lua_tointeger(L, stackIndex));
+    }
+    template<class T
+            >
+    bool is() const;
+    
     String toString() const {
         ASSERT(isCorrect());
         size_t len;
@@ -493,11 +516,15 @@ public:
     #endif
     }
     
+    template< class T
+            >
+    LuaVar call(const T& argument);
+
     LuaVar call(LuaFunctionArguments& args);
-    LuaVar call(const LuaVarRef& arg);
+
     LuaVar call();
 
-
+    
     RawPtr<LuaInterpreter> getLuaInterpreter() const;
 
     LuaAccess getLuaAccess() const {
@@ -510,7 +537,7 @@ public:
 #ifdef DEBUG
     bool isCorrect() const {
         ASSERT(LuaAccess::isCorrect());
-        ASSERT(stackIndex <= luaStackChecker->getHighestStackIndexForGeneration(stackGeneration));
+        ASSERT(stackIndex <= getLuaStackChecker()->getHighestStackIndexForGeneration(stackGeneration));
         return true;
     }
 #endif
@@ -560,6 +587,25 @@ protected:
 #endif
 };
 
+template<>
+inline bool LuaVarRef::is<String>() const
+{
+    return isString();
+}
+
+template<>
+inline bool LuaVarRef::is<int>() const
+{
+    return isNumber();
+}
+
+template<>
+inline bool LuaVarRef::is<long>() const
+{
+    return isNumber();
+}
+
+
 template<class KeyType
         >
 bool LuaObjectTableElementRef<KeyType>::operator==(const LuaVarRef& rhs) const
@@ -590,7 +636,7 @@ public:
         lua_pushnil(L);
         stackIndex = lua_gettop(L);
     #ifdef DEBUG
-        stackGeneration = luaStackChecker->registerAndGetGeneration(stackIndex);
+        stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
         lua_checkstack(L, 10);
 #ifdef PRINT_STACK_TRACE
@@ -606,7 +652,7 @@ printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
         lua_pushvalue(L, rhs.stackIndex);
         stackIndex = lua_gettop(L);
     #ifdef DEBUG
-        stackGeneration = luaStackChecker->registerAndGetGeneration(stackIndex);
+        stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
         lua_checkstack(L, 10);
 #ifdef PRINT_STACK_TRACE
@@ -622,7 +668,7 @@ printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
         lua_pushvalue(L, rhs.stackIndex);
         stackIndex = lua_gettop(L);
     #ifdef DEBUG
-        stackGeneration = luaStackChecker->registerAndGetGeneration(stackIndex);
+        stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
         lua_checkstack(L, 10);
 #ifdef PRINT_STACK_TRACE
@@ -640,7 +686,7 @@ printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
         push(rhs);
         stackIndex = lua_gettop(L);
     #ifdef DEBUG
-        stackGeneration = luaStackChecker->registerAndGetGeneration(stackIndex);
+        stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
         lua_checkstack(L, 10);
 #ifdef PRINT_STACK_TRACE
@@ -689,6 +735,14 @@ printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
     LuaVar& operator=(const T& rhs) {
         return assign(rhs);
     }
+
+    LuaVar& setNil() {
+        ASSERT(isCorrect());
+        lua_pushnil(L);
+        lua_replace(L, stackIndex);
+        return *this;
+    }
+
 #if 0
     LuaVar& operator=(const LuaVarRef& rhs)
     {
@@ -733,7 +787,7 @@ printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
 #endif
         ASSERT(isCorrect());
     #ifdef DEBUG
-        luaStackChecker->truncateGenerationAtStackIndex(stackGeneration, stackIndex);
+        getLuaStackChecker()->truncateGenerationAtStackIndex(stackGeneration, stackIndex);
     #endif
         lua_remove(L, stackIndex);
     }
@@ -775,7 +829,7 @@ private:
     {
         this->stackIndex = stackIndex;
     #ifdef DEBUG
-        stackGeneration = luaStackChecker->registerAndGetGeneration(stackIndex);
+        stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
         lua_checkstack(L, 10);
         ASSERT(isCorrect());
@@ -833,34 +887,64 @@ inline LuaVar LuaVarRef::call(LuaFunctionArguments& args)
     ASSERT(args.isCorrect());
 
     lua_checkstack(L, 10);
+
     lua_pushvalue(L, stackIndex);
-
-    lua_replace(L, -args.getLength() - 2);
-
-    int error = lua_pcall(L, args.getLength(), 1, 0);
-
-    LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args);
+    lua_replace  (L, -args.getLength() - 2);
+    
+    const int numberOfResults = 1;
+    int error = lua_pcall(L, args.getLength(), numberOfResults, 0);
 
     if (error != 0)
     {
         LuaException ex(lua_tostring(L, -1));
         lua_pop(L, 1);
+        LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, numberOfResults);
         throw ex;
-    } else {    
+    }
+    else {
+        LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, numberOfResults);
         return LuaVar(getLuaAccess(), lua_gettop(L));
     }
 }
 
+template<>
 inline LuaVar LuaVarRef::call(const LuaVarRef& arg)
 {
     ASSERT(isCorrect());
     ASSERT(arg.isCorrect());
     ASSERT(isSameLuaAccess(arg));
     
-    LuaFunctionArguments args(getLuaAccess());
-    args << arg;
-    return call(args);
+    LuaVar rslt(getLuaAccess());
+    {
+        LuaFunctionArguments args(getLuaAccess());
+        args << arg;
+        rslt = call(args);
+    }
+    return rslt;
 }
+
+template<>
+inline LuaVar LuaVarRef::call(const LuaVar& arg)
+{
+    return call<LuaVarRef>(arg);
+}
+
+
+template< class T
+        >
+inline LuaVar LuaVarRef::call(const T& arg)
+{
+    ASSERT(isCorrect());
+    
+    LuaVar rslt(getLuaAccess());
+    {
+        LuaFunctionArguments args(getLuaAccess());
+        args << arg;
+        rslt = call(args);
+    }
+    return rslt;
+}
+
 
 inline LuaVar LuaVarRef::call()
 {

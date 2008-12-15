@@ -87,6 +87,15 @@ public:
     void setMaximalEndOfMatchPosition(long epos) {
         maximalEndOfMatchPosition = epos;
     }
+    void setNoMatchBeforePosition(long pos) {
+        noMatchBeforePosition = pos;
+    }
+    void setMaxForwardAssertionLength(long maxForwardAssertionLength) {
+        this->maxForwardAssertionLength = maxForwardAssertionLength;
+    }
+    void setMaxBackwardAssertionLength(long maxBackwardAssertionLength) {
+        this->maxBackwardAssertionLength = maxBackwardAssertionLength;
+    }
     void setTextData(RawPtr<TextData> textData) {
         this->textData = textData;
     }
@@ -153,6 +162,10 @@ public:
     }
 
     static String quoteRegexCharacters(const String& s);
+    
+    int getNumberOfCapturingSubpatterns() const {
+        return regex.getNumberOfCapturingSubpatterns();
+    }
     
     int getCapturedSubpatternBeginPos(int patternNumber) {
         if (patternNumber > regex.getNumberOfCapturingSubpatterns()) {
@@ -260,7 +273,7 @@ private:
     static int pcreCalloutFunction(void* self, pcre_callout_block*);
 
     LuaVar evaluateCallout(CalloutObject::Ptr callout, const char* subject, 
-                              long startMatch, long pos, int lastCaptured, int topCaptured);
+                           long startMatch, long pos, int lastCaptured, int topCaptured);
 
 protected:
     SearchParameter p;
@@ -282,7 +295,10 @@ private:
     MemArray<int> expressionPositions;
     BasicRegex regex;
 
-    long maxRegexAssertionLength;
+    long maxForwardAssertionLength;
+    long maxBackwardAssertionLength;
+    
+    long noMatchBeforePosition;
 };
 
 } // namespace LucED

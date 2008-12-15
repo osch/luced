@@ -65,6 +65,10 @@ public:
     #endif
     }
     
+    bool has(int i) const {
+        return 0 <= i && i < numberArgs;
+    }
+    
     int getLength() const {
         ASSERT(isCorrect());
         return numberArgs;
@@ -79,7 +83,7 @@ public:
     bool isCorrect() const {
         ASSERT(luaAccess.isCorrect());
         if (numberArgs > 0) {
-            ASSERT(numberArgs <= luaAccess.luaStackChecker->getHighestStackIndexForGeneration(stackGeneration));
+            ASSERT(numberArgs <= luaAccess.getLuaStackChecker()->getHighestStackIndexForGeneration(stackGeneration));
         }
         return true;
     }
@@ -114,11 +118,11 @@ private:
     {
     #ifdef DEBUG
         if (numberArgs > 1) {
-            int s1          = luaAccess.luaStackChecker->registerAndGetGeneration(1);
-            stackGeneration = luaAccess.luaStackChecker->registerAndGetGeneration(numberArgs);
-            ASSERT(s1 = stackGeneration);
+            int s1          = luaAccess.getLuaStackChecker()->registerAndGetGeneration(1);
+            stackGeneration = luaAccess.getLuaStackChecker()->registerAndGetGeneration(numberArgs);
+            ASSERT(s1 == stackGeneration);
         } else if (numberArgs == 1) {
-            stackGeneration = luaAccess.luaStackChecker->registerAndGetGeneration(1);
+            stackGeneration = luaAccess.getLuaStackChecker()->registerAndGetGeneration(1);
         }
     #endif
         ASSERT(isCorrect());
@@ -129,7 +133,7 @@ private:
         ASSERT(isCorrect());
     #ifdef DEBUG
         if (numberArgs > 0) {
-            luaAccess.luaStackChecker->truncateGenerationAtStackIndex(stackGeneration, 1);
+            luaAccess.getLuaStackChecker()->truncateGenerationAtStackIndex(stackGeneration, 1);
         }
     #endif
     }
@@ -138,7 +142,7 @@ private:
         ASSERT(0 <= i && i < numberArgs);
         lua_remove(luaAccess.L, i + 1);
     #ifdef DEBUG
-        luaAccess.luaStackChecker->truncateGenerationAtStackIndex(stackGeneration, numberArgs);
+        luaAccess.getLuaStackChecker()->truncateGenerationAtStackIndex(stackGeneration, numberArgs);
     #endif
         numberArgs -= 1;
     }

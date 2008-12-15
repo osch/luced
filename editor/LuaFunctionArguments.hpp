@@ -65,7 +65,7 @@ public:
         if (isOnStack)
         {
         #ifdef DEBUG
-            luaStackChecker->truncateGenerationsAtStackIndex(startStackIndex);
+            getLuaStackChecker()->truncateGenerationsAtStackIndex(startStackIndex);
         #endif
             lua_pop(L, numberArguments + 1);
         }
@@ -96,7 +96,12 @@ public:
     private:
         friend class LuaVarRef;
         
-        static void clearAfterCall(LuaFunctionArguments& args) {
+        static void clearAfterCall(LuaFunctionArguments& args, int numberOfResults)
+        {
+        #ifdef DEBUG
+            ASSERT(args.startStackIndex - 1 + numberOfResults == lua_gettop(args.L));
+            args.getLuaStackChecker()->truncateGenerationsAtStackIndex(args.startStackIndex);
+        #endif
             args.isOnStack = false;
             args.numberArguments = 0;
         }
@@ -106,8 +111,8 @@ public:
     bool isCorrect() const {
         return    (LuaAccess::isCorrect())
                && (startStackIndex + numberArguments == lua_gettop(L))
-               && (luaStackChecker->getHighestStackIndexForNewestGeneration() < startStackIndex)
-               && (luaStackChecker->getHighestStackIndex() <= startStackIndex + numberArguments);
+               && (getLuaStackChecker()->getHighestStackIndexForNewestGeneration() < startStackIndex)
+               && (getLuaStackChecker()->getHighestStackIndex() <= startStackIndex + numberArguments);
     }
 #endif
 

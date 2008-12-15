@@ -20,6 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "LuaCMethod.hpp"
+#include "LuaArgException.hpp"
 
 using namespace LucED;
 
@@ -53,11 +54,17 @@ void LuaCMethodBase::throwDynamicCastError(const LuaVarRef& luaObject,
 }
 
 
-void LuaCMethodBase::handleException(lua_State* L)
+void LuaCMethodBase::handleException(lua_State* L, const char* className,
+                                                   const char* methodName)
 {
     try
     {
         throw;
+    }
+    catch (LuaArgException& ex)
+    {
+        lua_pushstring(L, (String() << "Invalid invocation arguments for LucED builtin function '" 
+                                    << className << "." << methodName << "'").toCString());
     }
     catch (BaseException& ex)
     {

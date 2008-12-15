@@ -35,11 +35,21 @@ public:
     static RawPtr<GlobalLuaInterpreter> getInstance() {
         return instance.getPtr();
     }
-    
+
+    void resetModules();
+    void resetModule(const String& moduleName);
+        
 private:
     friend class SingletonInstance<GlobalLuaInterpreter>;
     
     static SingletonInstance<GlobalLuaInterpreter> instance;
+
+    GlobalLuaInterpreter();
+
+    LuaStoredObjectReference lucedLuaInterfaceStoreReference;
+    LuaStoredObjectReference packageStoreReference;
+    LuaStoredObjectReference packageLoadedStoreReference;
+    LuaStoredObjectReference initialModulesStoreReference;
 };
 
 } // namespace LucED

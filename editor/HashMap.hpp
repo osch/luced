@@ -138,6 +138,9 @@ public:
     void remove(const K& key) {
         map.erase(key);
     }
+    void clear() {
+        map.clear();
+    }
     bool isEmpty() const {
         return getIterator().isAtEnd();
     }

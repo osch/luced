@@ -75,6 +75,8 @@ public:
         return currentAccess;
     }
     
+    LuaVar require(const String& packageName) const;
+    
     class LuaCFunctionAccess
     {
     private:
@@ -171,8 +173,8 @@ private:
         LuaStoredObjectReference lucedStdout;
         LuaStoredObjectReference owningPtrMapStoreReference;
         LuaStoredObjectReference weakPtrMapStoreReference;
-        
-        LuaStoredObjectReference lucedLuaInterface;
+
+        LuaStoredObjectReference requireFunctionStoreReference;
 
         template<class T
                 >
