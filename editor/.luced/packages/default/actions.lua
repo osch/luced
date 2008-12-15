@@ -126,9 +126,16 @@ return
         shellScript = [[ set -e
                          file=`readlink -f $FILE`
                          cd `dirname $file`
+                         
+                         term="xterm"
+                         if type rxvt 2>/dev/null 1>&2
+                         then
+                           term="rxvt"
+                         fi
+                         
                          if [ -e CVS ]
                          then
-                           rxvt -e cvs commit `basename $file`
+                           $term -e cvs commit `basename $file`
                          else
                            homedir=`cd "$HOME"; pwd`
                            gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
@@ -141,7 +148,7 @@ return
                              echo "error: neither Git nor CVS repository"
                              exit 1
                            fi
-                           rxvt -e git commit `basename $file`
+                           $term -e git commit `basename $file`
                          fi
                       ]],
     },
@@ -170,6 +177,7 @@ return
                                      echo \`pwd\`/\`basename $fn\`
                                     `
                            relname=`echo $fullname|sed s~$gitdir/~~`
+                           tag1="HEAD"
                            t1=`mktemp -t "old.$tag1.\`basename $fn\`.XXXXXX"`
                            git show $tag1:$relname > $t1
                            tkdiff "$t1" "$fn" 
