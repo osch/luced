@@ -2,6 +2,7 @@ sandbox.mk
 sandbox_options.hpp
 build*
 luced
+luced.exe
 lc
 *gprof*
 *.bak.*
