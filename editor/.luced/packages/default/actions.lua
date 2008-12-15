@@ -125,16 +125,57 @@ return
     {
         shellScript = [[ set -e
                          file=`readlink -f $FILE`
-                         cd `dirname $file` 
-                         rxvt -e cvs commit `basename $file` ]],
+                         cd `dirname $file`
+                         if [ -e CVS ]
+                         then
+                           rxvt -e cvs commit `basename $file`
+                         else
+                           homedir=`cd "$HOME"; pwd`
+                           gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
+                                   do 
+                                     cd ..
+                                   done
+                                   pwd`
+                           if [ ! -e "$gitdir"/.git ]
+                           then
+                             echo "error: neither Git nor CVS repository"
+                             exit 1
+                           fi
+                           rxvt -e git commit `basename $file`
+                         fi
+                      ]],
     },
     cvsDiff =
     {
         shellScript = [[ set -e
                          file=`readlink -f $FILE`
                          cd `dirname $file` 
-                         fn=`basename $file` 
-                         tkdiff $fn ]],
+                         fn=`basename $file`
+                         if [ -e CVS ]
+                         then 
+                           tkdiff $fn
+                         else
+                           homedir=`cd "$HOME"; pwd`
+                           gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
+                                   do 
+                                     cd ..
+                                   done
+                                   pwd`
+                           if [ ! -e "$gitdir"/.git ]
+                           then
+                             echo "error: neither Git nor CVS repository"
+                             exit 1
+                           fi
+                           fullname=`cd \`dirname $fn\`
+                                     echo \`pwd\`/\`basename $fn\`
+                                    `
+                           relname=`echo $fullname|sed s~$gitdir/~~`
+                           t1=`mktemp -t "old.$tag1.\`basename $fn\`.XXXXXX"`
+                           git show $tag1:$relname > $t1
+                           tkdiff "$t1" "$fn" 
+                           rm "$t1"
+                         fi
+                      ]],
     },
     cvsLog =
     {
