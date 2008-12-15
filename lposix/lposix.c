@@ -952,6 +952,9 @@ static int Ppathconf(lua_State *L)		/** pathconf([path,options]) */
 	return doselection(L, 2, Spathconf, Fpathconf, path);
 }
 
+#if defined(__CYGWIN__) && !defined(_SC_STREAM_MAX)
+#define _SC_STREAM_MAX 100
+#endif
 
 static const int Ksysconf[] =
 {
