@@ -898,7 +898,7 @@ inline LuaVar LuaVarRef::call(LuaFunctionArguments& args)
     {
         LuaException ex(lua_tostring(L, -1));
         lua_pop(L, 1);
-        LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, numberOfResults);
+        LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, 0);
         throw ex;
     }
     else {
