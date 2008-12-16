@@ -33,7 +33,7 @@ local function smartNewline(view)
 
     local cursorPos   = v:getCursorPosition()
     local m           = v:findMatch([[^]], cursorPos, "b")
-    local startOfLine = m.beginPos[0]
+    local startOfLine = m and m.beginPos[0] or 0
 
     m = v:findMatch([[(\,|\;|\<|\>)|(\&\&|\|\||\.|\<\<|\+)]], cursorPos, startOfLine, "b")
 
@@ -56,7 +56,7 @@ local function smartNewline(view)
 
     m = v:findMatch([[^([ \t]*)]], startOfLine)
 
-    if m.endPos[0] > cursorPos then
+    if not m or m.endPos[0] >= cursorPos then
         indentSpace = v:getChars(startOfLine, cursorPos)
     else
         indentSpace = m.match[0]
