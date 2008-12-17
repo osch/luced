@@ -58,7 +58,7 @@ void StackTrace::print()
         {
             argStrings.append("addr2line");
     
-            argStrings.append("-i");
+            //argStrings.append("-i"); <-- not supported under older addr2line
             argStrings.append("-f");
             argStrings.append("-s");
             argStrings.append("-C");
