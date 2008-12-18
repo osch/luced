@@ -207,13 +207,8 @@ LuaInterpreter::~LuaInterpreter()
 
 LuaVar LuaInterpreter::require(const String& packageName) const
 {
-    LuaVar rslt(currentAccess);
-    
-    {
-        LuaVar requireFunction = currentAccess.retrieve(storedObjects->requireFunctionStoreReference);
-        LuaVar packageLuaName  = currentAccess.toLua(packageName);
-        rslt = requireFunction.call(packageLuaName);
-    }
-    return rslt;
+    LuaVar requireFunction = currentAccess.retrieve(storedObjects->requireFunctionStoreReference);
+    LuaVar packageLuaName  = currentAccess.toLua(packageName);
+    return requireFunction.call(packageLuaName);
 }
 

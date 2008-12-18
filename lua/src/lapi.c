@@ -9,6 +9,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 
 #define lapi_c
 #define LUA_CORE
@@ -187,6 +188,23 @@ LUA_API void lua_remove (lua_State *L, int idx) {
   lua_unlock(L);
 }
 
+LUA_API void lua_unuse (lua_State *L, int idx) {
+  StkId p;
+  StkId b;
+  lua_lock(L);
+  p = index2adr(L, idx);
+  api_checkvalidindex(L, p);
+  p->tt = LUA_TUNUSED;
+  p = L->top - 1;
+  b = L->base;
+  while (p >= b && p->tt == LUA_TUNUSED) --p;
+  if (p + 1 != L->top) {
+    printf("*************** unused freed: %d\n", L->top - (p + 1));
+  }
+  L->top = p + 1;
+  lua_unlock(L);
+}
+
 
 LUA_API void lua_insert (lua_State *L, int idx) {
   StkId p;
@@ -247,7 +265,12 @@ LUA_API int lua_type (lua_State *L, int idx) {
 
 LUA_API const char *lua_typename (lua_State *L, int t) {
   UNUSED(L);
-  return (t == LUA_TNONE) ? "no value" : luaT_typenames[t];
+  switch (t)
+  {
+    case LUA_TNONE:   return "no value";
+    case LUA_TUNUSED: return "unused";
+    default:          return luaT_typenames[t];
+  }
 }
 
 

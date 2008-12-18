@@ -786,10 +786,10 @@ StackTrace::print();
 printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
 #endif
         ASSERT(isCorrect());
+        lua_unuse(L, stackIndex);
     #ifdef DEBUG
-        getLuaStackChecker()->truncateGenerationAtStackIndex(stackGeneration, stackIndex);
+        getLuaStackChecker()->truncateGenerationAtStackIndex(stackGeneration, lua_gettop(L) + 1);
     #endif
-        lua_remove(L, stackIndex);
     }
     void setToNil() const {
         ASSERT(isCorrect());
