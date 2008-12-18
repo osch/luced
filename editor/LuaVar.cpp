@@ -30,7 +30,6 @@ using namespace LucED;
 LuaVar LuaVar::call()
 {
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
-    lua_checkstack(L, 10);
     lua_pushvalue(L, stackIndex);
     int error = lua_pcall(L, 0, 1, 0);
 
@@ -47,7 +46,6 @@ LuaVar LuaVar::call()
 /*LuaVar LuaVar::call(const LuaVar& arg) const
 {
     ASSERT(stackIndex <= LuaStackChecker::getInstance()->getHighestStackIndexForGeneration(stackGeneration));
-    lua_checkstack(L, 10);
     lua_pushvalue(L, stackIndex);
     lua_pushvalue(L, arg.stackIndex);
     

@@ -638,7 +638,6 @@ public:
     #ifdef DEBUG
         stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
-        lua_checkstack(L, 10);
 #ifdef PRINT_STACK_TRACE
 StackTrace::print();
 printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
@@ -654,7 +653,6 @@ printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
     #ifdef DEBUG
         stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
-        lua_checkstack(L, 10);
 #ifdef PRINT_STACK_TRACE
 StackTrace::print();
 printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
@@ -670,7 +668,6 @@ printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
     #ifdef DEBUG
         stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
-        lua_checkstack(L, 10);
 #ifdef PRINT_STACK_TRACE
 StackTrace::print();
 printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
@@ -688,7 +685,6 @@ printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
     #ifdef DEBUG
         stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
-        lua_checkstack(L, 10);
 #ifdef PRINT_STACK_TRACE
 StackTrace::print();
 printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
@@ -831,7 +827,6 @@ private:
     #ifdef DEBUG
         stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
     #endif
-        lua_checkstack(L, 10);
         ASSERT(isCorrect());
 #ifdef PRINT_STACK_TRACE
 StackTrace::print();
@@ -885,8 +880,6 @@ inline LuaVar LuaVarRef::call(LuaFunctionArguments& args)
 {
     ASSERT(isCorrect());
     ASSERT(args.isCorrect());
-
-    lua_checkstack(L, 10);
 
     lua_pushvalue(L, stackIndex);
     lua_replace  (L, -args.getLength() - 2);
@@ -950,7 +943,6 @@ inline LuaVar LuaVarRef::call()
 {
     ASSERT(isCorrect());
 
-    lua_checkstack(L, 10);
     lua_pushvalue(L, stackIndex);
 
     int error = lua_pcall(L, 0, 1, 0);

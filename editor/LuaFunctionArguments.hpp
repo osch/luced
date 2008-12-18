@@ -39,8 +39,6 @@ public:
           numberArguments(0),
           isOnStack(true)
     {
-        lua_checkstack(L, 20);
-
         lua_pushnil(L); // placeholder for function
     #ifdef DEBUG
         startStackIndex  = lua_gettop(L);
@@ -52,8 +50,6 @@ public:
           numberArguments(1),
           isOnStack(true)
     {
-        lua_checkstack(L, 20);
-
         lua_pushnil(L); // placeholder for function
     #ifdef DEBUG
         startStackIndex  = lua_gettop(L);
@@ -81,9 +77,7 @@ public:
 
         push(arg);
         ++numberArguments;
-        if (numberArguments % 10 == 0) {
-            lua_checkstack(L, 20);
-        }
+
         return *this;
     }
 
