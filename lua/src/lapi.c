@@ -9,7 +9,6 @@
 #include <math.h>
 #include <stdarg.h>
 #include <string.h>
-#include <stdio.h>
 
 #define lapi_c
 #define LUA_CORE
@@ -198,9 +197,6 @@ LUA_API void lua_unuse (lua_State *L, int idx) {
   p = L->top - 1;
   b = L->base;
   while (p >= b && p->tt == LUA_TUNUSED) --p;
-  if (p + 1 != L->top) {
-    printf("*************** unused freed: %d\n", L->top - (p + 1));
-  }
   L->top = p + 1;
   lua_unlock(L);
 }
