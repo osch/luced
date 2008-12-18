@@ -26,8 +26,6 @@
 #include <string.h>
 #include <signal.h>
 
-#include "options.hpp"
-
 #ifdef HAS_STACKTRACE
 #include <execinfo.h>
 #endif

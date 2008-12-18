@@ -25,8 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "options.hpp"
-
 /*     #include <execinfo.h>
 */
      /* Obtain a backtrace and print it to `stdout'. */

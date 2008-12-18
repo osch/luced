@@ -28,7 +28,6 @@
 #include <errno.h>
 #include <string.h>
 
-#include "options.hpp"
 #include "File.hpp"
 #include "ByteArray.hpp"
 #include "Regex.hpp"
