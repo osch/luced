@@ -757,6 +757,15 @@ union luai_Cast { double l_d; long l_l; };
 ** without modifying the main part of the file.
 */
 
+
+#if defined(DEBUG)
+#include <assert.h>
+#undef  luai_apicheck
+#define luai_apicheck(L,o)	{ (void)L; assert(o); }
+#endif
+
+#define LUA_MINSTACK 20
+
 namespace LucED
 {
 
