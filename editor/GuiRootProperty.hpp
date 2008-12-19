@@ -22,6 +22,8 @@
 #ifndef GUIROOTPROPERTY_H
 #define GUIROOTPROPERTY_H
 
+#include <limits.h>
+
 #include <X11/Xatom.h>
 
 #include "OwningPtr.hpp"

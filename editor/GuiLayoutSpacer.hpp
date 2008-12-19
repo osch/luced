@@ -22,6 +22,8 @@
 #ifndef GUILAYOUTSPACER_H
 #define GUILAYOUTSPACER_H
 
+#include <limits.h>
+
 #include "GuiElement.hpp"
 #include "ObjectArray.hpp"
 #include "debug.hpp"
