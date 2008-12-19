@@ -51,19 +51,16 @@ public:
         
         if (i < args.getLength()) {
             if (!args[i].is<Type1>()) {
-printf("XXXXXXXXX\n");
                 return false;
             }
             i += 1;
         }
         if (i < args.getLength()) {
             if (!args[i].is<Type2>()) {
-printf("XXXXXXXXX2\n");
                 return false;
             }
             i += 1;
         }
-printf("XXXXXXXXX3 %d %d\n",i,args.getLength());
         return i == args.getLength();
     }
 };
