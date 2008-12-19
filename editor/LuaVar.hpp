@@ -907,13 +907,7 @@ inline LuaVar LuaVarRef::call(const LuaVarRef& arg)
     ASSERT(arg.isCorrect());
     ASSERT(isSameLuaAccess(arg));
     
-    LuaVar rslt(getLuaAccess());
-    {
-        LuaFunctionArguments args(getLuaAccess());
-        args << arg;
-        rslt = call(args);
-    }
-    return rslt;
+    return call(LuaFunctionArguments(getLuaAccess()) << arg);
 }
 
 template<>
@@ -929,13 +923,7 @@ inline LuaVar LuaVarRef::call(const T& arg)
 {
     ASSERT(isCorrect());
     
-    LuaVar rslt(getLuaAccess());
-    {
-        LuaFunctionArguments args(getLuaAccess());
-        args << arg;
-        rslt = call(args);
-    }
-    return rslt;
+    return call(LuaFunctionArguments(getLuaAccess()) << arg);
 }
 
 

@@ -124,6 +124,7 @@ LUA_API void  (lua_settop) (lua_State *L, int idx);
 LUA_API void  (lua_pushvalue) (lua_State *L, int idx);
 LUA_API void  (lua_remove) (lua_State *L, int idx);
 LUA_API void  (lua_unuse) (lua_State *L, int idx);
+LUA_API void  (lua_removeunusedbefore) (lua_State *L, int idx);
 LUA_API void  (lua_insert) (lua_State *L, int idx);
 LUA_API void  (lua_replace) (lua_State *L, int idx);
 LUA_API int   (lua_checkstack) (lua_State *L, int sz);

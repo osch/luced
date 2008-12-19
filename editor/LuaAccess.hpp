@@ -372,17 +372,79 @@ template<class T
         >
 inline void LuaAccess::pushOwning(const OwningPtr<T>& rhs) const
 {
-    ASSERT(isCorrect());
-
-    StaticAssertion<LuaClassRegistry::ClassAttributes<T>::isOwningPtrType>();
-
     {
+        ASSERT(isCorrect());
+    
+        StaticAssertion<LuaClassRegistry::ClassAttributes<T>::isOwningPtrType>();
+    
+        {
+            RawPtr<LuaInterpreter> luaInterpreter = getLuaInterpreter();
+        
+            void*  voidPtr      = rhs.getRawPtr();
+            LuaVar owningPtrMap = retrieve(LuaInterpreter::ClassRegistryAccess::getOwningPtrMapStoreReference(luaInterpreter));
+            
+            LuaVar existingObject = owningPtrMap[voidPtr];
+            
+            if (existingObject.isValid())
+            {
+                push(existingObject);
+            }
+            else
+            {
+                UserData* userDataPtr = static_cast< UserData*
+                                                   >
+                                                   (lua_newuserdata(L, sizeof(UserData) + sizeof(OwningPtr<HeapObject>)));
+                if (userDataPtr != NULL)
+                {
+                    LuaVar newObject(*this, lua_gettop(L));
+        
+                    userDataPtr->magic       = MAGIC;
+                    userDataPtr->isOwningPtr = true;
+                
+                    OwningPtr<HeapObject>* owningPtrPtr = static_cast< OwningPtr<HeapObject>*
+                                                                     >
+                                                                     (static_cast<void*>(userDataPtr + 1));
+                    new (owningPtrPtr) OwningPtr<HeapObject>(rhs);
+                
+                    RawPtr<LuaInterpreter>   luaInterpreter = getLuaInterpreter();
+                    LuaStoredObjectReference storeReference = LuaInterpreter::ClassRegistryAccess
+                                                                            ::getMetaTableStoreReference<T>(luaInterpreter);
+            
+                    ASSERT(storeReference.ptr->getLuaInterpreter() == luaInterpreter);
+            
+                    LuaVar metaTable = retrieve(storeReference);
+                    newObject.setMetaTable(metaTable);
+    
+                    owningPtrMap[voidPtr] = newObject;
+                    push(newObject);
+                }
+                else {
+                    lua_pushnil(L);
+                }
+            }
+        }
+    }
+    lua_removeunusedbefore(L, lua_gettop(L));
+#ifdef DEBUG
+    getLuaStackChecker()->truncateGenerationsAtStackIndex(lua_gettop(L));
+#endif
+}
+
+template<class T
+        >
+inline void LuaAccess::pushWeak(T* rhs) const
+{
+    {
+        ASSERT(isCorrect());
+        
+        StaticAssertion<!LuaClassRegistry::ClassAttributes<T>::isOwningPtrType>();
+    
         RawPtr<LuaInterpreter> luaInterpreter = getLuaInterpreter();
     
-        void*  voidPtr      = rhs.getRawPtr();
-        LuaVar owningPtrMap = retrieve(LuaInterpreter::ClassRegistryAccess::getOwningPtrMapStoreReference(luaInterpreter));
+        void*  voidPtr    = static_cast<void*>(rhs);
+        LuaVar weakPtrMap = retrieve(LuaInterpreter::ClassRegistryAccess::getWeakPtrMapStoreReference(luaInterpreter));
         
-        LuaVar existingObject = owningPtrMap[voidPtr];
+        LuaVar existingObject = weakPtrMap[voidPtr];
         
         if (existingObject.isValid())
         {
@@ -392,29 +454,28 @@ inline void LuaAccess::pushOwning(const OwningPtr<T>& rhs) const
         {
             UserData* userDataPtr = static_cast< UserData*
                                                >
-                                               (lua_newuserdata(L, sizeof(UserData) + sizeof(OwningPtr<HeapObject>)));
+                                               (lua_newuserdata(L, sizeof(UserData) + sizeof(WeakPtr<HeapObject>)));
             if (userDataPtr != NULL)
             {
                 LuaVar newObject(*this, lua_gettop(L));
     
                 userDataPtr->magic       = MAGIC;
-                userDataPtr->isOwningPtr = true;
+                userDataPtr->isOwningPtr = false;
             
-                OwningPtr<HeapObject>* owningPtrPtr = static_cast< OwningPtr<HeapObject>*
-                                                                 >
-                                                                 (static_cast<void*>(userDataPtr + 1));
-                new (owningPtrPtr) OwningPtr<HeapObject>(rhs);
+                WeakPtr<HeapObject>* weakPtrPtr = static_cast< WeakPtr<HeapObject>*
+                                                             >
+                                                             (static_cast<void*>(userDataPtr + 1));
+                new (weakPtrPtr) WeakPtr<HeapObject>(rhs);
             
-                RawPtr<LuaInterpreter>   luaInterpreter = getLuaInterpreter();
                 LuaStoredObjectReference storeReference = LuaInterpreter::ClassRegistryAccess
                                                                         ::getMetaTableStoreReference<T>(luaInterpreter);
         
                 ASSERT(storeReference.ptr->getLuaInterpreter() == luaInterpreter);
-        
+                
                 LuaVar metaTable = retrieve(storeReference);
                 newObject.setMetaTable(metaTable);
-
-                owningPtrMap[voidPtr] = newObject;
+    
+                weakPtrMap[voidPtr] = newObject;
                 push(newObject);
             }
             else {
@@ -422,59 +483,10 @@ inline void LuaAccess::pushOwning(const OwningPtr<T>& rhs) const
             }
         }
     }
-}
-
-template<class T
-        >
-inline void LuaAccess::pushWeak(T* rhs) const
-{
-    ASSERT(isCorrect());
-    
-    StaticAssertion<!LuaClassRegistry::ClassAttributes<T>::isOwningPtrType>();
-
-    RawPtr<LuaInterpreter> luaInterpreter = getLuaInterpreter();
-
-    void*  voidPtr    = static_cast<void*>(rhs);
-    LuaVar weakPtrMap = retrieve(LuaInterpreter::ClassRegistryAccess::getWeakPtrMapStoreReference(luaInterpreter));
-    
-    LuaVar existingObject = weakPtrMap[voidPtr];
-    
-    if (existingObject.isValid())
-    {
-        push(existingObject);
-    }
-    else
-    {
-        UserData* userDataPtr = static_cast< UserData*
-                                           >
-                                           (lua_newuserdata(L, sizeof(UserData) + sizeof(WeakPtr<HeapObject>)));
-        if (userDataPtr != NULL)
-        {
-            LuaVar newObject(*this, lua_gettop(L));
-
-            userDataPtr->magic       = MAGIC;
-            userDataPtr->isOwningPtr = false;
-        
-            WeakPtr<HeapObject>* weakPtrPtr = static_cast< WeakPtr<HeapObject>*
-                                                         >
-                                                         (static_cast<void*>(userDataPtr + 1));
-            new (weakPtrPtr) WeakPtr<HeapObject>(rhs);
-        
-            LuaStoredObjectReference storeReference = LuaInterpreter::ClassRegistryAccess
-                                                                    ::getMetaTableStoreReference<T>(luaInterpreter);
-    
-            ASSERT(storeReference.ptr->getLuaInterpreter() == luaInterpreter);
-            
-            LuaVar metaTable = retrieve(storeReference);
-            newObject.setMetaTable(metaTable);
-
-            weakPtrMap[voidPtr] = newObject;
-            push(newObject);
-        }
-        else {
-            lua_pushnil(L);
-        }
-    }
+    lua_removeunusedbefore(L, lua_gettop(L));
+#ifdef DEBUG
+    getLuaStackChecker()->truncateGenerationsAtStackIndex(lua_gettop(L));
+#endif
 }
 
 

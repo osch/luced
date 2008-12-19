@@ -201,6 +201,30 @@ LUA_API void lua_unuse (lua_State *L, int idx) {
   lua_unlock(L);
 }
 
+LUA_API void lua_removeunusedbefore (lua_State *L, int idx) {
+  StkId p;
+  StkId q;
+  StkId b;
+  lua_lock(L);
+  q = index2adr(L, idx);
+  api_checkvalidindex(L, q);
+
+  p = q - 1;
+  b = L->base;
+  while (p >= b && p->tt == LUA_TUNUSED) --p;
+  p += 1;
+
+  if (p < q) {
+    while (q < L->top) {
+        setobjs2s(L, p, q);
+        q += 1;
+        p += 1;   
+    }
+    L->top = p;
+  }
+  lua_unlock(L);
+}
+
 
 LUA_API void lua_insert (lua_State *L, int idx) {
   StkId p;
