@@ -272,6 +272,7 @@ private:
     TimeVal cursorNextBlinkTime;
     
     Position position;
+    bool hasPosition;
     TextData::Ptr textData;
 
     TextStyles::Ptr textStyles;

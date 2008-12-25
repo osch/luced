@@ -118,6 +118,7 @@ TextWidget::TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedTex
       updateHorizontalScrollBar(false),
       
       position(GuiWidget::getPosition()),
+      hasPosition(false),
       textData(hilitedText->getTextData()),
       cursorBlinkCallback(newCallback(this, &TextWidget::blinkCursor)),
       textStyles(textStyles),
@@ -1535,6 +1536,11 @@ void TextWidget::setLastEmptyLineStrategy(LastEmptyLineStrategy lastEmptyLineStr
 
 void TextWidget::setPosition(Position newPosition)
 {
+    if (!hasPosition)
+    {
+        exposureNeedsSync = true;
+        hasPosition       = true;
+    }
     if (position != newPosition)
     {
         textData->flushPendingUpdates();
