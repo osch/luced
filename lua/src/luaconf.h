@@ -764,7 +764,7 @@ union luai_Cast { double l_d; long l_l; };
 #define luai_apicheck(L,o)	{ (void)L; assert(o); }
 #endif
 
-#define LUA_MINSTACK 20
+#define LUA_MINSTACK 40
 
 namespace LucED
 {
