@@ -1452,18 +1452,23 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
 
 void TextWidget::internSetLeftPix(long newLeftPix)
 {
+    if (newLeftPix < 0) {
+        newLeftPix = 0;
+    }
+    if (newLeftPix == leftPix) {
+        return;
+    }
     textData->flushPendingUpdates();
-    processAllExposureEvents();
-
     calcTotalPixWidth();
 
-    if (newLeftPix < 0)
-        newLeftPix = 0;
-    
-    if (newLeftPix > totalPixWidth - position.w)
+    if (newLeftPix > totalPixWidth - position.w) {
         newLeftPix = totalPixWidth - position.w;
-
-
+    }
+    if (newLeftPix == leftPix) {
+        return;
+    }
+    processAllExposureEvents();
+    
     if (leftPix < newLeftPix) {
         long diffPix = newLeftPix - leftPix;
         if (!cursorVisible && cursorIsBlinking) {
@@ -1952,7 +1957,11 @@ GuiElement::ProcessingResult TextWidget::processEvent(const XEvent *event)
         return EVENT_PROCESSED;
     } else {
         switch (event->type) {
-        
+
+            case NoExpose: {
+                exposureNeedsSync = false;
+                return EVENT_PROCESSED;
+            }
             case GraphicsExpose:
             case Expose: {
 
@@ -1964,6 +1973,9 @@ GuiElement::ProcessingResult TextWidget::processEvent(const XEvent *event)
                     r.width  = event->xgraphicsexpose.width;
                     r.height = event->xgraphicsexpose.height;
                     count    = event->xgraphicsexpose.count; // Anzahl der noch folgenden Events
+                    if (count == 0) {
+                        exposureNeedsSync = false;
+                    }
                 } else {
                     r.x      = event->xexpose.x;
                     r.y      = event->xexpose.y;
@@ -2017,14 +2029,21 @@ GuiElement::ProcessingResult TextWidget::processEvent(const XEvent *event)
 
 void TextWidget::processAllExposureEvents()
 {
-    if (exposureNeedsSync) {
+    XEvent newEvent;
+    {
+        while (XCheckWindowEvent(getDisplay(), getWid(), ExposureMask, &newEvent) == True)
+        {
+            this->processEvent(&newEvent);
+        }
+    }
+    if (exposureNeedsSync)
+    {
         XSync(getDisplay(), False);
         exposureNeedsSync = false;   
-    }
-    XEvent newEvent;
-    while (XCheckWindowEvent(getDisplay(), getWid(), ExposureMask, &newEvent) == True)
-    {
-        this->processEvent(&newEvent);
+        while (XCheckWindowEvent(getDisplay(), getWid(), ExposureMask, &newEvent) == True)
+        {
+            this->processEvent(&newEvent);
+        }
     }
 }
 
