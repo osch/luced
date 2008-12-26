@@ -8,6 +8,7 @@ lc
 *.bak.*
 test*
 gmon.out
+out*
 backup*
 Backup*
 ChangeLog
