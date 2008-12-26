@@ -35,7 +35,7 @@ local function smartNewline(view)
     local m           = v:findMatch([[^]], cursorPos, "b")
     local startOfLine = m and m.beginPos[0] or 0
 
-    m = v:findMatch([[(\,|\;|\<|\>)|(\&\&|\|\||\.|\<\<|\+)]], cursorPos, startOfLine, "b")
+    m = v:findMatch([[(\,|\;|\<|\>)|(\&\&|\|\||\.|\<\<|\+)|([(){}])]], cursorPos, startOfLine, "b")
 
     local separatorChar
     local isOperator = false
@@ -46,6 +46,8 @@ local function smartNewline(view)
         elseif m.match[2] then
             separatorChar  = m.match[2]
             isOperator     = true
+        elseif m.match[3] then
+            separatorChar = nil
         end
     end
     if separatorChar then
