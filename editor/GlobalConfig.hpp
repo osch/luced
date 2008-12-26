@@ -145,9 +145,6 @@ public:
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode, 
                                                          Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const;
 
-    SyntaxPatterns::Ptr getSyntaxPatternsForFileName    (const String& fileName,
-                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const;
-
     LanguageMode::Ptr   getLanguageModeForFileName(const String& fileName) const;
     LanguageMode::Ptr   getDefaultLanguageMode() const;
 
