@@ -54,6 +54,14 @@ LanguageMode::LanguageMode(LuaVar config)
     }
     name = o.toString();
 
+    o = config["syntaxName"];
+    if (o.isValid()) {
+        if (!o.isString()) {
+            throw ConfigException(String() << "languageMode '" << name << "' has invalid element 'syntaxName'");
+        }
+        syntaxName = o.toString();
+    }
+
     o = config["fileNameRegex"];
     if (o.isValid()) {
         if (!o.isString()) {
