@@ -78,18 +78,11 @@ GlobalConfig::GlobalConfig()
 
 
 
-SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(const String& languageModeName,
-                                                                   Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const
-{
-    return this->syntaxPatternsConfig->getSyntaxPatternsForLanguageMode(languageModeName, changeCallback);
-}
-
-
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode,
                                                                    Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const
 {
     if (languageMode.isValid()) {
-        return getSyntaxPatternsForLanguageMode(languageMode->getName(), changeCallback);
+        return this->syntaxPatternsConfig->getSyntaxPatternsForLanguageMode(languageMode->getName(), changeCallback);
     } else {
         return SyntaxPatterns::Ptr();
     }
@@ -99,7 +92,7 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode:
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForFileName(const String& fileName,
                                                                Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const
 {
-    return getSyntaxPatternsForLanguageMode(languageModes->getLanguageModeForFile(fileName)->getName(),
+    return getSyntaxPatternsForLanguageMode(languageModes->getLanguageModeForFile(fileName),
                                             changeCallback);
 }
 

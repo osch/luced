@@ -142,9 +142,6 @@ public:
         return maxRegexAssertionLength;
     }
     
-    SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(const String& languageMode,
-                                                         Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const;
-
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode, 
                                                          Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const;
 
