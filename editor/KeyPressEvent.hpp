@@ -48,7 +48,7 @@ public:
         // not "keyId = KeyId(keySym);" because this gives Shift+ISO_Left_Tab instead of Shift+Tab
         
         keyId       = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
-        keyModifier = KeyModifier(event->xkey.state);
+        keyModifier = KeyModifier::createFromX11KeyState(event->xkey.state);
         
         if (len > 0) {
             input = String(buffer, len);

@@ -452,8 +452,8 @@ bool DialogPanel::processHotKey(KeyMapping::Id keyMappingId)
         
         HotKeyMapping::Value foundHotKeyWidgets = mapping->get(keyMappingId);
         
-        if (!foundHotKeyWidgets.isValid() && keyMappingId.getKeyModifier().containsModifier1()) {
-            foundHotKeyWidgets = mapping->get(KeyMapping::Id(KeyModifier(Mod1Mask), keyMappingId.getKeyId()));
+        if (!foundHotKeyWidgets.isValid() && keyMappingId.getKeyModifier().containsAltKey()) {
+            foundHotKeyWidgets = mapping->get(KeyMapping::Id(KeyModifier::ALT, keyMappingId.getKeyId()));
         }
         
         if (foundHotKeyWidgets.isValid()) {
@@ -506,7 +506,7 @@ bool DialogPanel::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent)
         processed = focusedElement->handleLowPriorityKeyPress(keyPressEvent);
     }
     if (!processed) {
-        processed = handleHighPriorityKeyPress(KeyPressEvent(KeyModifier(Mod1Mask), keyPressEvent.getKeyId()));
+        processed = handleHighPriorityKeyPress(KeyPressEvent(KeyModifier::ALT, keyPressEvent.getKeyId()));
     }
     return processed;
 }

@@ -438,7 +438,7 @@ void Button::emulateButtonPress(bool isDefaultKey, bool isRightClicked)
 void Button::treatHotKeyEvent(const KeyMapping::Id& id)
 {
     emulateButtonPress(id == KeyMapping::Id(KeyModifier(), KeyId("Return")),
-                       id.getKeyModifier().containsShift());
+                       id.getKeyModifier().containsShiftKey());
 }
 
 void Button::setAsDefaultButton(bool isDefault)

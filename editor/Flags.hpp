@@ -35,6 +35,7 @@ template
 class Flags
 {
 public:
+    typedef ValueType ImplType;
     
     Flags()
         : value()
@@ -43,28 +44,28 @@ public:
     Flags(EnumType initialFlagNumber)
         : value(1 << initialFlagNumber)
     {
-        ASSERT(initialFlagNumber < sizeof(ValueType) * 8);
+        ASSERT(initialFlagNumber < sizeof(ImplType) * 8);
     }
     
     void clear() {
-        value = ValueType();
+        value = ImplType();
     }
     
     void set(EnumType flagNumber)
     {
-        ASSERT(flagNumber < sizeof(ValueType) * 8);
+        ASSERT(flagNumber < sizeof(ImplType) * 8);
         value |= (1 << flagNumber);
     }
     
     void clear(EnumType flagNumber)
     {
-        ASSERT(flagNumber < sizeof(ValueType) * 8);
+        ASSERT(flagNumber < sizeof(ImplType) * 8);
         value &= ~(1 << flagNumber);
     }
     
     bool isSet(EnumType flagNumber) const
     {
-        ASSERT(flagNumber < sizeof(ValueType) * 8);
+        ASSERT(flagNumber < sizeof(ImplType) * 8);
         return value & (1 << flagNumber);
     }
     
@@ -84,9 +85,23 @@ public:
         this->set(flagNumber);
         return *this;
     }
+    
+    ImplType toImplType() const {
+        return value;
+    }
+    
+    bool operator==(const Flags& rhs) const {
+        return value == rhs.value;
+    }
+    bool operator!=(const Flags& rhs) const {
+        return value != rhs.value;
+    }
+    bool operator<(const Flags& rhs) const {
+        return value < rhs.value;
+    }
 
 private:
-    ValueType value;
+    ImplType value;
 };
 
 } // namespace LucED

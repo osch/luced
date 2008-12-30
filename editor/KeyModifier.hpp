@@ -24,6 +24,8 @@
 
 #include "headers.hpp"
 #include "String.hpp"
+#include "Flags.hpp"
+#include "HashMap.hpp"
 
 namespace LucED
 {
@@ -31,49 +33,57 @@ namespace LucED
 class KeyModifier
 {
 public:
+    enum Flag { SHIFT,
+                CONTROL,
+                ALT,
+                ALT_GR };
+                
+    typedef Flags<Flag> Value;
 
-#ifdef X11_GUI
     static const KeyModifier NONE;
 
     KeyModifier()
-        : keyState(0)
     {}
     
     KeyModifier(const String& asString);
     
-    explicit KeyModifier(int keyState)
-        : keyState(keyState)
+    KeyModifier(Value value)
+        : value(value)
     {}
+
+    KeyModifier(Flag flag)
+        : value(flag)
+    {}
+    
+#ifdef X11_GUI
+    static KeyModifier createFromX11KeyState(int x11KeyState);
+#endif
     
     String toString() const;
 
     bool operator==(const KeyModifier& rhs) const {
-        return keyState == rhs.keyState;
+        return value == rhs.value;
     }
     bool operator<(const KeyModifier& rhs) const {
-        return keyState < rhs.keyState;
+        return value < rhs.value;
     }
     
-    int toHashValue() const {
-        return keyState;
+    size_t toHashValue() const {
+        return HashFunction<Value::ImplType>()(value.toImplType());
     }
     
-    bool containsShift() const {
-        return keyState & ShiftMask;
+    bool containsShiftKey() const {
+        return value.isSet(SHIFT);
     }
     
-    bool containsModifier1() const {
-        return keyState & Mod1Mask;
+    bool containsAltKey() const {
+        return value.isSet(ALT);
     }
-    
-#endif
     
 private:
+    class SingletonData;
 
-#ifdef X11_GUI
-    int keyState;
-#endif
-
+    Value value;
 };      
 
 } // namespace LucED
