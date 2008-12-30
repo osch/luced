@@ -45,9 +45,15 @@ public:
         
         int len = XLookupString(&((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
 
-        // not "keyId = KeyId(keySym);" because this gives Shift+ISO_Left_Tab instead of Shift+Tab
-        
-        keyId       = KeyId(XLookupKeysym((XKeyEvent*)&event->xkey, 0));
+    #ifdef XK_ISO_Left_Tab
+        // Shift + Tab becomes XK_ISO_Left_Tab through XLookupString,
+        // however we need XLookupString for otherwise correct
+        // interpretation of num_lock
+        if (keySym == XK_ISO_Left_Tab) {
+            keySym = XK_Tab;
+        }
+    #endif
+        keyId       = KeyId(keySym);
         keyModifier = KeyModifier::createFromX11KeyState(event->xkey.state);
         
         if (len > 0) {
