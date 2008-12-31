@@ -53,6 +53,11 @@ public:
             keySym = XK_Tab;
         }
     #endif
+    #ifdef XK_KP_Tab
+        if (keySym == XK_KP_Tab) {
+            keySym = XK_Tab;
+        }
+    #endif
         keyId       = KeyId(keySym);
         keyModifier = KeyModifier::createFromX11KeyState(event->xkey.state);
         
