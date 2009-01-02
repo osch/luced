@@ -102,7 +102,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
 		SearchInteraction        ActionKeyConfig        SingleLineEditActions      MultiLineEditActions \
 		ActionKeySequenceHandler StackTrace             ActionIdRegistry           MultiLineDisplayActions \
 		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess \
-		LucedLuaInterface        KeyPressEvent
+		LucedLuaInterface        KeyPressEvent          QualifiedName
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

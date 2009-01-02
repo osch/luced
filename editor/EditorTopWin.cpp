@@ -48,8 +48,8 @@
 #include "UnknownActionNameException.hpp"
 #include "ViewLuaInterface.hpp"
 #include "LucedLuaInterface.hpp"
-#include "Regex.hpp"
 #include "GlobalLuaInterpreter.hpp"
+#include "QualifiedName.hpp"
 
 using namespace LucED;
 
@@ -234,34 +234,12 @@ private:
     UserDefinedActionMethods(RawPtr<EditorTopWin> thisTopWin)
         : thisTopWin(thisTopWin)
     {}
-    static String getModuleName(const String& actionName)
-    {
-        Regex  r("^(.*)\\.[^.]*?$");
-        String rslt;
-        if (r.matches(actionName))
-        {
-            rslt = actionName.getSubstring(r.getCaptureBegin(1),
-                                           r.getCaptureLength(1));
-        }
-        return rslt;
-    }
-    static String getActionNamePart(const String& actionName)
-    {
-        Regex  r("^.*\\.([^.]*?)$");
-        String rslt;
-        if (r.matches(actionName))
-        {
-            rslt = actionName.getSubstring(r.getCaptureBegin(1),
-                                           r.getCaptureLength(1));
-        }
-        return rslt;
-    }
     LuaVar getLuaActionFunction(ActionId actionId)
     {
-        String    actionName = actionId.toString();
-        String    moduleName = getModuleName(actionName);
-        LuaAccess luaAccess  = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
-        LuaVar    rslt(luaAccess);
+        QualifiedName fullActionName(actionId.toString());
+        String        moduleName = fullActionName.getQualifier();
+        LuaAccess     luaAccess  = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
+        LuaVar        rslt(luaAccess);
         
         if (moduleName.getLength() > 0 && moduleName != "builtin")
         {
@@ -280,7 +258,7 @@ private:
                         throw ConfigException(String() << "'" << moduleName 
                                                        << ".getAction' must be function");
                     }
-                    rslt = actionGetter.call(getActionNamePart(actionName));
+                    rslt = actionGetter.call(fullActionName.getName());
                 }
             }
         }
