@@ -65,6 +65,7 @@ public:
         for (long i = 0; i < src.getLength(); ++i) {
             append(src[i]);
         }
+        return *this;
     }
     T& operator[](long i) {
         ASSERT(i < getLength());
