@@ -76,7 +76,7 @@ public:
             rslt = keyIds.getSubstringBetween(0, p);
         }
         if (rslt.getLength() == 1) {
-            rslt = rslt.toLower();
+            rslt = rslt.toUpper();
         }
         return KeyId(rslt);
     }

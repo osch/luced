@@ -142,6 +142,10 @@ public:
         s.push_back((char)::tolower(c));
         return *this;
     }
+    String& appendUpperChar(char c) {
+        s.push_back((char)::toupper(c));
+        return *this;
+    }
     String& append(int rhs) {
         return append(String(rhs));
     }

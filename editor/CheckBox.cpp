@@ -51,7 +51,7 @@ CheckBox::CheckBox(GuiWidget* parent, String buttonText)
         hasHotKey = true;
         // showHotKey = true;
         String keySymString;
-        keySymString.appendLowerChar(hotKeyChar);
+        keySymString.appendUpperChar(hotKeyChar);
         requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
     } else {
         this->buttonText = buttonText;

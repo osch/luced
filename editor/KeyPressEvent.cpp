@@ -29,6 +29,13 @@ KeyPressEvent::KeyPressEvent(const XEvent* event)
     KeySym keySym;
     
     int len = XLookupString(&((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+    
+    KeySym lowerKeySym;
+    KeySym upperKeySym;
+    
+    XConvertCase(keySym, &lowerKeySym, &upperKeySym);
+    
+    keySym = upperKeySym;
 
 #ifdef XK_ISO_Left_Tab
     // Shift + Tab becomes XK_ISO_Left_Tab through XLookupString,

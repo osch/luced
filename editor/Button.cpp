@@ -55,7 +55,7 @@ void Button::setButtonText(String buttonText)
 {
     if (hasHotKeyFlag) {
         String keySymString;
-        keySymString.appendLowerChar(hotKeyChar);
+        keySymString.appendUpperChar(hotKeyChar);
         requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
         hasHotKeyFlag = false;
     }
@@ -72,7 +72,7 @@ void Button::setButtonText(String buttonText)
         hasHotKeyFlag = true;
         // showHotKeyFlag = true;
         String keySymString;
-        keySymString.appendLowerChar(hotKeyChar);
+        keySymString.appendUpperChar(hotKeyChar);
         requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
     } else {
         this->buttonText = buttonText;
