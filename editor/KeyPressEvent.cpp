@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,49 +19,34 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef KEY_PRESS_EVENT_HPP
-#define KEY_PRESS_EVENT_HPP
+#include "KeyPressEvent.hpp"
 
-#include "headers.hpp"
-#include "KeyId.hpp"
-#include "KeyModifier.hpp"
-#include "String.hpp"
+using namespace LucED;
 
-namespace LucED
+KeyPressEvent::KeyPressEvent(const XEvent* event) 
 {
+    char buffer[1000];
+    KeySym keySym;
+    
+    int len = XLookupString(&((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
 
-class KeyPressEvent
-{
-public:
-    KeyPressEvent(KeyModifier keyModifier, KeyId keyId)
-        : keyModifier(keyModifier),
-          keyId(keyId)
-    {}
-
-    KeyPressEvent(const XEvent* event);
-    
-    KeyId getKeyId() const {
-        return keyId;
+#ifdef XK_ISO_Left_Tab
+    // Shift + Tab becomes XK_ISO_Left_Tab through XLookupString,
+    // however we need XLookupString for otherwise correct
+    // interpretation of num_lock
+    if (keySym == XK_ISO_Left_Tab) {
+        keySym = XK_Tab;
     }
-    
-    KeyModifier getKeyModifier() const {
-        return keyModifier;
+#endif
+#ifdef XK_KP_Tab
+    if (keySym == XK_KP_Tab) {
+        keySym = XK_Tab;
     }
+#endif
+    keyId       = KeyId(keySym);
+    keyModifier = KeyModifier::createFromX11KeyState(event->xkey.state);
     
-    String getInputString() const {
-        return input;
+    if (len > 0) {
+        input = String(buffer, len);
     }
-    
-    bool hasInputString() const {
-        return input.getLength() > 0;
-    }
-    
-private:
-    KeyId       keyId;
-    KeyModifier keyModifier;
-    String      input;
-};
-
-} // namespace LucED
-
-#endif // KEY_PRESS_EVENT_HPP
+}
