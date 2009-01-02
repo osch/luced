@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -251,22 +251,32 @@ public:
         return false;
     }
     
-    bool endsWith(const char* str) const {
-        long len = strlen(str);
-        if (getLength() < len) {
+    bool endsWith(const char* str, long length) const {
+        if (getLength() < length) {
             return false;
         } else {
-            return memcmp(toCString() + getLength() - len, str, len) == 0;
+            return memcmp(toCString() + getLength() - length, str, length) == 0;
         }
     }
+    bool endsWith(const char* str) const {
+        return endsWith(str, strlen(str));
+    }
+    bool endsWith(const String& str) const {
+        return endsWith(str.toCString(), str.getLength());
+    }
     
-    bool startsWith(const char* str) const {
-        long len = strlen(str);
-        if (getLength() < len) {
+    bool startsWith(const char* str, long length) const {
+        if (getLength() < length) {
             return false;
         } else {
-            return memcmp(toCString(), str, len) == 0;
+            return memcmp(toCString(), str, length) == 0;
         }
+    }
+    bool startsWith(const char* str) const {
+        return startsWith(str, strlen(str));
+    }
+    bool startsWith(const String& str) const {
+        return startsWith(str.toCString(), str.getLength());
     }
     
     template<class T> String& operator<<(const T& rhs) {
