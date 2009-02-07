@@ -329,7 +329,7 @@ private:
     bool isEndOfLineFlag;
     unsigned char c;
     int  styleIndex;
-    const TextStyle* style;
+    RawPtr<TextStyle> style;
     const int tabWidth;
     const int spaceWidth;
     int charWidth;
@@ -525,7 +525,7 @@ void TextWidget::fillLineInfo(long beginOfLinePos, LineInfo* li)
 
 inline void TextWidget::applyTextStyle(int styleIndex)
 {
-    const TextStyle* style = textStyles->get(styleIndex);
+    const RawPtr<TextStyle> style = textStyles->get(styleIndex);
     
 //    XSetBackground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
 
@@ -683,7 +683,7 @@ inline void TextWidget::printPartialLineWithoutCursor(LineInfo* li, int y, int x
             int len        = fragments[i].numberBytes;
             int pixWidth   = fragments[i].pixWidth;
 
-            const TextStyle *style = textStyles->get(styleIndex);
+            const RawPtr<TextStyle> style = textStyles->get(styleIndex);
             
             if (x + style->getCharLBearing(*ptr) >= x2) {
                 break;
@@ -803,7 +803,7 @@ inline void TextWidget::printLine(LineInfo* li, int y)
             
             if (len > 0 && *ptr != '\t' ) 
             {
-                const TextStyle* style = textStyles->get(styleIndex);
+                const RawPtr<TextStyle> style = textStyles->get(styleIndex);
                 int txCorrection = - style->getCharWidth(ptr[len - 1]) + style->getCharRBearing(ptr[len - 1]);
                 
                 if (txCorrection > 0)
@@ -912,8 +912,8 @@ void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
     int newBackground   = newFragments[newFragmentIndex].background;
     int oldBackground   = oldFragments[oldFragmentIndex].background;
 
-    const TextStyle* newStyle = textStyles->get(newStyleIndex);
-    const TextStyle* oldStyle = textStyles->get(oldStyleIndex);
+    RawPtr<TextStyle> newStyle = textStyles->get(newStyleIndex);
+    RawPtr<TextStyle> oldStyle = textStyles->get(oldStyleIndex);
 
     int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
     
@@ -1425,7 +1425,7 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
         int x, nextX;
         for (x = 0, nextX = 0; nextX < pixX && i < endI; ++i) {
             x = nextX;
-            const TextStyle* style = textStyles->get(li->styles[i]);
+            const RawPtr<TextStyle> style = textStyles->get(li->styles[i]);
             byte c = textData->getChar(li->startPos + i);
             if (c == '\t') {
                 long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();

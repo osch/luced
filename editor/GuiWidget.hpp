@@ -165,7 +165,7 @@ protected:
         }
     }
     
-    TextStyle* getGuiTextStyle();
+    RawPtr<TextStyle> getGuiTextStyle();
     void drawLine(int x, int y, int dx, int dy);
     void drawLine(int x, int y, int dx, int dy, GuiColor color);
     void drawRaisedSurface(int x, int y, int w, int h);

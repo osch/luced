@@ -36,14 +36,15 @@ class GuiWidgetSingletonData : public HeapObject
 public:
     static GuiWidgetSingletonData* getInstance() { return instance.getPtr(); }
  
-    GC         getGcid()         { return gcid; }
-    TextStyle* getGuiTextStyle() { return &guiTextStyle; }
+    GC                getGcid()         { return gcid; }
+    RawPtr<TextStyle> getGuiTextStyle() { return guiTextStyle; }
 
 private:
     friend class SingletonInstance<GuiWidgetSingletonData>;
     
     GuiWidgetSingletonData()
-        : guiTextStyle(GlobalConfig::getInstance()->getGuiFont(), GlobalConfig::getInstance()->getGuiFontColor())
+        : guiTextStyle(TextStyle::create(GlobalConfig::getInstance()->getGuiFont(), 
+                                         GlobalConfig::getInstance()->getGuiFontColor()))
     {
         Display* display = GuiRoot::getInstance()->getDisplay();
         GuiRoot* guiRoot = GuiRoot::getInstance();
@@ -58,7 +59,7 @@ private:
 
         XSetGraphicsExposures(display, gcid, True);
 
-        XSetFont(display, gcid, guiTextStyle.getFontHandle());
+        XSetFont(display, gcid, guiTextStyle->getFontHandle());
     }
     
     ~GuiWidgetSingletonData()
@@ -67,8 +68,9 @@ private:
     }
     
     static SingletonInstance<GuiWidgetSingletonData> instance;
-    GC gcid;
-    TextStyle guiTextStyle;
+
+    GC             gcid;
+    TextStyle::Ptr guiTextStyle;
 };
 
 } // namespace LucED
@@ -536,7 +538,7 @@ void GuiWidget::drawDottedFrame(int x, int y, int w, int h)
 
 
 
-TextStyle* GuiWidget::getGuiTextStyle()
+RawPtr<TextStyle> GuiWidget::getGuiTextStyle()
 {
     return GuiWidgetSingletonData::getInstance()->getGuiTextStyle();
 }

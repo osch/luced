@@ -28,17 +28,22 @@
 #include "GuiRoot.hpp"
 #include "HeapObject.hpp"
 #include "ObjectArray.hpp"
+#include "RawPtr.hpp"
 #include "OwningPtr.hpp"
 #include "FontHandle.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-
-
-class TextStyle : NonCopyable
+class TextStyle : public HeapObject
 {
 public:
-    TextStyle(const String& fontname, const String& colorName);
+    typedef OwningPtr<TextStyle> Ptr;
+    
+    static Ptr create(const String& fontname, const String& colorName) {
+        return Ptr(new TextStyle(fontname, colorName));
+    }
+    
     ~TextStyle();
 
     GuiColor getColor() const {
@@ -89,6 +94,8 @@ public:
     }
 
 private:
+    TextStyle(const String& fontname, const String& colorName);
+
     String fontName;
     String colorName;
 #ifdef X11_GUI
@@ -116,12 +123,12 @@ public:
         return TextStyles::Ptr(new TextStyles());
     }
     
-    const TextStyle* get(int index) const {
-        return &textStyles[index];
+    RawPtr<TextStyle> get(int index) const {
+        return textStyles[index];
     }
     
     void appendNewStyle(const String& fontname, const String& color) {
-        textStyles.appendNew(fontname, color);
+        textStyles.append(TextStyle::create(fontname, color));
     }
     
     long getLength() const {
@@ -131,9 +138,9 @@ public:
 private:
     TextStyles() {}
 
-    ObjectArray<TextStyle> textStyles;
+    ObjectArray<TextStyle::Ptr> textStyles;
 };
 
-}
+} // namespace LucED
 
 #endif // TEXTSTYLE_HPP
