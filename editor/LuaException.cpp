@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -20,9 +20,15 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "LuaException.hpp"
-
+#include "StackTrace.hpp"
 
 using namespace LucED;
+
+LuaException::LuaException(const String& message)
+    : BaseException(message)
+{
+    //StackTrace::print();
+}
 
 const char* LuaException::what() const throw()
 {

@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,22 +19,22 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUAEXCEPTION_H
-#define LUAEXCEPTION_H
+#ifndef LUAEXCEPTION_HPP
+#define LUAEXCEPTION_HPP
 
 #include "BaseException.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class LuaException : public BaseException
 {
 public:
-    LuaException(String message)
-        : BaseException(message)
-    {}
+    LuaException(const String& message);
+
     virtual const char* what() const throw();
 };
 
 } // namespace LucED
 
-#endif // LUAEXCEPTION_H
+#endif // LUAEXCEPTION_HPP
