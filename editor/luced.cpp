@@ -19,13 +19,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <locale.h>
+#include <sys/types.h>
 
 #include "String.hpp"
-
 #include "EventDispatcher.hpp"
 #include "SingletonKeeper.hpp"
 #include "GuiRootProperty.hpp"
@@ -40,6 +40,8 @@ using namespace LucED;
 
 int main(int argc, char** argv)
 {
+    setlocale(LC_CTYPE, "");
+
     int rc = 0;
     
     try
