@@ -68,18 +68,18 @@ public:
         return *this;
     }
     T& operator[](long i) {
-        ASSERT(i < getLength());
+        ASSERT(0 <= i && i < getLength());
         return *this->getPtr(i);
     }
     T* getPtr(long i) {
         return MemArray<T>::getPtr(i);
     }
     T get(long i) const {
-        ASSERT(i < getLength());
+        ASSERT(0 <= i && i < getLength());
         return *this->getPtr(i);
     }
     T& get(long i) {
-        ASSERT(i < getLength());
+        ASSERT(0 <= i && i < getLength());
         return *this->getPtr(i);
     }
     const T& getLast() const {
@@ -91,7 +91,7 @@ public:
         return *this->getPtr(getLength() - 1);
     }
     const T& operator[](long i) const {
-        ASSERT(i < getLength());
+        ASSERT(0 <= i && i < getLength());
         return *this->getPtr(i);
     }
     const T* getPtr(long i) const {

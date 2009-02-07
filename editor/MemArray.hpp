@@ -38,17 +38,17 @@ public:
         mem.increaseTo(size * sizeof(T));
     }
     T& operator[](long i) {
-        ASSERT(i < size);
+        ASSERT(0 <= i && i < size);
         return *getPtr(i);
     }
     const T& operator[](long i) const {
-        ASSERT(i < size);
+        ASSERT(0 <= i && i < size);
         return *getPtr(i);
     }
-    T *getPtr(long pos = 0) {
+    T* getPtr(long pos = 0) {
         return (T*) mem.getPtr(pos * sizeof(T));
     }
-    const T *getPtr(long pos = 0) const {
+    const T* getPtr(long pos = 0) const {
         return (const T*) mem.getPtr(pos * sizeof(T));
     }
     T* getAmount(long startPos, long amount) {
@@ -78,8 +78,8 @@ public:
     }
     MemArray& removeAmount(long pos, long amount) {
         ASSERT(0 <= pos && pos + amount <= size);
-        T *dst = getPtr(pos);
-        const T *src = getPtr(pos + amount);
+        T* dst = getPtr(pos);
+        const T* src = getPtr(pos + amount);
         memmove(dst, src, (size - (pos + amount)) * sizeof(T));
         size -= amount;
         return *this;
@@ -99,8 +99,8 @@ public:
     }
     T* insertAmount(long pos, long amount) {
         mem.increaseTo((size + amount) * sizeof(T));
-        T *dst = getPtr(pos + amount);
-        T *src = getPtr(pos);
+        T* dst = getPtr(pos + amount);
+        T* src = getPtr(pos);
         memmove(dst, src, (size - pos) * sizeof(T));
         size += amount;
         return src;

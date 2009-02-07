@@ -181,6 +181,7 @@ public:
     }
     
     T* operator->() const {
+        ASSERT(ptr != NULL);
         checkOwningReferences();
         ASSERT(ptr != NULL);
         return ptr;
