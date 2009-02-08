@@ -58,7 +58,7 @@ return
                                 if rslt then
                                     return rslt
                                 else
-                                    local moduleName = syntaxPatternModuleNames[syntaxName]
+                                    local moduleName = syntaxModuleNames[syntaxName]
                                     if moduleName then
                                         local ok,rslt = pcall(require, thisPackagePrefix..moduleName)
                                         if ok then
