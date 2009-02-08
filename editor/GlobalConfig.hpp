@@ -134,10 +134,6 @@ public:
         return textStyleNameToIndexMap;
     }
     
-    bool hasSyntaxPatternsForLanguageMode(const String& languageMode) const {
-        return syntaxPatternsConfig->hasEntryForLanguageModeName(languageMode);
-    }
-    
     long getMaxRegexAssertionLength() const {
         return maxRegexAssertionLength;
     }
@@ -165,8 +161,6 @@ private:
     static SingletonInstance<GlobalConfig> instance;
     
     GlobalConfig();
-
-    SyntaxPatterns::Ptr loadSyntaxPatterns(const String& absoluteFileName);
 
     void readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, 
                               LuaVarRef            actionKeyBinding);
@@ -212,8 +206,7 @@ private:
     long maxRegexAssertionLength;
     
     String generalConfigFileName;
-    String syntaxPatternDirectory;
-    
+
     ActionKeyConfig::Ptr        actionKeyConfig;
     
     String configDirectory;

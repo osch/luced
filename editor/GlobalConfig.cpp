@@ -19,7 +19,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include <locale.h>
 #include <limits.h>
 
 #include "GlobalConfig.hpp"
@@ -70,19 +69,21 @@ GlobalConfig::GlobalConfig()
           editorPanelOnTop(false),
           keepRunningIfOwningClipboard(false),
           maxRegexAssertionLength(3000),
+          textStyleNameToIndexMap(NameToIndexMap::create()),
           syntaxPatternsConfig(SyntaxPatternsConfig::create()),
           actionKeyConfig(ActionKeyConfig::create())
-{
-    setlocale(LC_CTYPE, "");
-}
+{}
 
 
 
 SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode,
                                                                    Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const
 {
-    if (languageMode.isValid()) {
-        return this->syntaxPatternsConfig->getSyntaxPatternsForLanguageMode(languageMode->getName(), changeCallback);
+    if (languageMode.isValid() && languageMode->getSyntaxName().getLength() > 0) 
+    {
+        return this->syntaxPatternsConfig->getSyntaxPatterns(languageMode->getSyntaxName(),
+                                                             textStyleNameToIndexMap,
+                                                             changeCallback);
     } else {
         return SyntaxPatterns::Ptr();
     }
@@ -177,7 +178,7 @@ void GlobalConfig::readConfig()
         String homeDirectory = System::getInstance()->getHomeDirectory();
         configDirectory = File(homeDirectory, ".luced").getAbsoluteName();
     }
-
+    
     LuaAccess luaAccess = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
 
     this->generalConfigFileName = File(configDirectory, "config.lua").getAbsoluteName();
@@ -185,8 +186,9 @@ void GlobalConfig::readConfig()
 
     languageModes           = LanguageModes::create();
     textStyles              = TextStyles::create();
-    textStyleNameToIndexMap = NameToIndexMap::create();
-
+    
+    textStyleNameToIndexMap->clear();
+    
     try
     {
         CurrentDirectoryKeeper currentDirectoryKeeper(configDirectory);
@@ -492,66 +494,8 @@ void GlobalConfig::readConfig()
 
     // SyntaxPatterns
     
-    this->syntaxPatternsConfig->clear();
-    this->syntaxPatternDirectory = File(configDirectory, "syntaxpatterns").getAbsoluteName();
+    this->syntaxPatternsConfig->refresh(textStyleNameToIndexMap);
     
-    
-    for (DirectoryReader dirReader(syntaxPatternDirectory); dirReader.next();)
-    {
-        if (dirReader.isFile()) {
-            String fileName = dirReader.getName();
-            if (fileName.endsWith(luaFileExtension))
-            {
-                String languageModeName = fileName.getSubstring(0, fileName.getLength() - strlen(luaFileExtension));
-                configFileName = File(syntaxPatternDirectory, String() << languageModeName << luaFileExtension).getAbsoluteName();
-
-                if (!languageModes->hasLanguageMode(languageModeName)) {
-                    languageModes->append(languageModeName);
-                }
-
-                try
-                {
-                    LuaAccess::Result luaRslt = luaAccess.executeFile(configFileName);
-
-                    if (luaRslt.objects.getLength() <= 0 || !luaRslt.objects[0].isTable()) {
-                        throw ConfigException(String() << "Syntaxpattern '" << languageModeName << "' returns invalid element");
-                    }
-                    LuaVar sp = luaRslt.objects[0];
-                    
-                    try
-                    {
-                        this->syntaxPatternsConfig->append(languageModeName, 
-                                                           configFileName, 
-                                                           SyntaxPatterns::create(sp, textStyleNameToIndexMap));
-                    }
-                    catch (RegexException& ex) {
-                        throw ConfigException(String() << "syntaxpatterns for language mode '" << languageModeName << "' have invalid regex: "
-                                << ex.getMessage());
-                    }
-                }
-                catch (BaseException& ex)
-                {
-                    errorList->appendNew(configFileName, ex.getMessage());
-                    this->syntaxPatternsConfig->append(languageModeName, 
-                                                       configFileName, 
-                                                       SyntaxPatterns::Ptr());
-                }
-            }
-        }
-    }
-    for (int i = 0; i < languageModes->getLength(); ++i)
-    {
-        LanguageMode::Ptr languageMode      = languageModes->get(i);
-        const String      languageModeName  = languageMode->getName();
-        const String      configFileName    = String() << syntaxPatternDirectory << "/" << languageModeName << luaFileExtension;
-
-        if (!this->syntaxPatternsConfig->hasEntryForConfigFileName(configFileName))
-        {
-            this->syntaxPatternsConfig->append(languageModeName, 
-                                               configFileName, 
-                                               SyntaxPatterns::Ptr());
-        }
-    }
     if (errorList->getLength() > 0)
     {
         throw ConfigException(errorList);
@@ -560,56 +504,13 @@ void GlobalConfig::readConfig()
     configChangedCallbackContainer.invokeAllCallbacks();
 }
 
-
-SyntaxPatterns::Ptr GlobalConfig::loadSyntaxPatterns(const String& absoluteFileName)
-{
-    LuaAccess         luaAccess = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
-    
-    LuaAccess::Result luaRslt   = luaAccess.executeFile(absoluteFileName);
-    
-    if (luaRslt.objects.getLength() <= 0 || !luaRslt.objects[0].isTable()) {
-        throw ConfigException(String() << "Syntaxpattern '" << absoluteFileName << "' returns invalid element");
-    }
-    LuaVar sp = luaRslt.objects[0];
-    SyntaxPatterns::Ptr rslt;
-    try {
-        rslt = SyntaxPatterns::create(sp, textStyleNameToIndexMap);
-    } catch (RegexException& ex) {
-        throw ConfigException(String() << "syntaxpatterns for language mode '" << absoluteFileName << "' have invalid regex: "
-                << ex.getMessage());
-    }
-    return rslt;
-}
-
-
 void GlobalConfig::notifyAboutNewFileContent(String absoluteFileName)
 {
-    if (absoluteFileName == generalConfigFileName)
+    if (File(absoluteFileName).getDirName().startsWith(configDirectory))
     {
+        GlobalLuaInterpreter::getInstance()->resetModules();
+    
         readConfig();
-    }
-    else
-    {
-        if (this->syntaxPatternsConfig->hasEntryForConfigFileName(absoluteFileName))
-        {
-            this->syntaxPatternsConfig->updateForConfigFileName(absoluteFileName, 
-                                                                loadSyntaxPatterns(absoluteFileName));
-        }
-        else if (File(absoluteFileName).getDirName() == syntaxPatternDirectory && absoluteFileName.endsWith(luaFileExtension))
-        {
-            const String baseName = File(absoluteFileName).getBaseName();
-            ASSERT(baseName.endsWith(luaFileExtension));
-            
-            const String        languageModeName = baseName.getSubstring(0, baseName.getLength() - strlen(luaFileExtension));
-
-            if (!languageModes->hasLanguageMode(languageModeName)) {
-                languageModes->append(languageModeName);
-            }
-            
-            this->syntaxPatternsConfig->append(languageModeName,
-                                               absoluteFileName,
-                                               loadSyntaxPatterns(absoluteFileName));
-        }
     }
 }
 
