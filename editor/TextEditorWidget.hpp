@@ -56,11 +56,10 @@ public:
     };
 
     static Ptr create(GuiWidget*       parent,
-                      TextStyles::Ptr  textStyles, 
                       HilitedText::Ptr hilitedText,
                       CreateOptions    options = CreateOptions())
     {
-        return Ptr(new TextEditorWidget(parent, textStyles, hilitedText, options));
+        return Ptr(new TextEditorWidget(parent, hilitedText, options));
     }
 
     void connectToVerticalScrollBar(ScrollBar::Ptr scrollBar)
@@ -232,7 +231,6 @@ public:
     
 protected:
     TextEditorWidget(GuiWidget*       parent, 
-                     TextStyles::Ptr  textStyles, 
                      HilitedText::Ptr hilitedText, 
                      CreateOptions    options = CreateOptions(),
                      int              borderWidth = BORDER_WIDTH);

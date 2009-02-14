@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,38 +19,40 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLE_LINE_EDITOR_WIDGET_HPP
-#define SINGLE_LINE_EDITOR_WIDGET_HPP
+#include "TextStyleCache.hpp"
 
-#include "ByteArray.hpp"
-#include "TextEditorWidget.hpp"
+using namespace LucED;
 
-namespace LucED
+SingletonInstance<TextStyleCache> TextStyleCache::instance;
+
+
+TextStyle::Ptr TextStyleCache::getTextStyle(const String& fontname, const String& colorName)
 {
-
-class SingleLineEditorWidget : public TextEditorWidget
-{
-public:
-    typedef OwningPtr<SingleLineEditorWidget> Ptr;
-
-    static SingleLineEditorWidget::Ptr create(GuiWidget* parent, HilitedText::Ptr hilitedText)
+    TextStyle::Ptr rslt;
+    
+    for (int i = 0; i < list.getLength();)
     {
-        return SingleLineEditorWidget::Ptr(new SingleLineEditorWidget(parent, hilitedText));
+        if (   list[i]->getFontName() == fontname
+            && list[i]->getColorName() == colorName)
+        {
+            rslt = list[i];
+            ++i;
+        }
+        else
+        { 
+            if (list[i].getRefCounter() == 1) {
+                list.remove(i);
+            }
+            else {
+                ++i;
+            }
+        }
     }
-
-    virtual bool isFocusable() { return true; }
-    virtual FocusType getFocusType() { return NORMAL_FOCUS; }
-    
-
-protected:
-    SingleLineEditorWidget(GuiWidget* parent, HilitedText::Ptr hilitedText);
-    
-private:
-    void filterInsert(const byte** buffer, long* length);
-    
-    ByteArray filterBuffer;
-};
-
-} // namespapce LucED
-
-#endif // SINGLE_LINE_EDITOR_WIDGET_HPP
+    if (!rslt.isValid())
+    {
+        rslt = TextStyle::CacheAccess::create(fontname, colorName);
+        list.append(rslt);
+    }
+    ASSERT(rslt.isValid());
+    return rslt;
+}

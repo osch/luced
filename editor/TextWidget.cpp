@@ -104,10 +104,13 @@ SingletonInstance<TextWidgetSingletonData> TextWidgetSingletonData::instance;
 /**
  * TextWidget-Constructor.
  */
-TextWidget::TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border,
+TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int border,
                        CreateOptions options)
 
-    : GuiWidget(parent, 0, 0, textStyles->get(0)->getSpaceWidth()*200, textStyles->get(0)->getLineHeight(), border),
+    : GuiWidget(parent, 0, 0, 
+                hilitedText->getSyntaxPatterns()->getDefaultTextStyle()->getSpaceWidth()*200, 
+                hilitedText->getSyntaxPatterns()->getDefaultTextStyle()->getLineHeight(), 
+                border),
 
       totalPixWidth(0),
       leftPix(0),
@@ -119,9 +122,12 @@ TextWidget::TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedTex
       
       position(GuiWidget::getPosition()),
       hasPosition(false),
+      hilitedText(hilitedText),
       textData(hilitedText->getTextData()),
       cursorBlinkCallback(newCallback(this, &TextWidget::blinkCursor)),
-      textStyles(textStyles),
+      defaultTextStyle(hilitedText->getSyntaxPatterns()->getDefaultTextStyle()),
+      textStyles      (hilitedText->getSyntaxPatterns()->getTextStylesArray()),
+      rawTextStylePtrs(textStyles),
       hilitingBuffer(HilitingBuffer::create(hilitedText)),
       backliteBuffer(BackliteBuffer::create(textData)),
       lineInfos(),
@@ -156,8 +162,8 @@ TextWidget::TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedTex
     //setBackgroundColor(backgroundColor);
     setBorderColor(backgroundColor);
 
-    lineHeight  = textStyles->get(0)->getLineHeight();
-    lineAscent  = textStyles->get(0)->getLineAscent();
+    lineHeight  = defaultTextStyle->getLineHeight();
+    lineAscent  = defaultTextStyle->getLineAscent();
 
     visibleLines = position.h / lineHeight; // not rounded;
 
@@ -207,9 +213,12 @@ TextWidget::~TextWidget()
 void TextWidget::treatConfigUpdate()
 {
     lineInfos.setAllInvalid();
-    textStyles = GlobalConfig::getInstance()->getTextStyles();
-    lineHeight  = textStyles->get(0)->getLineHeight();
-    lineAscent  = textStyles->get(0)->getLineAscent();
+
+    textStyles       = hilitedText->getSyntaxPatterns()->getTextStylesArray();
+    rawTextStylePtrs = textStyles;
+
+    lineHeight  = defaultTextStyle->getLineHeight();
+    lineAscent  = defaultTextStyle->getLineAscent();
     
 }
 
@@ -243,23 +252,25 @@ namespace LucED
 class TextWidgetFillLineInfoIterator
 {
 public:
-    TextWidgetFillLineInfoIterator(RawPtr<const TextData>   textData, 
-                                   RawPtr<HilitingBuffer>   hilitingBuffer, 
-                                   RawPtr<BackliteBuffer>   backliteBuffer,
-                                   RawPtr<const TextStyles> textStyles,
-                                   long                     textPos)
+    TextWidgetFillLineInfoIterator(RawPtr<const TextData>                  textData, 
+                                   RawPtr<HilitingBuffer>                  hilitingBuffer, 
+                                   RawPtr<BackliteBuffer>                  backliteBuffer,
+                                   const ObjectArray< RawPtr<TextStyle> >& textStyles,
+                                   RawPtr<TextStyle>                       defaultTextStyle,
+                                   long                                    textPos)
         : textData(textData),
           hilitingBuffer(hilitingBuffer),
           backliteBuffer(backliteBuffer),
           textStyles(textStyles),
+          defaultTextStyle(defaultTextStyle),
           pixelPos(0),
           textPos(textPos),
           isEndOfLineFlag(textData->isEndOfLine(textPos)),
           c(isEndOfLineFlag ? 0 : textData->getChar(textPos)),
           styleIndex(hilitingBuffer->getTextStyle(textPos)),
-          style(textStyles->get(styleIndex)),
-          spaceWidth(textStyles->get(0)->getSpaceWidth()),
-          tabWidth(hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth()),
+          style(textStyles[styleIndex]),
+          spaceWidth(defaultTextStyle->getSpaceWidth()),
+          tabWidth(hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth()),
           charWidth(isEndOfLineFlag ? 0 : style->getCharWidth(c)),
           doBackgroundFlag(true),
           background(backliteBuffer->getBackground(textPos))
@@ -305,13 +316,13 @@ public:
         if (!textData->isEndOfLine(textPos)) {
             c          = textData->getChar(textPos);
             styleIndex = hilitingBuffer->getTextStyle(textPos);
-            style      = textStyles->get(styleIndex);
+            style      = textStyles[styleIndex];
             charWidth  = style->getCharWidth(c);
         } else {
             isEndOfLineFlag = true;
             c          = 0;
             styleIndex = 0;
-            style      = textStyles->get(0);
+            style      = defaultTextStyle;
             charWidth  = 0;
         }
         if (doBackgroundFlag == true) {
@@ -320,10 +331,11 @@ public:
     }
 
 private:
-    RawPtr<const TextData>   const textData;
-    RawPtr<HilitingBuffer>   const hilitingBuffer;
-    RawPtr<BackliteBuffer>   const backliteBuffer;
-    RawPtr<const TextStyles> const textStyles;
+    RawPtr<const TextData>             const textData;
+    RawPtr<HilitingBuffer>             const hilitingBuffer;
+    RawPtr<BackliteBuffer>             const backliteBuffer;
+    RawPtr<TextStyle>                  const defaultTextStyle;
+    const ObjectArray< RawPtr<TextStyle> >&  textStyles;
     long pixelPos;
     long textPos;
     bool isEndOfLineFlag;
@@ -404,7 +416,7 @@ private:
 
 void TextWidget::fillLineInfo(long beginOfLinePos, LineInfo* li)
 {
-    TextWidgetFillLineInfoIterator i(textData, hilitingBuffer, backliteBuffer, textStyles, beginOfLinePos);
+    TextWidgetFillLineInfoIterator i(textData, hilitingBuffer, backliteBuffer, rawTextStylePtrs, defaultTextStyle, beginOfLinePos);
     TextWidgetFragmentFiller       f(li->fragments);
     
     int  print = 0;
@@ -525,7 +537,7 @@ void TextWidget::fillLineInfo(long beginOfLinePos, LineInfo* li)
 
 inline void TextWidget::applyTextStyle(int styleIndex)
 {
-    const RawPtr<TextStyle> style = textStyles->get(styleIndex);
+    const RawPtr<TextStyle> style = textStyles[styleIndex];
     
 //    XSetBackground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
 
@@ -546,12 +558,12 @@ inline int TextWidget::calcVisiblePixX(LineInfo* li, long pos)
         unsigned char c = textData->getChar(p);
         int style = li->styles[i];
         if (c == '\t') {
-            int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
+            int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
             long totalX = leftPix + x;
             totalX = (totalX / tabWidth + 1) * tabWidth;
             x = totalX - leftPix;
         } else {
-            x += textStyles->get(style)->getCharWidth(c);
+            x += textStyles[style]->getCharWidth(c);
         }
     }
     return x;
@@ -683,7 +695,7 @@ inline void TextWidget::printPartialLineWithoutCursor(LineInfo* li, int y, int x
             int len        = fragments[i].numberBytes;
             int pixWidth   = fragments[i].pixWidth;
 
-            const RawPtr<TextStyle> style = textStyles->get(styleIndex);
+            const RawPtr<TextStyle> style = textStyles[styleIndex];
             
             if (x + style->getCharLBearing(*ptr) >= x2) {
                 break;
@@ -803,7 +815,7 @@ inline void TextWidget::printLine(LineInfo* li, int y)
             
             if (len > 0 && *ptr != '\t' ) 
             {
-                const RawPtr<TextStyle> style = textStyles->get(styleIndex);
+                const RawPtr<TextStyle> style = textStyles[styleIndex];
                 int txCorrection = - style->getCharWidth(ptr[len - 1]) + style->getCharRBearing(ptr[len - 1]);
                 
                 if (txCorrection > 0)
@@ -912,10 +924,10 @@ void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
     int newBackground   = newFragments[newFragmentIndex].background;
     int oldBackground   = oldFragments[oldFragmentIndex].background;
 
-    RawPtr<TextStyle> newStyle = textStyles->get(newStyleIndex);
-    RawPtr<TextStyle> oldStyle = textStyles->get(oldStyleIndex);
+    RawPtr<TextStyle> newStyle = textStyles[newStyleIndex];
+    RawPtr<TextStyle> oldStyle = textStyles[oldStyleIndex];
 
-    int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
+    int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
     
     do
     {
@@ -968,7 +980,7 @@ void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
                 newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberBytes;
                 newStyleIndex          = newFragments[newFragmentIndex].styleIndex;
                 newBackground          = newFragments[newFragmentIndex].background;
-                newStyle               = textStyles->get(newStyleIndex);
+                newStyle               = textStyles[newStyleIndex];
             } else {
                 newEnd = true;
             }
@@ -980,7 +992,7 @@ void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
                 oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberBytes;
                 oldStyleIndex          = oldFragments[oldFragmentIndex].styleIndex;
                 oldBackground          = oldFragments[oldFragmentIndex].background;
-                oldStyle               = textStyles->get(oldStyleIndex);
+                oldStyle               = textStyles[oldStyleIndex];
             } else {
                 oldEnd = true;
             }
@@ -1234,11 +1246,11 @@ long TextWidget::getCursorPixX()
     for (long p = lineBegin; p < cursorPos; ++p) {
         unsigned char c = textData->getChar(p);
         if (c == '\t') {
-            int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
+            int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
             x = (x / tabWidth + 1) * tabWidth;
         } else {
             int style = hilitingBuffer->getTextStyle(p);
-            x += textStyles->get(style)->getCharWidth(c);
+            x += textStyles[style]->getCharWidth(c);
         }
     }
     return x;
@@ -1361,10 +1373,10 @@ long TextWidget::getTextPosForPixX(long pixX, long beginOfLinePos)
         int c = textData->getChar(p);
         ox = x;
         if (c == '\t') {
-            long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
+            long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
             x = (x / tabWidth + 1) * tabWidth;
         } else {
-            x += textStyles->get(hilitingBuffer->getTextStyle(p))->getCharWidth(c);
+            x += textStyles[hilitingBuffer->getTextStyle(p)]->getCharWidth(c);
         }
         p += 1;
     }
@@ -1425,10 +1437,10 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
         int x, nextX;
         for (x = 0, nextX = 0; nextX < pixX && i < endI; ++i) {
             x = nextX;
-            const RawPtr<TextStyle> style = textStyles->get(li->styles[i]);
+            const RawPtr<TextStyle> style = textStyles[li->styles[i]];
             byte c = textData->getChar(li->startPos + i);
             if (c == '\t') {
-                long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * textStyles->get(0)->getSpaceWidth();
+                long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
                 nextX = (x / tabWidth + 1) * tabWidth;
             } else {
                 nextX += style->getCharWidth(c);
@@ -1642,13 +1654,13 @@ void TextWidget::setPosition(Position newPosition)
                 newTopLine = cursorLine - visibleLines + 1;
             }
             if (cursorPixX <= oldLeftPix) {
-                newLeftPix = cursorPixX - textStyles->get(0)->getSpaceWidth();
+                newLeftPix = cursorPixX - defaultTextStyle->getSpaceWidth();
                 if (newLeftPix < 0) {
                     newLeftPix = 0;
                 }
             }
-            if (cursorPixX >= oldLeftPix + newPosition.w - textStyles->get(0)->getSpaceWidth()) {
-                newLeftPix = cursorPixX - newPosition.w + textStyles->get(0)->getSpaceWidth();
+            if (cursorPixX >= oldLeftPix + newPosition.w - defaultTextStyle->getSpaceWidth()) {
+                newLeftPix = cursorPixX - newPosition.w + defaultTextStyle->getSpaceWidth();
                 if (newLeftPix < 0) {
                     newLeftPix = 0;
                 }
@@ -1715,21 +1727,21 @@ GuiElement::Measures TextWidget::getDesiredMeasures()
     int incrWidth  = getSpaceCharWidth();
     int incrHeight = getLineHeight();
     
-    Measures rslt(  minWidthChars * textStyles->get(0)->getSpaceWidth() + 2*border, 
+    Measures rslt(  minWidthChars * defaultTextStyle->getSpaceWidth() + 2*border, 
                      minHeightChars * lineHeight + 2*border, 
                     
-                     bestWidthChars * textStyles->get(0)->getSpaceWidth() + 2*border, 
+                     bestWidthChars * defaultTextStyle->getSpaceWidth() + 2*border, 
                     bestHeightChars * lineHeight + 2*border,
 
-                     maxWidthChars == INT_MAX ? INT_MAX :  maxWidthChars * textStyles->get(0)->getSpaceWidth() + 2*border,
+                     maxWidthChars == INT_MAX ? INT_MAX :  maxWidthChars * defaultTextStyle->getSpaceWidth() + 2*border,
                     maxHeightChars == INT_MAX ? INT_MAX : maxHeightChars * lineHeight + 2*border,
 
                     incrWidth, incrHeight);
 
-//    return Measures( 2 * textStyles->get(0)->getSpaceWidth() + 2*border, lineHeight + 2*border, 
-//                    35 * textStyles->get(0)->getSpaceWidth() + 2*border, lineHeight + 2*border,
+//    return Measures( 2 * defaultTextStyle->getSpaceWidth() + 2*border, lineHeight + 2*border, 
+//                    35 * defaultTextStyle->getSpaceWidth() + 2*border, lineHeight + 2*border,
 //                    INT_MAX, INT_MAX,
-//                    textStyles->get(0)->getSpaceWidth(), lineHeight);
+//                    defaultTextStyle->getSpaceWidth(), lineHeight);
 
     return rslt;
 }

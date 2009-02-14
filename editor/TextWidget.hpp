@@ -54,7 +54,7 @@ public:
     virtual ~TextWidget();
     
 protected:
-    TextWidget(GuiWidget* parent, TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int border,
+    TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int border,
                CreateOptions options);
 
     void setScrollBarVerticalValueRangeChangedCallback(Callback<long,long,long>::Ptr callback) {
@@ -120,8 +120,8 @@ public:
         return textData;
     }
     
-    TextStyles::Ptr getTextStyles() const {
-        return textStyles;
+    TextStyle::Ptr getDefaultTextStyle() const {
+        return defaultTextStyle;
     }
     
     LanguageMode::Ptr getLanguageMode() const {
@@ -169,7 +169,7 @@ public:
         return lineHeight;
     }
     int getSpaceCharWidth() const {
-        return textStyles->get(0)->getSpaceWidth();
+        return defaultTextStyle->getSpaceWidth();
     }
     long getMaximalVisiblePixWidth() const {
         return totalPixWidth;
@@ -273,9 +273,13 @@ private:
     
     Position position;
     bool hasPosition;
-    TextData::Ptr textData;
+    HilitedText::Ptr hilitedText;
+    TextData::Ptr    textData;
 
-    TextStyles::Ptr textStyles;
+    TextStyle::Ptr                   defaultTextStyle;
+    ObjectArray< TextStyle::Ptr>     textStyles;
+    ObjectArray< RawPtr<TextStyle> > rawTextStylePtrs;
+    
     HilitingBuffer::Ptr hilitingBuffer;
     BackliteBuffer::Ptr backliteBuffer;
 

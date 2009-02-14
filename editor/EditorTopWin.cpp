@@ -179,7 +179,6 @@ public:
     
     virtual void createEmptyWindow()
     {
-        TextStyles::Ptr   textStyles   = GlobalConfig::getInstance()->getTextStyles();
         LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
      
         String untitledFileName = File(String() << editorTopWin->textData->getFileName()).getDirName() << "/Untitled";
@@ -188,7 +187,7 @@ public:
      
         HilitedText::Ptr  hilitedText  = HilitedText::create(emptyTextData, languageMode);
      
-        EditorTopWin::Ptr win          = EditorTopWin::create(textStyles, hilitedText);
+        EditorTopWin::Ptr win          = EditorTopWin::create(hilitedText);
                           win->show();
     }
     
@@ -196,8 +195,7 @@ public:
     {
         Position myPosition = editorTopWin->getPosition();
       
-        EditorTopWin::Ptr newWin = EditorTopWin::create(editorTopWin->textEditor->getTextStyles(), 
-                                                        editorTopWin->textEditor->getHilitedText(),
+        EditorTopWin::Ptr newWin = EditorTopWin::create(editorTopWin->textEditor->getHilitedText(),
                                                         myPosition.w, 
                                                         myPosition.h);
         newWin->textEditor->moveCursorToTextMark(editorTopWin->textEditor->createNewMarkFromCursor());
@@ -268,7 +266,7 @@ private:
     RawPtr<EditorTopWin> thisTopWin;
 };
 
-EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height)
+EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
       flagForSetSizeHintAtFirstShow(true),
       hasMessageBox(false),
@@ -281,7 +279,7 @@ EditorTopWin::EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedT
     int statusLineIndex = rootElement->addElement(statusLine);
     upperPanelIndex = statusLineIndex + 1;
     
-    textEditor = MultiLineEditorWidget::create(this, textStyles, hilitedText);
+    textEditor = MultiLineEditorWidget::create(this, hilitedText);
 
     textEditor->setVerticalAdjustmentStrategy(TextWidget::STRICT_TOP_LINE_ANCHOR);
 

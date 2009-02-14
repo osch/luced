@@ -47,7 +47,7 @@ HilitingBuffer::HilitingBuffer(HilitedText::Ptr hiliting)
     hiliting->registerHilitingChangedCallback(newCallback(this, &HilitingBuffer::treatChangedHiliting));
 
     textData = hiliting->getTextData();
-    if (syntaxPatterns.isValid()) {
+    if (syntaxPatterns->hasPatterns()) {
         ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
     hiliting->registerUpdateListener(newCallback(this, &HilitingBuffer::treatHilitingUpdate));
@@ -64,7 +64,7 @@ void HilitingBuffer::treatChangedHiliting(HilitedText* changedHiliting)
     languageMode   = hiliting->getLanguageMode();
 
     maxDistance = calculateMaxDistance(hiliting);
-    if (syntaxPatterns.isValid()) {
+    if (syntaxPatterns->hasPatterns()) {
         ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
     styleBuffer.clear();
@@ -151,7 +151,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
     pushedSubstr = String();
     long searchStartPos = 0;
     
-    if (!syntaxPatterns.isValid()) {
+    if (!syntaxPatterns->hasPatterns()) {
         return NULL;
     }
 

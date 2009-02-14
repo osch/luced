@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,38 +19,45 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLE_LINE_EDITOR_WIDGET_HPP
-#define SINGLE_LINE_EDITOR_WIDGET_HPP
+#ifndef TEXT_STYLE_CACHE_HPP
+#define TEXT_STYLE_CACHE_HPP
 
-#include "ByteArray.hpp"
-#include "TextEditorWidget.hpp"
+#include "SingletonInstance.hpp"
+#include "RawPtr.hpp"
+#include "String.hpp"
+#include "TextStyle.hpp"
+#include "ObjectArray.hpp"
+#include "WeakPtr.hpp"
+#include "TextStyleDefinition.hpp"
 
 namespace LucED
 {
 
-class SingleLineEditorWidget : public TextEditorWidget
+class TextStyleCache : public HeapObject
 {
 public:
-    typedef OwningPtr<SingleLineEditorWidget> Ptr;
+    static RawPtr<TextStyleCache> getInstance() {
+        return instance.getPtr();
+    }
+    
+    TextStyle::Ptr getTextStyle(const String& fontname, const String& colorName);
 
-    static SingleLineEditorWidget::Ptr create(GuiWidget* parent, HilitedText::Ptr hilitedText)
-    {
-        return SingleLineEditorWidget::Ptr(new SingleLineEditorWidget(parent, hilitedText));
+    TextStyle::Ptr getTextStyle(const TextStyleDefinition& definition) {
+        return getTextStyle(definition.getFontName(),
+                            definition.getColorName());
     }
 
-    virtual bool isFocusable() { return true; }
-    virtual FocusType getFocusType() { return NORMAL_FOCUS; }
-    
-
-protected:
-    SingleLineEditorWidget(GuiWidget* parent, HilitedText::Ptr hilitedText);
-    
 private:
-    void filterInsert(const byte** buffer, long* length);
+    friend class SingletonInstance<TextStyleCache>;
     
-    ByteArray filterBuffer;
+    static SingletonInstance<TextStyleCache> instance;
+    
+    TextStyleCache()
+    {}
+    
+    ObjectArray<TextStyle::Ptr> list;
 };
 
-} // namespapce LucED
+} // namespace LucED
 
-#endif // SINGLE_LINE_EDITOR_WIDGET_HPP
+#endif // TEXT_STYLE_CACHE_HPP

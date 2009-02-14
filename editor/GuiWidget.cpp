@@ -27,6 +27,7 @@
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
 #include "SingletonInstance.hpp"
+#include "TextStyleCache.hpp"
 
 namespace LucED
 {
@@ -43,8 +44,9 @@ private:
     friend class SingletonInstance<GuiWidgetSingletonData>;
     
     GuiWidgetSingletonData()
-        : guiTextStyle(TextStyle::create(GlobalConfig::getInstance()->getGuiFont(), 
-                                         GlobalConfig::getInstance()->getGuiFontColor()))
+        : guiTextStyle(TextStyleCache::getInstance()
+                                     ->getTextStyle(GlobalConfig::getInstance()->getGuiFont(), 
+                                                    GlobalConfig::getInstance()->getGuiFontColor()))
     {
         Display* display = GuiRoot::getInstance()->getDisplay();
         GuiRoot* guiRoot = GuiRoot::getInstance();

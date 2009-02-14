@@ -28,28 +28,9 @@
 using namespace LucED;
 
 
-TextDisplayGuiCompound::Ptr TextDisplayGuiCompound::create(GuiWidget* parent, Style style, TextData::Ptr textData)
+TextDisplayGuiCompound::Ptr TextDisplayGuiCompound::create(GuiWidget* parent, TextData::Ptr textData)
 {
-    TextStyles::Ptr textStyles = TextStyles::create();
-
-    switch (style)
-    {
-        case STYLE_GUI: {
-            textStyles->appendNewStyle(GlobalConfig::getInstance()->getGuiFont(), 
-                                       GlobalConfig::getInstance()->getGuiFontColor());
-            break;
-        }
-        default: ASSERT(false);
-        case STYLE_OUTPUT: {
-            textStyles->appendNewStyle(GlobalConfig::getInstance()->getTextStyles()->get(0)->getFontName(),
-                                       GlobalConfig::getInstance()->getTextStyles()->get(0)->getColorName());
-            break;
-        }
-    }
-    
-    
     TextEditorWidget::Ptr textWidget = TextEditorWidget::create(parent, 
-                                                                textStyles, 
                                                                 HilitedText::create(textData, GlobalConfig::getInstance()->getDefaultLanguageMode()),
                                                                 TextWidget::CreateOptions() | TextWidget::READ_ONLY
                                                                                             | TextWidget::NEVER_SHOW_CURSOR);

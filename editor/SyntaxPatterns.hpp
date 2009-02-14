@@ -28,9 +28,14 @@
 #include "BasicRegex.hpp"
 #include "MemArray.hpp"
 #include "OwningPtr.hpp"
-
-namespace LucED {
-
+#include "TextStyleDefinition.hpp"
+#include "TextStyle.hpp"
+#include "TextStyleCache.hpp"
+#include "ObjectArray.hpp"
+#include "Nullable.hpp"
+          
+namespace LucED
+{
 
 class LuaVar;
 
@@ -95,7 +100,10 @@ public:
     typedef OwningPtr<SyntaxPatterns> Ptr;
     typedef HeapHashMap<String,int> NameToIndexMap;
     
-    static Ptr create(LuaVar config, NameToIndexMap::ConstPtr textStyleToIndexMap);
+    static Ptr create(LuaVar config, 
+                      HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions);
+
+    static Ptr createWithoutPatterns(HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions);
 
     SyntaxPattern* get(int i) {
         return allPatterns.getPtr(i);
@@ -126,19 +134,41 @@ public:
     int getTotalMaxExtend() const {
         return totalMaxREBytesExtend;
     }
-private:
+    bool hasSamePatternStructureThan(RawPtr<const SyntaxPatterns> rhs) const;
+    bool areTextStylesContainedIn   (RawPtr<const SyntaxPatterns> rhs) const;
+
+    const ObjectArray<TextStyle::Ptr>& getTextStylesArray() const {
+        return textStyles;
+    }
+    TextStyle::Ptr getDefaultTextStyle() const {
+        return defaultTextStyle;
+    }
     
-    SyntaxPatterns(LuaVar config, NameToIndexMap::ConstPtr textStyleToIndexMap);
+    bool hasPatterns() const {
+        return allPatterns.getLength() > 0;
+    }
+
+private:
+    SyntaxPatterns(Nullable<LuaVar> config, 
+                   HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions);
 
     void compile(int i);
     void compileAll();
+    
+    Nullable<int> getTextStyleIndex(const String& textStyleName);
     
     ObjectArray<SyntaxPattern> allPatterns;
     
     int maxOvecSize;
     int totalMaxREBytesExtend;
     
-    static TextStyles::Ptr preliminaryStaticTextStyles;
+    bool hasSerializedString;
+    String serializedString;
+
+    HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions;
+    TextStyle::Ptr              defaultTextStyle;
+    ObjectArray<TextStyle::Ptr> textStyles;
+    HashMap<String,int>         textStyleToIndexMap;
 };
 
 

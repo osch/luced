@@ -41,12 +41,7 @@ class TextDisplayGuiCompound : public ScrollableTextGuiCompound
 public:
     typedef OwningPtr<TextDisplayGuiCompound> Ptr;
 
-    enum Style {
-        STYLE_OUTPUT,
-        STYLE_GUI
-    };
-
-    static Ptr create(GuiWidget* parent, Style style, TextData::Ptr textData);
+    static Ptr create(GuiWidget* parent, TextData::Ptr textData);
 
     virtual bool invokeActionMethod(ActionId actionId);
     virtual bool hasActionMethod(ActionId actionId);

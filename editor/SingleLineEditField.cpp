@@ -39,7 +39,6 @@ SingleLineEditField::SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr la
         textData = TextData::create();
     }
     editorWidget = SingleLineEditorWidget::create(this, 
-                                                  GlobalConfig::getInstance()->getTextStyles(), 
                                                   HilitedText::create(textData, languageMode));
     editorWidget->setDesiredMeasuresInChars( 5, 1, 
                                             20, 1, 

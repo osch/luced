@@ -53,11 +53,10 @@ class EditorTopWin : public  TopWin,
 public:
     typedef WeakPtr<EditorTopWin> Ptr;
     
-    static EditorTopWin::Ptr create(
-            TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width = -1, int height = -1)
+    static EditorTopWin::Ptr create(HilitedText::Ptr hilitedText, int width = -1, int height = -1)
     {
         return transferOwnershipTo(
-                new EditorTopWin(textStyles, hilitedText, width, height),
+                new EditorTopWin(hilitedText, width, height),
                 TopWinList::getInstance());
     }
     
@@ -83,10 +82,6 @@ public:
 
     String getFileName() const;
     
-    TextStyles::Ptr getTextStyles() {
-        return textEditor->getTextStyles();
-    }
-
     HilitedText::Ptr getHilitedText() {
         return textEditor->getHilitedText();
     }
@@ -110,7 +105,7 @@ private:
     class ActionInterface;
     class UserDefinedActionMethods;
     
-    EditorTopWin(TextStyles::Ptr textStyles, HilitedText::Ptr hilitedText, int width, int height);
+    EditorTopWin(HilitedText::Ptr hilitedText, int width, int height);
 
     void treatConfigUpdate();
 

@@ -26,19 +26,28 @@
 #include "util.hpp"
 #include "LuaVar.hpp"
 #include "LuaIterator.hpp"
-
+#include "LuaException.hpp"
+#include "LuaSerializer.hpp"
+          
 using namespace LucED;
 
 
-SyntaxPatterns::Ptr SyntaxPatterns::create(LuaVar config, NameToIndexMap::ConstPtr textStyleToIndexMap)
+SyntaxPatterns::Ptr SyntaxPatterns::create(LuaVar config, 
+                                           HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions)
 {
-    return Ptr(new SyntaxPatterns(config, textStyleToIndexMap));
+    ASSERT(config.isTable());
+    return Ptr(new SyntaxPatterns(config, textStyleDefinitions));
+}
+
+SyntaxPatterns::Ptr SyntaxPatterns::createWithoutPatterns(HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions)
+{
+    return Ptr(new SyntaxPatterns(Nullable<LuaVar>(), textStyleDefinitions));
 }
 
 
 typedef HeapHashMap<String,int> NameToIndexMap;
 
-static void fillChildPatterns(SyntaxPattern *sp, LuaVar actPattern, NameToIndexMap::Ptr nameToIndexMap)
+static void fillChildPatterns(SyntaxPattern* sp, LuaVar actPattern, NameToIndexMap::Ptr nameToIndexMap)
 {
     LuaVar o = actPattern["childPatterns"];
     if (o.isValid()) {
@@ -59,180 +68,268 @@ static void fillChildPatterns(SyntaxPattern *sp, LuaVar actPattern, NameToIndexM
     }
 }
 
-
-SyntaxPatterns::SyntaxPatterns(LuaVar config, NameToIndexMap::ConstPtr textStyleToIndexMap)
-    : maxOvecSize(0),
-      totalMaxREBytesExtend(0)
+Nullable<int> SyntaxPatterns::getTextStyleIndex(const String& textStyleName)
 {
-    ASSERT(config.isTable());
+    Nullable<int> rslt;
     
-    LuaAccess luaAccess = config.getLuaAccess();
-    
-    LuaVar root = config["root"];
-    if (!root.isTable()) {
-        throw ConfigException("pattern 'root' not properly defined");
+    Nullable<int> foundIndex = textStyleToIndexMap.get(textStyleName);
+    if (foundIndex.isValid()) {
+        rslt = foundIndex;
     }
-    NameToIndexMap::Ptr nameToIndexMap = NameToIndexMap::create();
-    
-    ObjectArray<String> patternNames;
-
-    nameToIndexMap->set("root", 0);
-    for (LuaIterator i(luaAccess, 0); i.in(config);) {
-        String patternName = i.key().toString();
-        if (patternName != "root") {
-            nameToIndexMap->set(patternName, i + 1);  // i+1, because 0 is index for "root"
-            patternNames.append(patternName);
-            ++i;
-        }
-    }
-    allPatterns.appendAmount(patternNames.getLength() + 1);
-    
+    else 
     {
-        SyntaxPattern* sp = allPatterns.getPtr(0);
-        sp->name = "root";
-        LuaVar o = root["style"];
-        if (!o.isString()) {
-            throw ConfigException(String() << "pattern '" << sp->name << "': invalid style");
+        Nullable<TextStyleDefinition> foundDefinition = textStyleDefinitions->get(textStyleName);
+    
+        if (foundDefinition.isValid()) {
+            TextStyle::Ptr textStyle = TextStyleCache::getInstance()->getTextStyle(foundDefinition);
+            ASSERT(textStyle.isValid());
+            textStyles.append(textStyle);
+            textStyleToIndexMap.set(textStyleName, textStyles.getLength() - 1);
+            rslt = textStyles.getLength() - 1;
         }
-        NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(o.toString());
-        if (!foundIndex.isValid()) {
-            throw ConfigException(String() << "pattern '" << sp->name << "': invalid style '" << o.toString() << "'");
+    }
+    ASSERT(!rslt.isValid() || (textStyles[rslt].isValid() && textStyleToIndexMap.get(textStyleName) == rslt));
+    return rslt;
+}
+
+
+SyntaxPatterns::SyntaxPatterns(Nullable<LuaVar> optionalConfig, 
+                               HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions)
+    : maxOvecSize(0),
+      totalMaxREBytesExtend(0),
+      hasSerializedString(false),
+      textStyleDefinitions(textStyleDefinitions)
+{
+    {
+        RawPtr<TextStyleCache> textStyleCache = TextStyleCache::getInstance();
+        Nullable<TextStyleDefinition> defaultTextStyleDefinition = textStyleDefinitions->get("default");
+        if (!defaultTextStyleDefinition.isValid()) {
+            throw ConfigException("missing text style definition \"default\"");
         }
-        sp->style = foundIndex.get();
-        fillChildPatterns(sp, root, nameToIndexMap);
+        defaultTextStyle = textStyleCache->getTextStyle(defaultTextStyleDefinition);
+        ASSERT(defaultTextStyle.isValid());
+        textStyles.append(defaultTextStyle); // first TextStyle is default
+        ASSERT(textStyles.getLength() == 1);
+        textStyleToIndexMap.set("default", textStyles.getLength() - 1);
     }
     
-    for (int i = 0; i < patternNames.getLength(); ++i) {
-        String name = patternNames[i];
-        SyntaxPattern* sp = allPatterns.getPtr(i + 1);
-        sp->name = name;
-        LuaVar p = config[name];
-        if (!p.isTable()) {
-            throw ConfigException(String() << "pattern '" << name << "' not properly defined");
+    if (optionalConfig.isValid())
+    {
+        LuaVar config = optionalConfig.get();
+        ASSERT(config.isTable());
+    
+        LuaAccess luaAccess = config.getLuaAccess();
+        
+        LuaVar root = config["root"];
+        if (!root.isTable()) {
+            throw ConfigException("pattern 'root' not properly defined");
         }
-        LuaVar o = p["style"];
-        if (!o.isString()) {
-            throw ConfigException(String() << "pattern '" << sp->name << "': invalid style");
+        NameToIndexMap::Ptr nameToIndexMap = NameToIndexMap::create();
+        
+        ObjectArray<String> patternNames;
+    
+        nameToIndexMap->set("root", 0);
+        for (LuaIterator i(luaAccess, 0); i.in(config);) {
+            String patternName = i.key().toString();
+            if (patternName != "root") {
+                nameToIndexMap->set(patternName, i + 1);  // i+1, because 0 is index for "root"
+                patternNames.append(patternName);
+                ++i;
+            }
         }
-        NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(o.toString());
-        if (!foundIndex.isValid()) {
-            throw ConfigException(String() << "pattern '" << sp->name << "': invalid style '" << o.toString() << "'");
-        }
-        sp->style = foundIndex.get();
-
-        o = p["beginPattern"];
-        if (o.isString())
+        allPatterns.appendAmount(patternNames.getLength() + 1);
+        
         {
-            sp->beginPattern = o.toString().getTrimmedSubstring();
-            
-            if (sp->beginPattern.getLength() == 0) {
-                throw ConfigException(String() << "pattern '" << sp->name << "' has zero pattern length");
-            }
- 
-            o = p["endPattern"];
+            SyntaxPattern* sp = allPatterns.getPtr(0);
+            sp->name = "root";
+            LuaVar o = root["style"];
             if (!o.isString()) {
-                throw ConfigException(String() << "pattern '" << sp->name << "': missing 'endPattern' element");
+                throw ConfigException(String() << "pattern '" << sp->name << "': invalid style");
             }
-            sp->endPattern = o.toString();
-            sp->hasEndPattern = true;
-            
-            o = p["maxBeginExtend"];
-            if (!o.isNumber()) {
-                throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'maxBeginExtend' element");
+            Nullable<int> foundIndex = getTextStyleIndex(o.toString());
+            if (!foundIndex.isValid()) {
+                throw ConfigException(String() << "pattern '" << sp->name << "': invalid style '" << o.toString() << "'");
             }
-            sp->maxBeginBytesExtend = (int) o.toNumber();
-            
-            o = p["maxEndExtend"];
-            if (!o.isNumber()) {
-                throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'maxEndExtend'");
-            }
-            sp->maxEndBytesExtend = (int) o.toNumber();
-
-            fillChildPatterns(sp, p, nameToIndexMap);
-            
-            o = p["beginSubstyles"];
-            if (o.isValid()) {
-                if (!o.isTable()) {
-                    throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'beginSubstyles' element");
-                }
-                for (LuaIterator j(luaAccess); j.in(o);) {
-                    String k = j.key().toString();
-                    if (!j.value().isString()) {
-                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'beginSubstyles' element '" << k << "'");
-                    }
-                    NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(j.value().toString());
-                    if (!foundIndex.isValid()) {
-                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'beginSubstyles' element '" << k << "'");
-                    }
-                    sp->beginSubStyles.appendNew(k, foundIndex.get());
-                }
-            }
-
-            o = p["endSubstyles"];
-            if (o.isValid()) {
-                if (!o.isTable()) {
-                    throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'endSubstyles' element");
-                }
-                for (LuaIterator j(luaAccess); j.in(o);) {
-                    String k = j.key().toString();
-                    if (!j.value().isString()) {
-                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'endSubstyles' element '" << k << "'");
-                    }
-                    NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(j.value().toString());
-                    if (!foundIndex.isValid()) {
-                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'endSubstyles' element '" << k << "'");
-                    }
-                    sp->endSubStyles.appendNew(k, foundIndex.get());
-                }
-            }
-            
-            o = p["pushSubpattern"];
-            if (o.isValid()) {
-                if (!o.isString()) {
-                    throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'pushSubpattern' element");
-                }
-                sp->pushedSubPatternName = o.toString();
-            }
-        }
-        else {
-            o = p["pattern"];
-            if (!o.isString()) {
-                throw ConfigException(String() << "pattern '" << sp->name << "' must have 'beginPattern' or 'pattern' element");
-            }
-            sp->beginPattern = o.toString().getTrimmedSubstring();
-            if (sp->beginPattern.getLength() == 0) {
-                throw ConfigException(String() << "pattern '" << sp->name << "' has zero pattern length");
-            }
-            sp->hasEndPattern = false;
-            
-            o = p["maxExtend"];
-            if (!o.isNumber()) {
-                throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'maxExtend' element");
-            }
-            sp->maxBeginBytesExtend = (int) o.toNumber();
-
-            o = p["substyles"];
-            if (o.isValid()) {
-                if (!o.isTable()) {
-                    throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'substyles' element");
-                }
-                for (LuaIterator j(luaAccess); j.in(o);) {
-                    String k = j.key().toString();
-                    if (!j.value().isString()) {
-                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'substyles' element '" << k << "'");
-                    }
-                    NameToIndexMap::Value foundIndex = textStyleToIndexMap->get(j.value().toString());
-                    if (!foundIndex.isValid()) {
-                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'substyles' element '" << k << "'");
-                    }
-                    sp->beginSubStyles.appendNew(k, foundIndex.get());
-                }
-            }
-
+            sp->style = foundIndex.get();
+            fillChildPatterns(sp, root, nameToIndexMap);
         }
         
+        for (int i = 0; i < patternNames.getLength(); ++i) {
+            String name = patternNames[i];
+            SyntaxPattern* sp = allPatterns.getPtr(i + 1);
+            sp->name = name;
+            LuaVar p = config[name];
+            if (!p.isTable()) {
+                throw ConfigException(String() << "pattern '" << name << "' not properly defined");
+            }
+            LuaVar o = p["style"];
+            if (!o.isString()) {
+                throw ConfigException(String() << "pattern '" << sp->name << "': invalid style");
+            }
+            Nullable<int> foundIndex = getTextStyleIndex(o.toString());
+            if (!foundIndex.isValid()) {
+                throw ConfigException(String() << "pattern '" << sp->name << "': invalid style '" << o.toString() << "'");
+            }
+            sp->style = foundIndex.get();
+    
+            o = p["beginPattern"];
+            if (o.isString())
+            {
+                sp->beginPattern = o.toString().getTrimmedSubstring();
+                
+                if (sp->beginPattern.getLength() == 0) {
+                    throw ConfigException(String() << "pattern '" << sp->name << "' has zero pattern length");
+                }
+     
+                o = p["endPattern"];
+                if (!o.isString()) {
+                    throw ConfigException(String() << "pattern '" << sp->name << "': missing 'endPattern' element");
+                }
+                sp->endPattern = o.toString();
+                sp->hasEndPattern = true;
+                
+                o = p["maxBeginExtend"];
+                if (!o.isNumber()) {
+                    throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'maxBeginExtend' element");
+                }
+                sp->maxBeginBytesExtend = (int) o.toNumber();
+                
+                o = p["maxEndExtend"];
+                if (!o.isNumber()) {
+                    throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'maxEndExtend'");
+                }
+                sp->maxEndBytesExtend = (int) o.toNumber();
+    
+                fillChildPatterns(sp, p, nameToIndexMap);
+                
+                o = p["beginSubstyles"];
+                if (o.isValid()) {
+                    if (!o.isTable()) {
+                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'beginSubstyles' element");
+                    }
+                    for (LuaIterator j(luaAccess); j.in(o);) {
+                        String k = j.key().toString();
+                        if (!j.value().isString()) {
+                            throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'beginSubstyles' element '" << k << "'");
+                        }
+                        Nullable<int> foundIndex = getTextStyleIndex(j.value().toString());
+                        if (!foundIndex.isValid()) {
+                            throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'beginSubstyles' element '" << k << "'");
+                        }
+                        sp->beginSubStyles.appendNew(k, foundIndex.get());
+                    }
+                }
+    
+                o = p["endSubstyles"];
+                if (o.isValid()) {
+                    if (!o.isTable()) {
+                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'endSubstyles' element");
+                    }
+                    for (LuaIterator j(luaAccess); j.in(o);) {
+                        String k = j.key().toString();
+                        if (!j.value().isString()) {
+                            throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'endSubstyles' element '" << k << "'");
+                        }
+                        Nullable<int> foundIndex = getTextStyleIndex(j.value().toString());
+                        if (!foundIndex.isValid()) {
+                            throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'endSubstyles' element '" << k << "'");
+                        }
+                        sp->endSubStyles.appendNew(k, foundIndex.get());
+                    }
+                }
+                
+                o = p["pushSubpattern"];
+                if (o.isValid()) {
+                    if (!o.isString()) {
+                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'pushSubpattern' element");
+                    }
+                    sp->pushedSubPatternName = o.toString();
+                }
+            }
+            else {
+                o = p["pattern"];
+                if (!o.isString()) {
+                    throw ConfigException(String() << "pattern '" << sp->name << "' must have 'beginPattern' or 'pattern' element");
+                }
+                sp->beginPattern = o.toString().getTrimmedSubstring();
+                if (sp->beginPattern.getLength() == 0) {
+                    throw ConfigException(String() << "pattern '" << sp->name << "' has zero pattern length");
+                }
+                sp->hasEndPattern = false;
+                
+                o = p["maxExtend"];
+                if (!o.isNumber()) {
+                    throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'maxExtend' element");
+                }
+                sp->maxBeginBytesExtend = (int) o.toNumber();
+    
+                o = p["substyles"];
+                if (o.isValid()) {
+                    if (!o.isTable()) {
+                        throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'substyles' element");
+                    }
+                    for (LuaIterator j(luaAccess); j.in(o);) {
+                        String k = j.key().toString();
+                        if (!j.value().isString()) {
+                            throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'substyles' element '" << k << "'");
+                        }
+                        Nullable<int> foundIndex = getTextStyleIndex(j.value().toString());
+                        if (!foundIndex.isValid()) {
+                            throw ConfigException(String() << "pattern '" << sp->name << "': invalid 'substyles' element '" << k << "'");
+                        }
+                        sp->beginSubStyles.appendNew(k, foundIndex.get());
+                    }
+                }
+    
+            }
+            
+        }
+        compileAll();
+        
+        try
+        {
+            serializedString    = LuaSerializer(config).toString();
+            hasSerializedString = true;
+            //printf("serialized -> {\n%s\n}\n", serializedString.toCString());
+        }
+        catch (LuaException& ex) {
+            serializedString = "";
+            hasSerializedString = false;
+        }
     }
-    compileAll();
+    else
+    {
+        serializedString = "";
+        hasSerializedString = true;
+    }
+}
+
+bool SyntaxPatterns::hasSamePatternStructureThan(RawPtr<const SyntaxPatterns> rhs) const
+{
+    if (hasSerializedString && rhs->hasSerializedString) {
+        if (serializedString == rhs->serializedString) {
+            return true;
+        }
+    } 
+    return false;
+}
+
+bool SyntaxPatterns::areTextStylesContainedIn(RawPtr<const SyntaxPatterns> rhs) const
+{
+    HashMap<String,int>::Iterator iterator = textStyleToIndexMap.getIterator();
+    while (!iterator.isAtEnd())
+    {
+        Nullable<int> rhsIndex  = rhs->textStyleToIndexMap.get(iterator.getKey());
+        if (!rhsIndex.isValid()) {
+            return false;
+        }
+        int thisIndex = iterator.getValue();
+        if (textStyles[thisIndex] != rhs->textStyles[rhsIndex]) {
+            return false;
+        }
+        iterator.gotoNext();
+    }
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -405,3 +502,4 @@ int SyntaxPattern::getMatchedChild(const MemArray<int>& ovector)
     }
     return -2;
 }
+

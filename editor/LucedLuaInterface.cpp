@@ -24,6 +24,7 @@
 #include "LuaArgException.hpp"
 #include "Regex.hpp"
 #include "GlobalLuaInterpreter.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 
@@ -66,6 +67,8 @@ LuaCFunctionResult LucedLuaInterface::resetModules(const LuaCFunctionArguments& 
     }
 
     GlobalLuaInterpreter::getInstance()->resetModules();
+    
+    GlobalConfig::getInstance()->readConfig();
 
     return LuaCFunctionResult(args.getLuaAccess());
 }

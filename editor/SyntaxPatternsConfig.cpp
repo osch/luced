@@ -26,39 +26,45 @@
 
 using namespace LucED;
 
-SyntaxPatterns::Ptr SyntaxPatternsConfig::loadSyntaxPatterns(const String&       syntaxNameString,
-                                                             NameToIndexMap::Ptr textStyleToIndexMap)
+SyntaxPatterns::Ptr SyntaxPatternsConfig::loadSyntaxPatterns(const String& syntaxNameString,
+                                                             HeapHashMap<String,TextStyleDefinition>::Ptr textStyleDefinitions)
 {
-    QualifiedName syntaxName(syntaxNameString);
-    String        packageName = syntaxName.getQualifier();
-    LuaVar package = GlobalLuaInterpreter::getInstance()->require(packageName);
-    if (package.isTable()) {
-        LuaVar syntaxDefinitionGetter = package["getSyntaxDefinition"];
-        if (!syntaxDefinitionGetter.isFunction()) {
-            throw ConfigException(String() << "'"<< packageName 
-                                           << ".getSyntaxDefinition' must be function");
+    if (syntaxNameString.getLength() > 0)
+    {
+        QualifiedName syntaxName(syntaxNameString);
+        String        packageName = syntaxName.getQualifier();
+        LuaVar package = GlobalLuaInterpreter::getInstance()->require(packageName);
+        if (package.isTable()) {
+            LuaVar syntaxDefinitionGetter = package["getSyntaxDefinition"];
+            if (!syntaxDefinitionGetter.isFunction()) {
+                throw ConfigException(String() << "'"<< packageName 
+                                               << ".getSyntaxDefinition' must be function");
+            }
+            LuaVar syntaxDefinition = syntaxDefinitionGetter.call(syntaxName.getName());
+            if (!syntaxDefinition.isTable()) {
+                throw ConfigException(String() << "Syntax definition '" << syntaxNameString << "' not available");
+            }
+            return SyntaxPatterns::create(syntaxDefinition, textStyleDefinitions);
         }
-        LuaVar syntaxDefinition = syntaxDefinitionGetter.call(syntaxName.getName());
-        if (!syntaxDefinition.isTable()) {
-            throw ConfigException(String() << "Syntax definition '" << syntaxNameString << "' not available");
+        else {
+            throw ConfigException(String() << "Package '" << packageName << "' does not provide table object");
         }
-        return SyntaxPatterns::create(syntaxDefinition, textStyleToIndexMap);
     }
-    else {
-        throw ConfigException(String() << "Package '" << packageName << "' does not provide table object");
+    else
+    {
+        return SyntaxPatterns::createWithoutPatterns(textStyleDefinitions);
     }
 }
 
 
 SyntaxPatterns::Ptr SyntaxPatternsConfig::getSyntaxPatterns(const String&                      syntaxNameString,
-                                                            NameToIndexMap::Ptr                textStyleToIndexMap,
                                                             Callback<SyntaxPatterns::Ptr>::Ptr changedCallback)
 {
     Entry::Ptr entry = patterns.get(syntaxNameString);
 
     if (!entry.isValid())
     {
-        SyntaxPatterns::Ptr newPatterns = loadSyntaxPatterns(syntaxNameString, textStyleToIndexMap);
+        SyntaxPatterns::Ptr newPatterns = loadSyntaxPatterns(syntaxNameString, textStyleDefinitions);
         
         entry = Entry::create(newPatterns);
 
@@ -71,20 +77,24 @@ SyntaxPatterns::Ptr SyntaxPatternsConfig::getSyntaxPatterns(const String&       
 }
 
 
-void SyntaxPatternsConfig::refresh(NameToIndexMap::Ptr textStyleToIndexMap)
+void SyntaxPatternsConfig::refresh(HeapHashMap<String,TextStyleDefinition>::Ptr newTextStyleDefinitions)
 {
     HashMap<String,Entry::Ptr>::Iterator patternIterator = patterns.getIterator();
-    
+
     while (!patternIterator.isAtEnd())
     {
         String     syntaxName = patternIterator.getKey();
         Entry::Ptr entry      = patternIterator.getValue();
 
         SyntaxPatterns::Ptr oldPatterns = entry->getSyntaxPatterns();
-        SyntaxPatterns::Ptr newPatterns = loadSyntaxPatterns(syntaxName,
-                                                             textStyleToIndexMap);
+        SyntaxPatterns::Ptr newPatterns = loadSyntaxPatterns(syntaxName, newTextStyleDefinitions);
+        bool rslt =    oldPatterns->hasSamePatternStructureThan(newPatterns)
+                    && oldPatterns->areTextStylesContainedIn   (newPatterns);
+        printf("---- equals: %d (%s)\n", rslt, syntaxName.toCString());
+               
         entry->refreshWithNewSyntaxPatterns(newPatterns);
     
         patternIterator.gotoNext();
     }
+    textStyleDefinitions = newTextStyleDefinitions;
 }

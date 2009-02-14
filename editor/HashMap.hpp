@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HASHMAP_HPP
-#define HASHMAP_HPP
+#ifndef HASH_MAP_HPP
+#define HASH_MAP_HPP
 
 #include <sys/types.h>
 #include <ext/hash_map>
@@ -78,6 +78,22 @@ public:
     }
 };
 
+template<> class HashFunction<void*>
+{
+public:
+    size_t operator()(void* key) const {
+        return (size_t) key;
+    }
+};
+
+template<> class HashFunction<const void*>
+{
+public:
+    size_t operator()(const void* key) const {
+        return (size_t) key;
+    }
+};
+
 
 template
 <
@@ -116,6 +132,9 @@ public:
         Iter end;
     };
     
+    HashMap()
+    {}
+    
     void set(const K& key, const V& value) {
         map[key] = value;
     }
@@ -144,6 +163,15 @@ public:
     bool isEmpty() const {
         return getIterator().isAtEnd();
     }
+    bool operator==(const HashMap& rhs) const {
+        return map == rhs.map;
+    }
+
+protected:
+    HashMap(const HashMap& rhs)
+        : map(rhs.map)
+    {}
+    
 private:
     hash_map<K,V,H> map;
 };
@@ -151,5 +179,5 @@ private:
 
 } // namespace LucED
 
-#endif // HASHMAP_HPP
+#endif // HASH_MAP_HPP
 

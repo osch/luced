@@ -59,7 +59,9 @@ HilitedText::HilitedText(TextData::Ptr textData, LanguageMode::Ptr languageMode)
         this->breakPointDistance = 50;
     }
 
-    if (syntaxPatterns.isValid()) {
+    ASSERT(syntaxPatterns.isValid());
+    
+    if (syntaxPatterns->hasPatterns()) {
         this->ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
     EventDispatcher::getInstance()->registerProcess(processHandler);
@@ -87,7 +89,7 @@ void HilitedText::setLanguageMode(LanguageMode::Ptr languageMode)
 void HilitedText::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns)
 {
     this->syntaxPatterns = newSyntaxPatterns;
-    if (syntaxPatterns.isValid()) {
+    if (syntaxPatterns->hasPatterns()) {
         this->ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
     HilitingBase::clear();
@@ -217,7 +219,7 @@ bool HilitedText::needsProcessing()
 
 void HilitedText::treatTextDataUpdate(TextData::UpdateInfo u)
 {
-    if (!syntaxPatterns.isValid()) {
+    if (!syntaxPatterns->hasPatterns()) {
         return;
     }
     HilitingBase::treatTextDataUpdate(rememberedLastProcessingRestartedIterator, 
@@ -309,7 +311,7 @@ int HilitedText::pcreCalloutFunction(void* voidPtr, pcre_callout_block* calloutB
 
 int HilitedText::process(TimeVal endTime)
 {
-    if (!syntaxPatterns.isValid()) {
+    if (!syntaxPatterns->hasPatterns()) {
         needsProcessingFlag =  false;
         return 0;
     }

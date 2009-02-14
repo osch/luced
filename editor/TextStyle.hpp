@@ -40,9 +40,14 @@ class TextStyle : public HeapObject
 public:
     typedef OwningPtr<TextStyle> Ptr;
     
-    static Ptr create(const String& fontname, const String& colorName) {
-        return Ptr(new TextStyle(fontname, colorName));
-    }
+    class CacheAccess
+    {
+        friend class TextStyleCache;
+        
+        static Ptr create(const String& fontname, const String& colorName) {
+            return Ptr(new TextStyle(fontname, colorName));
+        }
+    };
     
     ~TextStyle();
 
@@ -112,33 +117,6 @@ private:
     int lineHeight;
     int lineAscent;
     int lineDescent;
-};
-
-class TextStyles : public HeapObject
-{
-public:
-    typedef OwningPtr<TextStyles> Ptr;
-    
-    static TextStyles::Ptr create() {
-        return TextStyles::Ptr(new TextStyles());
-    }
-    
-    RawPtr<TextStyle> get(int index) const {
-        return textStyles[index];
-    }
-    
-    void appendNewStyle(const String& fontname, const String& color) {
-        textStyles.append(TextStyle::create(fontname, color));
-    }
-    
-    long getLength() const {
-        return textStyles.getLength();
-    }
-    
-private:
-    TextStyles() {}
-
-    ObjectArray<TextStyle::Ptr> textStyles;
 };
 
 } // namespace LucED

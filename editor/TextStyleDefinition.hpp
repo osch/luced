@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,38 +19,46 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLE_LINE_EDITOR_WIDGET_HPP
-#define SINGLE_LINE_EDITOR_WIDGET_HPP
+#ifndef TEXT_STYLE_DEFINITION_HPP
+#define TEXT_STYLE_DEFINITION_HPP
 
-#include "ByteArray.hpp"
-#include "TextEditorWidget.hpp"
+#include "String.hpp"
 
 namespace LucED
 {
 
-class SingleLineEditorWidget : public TextEditorWidget
+class TextStyleDefinition
 {
 public:
-    typedef OwningPtr<SingleLineEditorWidget> Ptr;
-
-    static SingleLineEditorWidget::Ptr create(GuiWidget* parent, HilitedText::Ptr hilitedText)
-    {
-        return SingleLineEditorWidget::Ptr(new SingleLineEditorWidget(parent, hilitedText));
-    }
-
-    virtual bool isFocusable() { return true; }
-    virtual FocusType getFocusType() { return NORMAL_FOCUS; }
+    TextStyleDefinition()
+    {}
     
-
-protected:
-    SingleLineEditorWidget(GuiWidget* parent, HilitedText::Ptr hilitedText);
+    TextStyleDefinition(const String& name,
+                        const String& fontName,
+                        const String& colorName)
+        : name(name),
+          fontName(fontName),
+          colorName(colorName)
+    {}
+    
+    String getName() const {
+        return name;
+    }
+    
+    String getFontName() const {
+        return fontName;
+    }
+    
+    String getColorName() const {
+        return colorName;
+    }
     
 private:
-    void filterInsert(const byte** buffer, long* length);
-    
-    ByteArray filterBuffer;
+    String name;
+    String fontName;
+    String colorName;    
 };
 
-} // namespapce LucED
+} // namespace LucED
 
-#endif // SINGLE_LINE_EDITOR_WIDGET_HPP
+#endif // TEXT_STYLE_DEFINITION_HPP

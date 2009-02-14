@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -69,9 +69,9 @@ GlobalConfig::GlobalConfig()
           editorPanelOnTop(false),
           keepRunningIfOwningClipboard(false),
           maxRegexAssertionLength(3000),
-          textStyleNameToIndexMap(NameToIndexMap::create()),
           syntaxPatternsConfig(SyntaxPatternsConfig::create()),
-          actionKeyConfig(ActionKeyConfig::create())
+          actionKeyConfig(ActionKeyConfig::create()),
+          textStyleDefinitions(HeapHashMap<String,TextStyleDefinition>::create())
 {}
 
 
@@ -82,10 +82,9 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode:
     if (languageMode.isValid() && languageMode->getSyntaxName().getLength() > 0) 
     {
         return this->syntaxPatternsConfig->getSyntaxPatterns(languageMode->getSyntaxName(),
-                                                             textStyleNameToIndexMap,
                                                              changeCallback);
     } else {
-        return SyntaxPatterns::Ptr();
+        return this->syntaxPatternsConfig->getDefaultSyntaxPatterns(changeCallback);
     }
 }
     
@@ -185,9 +184,6 @@ void GlobalConfig::readConfig()
     String configFileName = generalConfigFileName;
 
     languageModes           = LanguageModes::create();
-    textStyles              = TextStyles::create();
-    
-    textStyleNameToIndexMap->clear();
     
     try
     {
@@ -414,7 +410,6 @@ void GlobalConfig::readConfig()
 
         }
 
-
         // textStyles
 
         LuaVar ts = configTable["textStyles"];
@@ -424,6 +419,8 @@ void GlobalConfig::readConfig()
 
         LuaVar o(luaAccess);
         
+        HeapHashMap<String,TextStyleDefinition>::Ptr newTextStyleDefinitions = HeapHashMap<String,TextStyleDefinition>::create();
+                
         for (int i = 0; o = ts[i + 1], o.isValid(); ++i) {
             LuaVar n = o["name"];
             if (!n.isString()) {
@@ -433,11 +430,9 @@ void GlobalConfig::readConfig()
             if (i == 0 && name != "default") {
                 throw ConfigException("first textstyle must be named 'default'");
             }
-            if (textStyleNameToIndexMap->hasKey(name)) {
+            if (newTextStyleDefinitions->hasKey(name)) {
                 throw ConfigException(String() << "duplicate textstyle '" << name << "'");
             }
-
-            textStyleNameToIndexMap->set(name, i);
 
             LuaVar f = o["font"];
             if (!f.isString()) {
@@ -449,8 +444,10 @@ void GlobalConfig::readConfig()
                 throw ConfigException(String() << "invalid color in textstyle '" << name << "'");
             }
             String colorname = c.toString();
-            textStyles->appendNewStyle(fontname, colorname);
+
+            newTextStyleDefinitions->set(name, TextStyleDefinition(name, fontname, colorname));
         }
+        this->textStyleDefinitions = newTextStyleDefinitions;
 
         // LanguageModes
 
@@ -482,19 +479,31 @@ void GlobalConfig::readConfig()
     }
     catch (BaseException& ex) {
         errorList->appendNew(configFileName, ex.getMessage());
-        if (textStyles->getLength() == 0) {
-            textStyles->appendNewStyle("-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", "black");
+        if (textStyleDefinitions->isEmpty())
+        {
+            textStyleDefinitions->set("default", 
+                                      TextStyleDefinition("default",
+                                                          "-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", 
+                                                          "black"));
         }
     }
 
-    if (textStyles->getLength() == 0) {
-        textStyles->appendNewStyle("-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", "black");
+    if (textStyleDefinitions->isEmpty()) {
+        textStyleDefinitions->set("default", 
+                                  TextStyleDefinition("default",
+                                                      "-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", 
+                                                      "black"));
         errorList->appendNew(configFileName, "missing textstyles");
     }
+    Nullable<TextStyleDefinition> defaultTextStyleDefinition = textStyleDefinitions->get("default");
+    if (!defaultTextStyleDefinition.isValid()) {
+        throw ConfigException("missing text style \"default\"");
+    }
+    defaultTextStyle = TextStyleCache::getInstance()->getTextStyle(defaultTextStyleDefinition);
 
     // SyntaxPatterns
     
-    this->syntaxPatternsConfig->refresh(textStyleNameToIndexMap);
+    this->syntaxPatternsConfig->refresh(textStyleDefinitions);
     
     if (errorList->getLength() > 0)
     {

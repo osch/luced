@@ -29,6 +29,7 @@
 #include "String.hpp"
 #include "Callback.hpp"
 #include "CallbackContainer.hpp"
+#include "TextStyleDefinition.hpp"
 
 namespace LucED
 {
@@ -45,17 +46,20 @@ public:
     typedef HeapHashMap<String,int> NameToIndexMap;
 
     SyntaxPatterns::Ptr getSyntaxPatterns(const String& syntaxNameString, 
-                                          NameToIndexMap::Ptr textStyleToIndexMap,
                                           Callback<SyntaxPatterns::Ptr>::Ptr changedCallback);
 
-    void refresh(NameToIndexMap::Ptr textStyleToIndexMap);
+    SyntaxPatterns::Ptr getDefaultSyntaxPatterns(Callback<SyntaxPatterns::Ptr>::Ptr changedCallback) {
+        return getSyntaxPatterns("", changedCallback);
+    }
+
+    void refresh(HeapHashMap<String,TextStyleDefinition>::Ptr newTextStyleDefinitions);
     
 private:
     SyntaxPatternsConfig()
     {}
 
-    SyntaxPatterns::Ptr loadSyntaxPatterns(const String&       syntaxName,
-                                           NameToIndexMap::Ptr textStyleToIndexMap);
+    static SyntaxPatterns::Ptr loadSyntaxPatterns(const String& syntaxName,
+                                                  HeapHashMap<String,TextStyleDefinition>::Ptr textStyleDefinitions);
 
     class Entry : public HeapObject
     {
@@ -85,6 +89,7 @@ private:
     };
 
     HashMap<String,Entry::Ptr> patterns;
+    HeapHashMap<String,TextStyleDefinition>::Ptr textStyleDefinitions;
 };
 
 } // namespace LucED

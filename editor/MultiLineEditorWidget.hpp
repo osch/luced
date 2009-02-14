@@ -33,17 +33,15 @@ public:
     typedef OwningPtr<MultiLineEditorWidget> Ptr;
 
     static Ptr create(GuiWidget*       parent, 
-                      TextStyles::Ptr  textStyles,
                       HilitedText::Ptr hilitedText,
                       CreateOptions    options = CreateOptions())
     {
-        return Ptr(new MultiLineEditorWidget(parent, textStyles, hilitedText, options));
+        return Ptr(new MultiLineEditorWidget(parent, hilitedText, options));
     }
 
 
 private:
     MultiLineEditorWidget(GuiWidget*       parent,
-                          TextStyles::Ptr  textStyles, 
                           HilitedText::Ptr hilitedText,
                           CreateOptions    options);
 

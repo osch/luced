@@ -102,14 +102,15 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
 		SearchInteraction        ActionKeyConfig        SingleLineEditActions      MultiLineEditActions \
 		ActionKeySequenceHandler StackTrace             ActionIdRegistry           MultiLineDisplayActions \
 		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess \
-		LucedLuaInterface        KeyPressEvent          QualifiedName              SyntaxPatternsConfig
+		LucedLuaInterface        KeyPressEvent          QualifiedName              SyntaxPatternsConfig \
+		TextStyleCache
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \
                 HilitingBuffer          HeapMem                File                   BasicRegex  \
                 BackliteBuffer          GuiLayoutRow           GuiLayoutColumn        HeapObject  \
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
-                ViewLuaInterface        
+                ViewLuaInterface        LuaSerializer
                 
 PRG_MODULES  := luced
 

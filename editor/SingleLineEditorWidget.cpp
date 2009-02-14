@@ -28,9 +28,8 @@ using namespace LucED;
 
 static const int BORDER_WIDTH = 2;
 
-SingleLineEditorWidget::SingleLineEditorWidget(GuiWidget* parent, TextStyles::Ptr  textStyles, 
-                                                                  HilitedText::Ptr hilitedText)
-    : TextEditorWidget(parent, textStyles, hilitedText, TextEditorWidget::CreateOptions(), ::BORDER_WIDTH)
+SingleLineEditorWidget::SingleLineEditorWidget(GuiWidget* parent, HilitedText::Ptr hilitedText)
+    : TextEditorWidget(parent, hilitedText, TextEditorWidget::CreateOptions(), ::BORDER_WIDTH)
 {
     getTextData()->setInsertFilterCallback(newCallback(this, &SingleLineEditorWidget::filterInsert));
 

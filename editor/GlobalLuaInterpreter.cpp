@@ -80,7 +80,6 @@ void GlobalLuaInterpreter::resetModules()
     {
         loadedModules[i.key()] = i.value();
     }
-    GlobalConfig::getInstance()->readConfig();
 }
 
 
@@ -94,10 +93,6 @@ void GlobalLuaInterpreter::resetModule(const String& moduleName)
     if (initialModules[moduleName].isNil())
     {
         loadedModules[moduleName].setNil();
-    }
-    if (GlobalConfig::getInstance()->dependsOnPackage(moduleName))
-    {
-        GlobalConfig::getInstance()->readConfig();
     }
 }
 

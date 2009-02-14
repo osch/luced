@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HEAPHASHMAP_H
-#define HEAPHASHMAP_H
+#ifndef HEAP_HASH_MAP_HPP
+#define HEAP_HASH_MAP_HPP
 
 #include "HeapObject.hpp"
 #include "HashMap.hpp"
@@ -38,11 +38,24 @@ public:
     static Ptr create() {
         return Ptr(new HeapHashMap());
     }
+
+    OwningPtr<HeapHashMap> clone() const {
+        return Ptr(new HeapHashMap(*this));
+    }
+    
+    bool equals(RawPtr<const HeapHashMap> rhs) const {
+        return *this == *rhs;
+    }
     
 protected:
-    HeapHashMap() {}
+    HeapHashMap()
+    {}
+    
+    HeapHashMap(const HeapHashMap& rhs)
+        : HashMap<K,V,H>(rhs)
+    {}
 };
 
 } // namespace LucED
 
-#endif // HEAPHASHMAP_H
+#endif // HEAP_HASH_MAP_HPP

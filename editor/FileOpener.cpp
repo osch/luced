@@ -79,8 +79,6 @@ void FileOpener::openFiles()
 
     ASSERT(!isWaitingForMessageBox)
 
-    TextStyles::Ptr  textStyles = GlobalConfig::getInstance()->getTextStyles();
-
     while (numberAndFileList.isValid() && numberAndFileList->getLength() > 0)
     {
         int    numberOfWindows  = numberAndFileList->get(0).numberOfWindows;
@@ -131,7 +129,7 @@ void FileOpener::openFiles()
                         textData->setPseudoFileName(fileName);
                     }
                     
-                    lastTopWin = EditorTopWin::create(textStyles, hilitedText);
+                    lastTopWin = EditorTopWin::create(hilitedText);
 
                     MessageBoxParameter p;
                     
@@ -162,7 +160,7 @@ void FileOpener::openFiles()
                     return;
                 }
 
-                lastTopWin = EditorTopWin::create(textStyles, hilitedText);
+                lastTopWin = EditorTopWin::create(hilitedText);
                 lastTopWin->show();
                 lastTopWin->raise();
 
@@ -172,8 +170,7 @@ void FileOpener::openFiles()
 
         for (int i = numberOfRaisedWindows; i < numberOfWindows; ++i)
         {
-            EditorTopWin::Ptr win = EditorTopWin::create(lastTopWin->getTextStyles(),
-                                                         lastTopWin->getHilitedText());
+            EditorTopWin::Ptr win = EditorTopWin::create(lastTopWin->getHilitedText());
             win->show();
         }
         numberAndFileList->remove(0);
@@ -190,7 +187,6 @@ void FileOpener::openConfigFiles()
 {
     if (configErrorList.isValid() && configErrorList->getLength() > 0)
     {
-        TextStyles::Ptr  textStyles = GlobalConfig::getInstance()->getTextStyles();
         TopWinList*      topWins    = TopWinList::getInstance();
 
         for (int i = 0; i < configErrorList->getLength(); ++i)
@@ -238,7 +234,7 @@ void FileOpener::openConfigFiles()
                     p.setTitle("Error opening file")
                      .setMessage(ex.getMessage());
                 }
-                editorWin = EditorTopWin::create(textStyles, hilitedText);
+                editorWin = EditorTopWin::create(hilitedText);
                 editorWin->show();
             }
             editorWin->setMessageBox(p);

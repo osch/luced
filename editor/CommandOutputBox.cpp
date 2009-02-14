@@ -36,7 +36,6 @@ CommandOutputBox::CommandOutputBox(TopWin* referingWindow, TextData::Ptr textDat
     button1 = Button::create(this, "O]K");
     
     multiLineOut = TextDisplayGuiCompound::create(this, 
-                                                  TextDisplayGuiCompound::STYLE_OUTPUT,
                                                   textData);
     
 

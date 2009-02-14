@@ -37,7 +37,7 @@ using std::max;
  * Array for objects with default-constructors, copy-constructors and 
  * destructors that can be moved by memmove
  */
-template<class T> class ObjectArray : MemArray<T>
+template<class T> class ObjectArray : private MemArray<T>
 {
 public:
     ObjectArray() : MemArray<T>(0) {}
@@ -60,7 +60,23 @@ public:
             append(src[i]);
         }
     }
+    template< class T2
+            >
+    explicit ObjectArray(const ObjectArray<T2>& src) : MemArray<T>(0) {
+        for (long i = 0; i < src.getLength(); ++i) {
+            append(src[i]);
+        }
+    }
     ObjectArray<T>& operator=(const ObjectArray<T>& src) {
+        clear();
+        for (long i = 0; i < src.getLength(); ++i) {
+            append(src[i]);
+        }
+        return *this;
+    }
+    template< class T2
+            >
+    ObjectArray<T>& operator=(const ObjectArray<T2>& src) {
         clear();
         for (long i = 0; i < src.getLength(); ++i) {
             append(src[i]);

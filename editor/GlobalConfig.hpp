@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -36,6 +36,7 @@
 #include "SyntaxPatternsConfig.hpp"
 #include "ActionKeyConfig.hpp"
 #include "LuaVar.hpp"
+#include "TextStyleDefinition.hpp"
 
 namespace LucED
 {
@@ -126,14 +127,6 @@ public:
         return keepRunningIfOwningClipboard;
     }
 
-    TextStyles::Ptr getTextStyles() const {
-        return textStyles;
-    }
-    
-    NameToIndexMap::ConstPtr getTextStyleNameToIndexMap() const {
-        return textStyleNameToIndexMap;
-    }
-    
     long getMaxRegexAssertionLength() const {
         return maxRegexAssertionLength;
     }
@@ -152,6 +145,10 @@ public:
     
     String getConfigDirectory() const {
         return configDirectory;
+    }
+    
+    TextStyle::Ptr getDefaultTextStyle() const {
+        return defaultTextStyle;
     }
     
     bool dependsOnPackage(const String& packageName) const;
@@ -188,10 +185,6 @@ private:
     int initialWindowWidth;
     int initialWindowHeight;
 
-    TextStyles::Ptr textStyles;
-    NameToIndexMap::Ptr textStyleNameToIndexMap;
-    
-    
     LanguageModes::Ptr languageModes;
     
     SyntaxPatternsConfig::Ptr syntaxPatternsConfig;
@@ -212,6 +205,9 @@ private:
     String configDirectory;
     
     HashMap<String,bool> packagesMap;
+    
+    HeapHashMap<String,TextStyleDefinition>::Ptr textStyleDefinitions;
+    TextStyle::Ptr defaultTextStyle;
 };
 
 } // namespace LucED

@@ -30,11 +30,10 @@
 using namespace LucED;
 
 MultiLineEditorWidget::MultiLineEditorWidget(GuiWidget*       parent, 
-                                             TextStyles::Ptr  textStyles, 
                                              HilitedText::Ptr hilitedText,
                                              CreateOptions    options)
 
-    : TextEditorWidget(parent, textStyles, hilitedText, options)
+    : TextEditorWidget(parent, hilitedText, options)
 {
     TextEditorWidget::addActionMethods(SingleLineDisplayActions::create(this));
     TextEditorWidget::addActionMethods(MultiLineDisplayActions::create(this));

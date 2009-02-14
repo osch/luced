@@ -108,12 +108,11 @@ private:
 };
 
 TextEditorWidget::TextEditorWidget(GuiWidget*       parent, 
-                                   TextStyles::Ptr  textStyles, 
                                    HilitedText::Ptr hilitedText, 
                                    CreateOptions    options,
                                    int              borderWidth)
                                    
-      : TextWidget(parent, textStyles, hilitedText, borderWidth, options),
+      : TextWidget(parent, hilitedText, borderWidth, options),
 
         hasFocusFlag(false),
 
@@ -155,7 +154,7 @@ bool TextEditorWidget::isCursorVisible()
         return false;
     }
     long pixX = getCursorPixX();
-    int spaceWidth = getTextStyles()->get(0)->getSpaceWidth();
+    int spaceWidth = getDefaultTextStyle()->getSpaceWidth();
     
     if (  pixX > 0
        && (   (pixX < getLeftPix() + spaceWidth)
@@ -174,7 +173,7 @@ void TextEditorWidget::assureCursorVisible()
         setTopLineNumber(getCursorLineNumber() - getNumberOfVisibleLines() + 1);
     }
     long pixX = getCursorPixX();
-    int spaceWidth = getTextStyles()->get(0)->getSpaceWidth();
+    int spaceWidth = getDefaultTextStyle()->getSpaceWidth();
     
     if (pixX < getLeftPix() + spaceWidth) {
         setLeftPix(pixX - spaceWidth);
@@ -221,7 +220,7 @@ void TextEditorWidget::adjustCursorVisibility()
         setTopLineNumber(newTopLineNumber);
     }
     long pixX = getCursorPixX();
-    int spaceWidth = getTextStyles()->get(0)->getSpaceWidth();
+    int spaceWidth = getDefaultTextStyle()->getSpaceWidth();
     if (pixX < getLeftPix() + spaceWidth) {
         setLeftPix(pixX - spaceWidth);
     } else {
@@ -806,7 +805,7 @@ bool TextEditorWidget::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEv
                     setTopLineNumber(getCursorLineNumber() - getNumberOfVisibleLines() + 1);
                 }
                 long cursorPixX = getCursorPixX();
-                int spaceWidth = getTextStyles()->get(0)->getSpaceWidth();
+                int spaceWidth = getDefaultTextStyle()->getSpaceWidth();
 
                 if (cursorPixX < getLeftPix()) {
                     setLeftPix(cursorPixX - spaceWidth);
@@ -938,14 +937,14 @@ bool TextEditorWidget::scrollUp()
 
 void TextEditorWidget::scrollLeft()
 {
-    long newLeft = this->getLeftPix() - this->getTextStyles()->get(0)->getSpaceWidth();
+    long newLeft = this->getLeftPix() - this->getDefaultTextStyle()->getSpaceWidth();
     this->setLeftPix(newLeft);
 }
 
 
 void TextEditorWidget::scrollRight()
 {
-    long newLeft = this->getLeftPix() + this->getTextStyles()->get(0)->getSpaceWidth();
+    long newLeft = this->getLeftPix() + this->getDefaultTextStyle()->getSpaceWidth();
     this->setLeftPix(newLeft);
 }
 
@@ -974,16 +973,16 @@ void TextEditorWidget::scrollPageDown()
 
 void TextEditorWidget::scrollPageLeft()
 {
-    int columns = this->getPixWidth() / this->getTextStyles()->get(0)->getSpaceWidth();
-    long newLeft = this->getLeftPix() - this->getTextStyles()->get(0)->getSpaceWidth() * (columns/2);
+    int columns = this->getPixWidth() / this->getDefaultTextStyle()->getSpaceWidth();
+    long newLeft = this->getLeftPix() - this->getDefaultTextStyle()->getSpaceWidth() * (columns/2);
     this->setLeftPix(newLeft);
 }
 
 
 void TextEditorWidget::scrollPageRight()
 {
-    int columns = this->getPixWidth() / this->getTextStyles()->get(0)->getSpaceWidth();
-    long newLeft = this->getLeftPix() + this->getTextStyles()->get(0)->getSpaceWidth() * (columns/2);
+    int columns = this->getPixWidth() / this->getDefaultTextStyle()->getSpaceWidth();
+    long newLeft = this->getLeftPix() + this->getDefaultTextStyle()->getSpaceWidth() * (columns/2);
     this->setLeftPix(newLeft);
 }
 
