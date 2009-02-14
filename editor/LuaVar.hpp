@@ -142,6 +142,15 @@ public:
         lua_pop(L, 1);
         return rslt;
     }
+    
+    const void* toVoidPtr() const {
+        ASSERT(isCorrect());
+        push(key);
+        lua_gettable(L, tableStackIndex);
+        bool rslt = lua_topointer(L, -1);
+        lua_pop(L, 1);
+        return rslt;
+    }
 
     bool toBoolean() const {
         ASSERT(isCorrect());
@@ -329,6 +338,11 @@ public:
         return lua_typename(L, lua_type(L, stackIndex));
     }
     
+    const void* toVoidPtr() const {
+        ASSERT(isCorrect());
+        return lua_topointer(L, stackIndex);
+    }
+
     bool toBoolean() const {
         ASSERT(isCorrect());
         return lua_toboolean(L, stackIndex);

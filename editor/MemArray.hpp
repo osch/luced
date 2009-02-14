@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef MEMARRAY_H
-#define MEMARRAY_H
+#ifndef MEM_ARRAY_HPP
+#define MEM_ARRAY_HPP
 
 #include "HeapMem.hpp"
 
@@ -138,6 +138,15 @@ public:
         return *this;
     }
     
+    int findFirstIndex(const T& rhs) const {
+        for (int i =  0, n = getLength(); i < n; ++i) {
+            if ((*this)[i] == rhs) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
     bool operator==(const MemArray<T>& rhs) const {
         return (getLength() == rhs.getLength()
              && memcmp(getPtr(0), rhs.getPtr(0), getLength() * sizeof(T)) == 0);
@@ -154,4 +163,4 @@ protected:
 
 } // namespace LucED
 
-#endif // MEMARRAY_H
+#endif // MEM_ARRAY_HPP

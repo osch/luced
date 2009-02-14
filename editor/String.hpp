@@ -149,6 +149,11 @@ public:
     String& append(int rhs) {
         return append(String(rhs));
     }
+    String& append(double d) {
+        char buffer[20];
+        sprintf(buffer, "%.0f", d);
+        return append(buffer);
+    }
 
     bool consistsOfDigits() const {
         for (int i = 0, n = s.length(); i < n; ++i) {
