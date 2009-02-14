@@ -22,13 +22,15 @@
 #ifndef STACK_TRACE_HPP
 #define STACK_TRACE_HPP
 
+#include <stdio.h>
+
 namespace LucED
 {
 
 class StackTrace
 {
 public:
-    static void print();
+    static void print(FILE* fprintfOutput = stdout);
 private:
 };
 
