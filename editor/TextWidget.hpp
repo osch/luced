@@ -258,6 +258,8 @@ private:
     void blinkCursor();
 
     void treatTextDataUpdate(TextData::UpdateInfo update);
+    void treatTextStylesChanged();
+    void treatSyntaxPatternsChanged(SyntaxPatterns::Ptr newSyntaxPatterns);
 
     void flushPendingUpdates();
     

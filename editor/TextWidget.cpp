@@ -203,6 +203,10 @@ TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int bord
     XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
 
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TextWidget::treatConfigUpdate));
+    
+    hilitedText->getSyntaxPatterns()->registerTextStylesChangedCallback(newCallback(this, &TextWidget::treatTextStylesChanged));
+    hilitedText->registerSyntaxPatternsChangedCallback(newCallback(this, &TextWidget::treatSyntaxPatternsChanged));
+
 }
 
 TextWidget::~TextWidget()
@@ -212,14 +216,33 @@ TextWidget::~TextWidget()
 
 void TextWidget::treatConfigUpdate()
 {
-    lineInfos.setAllInvalid();
+fprintf(stderr, "------- TextWidget::treatConfigUpdate\n");
+}
 
-    textStyles       = hilitedText->getSyntaxPatterns()->getTextStylesArray();
+void TextWidget::treatTextStylesChanged()
+{
+StackTrace::print();
+fprintf(stderr, "------- %p TextWidget::treatTextStylesChanged\n", this);
+    lineInfos.setAllInvalid();
+    
+    SyntaxPatterns::Ptr syntaxPatterns = hilitedText->getSyntaxPatterns();
+
+    defaultTextStyle = syntaxPatterns->getDefaultTextStyle();
+    textStyles       = syntaxPatterns->getTextStylesArray();
     rawTextStylePtrs = textStyles;
 
     lineHeight  = defaultTextStyle->getLineHeight();
     lineAscent  = defaultTextStyle->getLineAscent();
     
+    redrawChanged(getTopLeftTextPosition(), textData->getLength());
+}
+
+void TextWidget::treatSyntaxPatternsChanged(SyntaxPatterns::Ptr newSyntaxPatterns)
+{
+fprintf(stderr, "------- %p TextWidget::treatSyntaxPatternsChanged\n", this);
+    ASSERT(hilitedText->getSyntaxPatterns() == newSyntaxPatterns);
+    newSyntaxPatterns->registerTextStylesChangedCallback(newCallback(this, &TextWidget::treatTextStylesChanged));
+    treatTextStylesChanged();
 }
 
 void TextWidget::registerCursorPositionDataListener(Callback<CursorPositionData>::Ptr listener)

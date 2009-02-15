@@ -314,22 +314,48 @@ bool SyntaxPatterns::hasSamePatternStructureThan(RawPtr<const SyntaxPatterns> rh
     return false;
 }
 
-bool SyntaxPatterns::areTextStylesContainedIn(RawPtr<const SyntaxPatterns> rhs) const
+
+void SyntaxPatterns::updateTextStyles(HeapHashMap<String,TextStyleDefinition>::ConstPtr newTextStyleDefinitions)
 {
+    TextStyle::Ptr newDefaultTextStyle;
     HashMap<String,int>::Iterator iterator = textStyleToIndexMap.getIterator();
+    bool changed = false;
+    
     while (!iterator.isAtEnd())
     {
-        Nullable<int> rhsIndex  = rhs->textStyleToIndexMap.get(iterator.getKey());
-        if (!rhsIndex.isValid()) {
-            return false;
+        String textStyleName  = iterator.getKey();
+        int    textStyleIndex = iterator.getValue();
+        
+        Nullable<TextStyleDefinition> foundDefinition = newTextStyleDefinitions->get(textStyleName);
+
+        if (!foundDefinition.isValid()) {
+            throw ConfigException(String() << "missing text style '" << textStyleName << "'");
         }
-        int thisIndex = iterator.getValue();
-        if (textStyles[thisIndex] != rhs->textStyles[rhsIndex]) {
-            return false;
+        TextStyle::Ptr textStyle = TextStyleCache::getInstance()->getTextStyle(foundDefinition);
+        ASSERT(textStyle.isValid());
+        
+        if (textStyle != textStyles[textStyleIndex])
+        {
+            changed = true;
+        
+            textStyles[textStyleIndex] = textStyle;
+            
+            if (textStyleIndex == 0) {
+                ASSERT(textStyleName == "default");
+                newDefaultTextStyle = textStyle;
+            }
         }
         iterator.gotoNext();
     }
-    return true;
+    if (changed)
+    {
+        this->textStyleDefinitions = newTextStyleDefinitions;
+        if (newDefaultTextStyle.isValid()) {
+            this->defaultTextStyle = newDefaultTextStyle;
+        }
+     
+        textStylesChangedCallback.invokeAllCallbacks();   
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////

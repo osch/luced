@@ -33,6 +33,8 @@
 #include "TextStyleCache.hpp"
 #include "ObjectArray.hpp"
 #include "Nullable.hpp"
+#include "CallbackContainer.hpp"
+#include "Callback.hpp"
           
 namespace LucED
 {
@@ -134,8 +136,7 @@ public:
     int getTotalMaxExtend() const {
         return totalMaxREBytesExtend;
     }
-    bool hasSamePatternStructureThan(RawPtr<const SyntaxPatterns> rhs) const;
-    bool areTextStylesContainedIn   (RawPtr<const SyntaxPatterns> rhs) const;
+    bool hasSamePatternStructureThan (RawPtr<const SyntaxPatterns> rhs) const;
 
     const ObjectArray<TextStyle::Ptr>& getTextStylesArray() const {
         return textStyles;
@@ -148,6 +149,12 @@ public:
         return allPatterns.getLength() > 0;
     }
 
+    void updateTextStyles(HeapHashMap<String,TextStyleDefinition>::ConstPtr newTextStyleDefinitions);
+    
+    void registerTextStylesChangedCallback(Callback<>::Ptr callback) {
+        textStylesChangedCallback.registerCallback(callback);
+    }
+    
 private:
     SyntaxPatterns(Nullable<LuaVar> config, 
                    HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions);
@@ -169,6 +176,8 @@ private:
     TextStyle::Ptr              defaultTextStyle;
     ObjectArray<TextStyle::Ptr> textStyles;
     HashMap<String,int>         textStyleToIndexMap;
+    
+    CallbackContainer<> textStylesChangedCallback;
 };
 
 

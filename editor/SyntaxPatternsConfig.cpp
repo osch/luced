@@ -88,12 +88,14 @@ void SyntaxPatternsConfig::refresh(HeapHashMap<String,TextStyleDefinition>::Ptr 
 
         SyntaxPatterns::Ptr oldPatterns = entry->getSyntaxPatterns();
         SyntaxPatterns::Ptr newPatterns = loadSyntaxPatterns(syntaxName, newTextStyleDefinitions);
-        bool rslt =    oldPatterns->hasSamePatternStructureThan(newPatterns)
-                    && oldPatterns->areTextStylesContainedIn   (newPatterns);
-        printf("---- equals: %d (%s)\n", rslt, syntaxName.toCString());
-               
-        entry->refreshWithNewSyntaxPatterns(newPatterns);
-    
+
+        if (!oldPatterns->hasSamePatternStructureThan(newPatterns))
+        {
+            entry->refreshWithNewSyntaxPatterns(newPatterns);
+        }
+        else {
+            oldPatterns->updateTextStyles(newTextStyleDefinitions);
+        }
         patternIterator.gotoNext();
     }
     textStyleDefinitions = newTextStyleDefinitions;

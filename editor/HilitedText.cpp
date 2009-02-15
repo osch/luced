@@ -88,18 +88,23 @@ void HilitedText::setLanguageMode(LanguageMode::Ptr languageMode)
 
 void HilitedText::treatSyntaxPatternsUpdate(SyntaxPatterns::Ptr newSyntaxPatterns)
 {
-    this->syntaxPatterns = newSyntaxPatterns;
-    if (syntaxPatterns->hasPatterns()) {
-        this->ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
-    }
-    HilitingBase::clear();
-
-    this->beginChangedPos = 0;
-    this->endChangedPos = 0;
-    this->processingEndBeforeRestartFlag = false;
-    this->needsProcessingFlag = newSyntaxPatterns.isValid();
+    if (this->syntaxPatterns != newSyntaxPatterns)
+    {
+        this->syntaxPatterns = newSyntaxPatterns;
+        if (syntaxPatterns->hasPatterns()) {
+            this->ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
+        }
+        HilitingBase::clear();
     
-    hilitingChangedCallbacks.invokeAllCallbacks(this);
+        this->beginChangedPos = 0;
+        this->endChangedPos = 0;
+        this->processingEndBeforeRestartFlag = false;
+        this->needsProcessingFlag = newSyntaxPatterns.isValid();
+        
+        hilitingChangedCallbacks.invokeAllCallbacks(this);
+        
+        syntaxPatternsChangedCallbacks.invokeAllCallbacks(newSyntaxPatterns);
+    }
 }
 
 

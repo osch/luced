@@ -66,6 +66,10 @@ public:
     void registerHilitingChangedCallback(Callback<HilitedText*>::Ptr hilitingChangeCallback) {
         hilitingChangedCallbacks.registerCallback(hilitingChangeCallback);
     }
+    
+    void registerSyntaxPatternsChangedCallback(Callback<SyntaxPatterns::Ptr>::Ptr callback) {
+        syntaxPatternsChangedCallbacks.registerCallback(callback);
+    }
 
     LanguageMode::Ptr getLanguageMode() {
         return languageMode;
@@ -129,6 +133,8 @@ private:
     Callback<SyntaxPatterns::Ptr>::Ptr syntaxPatternUpdateCallback;
 
     String pushedSubstr;
+    
+    CallbackContainer<SyntaxPatterns::Ptr> syntaxPatternsChangedCallbacks;
 };
 
 } // namespace LucED
