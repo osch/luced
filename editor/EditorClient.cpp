@@ -119,12 +119,19 @@ void EditorClient::startWithCommandline(Commandline::Ptr commandline)
                     Seconds(3), MicroSeconds(0),
                     newCallback(this, &EditorClient::waitingForServerFailed));
 
+            isServerStartupNeededFlag = false;
         }
+        else
+        {
+            isServerStartupNeededFlag = true;
+        }
+    }
+    else {
+        isServerStartupNeededFlag = false;
     }
     
     if (!wasCommandSet)
     {
         EventDispatcher::getInstance()->requestProgramTermination();
-        isServerStartupNeededFlag = true;
     }
 }

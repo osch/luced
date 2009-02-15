@@ -175,5 +175,9 @@ void EditorServer::processCommandline(Commandline::Ptr commandline,
             FileOpener::start(commandInterpreter.getActor().getNumberAndFileList());
         }
     }
+    else
+    {
+        EventDispatcher::getInstance()->requestProgramTermination();
+    }
 }
 
