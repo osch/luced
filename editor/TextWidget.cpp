@@ -215,14 +215,10 @@ TextWidget::~TextWidget()
 }
 
 void TextWidget::treatConfigUpdate()
-{
-fprintf(stderr, "------- TextWidget::treatConfigUpdate\n");
-}
+{}
 
 void TextWidget::treatTextStylesChanged()
 {
-StackTrace::print();
-fprintf(stderr, "------- %p TextWidget::treatTextStylesChanged\n", this);
     lineInfos.setAllInvalid();
     
     SyntaxPatterns::Ptr syntaxPatterns = hilitedText->getSyntaxPatterns();
@@ -239,7 +235,6 @@ fprintf(stderr, "------- %p TextWidget::treatTextStylesChanged\n", this);
 
 void TextWidget::treatSyntaxPatternsChanged(SyntaxPatterns::Ptr newSyntaxPatterns)
 {
-fprintf(stderr, "------- %p TextWidget::treatSyntaxPatternsChanged\n", this);
     ASSERT(hilitedText->getSyntaxPatterns() == newSyntaxPatterns);
     newSyntaxPatterns->registerTextStylesChangedCallback(newCallback(this, &TextWidget::treatTextStylesChanged));
     treatTextStylesChanged();
