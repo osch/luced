@@ -55,8 +55,10 @@ void StackTrace::print(FILE* fprintfOutput)
         ObjectArray<String> argStrings;
         {
             argStrings.append("addr2line");
-    
-            //argStrings.append("-i"); <-- not supported under older addr2line
+
+        #ifdef ADDR2LINE_SUPPORTS_INLINES    
+            argStrings.append("-i"); // <-- not supported under older addr2line
+        #endif
             argStrings.append("-f");
             argStrings.append("-s");
             argStrings.append("-C");
