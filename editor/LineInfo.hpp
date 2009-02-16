@@ -19,13 +19,14 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LINEINFO_H
-#define LINEINFO_H
+#ifndef LINE_INFO_HPP
+#define LINE_INFO_HPP
 
 #include "NonCopyable.hpp"
 #include "ByteArray.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class LineInfo
 {
@@ -123,4 +124,4 @@ private:
 
 } // namespace LucED
 
-#endif // LINEINFO_H
+#endif // LINE_INFO_HPP
