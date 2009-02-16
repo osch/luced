@@ -37,7 +37,11 @@ namespace LucED
  * In DEBUG version this is checked through a WeakPtr.
  * In NON-DEBUG version it is simply a raw pointer.
  */
-template<class T> class RawPtr
+template
+<
+    class T
+>
+class RawPtr
 {
 public:
     
@@ -52,8 +56,10 @@ public:
         : ptr(src.ptr)
     {
     #ifdef DEBUG
+        ptrGuard    = RawPtrGuardHolder::RawPtrGuardAccess::getRawPtrGuard(src);
         isValidFlag = src.isValidFlag;
-        ASSERT(isValidFlag == ptr.isValid());
+        ASSERT(isValidFlag == ptrGuard.isValid());
+        ASSERT((ptr != NULL && isValidFlag) || (ptr == NULL && !isValidFlag));
     #endif
     }
     
@@ -61,8 +67,10 @@ public:
         : ptr(src.ptr)
     {
     #ifdef DEBUG
+        ptrGuard    = RawPtrGuardHolder::RawPtrGuardAccess::getRawPtrGuard(src);
         isValidFlag = src.isValidFlag;
-        ASSERT(isValidFlag == ptr.isValid());
+        ASSERT(isValidFlag == ptrGuard.isValid());
+        ASSERT((ptr != NULL && isValidFlag) || (ptr == NULL && !isValidFlag));
     #endif
     }
     
@@ -70,7 +78,9 @@ public:
         : ptr(src)
     {
     #ifdef DEBUG
-        isValidFlag = ptr.isValid();
+        ptrGuard    = RawPtrGuardHolder::RawPtrGuardAccess::getRawPtrGuard(src);
+        isValidFlag = ptrGuard.isValid();
+        ASSERT((ptr != NULL && isValidFlag) || (ptr == NULL && !isValidFlag));
     #endif
     }
     
@@ -78,8 +88,10 @@ public:
     {
         ptr = src.ptr;
     #ifdef DEBUG
+        ptrGuard    = RawPtrGuardHolder::RawPtrGuardAccess::getRawPtrGuard(src);
         isValidFlag = src.isValidFlag;
-        ASSERT(isValidFlag == ptr.isValid());
+        ASSERT(isValidFlag == ptrGuard.isValid());
+        ASSERT((ptr != NULL && isValidFlag) || (ptr == NULL && !isValidFlag));
     #endif
         return *this;
     }
@@ -88,8 +100,10 @@ public:
     {
         ptr = src.ptr;
     #ifdef DEBUG
+        ptrGuard    = RawPtrGuardHolder::RawPtrGuardAccess::getRawPtrGuard(src);
         isValidFlag = src.isValidFlag;
-        ASSERT(isValidFlag == ptr.isValid());
+        ASSERT(isValidFlag == ptrGuard.isValid());
+        ASSERT((ptr != NULL && isValidFlag) || (ptr == NULL && !isValidFlag));
     #endif
         return *this;
     }
@@ -98,18 +112,19 @@ public:
     {
         ptr = src;
     #ifdef DEBUG
-        isValidFlag = ptr.isValid();
+        ptrGuard    = RawPtrGuardHolder::RawPtrGuardAccess::getRawPtrGuard(src);
+        isValidFlag = ptrGuard.isValid();
+        ASSERT((ptr != NULL && isValidFlag) || (ptr == NULL && !isValidFlag));
     #endif
         return *this;
     }
     
     bool isValid() const {
     #ifdef DEBUG
-        ASSERT(isValidFlag == ptr.isValid());
-        return isValidFlag;
-    #else
-        return ptr != NULL;
+        ASSERT(isValidFlag == ptrGuard.isValid());
+        ASSERT((ptr != NULL && isValidFlag) || (ptr == NULL && !isValidFlag));
     #endif
+        return ptr != NULL;
     }
     
     template<class S> bool operator==(const RawPtr<S>& rhs) const {
@@ -132,7 +147,10 @@ public:
     }
     
     T* getRawPtr() const {
-        ASSERT(isValid());
+    #ifdef DEBUG
+        ASSERT(isValidFlag == ptrGuard.isValid());
+        ASSERT((ptr != NULL && isValidFlag) || (ptr == NULL && !isValidFlag));
+    #endif
         return ptr;
     }
 
@@ -150,12 +168,12 @@ public:
 
     void invalidate() {
     #ifdef DEBUG
-        ASSERT(isValidFlag == ptr.isValid());
-        ptr.invalidate();
+        ASSERT(isValidFlag == ptrGuard.isValid());
+        ASSERT((ptr != NULL && isValidFlag) || (ptr == NULL && !isValidFlag));
+        ptrGuard.invalidate();
         isValidFlag = false;
-    #else
-        ptr = NULL;
     #endif
+        ptr = NULL;
     }
 
 private:
@@ -165,11 +183,10 @@ private:
     friend class RawPtr;
 
 #ifdef DEBUG
-    WeakPtr<T> ptr;
-    bool       isValidFlag;
-#else
-    T* ptr;
+    WeakPtr<RawPtrGuard> ptrGuard;
+    bool                 isValidFlag;
 #endif    
+    T* ptr;
 };
 
 

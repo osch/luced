@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,19 +19,20 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef OBJECTARRAY_H
-#define OBJECTARRAY_H
+#ifndef OBJECT_ARRAY_HPP
+#define OBJECT_ARRAY_HPP
 
 #include <new>
 #include <algorithm>
 
+#include "debug.hpp"
 #include "HeapMem.hpp"
 #include "MemArray.hpp"
+#include "RawPtrGuardHolder.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-using std::min;
-using std::max;
 
 /**
  * Array for objects with default-constructors, copy-constructors and 
@@ -116,14 +117,18 @@ public:
     long getLength() const {
         return MemArray<T>::getLength();
     }
-    ObjectArray<T>& clear() {
+    ObjectArray<T>& clear()
+    {
+        invalidateAllPtrGuards();
         for (long i = 0; i < getLength(); ++i) {
             this->getPtr(i)->~T();
         }
         MemArray<T>::clear();
         return *this;
     }
-    ObjectArray<T>& removeAmount(long pos, long amount) {
+    ObjectArray<T>& removeAmount(long pos, long amount)
+    {
+        invalidateAllPtrGuards();
         ASSERT(0 <= pos && pos + amount <= getLength());
         for (long p = pos; p < pos + amount; ++p) {
             this->getPtr(p)->~T();
@@ -144,7 +149,9 @@ public:
         removeAmount(pos1, pos2 - pos1);
         return *this;
     }
-    ObjectArray<T>& insert(long pos, const T* source, long sourceLength) {
+    ObjectArray<T>& insert(long pos, const T* source, long sourceLength)
+    {
+        invalidateAllPtrGuards();
         MemArray<T>::insertAmount(pos, sourceLength);
         for (long i = 0; i < sourceLength; ++i) {
             new (this->getPtr(pos + i)) T(source[i]);
@@ -176,7 +183,9 @@ public:
         append(&src, 1);
         return *this;
     }
-    ObjectArray<T>& appendAmount(long amount) {
+    ObjectArray<T>& appendAmount(long amount)
+    {
+        invalidateAllPtrGuards();
         long oldSize = getLength();
         MemArray<T>::appendAmount(amount);
         for (long i = oldSize; i < getLength(); ++i) {
@@ -189,29 +198,43 @@ public:
         return appendAmount(1);
     }
     template<class T1> 
-    ObjectArray<T>& appendNew(const T1& t1) {
+    ObjectArray<T>& appendNew(const T1& t1)
+    {
+        invalidateAllPtrGuards();
         long pos = getLength();
         MemArray<T>::insertAmount(pos, 1);
         new(this->getPtr(pos)) T(t1);
         return *this;
     }
     template<class T1, class T2> 
-    ObjectArray<T>& appendNew(const T1& t1, const T2& t2) {
+    ObjectArray<T>& appendNew(const T1& t1, const T2& t2)
+    {
+        invalidateAllPtrGuards();
         long pos = getLength();
         MemArray<T>::insertAmount(pos, 1);
         new(this->getPtr(pos)) T(t1, t2);
         return *this;
     }
     template<class T1, class T2, class T3> 
-    ObjectArray<T>& appendNew(const T1& t1, const T2& t2, const T3& t3) {
+    ObjectArray<T>& appendNew(const T1& t1, const T2& t2, const T3& t3)
+    {
+        invalidateAllPtrGuards();
         long pos = getLength();
         MemArray<T>::insertAmount(pos, 1);
         new(this->getPtr(pos)) T(t1, t2, t3);
         return *this;
     }
 private:
+    void invalidateAllPtrGuards()
+    {
+    #ifdef DEBUG
+        for (int i = 0, n = getLength(); i < n; ++i) {
+            RawPtrGuardHolder::RawPtrGuardAccess::invalidateRawPtrGuard(getPtr(i));
+        }
+    #endif
+    }
 };
 
 } // namespace LucED
 
-#endif // OBJECTARRAY_H
+#endif // OBJECT_ARRAY_HPP

@@ -19,36 +19,41 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "HeapObject.hpp"
+#include "RawPtrGuardHolder.hpp"
+
 #ifndef OWNING_PTR_HPP
 #define OWNING_PTR_HPP
-
-#include "HeapObject.hpp"
 
 namespace LucED
 {
 
-template<class T> class OwningPtr : private HeapObjectRefManipulator
+template
+<
+    class T
+>
+class OwningPtr
 {
 public:
     explicit OwningPtr(T* ptr = NULL) : ptr(ptr) {
         if (ptr != NULL) {
-            obtainInitialOwnership(ptr);
+            HeapObjectRefManipulator::obtainInitialOwnership(ptr);
         }
     }
     
     ~OwningPtr() {
-        decRefCounter(ptr);
+        HeapObjectRefManipulator::decRefCounter(ptr);
     }
     
     OwningPtr(const OwningPtr& src) {
         ptr = src.ptr;
-        incRefCounter(ptr);
+        HeapObjectRefManipulator::incRefCounter(ptr);
     }
     
     template<class S> OwningPtr(const OwningPtr<S>& src) {
         if (src.isValid()) {
             ptr = src.getRawPtr();
-            incRefCounter(ptr);
+            HeapObjectRefManipulator::incRefCounter(ptr);
         } else {
             ptr = NULL;
         }
@@ -56,10 +61,10 @@ public:
     
     OwningPtr& operator=(const OwningPtr& src) {
         if (src.isValid()) {
-            T *ptr1 = ptr;
+            T* ptr1 = ptr;
             ptr = src.getRawPtr();
-            incRefCounter(ptr);
-            if (ptr1 != NULL) decRefCounter(ptr1);
+            HeapObjectRefManipulator::incRefCounter(ptr);
+            if (ptr1 != NULL) HeapObjectRefManipulator::decRefCounter(ptr1);
         } else {
             invalidate();
         }
@@ -68,10 +73,10 @@ public:
     
     template<class S> OwningPtr& operator=(const OwningPtr<S>& src) {
         if (src.isValid()) {
-            T *ptr1 = ptr;
+            T* ptr1 = ptr;
             ptr = src.getRawPtr();
-            incRefCounter(ptr);
-            if (ptr1 != NULL) decRefCounter(ptr1);
+            HeapObjectRefManipulator::incRefCounter(ptr);
+            if (ptr1 != NULL) HeapObjectRefManipulator::decRefCounter(ptr1);
         } else {
             invalidate();
         }
@@ -80,7 +85,7 @@ public:
     
     void invalidate() {
         if (ptr != NULL) {
-            decRefCounter(ptr);
+            HeapObjectRefManipulator::decRefCounter(ptr);
             ptr = NULL;
         }
     }

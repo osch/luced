@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -18,6 +18,8 @@
 //   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 /////////////////////////////////////////////////////////////////////////////////////
+
+#include "RawPtrGuardHolder.hpp"
 
 #ifndef HEAP_OBJECT_HPP
 #define HEAP_OBJECT_HPP
@@ -38,13 +40,16 @@
 namespace LucED
 {
 
+class HeapObject;
+class RawPtrGuard;
+      
 #ifdef DEBUG
 class HeapObjectChecker : private NonCopyable
 {
 public:
     static void assertAllCleared();
 private:
-    friend class HeapObject;
+    friend class HeapObjectBase;
     friend class HeapObjectRefManipulator;
     HeapObjectChecker();
     
@@ -58,7 +63,7 @@ private:
 class HeapObjectCounters : private NonCopyable
 {
 private:
-    friend class HeapObject;
+    friend class HeapObjectBase;
     friend class HeapObjectRefManipulator;
     HeapObjectCounters() : weakCounter(0), 
                            strongCounter(1),
@@ -97,19 +102,23 @@ public:
     }
 };
 
-class HeapObject : private NonCopyable
-{
-protected:
 
-    HeapObject() {
-    }
+class HeapObjectBase : private NonCopyable
+{
+private:
+    friend class HeapObject;
+#ifdef DEBUG
+    friend class RawPtrGuard;
+#endif
+    HeapObjectBase()
+    {}
     
 public:
 
     /**
      * Virtual Destructor.
      */
-    virtual ~HeapObject() {}
+    virtual ~HeapObjectBase() {}
 
 protected:
     
@@ -118,7 +127,7 @@ protected:
                 malloc(sizeof(HeapObjectCounters) + size));
         new(allocated) HeapObjectCounters();
     #ifdef PRINT_MALLOCS
-        printf("----> HeapObject %p : allocating %8.d bytes \n", allocated + 1, size);
+        printf("----> HeapObjectBase %p : allocating %8.d bytes \n", allocated + 1, size);
         printf("***** HeapObjects allocated: %d \n", HeapObjectChecker::allocCounter - HeapObjectChecker::destructCounter);
     #endif
     #ifdef DEBUG
@@ -165,24 +174,31 @@ private:
 class HeapObjectRefManipulator
 {
 protected:
-    static void obtainInitialOwnership(const HeapObject* obj) {
+    template<class T
+            >
+    friend class OwningPtr;
+    template<class T
+            >
+    friend class WeakPtr;
+    friend class RawPtrGuardHolder;
+
+    static void obtainInitialOwnership(const HeapObjectBase* obj) {
         if (obj != NULL) {
-#ifdef DEBUG
+    #ifdef DEBUG
         #ifdef PRINT_MALLOCS
-            printf("----> HeapObject %p : initial Ownership\n", obj);
+            printf("----> HeapObjectBase %p : initial Ownership\n", obj);
             printf("----- New %s at %p\n", typeid(*obj).name(), dynamic_cast<const void*>(obj));
         #endif
-        #ifdef DEBUG
             HeapObjectChecker::initCounter += 1;
-        #endif
+    #endif
             HeapObjectCounters* heapObjectCounters = getHeapObjectCounters(obj);
             ASSERT(heapObjectCounters->wasNeverOwned);
             ASSERT(heapObjectCounters->strongCounter >= 1); // normal == 1, >= 1 after resetInitialOwnership
-#endif
+
             heapObjectCounters->wasNeverOwned = false;
         }
     }
-    static void resetInitialOwnership(const HeapObject* obj) {
+    static void resetInitialOwnership(const HeapObjectBase* obj) {
         if (obj != NULL) {
             HeapObjectCounters* heapObjectCounters = getHeapObjectCounters(obj);
             heapObjectCounters->wasNeverOwned = true;
@@ -192,7 +208,7 @@ protected:
         }
     }
 
-    static void incRefCounter(const HeapObject* obj) {
+    static void incRefCounter(const HeapObjectBase* obj) {
         if (obj != NULL) {
             incRefCounter(getHeapObjectCounters(obj));
         }
@@ -203,7 +219,7 @@ protected:
         }
     }
 
-    static void decRefCounter(const HeapObject* obj) {
+    static void decRefCounter(const HeapObjectBase* obj) {
         if (obj != NULL) {
             decRefCounter(getHeapObjectCounters(obj));
         }
@@ -214,7 +230,7 @@ protected:
             if (counters->strongCounter == 1) {
                 // keep strongCounter == 1 while destructing
                 void* rawPtr = counters + 1;
-                static_cast<HeapObject*>(rawPtr)->~HeapObject();
+                static_cast<HeapObjectBase*>(rawPtr)->~HeapObjectBase();
                 #ifdef DEBUG
                 HeapObjectChecker::destructCounter += 1;
                 #endif
@@ -222,7 +238,7 @@ protected:
                 if (counters->weakCounter == 0) {
                     counters->clear();
                     #ifdef PRINT_MALLOCS
-                    printf("----> HeapObject %p : deleting\n", counters + 1);
+                    printf("----> HeapObjectBase %p : deleting\n", counters + 1);
                     #endif
                     free(counters);
                 } else {
@@ -234,7 +250,7 @@ protected:
         }
     }
     
-    static void incWeakCounter(const HeapObject* obj) {
+    static void incWeakCounter(const HeapObjectBase* obj) {
         if (obj != NULL) {
             incWeakCounter(getHeapObjectCounters(obj));
         }
@@ -245,7 +261,7 @@ protected:
         }
     }
 
-    static void decWeakCounter(const HeapObject* obj) {
+    static void decWeakCounter(const HeapObjectBase* obj) {
         if (obj != NULL) {
             decWeakCounter(getHeapObjectCounters(obj));
         }
@@ -256,7 +272,7 @@ protected:
             counters->weakCounter -= 1;
             if (!counters->hasWeakReferences() && !counters->hasOwningReferences()) {
                 #ifdef PRINT_MALLOCS
-                printf("----> HeapObject %p : deleting\n", counters + 1);
+                printf("----> HeapObjectBase %p : deleting\n", counters + 1);
                 #endif
                 counters->clear();
                 free(counters);
@@ -264,7 +280,7 @@ protected:
         }
     }
 
-    static HeapObjectCounters* getHeapObjectCounters(const HeapObject* heapObject)
+    static HeapObjectCounters* getHeapObjectCounters(const HeapObjectBase* heapObject)
     {
         if (heapObject != NULL)
         {
@@ -284,6 +300,14 @@ protected:
             return NULL;
         }
     }
+};
+
+class HeapObject : public HeapObjectBase,
+                   public RawPtrGuardHolder
+{
+protected:
+    HeapObject()
+    {}
 };
 
 } // namespace LucED

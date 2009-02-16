@@ -19,11 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef WEAK_PTR_HPP
-#define WEAK_PTR_HPP
-
 #include "HeapObject.hpp"
 #include "OwningPtr.hpp"
+
+#ifndef WEAK_PTR_HPP
+#define WEAK_PTR_HPP
 
 #undef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS
 
@@ -31,7 +31,11 @@ namespace LucED
 {
 
 
-template<class T> class WeakPtr : private HeapObjectRefManipulator
+template
+<
+    class T
+>
+class WeakPtr
 {
 public:
     
@@ -48,7 +52,7 @@ public:
         , heapObjectCounters(HeapObjectRefManipulator::getHeapObjectCounters(ptr))
 #endif
     {
-        incWeakCounter(getHeapObjectCounters());
+        HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
     }
     
     WeakPtr(const WeakPtr& src)
@@ -57,7 +61,7 @@ public:
         , heapObjectCounters(HeapObjectRefManipulator::getHeapObjectCounters(ptr))
 #endif
     {
-        incWeakCounter(getHeapObjectCounters());
+        HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
     }
     
     template<class S> WeakPtr(const WeakPtr<S>& src) {
@@ -66,7 +70,7 @@ public:
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    
             heapObjectCounters = HeapObjectRefManipulator::getHeapObjectCounters(ptr);
 #endif
-            incWeakCounter(getHeapObjectCounters());
+            HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
         } else {
             ptr = NULL;
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    
@@ -81,7 +85,7 @@ public:
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    
             heapObjectCounters = HeapObjectRefManipulator::getHeapObjectCounters(ptr);
 #endif
-            incWeakCounter(getHeapObjectCounters());
+            HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
         } else {
             ptr = NULL;
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    
@@ -96,7 +100,7 @@ public:
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS
             heapObjectCounters = HeapObjectRefManipulator::getHeapObjectCounters(ptr);
 #endif
-            incWeakCounter(getHeapObjectCounters());
+            HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
         } else {
             ptr = NULL;
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    
@@ -106,7 +110,7 @@ public:
     }
     
     ~WeakPtr() {
-        decWeakCounter(getHeapObjectCounters());
+        HeapObjectRefManipulator::decWeakCounter(getHeapObjectCounters());
     }
     
     WeakPtr& operator=(const WeakPtr& src) {
@@ -117,8 +121,8 @@ public:
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS
             heapObjectCounters = HeapObjectRefManipulator::getHeapObjectCounters(ptr);
 #endif
-            incWeakCounter(getHeapObjectCounters());
-            decWeakCounter(heapObjectCounters1);
+            HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
+            HeapObjectRefManipulator::decWeakCounter(heapObjectCounters1);
         } else {
             invalidate();
         }
@@ -133,8 +137,8 @@ public:
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS
             heapObjectCounters = HeapObjectRefManipulator::getHeapObjectCounters(ptr);
 #endif
-            incWeakCounter(getHeapObjectCounters());
-            decWeakCounter(heapObjectCounters1);
+            HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
+            HeapObjectRefManipulator::decWeakCounter(heapObjectCounters1);
         } else {
             invalidate();
         }
@@ -149,8 +153,8 @@ public:
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS
             heapObjectCounters = getHeapObjectCounters(ptr);
 #endif
-            incWeakCounter(getHeapObjectCounters());
-            decWeakCounter(heapObjectCounters1);
+            HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
+            HeapObjectRefManipulator::decWeakCounter(heapObjectCounters1);
         } else {
             invalidate();
         }
@@ -158,7 +162,7 @@ public:
     }
     
     void invalidate() {
-        decWeakCounter(getHeapObjectCounters());
+        HeapObjectRefManipulator::decWeakCounter(getHeapObjectCounters());
         ptr = NULL;
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    
         heapObjectCounters = NULL;
@@ -197,7 +201,7 @@ private:
     void checkOwningReferences() const {
         HeapObjectCounters* counters = getHeapObjectCounters();
         if (ptr != NULL && !counters->hasOwningReferences()) {
-            decWeakCounter(counters);
+            HeapObjectRefManipulator::decWeakCounter(counters);
             ptr = NULL;
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS
             heapObjectCounters = NULL;
