@@ -23,6 +23,7 @@
 #define MEM_ARRAY_HPP
 
 #include "HeapMem.hpp"
+#include "ValueObject.hpp"
 
 namespace LucED {
 
@@ -30,7 +31,11 @@ namespace LucED {
  * Array for objects that do not need constructors 
  * and destructors and can be copied by memmove.
  */
-template<typename T> class MemArray
+template
+<
+    typename T
+>
+class MemArray : public ValueObject
 {
 public:
     MemArray(long size = 0) {

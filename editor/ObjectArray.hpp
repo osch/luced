@@ -29,21 +29,25 @@
 #include "HeapMem.hpp"
 #include "MemArray.hpp"
 #include "RawPtrGuardHolder.hpp"
+#include "ValueObject.hpp"
 
 namespace LucED
 {
-
 
 /**
  * Array for objects with default-constructors, copy-constructors and 
  * destructors that can be moved by memmove
  */
-template<class T> class ObjectArray : private MemArray<T>
+template
+<
+    class T
+>
+class ObjectArray : public  ValueObject
 {
 public:
-    ObjectArray() : MemArray<T>(0) {}
+    ObjectArray() : memArray(0) {}
     
-    ObjectArray(long size) : MemArray<T>(size) {
+    ObjectArray(long size) : memArray(size) {
         for (long i = 0; i < size; ++i) {
             new(this->getPtr(i)) T();
         }
@@ -56,14 +60,14 @@ public:
             this->getPtr(i)->~T();
         }
     }
-    ObjectArray(const ObjectArray<T>& src) : MemArray<T>(0) {
+    ObjectArray(const ObjectArray<T>& src) : memArray(0) {
         for (long i = 0; i < src.getLength(); ++i) {
             append(src[i]);
         }
     }
     template< class T2
             >
-    explicit ObjectArray(const ObjectArray<T2>& src) : MemArray<T>(0) {
+    explicit ObjectArray(const ObjectArray<T2>& src) : memArray(0) {
         for (long i = 0; i < src.getLength(); ++i) {
             append(src[i]);
         }
@@ -89,7 +93,7 @@ public:
         return *this->getPtr(i);
     }
     T* getPtr(long i) {
-        return MemArray<T>::getPtr(i);
+        return memArray.getPtr(i);
     }
     T get(long i) const {
         ASSERT(0 <= i && i < getLength());
@@ -112,10 +116,10 @@ public:
         return *this->getPtr(i);
     }
     const T* getPtr(long i) const {
-        return MemArray<T>::getPtr(i);
+        return memArray.getPtr(i);
     }
     long getLength() const {
-        return MemArray<T>::getLength();
+        return memArray.getLength();
     }
     ObjectArray<T>& clear()
     {
@@ -123,7 +127,7 @@ public:
         for (long i = 0; i < getLength(); ++i) {
             this->getPtr(i)->~T();
         }
-        MemArray<T>::clear();
+        memArray.clear();
         return *this;
     }
     ObjectArray<T>& removeAmount(long pos, long amount)
@@ -133,7 +137,7 @@ public:
         for (long p = pos; p < pos + amount; ++p) {
             this->getPtr(p)->~T();
         }
-        MemArray<T>::removeAmount(pos, amount);
+        memArray.removeAmount(pos, amount);
         return *this;
     }
     ObjectArray<T>& remove(long pos) {
@@ -152,7 +156,7 @@ public:
     ObjectArray<T>& insert(long pos, const T* source, long sourceLength)
     {
         invalidateAllPtrGuards();
-        MemArray<T>::insertAmount(pos, sourceLength);
+        memArray.insertAmount(pos, sourceLength);
         for (long i = 0; i < sourceLength; ++i) {
             new (this->getPtr(pos + i)) T(source[i]);
         }
@@ -187,7 +191,7 @@ public:
     {
         invalidateAllPtrGuards();
         long oldSize = getLength();
-        MemArray<T>::appendAmount(amount);
+        memArray.appendAmount(amount);
         for (long i = oldSize; i < getLength(); ++i) {
             new(this->getPtr(i)) T();
         }
@@ -202,7 +206,7 @@ public:
     {
         invalidateAllPtrGuards();
         long pos = getLength();
-        MemArray<T>::insertAmount(pos, 1);
+        memArray.insertAmount(pos, 1);
         new(this->getPtr(pos)) T(t1);
         return *this;
     }
@@ -211,7 +215,7 @@ public:
     {
         invalidateAllPtrGuards();
         long pos = getLength();
-        MemArray<T>::insertAmount(pos, 1);
+        memArray.insertAmount(pos, 1);
         new(this->getPtr(pos)) T(t1, t2);
         return *this;
     }
@@ -220,7 +224,7 @@ public:
     {
         invalidateAllPtrGuards();
         long pos = getLength();
-        MemArray<T>::insertAmount(pos, 1);
+        memArray.insertAmount(pos, 1);
         new(this->getPtr(pos)) T(t1, t2, t3);
         return *this;
     }
@@ -233,6 +237,8 @@ private:
         }
     #endif
     }
+
+    MemArray<T> memArray;
 };
 
 } // namespace LucED

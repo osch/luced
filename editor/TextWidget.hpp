@@ -235,22 +235,19 @@ private:
     void clip(int x, int y, int w, int h);
     void calcTotalPixWidth();
     long calcLongestVisiblePixWidth();
-    void fillLineInfo(long beginOfLinePos, LineInfo* li);
-    LineInfo* getValidLineInfo(long line);
-    void appendToOutBuf(LineInfo *li, long pos,
-            int c, int background, int style, int *print, long *pixelPos, int* lastBackground, int* lastStyle, 
-            int* lastStyleBegin, long* lastStylePixBegin);
+    void fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li);
+    RawPtr<LineInfo> getValidLineInfo(long line);
     void redrawChanged(long spos, long epos);
     void redraw();
     void drawPartialArea(int minY, int maxY, int x1, int x2);
     void drawArea(int minY, int maxY);
-    int  calcVisiblePixX(LineInfo *li, long pos);
-    void printPartialLine(LineInfo *li, int y, int x1, int x2);
-    void printPartialLineWithoutCursor(LineInfo *li, int y, int x1, int x2);
-    void printLine(LineInfo *li, int y);
-    void printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi);
-    void clearLine(LineInfo *li, int y);
-    void clearPartialLine(LineInfo *li, int y, int x1, int x2);
+    int  calcVisiblePixX(RawPtr<LineInfo> li, long pos);
+    void printPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2);
+    void printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y, int x1, int x2);
+    void printLine(RawPtr<LineInfo> li, int y);
+    void printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<LineInfo> oldLi);
+    void clearLine(RawPtr<LineInfo> li, int y);
+    void clearPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2);
     void applyTextStyle(int styleIndex);
     void internSetLeftPix(long leftPix);
 

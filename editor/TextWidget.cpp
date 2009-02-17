@@ -273,7 +273,8 @@ public:
     TextWidgetFillLineInfoIterator(RawPtr<const TextData>                  textData, 
                                    RawPtr<HilitingBuffer>                  hilitingBuffer, 
                                    RawPtr<BackliteBuffer>                  backliteBuffer,
-                                   const ObjectArray< RawPtr<TextStyle> >& textStyles,
+                                   RawPtr<const ObjectArray< RawPtr<TextStyle> > > 
+                                                                           textStyles,
                                    RawPtr<TextStyle>                       defaultTextStyle,
                                    long                                    textPos)
         : textData(textData),
@@ -286,7 +287,7 @@ public:
           isEndOfLineFlag(textData->isEndOfLine(textPos)),
           c(isEndOfLineFlag ? 0 : textData->getChar(textPos)),
           styleIndex(hilitingBuffer->getTextStyle(textPos)),
-          style(textStyles[styleIndex]),
+          style((*textStyles)[styleIndex]),
           spaceWidth(defaultTextStyle->getSpaceWidth()),
           tabWidth(hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth()),
           charWidth(isEndOfLineFlag ? 0 : style->getCharWidth(c)),
@@ -334,7 +335,7 @@ public:
         if (!textData->isEndOfLine(textPos)) {
             c          = textData->getChar(textPos);
             styleIndex = hilitingBuffer->getTextStyle(textPos);
-            style      = textStyles[styleIndex];
+            style      = (*textStyles)[styleIndex];
             charWidth  = style->getCharWidth(c);
         } else {
             isEndOfLineFlag = true;
@@ -353,7 +354,7 @@ private:
     RawPtr<HilitingBuffer>             const hilitingBuffer;
     RawPtr<BackliteBuffer>             const backliteBuffer;
     RawPtr<TextStyle>                  const defaultTextStyle;
-    const ObjectArray< RawPtr<TextStyle> >&  textStyles;
+    RawPtr<const ObjectArray< RawPtr<TextStyle> > >  textStyles;
     long pixelPos;
     long textPos;
     bool isEndOfLineFlag;
@@ -370,7 +371,7 @@ private:
 class TextWidgetFragmentFiller
 {
 public:
-    TextWidgetFragmentFiller(MemArray<LineInfo::FragmentInfo>& fragments)
+    TextWidgetFragmentFiller(RawPtr<MemArray<LineInfo::FragmentInfo> > fragments)
         : fragments(fragments),
           lastStyle(-1),
           lastBackground(-1),
@@ -395,10 +396,10 @@ public:
         ASSERT(lastStyle             != -1);
         ASSERT(lastStyleBeginTextPos != -1);
         ASSERT(lastStylePixBegin     != -1);
-        ASSERT(fragments.getLength() >=  1);
+        ASSERT(fragments->getLength() >=  1);
 
-        fragments.getLast().numberBytes = i.getTextPos() - lastStyleBeginTextPos;
-        fragments.getLast().pixWidth    = i.getPixelPos() - lastStylePixBegin;
+        fragments->getLast().numberBytes = i.getTextPos() - lastStyleBeginTextPos;
+        fragments->getLast().pixWidth    = i.getPixelPos() - lastStylePixBegin;
     }
 
     void beginNewFragment(const TextWidgetFillLineInfoIterator& i)
@@ -412,17 +413,17 @@ public:
         lastStylePixBegin     = i.getPixelPos();
         lastStyleBeginTextPos = i.getTextPos();
 
-        fragments.appendAmount(1);
-        fragments.getLast().background = i.getBackground();
-        fragments.getLast().styleIndex = i.getStyleIndex();
+        fragments->appendAmount(1);
+        fragments->getLast().background = i.getBackground();
+        fragments->getLast().styleIndex = i.getStyleIndex();
     #ifdef DEBUG
-        fragments.getLast().numberBytes = -1;
-        fragments.getLast().pixWidth    = -1;
+        fragments->getLast().numberBytes = -1;
+        fragments->getLast().pixWidth    = -1;
     #endif
     }
 
 private:
-    MemArray<LineInfo::FragmentInfo>&       fragments;
+    RawPtr<MemArray<LineInfo::FragmentInfo> > fragments;
     int                                     lastStyle;
     int                                     lastBackground;
     long                                    lastStylePixBegin;
@@ -432,10 +433,10 @@ private:
 } // namespace LucED
 
 
-void TextWidget::fillLineInfo(long beginOfLinePos, LineInfo* li)
+void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
 {
-    TextWidgetFillLineInfoIterator i(textData, hilitingBuffer, backliteBuffer, rawTextStylePtrs, defaultTextStyle, beginOfLinePos);
-    TextWidgetFragmentFiller       f(li->fragments);
+    TextWidgetFillLineInfoIterator i(textData, hilitingBuffer, backliteBuffer, &rawTextStylePtrs, defaultTextStyle, beginOfLinePos);
+    TextWidgetFragmentFiller       f(&li->fragments);
     
     int  print = 0;
     
@@ -563,7 +564,7 @@ inline void TextWidget::applyTextStyle(int styleIndex)
     XSetFont(      getDisplay(), textWidget_gcid, style->getFontHandle());
 }
 
-inline int TextWidget::calcVisiblePixX(LineInfo* li, long pos)
+inline int TextWidget::calcVisiblePixX(RawPtr<LineInfo> li, long pos)
 {
     int x = -li->leftPixOffset;
     int  p, i;
@@ -600,7 +601,7 @@ inline GuiColor TextWidget::getColorForBackground(byte background)
 }
 
 
-inline void TextWidget::clearLine(LineInfo* li, int y)
+inline void TextWidget::clearLine(RawPtr<LineInfo> li, int y)
 {
 /*{
     long x = 0;
@@ -616,11 +617,12 @@ inline void TextWidget::clearLine(LineInfo* li, int y)
 
 
 
-inline void TextWidget::clearPartialLine(LineInfo* li, int y, int x1, int x2)
+inline void TextWidget::clearPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2)
 {
     ByteArray& buf = li->outBuf;
-    MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
-    byte *ptr, *end;
+    RawPtr<MemArray<LineInfo::FragmentInfo> > fragments = &li->fragments;
+    byte* ptr;
+    byte* end;
     long x = -li->leftPixOffset;;
     long accX = -li->leftPixOffset;;
     int  accBackground = -1;
@@ -630,14 +632,14 @@ inline void TextWidget::clearPartialLine(LineInfo* li, int y, int x1, int x2)
         ptr = buf.getPtr(0);
         end = ptr + buf.getLength();
 
-        for (int i = 0, n = fragments.getLength(); i < n; ++i)
+        for (int i = 0, n = fragments->getLength(); i < n; ++i)
         {
             ASSERT(ptr < end);
             
-            int background = fragments[i].background;
-            int styleIndex = fragments[i].styleIndex;
-            int len        = fragments[i].numberBytes;
-            int pixWidth   = fragments[i].pixWidth;
+            int background = (*fragments)[i].background;
+            int styleIndex = (*fragments)[i].styleIndex;
+            int len        = (*fragments)[i].numberBytes;
+            int pixWidth   = (*fragments)[i].pixWidth;
 
             if (background != accBackground) {
                 if (accBackground != -1) {
@@ -692,7 +694,7 @@ inline void TextWidget::clearPartialLine(LineInfo* li, int y, int x1, int x2)
 
 }
 
-inline void TextWidget::printPartialLineWithoutCursor(LineInfo* li, int y, int x1, int x2)
+inline void TextWidget::printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y, int x1, int x2)
 {
     ByteArray& buf = li->outBuf;
     MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
@@ -723,10 +725,10 @@ inline void TextWidget::printPartialLineWithoutCursor(LineInfo* li, int y, int x
                     && x + pixWidth 
                          - style->getCharWidth(ptr[len - 1])
                          + style->getCharRBearing(ptr[len - 1]) >= x1) {
-                unsigned char *ptrpend = ptr + len;
-                unsigned char *ptrp = ptr;
-                unsigned char *ptrp1;
-                unsigned char *ptrp2;
+                unsigned char* ptrpend = ptr + len;
+                unsigned char* ptrp = ptr;
+                unsigned char* ptrp1;
+                unsigned char* ptrp2;
                 int xp = x;
                 int xp1;
                 
@@ -756,7 +758,7 @@ inline void TextWidget::printPartialLineWithoutCursor(LineInfo* li, int y, int x
 }
 
 
-inline void TextWidget::printPartialLine(LineInfo* li, int y, int x1, int x2)
+inline void TextWidget::printPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2)
 {
     long cursorPos = getCursorTextPosition();
     
@@ -786,7 +788,7 @@ inline void TextWidget::printPartialLine(LineInfo* li, int y, int x1, int x2)
 }
 
 
-inline void TextWidget::printLine(LineInfo* li, int y)
+inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
 {
     long cursorPos      = getCursorTextPosition();
     bool considerCursor = false;
@@ -800,7 +802,8 @@ inline void TextWidget::printLine(LineInfo* li, int y)
 
     ByteArray& buf                    = li->outBuf;
     MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
-    byte *ptr, *end;
+    byte* ptr;
+    byte* end;
     long x = 0;
     long lastBackgroundX = 0;
     int leftPixOffset = li->leftPixOffset;
@@ -893,7 +896,7 @@ inline void TextWidget::printLine(LineInfo* li, int y)
     }
 }
 
-void TextWidget::printChangedPartOfLine(LineInfo* newLi, int y, LineInfo* oldLi)
+void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<LineInfo> oldLi)
 {
     ByteArray& newBuf                              = newLi->outBuf;
     ByteArray& oldBuf                              = oldLi->outBuf;
@@ -1047,7 +1050,7 @@ void TextWidget::drawPartialArea(int minY, int maxY, int x1, int x2)
     long oldpos;
     
     do {
-        LineInfo* li = lineInfos.getPtr(line);
+        RawPtr<LineInfo> li = lineInfos.getPtr(line);
 
         if (!li->valid) {
             fillLineInfo(pos, li);
@@ -1086,7 +1089,7 @@ void TextWidget::drawArea(int minY, int maxY)
 
     if (lineInfos.getLength() > 0) {
         do {
-            LineInfo* li = lineInfos.getPtr(line);
+            RawPtr<LineInfo> li = lineInfos.getPtr(line);
 
             if (!li->valid) {
                 fillLineInfo(pos, li);
@@ -1130,7 +1133,7 @@ void TextWidget::redrawChanged(long spos, long epos)
 
     if (lineInfos.getLength() > 0) {
         do {
-            LineInfo* li = lineInfos.getPtr(line);
+            RawPtr<LineInfo> li = lineInfos.getPtr(line);
 
             if (li->valid && li->beginOfLinePos == pos) {
                 
@@ -1185,9 +1188,9 @@ inline void TextWidget::redraw() {
     drawArea(0, position.h);
 }
 
-LineInfo* TextWidget::getValidLineInfo(long line)
+RawPtr<LineInfo> TextWidget::getValidLineInfo(long line)
 {
-    LineInfo* li = lineInfos.getPtr(line);
+    RawPtr<LineInfo> li = lineInfos.getPtr(line);
 
     if (!li->valid)
     {
@@ -1215,7 +1218,7 @@ void TextWidget::drawCursor(long cursorPos)
 {
     int y = 0;
     int line = 0;
-    LineInfo* li;
+    RawPtr<LineInfo> li;
 
     if (lineInfos.getLength() > 0) {
         do {
@@ -1249,7 +1252,7 @@ long TextWidget::getCursorPixX()
     
     if (0 <= line && line < visibleLines) {
 
-        LineInfo* li = getValidLineInfo(line);
+        RawPtr<LineInfo> li = getValidLineInfo(line);
     
         if (li->startPos <= cursorPos && cursorPos <= li->endPos) {
             // cursor visible
@@ -1284,7 +1287,7 @@ long TextWidget::calcLongestVisiblePixWidth()
     
     if (lineInfos.getLength() > 0) {
         do {
-            LineInfo* li = lineInfos.getPtr(line);
+            RawPtr<LineInfo> li = lineInfos.getPtr(line);
             if (!li->valid) {
                 fillLineInfo(pos, li);
             }
@@ -1431,7 +1434,7 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
     long pos;
     long nextPos = getTopLeftTextPosition();
 
-    LineInfo* li;
+    RawPtr<LineInfo> li;
     
     do {
         line += 1;
@@ -1957,7 +1960,7 @@ void TextWidget::removeAtCursor(long amount)
 
 
 
-static inline bool areIntersected(XRectangle *r1, XRectangle *r2)
+static inline bool areIntersected(XRectangle* r1, XRectangle* r2)
 {
     bool rslt = false;
     
@@ -1981,7 +1984,7 @@ static inline bool areIntersected(XRectangle *r1, XRectangle *r2)
     return false;
 }
 
-GuiElement::ProcessingResult TextWidget::processEvent(const XEvent *event)
+GuiElement::ProcessingResult TextWidget::processEvent(const XEvent* event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
@@ -2111,7 +2114,7 @@ void TextWidget::treatTextDataUpdate(TextData::UpdateInfo u)
     }
 
     for (int i = 0; i < lineInfos.getLength(); ++i) {
-        LineInfo* li = lineInfos.getPtr(i);
+        RawPtr<LineInfo> li = lineInfos.getPtr(i);
         if (li->valid)
         {
             if (adjustLineInfoPosition(&li->beginOfLinePos, u.beginChangedPos, u.oldEndChangedPos, u.changedAmount)

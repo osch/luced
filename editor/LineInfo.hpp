@@ -24,11 +24,12 @@
 
 #include "NonCopyable.hpp"
 #include "ByteArray.hpp"
+#include "ValueObject.hpp"
 
 namespace LucED
 {
 
-class LineInfo
+class LineInfo : public ValueObject
 {
 public:
     LineInfo() : valid(false) {}
@@ -77,10 +78,10 @@ public:
     LineInfos() : first(0) {}
     
     int getLength() { return lineInfos.getLength(); }
-    const LineInfo* getPtr(long nr) const {
+    RawPtr<const LineInfo> getPtr(long nr) const {
         return &lineInfos[(first + nr) % lineInfos.getLength()];
     }
-    LineInfo* getPtr(long nr) {
+    RawPtr<LineInfo> getPtr(long nr) {
         return &lineInfos[(first + nr) % lineInfos.getLength()];
     }
     void setAllInvalid() {
