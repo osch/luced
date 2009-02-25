@@ -285,7 +285,7 @@ return -- default actionName key binding
     },
     {
         actionName = "builtin.closeMessageBox",
-        keys       = { "Escape" },
+        keys       = { "Escape", "Q" },
     },
     {
         actionName = "builtin.closePanel",
