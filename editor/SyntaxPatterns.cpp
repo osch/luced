@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -33,13 +33,13 @@ using namespace LucED;
 
 
 SyntaxPatterns::Ptr SyntaxPatterns::create(LuaVar config, 
-                                           HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions)
+                                           TextStyleDefinitions::ConstPtr textStyleDefinitions)
 {
     ASSERT(config.isTable());
     return Ptr(new SyntaxPatterns(config, textStyleDefinitions));
 }
 
-SyntaxPatterns::Ptr SyntaxPatterns::createWithoutPatterns(HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions)
+SyntaxPatterns::Ptr SyntaxPatterns::createWithoutPatterns(TextStyleDefinitions::ConstPtr textStyleDefinitions)
 {
     return Ptr(new SyntaxPatterns(Nullable<LuaVar>(), textStyleDefinitions));
 }
@@ -78,7 +78,7 @@ Nullable<int> SyntaxPatterns::getTextStyleIndex(const String& textStyleName)
     }
     else 
     {
-        Nullable<TextStyleDefinition> foundDefinition = textStyleDefinitions->get(textStyleName);
+        Nullable<TextStyleDefinition> foundDefinition = textStyleDefinitions->getFirstWithName(textStyleName);
     
         if (foundDefinition.isValid()) {
             TextStyle::Ptr textStyle = TextStyleCache::getInstance()->getTextStyle(foundDefinition);
@@ -94,7 +94,7 @@ Nullable<int> SyntaxPatterns::getTextStyleIndex(const String& textStyleName)
 
 
 SyntaxPatterns::SyntaxPatterns(Nullable<LuaVar> optionalConfig, 
-                               HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions)
+                               TextStyleDefinitions::ConstPtr textStyleDefinitions)
     : maxOvecSize(0),
       totalMaxREBytesExtend(0),
       hasSerializedString(false),
@@ -102,7 +102,7 @@ SyntaxPatterns::SyntaxPatterns(Nullable<LuaVar> optionalConfig,
 {
     {
         RawPtr<TextStyleCache> textStyleCache = TextStyleCache::getInstance();
-        Nullable<TextStyleDefinition> defaultTextStyleDefinition = textStyleDefinitions->get("default");
+        Nullable<TextStyleDefinition> defaultTextStyleDefinition = textStyleDefinitions->getFirstWithName("default");
         if (!defaultTextStyleDefinition.isValid()) {
             throw ConfigException("missing text style definition \"default\"");
         }
@@ -315,7 +315,7 @@ bool SyntaxPatterns::hasSamePatternStructureThan(RawPtr<const SyntaxPatterns> rh
 }
 
 
-void SyntaxPatterns::updateTextStyles(HeapHashMap<String,TextStyleDefinition>::ConstPtr newTextStyleDefinitions)
+void SyntaxPatterns::updateTextStyles(TextStyleDefinitions::ConstPtr newTextStyleDefinitions)
 {
     TextStyle::Ptr newDefaultTextStyle;
     HashMap<String,int>::Iterator iterator = textStyleToIndexMap.getIterator();
@@ -326,7 +326,7 @@ void SyntaxPatterns::updateTextStyles(HeapHashMap<String,TextStyleDefinition>::C
         String textStyleName  = iterator.getKey();
         int    textStyleIndex = iterator.getValue();
         
-        Nullable<TextStyleDefinition> foundDefinition = newTextStyleDefinitions->get(textStyleName);
+        Nullable<TextStyleDefinition> foundDefinition = newTextStyleDefinitions->getFirstWithName(textStyleName);
 
         if (!foundDefinition.isValid()) {
             throw ConfigException(String() << "missing text style '" << textStyleName << "'");

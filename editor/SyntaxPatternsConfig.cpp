@@ -26,8 +26,8 @@
 
 using namespace LucED;
 
-SyntaxPatterns::Ptr SyntaxPatternsConfig::loadSyntaxPatterns(const String& syntaxNameString,
-                                                             HeapHashMap<String,TextStyleDefinition>::Ptr textStyleDefinitions)
+SyntaxPatterns::Ptr SyntaxPatternsConfig::loadSyntaxPatterns(const String&             syntaxNameString,
+                                                             TextStyleDefinitions::Ptr textStyleDefinitions)
 {
     if (syntaxNameString.getLength() > 0)
     {
@@ -77,7 +77,7 @@ SyntaxPatterns::Ptr SyntaxPatternsConfig::getSyntaxPatterns(const String&       
 }
 
 
-void SyntaxPatternsConfig::refresh(HeapHashMap<String,TextStyleDefinition>::Ptr newTextStyleDefinitions)
+void SyntaxPatternsConfig::refresh(TextStyleDefinitions::Ptr newTextStyleDefinitions)
 {
     HashMap<String,Entry::Ptr>::Iterator patternIterator = patterns.getIterator();
 

@@ -30,6 +30,7 @@
 #include "Callback.hpp"
 #include "CallbackContainer.hpp"
 #include "TextStyleDefinition.hpp"
+#include "TextStyleDefinitions.hpp"
 
 namespace LucED
 {
@@ -52,14 +53,14 @@ public:
         return getSyntaxPatterns("", changedCallback);
     }
 
-    void refresh(HeapHashMap<String,TextStyleDefinition>::Ptr newTextStyleDefinitions);
+    void refresh(TextStyleDefinitions::Ptr newTextStyleDefinitions);
     
 private:
     SyntaxPatternsConfig()
     {}
 
-    static SyntaxPatterns::Ptr loadSyntaxPatterns(const String& syntaxName,
-                                                  HeapHashMap<String,TextStyleDefinition>::Ptr textStyleDefinitions);
+    static SyntaxPatterns::Ptr loadSyntaxPatterns(const String&             syntaxName,
+                                                  TextStyleDefinitions::Ptr textStyleDefinitions);
 
     class Entry : public HeapObject
     {
@@ -89,7 +90,7 @@ private:
     };
 
     HashMap<String,Entry::Ptr> patterns;
-    HeapHashMap<String,TextStyleDefinition>::Ptr textStyleDefinitions;
+    TextStyleDefinitions::Ptr  textStyleDefinitions;
 };
 
 } // namespace LucED

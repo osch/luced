@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -35,6 +35,7 @@
 #include "Nullable.hpp"
 #include "CallbackContainer.hpp"
 #include "Callback.hpp"
+#include "TextStyleDefinitions.hpp"
           
 namespace LucED
 {
@@ -103,9 +104,9 @@ public:
     typedef HeapHashMap<String,int> NameToIndexMap;
     
     static Ptr create(LuaVar config, 
-                      HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions);
+                      TextStyleDefinitions::ConstPtr textStyleDefinitions);
 
-    static Ptr createWithoutPatterns(HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions);
+    static Ptr createWithoutPatterns(TextStyleDefinitions::ConstPtr textStyleDefinitions);
 
     SyntaxPattern* get(int i) {
         return allPatterns.getPtr(i);
@@ -149,7 +150,7 @@ public:
         return allPatterns.getLength() > 0;
     }
 
-    void updateTextStyles(HeapHashMap<String,TextStyleDefinition>::ConstPtr newTextStyleDefinitions);
+    void updateTextStyles(TextStyleDefinitions::ConstPtr newTextStyleDefinitions);
     
     void registerTextStylesChangedCallback(Callback<>::Ptr callback) {
         textStylesChangedCallback.registerCallback(callback);
@@ -157,7 +158,7 @@ public:
     
 private:
     SyntaxPatterns(Nullable<LuaVar> config, 
-                   HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions);
+                   TextStyleDefinitions::ConstPtr textStyleDefinitions);
 
     void compile(int i);
     void compileAll();
@@ -172,7 +173,7 @@ private:
     bool hasSerializedString;
     String serializedString;
 
-    HeapHashMap<String,TextStyleDefinition>::ConstPtr textStyleDefinitions;
+    TextStyleDefinitions::ConstPtr textStyleDefinitions;
     TextStyle::Ptr              defaultTextStyle;
     ObjectArray<TextStyle::Ptr> textStyles;
     HashMap<String,int>         textStyleToIndexMap;

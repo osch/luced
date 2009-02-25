@@ -37,6 +37,7 @@
 #include "ActionKeyConfig.hpp"
 #include "LuaVar.hpp"
 #include "TextStyleDefinition.hpp"
+#include "TextStyleDefinitions.hpp"
 
 namespace LucED
 {
@@ -206,7 +207,7 @@ private:
     
     HashMap<String,bool> packagesMap;
     
-    HeapHashMap<String,TextStyleDefinition>::Ptr textStyleDefinitions;
+    TextStyleDefinitions::Ptr textStyleDefinitions;
     TextStyle::Ptr defaultTextStyle;
 };
 

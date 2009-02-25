@@ -71,7 +71,7 @@ GlobalConfig::GlobalConfig()
           maxRegexAssertionLength(3000),
           syntaxPatternsConfig(SyntaxPatternsConfig::create()),
           actionKeyConfig(ActionKeyConfig::create()),
-          textStyleDefinitions(HeapHashMap<String,TextStyleDefinition>::create())
+          textStyleDefinitions(TextStyleDefinitions::create())
 {}
 
 
@@ -419,7 +419,7 @@ void GlobalConfig::readConfig()
 
         LuaVar o(luaAccess);
         
-        HeapHashMap<String,TextStyleDefinition>::Ptr newTextStyleDefinitions = HeapHashMap<String,TextStyleDefinition>::create();
+        TextStyleDefinitions::Ptr newTextStyleDefinitions = TextStyleDefinitions::create();
                 
         for (int i = 0; o = ts[i + 1], o.isValid(); ++i) {
             LuaVar n = o["name"];
@@ -429,9 +429,6 @@ void GlobalConfig::readConfig()
             String name = n.toString();
             if (i == 0 && name != "default") {
                 throw ConfigException("first textstyle must be named 'default'");
-            }
-            if (newTextStyleDefinitions->hasKey(name)) {
-                throw ConfigException(String() << "duplicate textstyle '" << name << "'");
             }
 
             LuaVar f = o["font"];
@@ -445,7 +442,7 @@ void GlobalConfig::readConfig()
             }
             String colorname = c.toString();
 
-            newTextStyleDefinitions->set(name, TextStyleDefinition(name, fontname, colorname));
+            newTextStyleDefinitions->append(TextStyleDefinition(name, fontname, colorname));
         }
         this->textStyleDefinitions = newTextStyleDefinitions;
 
@@ -481,21 +478,19 @@ void GlobalConfig::readConfig()
         errorList->appendNew(configFileName, ex.getMessage());
         if (textStyleDefinitions->isEmpty())
         {
-            textStyleDefinitions->set("default", 
-                                      TextStyleDefinition("default",
-                                                          "-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", 
-                                                          "black"));
+            textStyleDefinitions->append(TextStyleDefinition("default",
+                                                             "-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", 
+                                                             "black"));
         }
     }
 
     if (textStyleDefinitions->isEmpty()) {
-        textStyleDefinitions->set("default", 
-                                  TextStyleDefinition("default",
-                                                      "-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", 
-                                                      "black"));
+        textStyleDefinitions->append(TextStyleDefinition("default",
+                                                         "-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", 
+                                                         "black"));
         errorList->appendNew(configFileName, "missing textstyles");
     }
-    Nullable<TextStyleDefinition> defaultTextStyleDefinition = textStyleDefinitions->get("default");
+    Nullable<TextStyleDefinition> defaultTextStyleDefinition = textStyleDefinitions->get(0);
     if (!defaultTextStyleDefinition.isValid()) {
         throw ConfigException("missing text style \"default\"");
     }
