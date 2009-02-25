@@ -21,6 +21,7 @@
 
 #include "HeapObject.hpp"
 #include "RawPtrGuardHolder.hpp"
+#include "Null.hpp"
 
 #ifndef OWNING_PTR_HPP
 #define OWNING_PTR_HPP
@@ -35,12 +36,15 @@ template
 class OwningPtr
 {
 public:
-    explicit OwningPtr(T* ptr = NULL) : ptr(ptr) {
+    OwningPtr(const NullType& nullValue = Null) : ptr(NULL)
+    {}
+    
+    explicit OwningPtr(T* ptr) : ptr(ptr) {
         if (ptr != NULL) {
             HeapObjectRefManipulator::obtainInitialOwnership(ptr);
         }
     }
-    
+
     ~OwningPtr() {
         HeapObjectRefManipulator::decRefCounter(ptr);
     }

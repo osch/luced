@@ -97,7 +97,7 @@ inline WeakPtr<RawPtrGuard> RawPtrGuardHolder::RawPtrGuardAccess::getRawPtrGuard
     if (holder != NULL) {
         return WeakPtr<RawPtrGuard>(holder->rawPtrGuard);
     } else {
-        return WeakPtr<RawPtrGuard>();
+        return Null;
     }
 }
 #endif

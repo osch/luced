@@ -21,6 +21,7 @@
 
 #include "HeapObject.hpp"
 #include "OwningPtr.hpp"
+#include "Null.hpp"
 
 #ifndef WEAK_PTR_HPP
 #define WEAK_PTR_HPP
@@ -39,7 +40,7 @@ class WeakPtr
 {
 public:
     
-    WeakPtr() 
+    WeakPtr(const NullType& nullValue = Null) 
         : ptr(NULL)
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    
         , heapObjectCounters(NULL)

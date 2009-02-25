@@ -438,7 +438,7 @@ public:
                 return *static_cast<WeakPtr<HeapObject>*>(static_cast<void*>(userDataPtr + 1));
             }
         } else {
-            return WeakPtr<HeapObject>();
+            return Null;
         }
     }
     OwningPtr<HeapObject> toOwningPtr() const {
@@ -448,10 +448,10 @@ public:
             if (userDataPtr->isOwningPtr) {
                 return *static_cast<OwningPtr<HeapObject>*>(static_cast<void*>(userDataPtr + 1));
             } else {
-                return OwningPtr<HeapObject>();
+                return Null;
             }
         } else {
-            return OwningPtr<HeapObject>();
+            return Null;
         }
     }
     

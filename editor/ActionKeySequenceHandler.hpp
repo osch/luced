@@ -74,7 +74,7 @@ public:
     
 
     bool handleKeyPress(const KeyPressEvent& keyPressEvent, 
-                        RawPtr<GuiWidget>    focusedWidget = RawPtr<GuiWidget>());
+                        RawPtr<GuiWidget>    focusedWidget = Null);
     
 private:
     RawPtr<GuiWidget>       thisWidget;

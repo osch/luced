@@ -25,6 +25,7 @@
 #include <new>
 
 #include "debug.hpp"
+#include "Null.hpp"
 
 namespace LucED
 {
@@ -44,6 +45,9 @@ public:
             ((V*)&(value))->~V();
         }
     }
+    
+    Nullable(const NullType& nullValue) : valid(false)
+    {}
     
     Nullable(const Nullable& rhs) : valid (rhs.valid) {
         ASSERT(this != &rhs);

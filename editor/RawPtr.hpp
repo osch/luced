@@ -23,6 +23,7 @@
 #define RAW_PTR_HPP
 
 #include "WeakPtr.hpp"
+#include "Null.hpp"
 
 namespace LucED
 {
@@ -45,7 +46,7 @@ class RawPtr
 {
 public:
     
-    RawPtr() : ptr(NULL)
+    RawPtr(const NullType& nullValue = Null) : ptr(NULL)
     {
     #ifdef DEBUG
         isValidFlag = false;
