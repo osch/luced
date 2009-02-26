@@ -773,20 +773,20 @@ bool TextEditorWidget::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEv
                 TextData::HistorySection::Ptr historySectionHolder = textData->getHistorySectionHolder();
                 
                 hideCursor();
-                if (selectionOwner->hasSelectionOwnership())
+                if (hasPrimarySelection())
                 {
-                    long selBegin = getBackliteBuffer()->getBeginSelectionPos();
-                    long selLength = getBackliteBuffer()->getEndSelectionPos() - selBegin;
+                    long selBegin  = getBeginSelectionPos();
+                    long selLength = getEndSelectionPos() - selBegin;
                     moveCursorToTextPosition(selBegin);
                     removeAtCursor(selLength);
                     releaseSelection();
                 }
-                else if (getBackliteBuffer()->hasActiveSelection())
+                else if (hasPseudoSelection())
                 {
                     if (   (lastActionCategory != ACTION_KEYBOARD_INPUT && lastActionCategory != ACTION_TABULATOR)
                         || getCursorTextPosition() != getBackliteBuffer()->getEndSelectionPos())
                     {
-                        getBackliteBuffer()->deactivateSelection();
+                        releaseSelection();
                     }
                 }
                 if (!getBackliteBuffer()->hasActiveSelection())
