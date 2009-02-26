@@ -55,7 +55,7 @@ public:
     private:
         friend class GuiWidget;
         friend class EventDispatcher;
-        friend class GuiWidgetAccessForEventProcessors;
+        friend class EventProcessorAccess;
         EventRegistration(RawPtr<GuiWidget> guiWidget, WidgetId wid) : guiWidget(guiWidget), wid(wid) {}
         RawPtr<GuiWidget> guiWidget;
         WidgetId wid;
@@ -104,6 +104,21 @@ public:
     virtual bool invokeActionMethod(ActionId actionId);
     virtual bool hasActionMethod(ActionId actionId);
 
+    class EventProcessorAccess
+    {
+        friend class PasteDataReceiver;
+        friend class SelectionOwner;
+        
+        static void addToXEventMaskForGuiWidget(GuiWidget* w, long eventMask) {
+            w->addToXEventMask(eventMask);
+        }
+        static WidgetId getGuiWidgetWid(GuiWidget* w) {
+            return w->getWid();
+        }
+        static GuiWidget::EventRegistration createEventRegistration(GuiWidget* guiWidget, WidgetId wid) {
+            return GuiWidget::EventRegistration(guiWidget, wid);
+        }
+    };
 protected:
 
     GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width);
@@ -192,8 +207,6 @@ protected:
     
     
 private:
-    friend class GuiWidgetAccessForEventProcessors;
-    
     bool isTopWindow;
     WidgetId wid;
     long eventMask;
@@ -207,19 +220,6 @@ private:
     ObjectArray<ActionMethods::Ptr> actionMethods;
 };
 
-class GuiWidgetAccessForEventProcessors
-{
-protected:
-    void addToXEventMaskForGuiWidget(GuiWidget* w, long eventMask) {
-        w->addToXEventMask(eventMask);
-    }
-    WidgetId getGuiWidgetWid(GuiWidget* w) {
-        return w->getWid();
-    }
-    GuiWidget::EventRegistration createEventRegistration(GuiWidget* guiWidget, WidgetId wid) {
-        return GuiWidget::EventRegistration(guiWidget, wid);
-    }
-};
 
 } // namespace LucED
 

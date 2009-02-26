@@ -36,7 +36,7 @@ PasteDataReceiver::PasteDataReceiver(RawPtr<GuiWidget> baseWidget, ContentHandle
 {
     x11AtomForTargets   = XInternAtom(display, "TARGETS", False);
     x11AtomForIncr      = XInternAtom(display, "INCR", False);
-    addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
+    GuiWidget::EventProcessorAccess::addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 
 void PasteDataReceiver::requestSelectionPasting()
@@ -44,10 +44,10 @@ void PasteDataReceiver::requestSelectionPasting()
     pasteBuffer.clear();
     if (SelectionOwner::hasPrimarySelectionOwner()) {
         SelectionOwner* selectionOwner = SelectionOwner::getPrimarySelectionOwner();
-        long length = initSelectionDataRequest(selectionOwner);
+        long length = SelectionOwner::ReceiverAccess::initSelectionDataRequest(selectionOwner);
         if (length > 0) {
-            const byte* data = getSelectionDataChunk(selectionOwner, 0, length);
-            endSelectionDataRequest(selectionOwner);
+            const byte* data = SelectionOwner::ReceiverAccess::getSelectionDataChunk(selectionOwner, 0, length);
+            SelectionOwner::ReceiverAccess::endSelectionDataRequest(selectionOwner);
             ByteArray buffer;
             buffer.append(data, length); // make copy, because data* could become invalid, if
                                          // paste is going into the same buffer
@@ -55,12 +55,12 @@ void PasteDataReceiver::requestSelectionPasting()
             contentHandler->notifyAboutReceivedPasteData(buffer.getPtr(0), buffer.getLength());
             contentHandler->notifyAboutEndOfPastingData();
         } else {
-            endSelectionDataRequest(selectionOwner);
+            SelectionOwner::ReceiverAccess::endSelectionDataRequest(selectionOwner);
         }
         isReceivingPasteDataFlag = false;
     } else {
-        XDeleteProperty(display, getGuiWidgetWid(baseWidget), XA_PRIMARY);
-        XConvertSelection(display, XA_PRIMARY, XA_STRING, XA_PRIMARY, getGuiWidgetWid(baseWidget), CurrentTime);
+        XDeleteProperty(display, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), XA_PRIMARY);
+        XConvertSelection(display, XA_PRIMARY, XA_STRING, XA_PRIMARY, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), CurrentTime);
         isMultiPartPastingFlag = false;
         isReceivingPasteDataFlag = true;
         contentHandler->notifyAboutBeginOfPastingData();
@@ -83,9 +83,9 @@ void PasteDataReceiver::requestClipboardPasting()
         }
         isReceivingPasteDataFlag = false;
     } else {
-        XDeleteProperty(display, getGuiWidgetWid(baseWidget), Clipboard::getInstance()->getX11AtomForClipboard());
+        XDeleteProperty(display, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), Clipboard::getInstance()->getX11AtomForClipboard());
         XConvertSelection(display, Clipboard::getInstance()->getX11AtomForClipboard(),
-                             XA_STRING, Clipboard::getInstance()->getX11AtomForClipboard(), getGuiWidgetWid(baseWidget), CurrentTime);
+                             XA_STRING, Clipboard::getInstance()->getX11AtomForClipboard(), GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), CurrentTime);
         isMultiPartPastingFlag = false;
         isReceivingPasteDataFlag = true;
         contentHandler->notifyAboutBeginOfPastingData();

@@ -26,10 +26,10 @@
 #include "GuiWidget.hpp"
 #include "RawPtr.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-class SelectionOwner : public HeapObject,
-                       private GuiWidgetAccessForEventProcessors
+class SelectionOwner : public HeapObject
 {
 public:
     typedef OwningPtr<SelectionOwner> Ptr;
@@ -69,6 +69,20 @@ public:
     static SelectionOwner* getPrimarySelectionOwner() {return primarySelectionOwner;}
     static bool hasPrimarySelectionOwner() {return primarySelectionOwner != NULL;}
 
+    class ReceiverAccess
+    {
+        friend class PasteDataReceiver;
+        
+        static long initSelectionDataRequest(SelectionOwner* o) {
+            return o->contentHandler->initSelectionDataRequest();
+        }
+        static const byte* getSelectionDataChunk(SelectionOwner* o, long pos, long length) {
+            return o->contentHandler->getSelectionDataChunk(pos, length);
+        }
+        static void endSelectionDataRequest(SelectionOwner* o) {
+            o->contentHandler->endSelectionDataRequest();
+        }
+    };
 private:
 
     friend class SelectionOwnerAccessForPasteDataReceiver;
@@ -93,19 +107,6 @@ private:
     static WeakPtr<SelectionOwner> primarySelectionOwner;
 };
 
-class SelectionOwnerAccessForPasteDataReceiver
-{
-protected:
-    static long initSelectionDataRequest(SelectionOwner* o) {
-        return o->contentHandler->initSelectionDataRequest();
-    }
-    static const byte* getSelectionDataChunk(SelectionOwner* o, long pos, long length) {
-        return o->contentHandler->getSelectionDataChunk(pos, length);
-    }
-    static void endSelectionDataRequest(SelectionOwner* o) {
-        o->contentHandler->endSelectionDataRequest();
-    }
-};
 
 } // namespace LucED
 

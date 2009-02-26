@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef PASTE_DATA_RECEIVER_H
-#define PASTE_DATA_RECEIVER_H
+#ifndef PASTE_DATA_RECEIVER_HPP
+#define PASTE_DATA_RECEIVER_HPP
 
 #include "ByteArray.hpp"
 #include "GuiWidget.hpp"
@@ -33,9 +33,7 @@
 namespace LucED
 {
 
-class PasteDataReceiver : public HeapObject,
-                          public GuiWidgetAccessForEventProcessors, 
-                          public SelectionOwnerAccessForPasteDataReceiver
+class PasteDataReceiver : public HeapObject
 {
 public:
     typedef OwningPtr<PasteDataReceiver> Ptr;
@@ -82,4 +80,4 @@ private:
 
 } // namespace LucED
 
-#endif // PASTE_DATA_RECEIVER_H
+#endif // PASTE_DATA_RECEIVER_HPP

@@ -40,7 +40,7 @@ SelectionOwner::SelectionOwner(RawPtr<GuiWidget> baseWidget, Type type, ContentH
 {
     x11AtomForTargets   = XInternAtom(display, "TARGETS", False);
     x11AtomForIncr      = XInternAtom(display, "INCR", False);
-    addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
+    GuiWidget::EventProcessorAccess::addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 
 
@@ -49,7 +49,7 @@ SelectionOwner::~SelectionOwner()
     if (sendingMultiPart) {
         sendingMultiPart = false;
         XSelectInput(display, multiPartTargetWid, 0);
-        EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
+        EventDispatcher::getInstance()->removeEventReceiver(GuiWidget::EventProcessorAccess::createEventRegistration(baseWidget, multiPartTargetWid));
     }
     if (primarySelectionOwner == this) {
         primarySelectionOwner = NULL;
@@ -62,11 +62,11 @@ bool SelectionOwner::requestSelectionOwnership()
     if (sendingMultiPart) {
         sendingMultiPart = false;
         XSelectInput(display, multiPartTargetWid, 0);
-        EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
+        EventDispatcher::getInstance()->removeEventReceiver(GuiWidget::EventProcessorAccess::createEventRegistration(baseWidget, multiPartTargetWid));
     }
     if (!hasRequestedSelectionOwnership) {
-        XSetSelectionOwner(display, x11AtomForSelection, getGuiWidgetWid(baseWidget), CurrentTime);
-        hasRequestedSelectionOwnership = (XGetSelectionOwner(display, x11AtomForSelection) == getGuiWidgetWid(baseWidget));
+        XSetSelectionOwner(display, x11AtomForSelection, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), CurrentTime);
+        hasRequestedSelectionOwnership = (XGetSelectionOwner(display, x11AtomForSelection) == GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget));
         if (x11AtomForSelection == XA_PRIMARY && hasRequestedSelectionOwnership) {
             if (primarySelectionOwner != NULL && primarySelectionOwner != this) {
                 // No SelectionClear event if selection owner changes within LucED (why!?!?!)
@@ -137,7 +137,7 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                 if (sendingMultiPart) {
                     sendingMultiPart = false;
                     XSelectInput(display, multiPartTargetWid, 0);
-                    EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
+                    EventDispatcher::getInstance()->removeEventReceiver(GuiWidget::EventProcessorAccess::createEventRegistration(baseWidget, multiPartTargetWid));
                 }
                 if (hasRequestedSelectionOwnership && e.selection == x11AtomForSelection)
                 {
@@ -168,7 +168,7 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                         // this method should only be used for Windows from other applications
                         ASSERT(EventDispatcher::getInstance()->isForeignWidget(multiPartTargetWid));
                         
-                        EventDispatcher::getInstance()->registerEventReceiverForForeignWidget(createEventRegistration(baseWidget, multiPartTargetWid));
+                        EventDispatcher::getInstance()->registerEventReceiverForForeignWidget(GuiWidget::EventProcessorAccess::createEventRegistration(baseWidget, multiPartTargetWid));
                         contentHandler->endSelectionDataRequest();
                     }
                 } else {
@@ -200,7 +200,7 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                             0, 0);
                     sendingMultiPart = false;
                     XSelectInput(display, multiPartTargetWid, 0);
-                    EventDispatcher::getInstance()->removeEventReceiver(createEventRegistration(baseWidget, multiPartTargetWid));
+                    EventDispatcher::getInstance()->removeEventReceiver(GuiWidget::EventProcessorAccess::createEventRegistration(baseWidget, multiPartTargetWid));
                     contentHandler->endSelectionDataRequest();
                 }
                 else
