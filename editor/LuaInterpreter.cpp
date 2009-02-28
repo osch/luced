@@ -164,21 +164,21 @@ LuaInterpreter::LuaInterpreter()
     storedObjects->originalIoWriteFunction       = currentAccess.getGlobal("io")["write"] .store();
     storedObjects->requireFunctionStoreReference = currentAccess.getGlobal("require")     .store();
                    
-    currentAccess.setGlobal("print", LuaCFunction<printFunction>::createWrapper());
-    currentAccess.setGlobal("trt",   LuaCFunction<testFunction>::createWrapper());
+    currentAccess.setGlobal("print", LuaCClosure::create<printFunction>());
+    currentAccess.setGlobal("trt",   LuaCClosure::create<testFunction>());
 
     LuaVar lucedStdout = currentAccess.newTable();
     
-    lucedStdout["write"] = LuaCFunction<stdoutWriteFunction>::createWrapper();
-    lucedStdout["close"] = LuaCFunction<doNothingFunction>::createWrapper();
-    lucedStdout["flush"] = LuaCFunction<doNothingFunction>::createWrapper();
+    lucedStdout["write"] = LuaCClosure::create<stdoutWriteFunction>();
+    lucedStdout["close"] = LuaCClosure::create<doNothingFunction>();
+    lucedStdout["flush"] = LuaCClosure::create<doNothingFunction>();
     
     LuaVar io = currentAccess.getGlobal("io");
     ASSERT(io.isTable());
 
     io["stdout"] = lucedStdout;
-    io["output"] = LuaCFunction<ioOutputFunction>::createWrapper();
-    io["write"]  = LuaCFunction<ioWriteFunction>::createWrapper();
+    io["output"] = LuaCClosure::create<ioOutputFunction>();
+    io["write"]  = LuaCClosure::create<ioWriteFunction>();
     
     storedObjects->lucedStdout = currentAccess.store(lucedStdout);
     isLucedStdoutActive = true;

@@ -203,16 +203,16 @@ inline LuaStoredObjectReference storeMetatableFor@(def.name)(const LuaAccess& lu
     
     metaTable["__index"]     = methodTable;
     metaTable["__metatable"] = false;
-    metaTable["__eq"]        = LuaCFunction<CompareFunction>::createWrapper();
-    metaTable["__lt"]        = LuaCFunction<LessThanFunction>::createWrapper();
-    metaTable["__le"]        = LuaCFunction<LessOrEqualFunction>::createWrapper();
-    metaTable["__tostring"]  = LuaCFunction<TostringFunction>::createWrapper();
-    metaTable["__gc"]        = LuaCFunction<GarbageCollectorFunction>::createWrapper();
+    metaTable["__eq"]        = LuaCClosure::create<CompareFunction>();
+    metaTable["__lt"]        = LuaCClosure::create<LessThanFunction>();
+    metaTable["__le"]        = LuaCClosure::create<LessOrEqualFunction>();
+    metaTable["__tostring"]  = LuaCClosure::create<TostringFunction>();
+    metaTable["__gc"]        = LuaCClosure::create<GarbageCollectorFunction>();
     
     
     methodTable["type"]      = "@(def.name)";
-    methodTable["isOwning"]  = LuaCFunction<IsOwningFunction>::createWrapper();;
-    methodTable["isValid"]   = LuaCFunction<IsValidFunction>::createWrapper();;
+    methodTable["isOwning"]  = LuaCClosure::create<IsOwningFunction>();
+    methodTable["isValid"]   = LuaCClosure::create<IsValidFunction>();
 
 @   local function methods(def)
 @     if def.derived then

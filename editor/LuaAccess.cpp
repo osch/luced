@@ -95,9 +95,40 @@ LuaAccess::Result LuaAccess::executeExpression(const char* scriptBegin, long scr
     return rslt;
 }
 
+
 LuaAccess::Result LuaAccess::executeFile(String name) const
 {
     ByteBuffer buffer;
     File(name).loadInto(buffer);
     return executeScript((const char*) buffer.getTotalAmount(), buffer.getLength(), name);
 }
+
+
+LuaVar LuaAccess::loadString(const String& script) const
+{
+    int rc = luaL_loadstring(L, script.toCString());
+    if (rc != 0) {
+        LuaException ex(lua_tostring(L, -1));
+        lua_pop(L, 1);
+        throw ex;
+    }    
+    return LuaVar(*this, lua_gettop(L));
+}
+
+
+LuaVar LuaAccess::loadFile(const String& fileName) const
+{
+    int rc = luaL_loadfile(L, fileName.toCString());
+    if (rc != 0) {
+        if (rc == LUA_ERRFILE) {
+            lua_pop(L, 1);
+            lua_pushnil(L);
+        } else {
+            LuaException ex(lua_tostring(L, -1));
+            lua_pop(L, 1);
+            throw ex;
+        }
+    }    
+    return LuaVar(*this, lua_gettop(L));
+}
+

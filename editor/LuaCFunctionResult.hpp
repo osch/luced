@@ -52,10 +52,10 @@ private:
     
     template
     <
-        LuaCFunctionResult F(const LuaCFunctionArguments& args)
+        class LuaCClosureT
     >
-    friend class LuaCFunction;
-    
+    friend class LuaCClosureImpl;
+
     template
     <
         class C,

@@ -49,11 +49,12 @@ template<class KeyType
         >
 class LuaObjectTableElementRef;
 
+
 template
 <
-    LuaCFunctionResult F(const LuaCFunctionArguments& args)
+    class LuaCClosureT
 >
-class LuaCFunction;
+class LuaCClosureImpl;
 
 template
 <
@@ -92,6 +93,7 @@ public:
     
     LuaVar getGlobal(const char* name) const;
     LuaVar getGlobal(const String& name) const;
+    LuaVar getGlobalVariables() const;
 
     LuaVar getTrue() const;    
     LuaVar getFalse() const;    
@@ -125,6 +127,9 @@ public:
         ASSERT(isCorrect());
         return (L == rhs.L);
     }
+    
+    LuaVar loadString(const String& script) const;
+    LuaVar loadFile(const String& fileName) const;
     
     class Result;
     Result executeFile(String name) const;
@@ -212,9 +217,9 @@ protected:
     
     template
     <
-        LuaCFunctionResult F(const LuaCFunctionArguments& args)
+        class LuaCClosureT
     >
-    void push(LuaCFunction<F> wrapper) const;
+    void push(const LuaCClosureImpl<LuaCClosureT>& wrapper) const;
 
     template
     <
@@ -245,7 +250,7 @@ protected:
 #include "LuaCFunctionResult.hpp"
 #include "LuaCMethod.hpp"
 #include "LuaSingletonCMethod.hpp"
-#include "LuaCFunction.hpp"
+#include "LuaCClosure.hpp"
 #include "LuaStackChecker.hpp"
 #include "LuaStateAccess.hpp"
 #include "LuaStoredObjectReference.hpp"
@@ -539,6 +544,15 @@ inline LuaVar LuaAccess::getGlobal(const String& name) const
     return getGlobal(name.toCString());
 }
 
+inline LuaVar LuaAccess::getGlobalVariables() const
+{
+    ASSERT(isCorrect());
+    
+    lua_pushvalue(L, LUA_GLOBALSINDEX);
+
+    return LuaVar(*this, lua_gettop(L));
+}
+
 template
 <
     class T
@@ -551,15 +565,19 @@ inline void LuaAccess::setGlobal(const char* name, const T& value) const
     lua_setglobal(L, name);
 }
 
+
 template
 <
-    LuaCFunctionResult F(const LuaCFunctionArguments& args)
+    class LuaCClosureType
 >
-inline void LuaAccess::push(LuaCFunction<F> wrapper) const
+inline void LuaAccess::push(const LuaCClosureImpl<LuaCClosureType>& wrapper) const
 {
     ASSERT(isCorrect());
 
-    lua_pushcfunction(L, LuaCFunction<F>::invokeFunction);
+    wrapper.pushUpvaluesTo(*this);
+
+    lua_pushcclosure(L, LuaCClosureImpl<LuaCClosureType>::invokeFunction, 
+                        LuaCClosureImpl<LuaCClosureType>::NUMBER_UPVALUES);
 }
 
 template

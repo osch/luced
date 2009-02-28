@@ -1,0 +1,200 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+#include "LuaAccess.hpp"
+#include "LuaInterpreter.hpp"
+
+#ifndef LUA_C_CLOSURE_HPP
+#define LUA_C_CLOSURE_HPP
+
+#include <exception>
+
+#include "LuaCFunctionArguments.hpp"
+#include "LuaCFunctionResult.hpp"
+#include "BaseException.hpp"
+#include "LuaAccess.hpp"
+
+@ local functions     = require("functions")
+@ local argList       = functions.argList
+@ local filledArgList = functions.filledArgList
+@ local typedArgList  = functions.typedArgList
+@ local classList     = functions.classList
+
+namespace LucED
+{
+
+@ MAX_NUMBER_UPVALUES = 3 -- maximal number of upvalues for c closures
+
+@ for numberUpvalues = 0, MAX_NUMBER_UPVALUES do
+typedef LuaCFunctionResult LuaCClosureWrappedFunction@(numberUpvalues)
+(
+    const LuaCFunctionArguments& args@(numberUpvalues > 0 and ',' or '') 
+    @(argList('LuaVarRef upvalue', numberUpvalues))
+);
+
+@ end
+
+@ for numberUpvalues = 0, MAX_NUMBER_UPVALUES do
+template
+<
+    LuaCClosureWrappedFunction@(numberUpvalues) F
+>
+class LuaCClosureType@(numberUpvalues)
+{
+};
+@ end
+
+
+
+template
+<
+    class LuaCClosureType
+>
+class LuaCClosureImpl;
+
+
+@ for numberUpvalues = 0, MAX_NUMBER_UPVALUES do
+template
+<
+    LuaCClosureWrappedFunction@(numberUpvalues) F
+>
+class LuaCClosureImpl< LuaCClosureType@(numberUpvalues)<F> >
+@   if numberUpvalues > 0 then
+        : public LuaAccess
+@   end
+{
+public:
+    static const int NUMBER_UPVALUES = @(numberUpvalues);
+
+private:
+    friend class LuaAccess;
+    friend class LuaCClosure;
+    
+    template<class KeyType
+            >
+    friend class LuaObjectTableElementRef;
+    
+    LuaCClosureImpl(@(argList('const LuaVar& upvalue', numberUpvalues)))
+@ if numberUpvalues > 0 then
+        : LuaAccess(upvalue1.getLuaAccess()),
+@   for i = 1, numberUpvalues do
+          upvalue@(i)(upvalue@(i))@(i < numberUpvalues and ',' or '')
+@   end
+@ end
+    {
+@   for i = 1, numberUpvalues do
+        ASSERT(isSameLuaAccess(upvalue@(i)));
+@   end
+    }
+    
+    static int invokeFunction(lua_State* L)
+    {
+        LuaAccess              luaAccess(L);
+        RawPtr<LuaInterpreter> luaInterpreter = luaAccess.getLuaInterpreter();
+        LuaAccess              oldLuaAccess   = luaInterpreter->getCurrentLuaAccess();
+        
+        LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess(luaInterpreter, luaAccess);
+        #ifdef DEBUG
+            LuaStackChecker::Ptr stackChecker = LuaStackChecker::create();
+            OwningPtr<LuaStackChecker> oldChecker = LuaStateAccess::replaceLuaStackChecker(L, stackChecker);
+        #endif
+        
+        int numberOfResults = 0;
+        bool wasError = false;
+        {
+            LuaCFunctionArguments args(luaAccess);
+
+            try
+            {
+@           for i = 1, numberUpvalues do
+                LuaVarRef upvalue@(i)(luaAccess, lua_upvalueindex(@(i)));
+@           end
+                
+                numberOfResults = F(args@(numberUpvalues > 0 and ',' or '') 
+                                    @(argList('upvalue', numberUpvalues))).numberOfResults;
+            }
+            catch (BaseException& ex)
+            {
+                lua_pushstring(L, ex.getMessage().toCString());
+                wasError = true;
+            }
+            catch (std::exception& ex)
+            {
+                lua_pushstring(L, ex.what());
+                wasError = true;
+            }
+            catch (...)
+            {
+                lua_pushstring(L, "unknown error");
+                wasError = true;
+            }
+        }
+        #ifdef DEBUG
+            LuaStateAccess::replaceLuaStackChecker(L, oldChecker);
+        #endif
+        LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess(luaInterpreter, oldLuaAccess);
+
+        if (wasError) {
+            lua_error(L);
+            ASSERT(false);
+            return 0;
+        } else {
+            return numberOfResults;
+        }
+    }
+    
+    void pushUpvaluesTo(const LuaAccess& luaAccess) const
+    {
+@ if numberUpvalues > 0 then
+        ASSERT(isSameLuaAccess(luaAccess));
+@   for i = 1, numberUpvalues do
+        push(upvalue@(i));
+@   end
+@ end
+    }
+
+@   for i = 1, numberUpvalues do
+    LuaVar upvalue@(i);
+@   end
+};
+@ end
+
+
+class LuaCClosure
+{
+public:
+
+@ for numberUpvalues = 0, MAX_NUMBER_UPVALUES do
+    template
+    <
+        LuaCClosureWrappedFunction@(numberUpvalues) F
+    >
+    static LuaCClosureImpl< LuaCClosureType@(numberUpvalues)<F> > create(@(argList('const LuaVar& upvalue', numberUpvalues)))
+    {
+        return LuaCClosureImpl< LuaCClosureType@(numberUpvalues)<F> >(@(argList('upvalue', numberUpvalues)));
+    }
+
+@ end
+};
+
+} // namespace LucED
+
+#endif // LUA_C_CLOSURE_HPP

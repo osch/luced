@@ -30,11 +30,6 @@ namespace LucED
 
 class LuaCFunctionArguments;
 class LuaCFunctionResult;
-template
-<
-    LuaCFunctionResult F(const LuaCFunctionArguments& args)
->
-class LuaCFunction;
 
 template
 <
@@ -93,10 +88,10 @@ private:
     
     template
     <
-        LuaCFunctionResult F(const LuaCFunctionArguments& args)
+        class LuaCClosureType
     >
-    friend class LuaCFunction;
-    
+    friend class LuaCClosureImpl;
+
     template
     <
         class C,

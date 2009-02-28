@@ -58,11 +58,6 @@ class LuaFunctionArguments;
 
 template
 <
-    LuaCFunctionResult F(const LuaCFunctionArguments& args)
->
-class LuaCFunction;
-template
-<
     class C,
     LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
 >
@@ -296,6 +291,15 @@ public:
 
         lua_pushvalue(L, rhs.stackIndex);
         lua_setmetatable(L, stackIndex);
+    }
+    void setFunctionEnvironment(const LuaVarRef& rhs)
+    {
+        ASSERT(isCorrect());
+        ASSERT(rhs.isCorrect());
+        ASSERT(isSameLuaAccess(rhs));
+
+        lua_pushvalue(L, rhs.stackIndex);
+        lua_setfenv(L, stackIndex);
     }
     
     
@@ -568,6 +572,12 @@ protected:
     friend class ObjectArray<LuaVar>;
     friend class LuaVar;
     
+    template
+    <
+        class LuaCClosureT
+    >
+    friend class LuaCClosureImpl;
+
     explicit LuaVarRef(const LuaAccess& luaAccess)
         : LuaAccess(luaAccess)
     {
@@ -881,7 +891,6 @@ inline bool operator!=(const String& lhs, const LuaVarRef& rhs)
 
 #include "LuaFunctionArguments.hpp"
 #include "LuaCMethod.hpp"
-#include "LuaCFunction.hpp"
 #include "LuaCFunctionArguments.hpp"
 #include "LuaCFunctionResult.hpp"
 #include "LuaStoredObjectReference.hpp"
