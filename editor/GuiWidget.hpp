@@ -50,12 +50,15 @@ public:
     typedef OwningPtr<GuiWidget> Ptr;
     typedef OwningPtr<const GuiWidget> ConstPtr;
     
+    class EventProcessorAccess;
+    
     class EventRegistration
     {
     private:
         friend class GuiWidget;
-        friend class EventDispatcher;
         friend class EventProcessorAccess;
+        friend class EventDispatcher;
+
         EventRegistration(RawPtr<GuiWidget> guiWidget, WidgetId wid) : guiWidget(guiWidget), wid(wid) {}
         RawPtr<GuiWidget> guiWidget;
         WidgetId wid;
