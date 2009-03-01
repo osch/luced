@@ -53,7 +53,12 @@ public:
 
     template<class T
             >
-    class ClassAttributes;
+    class ClassAttributes
+    {
+    public:
+        static const bool  isKnown         = false;
+        static const bool  isOwningPtrType = false;
+    };
     
 
     template<class C,
@@ -92,8 +97,8 @@ template<
 class LuaClassRegistry::ClassAttributes<@(def.class)>
 {
 public:
-    static const bool  isOwningPtrType = @(def.ptrType == "OwningPtr" and "true" or "false");
     static const bool  isKnown         = true;
+    static const bool  isOwningPtrType = @(def.ptrType == "OwningPtr" and "true" or "false");
 
     static const char* getLuaClassName() {
         return "@(def.name)";

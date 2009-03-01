@@ -190,11 +190,12 @@ protected:
     
     template<class T
             >
-    void pushOwning(const OwningPtr<T>& rhs) const;
+    void pushOwningPtr(const OwningPtr<T>& rhs) const;
     
     template<class T
             >
-    void pushWeak(T* rhs) const;
+    void pushWeakPtr(T* rhs) const;
+    
 
     template<bool isOwning
             >
@@ -203,10 +204,15 @@ protected:
         template<class T
                 >
         static void pushInternal(const LuaAccess& luaAccess, const OwningPtr<T>& rhs);
-
+    };
+    
+    template<bool isInClassRegistry
+            >
+    struct IsInClassRegistry
+    {
         template<class T
                 >
-        static void pushInternal(const LuaAccess& luaAccess, T* rhs);
+        static void setMetatable(const LuaAccess& luaAccess, LuaVarRef newObject, T* dummy);
     };
 
     void push(void* voidPtr) const;
@@ -354,7 +360,7 @@ template<class T
         >
 inline void LuaAccess::IsOwning<true>::pushInternal(const LuaAccess& luaAccess, const OwningPtr<T>& rhs)
 {
-    luaAccess.pushOwning(rhs);
+    luaAccess.pushOwningPtr(rhs);
 }
 template<
         >
@@ -362,20 +368,35 @@ template<class T
         >
 inline void LuaAccess::IsOwning<false>::pushInternal(const LuaAccess& luaAccess, const OwningPtr<T>& rhs)
 {
-    luaAccess.pushWeak(rhs.getRawPtr());
+    luaAccess.pushWeakPtr(rhs.getRawPtr());
+}
+
+template<
+        >
+template<class T
+        >
+inline void LuaAccess::IsInClassRegistry<true>::setMetatable(const LuaAccess& luaAccess, LuaVarRef newObject, T* dummy)
+{
+    RawPtr<LuaInterpreter>   luaInterpreter = luaAccess.getLuaInterpreter();
+    LuaStoredObjectReference storeReference = LuaInterpreter::ClassRegistryAccess
+                                                            ::getMetaTableStoreReference<T>(luaInterpreter);
+    
+    ASSERT(storeReference.ptr->getLuaInterpreter() == luaInterpreter);
+    
+    LuaVar metaTable = luaAccess.retrieve(storeReference);
+    newObject.setMetaTable(metaTable);
 }
 template<
         >
 template<class T
         >
-inline void LuaAccess::IsOwning<false>::pushInternal(const LuaAccess& luaAccess, T* rhs)
+inline void LuaAccess::IsInClassRegistry<false>::setMetatable(const LuaAccess& luaAccess, LuaVarRef newObject, T* dummy)
 {
-    luaAccess.pushWeak(rhs);
 }
 
 template<class T
         >
-inline void LuaAccess::pushOwning(const OwningPtr<T>& rhs) const
+inline void LuaAccess::pushOwningPtr(const OwningPtr<T>& rhs) const
 {
     {
         ASSERT(isCorrect());
@@ -401,7 +422,7 @@ inline void LuaAccess::pushOwning(const OwningPtr<T>& rhs) const
                                                    (lua_newuserdata(L, sizeof(UserData) + sizeof(OwningPtr<HeapObject>)));
                 if (userDataPtr != NULL)
                 {
-                    LuaVar newObject(*this, lua_gettop(L));
+                    LuaVarRef newObject(*this, lua_gettop(L)); // newObject ist pushed on the Stack by lua_newuserdata
         
                     userDataPtr->magic       = MAGIC;
                     userDataPtr->isOwningPtr = true;
@@ -411,17 +432,9 @@ inline void LuaAccess::pushOwning(const OwningPtr<T>& rhs) const
                                                                      (static_cast<void*>(userDataPtr + 1));
                     new (owningPtrPtr) OwningPtr<HeapObject>(rhs);
                 
-                    RawPtr<LuaInterpreter>   luaInterpreter = getLuaInterpreter();
-                    LuaStoredObjectReference storeReference = LuaInterpreter::ClassRegistryAccess
-                                                                            ::getMetaTableStoreReference<T>(luaInterpreter);
-            
-                    ASSERT(storeReference.ptr->getLuaInterpreter() == luaInterpreter);
-            
-                    LuaVar metaTable = retrieve(storeReference);
-                    newObject.setMetaTable(metaTable);
-    
+                    IsInClassRegistry<LuaClassRegistry::ClassAttributes<T>::isKnown>::setMetatable(*this, newObject, (T*)NULL);
+                        
                     owningPtrMap[voidPtr] = newObject;
-                    push(newObject);
                 }
                 else {
                     lua_pushnil(L);
@@ -430,14 +443,11 @@ inline void LuaAccess::pushOwning(const OwningPtr<T>& rhs) const
         }
     }
     lua_removeunusedbefore(L, lua_gettop(L));
-#ifdef DEBUG
-    getLuaStackChecker()->truncateGenerationsAtStackIndex(lua_gettop(L));
-#endif
 }
 
 template<class T
         >
-inline void LuaAccess::pushWeak(T* rhs) const
+inline void LuaAccess::pushWeakPtr(T* rhs) const
 {
     {
         ASSERT(isCorrect());
@@ -462,7 +472,7 @@ inline void LuaAccess::pushWeak(T* rhs) const
                                                (lua_newuserdata(L, sizeof(UserData) + sizeof(WeakPtr<HeapObject>)));
             if (userDataPtr != NULL)
             {
-                LuaVar newObject(*this, lua_gettop(L));
+                LuaVarRef newObject(*this, lua_gettop(L)); // newObject ist pushed on the Stack by lua_newuserdata
     
                 userDataPtr->magic       = MAGIC;
                 userDataPtr->isOwningPtr = false;
@@ -472,16 +482,9 @@ inline void LuaAccess::pushWeak(T* rhs) const
                                                              (static_cast<void*>(userDataPtr + 1));
                 new (weakPtrPtr) WeakPtr<HeapObject>(rhs);
             
-                LuaStoredObjectReference storeReference = LuaInterpreter::ClassRegistryAccess
-                                                                        ::getMetaTableStoreReference<T>(luaInterpreter);
-        
-                ASSERT(storeReference.ptr->getLuaInterpreter() == luaInterpreter);
-                
-                LuaVar metaTable = retrieve(storeReference);
-                newObject.setMetaTable(metaTable);
-    
+                IsInClassRegistry<LuaClassRegistry::ClassAttributes<T>::isKnown>::setMetatable(*this, newObject, (T*)NULL);
+
                 weakPtrMap[voidPtr] = newObject;
-                push(newObject);
             }
             else {
                 lua_pushnil(L);
@@ -489,9 +492,6 @@ inline void LuaAccess::pushWeak(T* rhs) const
         }
     }
     lua_removeunusedbefore(L, lua_gettop(L));
-#ifdef DEBUG
-    getLuaStackChecker()->truncateGenerationsAtStackIndex(lua_gettop(L));
-#endif
 }
 
 
@@ -506,14 +506,14 @@ template<class T
         >
 inline void LuaAccess::push(T* rhs) const
 {
-    pushWeak(rhs);
+    pushWeakPtr(rhs);
 }
 
 template<class T
         >
 inline void LuaAccess::push(const WeakPtr<T>& rhs) const
 {
-    pushWeak(rhs.getRawPtr());
+    pushWeakPtr(rhs.getRawPtr());
 }
 
 template<class KeyType
