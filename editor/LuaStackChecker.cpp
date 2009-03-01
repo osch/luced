@@ -32,18 +32,16 @@ int LuaStackChecker::registerAndGetGeneration(int stackIndex)
 {
     ASSERT(highestStackIndexForGeneration(newestGeneration) < stackIndex);
 
-#if 0
+    // truncate all older generations
+    // highestStackIndexForGeneration(i) might be incorrect because of 
+    // temporarily pushed stack indices that do not belong to any LuaVar
+    // or LuaVarRef object
     for (int i = generationOffset; i <= newestGeneration; ++i) {
         if (highestStackIndexForGeneration(i) >= stackIndex) {
             truncateGenerationsAtStackIndex(stackIndex);
             break;
         }
     }
-#else    
-    for (int i = generationOffset; i <= newestGeneration; ++i) {
-        ASSERT(highestStackIndexForGeneration(i) < stackIndex);
-    }
-#endif
 
     highestStackIndexForGeneration(newestGeneration) = stackIndex;
     

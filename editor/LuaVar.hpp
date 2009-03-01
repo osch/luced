@@ -555,7 +555,9 @@ public:
 #ifdef DEBUG
     bool isCorrect() const {
         ASSERT(LuaAccess::isCorrect());
-        ASSERT(stackIndex <= getLuaStackChecker()->getHighestStackIndexForGeneration(stackGeneration));
+        if (stackGeneration != -2) {
+            ASSERT(stackIndex <= getLuaStackChecker()->getHighestStackIndexForGeneration(stackGeneration));
+        }
         return true;
     }
 #endif
@@ -595,14 +597,16 @@ protected:
     {
         ASSERT(isCorrect());
     }
-#else
+#endif
     explicit LuaVarRef(const LuaAccess& luaAccess, int stackIndex)
         : LuaAccess(luaAccess),
           stackIndex(stackIndex)
+#ifdef DEBUG
+        , stackGeneration(-2)
+#endif
     {
         ASSERT(isCorrect());
     }
-#endif
     
     
     int stackIndex;
