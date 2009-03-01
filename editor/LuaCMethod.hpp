@@ -51,7 +51,7 @@ protected:
     {
         HeapObject* ptr = luaObject.toWeakPtr();
         if (ptr == NULL) {
-            trowInvalidArgumentError(luaObject, luaClassName);
+            throwInvalidArgumentError(luaObject, luaClassName);
         }
         T* rslt = dynamic_cast<T*>(ptr);
         if (rslt == NULL) {
@@ -64,7 +64,7 @@ protected:
                                               const char* methodName);
 
 private:    
-    static void trowInvalidArgumentError(const LuaVarRef& luaObject,
+    static void throwInvalidArgumentError(const LuaVarRef& luaObject,
                                          const char*      luaClassName);
 
     static void throwDynamicCastError(const LuaVarRef& luaObject,

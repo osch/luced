@@ -32,7 +32,7 @@ void LuaCMethodBase::throwInvalidNumberArgsError(const char* luaClassName)
 }
 
 
-void LuaCMethodBase::trowInvalidArgumentError(const LuaVarRef& luaObject, 
+void LuaCMethodBase::throwInvalidArgumentError(const LuaVarRef& luaObject, 
                                               const char*      luaClassName)
 {
     if (!luaObject.isPtr()) {
