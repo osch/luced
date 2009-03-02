@@ -19,16 +19,13 @@
 --
 -------------------------------------------------------------------------------------
 
-local thisModuleName    = ...
-local thisPackagePrefix = luced.getModulePrefix(thisModuleName)
-
 return -- default actionName key binding
 {
     -----------------------------------------
     -- default lua edit actions
     --
     {
-        actionName = thisPackagePrefix.."smartNewline",
+        actionName = "this.smartNewline",
         keys       = { "Return" },
     },
     
@@ -36,23 +33,23 @@ return -- default actionName key binding
     -- default shell script actions
     --
     {
-        actionName = thisPackagePrefix.."cvsEdit",
+        actionName = "this.cvsEdit",
         keys       = { "Alt+S,E" },
     },
     {
-        actionName = thisPackagePrefix.."cvsUnedit",
+        actionName = "this.cvsUnedit",
         keys       = { "Alt+S,U" },
     },
     {
-        actionName = thisPackagePrefix.."cvsCommit",
+        actionName = "this.cvsCommit",
         keys       = { "Alt+S,C" },
     },
     {
-        actionName = thisPackagePrefix.."cvsDiff",
+        actionName = "this.cvsDiff",
         keys       = { "Alt+S,D" },
     },
     {
-        actionName = thisPackagePrefix.."cvsLog",
+        actionName = "this.cvsLog",
         keys       = { "Alt+S,L" },
     },
 

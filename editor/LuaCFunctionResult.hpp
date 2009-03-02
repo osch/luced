@@ -34,10 +34,17 @@ class LuaCFunctionArguments;
 class LuaCFunctionResult
 {
 public:
-    LuaCFunctionResult(const LuaAccess& luaAccess)
+    explicit LuaCFunctionResult(const LuaAccess& luaAccess)
         : numberOfResults(0),
           luaAccess(luaAccess)
     {}
+    
+    LuaCFunctionResult(const LuaVarRef& rslt)
+        : numberOfResults(1),
+          luaAccess(rslt.getLuaAccess())
+    {
+        luaAccess.push(rslt);
+    }
     
     template<class T
             >

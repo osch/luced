@@ -161,7 +161,8 @@ private:
     GlobalConfig();
 
     void readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, 
-                              LuaVarRef            actionKeyBinding);
+                              LuaVarRef            actionKeyBinding,
+                              String               thisPackageName);
                               
     bool         useOwnKeyPressRepeater;
     bool         doNotUseX11XkbExtension;

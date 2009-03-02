@@ -33,7 +33,7 @@ void LuaCMethodBase::throwInvalidNumberArgsError(const char* luaClassName)
 
 
 void LuaCMethodBase::throwInvalidArgumentError(const LuaVarRef& luaObject, 
-                                              const char*      luaClassName)
+                                               const char*      luaClassName)
 {
     if (!luaObject.isPtr()) {
         throw LuaException(String() << "method needs object of type " << luaClassName
@@ -48,9 +48,14 @@ void LuaCMethodBase::throwInvalidArgumentError(const LuaVarRef& luaObject,
 void LuaCMethodBase::throwDynamicCastError(const LuaVarRef& luaObject,
                                            const char*      luaClassName)
 {
-    throw LuaException(String() << "method needs object of type " << luaClassName
-                                                                  << " as first argument, "
-                                   " but has argument of type "   << luaObject["type"].toString());
+    if (luaObject.isPtr() && luaObject["type"].isString()) 
+    {
+        throw LuaException(String() << "method needs object of type " << luaClassName
+                                                                      << " as first argument, "
+                                       " but has argument of type "   << luaObject["type"].toString());
+    } else {
+        throwInvalidArgumentError(luaObject, luaClassName);
+    }
 }
 
 

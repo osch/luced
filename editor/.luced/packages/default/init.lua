@@ -19,21 +19,18 @@
 --
 -------------------------------------------------------------------------------------
 
-local thisModuleName    = ...
-local thisPackagePrefix = thisModuleName.."."
-
 local cachedActions           = nil
 local cachedActionKeyBinding  = nil
 
 local cachedSyntaxDefinitions = {}
 
 local syntaxModuleNames       = {
-                                    cplusplus = "cplusplusSyntax",
-                                    lua       = "luaSyntax",
-                                    rexx      = "rexxSyntax",
-                                    emlua     = "emluaSyntax",
-                                    makefile  = "makefileSyntax",
-                                    java      = "javaSyntax",
+                                    cplusplus = "this.cplusplusSyntax",
+                                    lua       = "this.luaSyntax",
+                                    rexx      = "this.rexxSyntax",
+                                    emlua     = "this.emluaSyntax",
+                                    makefile  = "this.makefileSyntax",
+                                    java      = "this.javaSyntax",
                                 }
 
 
@@ -41,14 +38,14 @@ return
 {
     getAction            =  function(actionName)
                                 if not cachedActions then
-                                    cachedActions = require(thisPackagePrefix.."actions")
+                                    cachedActions = require("this.actions")
                                 end
                                 return cachedActions[actionName]
                             end,
                         
     getActionKeyBinding  =  function()
                                 if not cachedActionKeyBinding then
-                                    cachedActionKeyBinding = require(thisPackagePrefix.."actionKeyBinding")
+                                    cachedActionKeyBinding = require("this.actionKeyBinding")
                                 end
                                 return cachedActionKeyBinding
                             end,
@@ -60,7 +57,7 @@ return
                                 else
                                     local moduleName = syntaxModuleNames[syntaxName]
                                     if moduleName then
-                                        local ok,rslt = pcall(require, thisPackagePrefix..moduleName)
+                                        local ok,rslt = pcall(require, moduleName)
                                         if ok then
                                             cachedSyntaxDefinitions[syntaxName] = rslt
                                             return rslt

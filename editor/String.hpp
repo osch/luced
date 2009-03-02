@@ -351,6 +351,38 @@ public:
     void clear() {
         s.clear();
     }
+    
+    String toSubstitutedString(char oldChar, char newChar) const {
+        String rslt = *this;
+        for (int i = 0, n = getLength(); i < n; ++i) {
+            if (rslt[i] == oldChar) {
+                rslt[i] = newChar;
+            }
+        }
+        return rslt;
+    }
+    String toSubstitutedString(const char* oldPart, const char* newPart) const {
+        String rslt;
+        int oldPartLength = strlen(oldPart);
+        if (oldPartLength == 0) {
+            return "";
+        }
+        int newPartLength = strlen(newPart);
+        int thisLength = getLength();
+        int i = 0;
+        while (i < thisLength) 
+        {
+            int n = s.find(oldPart, i);
+            if (n == std::string::npos) {
+                break;
+            }
+            rslt.appendSubstring(*this, i, n - i);
+            rslt.append(newPart, newPartLength);
+            i = n + oldPartLength;
+        }
+        rslt.appendSubstring(*this, i, thisLength - i);
+        return rslt;
+    }
 
 private:
     static std::string stringify(int i) {

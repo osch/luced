@@ -301,7 +301,7 @@ public:
         lua_pushvalue(L, rhs.stackIndex);
         lua_setfenv(L, stackIndex);
     }
-    
+    LuaVar getFunctionEnvironment() const;    
     
     bool isNil() const {
         ASSERT(isCorrect());
@@ -432,15 +432,21 @@ public:
                 &&  userDataPtr->magic == LuaAccess::MAGIC 
                 && !userDataPtr->isOwningPtr);
     }
-    WeakPtr<HeapObject> toWeakPtr() const {
+    template<class T
+            >
+    WeakPtr<T> toWeakPtr() const {
         ASSERT(isCorrect());
         LuaAccess::UserData* userDataPtr = static_cast<UserData*>(lua_touserdata(L, stackIndex));
         if (userDataPtr != NULL && userDataPtr->magic == LuaAccess::MAGIC) {
+            HeapObject* rsltPtr;
             if (userDataPtr->isOwningPtr) {
-                return *static_cast<OwningPtr<HeapObject>*>(static_cast<void*>(userDataPtr + 1));
+                rsltPtr = static_cast<OwningPtr<HeapObject>*>(static_cast<void*>(userDataPtr + 1))
+                          ->getRawPtr();
             } else {
-                return *static_cast<WeakPtr<HeapObject>*>(static_cast<void*>(userDataPtr + 1));
+                rsltPtr = static_cast<WeakPtr<HeapObject>*>(static_cast<void*>(userDataPtr + 1))
+                          ->getRawPtr();
             }
+            return dynamic_cast<T*>(rsltPtr);
         } else {
             return Null;
         }
@@ -995,6 +1001,14 @@ inline RawPtr<LuaInterpreter> LuaVarRef::getLuaInterpreter() const
     ASSERT(isCorrect());
     return LuaStateAccess::getLuaInterpreter(L);
 }
+
+inline LuaVar LuaVarRef::getFunctionEnvironment() const
+{
+    ASSERT(isCorrect());
+    lua_getfenv(L, stackIndex);
+    return LuaVar(getLuaAccess(), lua_gettop(L));
+}
+
 
 #ifdef DEBUG
 template<

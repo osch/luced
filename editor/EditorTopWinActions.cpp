@@ -128,6 +128,7 @@ void EditorTopWinActions::executeLuaScript()
 void EditorTopWinActions::resetLuaModules()
 {
     GlobalLuaInterpreter::getInstance()->resetModules();
+    GlobalConfig::getInstance()->readConfig();
 }
 
 

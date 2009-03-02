@@ -25,6 +25,7 @@
 #include "Regex.hpp"
 #include "GlobalLuaInterpreter.hpp"
 #include "GlobalConfig.hpp"
+#include "LuaIterator.hpp"
 
 using namespace LucED;
 
@@ -84,3 +85,14 @@ LuaCFunctionResult LucedLuaInterface::getCurrentView(const LuaCFunctionArguments
     
     return LuaCFunctionResult(luaAccess) << currentView;
 }
+
+LuaCFunctionResult LucedLuaInterface::getLoadedPackageModules(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (args.getLength() > 0) {
+        throw LuaArgException();
+    }
+    return GlobalLuaInterpreter::getInstance()->getLoadedPackageModules();
+}
+

@@ -31,7 +31,8 @@
 #include "File.hpp"
 #include "CurrentDirectoryKeeper.hpp"
 #include "ActionIdRegistry.hpp"
-
+#include "QualifiedName.hpp"
+                            
 using namespace LucED;
 
 SingletonInstance<GlobalConfig> GlobalConfig::instance;;
@@ -100,7 +101,11 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode() const
     return languageModes->getDefaultLanguageMode();
 }
 
-void GlobalConfig::readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, LuaVarRef actionKeyBinding)
+static const char* THIS_PREFIX = "this.";
+
+void GlobalConfig::readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, 
+                                        LuaVarRef actionKeyBinding,
+                                        String    thisPackageName)
 {
     LuaAccess luaAccess = actionKeyBinding.getLuaAccess();
     LuaVar o(luaAccess);
@@ -114,6 +119,17 @@ void GlobalConfig::readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, Lu
         if (n.isString())
         {
             String actionName = n.toString();
+            if (actionName.startsWith(THIS_PREFIX) && thisPackageName != "") {
+                actionName = String() << thisPackageName << "." 
+                                      << actionName.getTail(strlen(THIS_PREFIX));
+            }
+            QualifiedName qualifiedActionName(actionName);
+            if (   qualifiedActionName.getQualifier() == ""
+                || qualifiedActionName.getQualifier() == "this"
+                || qualifiedActionName.getName() == "")
+            {
+                throw ConfigException(String() << "Invalid actionName '" << n.toString() << "'");
+            }
             ActionId actionId = ActionIdRegistry::getInstance()->getActionId(actionName);
             LuaVar keys = o["keys"];
             if (!keys.isValid() || (!keys.isString() && !keys.isTable())) {
@@ -147,7 +163,7 @@ void GlobalConfig::readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, Lu
             }
             String packageName = n.toString();
             packagesMap.set(packageName, true);
-            LuaVar package = GlobalLuaInterpreter::getInstance()->require(packageName);
+            LuaVar package = GlobalLuaInterpreter::getInstance()->requirePackage(packageName);
             if (package.isTable()) {
                 LuaVar getActionKeyBinding = package["getActionKeyBinding"];
                 if (!getActionKeyBinding.isFunction()) {
@@ -159,7 +175,7 @@ void GlobalConfig::readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, Lu
                     throw ConfigException(String() << "'"<< packageName 
                                                    << ".getActionKeyBinding()' must return table");
                 }
-                readActionKeyBinding(actionKeyConfig, packageBinding);
+                readActionKeyBinding(actionKeyConfig, packageBinding, packageName);
             }
         }
     }
@@ -470,7 +486,7 @@ void GlobalConfig::readConfig()
             if (!actionKeyBinding.isTable()) {
                 throw ConfigException("invalid actionKeyBinding");
             }
-            readActionKeyBinding(newActionKeyConfig, actionKeyBinding);
+            readActionKeyBinding(newActionKeyConfig, actionKeyBinding, "");
         }
         actionKeyConfig = newActionKeyConfig;
     }

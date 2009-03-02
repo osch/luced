@@ -33,7 +33,7 @@ SyntaxPatterns::Ptr SyntaxPatternsConfig::loadSyntaxPatterns(const String&      
     {
         QualifiedName syntaxName(syntaxNameString);
         String        packageName = syntaxName.getQualifier();
-        LuaVar package = GlobalLuaInterpreter::getInstance()->require(packageName);
+        LuaVar package = GlobalLuaInterpreter::getInstance()->requirePackage(packageName);
         if (package.isTable()) {
             LuaVar syntaxDefinitionGetter = package["getSyntaxDefinition"];
             if (!syntaxDefinitionGetter.isFunction()) {

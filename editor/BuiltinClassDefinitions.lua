@@ -34,6 +34,8 @@ return
                      },
                      { name = "getCurrentView"
                      },
+                     { name = "getLoadedPackageModules"
+                     },
                    }
     },
     {

@@ -24,6 +24,7 @@
 #include "GlobalConfig.hpp"
 #include "File.hpp"
 #include "LuaIterator.hpp"
+#include "LuaCClosure.hpp"
 
 using namespace LucED;
 
@@ -41,11 +42,14 @@ GlobalLuaInterpreter::GlobalLuaInterpreter()
     LuaVar loaded = package["loaded"];
     loaded["luced"] = luced;
 
-    String packagesDir = File(GlobalConfig::getInstance()->getConfigDirectory(),
-                              "packages").getAbsoluteName();
+    packagesDir = File(GlobalConfig::getInstance()->getConfigDirectory(),
+                       "packages").getAbsoluteName();
     
-    package["path"] = String() << packagesDir << "/?.lua;"
-                               << packagesDir << "/?/init.lua";
+    modulesDir  = File(GlobalConfig::getInstance()->getConfigDirectory(),
+                       "modules").getAbsoluteName();
+
+    package["path"] = String() << modulesDir << "/?.lua;"
+                               << modulesDir << "/?/init.lua";
 
 
     LuaVar initialModules = luaAccess.newTable();
@@ -56,9 +60,9 @@ GlobalLuaInterpreter::GlobalLuaInterpreter()
     }
 
     lucedLuaInterfaceStoreReference = luced.store();
-    packageStoreReference           = package.store();
-    packageLoadedStoreReference     = loaded.store();
+    loadedModulesStoreReference     = loaded.store();
     initialModulesStoreReference    = initialModules.store();
+    loadedPackagesStoreReference    = luaAccess.newTable().store();
 }
 
 
@@ -66,7 +70,7 @@ void GlobalLuaInterpreter::resetModules()
 {
     LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
 
-    LuaVar loadedModules  = luaAccess.retrieve(packageLoadedStoreReference);
+    LuaVar loadedModules  = luaAccess.retrieve(loadedModulesStoreReference);
     LuaVar initialModules = luaAccess.retrieve(initialModulesStoreReference);
 
     for (LuaIterator i(luaAccess); i.in(loadedModules);)
@@ -80,19 +84,127 @@ void GlobalLuaInterpreter::resetModules()
     {
         loadedModules[i.key()] = i.value();
     }
+
+    loadedPackagesStoreReference    = luaAccess.newTable().store();
 }
 
 
-void GlobalLuaInterpreter::resetModule(const String& moduleName)
+static const char* THIS_PREFIX = "this.";
+
+LuaCFunctionResult GlobalLuaInterpreter::packageLocalRequireFunction(const LuaCFunctionArguments& args, 
+                                                                     LuaVarRef luaInterpreterVar,
+                                                                     LuaVarRef currentPackageNameVar,
+                                                                     LuaVarRef environmentVar)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+
+    WeakPtr<GlobalLuaInterpreter> luaInterpreter = luaInterpreterVar.toWeakPtr<GlobalLuaInterpreter>();
+    
+    if (!luaInterpreter.isValid() || !currentPackageNameVar.isString()) {
+        throw LuaException("internal error");
+    }
+    String currentPackageName = currentPackageNameVar.toString();
+
+    if (args.getLength() == 0 || !args[0].isString())
+    {
+        throw LuaException(String() << "function 'require' needs string argument but got " << args[0].getTypeName());
+    }
+    String requiredModuleName = args[0].toString();
+    
+    if (requiredModuleName == "this") {
+        throw LuaException(String() << "Module name '" << requiredModuleName << "' not allowed");
+    }
+    if (!requiredModuleName.startsWith(THIS_PREFIX))
+    {
+        return luaInterpreter->require(requiredModuleName);
+    }
+    
+    String absoluteRequiredModuleName = String() << currentPackageName << "." 
+                                                 << requiredModuleName.getTail(strlen(THIS_PREFIX));
+
+    LuaVar loadedPackages = luaAccess.retrieve(luaInterpreter->loadedPackagesStoreReference);
+    LuaVar loadedPackage  = loadedPackages[absoluteRequiredModuleName];
+    if (!loadedPackage.isNil()) {
+        return loadedPackage;
+    }
+
+    String absoluteRequiredModuleFileNamePart  = absoluteRequiredModuleName.toSubstitutedString('.', '/');
+
+    String fileName = String() << luaInterpreter->packagesDir << "/" << absoluteRequiredModuleFileNamePart 
+                                                              << ".lua";
+    LuaVar startModule = luaAccess.loadFile(fileName);
+    
+    if (startModule.isNil())
+    {
+        fileName = String() << luaInterpreter->packagesDir << "/" << absoluteRequiredModuleFileNamePart 
+                                                           << "/init.lua";
+        startModule = luaAccess.loadFile(fileName);
+    }
+    
+    if (startModule.isNil()) {
+        throw LuaException(String() << "cannot find module '" << absoluteRequiredModuleName << "'");
+    }
+
+    startModule.setFunctionEnvironment(environmentVar);
+    
+    LuaVar rslt = startModule.call(absoluteRequiredModuleName);
+
+    if (rslt.isNil()) {
+        rslt = true;
+    }
+    loadedPackages[absoluteRequiredModuleName] = rslt;
+    return rslt;
+}
+
+
+LuaVar GlobalLuaInterpreter::requirePackage(const String& packageName)
 {
     LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
 
-    LuaVar loadedModules  = luaAccess.retrieve(packageLoadedStoreReference);
-    LuaVar initialModules = luaAccess.retrieve(initialModulesStoreReference);
-
-    if (initialModules[moduleName].isNil())
-    {
-        loadedModules[moduleName].setNil();
+    if (packageName.startsWith(THIS_PREFIX) || packageName == "this") {
+        throw LuaException(String() << "Package name '" << packageName << "' not allowed");
     }
+    
+    LuaVar loadedPackages = luaAccess.retrieve(loadedPackagesStoreReference);
+    
+    LuaVar loadedPackage = loadedPackages[packageName];
+    
+    if (!loadedPackage.isNil()) {
+        return loadedPackage;
+    }
+    
+    String packageFileNamePart = packageName.toSubstitutedString('.', '/');
+    
+    LuaVar startModule = luaAccess.loadFile(String() << packagesDir << "/" << packageFileNamePart << ".lua");
+    
+    if (startModule.isNil()) {
+        startModule    = luaAccess.loadFile(String() << packagesDir << "/" << packageFileNamePart << "/init.lua");
+    }
+    
+
+    if (startModule.isNil()) {
+        throw LuaException(String() << "cannot find package '" << packageName << "'");
+    }
+    
+    LuaVar env = luaAccess.newTable();
+
+    env["require"] = LuaCClosure::create<GlobalLuaInterpreter::packageLocalRequireFunction>(luaAccess.toLua(this), 
+                                                                                            luaAccess.toLua(packageName), 
+                                                                                            env);
+    LuaVar metaEnv = luaAccess.newTable();
+    
+    metaEnv["__index"] = luaAccess.getGlobalVariables();
+    
+    env.setMetaTable(metaEnv);
+    
+    startModule.setFunctionEnvironment(env);
+    
+    LuaVar rslt = startModule.call(packageName);
+
+    if (rslt.isNil()) {
+        rslt = true;
+    }
+    loadedPackages[packageName] = rslt;
+    return rslt;
 }
 

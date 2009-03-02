@@ -19,9 +19,6 @@
 --
 -------------------------------------------------------------------------------------
 
-local thisModuleName    = ...
-local thisPackagePrefix = luced.getModulePrefix(thisModuleName)
-
 local append = table.insert
 
 local function smartNewline(view)

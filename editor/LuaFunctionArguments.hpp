@@ -106,7 +106,6 @@ public:
         ASSERT(LuaAccess::isCorrect());
         ASSERT(startStackIndex + numberArguments == lua_gettop(L));
         ASSERT(getLuaStackChecker()->getHighestStackIndexForNewestGeneration() < startStackIndex);
-        ASSERT(getLuaStackChecker()->getHighestStackIndex() <= startStackIndex + numberArguments);
         return true;
     }
 #endif

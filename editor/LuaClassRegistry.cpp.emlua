@@ -52,8 +52,8 @@ LuaCFunctionResult CompareFunction(const LuaCFunctionArguments& args)
     
     if (args.getLength() >= 2)
     {
-        HeapObject* p1 = args[0].toWeakPtr();
-        HeapObject* p2 = args[1].toWeakPtr();
+        HeapObject* p1 = args[0].toWeakPtr<HeapObject>();
+        HeapObject* p2 = args[1].toWeakPtr<HeapObject>();
         
         rslt = (p1 == p2);
     }
@@ -71,8 +71,8 @@ LuaCFunctionResult LessThanFunction(const LuaCFunctionArguments& args)
     
     if (args.getLength() >= 2)
     {
-        HeapObject* p1 = args[0].toWeakPtr();
-        HeapObject* p2 = args[1].toWeakPtr();
+        HeapObject* p1 = args[0].toWeakPtr<HeapObject>();
+        HeapObject* p2 = args[1].toWeakPtr<HeapObject>();
         
         rslt = (p1 < p2);
     }
@@ -90,8 +90,8 @@ LuaCFunctionResult LessOrEqualFunction(const LuaCFunctionArguments& args)
     
     if (args.getLength() >= 2)
     {
-        HeapObject* p1 = args[0].toWeakPtr();
-        HeapObject* p2 = args[1].toWeakPtr();
+        HeapObject* p1 = args[0].toWeakPtr<HeapObject>();
+        HeapObject* p2 = args[1].toWeakPtr<HeapObject>();
         
         rslt = (p1 <= p2);
     }
@@ -118,7 +118,7 @@ LuaCFunctionResult TostringFunction(const LuaCFunctionArguments& args)
         }
         
         String hexPtr;
-        HeapObject* p = args[0].toWeakPtr();
+        HeapObject* p = args[0].toWeakPtr<HeapObject>();
 
         if (p != NULL) {
             char hexPtrBuffer[40]; sprintf(hexPtrBuffer, "%p", p);
@@ -181,7 +181,7 @@ LuaCFunctionResult IsValidFunction(const LuaCFunctionArguments& args)
     {
         if (args.getLength() >= 1)
         {
-            if (args[0].toWeakPtr().isValid())
+            if (args[0].toWeakPtr<HeapObject>().isValid())
             {
                 rslt = true;
             }

@@ -37,19 +37,34 @@ public:
     }
 
     void resetModules();
-    void resetModule(const String& moduleName);
-        
+    
+    LuaVar requirePackage(const String& packageName);
+    
+    LuaVar getLoadedPackageModules() {
+        return LuaInterpreter::getCurrentLuaAccess().retrieve(loadedPackagesStoreReference);
+    }
 private:
     friend class SingletonInstance<GlobalLuaInterpreter>;
     
     static SingletonInstance<GlobalLuaInterpreter> instance;
 
     GlobalLuaInterpreter();
+    
+    String packagesDir;
+    String modulesDir;
+    
+    static LuaCFunctionResult packageLocalRequireFunction(const LuaCFunctionArguments& args, 
+                                                          LuaVarRef luaInterpreterVar,
+                                                          LuaVarRef currentPackageNameVar,
+                                                          LuaVarRef environmentVar);
+    
+    String currentPackageName;
 
     LuaStoredObjectReference lucedLuaInterfaceStoreReference;
-    LuaStoredObjectReference packageStoreReference;
-    LuaStoredObjectReference packageLoadedStoreReference;
+    LuaStoredObjectReference loadedModulesStoreReference;
     LuaStoredObjectReference initialModulesStoreReference;
+
+    LuaStoredObjectReference loadedPackagesStoreReference;
 };
 
 } // namespace LucED
