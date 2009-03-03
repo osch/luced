@@ -246,6 +246,11 @@ protected:
 #endif
 
     lua_State* L;
+
+private:
+    template<class T
+            >
+    static LuaStoredObjectReference getMetaTableStoreReference(RawPtr<LuaInterpreter> luaInterpreter);
 };
 
 } // namespace LucED
@@ -378,10 +383,9 @@ template<class T
 inline void LuaAccess::IsInClassRegistry<true>::setMetatable(const LuaAccess& luaAccess, LuaVarRef newObject, T* dummy)
 {
     RawPtr<LuaInterpreter>   luaInterpreter = luaAccess.getLuaInterpreter();
-    LuaStoredObjectReference storeReference = LuaInterpreter::ClassRegistryAccess
-                                                            ::getMetaTableStoreReference<T>(luaInterpreter);
+    LuaStoredObjectReference storeReference = getMetaTableStoreReference<T>(luaInterpreter);
     
-    ASSERT(storeReference.ptr->getLuaInterpreter() == luaInterpreter);
+    ASSERT(storeReference.hasLuaInterpreter(luaInterpreter));
     
     LuaVar metaTable = luaAccess.retrieve(storeReference);
     newObject.setMetaTable(metaTable);
@@ -618,6 +622,14 @@ inline LuaAccess::Result LuaAccess::executeExpression(const String& expr, String
 inline LuaAccess::Result LuaAccess::executeScript(String script, String name) const
 {
     return executeScript(script.toCString(), script.getLength(), name);
+}
+
+template<class T
+        >
+inline LuaStoredObjectReference LuaAccess::getMetaTableStoreReference(RawPtr<LuaInterpreter> luaInterpreter)
+{
+    return LuaInterpreter::ClassRegistryAccess
+                         ::getMetaTableStoreReference<T>(luaInterpreter);
 }
 
 #ifdef DEBUG

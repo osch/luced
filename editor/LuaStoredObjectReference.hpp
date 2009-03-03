@@ -38,7 +38,20 @@ class LuaStoredObjectReference
 {
 public:
     LuaStoredObjectReference();
+    
+    bool hasLuaInterpreter(RawPtr<LuaInterpreter> luaInterpreter) const {
+        return ptr->getLuaInterpreter() == luaInterpreter;
+    }
 
+    bool isValid() const {
+        return ptr.isValid();
+    }
+
+    int getRegistryReference() const {
+        ASSERT(ptr->getRegistryReference() == registryReference);
+        return registryReference;
+    }
+    
 private:
     friend class LuaAccess;
     
@@ -69,6 +82,7 @@ private:
     static lua_State* getL(const LuaAccess& luaAccess);
 
     OwningPtr<Data> ptr;
+    int             registryReference;
 };
 
 } // namespace LucED
@@ -95,12 +109,14 @@ inline LuaStoredObjectReference::Data::Data(int registryReference, RawPtr<LuaInt
 {}
 
 inline LuaStoredObjectReference::LuaStoredObjectReference()
+    : registryReference(0)
 {}
 
 inline LuaStoredObjectReference::LuaStoredObjectReference(int                    registryReference,
                                                           RawPtr<LuaInterpreter> luaInterpreter)
     : ptr(Data::create(registryReference, 
-                       luaInterpreter))
+                       luaInterpreter)),
+      registryReference(registryReference)
 {}
 
 inline lua_State* LuaStoredObjectReference::getL(const LuaAccess& luaAccess)
