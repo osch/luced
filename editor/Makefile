@@ -30,7 +30,7 @@ LINK_INVOKE_OPTS    := -g
 
 CPP_DEFINES         :=
 
-CPP_DEFINES         += -D LUA_USE_LINUX
+CPP_DEFINES         += -D LUA_USE_POSIX
 
 CPP_DEFINES         += -D STAT_HAS_ST_MTIM_TV_NSEC
 #CPP_DEFINES        += -D STAT_HAS_ST_MTIMENSE
@@ -136,7 +136,8 @@ LIB_MBRS      := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
 LIB_OBJS      := $(patsubst %, $(BUILD_DIR)/%.o,                $(MODULES))
 FAST_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(FAST_MODULES))
 SLOW_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(SLOW_MODULES))
- LUA_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(LUA_MODULES))
+ LUA_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(LUA_MODULES) \
+                                                                   lua)
 LPOSIX_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,              $(LPOSIX_MODULES))
  PRG_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
 
@@ -163,6 +164,10 @@ clean:
 
 luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
 	$(LINK_RUN)
+
+lua:  $(BUILD_DIR)/lua.o $(LUA_OBJS) $(LPOSIX_OBJS)
+	$(LINK_RUN)
+
 
 complink: luced.cpp $(patsubst %, %.cpp, $(MODULES))
 	$(call COMPILE_LINK_RUN,,luced,$^)
@@ -194,7 +199,7 @@ endif                                                         #
 
 EMLUA_STARTUP := CONFIG_FILES={ $(patsubst .luced/%,"%";, $(CONFIG_FILES)) }
 
-$(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_SCRIPT_FILES) $(CONFIG_FILES)
+$(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_SCRIPT_FILES) $(CONFIG_FILES) lua
 	$(call EMLUA_RUN,                   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<),$(EMLUA_STARTUP))
 	$(call CONDITIONAL_DEPENDECY_RUN,   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.hpp.gen.dep,$<), \
 	                                    $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<),     \
@@ -202,7 +207,7 @@ $(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_SCRIPT_FILE
 	                                    
 
 
-$(BUILD_DIR)/%.cpp.gen.dep $(BUILD_DIR)/%.new.cpp: %.cpp.emlua $(LUA_SCRIPT_FILES) $(CONFIG_FILES)
+$(BUILD_DIR)/%.cpp.gen.dep $(BUILD_DIR)/%.new.cpp: %.cpp.emlua $(LUA_SCRIPT_FILES) $(CONFIG_FILES) lua
 	$(call EMLUA_RUN,                   $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.new.cpp,$<),$(EMLUA_STARTUP))
 	$(call CONDITIONAL_DEPENDECY_RUN,   $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.cpp.gen.dep,$<), \
 	                                    $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.new.cpp,$<),     \
@@ -309,7 +314,7 @@ define EMLUA_RUN
 	@echo "Generating $< --> $(strip $1)"; \
 	mkdir -p $(@D); \
 	rm -f $1; \
-	lua -e '$2' em.lua $< > $1; rc=$$?; \
+	./lua -e '$2' em.lua $< > $1; rc=$$?; \
 	if [ 0 -ne $$rc ]; then rm -f $1; else chmod a-w $1; fi; \
 	exit $$rc
 endef

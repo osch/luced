@@ -748,7 +748,7 @@ union luai_Cast { double l_d; long l_l; };
 
 #endif
 
-
+#define LUACONF_INITLIBS(L)
 
 /* =================================================================== */
 
@@ -824,6 +824,24 @@ void LuaStateAccess_incRefForLuaInterpreter(void* luaInterpreter);
         LucED::LuaStateAccess_freeExtraLuaStateData(extra); \
     } \
 }
+
+#if defined(lua_c)
+// Dummy functions used in luaconf and not needed for 
+// standalone interpreter:
+//
+void LucED::LuaStateAccess_freeExtraLuaStateData(ExtraLuaStateData* extraLuaStateData)
+{}
+void LucED::LuaStateAccess_incRefForLuaInterpreter(void* luaInterpreter)
+{}
+
+struct lua_State;
+extern int luaopen_posix (struct lua_State* L);
+
+#undef  LUACONF_INITLIBS
+#define LUACONF_INITLIBS(L) luaopen_posix((L))
+
+#endif
+
 
 #endif
 
