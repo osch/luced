@@ -35,7 +35,8 @@
 #include "CommandlineException.hpp"
 #include "GlobalConfig.hpp"
 #include "ProgramName.hpp"
-
+#include "DefaultConfig.hpp"
+             
 using namespace LucED;
 
 int main(int argc, char** argv)
@@ -53,7 +54,9 @@ int main(int argc, char** argv)
             SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
             Commandline::Ptr     commandline     = Commandline::create(argc, argv);
             EditorClient::Ptr    editorClient    = EditorClient::getInstance();
-            
+          
+            DefaultConfig::createMissingConfigFiles();
+              
             editorClient->startWithCommandline(commandline);
 
             EventDispatcher::getInstance()->doEventLoop();

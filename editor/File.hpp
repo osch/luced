@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -30,11 +30,10 @@
 #include "Seconds.hpp"
 #include "MicroSeconds.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-
-
-class File : public NonCopyable
+class File
 {
 public:
 
@@ -91,11 +90,21 @@ public:
 
     void loadInto(ByteBuffer& buffer) const;
     
+    void storeData(const char* data, int length) const;
+
+    void storeData(const char* data) const;
+    
     void storeData(ByteBuffer& data) const;
     
     bool exists() const;
     
     Info getInfo() const;
+    
+    void createDirectory() const;
+
+    operator String() const {
+        return name;
+    }
     
 private:
    String         name;
@@ -105,4 +114,3 @@ private:
 } // namespace LucED
 
 #endif // FILE_HPP
-

@@ -77,8 +77,8 @@ INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
 LUA_SCRIPTS            := functions             BuiltinActionDefinitions  BuiltinClassDefinitions
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
                           LuaClassRegistry      LuaCClosure
-GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       
                           
+GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultConfig
                           
 GENERATED_FAST_MODULES := LuaClassRegistry
 
@@ -104,7 +104,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
 		ActionKeySequenceHandler StackTrace             ActionIdRegistry           MultiLineDisplayActions \
 		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess \
 		LucedLuaInterface        KeyPressEvent          QualifiedName              SyntaxPatternsConfig \
-		TextStyleCache
+		TextStyleCache           
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \
@@ -113,6 +113,9 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
                 ViewLuaInterface        LuaSerializer
                 
+CONFIG_FILES := .luced/config.lua \
+                $(wildcard .luced/packages/default/*.lua)
+
 PRG_MODULES  := luced
 
 LUA_MODULES  := lapi lcode ldebug ldo ldump lfunc lgc llex lmem \
@@ -189,16 +192,18 @@ endif                                                         #
 #  is used).
 #
 
-$(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_SCRIPT_FILES)
-	$(call EMLUA_RUN,                   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<))
+EMLUA_STARTUP := CONFIG_FILES={ $(patsubst .luced/%,"%";, $(CONFIG_FILES)) }
+
+$(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_SCRIPT_FILES) $(CONFIG_FILES)
+	$(call EMLUA_RUN,                   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<),$(EMLUA_STARTUP))
 	$(call CONDITIONAL_DEPENDECY_RUN,   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.hpp.gen.dep,$<), \
 	                                    $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<),     \
 	                                    $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.hpp,$<) )
 	                                    
 
 
-$(BUILD_DIR)/%.cpp.gen.dep $(BUILD_DIR)/%.new.cpp: %.cpp.emlua $(LUA_SCRIPT_FILES)
-	$(call EMLUA_RUN,                   $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.new.cpp,$<))
+$(BUILD_DIR)/%.cpp.gen.dep $(BUILD_DIR)/%.new.cpp: %.cpp.emlua $(LUA_SCRIPT_FILES) $(CONFIG_FILES)
+	$(call EMLUA_RUN,                   $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.new.cpp,$<),$(EMLUA_STARTUP))
 	$(call CONDITIONAL_DEPENDECY_RUN,   $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.cpp.gen.dep,$<), \
 	                                    $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.new.cpp,$<),     \
 	                                    $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.cpp,$<) )
@@ -298,12 +303,13 @@ endef
 # Parameters:
 #
 # $1:  target file
+# $2:  startup code without '
 #
 define EMLUA_RUN
 	@echo "Generating $< --> $(strip $1)"; \
 	mkdir -p $(@D); \
 	rm -f $1; \
-	lua em.lua $< > $1; rc=$$?; \
+	lua -e '$2' em.lua $< > $1; rc=$$?; \
 	if [ 0 -ne $$rc ]; then rm -f $1; else chmod a-w $1; fi; \
 	exit $$rc
 endef

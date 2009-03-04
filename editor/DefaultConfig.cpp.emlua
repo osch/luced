@@ -1,0 +1,79 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+#include "DefaultConfig.hpp"
+#include "File.hpp"
+#include "System.hpp"
+
+@ local stringLiteral = require("functions").stringLiteral
+
+using namespace LucED;
+
+namespace // anonymous
+{
+
+static const int NUMBER_CONFIG_FILES = @(#CONFIG_FILES);
+
+struct DefaultConfigEntry
+{
+    const char* fileName;
+    const char* fileContent;
+};
+
+static DefaultConfigEntry defaultConfigEntries[NUMBER_CONFIG_FILES] =
+{
+@ for i = 1, #CONFIG_FILES do
+@   local fileName = CONFIG_FILES[i]
+    {
+        @(stringLiteral(fileName)),
+@
+@   for line in io.lines(".luced/"..fileName) do
+        @(stringLiteral(line.."\n"))
+@   end
+    }
+    @(i < #CONFIG_FILES and "," or "")
+@ end
+};
+
+} // anonymous namespace
+
+
+void DefaultConfig::createMissingConfigFiles()
+{
+    File configDirectory(".luced");
+    
+    if (!configDirectory.exists()) {
+        String homeDirectory = System::getInstance()->getHomeDirectory();
+        configDirectory = File(homeDirectory, ".luced");
+    }
+    if (!configDirectory.exists())
+    {
+        configDirectory.createDirectory();
+        
+        for (int i = 0; i < NUMBER_CONFIG_FILES; ++i)
+        {
+            File thisFile(configDirectory, defaultConfigEntries[i].fileName);
+            File thisDir = thisFile.getDirName();
+            thisDir.createDirectory();
+            thisFile.storeData(defaultConfigEntries[i].fileContent);
+        }
+    }
+}

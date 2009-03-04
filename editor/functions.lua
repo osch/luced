@@ -103,11 +103,20 @@ local function upperize(s)
     return concat(rslt, "_")
 end
 
+local function stringLiteral(s)
+    s = string.gsub(s, [[\]], [[\\]])
+    s = string.gsub(s, [["]], [[\"]])
+    s = string.gsub(s, "\n",  [[\n]])
+    s = string.gsub(s, "\r",  [[\r]])
+    return '"'..s..'"'
+end
+
 return  {
             argList        = argList,
             filledArgList  = filledArgList,
             typedArgList   = typedArgList,
             classList      = classList,
             capitalize     = capitalize,
-            upperize       = upperize
+            upperize       = upperize,
+            stringLiteral  = stringLiteral,
         }

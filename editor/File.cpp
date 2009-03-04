@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -73,13 +73,12 @@ void File::loadInto(ByteBuffer& buffer) const
     }
 }
 
-void File::storeData(ByteBuffer& data) const
+void File::storeData(const char* data, int length) const
 {
     int fd = open(name.toCString(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
     
     if (fd != -1) {
-        long length = data.getLength();
-        if (write(fd, data.getAmount(0, length), length) == -1) {
+        if (write(fd, data, length) == -1) {
             throw FileException(errno, String() << "error writing to file '" << name << "': " << strerror(errno));
         }
         if (close(fd) == -1) {
@@ -88,6 +87,17 @@ void File::storeData(ByteBuffer& data) const
     } else {
         throw FileException(errno, String() << "error opening file '" << name << "' for writing: " << strerror(errno));
     }
+}
+
+void File::storeData(const char* data) const
+{
+    storeData(data, strlen(data));
+}
+
+void File::storeData(ByteBuffer& data) const
+{
+    int length = data.getLength();
+    storeData((char*)data.getAmount(0, length), length);
 }
 
 String File::getAbsoluteName() const
@@ -222,5 +232,27 @@ File::Info File::getInfo() const
     {
         throw FileException(errno, String() << "error accessing file '" << fileName << "': " << strerror(errno));
     }
+}
+
+
+void File::createDirectory() const
+{
+    const String fileName = getAbsoluteName();
+    const int    len      = fileName.getLength();
+
+    int i = 0;
+    while (i < len && fileName[i] == '/') ++i;
+    do {
+        while (i < len && fileName[i] != '/') ++i;
+        String path = fileName.getSubstringBetween(0, i);
+        int rc = mkdir(path.toCString(), S_IRUSR|S_IWUSR|S_IXUSR|
+                                         S_IRGRP|S_IWGRP|S_IXGRP|
+                                         S_IROTH|S_IWOTH|S_IXOTH);
+        if (rc != 0 && errno != EEXIST) {
+            throw FileException(errno, String() << "error creating directory '" << path << "': " << strerror(errno));
+        }
+        while (i < len && fileName[i] == '/') ++i;
+    }
+    while (i < len);
 }
 
