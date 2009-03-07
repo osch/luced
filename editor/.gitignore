@@ -3,6 +3,8 @@ sandbox_options.hpp
 build*
 luced
 luced.exe
+lua
+lua.exe
 lc
 *gprof*
 *.bak.*
