@@ -149,7 +149,7 @@ void FileOpener::openFiles()
                                         p.setTitle("Error opening file")
                                          .setMessage(ex.getMessage())
                                          .setCancelButton     ("Ca]ncel",               newCallback(this, &FileOpener::handleAbortButton));
-                        if (ex.getErrno() == ENOENT) {
+                        if (ex.getErrno() == ENOENT && fileName.getLength() > 0) {
                                         p.setDefaultButton    ("C]reate this file",     newCallback(this, &FileOpener::handleCreateFileButton));
                         } else {
                                         p.setDefaultButton    ("R]etry",                newCallback(this, &FileOpener::openFiles));
@@ -229,8 +229,13 @@ void FileOpener::openConfigFiles()
                 }
                 catch (FileException& ex)
                 {
-                    textData->setRealFileName(fileName);
-
+                    if (ex.getErrno() == ENOENT && fileName.getLength() > 0)
+                    {
+                        textData->setRealFileName(fileName);
+                    }
+                    else {
+                        textData->setPseudoFileName(fileName);
+                    }
                     p.setTitle("Error opening file")
                      .setMessage(ex.getMessage());
                 }
