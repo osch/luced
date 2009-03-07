@@ -309,7 +309,7 @@ public:
     }
     void removeAmount(int pos, int amount) {
         ASSERT(0 <= amount);
-        ASSERT(0 <= pos && pos + amount < getLength());
+        ASSERT(0 <= pos && pos + amount <= getLength());
         s.erase(pos, amount);
     }
     void removeBetween(int pos1, int pos2) {
