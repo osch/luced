@@ -21,7 +21,6 @@
 
 #include "GlobalLuaInterpreter.hpp"
 #include "LucedLuaInterface.hpp"
-#include "GlobalConfig.hpp"
 #include "File.hpp"
 #include "LuaIterator.hpp"
 #include "LuaCClosure.hpp"
@@ -42,16 +41,6 @@ GlobalLuaInterpreter::GlobalLuaInterpreter()
     LuaVar loaded = package["loaded"];
     loaded["luced"] = luced;
 
-    packagesDir = File(GlobalConfig::getInstance()->getConfigDirectory(),
-                       "packages").getAbsoluteName();
-    
-    modulesDir  = File(GlobalConfig::getInstance()->getConfigDirectory(),
-                       "modules").getAbsoluteName();
-
-    package["path"] = String() << modulesDir << "/?.lua;"
-                               << modulesDir << "/?/init.lua";
-
-
     LuaVar initialModules = luaAccess.newTable();
     
     for (LuaIterator i(luaAccess); i.in(loaded);)
@@ -62,7 +51,22 @@ GlobalLuaInterpreter::GlobalLuaInterpreter()
     lucedLuaInterfaceStoreReference = luced.store();
     loadedModulesStoreReference     = loaded.store();
     initialModulesStoreReference    = initialModules.store();
+    packageModuleStoreReference     = package.store();
+
     loadedPackagesStoreReference    = luaAccess.newTable().store();
+}
+
+void GlobalLuaInterpreter::setConfigDir(const String& configDir)
+{
+    configPackageLoader.setConfigDir(configDir);
+
+    String modulesDir  = File(configDir, "modules").getAbsoluteName();
+
+    LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
+
+    LuaVar package = luaAccess.retrieve(packageModuleStoreReference);
+    package["path"] = String() << modulesDir << "/?.lua;"
+                               << modulesDir << "/?/init.lua";
 }
 
 
@@ -128,18 +132,7 @@ LuaCFunctionResult GlobalLuaInterpreter::packageLocalRequireFunction(const LuaCF
         return loadedPackage;
     }
 
-    String absoluteRequiredModuleFileNamePart  = absoluteRequiredModuleName.toSubstitutedString('.', '/');
-
-    String fileName = String() << luaInterpreter->packagesDir << "/" << absoluteRequiredModuleFileNamePart 
-                                                              << ".lua";
-    LuaVar startModule = luaAccess.loadFile(fileName);
-    
-    if (startModule.isNil())
-    {
-        fileName = String() << luaInterpreter->packagesDir << "/" << absoluteRequiredModuleFileNamePart 
-                                                           << "/init.lua";
-        startModule = luaAccess.loadFile(fileName);
-    }
+    LuaVar startModule = luaInterpreter->configPackageLoader.loadPackageModule(luaAccess, absoluteRequiredModuleName);
     
     if (startModule.isNil()) {
         throw LuaException(String() << "cannot find module '" << absoluteRequiredModuleName << "'");
@@ -157,7 +150,7 @@ LuaCFunctionResult GlobalLuaInterpreter::packageLocalRequireFunction(const LuaCF
 }
 
 
-LuaVar GlobalLuaInterpreter::requirePackage(const String& packageName)
+LuaVar GlobalLuaInterpreter::requireConfigPackage(const String& packageName)
 {
     LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
 
@@ -173,14 +166,7 @@ LuaVar GlobalLuaInterpreter::requirePackage(const String& packageName)
         return loadedPackage;
     }
     
-    String packageFileNamePart = packageName.toSubstitutedString('.', '/');
-    
-    LuaVar startModule = luaAccess.loadFile(String() << packagesDir << "/" << packageFileNamePart << ".lua");
-    
-    if (startModule.isNil()) {
-        startModule    = luaAccess.loadFile(String() << packagesDir << "/" << packageFileNamePart << "/init.lua");
-    }
-    
+    LuaVar startModule = configPackageLoader.loadPackageModule(luaAccess, packageName);
 
     if (startModule.isNil()) {
         throw LuaException(String() << "cannot find package '" << packageName << "'");
@@ -208,3 +194,22 @@ LuaVar GlobalLuaInterpreter::requirePackage(const String& packageName)
     return rslt;
 }
 
+LuaVar GlobalLuaInterpreter::getGeneralConfigModule(const String& moduleName)
+{
+    LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
+
+    LuaVar startModule = configPackageLoader.loadGeneralConfigModule(luaAccess, moduleName);
+    
+    if (startModule.isNil()) {
+        throw LuaException("cannot find general config file 'config.lua'");
+    }
+    return startModule.call();
+}
+
+void GlobalLuaInterpreter::setMode(ConfigPackageLoader::Mode mode)
+{
+    loadedPackagesStoreReference = LuaInterpreter::getCurrentLuaAccess()
+                                   .newTable().store();
+
+    configPackageLoader.setMode(mode);
+}

@@ -112,7 +112,7 @@ String File::getAbsoluteName() const
                               << "/" 
                               << name;
         }
-        Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./");
+        Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./|/+$");
     
         while (r.findMatch(buffer, Regex::MatchOptions())) {
             buffer.removeAmount(r.getCaptureBegin(0), r.getCaptureLength(0));

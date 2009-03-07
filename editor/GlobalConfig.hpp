@@ -200,8 +200,6 @@ private:
     bool keepRunningIfOwningClipboard;
     long maxRegexAssertionLength;
     
-    String generalConfigFileName;
-
     ActionKeyConfig::Ptr        actionKeyConfig;
     
     String configDirectory;

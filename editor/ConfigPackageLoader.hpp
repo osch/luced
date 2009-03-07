@@ -19,22 +19,42 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef DEFAULT_CONFIG_HPP
-#define DEFAULT_CONFIG_HPP
+#ifndef CONFIG_PACKAGE_LOADER_HPP
+#define CONFIG_PACKAGE_LOADER_HPP
 
-#include "String.hpp"
+#include "LuaAccess.hpp"
+#include "LuaVar.hpp"
+#include "Nullable.hpp"
 
 namespace LucED
 {
 
-class DefaultConfig
+class ConfigPackageLoader
 {
 public:
-    static void createMissingConfigFiles();
+    ConfigPackageLoader();
     
-    static const char* getDefaultModule(const String& pseudoFileName);
+    enum Mode { MODE_NORMAL,
+                MODE_FALLBACK
+              };
+    
+    void setMode(Mode mode) {
+        this->mode = mode;
+    }
+    
+    void setConfigDir(const String& configDir);
+    
+    LuaVar loadPackageModule(LuaAccess     luaAccess,
+                             const String& moduleName) const;
+    
+    LuaVar loadGeneralConfigModule(LuaAccess  luaAccess,
+                                   String     moduleName) const;
+
+private:
+    Mode mode;
+    Nullable<String> configDir;
 };
 
 } // namespace LucED
 
-#endif // DEFAULT_CONFIG_HPP
+#endif // CONFIG_PACKAGE_LOADER_HPP

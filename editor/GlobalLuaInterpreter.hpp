@@ -25,6 +25,7 @@
 #include "SingletonInstance.hpp"
 #include "LuaInterpreter.hpp"
 #include "RawPtr.hpp"
+#include "ConfigPackageLoader.hpp"
 
 namespace LucED
 {
@@ -38,7 +39,13 @@ public:
 
     void resetModules();
     
-    LuaVar requirePackage(const String& packageName);
+    void setConfigDir(const String& configDir);
+
+    void setMode(ConfigPackageLoader::Mode mode);
+    
+    LuaVar requireConfigPackage(const String& packageName);
+    
+    LuaVar getGeneralConfigModule(const String& moduleName);
     
     LuaVar getLoadedPackageModules() {
         return LuaInterpreter::getCurrentLuaAccess().retrieve(loadedPackagesStoreReference);
@@ -50,7 +57,6 @@ private:
 
     GlobalLuaInterpreter();
     
-    String packagesDir;
     String modulesDir;
     
     static LuaCFunctionResult packageLocalRequireFunction(const LuaCFunctionArguments& args, 
@@ -58,13 +64,14 @@ private:
                                                           LuaVarRef currentPackageNameVar,
                                                           LuaVarRef environmentVar);
     
-    String currentPackageName;
-
     LuaStoredObjectReference lucedLuaInterfaceStoreReference;
     LuaStoredObjectReference loadedModulesStoreReference;
     LuaStoredObjectReference initialModulesStoreReference;
+    LuaStoredObjectReference packageModuleStoreReference;
 
     LuaStoredObjectReference loadedPackagesStoreReference;
+    
+    ConfigPackageLoader configPackageLoader;
 };
 
 } // namespace LucED

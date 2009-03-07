@@ -244,7 +244,7 @@ private:
             LuaVar module(luaAccess);
             try
             {
-                module = GlobalLuaInterpreter::getInstance()->requirePackage(moduleName);
+                module = GlobalLuaInterpreter::getInstance()->requireConfigPackage(moduleName);
             } 
             catch (LuaException& ex) {
             }

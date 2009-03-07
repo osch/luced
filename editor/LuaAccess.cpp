@@ -104,9 +104,9 @@ LuaAccess::Result LuaAccess::executeFile(String name) const
 }
 
 
-LuaVar LuaAccess::loadString(const String& script) const
+LuaVar LuaAccess::loadString(const char* script) const
 {
-    int rc = luaL_loadstring(L, script.toCString());
+    int rc = luaL_loadstring(L, script);
     if (rc != 0) {
         LuaException ex(lua_tostring(L, -1));
         lua_pop(L, 1);
@@ -114,6 +114,7 @@ LuaVar LuaAccess::loadString(const String& script) const
     }    
     return LuaVar(*this, lua_gettop(L));
 }
+
 
 
 LuaVar LuaAccess::loadFile(const String& fileName) const

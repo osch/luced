@@ -77,3 +77,19 @@ void DefaultConfig::createMissingConfigFiles()
         }
     }
 }
+
+const char* DefaultConfig::getDefaultModule(const String& pseudoFileName)
+{
+    const char* rslt = NULL;
+    
+    for (int i = 0; i < NUMBER_CONFIG_FILES; ++i)
+    {
+        if (defaultConfigEntries[i].fileName == pseudoFileName)
+        {
+            rslt = defaultConfigEntries[i].fileContent;
+            break;
+        }
+    }
+    return rslt;
+}
+
