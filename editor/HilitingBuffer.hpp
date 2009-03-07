@@ -43,8 +43,8 @@ public:
             : beginPos(beginPos), endPos(endPos) {}
     };
 
-    static HilitingBuffer::Ptr create(HilitedText::Ptr hiliting) {
-        return HilitingBuffer::Ptr(new HilitingBuffer(hiliting));
+    static HilitingBuffer::Ptr create(HilitedText::Ptr hilitedText) {
+        return HilitingBuffer::Ptr(new HilitingBuffer(hilitedText));
     }
     
     int getTextStyle(long textPos) {
@@ -69,6 +69,7 @@ public:
         }
     }
     
+    void registerTextStylesChangedListeners(Callback<const ObjectArray<TextStyle::Ptr>&>::Ptr callback);
     void registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback);
     
     LanguageMode::Ptr getLanguageMode() const {
@@ -76,12 +77,12 @@ public:
     }
     
     HilitedText::Ptr getHilitedText() const {
-        return hiliting;
+        return hilitedText;
     }
 
 private:
     
-    HilitingBuffer(HilitedText::Ptr hiliting);
+    HilitingBuffer(HilitedText::Ptr hilitedText);
     
     static int pcreCalloutFunction(void*, pcre_callout_block*);
 
@@ -92,9 +93,10 @@ private:
 
     void treatTextDataUpdate(TextData::UpdateInfo update);
 
+    void treatTextStylesChanged();
     void treatChangedHiliting(HilitedText* changedHiliting);
 
-    HilitedText::Ptr hiliting;
+    HilitedText::Ptr hilitedText;
     HilitedText::Iterator iterator;
     TextData::Ptr textData;
     SyntaxPatterns::Ptr syntaxPatterns;
@@ -105,6 +107,7 @@ private:
     PatternStack patternStack;
     ByteArray styleBuffer;
     CallbackContainer<UpdateInfo> updateListeners;
+    CallbackContainer<const ObjectArray<TextStyle::Ptr>&> textStylesChangedListeners;
     MemArray<int> ovector;
 
     int maxDistance;

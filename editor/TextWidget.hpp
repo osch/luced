@@ -255,8 +255,7 @@ private:
     void blinkCursor();
 
     void treatTextDataUpdate(TextData::UpdateInfo update);
-    void treatTextStylesChanged();
-    void treatSyntaxPatternsChanged(SyntaxPatterns::Ptr newSyntaxPatterns);
+    void treatTextStylesChanged(const ObjectArray<TextStyle::Ptr>& newTextStyles);
 
     void flushPendingUpdates();
     

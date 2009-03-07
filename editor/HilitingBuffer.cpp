@@ -24,52 +24,61 @@
 
 using namespace LucED;
 
-static long calculateMaxDistance(HilitedText::Ptr hiliting)
+static long calculateMaxDistance(HilitedText::Ptr hilitedText)
 {
-    if (hiliting->getSyntaxPatterns().isValid()) {
+    if (hilitedText->getSyntaxPatterns().isValid()) {
         return 3 * util::maximum(
-            hiliting->getLanguageMode()->getHilitingBreakPointDistance(),
-            hiliting->getSyntaxPatterns()->getTotalMaxExtend());
+            hilitedText->getLanguageMode()->getHilitingBreakPointDistance(),
+            hilitedText->getSyntaxPatterns()->getTotalMaxExtend());
     } else {
-        return 3 * hiliting->getLanguageMode()->getHilitingBreakPointDistance();
+        return 3 * hilitedText->getLanguageMode()->getHilitingBreakPointDistance();
     }
 }
 
-HilitingBuffer::HilitingBuffer(HilitedText::Ptr hiliting)
+HilitingBuffer::HilitingBuffer(HilitedText::Ptr hilitedText)
   : startPos(0),
-    hiliting(hiliting),
-    syntaxPatterns(hiliting->getSyntaxPatterns()),
-    languageMode(hiliting->getLanguageMode()),
-    iterator(hiliting->createNewIterator()),
-    maxDistance(calculateMaxDistance(hiliting))
+    hilitedText(hilitedText),
+    syntaxPatterns(hilitedText->getSyntaxPatterns()),
+    languageMode(hilitedText->getLanguageMode()),
+    iterator(hilitedText->createNewIterator()),
+    maxDistance(calculateMaxDistance(hilitedText))
     
 {
-    hiliting->registerHilitingChangedCallback(newCallback(this, &HilitingBuffer::treatChangedHiliting));
+    hilitedText->registerHilitingChangedCallback(newCallback(this, &HilitingBuffer::treatChangedHiliting));
 
-    textData = hiliting->getTextData();
+    textData = hilitedText->getTextData();
     if (syntaxPatterns->hasPatterns()) {
         ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
-    hiliting->registerUpdateListener(newCallback(this, &HilitingBuffer::treatHilitingUpdate));
+    hilitedText->registerUpdateListener(newCallback(this, &HilitingBuffer::treatHilitingUpdate));
     textData->registerUpdateListener(newCallback(this, &HilitingBuffer::treatTextDataUpdate));
+
+    syntaxPatterns->registerTextStylesChangedCallback(newCallback(this, &HilitingBuffer::treatTextStylesChanged));
 }
 
+void HilitingBuffer::treatTextStylesChanged()
+{
+    textStylesChangedListeners.invokeAllCallbacks(syntaxPatterns->getTextStylesArray());
+}
 
 void HilitingBuffer::treatChangedHiliting(HilitedText* changedHiliting)
 {
-    ASSERT(changedHiliting == hiliting);
-    ASSERT(hiliting->getTextData() == textData);
+    ASSERT(changedHiliting == hilitedText);
+    ASSERT(hilitedText->getTextData() == textData);
     
-    syntaxPatterns = hiliting->getSyntaxPatterns();
-    languageMode   = hiliting->getLanguageMode();
+    syntaxPatterns = hilitedText->getSyntaxPatterns();
+    languageMode   = hilitedText->getLanguageMode();
 
-    maxDistance = calculateMaxDistance(hiliting);
+    syntaxPatterns->registerTextStylesChangedCallback(newCallback(this, &HilitingBuffer::treatTextStylesChanged));
+
+    maxDistance = calculateMaxDistance(hilitedText);
     if (syntaxPatterns->hasPatterns()) {
         ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
     styleBuffer.clear();
     patternStack.clear();
-    updateListeners.invokeAllCallbacks(UpdateInfo(0, textData->getLength()));
+    textStylesChangedListeners.invokeAllCallbacks(syntaxPatterns->getTextStylesArray());
+    updateListeners           .invokeAllCallbacks(UpdateInfo(0, textData->getLength()));
 }
 
 
@@ -174,9 +183,9 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
         // at pos could have lead to another break at this position, 
         // therefore take (pos - 1)
     
-        hiliting->moveIteratorToNextBefore(iterator, (pos > 0) ? (pos - 1) : pos);    
+        hilitedText->moveIteratorToNextBefore(iterator, (pos > 0) ? (pos - 1) : pos);    
         
-        searchStartPos = hiliting->getBreakEndPos(iterator);
+        searchStartPos = hilitedText->getBreakEndPos(iterator);
         ASSERT(0 <= searchStartPos && searchStartPos <= pos);
 
         // TODO: vielleicht besser PROCESS_AMOUNT, da das größte vorkommende Pattern
@@ -197,7 +206,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
         }
         else
         {
-            hiliting->copyBreakStackTo(iterator, patternStack);
+            hilitedText->copyBreakStackTo(iterator, patternStack);
             sp = syntaxPatterns->get(patternStack.getLast());
             pushedSubstr = patternStack.getAdditionalDataAsString();
         }
@@ -343,8 +352,13 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
     }
 }
 
-void HilitingBuffer::registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback)
+void HilitingBuffer::registerUpdateListener(Callback<UpdateInfo>::Ptr callback)
 {
-    updateListeners.registerCallback(updateCallback);
+    updateListeners.registerCallback(callback);
+}
+
+void HilitingBuffer::registerTextStylesChangedListeners(Callback<const ObjectArray<TextStyle::Ptr>&>::Ptr callback)
+{
+    textStylesChangedListeners.registerCallback(callback);
 }
 

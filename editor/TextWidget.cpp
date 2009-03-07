@@ -195,18 +195,15 @@ TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int bord
     
     EventDispatcher::getInstance()->registerUpdateSource(newCallback(this, &TextWidget::flushPendingUpdates));
 
-    hilitingBuffer->registerUpdateListener(newCallback(this, &TextWidget::treatHilitingUpdate));
-    backliteBuffer->registerUpdateListener(newCallback(this, &TextWidget::treatHilitingUpdate));
+    hilitingBuffer->registerTextStylesChangedListeners(newCallback(this, &TextWidget::treatTextStylesChanged));
+    hilitingBuffer->registerUpdateListener            (newCallback(this, &TextWidget::treatHilitingUpdate));
+    backliteBuffer->registerUpdateListener            (newCallback(this, &TextWidget::treatHilitingUpdate));
     
     redrawRegion = XCreateRegion();
     
     XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
 
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TextWidget::treatConfigUpdate));
-    
-    hilitedText->getSyntaxPatterns()->registerTextStylesChangedCallback(newCallback(this, &TextWidget::treatTextStylesChanged));
-    hilitedText->registerSyntaxPatternsChangedCallback(newCallback(this, &TextWidget::treatSyntaxPatternsChanged));
-
 }
 
 TextWidget::~TextWidget()
@@ -217,15 +214,13 @@ TextWidget::~TextWidget()
 void TextWidget::treatConfigUpdate()
 {}
 
-void TextWidget::treatTextStylesChanged()
+void TextWidget::treatTextStylesChanged(const ObjectArray<TextStyle::Ptr>& newTextStyles)
 {
     lineInfos.setAllInvalid();
     
-    SyntaxPatterns::Ptr syntaxPatterns = hilitedText->getSyntaxPatterns();
-
-    defaultTextStyle = syntaxPatterns->getDefaultTextStyle();
-    textStyles       = syntaxPatterns->getTextStylesArray();
-    rawTextStylePtrs = textStyles;
+    defaultTextStyle = newTextStyles[0];
+    textStyles       = newTextStyles;
+    rawTextStylePtrs = newTextStyles;
 
     lineHeight  = defaultTextStyle->getLineHeight();
     lineAscent  = defaultTextStyle->getLineAscent();
@@ -233,12 +228,6 @@ void TextWidget::treatTextStylesChanged()
     redrawChanged(getTopLeftTextPosition(), textData->getLength());
 }
 
-void TextWidget::treatSyntaxPatternsChanged(SyntaxPatterns::Ptr newSyntaxPatterns)
-{
-    ASSERT(hilitedText->getSyntaxPatterns() == newSyntaxPatterns);
-    newSyntaxPatterns->registerTextStylesChangedCallback(newCallback(this, &TextWidget::treatTextStylesChanged));
-    treatTextStylesChanged();
-}
 
 void TextWidget::registerCursorPositionDataListener(Callback<CursorPositionData>::Ptr listener)
 {
