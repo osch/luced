@@ -245,11 +245,14 @@ void File::createDirectory() const
     do {
         while (i < len && fileName[i] != '/') ++i;
         String path = fileName.getSubstringBetween(0, i);
-        int rc = mkdir(path.toCString(), S_IRUSR|S_IWUSR|S_IXUSR|
-                                         S_IRGRP|S_IWGRP|S_IXGRP|
-                                         S_IROTH|S_IWOTH|S_IXOTH);
-        if (rc != 0 && errno != EEXIST) {
-            throw FileException(errno, String() << "error creating directory '" << path << "': " << strerror(errno));
+        if (!File(path).exists())
+        {
+            int rc = mkdir(path.toCString(), S_IRUSR|S_IWUSR|S_IXUSR|
+                                             S_IRGRP|S_IWGRP|S_IXGRP|
+                                             S_IROTH|S_IWOTH|S_IXOTH);
+            if (rc != 0 && errno != EEXIST) {
+                throw FileException(errno, String() << "error creating directory '" << path << "': " << strerror(errno));
+            }
         }
         while (i < len && fileName[i] == '/') ++i;
     }
