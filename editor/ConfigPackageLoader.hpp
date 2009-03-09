@@ -47,8 +47,8 @@ public:
     LuaVar loadPackageModule(LuaAccess     luaAccess,
                              const String& moduleName) const;
     
-    LuaVar loadGeneralConfigModule(LuaAccess  luaAccess,
-                                   String     moduleName) const;
+    LuaVar loadGeneralConfigModule(LuaAccess     luaAccess,
+                                   const String& moduleName) const;
 
 private:
     Mode mode;

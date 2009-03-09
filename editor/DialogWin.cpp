@@ -76,16 +76,16 @@ void DialogWin::prepareSizeHints()
     if (rootElement.isValid()) {
         Measures m = rootElement->getDesiredMeasures();
         if (wasNeverShown) {
+            Position pp;
             if (referingWindow != NULL)  {
-                Position pp = referingWindow->getAbsolutePosition();
-                int x = pp.x + (pp.w - m.bestWidth)/2;
-                int y = pp.y + (pp.h - m.bestHeight)/2;
-                setPosition(Position(x, y, m.bestWidth, m.bestHeight));
-                setSizeHints(x, y, m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
+                pp = referingWindow->getAbsolutePosition();
             } else {
-                setSize(m.bestWidth, m.bestHeight);
-                setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
+                pp = GuiRoot::getInstance()->getRootPosition();
             }
+            int x = pp.x + (pp.w - m.bestWidth)/2;
+            int y = pp.y + (pp.h - m.bestHeight)/2;
+            setPosition(Position(x, y, m.bestWidth, m.bestHeight));
+            setSizeHints(x, y, m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
         } else {
             setSizeHints(getPosition().x, getPosition().y, m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
         }

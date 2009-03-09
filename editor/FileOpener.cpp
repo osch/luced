@@ -191,7 +191,8 @@ void FileOpener::openConfigFiles()
 
         for (int i = 0; i < configErrorList->getLength(); ++i)
         {
-            String fileName = configErrorList->get(i).getConfigFileName();
+            String fileName   = configErrorList->get(i).getConfigFileName();
+            int    lineNumber = configErrorList->get(i).getLineNumber();
 
             EditorTopWin::Ptr editorWin;        
 
@@ -241,6 +242,9 @@ void FileOpener::openConfigFiles()
                 }
                 editorWin = EditorTopWin::create(hilitedText);
                 editorWin->show();
+            }
+            if (lineNumber >= 0) {
+                editorWin->gotoLineNumber(lineNumber);
             }
             editorWin->setMessageBox(p);
         }

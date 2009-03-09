@@ -91,7 +91,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
                 Button                   GuiLayoutWidget        LuaStoredObjectReference   LuaArgException \
                 GotoLinePanel            SingletonKeeper        TopWinList                 OwnedTopWins \
                 DialogWin                GuiLayoutSpacer        MultiLineEditorWidget      SubstitutionException \
-                SingleLineEditorWidget   LuaStackChecker        Commandline \
+                SingleLineEditorWidget   LuaStackChecker        Commandline                BaseException \
                 SingleLineEditField      LabelWidget            DialogPanel                PanelDialogWin \
                 FindPanel                CheckBox               MessageBox                 SearchHistory \
                 FileException            EditorServer           ClientServerUtil           EditorClient  \
@@ -315,7 +315,7 @@ define EMLUA_RUN
 	mkdir -p $(@D); \
 	rm -f $1; \
 	./lua -e '$2' em.lua $< > $1; rc=$$?; \
-	if [ 0 -ne $$rc ]; then rm -f $1; else chmod a-w $1; fi; \
+	if [ 0 -ne $$rc ]; then echo "*** emlua error ***"; rm -f $1; else chmod a-w $1; fi; \
 	exit $$rc
 endef
 

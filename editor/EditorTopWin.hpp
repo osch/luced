@@ -99,6 +99,8 @@ public:
     void saveAndClose();
     
     bool checkForFileModifications();
+    
+    void gotoLineNumber(int lineNumber);
 
 private:
     class PanelInvoker;

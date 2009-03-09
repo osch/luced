@@ -33,21 +33,49 @@ public:
     class Error
     {
     public:
-        Error(const String& configFileName, const String& message)
-            : configFileName(configFileName),
+        Error(const String& configFileName, int lineNumber, const String& message)
+            : lineNumber(lineNumber),
+              configFileName(configFileName),
               message(message)
         {}
         String getConfigFileName() const {
             return configFileName;
+        }
+        int getLineNumber() const {
+            return lineNumber;
         }
         String getMessage() const {
             return message;
         }
     private:
         String configFileName;
+        int    lineNumber;
         String message;
     };
-    typedef HeapObjectArray<Error> ErrorList;
+    
+    class ErrorList : public HeapObjectArray<Error>
+    {
+    public:
+        typedef OwningPtr<ErrorList> Ptr;
+        
+        static Ptr create() {
+            return Ptr(new ErrorList());
+        }
+        
+        void setFallbackFileName(const String& fallbackFileName) {
+            this->fallbackFileName = fallbackFileName;
+        }
+
+        void appendCatchedException();
+        void appendErrorMessage(const String& message) {
+            this->append(Error(fallbackFileName, -1, message));
+        }
+
+    private:
+        ErrorList()
+        {}
+        String fallbackFileName;
+    };
     
     ConfigException(const String& message)
         : BaseException(message)

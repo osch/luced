@@ -34,6 +34,7 @@
 #include "LuaCFunctionArguments.hpp"
 #include "LuaCFunctionResult.hpp"
 #include "LuaClassRegistry.hpp"
+#include "LuaCClosure.hpp"
 
 namespace LucED
 {
@@ -90,8 +91,9 @@ private:
     static int invokeFunction(lua_State* L)
     {
         LuaAccess              luaAccess(L);
-        RawPtr<LuaInterpreter> luaInterpreter = luaAccess.getLuaInterpreter();
-        LuaAccess              oldLuaAccess   = luaInterpreter->getCurrentLuaAccess();
+        RawPtr<LuaInterpreter> luaInterpreter            = luaAccess.getLuaInterpreter();
+        LuaAccess              oldLuaAccess              = luaInterpreter->getCurrentLuaAccess();
+        int                    oldErrorHandlerStackIndex = luaInterpreter->getErrorHandlerStackIndex();
         
         LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess(luaInterpreter, luaAccess);
         #ifdef DEBUG
@@ -101,10 +103,13 @@ private:
         int numberOfResults = 0;
         bool wasError = false;
         {
+            LuaCFunctionArguments args(luaAccess);
+
+            LuaVar errorHandler(luaAccess, LuaCClosure::create<LuaInterpreter::errorHandlerFunction>());
+            LuaInterpreter::LuaCFunctionAccess::setErrorHandlerStackIndex(luaInterpreter, errorHandler.getStackIndex());
+
             try
             {
-                LuaCFunctionArguments args(luaAccess);
-                
                 const char* className = LuaClassRegistry::ClassAttributes<C>::getLuaClassName();
                 
                 if (args.getLength() < 1)
@@ -126,7 +131,8 @@ private:
         #ifdef DEBUG
             LuaStateAccess::replaceLuaStackChecker(L, oldChecker);
         #endif
-        LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess(luaInterpreter, oldLuaAccess);
+        LuaInterpreter::LuaCFunctionAccess::setErrorHandlerStackIndex(luaInterpreter, oldErrorHandlerStackIndex);
+        LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess      (luaInterpreter, oldLuaAccess);
 
         if (wasError) {
             lua_error(L);

@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -34,6 +34,8 @@ using std::exception;
 class BaseException : public exception
 {
 public:
+    BaseException(const String& message);
+    
     String getMessage() const {
         return message;
     }
@@ -41,10 +43,8 @@ public:
 
     virtual const char* what() const throw() = 0;
 
-    BaseException(const String& message)
-        : message(message)
-    {}
-
+    virtual String toString() const;
+    
 private:
     String message;
 };

@@ -29,6 +29,8 @@
 #include "OwningPtr.hpp"
 #include "ConfigException.hpp"
 #include "FileOpener.hpp"
+#include "ActionId.hpp"
+#include "Nullable.hpp"
 
 namespace LucED
 {
@@ -40,19 +42,35 @@ public:
     typedef LucED::WeakPtr  <ConfigErrorHandler> WeakPtr;
 
     static WeakPtr start(ConfigException::ErrorList::Ptr errorList,
-                         FileOpener::ParameterList::Ptr  fileOpenerParameters = FileOpener::ParameterList::Ptr())
+                         FileOpener::ParameterList::Ptr  fileOpenerParameters = Null)
     {
-        OwningPtr ptr(new ConfigErrorHandler(errorList, fileOpenerParameters));
+        OwningPtr ptr(new ConfigErrorHandler(errorList, fileOpenerParameters, Null));
         EventDispatcher::getInstance()->registerRunningComponent(ptr);
         ptr->startMessageBox();
         return ptr;
     }
+    static WeakPtr start(ConfigException::ErrorList::Ptr errorList,
+                         Nullable<ActionId>              optionalActionId = Null)
+    {
+        OwningPtr ptr(new ConfigErrorHandler(errorList, Null, optionalActionId));
+        EventDispatcher::getInstance()->registerRunningComponent(ptr);
+        ptr->startMessageBox();
+        return ptr;
+    }
+    static WeakPtr startWithCatchedException(Nullable<ActionId> optionalActionId = Null)
+    {
+        ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::create();
+        errorList->appendCatchedException();
+        return ConfigErrorHandler::start(errorList, optionalActionId);
+    }
 
 private:
     ConfigErrorHandler(ConfigException::ErrorList::Ptr errorList,
-                       FileOpener::ParameterList::Ptr  fileOpenerParameters)
+                       FileOpener::ParameterList::Ptr  fileOpenerParameters,
+                       Nullable<ActionId>              optionalActionId)
         : errorList(errorList),
-          fileOpenerParameters(fileOpenerParameters)
+          fileOpenerParameters(fileOpenerParameters),
+          optionalActionId(optionalActionId)
     {}
     
     void startMessageBox();
@@ -61,6 +79,7 @@ private:
     
     ConfigException::ErrorList::Ptr errorList;
     FileOpener::ParameterList::Ptr  fileOpenerParameters;
+    Nullable<ActionId>              optionalActionId;
 };
 
 } // namespace LucED

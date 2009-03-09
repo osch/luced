@@ -86,7 +86,7 @@ public:
         return matchFlag;
     }
     
-    bool findMatch(const String& subject, MatchOptions matchOptions) {
+    bool findMatch(const String& subject, MatchOptions matchOptions = MatchOptions()) {
         return findMatch(subject.toCString(), subject.getLength(), 0, matchOptions);
     }
     

@@ -128,8 +128,8 @@ public:
         return (L == rhs.L);
     }
     
-    LuaVar loadString(const char*   script) const;
-    LuaVar loadString(const String& script) const;
+    LuaVar loadString(const char*   script, const String& pseudoFileName = "") const;
+    LuaVar loadString(const String& script, const String& pseudoFileName = "") const;
 
     LuaVar loadFile(const String& fileName) const;
     
@@ -610,8 +610,8 @@ inline void LuaAccess::push(LuaSingletonCMethod<C,M> wrapper) const
     lua_pushcfunction(L, &(LuaSingletonCMethod<C,M>::invokeFunction));
 }
 
-inline LuaVar LuaAccess::loadString(const String& script) const {
-    return loadString(script.toCString());
+inline LuaVar LuaAccess::loadString(const String& script, const String& pseudoFileName) const {
+    return loadString(script.toCString(), pseudoFileName);
 }
 
 class LuaAccess::Result

@@ -185,6 +185,8 @@ void GlobalConfig::readConfig()
     packagesMap.clear();
     
     ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::create();
+                                    errorList->setFallbackFileName(String() << configDirectory 
+                                                                            << "/config.lua");
     
     configDirectory = File(".luced").getAbsoluteName();
     
@@ -489,14 +491,13 @@ void GlobalConfig::readConfig()
         catch (BaseException& ex)
         {
             if (tryItAgain) {
-                printf("%s\n", ex.getMessage().toCString());
+                printf("%s\n", ex.toString().toCString());
             }
             ASSERT(!tryItAgain); // MODE_FALLBACK should not throw exception
 
             if (!tryItAgain)
             {
-                errorList->appendNew(String() << configDirectory << "/config.lua", 
-                                     ex.getMessage());
+                errorList->appendCatchedException();
             }
             else {
                 if (textStyleDefinitions->isEmpty())
@@ -522,7 +523,7 @@ void GlobalConfig::readConfig()
         textStyleDefinitions->append(TextStyleDefinition("default",
                                                          "-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*", 
                                                          "black"));
-        errorList->appendNew(String() << configDirectory << "/config.lua", "missing textstyles");
+        errorList->appendErrorMessage("missing textstyles");
     }
     Nullable<TextStyleDefinition> defaultTextStyleDefinition = textStyleDefinitions->get(0);
     if (!defaultTextStyleDefinition.isValid()) {

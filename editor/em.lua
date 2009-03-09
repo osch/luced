@@ -85,13 +85,13 @@ for _, filename in ipairs({...}) do
     local code = preprocess(filename)
     local func, msg = loadstring(code, filename)
     if not func then
-       io.stderr:write("Error: " .. msg)
-       os.exit(1)
+       io.stderr:write("Error: " .. msg .. "\n")
+       os.exit(111)
     end
     local status, msg = xpcall(func, emluaErrorHandler)
     if not status then
       io.stderr:write("Error in file "..filename..": "..msg.."\n")
-      os.exit(2)
+      os.exit(112)
     end
 end
 

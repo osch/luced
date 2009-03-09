@@ -97,8 +97,13 @@ public:
         >
         friend class LuaSingletonCMethod;
         
-        static void setCurrentLuaAccess(LuaInterpreter* luaInterpreter, const LuaAccess& luaAccess) {
+        static void setCurrentLuaAccess(LuaInterpreter* luaInterpreter, const LuaAccess& luaAccess)
+        {
             luaInterpreter->currentAccess = luaAccess;
+        }
+        static void setErrorHandlerStackIndex(LuaInterpreter* luaInterpreter, int errorHandlerStackIndex)
+        {
+            luaInterpreter->errorHandlerStackIndex = errorHandlerStackIndex;
         }
     };
     
@@ -143,17 +148,23 @@ public:
     }
 #endif
     
+    static LuaCFunctionResult errorHandlerFunction(const LuaCFunctionArguments& args);
+
+    int getErrorHandlerStackIndex() const {
+        return errorHandlerStackIndex;
+    }
+    
 protected:
     LuaInterpreter();
     ~LuaInterpreter();
 
 private:
-    static LuaCFunctionResult printFunction      (const LuaCFunctionArguments& args);
-    static LuaCFunctionResult stdoutWriteFunction(const LuaCFunctionArguments& args);
-    static LuaCFunctionResult ioWriteFunction    (const LuaCFunctionArguments& args);
-    static LuaCFunctionResult ioOutputFunction   (const LuaCFunctionArguments& args);
-    static LuaCFunctionResult testFunction       (const LuaCFunctionArguments& args);
-    static LuaCFunctionResult doNothingFunction  (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult printFunction       (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult stdoutWriteFunction (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult ioWriteFunction     (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult ioOutputFunction    (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult testFunction        (const LuaCFunctionArguments& args);
+    static LuaCFunctionResult doNothingFunction   (const LuaCFunctionArguments& args);
 
     class StoredObjects : public HeapObject
     {
@@ -195,6 +206,8 @@ private:
 
     LuaAccess rootAccess;
     LuaAccess currentAccess;
+    
+    int errorHandlerStackIndex;
 };
 
 

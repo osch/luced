@@ -19,44 +19,20 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUA_EXCEPTION_HPP
-#define LUA_EXCEPTION_HPP
-
 #include "BaseException.hpp"
+#include "StackTrace.hpp"
 
-namespace LucED
+using namespace LucED;
+
+BaseException::BaseException(const String& message)
+    : message(message)
 {
+    // StackTrace::print();
+}
 
-class LuaException;
-class LuaVar;
 
-class LuaException : public BaseException
+String BaseException::toString() const
 {
-public:
-    LuaException(const String& message, int lineNumber = -1, const String& fileName = "");
-    
-    LuaException(const LuaVar& errorObject);
-    
-    virtual ~LuaException() throw()
-    {}
+    return String() << what() << ": " << message;
+}
 
-    virtual const char* what() const throw();
-    
-    int getLineNumber() const {
-        return lineNumber;
-    }
-    
-    String getFileName() const {
-        return fileName;
-    }
-    
-    virtual String toString() const;
-
-private:
-    int lineNumber;
-    String fileName;
-};
-
-} // namespace LucED
-
-#endif // LUA_EXCEPTION_HPP

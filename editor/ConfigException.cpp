@@ -20,7 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "ConfigException.hpp"
-
+#include "LuaException.hpp"
 
 using namespace LucED;
 
@@ -30,3 +30,29 @@ const char* ConfigException::what() const throw()
     return whatString;
 }
 
+void ConfigException::ErrorList::appendCatchedException()
+{
+    try
+    {
+        throw;
+    }
+    catch (LuaException& ex)
+    {
+        this->append(Error(ex.getFileName(), ex.getLineNumber(), ex.getMessage()));    
+    }
+    catch (ConfigException& ex)
+    {
+        ErrorList::Ptr list = ex.getErrorList();
+        if (list.isValid() && list->getLength() > 0) {
+            for (int i = 0, n = list->getLength(); i < n; ++i) {
+                this->append(list->get(i));
+            }
+        } else {
+            this->append(Error(fallbackFileName, -1, ex.getMessage()));    
+        }
+    }
+    catch (BaseException& ex)
+    {
+        this->append(Error(fallbackFileName, -1, ex.getMessage()));    
+    }
+}

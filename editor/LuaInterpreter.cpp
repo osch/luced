@@ -141,8 +141,40 @@ LuaCFunctionResult LuaInterpreter::doNothingFunction(const LuaCFunctionArguments
     return LuaCFunctionResult(luaAccess);
 }
 
+LuaCFunctionResult LuaInterpreter::errorHandlerFunction(const LuaCFunctionArguments& args)
+{
+    LuaAccess  luaAccess = args.getLuaAccess();
 
-extern int luaopen_posix (lua_State *L);
+    LuaVar rslt = luaAccess.newTable();
+    
+    if (args.getLength() > 0) {
+        rslt["errorMessage"] = args[0];
+    }
+    int callLevel = 1;
+
+retry:
+    lua_Debug debugInfo;   memset(&debugInfo, 0, sizeof(debugInfo));
+    
+    int rc = lua_getstack(luaAccess.L, callLevel, &debugInfo);
+    if (rc == 1)
+    {
+        lua_getinfo (luaAccess.L, "Sln", &debugInfo);
+        
+        if (strcmp(debugInfo.what, "C") == 0) {
+            callLevel += 1;
+            goto retry;
+        }
+    
+        if (debugInfo.source != NULL && debugInfo.source[0] == '@') {
+            rslt["fileName"]   = debugInfo.source + 1;
+            rslt["lineNumber"] = debugInfo.currentline;
+        }
+    }
+    return LuaCFunctionResult(luaAccess) << rslt;
+}
+
+
+extern int luaopen_posix (lua_State* L);
 
 
 inline lua_State* LuaInterpreter::initState(LuaInterpreter* luaInterpreter, lua_State* L)
@@ -157,6 +189,9 @@ LuaInterpreter::LuaInterpreter()
     : rootAccess(initState(this, luaL_newstate())),
       currentAccess(rootAccess.L)
 {
+    currentAccess.push(LuaCClosure::create<errorHandlerFunction>());
+    errorHandlerStackIndex = lua_gettop(currentAccess.L);
+    
     storedObjects = StoredObjects::create(currentAccess);
     
     storedObjects->originalToStringFunction      = currentAccess.getGlobal("tostring")    .store();

@@ -21,18 +21,66 @@
 
 #include "LuaException.hpp"
 #include "StackTrace.hpp"
+#include "LuaVar.hpp"
 
 using namespace LucED;
 
-LuaException::LuaException(const String& message)
-    : BaseException(message)
+static inline String getErrorMessageFromErrorObject(const LuaVar& errorObject)
+{
+    if (errorObject.isString()) {
+        return errorObject.toString();
+    }
+    else if (errorObject.isTable() && errorObject["errorMessage"].isString()) {
+        return errorObject["errorMessage"].toString();
+    }
+    else {
+        ASSERT(false);
+        return "unknown error";
+    }
+}
+
+
+
+LuaException::LuaException(const String& message,
+                           int           lineNumber,
+                           const String& fileName)
+    : BaseException(message),
+      lineNumber(lineNumber),
+      fileName(fileName)
 {
     //StackTrace::print();
 }
+LuaException::LuaException(const LuaVar& errorObject)
+    : BaseException(getErrorMessageFromErrorObject(errorObject)),
+      lineNumber(-1)
+{
+    if (errorObject.isTable()) {
+        if (errorObject["lineNumber"].isNumber()) {
+            lineNumber = errorObject["lineNumber"].toInt() - 1;
+        }
+        if (errorObject["fileName"].isString()) {
+            fileName = errorObject["fileName"].toString();
+        }
+    }
+}
+
 
 const char* LuaException::what() const throw()
 {
     static const char* whatString = "LuaException";
     return whatString;
+}
+
+String LuaException::toString() const
+{
+    String rslt;
+    if (fileName.getLength() > 0) {
+        rslt << fileName << ": ";
+    }
+    if (lineNumber >= 0) {
+        rslt << "line " << lineNumber << ": ";
+    }
+    rslt << BaseException::toString();
+    return rslt;
 }
 

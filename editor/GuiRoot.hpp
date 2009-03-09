@@ -19,18 +19,18 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GUIROOT_HPP
-#define GUIROOT_HPP
+#ifndef GUI_ROOT_HPP
+#define GUI_ROOT_HPP
 
 #include "WidgetId.hpp"
 #include "String.hpp"
 #include "HeapObject.hpp"
 #include "GuiColor.hpp"
 #include "SingletonInstance.hpp"
-
-namespace LucED {
-
-
+#include "Position.hpp"
+          
+namespace LucED
+{
 
 class GuiRoot : public HeapObject
 {
@@ -44,6 +44,13 @@ public:
     
     WidgetId getRootWid() const {
         return rootWid;
+    }
+    
+    Position getRootPosition() const {
+        return Position(rootWinAttr.x,
+                        rootWinAttr.y,
+                        rootWinAttr.width,
+                        rootWinAttr.height);
     }
         
     void flushDisplay() const {
@@ -123,8 +130,6 @@ private:
     int    x11ServerVendorRelease;
 };
 
-
 } // namespace LucED
 
-
-#endif // GUIROOT_HPP
+#endif // GUI_ROOT_HPP

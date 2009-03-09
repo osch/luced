@@ -677,6 +677,22 @@ StackTrace::print();
 printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
 #endif
     }
+    
+    template<class T
+            >
+    LuaVar(const LuaAccess& luaAccess, const T& rhs)
+        : LuaVarRef(luaAccess)
+    {
+        push(rhs);
+        stackIndex = lua_gettop(L);
+    #ifdef DEBUG
+        stackGeneration = getLuaStackChecker()->registerAndGetGeneration(stackIndex);
+    #endif
+#ifdef PRINT_STACK_TRACE
+StackTrace::print();
+printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
+#endif
+    }
         
     LuaVar(const LuaVar& rhs)
         : LuaVarRef(rhs.getLuaAccess())
@@ -838,6 +854,10 @@ printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
     }
 #endif
 
+    int getStackIndex() const {
+        return stackIndex;
+    }
+
 private:
     friend class LuaInterpreter;
     friend class LuaAccess;
@@ -867,7 +887,6 @@ StackTrace::print();
 printf("%p %d (%d)\n", this, stackIndex, stackGeneration);
 #endif
     }
-    
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -918,14 +937,12 @@ inline LuaVar LuaVarRef::call(LuaFunctionArguments& args)
     lua_replace  (L, -args.getLength() - 2);
     
     const int numberOfResults = 1;
-    int error = lua_pcall(L, args.getLength(), numberOfResults, 0);
-
+    int error = lua_pcall(L, args.getLength(), numberOfResults, 
+                             getLuaInterpreter()->getErrorHandlerStackIndex());
     if (error != 0)
     {
-        LuaException ex(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, 0);
-        throw ex;
+        LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, 1); // 1 rslt is errorObject
+        throw LuaException(LuaVar(getLuaAccess(), lua_gettop(L)));
     }
     else {
         LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, numberOfResults);
@@ -966,13 +983,11 @@ inline LuaVar LuaVarRef::call()
 
     lua_pushvalue(L, stackIndex);
 
-    int error = lua_pcall(L, 0, 1, 0);
+    int error = lua_pcall(L, 0, 1, getLuaInterpreter()->getErrorHandlerStackIndex());
 
     if (error != 0)
     {
-        LuaException ex(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        throw ex;
+        throw LuaException(LuaVar(getLuaAccess(), lua_gettop(L)));
     } else {    
         return LuaVar(getLuaAccess(), lua_gettop(L));
     }

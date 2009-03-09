@@ -25,6 +25,7 @@
 #include "ByteBuffer.hpp"
 #include "File.hpp"
 #include "LuaVar.hpp"
+#include "Regex.hpp"
 
 using namespace LucED;
 
@@ -104,14 +105,34 @@ LuaAccess::Result LuaAccess::executeFile(String name) const
 }
 
 
-LuaVar LuaAccess::loadString(const char* script) const
+LuaVar LuaAccess::loadString(const char* script, const String& pseudoFileName) const
 {
     int rc = luaL_loadstring(L, script);
+    
     if (rc != 0) {
-        LuaException ex(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        throw ex;
-    }    
+        if (rc == LUA_ERRMEM) {
+            throw LuaException("out of memory");
+        } else {
+            String errorText = lua_tostring(L, -1);
+            lua_pop(L, 1);
+    
+            Regex  r("^line (\\d+)\\: \\s*");
+            int    lineNumber;
+            String errorMessage;
+    
+            if (r.matches(errorText)) {
+                lineNumber   = errorText.getSubstringBetween(r.getCaptureBegin(1), 
+                                                             r.getCaptureEnd(1)).toInt() - 1;
+                errorMessage = errorText.getTail(r.getCaptureEnd(0));
+            } else {
+                lineNumber   = -1;
+                errorMessage = errorText;
+            }
+            throw LuaException(errorMessage,
+                               lineNumber,
+                               pseudoFileName);
+        }
+    }
     return LuaVar(*this, lua_gettop(L));
 }
 
@@ -120,14 +141,32 @@ LuaVar LuaAccess::loadString(const char* script) const
 LuaVar LuaAccess::loadFile(const String& fileName) const
 {
     int rc = luaL_loadfile(L, fileName.toCString());
+    
     if (rc != 0) {
         if (rc == LUA_ERRFILE) {
             lua_pop(L, 1);
             lua_pushnil(L);
+        } else if (rc == LUA_ERRMEM) {
+            throw LuaException("out of memory");
         } else {
-            LuaException ex(lua_tostring(L, -1));
+            String errorText = lua_tostring(L, -1);
             lua_pop(L, 1);
-            throw ex;
+
+            Regex  r("^line (\\d+)\\: \\s*");
+            int    lineNumber;
+            String errorMessage;
+
+            if (r.findMatch(errorText)) {
+                lineNumber   = errorText.getSubstringBetween(r.getCaptureBegin(1), 
+                                                             r.getCaptureEnd(1)).toInt() - 1;
+                errorMessage = errorText.getTail(r.getCaptureEnd(0));
+            } else {
+                lineNumber   = -1;
+                errorMessage = errorText;
+            }
+            throw LuaException(errorMessage,
+                               lineNumber,
+                               fileName);
         }
     }    
     return LuaVar(*this, lua_gettop(L));

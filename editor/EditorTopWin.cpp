@@ -159,16 +159,10 @@ public:
             editorTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
                                                              .setMessage(ex.getMessage()));
         } catch (LuaException& ex) {
-            editorTopWin->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                                             .setMessage(ex.getMessage()));
-        } catch (ConfigException& ex)
-        {
-            if (ex.getErrorList().isValid() && ex.getErrorList()->getLength() > 0) {
-                ConfigErrorHandler::start(ex.getErrorList());
-            } else {
-                editorTopWin->setMessageBox(MessageBoxParameter().setTitle("Config Error")
-                                                                 .setMessage(ex.getMessage()));
-            }
+            ConfigErrorHandler::startWithCatchedException();
+        }
+        catch (ConfigException& ex) {
+            ConfigErrorHandler::startWithCatchedException();
         }
     }
     
@@ -482,6 +476,14 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
 #endif
         return rslt;
     }
+    catch (LuaException& ex) {
+        ConfigErrorHandler::startWithCatchedException();
+        return EVENT_PROCESSED;
+    }
+    catch (ConfigException& ex) {
+        ConfigErrorHandler::startWithCatchedException();
+        return EVENT_PROCESSED;
+    }
     catch (UnknownActionNameException& ex)
     {
         setMessageBox(MessageBoxParameter().setTitle("Config Error")
@@ -790,11 +792,9 @@ void EditorTopWin::saveAndClose()
         setMessageBox(MessageBoxParameter().setTitle("File Error")
                                            .setMessage(ex.getMessage()));
     } catch (LuaException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                           .setMessage(ex.getMessage()));
+        ConfigErrorHandler::startWithCatchedException();
     } catch (ConfigException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("Config Error")
-                                           .setMessage(ex.getMessage()));
+        ConfigErrorHandler::startWithCatchedException();
     }
 }
 
@@ -911,17 +911,10 @@ bool EditorTopWin::UserDefinedActionMethods::invokeActionMethod(ActionId actionI
                                                        .setMessage(ex.getMessage()));
     }
     catch (LuaException& ex) {
-        thisTopWin->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                                       .setMessage(ex.getMessage()));
+        ConfigErrorHandler::startWithCatchedException(actionId);
     }
-    catch (ConfigException& ex)
-    {
-        if (ex.getErrorList().isValid() && ex.getErrorList()->getLength() > 0) {
-            ConfigErrorHandler::start(ex.getErrorList());
-        } else {
-            thisTopWin->setMessageBox(MessageBoxParameter().setTitle("Config Error")
-                                                           .setMessage(ex.getMessage()));
-        }
+    catch (ConfigException& ex) {
+        ConfigErrorHandler::startWithCatchedException(actionId);
     }
     return rslt;
 }
@@ -940,6 +933,28 @@ void EditorTopWin::finishedShellscript(ProgramExecutor::Result rslt)
     
         CommandOutputBox::Ptr commandOutputBox = CommandOutputBox::create(this, textData);
         commandOutputBox->show();
+    }
+}
+
+
+void EditorTopWin::gotoLineNumber(int lineNumber)
+{
+    bool wasNegative = (lineNumber < 0);
+    
+    if (lineNumber < 0) lineNumber = 0;
+    
+    TextData::TextMark m = textEditor->createNewMarkFromCursor();
+    m.moveToLineAndColumn(lineNumber, m.getColumn());
+    textEditor->moveCursorToTextMarkAndAdjustVisibility(m);
+    textEditor->rememberCursorPixX();
+    if (!wasNegative) {
+        m.moveToBeginOfLine();    long spos = m.getPos();
+        m.moveToNextLineBegin();  long epos = m.getPos();
+        
+        textEditor->setPrimarySelection(spos, epos);
+    
+    } else {
+        textEditor->releaseSelection();
     }
 }
 

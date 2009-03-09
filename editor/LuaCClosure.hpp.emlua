@@ -105,61 +105,7 @@ private:
 @   end
     }
     
-    static int invokeFunction(lua_State* L)
-    {
-        LuaAccess              luaAccess(L);
-        RawPtr<LuaInterpreter> luaInterpreter = luaAccess.getLuaInterpreter();
-        LuaAccess              oldLuaAccess   = luaInterpreter->getCurrentLuaAccess();
-        
-        LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess(luaInterpreter, luaAccess);
-        #ifdef DEBUG
-            LuaStackChecker::Ptr stackChecker = LuaStackChecker::create();
-            OwningPtr<LuaStackChecker> oldChecker = LuaStateAccess::replaceLuaStackChecker(L, stackChecker);
-        #endif
-        
-        int numberOfResults = 0;
-        bool wasError = false;
-        {
-            LuaCFunctionArguments args(luaAccess);
-
-            try
-            {
-@           for i = 1, numberUpvalues do
-                LuaVarRef upvalue@(i)(luaAccess, lua_upvalueindex(@(i)));
-@           end
-                
-                numberOfResults = F(args@(numberUpvalues > 0 and ',' or '') 
-                                    @(argList('upvalue', numberUpvalues))).numberOfResults;
-            }
-            catch (BaseException& ex)
-            {
-                lua_pushstring(L, ex.getMessage().toCString());
-                wasError = true;
-            }
-            catch (std::exception& ex)
-            {
-                lua_pushstring(L, ex.what());
-                wasError = true;
-            }
-            catch (...)
-            {
-                lua_pushstring(L, "unknown error");
-                wasError = true;
-            }
-        }
-        #ifdef DEBUG
-            LuaStateAccess::replaceLuaStackChecker(L, oldChecker);
-        #endif
-        LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess(luaInterpreter, oldLuaAccess);
-
-        if (wasError) {
-            lua_error(L);
-            ASSERT(false);
-            return 0;
-        } else {
-            return numberOfResults;
-        }
-    }
+    static int invokeFunction(lua_State* L);
     
     void pushUpvaluesTo(const LuaAccess& luaAccess) const
     {
@@ -194,6 +140,73 @@ public:
 
 @ end
 };
+
+@ for numberUpvalues = 0, MAX_NUMBER_UPVALUES do
+template
+<
+    LuaCClosureWrappedFunction@(numberUpvalues) F
+>
+inline int LuaCClosureImpl< LuaCClosureType@(numberUpvalues)<F> >::invokeFunction(lua_State* L)
+{
+    LuaAccess              luaAccess(L);
+    RawPtr<LuaInterpreter> luaInterpreter            = luaAccess.getLuaInterpreter();
+    LuaAccess              oldLuaAccess              = luaInterpreter->getCurrentLuaAccess();
+    int                    oldErrorHandlerStackIndex = luaInterpreter->getErrorHandlerStackIndex();
+    
+    LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess(luaInterpreter, luaAccess);
+    #ifdef DEBUG
+        LuaStackChecker::Ptr stackChecker = LuaStackChecker::create();
+        OwningPtr<LuaStackChecker> oldChecker = LuaStateAccess::replaceLuaStackChecker(L, stackChecker);
+    #endif
+    
+    int numberOfResults = 0;
+    bool wasError = false;
+    {
+        LuaCFunctionArguments args(luaAccess);
+
+        LuaVar errorHandler(luaAccess, LuaCClosure::create<LuaInterpreter::errorHandlerFunction>());
+        LuaInterpreter::LuaCFunctionAccess::setErrorHandlerStackIndex(luaInterpreter, errorHandler.getStackIndex());
+
+        try
+        {
+@       for i = 1, numberUpvalues do
+            LuaVarRef upvalue@(i)(luaAccess, lua_upvalueindex(@(i)));
+@       end
+            numberOfResults = F(args@(numberUpvalues > 0 and ',' or '') 
+                                @(argList('upvalue', numberUpvalues))).numberOfResults;
+        }
+        catch (BaseException& ex)
+        {
+            lua_pushstring(L, ex.getMessage().toCString());
+            wasError = true;
+        }
+        catch (std::exception& ex)
+        {
+            lua_pushstring(L, ex.what());
+            wasError = true;
+        }
+        catch (...)
+        {
+            lua_pushstring(L, "unknown error");
+            wasError = true;
+        }
+    }
+    #ifdef DEBUG
+        LuaStateAccess::replaceLuaStackChecker(L, oldChecker);
+    #endif
+    LuaInterpreter::LuaCFunctionAccess::setErrorHandlerStackIndex(luaInterpreter, oldErrorHandlerStackIndex);
+    LuaInterpreter::LuaCFunctionAccess::setCurrentLuaAccess      (luaInterpreter, oldLuaAccess);
+
+    if (wasError) {
+        lua_error(L);
+        ASSERT(false);
+        return 0;
+    } else {
+        return numberOfResults;
+    }
+}
+@ end
+
 
 } // namespace LucED
 
