@@ -538,9 +538,11 @@ void EditorTopWin::treatFocusIn()
         }
         if (isMessageBoxModal) {
             textEditor->disableCursorChanges();
+            messageBox->raise();
+            messageBox->requestFocus();
+        } else {
+            textEditor->treatFocusIn();
         }
-        messageBox->raise();
-        messageBox->requestFocus();
     } else {
         if (invokedPanel.isValid()) {
             invokedPanel->treatFocusIn();
