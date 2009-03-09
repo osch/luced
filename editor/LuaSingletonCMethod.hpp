@@ -76,7 +76,7 @@ private:
         {
             LuaCFunctionArguments args(luaAccess);
 
-            LuaVar errorHandler(luaAccess, LuaCClosure::create<LuaInterpreter::errorHandlerFunction>());
+            LuaVar errorHandler(luaAccess, LuaCClosure::create<&LuaInterpreter::errorHandlerFunction>());
             LuaInterpreter::LuaCFunctionAccess::setErrorHandlerStackIndex(luaInterpreter, errorHandler.getStackIndex());
 
             try

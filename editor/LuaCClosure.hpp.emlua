@@ -164,7 +164,7 @@ inline int LuaCClosureImpl< LuaCClosureType@(numberUpvalues)<F> >::invokeFunctio
     {
         LuaCFunctionArguments args(luaAccess);
 
-        LuaVar errorHandler(luaAccess, LuaCClosure::create<LuaInterpreter::errorHandlerFunction>());
+        LuaVar errorHandler(luaAccess, LuaCClosure::create<&LuaInterpreter::errorHandlerFunction>());
         LuaInterpreter::LuaCFunctionAccess::setErrorHandlerStackIndex(luaInterpreter, errorHandler.getStackIndex());
 
         try
