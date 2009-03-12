@@ -109,6 +109,9 @@ private:
     
     EditorTopWin(HilitedText::Ptr hilitedText, int width, int height);
 
+    virtual void requestFocusFor(GuiWidget* w);
+    virtual void reportMouseClickFrom(GuiWidget* w);
+
     void treatConfigUpdate();
 
     void requestCloseFor(GuiWidget* w);
@@ -143,6 +146,7 @@ private:
     
     WeakPtr<DialogPanel> invokedPanel;
     int                  invokedPanelIndex;
+    bool                 hasInvokedPanelFocus;
 
     MessageBox::Ptr     messageBox;
     MessageBoxParameter messageBoxParameter;

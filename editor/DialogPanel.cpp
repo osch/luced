@@ -42,7 +42,8 @@ DialogPanel::DialogPanel(GuiWidget*                  parent,
       hasFocusFlag(false),
       requestCloseCallback(requestCloseCallback)
 {
-    addToXEventMask(ExposureMask);
+    addToXEventMask(ExposureMask|ButtonPressMask);
+
     setBackgroundColor(getGuiRoot()->getGuiColor03());
 
     GuiWidget::addActionMethods(Actions::create(this));
@@ -119,6 +120,11 @@ GuiElement::ProcessingResult DialogPanel::processEvent(const XEvent* event)
     } else {
         switch (event->type)
         {
+            case ButtonPress:
+                if (!hasFocusFlag) {
+                    GuiWidget::reportMouseClickFrom(this);
+                }
+                break;
             case GraphicsExpose:
                 if (event->xgraphicsexpose.count > 0) {
                     break;
@@ -650,6 +656,12 @@ void DialogPanel::setFocus(GuiWidget* element)
 }
 
 
+void DialogPanel::reportMouseClickFrom(GuiWidget* w)
+{
+    if (!hasFocusFlag) {
+        GuiWidget::reportMouseClickFrom(this);
+    }
+}
 
 void DialogPanel::requestFocusFor(GuiWidget* w)
 {

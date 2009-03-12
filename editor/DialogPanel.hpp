@@ -82,6 +82,7 @@ protected:
     GuiElement* getRootElement() {return rootElement.getRawPtr();}
     
     virtual void requestFocusFor(GuiWidget* w);
+    virtual void reportMouseClickFrom(GuiWidget* w);
     
     virtual void requestClose();
     

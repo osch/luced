@@ -219,6 +219,9 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
             }
 
             case ButtonPress: {
+                if (!hasFocusFlag) {
+                    reportMouseClickFrom(this);
+                }
                 if (event->xbutton.button == Button1 || (this->doesReactOnRightClick() && event->xbutton.button == Button3))
                 {
                     earliestButtonReleaseTime.setToCurrentTime().add(shortTime);

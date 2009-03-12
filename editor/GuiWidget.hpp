@@ -154,13 +154,18 @@ protected:
     virtual void requestFocusFor(GuiWidget* w) {
         if (parent != NULL) parent->requestFocusFor(w);
     }
+    virtual void reportMouseClickFrom(GuiWidget* w) {
+        if (parent != NULL) parent->reportMouseClickFrom(w);
+    }
     virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w) {
         if (parent != NULL) parent->requestHotKeyRegistrationFor(id, w);
     }
     virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w) {
         if (parent != NULL) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
     }
-
+    RawPtr<GuiWidget> getParentWidget() const {
+        return parent;
+    }
 public:
     WidgetId getWid() const {
         return wid;

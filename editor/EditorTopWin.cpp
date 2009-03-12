@@ -263,6 +263,7 @@ private:
 EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
       flagForSetSizeHintAtFirstShow(true),
+      hasInvokedPanelFocus(false),
       hasMessageBox(false),
       isMessageBoxModal(false),
       actionKeySequenceHandler(this)
@@ -337,7 +338,7 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
     GuiWidget::addActionMethods(EditorTopWinActions::create(
                                 TopWinActionsParameter(this, 
                                                        textEditor,
-                                                       newCallback(this, &EditorTopWin::setMessageBox),
+                                                       newCallback(this, &EditorTopWin::setModalMessageBox),
                                                        panelInvoker,
                                                        actionInterface)));
 
@@ -409,7 +410,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
             
             RawPtr<GuiWidget> focusedWidget;
             
-            if (invokedPanel.isValid()) {
+            if (invokedPanel.isValid() && hasInvokedPanelFocus) {
                 focusedWidget = invokedPanel;
             } else {
                 focusedWidget = textEditor;
@@ -427,7 +428,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
             }
             if (actionKeySequenceHandler.hasJustEnteredSequence())
             {
-                if (invokedPanel.isValid()) {
+                if (invokedPanel.isValid() && hasInvokedPanelFocus) {
                     invokedPanel->treatFocusOut();
                 } else {
                     textEditor->treatFocusOut();
@@ -439,7 +440,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
             }
             else if (actionKeySequenceHandler.hasJustQuitSequence()) 
             {
-                if (invokedPanel.isValid()) {
+                if (invokedPanel.isValid() && hasInvokedPanelFocus) {
                     invokedPanel->treatFocusIn();
                 } else {
                     textEditor->treatFocusIn();
@@ -529,6 +530,44 @@ GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent* event)
     }
 }
 
+void EditorTopWin::reportMouseClickFrom(GuiWidget* w)
+{
+    if (!hasMessageBox || !isMessageBoxModal)
+    {
+        if (w == textEditor) {
+            textEditor->treatFocusIn();
+            if (invokedPanel.isValid()) {
+                invokedPanel->treatFocusOut();
+            }
+            hasInvokedPanelFocus = false;
+        }
+        else if (w == invokedPanel) {
+            invokedPanel->treatFocusIn();
+            textEditor->treatFocusOut();
+            hasInvokedPanelFocus = true;
+        }
+    }
+}
+
+void EditorTopWin::requestFocusFor(GuiWidget* w)
+{
+    if (!hasMessageBox || !isMessageBoxModal)
+    {
+        if (w == textEditor) {
+            textEditor->treatFocusIn();
+            if (invokedPanel.isValid()) {
+                invokedPanel->treatFocusOut();
+            }
+            hasInvokedPanelFocus = false;
+        }
+        else if (w == invokedPanel) {
+            invokedPanel->treatFocusIn();
+            textEditor->treatFocusOut();
+            hasInvokedPanelFocus = true;
+        }
+    }
+}
+
 
 void EditorTopWin::treatFocusIn()
 {
@@ -537,14 +576,14 @@ void EditorTopWin::treatFocusIn()
             internalInvokeNewMessageBox();
         }
         if (isMessageBoxModal) {
-            textEditor->disableCursorChanges();
+            //textEditor->disableCursorChanges();
             messageBox->raise();
             messageBox->requestFocus();
         } else {
             textEditor->treatFocusIn();
         }
     } else {
-        if (invokedPanel.isValid()) {
+        if (invokedPanel.isValid() && hasInvokedPanelFocus) {
             invokedPanel->treatFocusIn();
         } else {
             textEditor->treatFocusIn();
@@ -601,7 +640,7 @@ void EditorTopWin::treatFocusOut()
     if (actionKeySequenceHandler.isWithinSequence())
     {
         actionKeySequenceHandler.reset();
-        if (invokedPanel.isValid()) {
+        if (invokedPanel.isValid() && hasInvokedPanelFocus) {
             invokedPanel->treatFocusIn();
         } else {
             textEditor->treatFocusIn();
@@ -609,7 +648,7 @@ void EditorTopWin::treatFocusOut()
         statusLine->clearMessage();
     }
 
-    if (invokedPanel.isValid()) {
+    if (invokedPanel.isValid() && hasInvokedPanelFocus) {
         invokedPanel->treatFocusOut();
     } else {
         textEditor->treatFocusOut();
@@ -643,7 +682,7 @@ void EditorTopWin::internalSetMessageBox(const MessageBoxParameter& p)
     if (isVisible())
     {
         if (isMessageBoxModal) {
-            textEditor->disableCursorChanges();
+//            textEditor->disableCursorChanges();
         }
         internalInvokeNewMessageBox();
         messageBox->raise();
@@ -695,7 +734,11 @@ void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseRe
 
 void EditorTopWin::invokePanel(DialogPanel* panel)
 {
-    if (invokedPanel != panel) {
+    if (panel == invokedPanel) {
+        panel->treatFocusIn();
+        hasInvokedPanelFocus = true;
+        textEditor->treatFocusOut();
+    } else {
         if (invokedPanel.isValid()) {
             requestCloseFor(invokedPanel);
         }
@@ -713,6 +756,7 @@ void EditorTopWin::invokePanel(DialogPanel* panel)
         rootElement->setPosition(Position(0, 0, p.w, p.h));
         panel->show();
         panel->treatFocusIn();
+        hasInvokedPanelFocus = true;
         textEditor->treatFocusOut();
         invokedPanel = panel;
         textEditor->setVerticalAdjustmentStrategy(TextWidget::STRICT_TOP_LINE_ANCHOR);

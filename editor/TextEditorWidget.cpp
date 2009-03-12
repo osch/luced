@@ -336,6 +336,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
             {
                 showMousePointer();
                 if (!hasFocusFlag) {
+                    reportMouseClickFrom(this);
                     requestFocusFor(this);
                 }
                 if (event->xbutton.button == Button1)

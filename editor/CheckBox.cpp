@@ -175,6 +175,9 @@ GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
             }
 
             case ButtonPress: {
+                if (!hasFocus) {
+                    reportMouseClickFrom(this);
+                }
                 if (event->xbutton.button == Button1)
                 {
                     isMouseButtonPressed = true;
