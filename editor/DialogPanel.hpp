@@ -29,11 +29,12 @@
 #include "Callback.hpp"
 #include "HeapHashMap.hpp"
 #include "ActionMethodBinding.hpp"
-
+#include "FocusableWidget.hpp"
+                    
 namespace LucED
 {
 
-class DialogPanel : public GuiWidget
+class DialogPanel : public FocusableWidget
 {
 public:
     typedef OwningPtr<DialogPanel> Ptr;
@@ -64,15 +65,11 @@ public:
     virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
 
     void setRootElement(OwningPtr<GuiElement> rootElement);
-    void setFocus(GuiWidget* element);
+    void setFocus(RawPtr<FocusableWidget> element);
     virtual void notifyAboutHotKeyEventForOtherWidget();
 
     virtual void setPosition(Position newPosition);
     
-    bool hasFocus() const {
-        return hasFocusFlag;
-    }
-
     virtual bool invokeActionMethod(ActionId actionId);
     virtual bool hasActionMethod(ActionId actionId);
     
@@ -81,7 +78,7 @@ protected:
     
     GuiElement* getRootElement() {return rootElement.getRawPtr();}
     
-    virtual void requestFocusFor(GuiWidget* w);
+    virtual void requestFocusFor(RawPtr<FocusableWidget> w);
     virtual void reportMouseClickFrom(GuiWidget* w);
     
     virtual void requestClose();
@@ -134,11 +131,9 @@ private:
     typedef HeapHashMap< KeyMapping::Id, WidgetQueue::Ptr > HotKeyMapping;
     HotKeyMapping::Ptr hotKeyMapping;
     
-    WeakPtr<GuiWidget> focusedElement;
-    bool               focusedElementTakesAwayDefaultKey;
-    WidgetQueue::Ptr   defaultKeyWidgets;
-    
-    bool hasFocusFlag;
+    WeakPtr<FocusableWidget> focusedElement;
+    bool                     focusedElementTakesAwayDefaultKey;
+    WidgetQueue::Ptr         defaultKeyWidgets;
     
     Callback<DialogPanel*>::Ptr requestCloseCallback;
     

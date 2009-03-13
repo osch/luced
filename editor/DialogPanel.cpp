@@ -31,7 +31,7 @@ using namespace LucED;
 
 DialogPanel::DialogPanel(GuiWidget*                  parent, 
                          Callback<DialogPanel*>::Ptr requestCloseCallback)
-    : GuiWidget(parent, 0, 0, 1, 1, 0),
+    : FocusableWidget(parent, 0, 0, 1, 1, 0),
       wasNeverShown(true),
       
       hotKeyMapping(HotKeyMapping::create()),
@@ -39,7 +39,6 @@ DialogPanel::DialogPanel(GuiWidget*                  parent,
       focusedElementTakesAwayDefaultKey(false),
       defaultKeyWidgets(WidgetQueue::create()),
       
-      hasFocusFlag(false),
       requestCloseCallback(requestCloseCallback)
 {
     addToXEventMask(ExposureMask|ButtonPressMask);
@@ -121,7 +120,7 @@ GuiElement::ProcessingResult DialogPanel::processEvent(const XEvent* event)
         switch (event->type)
         {
             case ButtonPress:
-                if (!hasFocusFlag) {
+                if (!hasFocus()) {
                     GuiWidget::reportMouseClickFrom(this);
                 }
                 break;
@@ -155,7 +154,7 @@ void DialogPanel::treatFocusIn()
         }
     }
 
-    hasFocusFlag = true;
+    setFocusFlag(true);
     if (focusedElement.isValid()) {
         focusedElement->treatFocusIn();
     }
@@ -188,7 +187,7 @@ void DialogPanel::treatFocusOut()
         }
     }
 
-    hasFocusFlag = false;
+    setFocusFlag(false);
     if (focusedElement.isValid()) {
         focusedElement->treatFocusOut();
     }
@@ -213,11 +212,11 @@ void DialogPanel::treatFocusOut()
 void DialogPanel::Actions::focusNext()
 {
     if (thisPanel->focusedElement.isValid()) {
-        GuiWidget* e = thisPanel->focusedElement;
+        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
         do {
             e = e->getNextFocusWidget();
-        } while (e != thisPanel->focusedElement && e != NULL && !e->isFocusable());
-        if (e != NULL) {
+        } while (e != thisPanel->focusedElement && e.isValid() && !e->isFocusable());
+        if (e.isValid()) {
             thisPanel->setFocus(e);
         }
     }
@@ -227,11 +226,11 @@ void DialogPanel::Actions::focusNext()
 void DialogPanel::Actions::focusPrevious()
 {
     if (thisPanel->focusedElement.isValid()) {
-        GuiWidget* e = thisPanel->focusedElement;
+        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
         do {
             e = e->getPrevFocusWidget();
-        } while (e != thisPanel->focusedElement && e != NULL && !e->isFocusable());
-        if (e != NULL) {
+        } while (e != thisPanel->focusedElement && e.isValid() && !e->isFocusable());
+        if (e.isValid()) {
             thisPanel->setFocus(e);
         }
     }
@@ -241,8 +240,8 @@ void DialogPanel::Actions::focusRight()
 {
     if (thisPanel->focusedElement.isValid())
     {
-        GuiWidget* e = thisPanel->focusedElement;
-        GuiWidget* best = NULL;
+        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
+        RawPtr<FocusableWidget> best;
         int minX = e->getPosition().x + e->getPosition().w;
         int minY = e->getPosition().y;
         int maxY = e->getPosition().y + e->getPosition().h;
@@ -251,7 +250,7 @@ void DialogPanel::Actions::focusRight()
 //printf("\n-----           %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
         do {
             e = e->getNextFocusWidget();
-            if (e != NULL && e->isFocusable())
+            if (e.isValid() && e->isFocusable())
             {
 //printf("                %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
 
@@ -265,9 +264,9 @@ void DialogPanel::Actions::focusRight()
                     bestX = e->getPosition().x;
                 }
             }
-        } while (e != thisPanel->focusedElement && e != NULL);
+        } while (e != thisPanel->focusedElement && e.isValid());
 
-        if (best == NULL)
+        if (!best.isValid())
         {
             int bestX = INT_MAX;
             int bestY = INT_MAX;
@@ -276,7 +275,7 @@ void DialogPanel::Actions::focusRight()
             e = thisPanel->focusedElement;
             do {
                 e = e->getNextFocusWidget();
-                if (e != NULL && e->isFocusable())
+                if (e.isValid() && e->isFocusable())
                 {
     //printf("                %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
     
@@ -291,9 +290,9 @@ void DialogPanel::Actions::focusRight()
                         bestH = e->getPosition().h;
                     }
                 }
-            } while (e != thisPanel->focusedElement && e != NULL);
+            } while (e != thisPanel->focusedElement && e.isValid());
         }
-        if (best != NULL) {
+        if (best.isValid()) {
             thisPanel->setFocus(best);
         }
     }
@@ -304,8 +303,8 @@ void DialogPanel::Actions::focusLeft()
 {
     if (thisPanel->focusedElement.isValid())
     {
-        GuiWidget* e = thisPanel->focusedElement;
-        GuiWidget* best = NULL;
+        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
+        RawPtr<FocusableWidget> best;
         int maxX = e->getPosition().x;
         int minY = e->getPosition().y;
         int maxY = e->getPosition().y + e->getPosition().h;
@@ -314,7 +313,7 @@ void DialogPanel::Actions::focusLeft()
 //printf("\n-----           %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
         do {
             e = e->getPrevFocusWidget();
-            if (e != NULL && e->isFocusable())
+            if (e.isValid() && e->isFocusable())
             {
 //printf("                %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
 
@@ -328,9 +327,9 @@ void DialogPanel::Actions::focusLeft()
                     bestX = e->getPosition().x + e->getPosition().w;
                 }
             }
-        } while (e != thisPanel->focusedElement && e != NULL);
+        } while (e != thisPanel->focusedElement && e.isValid());
 
-        if (best == NULL)
+        if (!best.isValid())
         {
             int bestX = 0;
             int bestY = 0;
@@ -339,7 +338,7 @@ void DialogPanel::Actions::focusLeft()
             e = thisPanel->focusedElement;
             do {
                 e = e->getPrevFocusWidget();
-                if (e != NULL && e->isFocusable())
+                if (e.isValid() && e->isFocusable())
                 {
     //printf("                %d %d %d %d\n", e->getPosition().y, e->getPosition().x, e->getPosition().h, e->getPosition().w);
     
@@ -354,9 +353,9 @@ void DialogPanel::Actions::focusLeft()
                         bestX = e->getPosition().x + e->getPosition().w;
                     }
                 }
-            } while (e != thisPanel->focusedElement && e != NULL);
+            } while (e != thisPanel->focusedElement && e.isValid());
         }
-        if (best != NULL) {
+        if (best.isValid()) {
             thisPanel->setFocus(best);
         }
     }
@@ -367,8 +366,8 @@ void DialogPanel::Actions::focusUp()
 {
     if (thisPanel->focusedElement.isValid())
     {
-        GuiWidget* e = thisPanel->focusedElement;
-        GuiWidget* best = NULL;
+        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
+        RawPtr<FocusableWidget> best;
         int maxY = e->getPosition().y;
         int minX = e->getPosition().x;
         int maxX = e->getPosition().x + e->getPosition().w;
@@ -377,7 +376,7 @@ void DialogPanel::Actions::focusUp()
 //printf("\n-----           %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
         do {
             e = e->getPrevFocusWidget();
-            if (e != NULL && e->isFocusable())
+            if (e.isValid() && e->isFocusable())
             {
 //printf("                %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
 
@@ -391,8 +390,8 @@ void DialogPanel::Actions::focusUp()
                     bestY = e->getPosition().y + e->getPosition().h;
                 }
             }
-        } while (e != thisPanel->focusedElement && e != NULL);
-        if (best != NULL) {
+        } while (e != thisPanel->focusedElement && e.isValid());
+        if (best.isValid()) {
             thisPanel->setFocus(best);
         }
     }
@@ -402,8 +401,8 @@ void DialogPanel::Actions::focusDown()
 {
     if (thisPanel->focusedElement.isValid())
     {
-        GuiWidget* e = thisPanel->focusedElement;
-        GuiWidget* best = NULL;
+        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
+        RawPtr<FocusableWidget> best;
         int minY = e->getPosition().y + e->getPosition().h;
         int minX = e->getPosition().x;
         int maxX = e->getPosition().x + e->getPosition().w;
@@ -412,7 +411,7 @@ void DialogPanel::Actions::focusDown()
 //printf("\n-----           %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
         do {
             e = e->getNextFocusWidget();
-            if (e != NULL && e->isFocusable())
+            if (e.isValid() && e->isFocusable())
             {
 //printf("                %d %d %d %d\n", e->getPosition().x, e->getPosition().y, e->getPosition().w, e->getPosition().h);
 
@@ -426,8 +425,8 @@ void DialogPanel::Actions::focusDown()
                     bestY = e->getPosition().y;
                 }
             }
-        } while (e != thisPanel->focusedElement && e != NULL);
-        if (best != NULL) {
+        } while (e != thisPanel->focusedElement && e.isValid());
+        if (best.isValid()) {
             thisPanel->setFocus(best);
         }
     }
@@ -440,11 +439,11 @@ bool DialogPanel::processHotKey(KeyMapping::Id keyMappingId)
     
     if (focusedElement.isValid()) {
         if (focusedElement->getFocusType() == NO_FOCUS) {
-            GuiWidget* e = focusedElement;
+            RawPtr<FocusableWidget> e = focusedElement;
             do {
                 e = e->getNextFocusWidget();
-            } while (e != NULL && e != focusedElement && !e->isFocusable());
-            if (e != NULL) {
+            } while (e.isValid() && e != focusedElement && !e->isFocusable());
+            if (e.isValid()) {
                 e->treatFocusIn();
                 focusedElement = e;
             }
@@ -498,11 +497,11 @@ bool DialogPanel::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent)
     
     if (focusedElement.isValid()) {
         if (focusedElement->getFocusType() == NO_FOCUS) {
-            GuiWidget* e = focusedElement;
+            RawPtr<FocusableWidget> e = focusedElement;
             do {
                 e = e->getNextFocusWidget();
-            } while (e != NULL && e != focusedElement && !e->isFocusable());
-            if (e != NULL) {
+            } while (e.isValid() && e != focusedElement && !e->isFocusable());
+            if (e.isValid()) {
                 e->treatFocusIn();
                 focusedElement = e;
             }
@@ -524,11 +523,11 @@ bool DialogPanel::handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent)
     
     if (focusedElement.isValid()) {
         if (focusedElement->getFocusType() == NO_FOCUS) {
-            GuiWidget* e = focusedElement;
+            RawPtr<FocusableWidget> e = focusedElement;
             do {
                 e = e->getNextFocusWidget();
-            } while (e != NULL && e != focusedElement && !e->isFocusable());
-            if (e != NULL) {
+            } while (e.isValid() && e != focusedElement && !e->isFocusable());
+            if (e.isValid()) {
                 e->treatFocusIn();
                 focusedElement = e;
             }
@@ -549,11 +548,11 @@ GuiElement::ProcessingResult DialogPanel::processKeyboardEvent(const KeyPressEve
     
     if (focusedElement.isValid()) {
         if (focusedElement->getFocusType() == NO_FOCUS) {
-            GuiWidget* e = focusedElement;
+            RawPtr<FocusableWidget> e = focusedElement;
             do {
                 e = e->getNextFocusWidget();
-            } while (e != NULL && e != focusedElement && !e->isFocusable());
-            if (e != NULL) {
+            } while (e.isValid() && e != focusedElement && !e->isFocusable());
+            if (e.isValid()) {
                 e->treatFocusIn();
                 focusedElement = e;
             }
@@ -614,11 +613,11 @@ bool DialogPanel::takesAwayDefaultKey(GuiWidget* widget)
 }
 
 
-void DialogPanel::setFocus(GuiWidget* element)
+void DialogPanel::setFocus(RawPtr<FocusableWidget> element)
 {
     if (focusedElement != element)
     {
-        if (hasFocusFlag)
+        if (hasFocus())
         {
             if (focusedElement.isValid()) {
                 focusedElement->treatFocusOut();
@@ -658,12 +657,12 @@ void DialogPanel::setFocus(GuiWidget* element)
 
 void DialogPanel::reportMouseClickFrom(GuiWidget* w)
 {
-    if (!hasFocusFlag) {
+    if (!hasFocus()) {
         GuiWidget::reportMouseClickFrom(this);
     }
 }
 
-void DialogPanel::requestFocusFor(GuiWidget* w)
+void DialogPanel::requestFocusFor(RawPtr<FocusableWidget> w)
 {
     setFocus(w);
 }
@@ -682,7 +681,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
             if (last != NULL) {
                 last->treatLostHotKeyRegistration(id);
             }
-            if (hasFocusFlag) {
+            if (hasFocus()) {
                 w->treatNewHotKeyRegistration(id);
             }
         }
@@ -708,7 +707,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidg
         this->hotKeyMapping->set(id, widgets);
     }
     widgets->append(w);
-    if (hasFocusFlag) {
+    if (hasFocus()) {
         w->treatNewHotKeyRegistration(id);
     }
     if (hotKeyPredecessor.isValid())
@@ -728,7 +727,7 @@ void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id
         w->treatLostHotKeyRegistration(id);
         defaultKeyWidgets->removeAll(w);
 
-        if (hasFocusFlag && !focusedElementTakesAwayDefaultKey) {
+        if (hasFocus() && !focusedElementTakesAwayDefaultKey) {
             GuiWidget* last = defaultKeyWidgets->getLast();
             if (last != NULL) {
                 last->treatNewHotKeyRegistration(id);
@@ -750,7 +749,7 @@ void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id
                 w->treatLostHotKeyRegistration(id);
             }
             GuiWidget* newActive = widgets->getLast();
-            if (doIt && newActive != NULL && hasFocusFlag) {
+            if (doIt && newActive != NULL && hasFocus()) {
                 newActive->treatNewHotKeyRegistration(id);
             }
         }

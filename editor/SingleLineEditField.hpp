@@ -26,11 +26,12 @@
 #include "TextData.hpp"
 #include "EditFieldGroup.hpp"
 #include "RawPtr.hpp"
+#include "FocusableWidget.hpp"
 
 namespace LucED
 {
 
-class SingleLineEditField : public GuiWidget
+class SingleLineEditField : public FocusableWidget
 {
 public:
     typedef OwningPtr<SingleLineEditField> Ptr;
@@ -50,17 +51,11 @@ public:
     virtual Measures getDesiredMeasures();
     virtual void setPosition(Position p);
 
-    virtual bool isFocusable() { return true; }
-    virtual FocusType getFocusType() { return NORMAL_FOCUS; }
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
     TextData::Ptr getTextData() {
         return editorWidget->getTextData();
-    }
-    
-    bool hasFocus() const {
-        return hasFocusFlag;
     }
     
     void showCursor() {
@@ -96,13 +91,12 @@ public:
     virtual void notifyAboutHotKeyEventForOtherWidget();
     
 protected:    
-    virtual void requestFocusFor(GuiWidget* w);
+    virtual void requestFocusFor(RawPtr<FocusableWidget> w);
 
 private:
     SingleLineEditField(GuiWidget* parent, LanguageMode::Ptr languageMode, TextData::Ptr textData);
     SingleLineEditorWidget::Ptr editorWidget;
     void draw();
-    bool hasFocusFlag;
     VerticalAdjustment::Type adjustment;
     int layoutHeight;
     int heightOffset;

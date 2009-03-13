@@ -32,13 +32,12 @@ using namespace LucED;
 const int BUTTON_OUTER_BORDER = 1;
 
 Button::Button(GuiWidget* parent, String buttonText)
-      : GuiWidget(parent, 0, 0, 1, 1, 0),
+      : FocusableWidget(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
         isButtonPressed(false),
         isMouseButtonPressed(false),
         isMouseOverButton(false),
         isDefaultButton(false),
-        hasFocusFlag(false),
         hasHotKeyFlag(false),
         showHotKeyFlag(false),
         isExplicitDefaultButton(false),
@@ -155,7 +154,7 @@ void Button::drawButton()
         const int d = BUTTON_OUTER_BORDER - 1;
         undrawFrame(d + guiSpacing, d + guiSpacing, position.w - 2 * d - guiSpacing, position.h - 2 * d - guiSpacing);
     }
-    if (hasFocusFlag) {
+    if (hasFocus()) {
         const int d = BUTTON_OUTER_BORDER + 1;
         if (isButtonPressed) {
             drawDottedFrame(d+1 + guiSpacing, d+1 + guiSpacing, position.w - 2 * d - 1 - guiSpacing, position.h - 2 * d - 1 - guiSpacing);
@@ -219,7 +218,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
             }
 
             case ButtonPress: {
-                if (!hasFocusFlag) {
+                if (!hasFocus()) {
                     reportMouseClickFrom(this);
                 }
                 if (event->xbutton.button == Button1 || (this->doesReactOnRightClick() && event->xbutton.button == Button3))
@@ -385,8 +384,8 @@ void Button::treatFocusIn()
     if (!isDefaultButton) {
         requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier(), KeyId("Return")),   this);
     }
-    if (!hasFocusFlag) {
-        hasFocusFlag = true;
+    if (!hasFocus()) {
+        setFocusFlag(true);
         drawButton();
     }
 }
@@ -394,7 +393,7 @@ void Button::treatFocusIn()
 
 void Button::treatFocusOut()
 {
-    hasFocusFlag = false;
+    setFocusFlag(false);
     if (!isExplicitDefaultButton) {
         requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(KeyModifier(), KeyId("Return")),   this);
     }

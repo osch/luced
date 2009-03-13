@@ -325,11 +325,7 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
 
     flagForSetSizeHintAtFirstShow = true;
     
-
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &EditorTopWin::treatConfigUpdate));
-
-
-    Callback<GuiWidget*>::Ptr requestClosePanelCallback = newCallback(this, &EditorTopWin::requestCloseFor);
 
     actionInterface = EditorTopWin::ActionInterface::create(this);
 
@@ -549,23 +545,9 @@ void EditorTopWin::reportMouseClickFrom(GuiWidget* w)
     }
 }
 
-void EditorTopWin::requestFocusFor(GuiWidget* w)
+void EditorTopWin::requestFocusFor(RawPtr<FocusableWidget> w)
 {
-    if (!hasMessageBox || !isMessageBoxModal)
-    {
-        if (w == textEditor) {
-            textEditor->treatFocusIn();
-            if (invokedPanel.isValid()) {
-                invokedPanel->treatFocusOut();
-            }
-            hasInvokedPanelFocus = false;
-        }
-        else if (w == invokedPanel) {
-            invokedPanel->treatFocusIn();
-            textEditor->treatFocusOut();
-            hasInvokedPanelFocus = true;
-        }
-    }
+    reportMouseClickFrom(w);
 }
 
 
@@ -763,7 +745,7 @@ void EditorTopWin::invokePanel(DialogPanel* panel)
     }
 }
 
-void EditorTopWin::requestCloseFor(GuiWidget* w)
+void EditorTopWin::requestCloseFor(DialogPanel* w)
 {
     if (w == invokedPanel) {
         if (messageBox.isValid()) {

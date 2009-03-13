@@ -114,8 +114,6 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
                                    
       : TextWidget(parent, hilitedText, borderWidth, options),
 
-        hasFocusFlag(false),
-
         selectionOwner(SelectionOwner::create(this, 
                                               SelectionOwner::TYPE_PRIMARY,
                                               SelectionContentHandler::create(this))),
@@ -335,7 +333,7 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
             case ButtonPress:
             {
                 showMousePointer();
-                if (!hasFocusFlag) {
+                if (!hasFocus()) {
                     reportMouseClickFrom(this);
                     requestFocusFor(this);
                 }
@@ -756,7 +754,7 @@ bool TextEditorWidget::invokeActionMethod(ActionId actionId)
 bool TextEditorWidget::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent)
 {
     
-    if (hasFocusFlag && !keyPressEvent.getKeyId().isModifierKey())
+    if (hasFocus() && !keyPressEvent.getKeyId().isModifierKey())
     {
         hideMousePointer();
     }
@@ -833,7 +831,7 @@ void TextEditorWidget::disableCursorChanges()
 
 void TextEditorWidget::enableCursorChanges()
 {
-    if (hasFocusFlag) {
+    if (hasFocus()) {
         setCursorActive();
         startCursorBlinking();
     }
@@ -847,7 +845,7 @@ void TextEditorWidget::treatFocusIn()
         startCursorBlinking();
     }
     showMousePointer();
-    hasFocusFlag = true;
+    setFocusFlag(true);
 
     isSelectionPersistent = false;
 }
@@ -858,7 +856,7 @@ void TextEditorWidget::treatFocusOut()
     setCursorInactive();
     stopCursorBlinking();
     showMousePointer();
-    hasFocusFlag = false;
+    setFocusFlag(false);
 
     if (getBackliteBuffer()->hasActiveSelection()) {
         isSelectionPersistent = true;
@@ -868,7 +866,7 @@ void TextEditorWidget::treatFocusOut()
 
 void TextEditorWidget::showCursor()
 {
-    if (hasFocusFlag) {
+    if (hasFocus()) {
         TextWidget::startCursorBlinking();
     } else {
         TextWidget::showCursor();

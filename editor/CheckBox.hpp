@@ -29,11 +29,12 @@
 #include "Callback.hpp"
 #include "TimeVal.hpp"
 #include "ActionMethodBinding.hpp"
+#include "FocusableWidget.hpp"
 
 namespace LucED
 {
 
-class CheckBox : public GuiWidget
+class CheckBox : public FocusableWidget
 {
 public:
     typedef OwningPtr<CheckBox> Ptr;
@@ -54,8 +55,6 @@ public:
 
     virtual Measures getDesiredMeasures();
     virtual void setPosition(Position newPosition);
-    virtual bool isFocusable() { return true; }
-    virtual FocusType getFocusType() { return NORMAL_FOCUS; }
     
     virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
@@ -100,7 +99,6 @@ private:
     bool isMouseButtonPressed;
     bool isMouseOverButton;
     Callback<CheckBox*>::Ptr pressedCallback;
-    bool hasFocus;
     bool hasHotKey;
     bool showHotKey;
     char hotKeyChar;

@@ -28,10 +28,10 @@
 #include "GuiWidget.hpp"
 #include "Callback.hpp"
 #include "OwningPtr.hpp"
+#include "FocusableWidget.hpp"
 
-namespace LucED {
-
-
+namespace LucED
+{
 
 class LabelWidget : public GuiWidget
 {
@@ -54,13 +54,6 @@ public:
 
     void setLayoutHeight(int height, VerticalAdjustment::Type adjust);
 
-    virtual FocusType getFocusType() { return fakeFocusFlag ? NORMAL_FOCUS : NO_FOCUS; }
-    virtual bool isFocusable()       { return fakeFocusFlag ? true : false; }
-    
-    void setFakeFocus(bool fakeFocusFlag) {
-        this->fakeFocusFlag = fakeFocusFlag;
-    }
-    
     void setMiddleMouseButtonCallback(Callback<>::Ptr middleMouseButtonCallback) {
         this->middleMouseButtonCallback = middleMouseButtonCallback;
     }
@@ -76,14 +69,11 @@ private:
     String rightText;
     VerticalAdjustment::Type adjustment;
     int layoutHeight;
-    bool fakeFocusFlag;
     bool hasForcedMeasuresFlag;
     Measures forcedMeasures;
     Callback<>::Ptr middleMouseButtonCallback;
 };
 
-
 } // namespace LucED
-
 
 #endif // LABELWIDGET_HPP

@@ -47,9 +47,9 @@ public:
     
 protected:
     PanelDialogWin(TopWin* referingWindow);
-    void setFocus(GuiWidget* element);
+    void setFocus(RawPtr<FocusableWidget> element);
 
-    DialogPanel* getRootPanel() {
+    RawPtr<DialogPanel> getRootPanel() {
         return dialogPanel;
     }
 

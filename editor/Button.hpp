@@ -29,11 +29,12 @@
 #include "Callback.hpp"
 #include "TimeVal.hpp"
 #include "ActionMethodBinding.hpp"
-
+#include "FocusableWidget.hpp"
+                    
 namespace LucED
 {
 
-class Button : public GuiWidget
+class Button : public FocusableWidget
 {
 public:
     enum ActivationVariant {
@@ -87,8 +88,6 @@ public:
     
     virtual Measures getDesiredMeasures();
     virtual void setPosition(Position newPosition);
-    virtual bool isFocusable() { return true; }
-    virtual FocusType getFocusType() { return NORMAL_FOCUS; }
     
     virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
@@ -138,7 +137,6 @@ private:
     
     bool isDefaultButton;
     bool isExplicitDefaultButton;
-    bool hasFocusFlag;
     TimeVal earliestButtonReleaseTime;
     bool hasHotKeyFlag;
     bool showHotKeyFlag;

@@ -57,7 +57,7 @@ void PanelDialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
 }
 
 
-void PanelDialogWin::setFocus(GuiWidget* element)
+void PanelDialogWin::setFocus(RawPtr<FocusableWidget> element)
 {
     dialogPanel->setFocus(element);
 }

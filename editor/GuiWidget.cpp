@@ -28,6 +28,7 @@
 #include "GlobalConfig.hpp"
 #include "SingletonInstance.hpp"
 #include "TextStyleCache.hpp"
+#include "FocusableWidget.hpp"
 
 namespace LucED
 {
@@ -150,12 +151,6 @@ GuiWidget::GuiWidget(GuiWidget* parent,
 
 GuiWidget::~GuiWidget()
 {
-    if (nextFocusWidget.isValid() && nextFocusWidget->prevFocusWidget == this) {
-        nextFocusWidget->prevFocusWidget = prevFocusWidget;
-    }
-    if (prevFocusWidget.isValid() && prevFocusWidget->nextFocusWidget == this) {
-        prevFocusWidget->nextFocusWidget = nextFocusWidget;
-    }
     EventDispatcher::getInstance()->removeEventReceiver(EventRegistration(this, wid));
     if (isTopWindow) {
         XUnmapWindow(getDisplay(), wid); // Workaround: without "unmap" strange focus changed happened under the Exceed xserver
@@ -617,5 +612,10 @@ bool GuiWidget::hasActionMethod(ActionId actionId)
         }
     }
     return false;
+}
+
+void GuiWidget::requestFocusFor(RawPtr<FocusableWidget> w)
+{
+    if (parent.isValid()) parent->requestFocusFor(w);
 }
 

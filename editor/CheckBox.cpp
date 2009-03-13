@@ -31,12 +31,11 @@ using namespace LucED;
 const int BUTTON_OUTER_BORDER = 1;
 
 CheckBox::CheckBox(GuiWidget* parent, String buttonText)
-      : GuiWidget(parent, 0, 0, 1, 1, 0),
+      : FocusableWidget(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
         isBoxChecked(false),
         isMouseButtonPressed(false),
         isMouseOverButton(false),
-        hasFocus(false),
         hasHotKey(false),
         showHotKey(false)
 {
@@ -130,7 +129,7 @@ void CheckBox::draw()
     }
     const int d = BUTTON_OUTER_BORDER - 1;
     undrawFrame(d + guiSpacing, d + guiSpacing, position.w - 2 * d - guiSpacing, position.h - 2 * d - guiSpacing);
-    if (hasFocus) {
+    if (hasFocus()) {
         const int d = BUTTON_OUTER_BORDER;
         drawDottedFrame(d + guiSpacing, d + guiSpacing + 1, position.w - 2 * d - 1 - guiSpacing, position.h - 2 * d - 1 - guiSpacing);
     }
@@ -175,7 +174,7 @@ GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
             }
 
             case ButtonPress: {
-                if (!hasFocus) {
+                if (!hasFocus()) {
                     reportMouseClickFrom(this);
                 }
                 if (event->xbutton.button == Button1)
@@ -277,8 +276,8 @@ void CheckBox::treatNewHotKeyRegistration(const KeyMapping::Id& id)
 
 void CheckBox::treatFocusIn()
 {
-    if (!hasFocus) {
-        hasFocus = true;
+    if (!hasFocus()) {
+        setFocusFlag(true);
         draw();
     }
 }
@@ -286,7 +285,7 @@ void CheckBox::treatFocusIn()
 
 void CheckBox::treatFocusOut()
 {
-    hasFocus = false;
+    setFocusFlag(false);
     draw();
 }
 

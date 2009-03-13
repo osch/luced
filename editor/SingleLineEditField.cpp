@@ -26,8 +26,7 @@
 using namespace LucED;
 
 SingleLineEditField::SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr languageMode, TextData::Ptr textData)
-    : GuiWidget(parent, 0, 0, 1, 1, 0),
-      hasFocusFlag(false),
+    : FocusableWidget(parent, 0, 0, 1, 1, 0),
       adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
       heightOffset(0),
@@ -102,7 +101,7 @@ void SingleLineEditField::draw()
     int w = getPosition().w - guiSpacing;
     int h = getPosition().h - ud - ld - guiSpacing;
     
-    if (hasFocusFlag) {
+    if (hasFocus()) {
         drawActiveSunkenFrame(  x, y, w, h);
     } else {
         drawInactiveSunkenFrame(x, y, w, h);
@@ -160,7 +159,7 @@ void SingleLineEditField::setPosition(Position p)
     editorWidget->setPosition(p);
 }
 
-void SingleLineEditField::requestFocusFor(GuiWidget* w)
+void SingleLineEditField::requestFocusFor(RawPtr<FocusableWidget> w)
 {
     if (editorWidget.getRawPtr() == w) {
         GuiWidget::requestFocusFor(this);
@@ -169,7 +168,7 @@ void SingleLineEditField::requestFocusFor(GuiWidget* w)
 
 void SingleLineEditField::treatFocusIn()
 {
-    hasFocusFlag = true;
+    setFocusFlag(true);
     cursorStaysHidden = false;
     draw();
     editorWidget->treatFocusIn();
@@ -180,14 +179,14 @@ void SingleLineEditField::treatFocusIn()
 
 void SingleLineEditField::treatFocusOut()
 {
-    hasFocusFlag = false;
+    setFocusFlag(false);
     draw();
     editorWidget->treatFocusOut();
 }
 
 void SingleLineEditField::notifyAboutHotKeyEventForOtherWidget()
 {
-    if (hasFocusFlag && editorWidget->isCursorBlinking()) {
+    if (hasFocus() && editorWidget->isCursorBlinking()) {
         editorWidget->startCursorBlinking(); // redraw Cursor while Hotkey for other widget
     }
 }

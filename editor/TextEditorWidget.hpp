@@ -94,11 +94,9 @@ public:
     virtual bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
     virtual bool invokeActionMethod(ActionId actionId);
     
-    void treatFocusIn();
-    void treatFocusOut();
-    bool hasFocus() const {
-        return hasFocusFlag;
-    }
+    virtual void treatFocusIn();
+    virtual void treatFocusOut();
+
     void disableCursorChanges();
     void enableCursorChanges();
     bool areCursorChangesDisabled()  { return cursorChangesDisabled; }
@@ -242,7 +240,6 @@ protected:
 private:
     void setNewMousePositionForMovingSelection(int x, int y);
     
-    bool hasFocusFlag;
     long rememberedCursorPixX;
     
     bool hasMovingSelection;

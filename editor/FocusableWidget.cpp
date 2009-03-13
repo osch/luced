@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,34 +19,16 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SINGLE_LINE_EDITOR_WIDGET_HPP
-#define SINGLE_LINE_EDITOR_WIDGET_HPP
+#include "FocusableWidget.hpp"
 
-#include "ByteArray.hpp"
-#include "TextEditorWidget.hpp"
+using namespace LucED;
 
-namespace LucED
+FocusableWidget::~FocusableWidget()
 {
-
-class SingleLineEditorWidget : public TextEditorWidget
-{
-public:
-    typedef OwningPtr<SingleLineEditorWidget> Ptr;
-
-    static SingleLineEditorWidget::Ptr create(GuiWidget* parent, HilitedText::Ptr hilitedText)
-    {
-        return SingleLineEditorWidget::Ptr(new SingleLineEditorWidget(parent, hilitedText));
+    if (nextFocusWidget.isValid() && nextFocusWidget->prevFocusWidget == this) {
+        nextFocusWidget->prevFocusWidget = prevFocusWidget;
     }
-
-protected:
-    SingleLineEditorWidget(GuiWidget* parent, HilitedText::Ptr hilitedText);
-    
-private:
-    void filterInsert(const byte** buffer, long* length);
-    
-    ByteArray filterBuffer;
-};
-
-} // namespapce LucED
-
-#endif // SINGLE_LINE_EDITOR_WIDGET_HPP
+    if (prevFocusWidget.isValid() && prevFocusWidget->nextFocusWidget == this) {
+        prevFocusWidget->nextFocusWidget = nextFocusWidget;
+    }
+}

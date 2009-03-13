@@ -43,6 +43,7 @@ namespace LucED
 class EventDispatcher;
 class GuiRoot;
 class TopWin;
+class FocusableWidget;
 
 class GuiWidget : public GuiElement
 {
@@ -74,16 +75,6 @@ public:
     virtual void show();
     virtual void hide();
     
-    enum FocusType {
-        NO_FOCUS,
-        NORMAL_FOCUS,
-        TOTAL_FOCUS
-    };
-
-    virtual bool isFocusable() { return false; }
-    virtual FocusType getFocusType() { return NO_FOCUS; }
-    virtual void treatFocusIn() {}
-    virtual void treatFocusOut() {}
     virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent) { return NOT_PROCESSED; }
 
     virtual bool handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent) { return false; }
@@ -95,10 +86,6 @@ public:
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id) {}
     virtual void treatHotKeyEvent(const KeyMapping::Id& id) {}
     
-    
-    void setNextFocusWidget(GuiWidget* n) { nextFocusWidget = n; n->prevFocusWidget = this; }
-    GuiWidget* getNextFocusWidget() { return nextFocusWidget; }
-    GuiWidget* getPrevFocusWidget() { return prevFocusWidget; }
     
     void setWinGravity(int winGravity);
     
@@ -151,9 +138,6 @@ protected:
     void setBitGravity(int bitGravity);
 
 protected:
-    virtual void requestFocusFor(GuiWidget* w) {
-        if (parent != NULL) parent->requestFocusFor(w);
-    }
     virtual void reportMouseClickFrom(GuiWidget* w) {
         if (parent != NULL) parent->reportMouseClickFrom(w);
     }
@@ -175,7 +159,7 @@ public:
     virtual void setBorderColor(GuiColor color);
 
 protected:
-    
+    virtual void requestFocusFor(RawPtr<FocusableWidget> w);
     
     void addToXEventMask(long eventMask);
     void removeFromXEventMask(long eventMask);
@@ -223,8 +207,6 @@ private:
 
     WeakPtr<GuiWidget> parent;
 
-    WeakPtr<GuiWidget> nextFocusWidget;
-    WeakPtr<GuiWidget> prevFocusWidget;
     ObjectArray<ActionMethods::Ptr> actionMethods;
 };
 

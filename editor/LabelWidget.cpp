@@ -35,7 +35,6 @@ LabelWidget::LabelWidget(GuiWidget* parent, const String& leftText, const String
       rightText(rightText),
       adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
-      fakeFocusFlag(false),
       hasForcedMeasuresFlag(false)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
