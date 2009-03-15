@@ -115,7 +115,7 @@ LuaCFunctionResult GlobalLuaInterpreter::packageLocalRequireFunction(const LuaCF
     }
     String requiredModuleName = args[0].toString();
     
-    if (requiredModuleName == "this") {
+    if (requiredModuleName == "this" || requiredModuleName == "builtin") {
         throw LuaException(String() << "Module name '" << requiredModuleName << "' not allowed");
     }
     if (!requiredModuleName.startsWith(THIS_PREFIX))
@@ -154,7 +154,7 @@ LuaVar GlobalLuaInterpreter::requireConfigPackage(const String& packageName)
 {
     LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
 
-    if (packageName.startsWith(THIS_PREFIX) || packageName == "this") {
+    if (packageName.startsWith(THIS_PREFIX) || packageName == "this" || packageName == "builtin") {
         throw LuaException(String() << "Package name '" << packageName << "' not allowed");
     }
     
