@@ -24,16 +24,16 @@
 using namespace LucED;
 
 
-bool ActionKeySequenceHandler::handleKeyPress(const KeyPressEvent& keyPressEvent, 
-                                              RawPtr<GuiWidget>    focusedWidget)
+bool ActionKeySequenceHandler::handleKeyPress(const KeyPressEvent&    keyPressEvent, 
+                                              RawPtr<KeyActionHandler> focusedKeyActionHandler)
 {
     hasJustQuitSequenceFlag    = false;
     hasJustEnteredSequenceFlag = false;
     
     bool keyProcessed = false;
 
-    if (   !isWithinSequence() && focusedWidget.isValid()
-        && focusedWidget->handleHighPriorityKeyPress(keyPressEvent))
+    if (   !isWithinSequence() && focusedKeyActionHandler.isValid()
+        && focusedKeyActionHandler->handleHighPriorityKeyPress(keyPressEvent))
     {
         return true;
     }
@@ -43,7 +43,6 @@ bool ActionKeySequenceHandler::handleKeyPress(const KeyPressEvent& keyPressEvent
     node = currentActionKeyConfig->find((isWithinSequence() ? sequenceKeyModifier
                                                             : keyPressEvent.getKeyModifier()), 
                                         keyPressEvent.getKeyId());
-
     if (node.isValid())
     {
         if (node->hasActionIds())
@@ -52,8 +51,8 @@ bool ActionKeySequenceHandler::handleKeyPress(const KeyPressEvent& keyPressEvent
 
             for (int i = 0, n = actionIds->getLength(); i < n; ++i)
             {
-                if (   (focusedWidget.isValid() && focusedWidget->invokeActionMethod(actionIds->get(i)))
-                    || (                              thisWidget->invokeActionMethod(actionIds->get(i))))
+                if (   (focusedKeyActionHandler.isValid() && focusedKeyActionHandler->invokeActionMethod(actionIds->get(i)))
+                    || (theseActions.isValid()           &&           theseActions->invokeActionMethod(actionIds->get(i))))
                 {
                     reset();
                     keyProcessed = true;
@@ -78,8 +77,8 @@ bool ActionKeySequenceHandler::handleKeyPress(const KeyPressEvent& keyPressEvent
         }
     }
     if (   !keyProcessed
-        && !isWithinSequence() && focusedWidget.isValid()
-        && focusedWidget->handleLowPriorityKeyPress(keyPressEvent))
+        && !isWithinSequence() && focusedKeyActionHandler.isValid()
+        && focusedKeyActionHandler->handleLowPriorityKeyPress(keyPressEvent))
     {
         keyProcessed = true;
     }

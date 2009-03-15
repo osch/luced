@@ -61,36 +61,11 @@ TextDisplayGuiCompound::TextDisplayGuiCompound(GuiWidget*                       
                                                TextEditorWidget::Ptr              textWidget, 
                                                ScrollableTextGuiCompound::Options options)
 
-    : ScrollableTextGuiCompound(parent, textWidget, options)
+    : ScrollableTextGuiCompound(parent, textWidget, options),
+      actionMethods(ActionMethodContainer::create())
 {
-    addActionMethods(SingleLineDisplayActions::create(textWidget));
-    addActionMethods(MultiLineDisplayActions::create(textWidget));
+    actionMethods->addActionMethods(SingleLineDisplayActions::create(textWidget));
+    actionMethods->addActionMethods(MultiLineDisplayActions::create(textWidget));
 }
 
-
-void TextDisplayGuiCompound::addActionMethods(ActionMethods::Ptr methods)
-{
-    actionMethods.append(methods);
-}
-
-bool TextDisplayGuiCompound::invokeActionMethod(ActionId actionId)
-{
-    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
-        if (actionMethods[i]->invokeActionMethod(actionId)) {
-            ASSERT(hasActionMethod(actionId));
-            return true;
-        }
-    }
-    return false;
-}
-
-bool TextDisplayGuiCompound::hasActionMethod(ActionId actionId)
-{
-    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
-        if (actionMethods[i]->hasActionMethod(actionId)) {
-            return true;
-        }
-    }
-    return false;
-}
 

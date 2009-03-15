@@ -34,7 +34,8 @@ DialogWin::DialogWin(TopWin* referingWindow)
     : wasNeverShown(true),
       referingWindow(referingWindow),
       shouldBeMapped(false),
-      actionKeySequenceHandler(this)
+      actionMethodContainer(ActionMethodContainer::create()),
+      actionKeySequenceHandler(actionMethodContainer)
 {
     if (referingWindow != NULL) {
         XSetTransientForHint(getDisplay(), getWid(), referingWindow->getWid());
@@ -66,7 +67,7 @@ void DialogWin::requestCloseWindow(TopWin::CloseReason reason)
     TopWin::requestCloseWindow(reason);
 }
 
-void DialogWin::setRootElement(OwningPtr<GuiWidget> rootElement)
+void DialogWin::setRootElement(OwningPtr<FocusableWidget> rootElement)
 {
     this->rootElement = rootElement;
 }
@@ -134,7 +135,7 @@ GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const KeyPressEvent
     bool processed = false;
 
     if (!processed) {
-        processed = actionKeySequenceHandler.handleKeyPress(keyPressEvent, rootElement);
+        processed = actionKeySequenceHandler.handleKeyPress(keyPressEvent, rootElement->getKeyActionHandler());
     }
 
     if (!processed && actionKeySequenceHandler.isWithinSequence())

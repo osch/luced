@@ -32,6 +32,7 @@
 #include "GuiLayoutWidget.hpp"
 #include "FramedGuiCompound.hpp"
 #include "ScrollableTextGuiCompound.hpp"
+#include "ActionMethodContainer.hpp"
 
 namespace LucED
 {
@@ -43,17 +44,16 @@ public:
 
     static Ptr create(GuiWidget* parent, TextData::Ptr textData);
 
-    virtual bool invokeActionMethod(ActionId actionId);
-    virtual bool hasActionMethod(ActionId actionId);
+    ActionMethodContainer::Ptr getActionMethodContainer() const {
+        return actionMethods;
+    }
     
 private:
     TextDisplayGuiCompound(GuiWidget*                         parent, 
                            TextEditorWidget::Ptr              textWidget, 
                            ScrollableTextGuiCompound::Options options);
 
-    virtual void addActionMethods(ActionMethods::Ptr methods);
-
-    ObjectArray<ActionMethods::Ptr> actionMethods;
+    ActionMethodContainer::Ptr actionMethods;
 };
 
 } // namespace LucED

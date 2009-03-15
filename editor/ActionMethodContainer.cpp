@@ -19,36 +19,27 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef NULL_HPP
-#define NULL_HPP
+#include "ActionMethodContainer.hpp"
 
-namespace LucED
+using namespace LucED;
+
+bool ActionMethodContainer::invokeActionMethod(ActionId actionId)
 {
-
-class NullType
-{};
-
-const NullType Null = NullType();
-
-inline bool operator==(const void* lhs, const NullType& rhs)
-{
-    return lhs == NULL;
-}
-inline bool operator==(const NullType& lhs, const void* rhs)
-{
-    return rhs == NULL;
+    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
+        if (actionMethods[i]->invokeActionMethod(actionId)) {
+            ASSERT(hasActionMethod(actionId));
+            return true;
+        }
+    }
+    return false;
 }
 
-inline bool operator!=(const void* lhs, const NullType& rhs)
+bool ActionMethodContainer::hasActionMethod(ActionId actionId)
 {
-    return lhs != NULL;
+    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
+        if (actionMethods[i]->hasActionMethod(actionId)) {
+            return true;
+        }
+    }
+    return false;
 }
-
-inline bool operator!=(const NullType& lhs, const void* rhs)
-{
-    return rhs != NULL;
-}
-
-} // namespace LucED
-
-#endif // NULL_HPP

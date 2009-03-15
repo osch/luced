@@ -107,6 +107,45 @@ private:
     RawPtr<TextEditorWidget> textEditorWidget;
 };
 
+class TextEditorWidget::MyKeyActionHandler : public KeyActionHandler
+{
+public:
+    typedef OwningPtr<MyKeyActionHandler> Ptr;
+    
+    static Ptr create(RawPtr<TextEditorWidget> w) {
+        return Ptr(new MyKeyActionHandler(w));
+    }
+    
+    virtual bool invokeActionMethod(ActionId actionId)
+    {
+        ActionCategory oldLastActionCategory    = w->lastActionCategory;
+        ActionCategory oldCurrentActionCategory = w->currentActionCategory;
+        
+        w->lastActionCategory    = w->currentActionCategory;
+        w->currentActionCategory = ACTION_UNSPECIFIED;
+    
+        bool rslt = KeyActionHandler::invokeActionMethod(actionId);
+    
+        if (!rslt) {
+            w->lastActionCategory    = oldLastActionCategory;
+            w->currentActionCategory = oldCurrentActionCategory;
+        }
+        return rslt;
+    }
+    
+    virtual bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent)
+    {
+        return w->handleLowPriorityKeyPress(keyPressEvent);
+    }
+    
+private:
+    MyKeyActionHandler(RawPtr<TextEditorWidget> w)
+        : w(w)
+    {}
+    
+    RawPtr<TextEditorWidget> w;
+};
+
 TextEditorWidget::TextEditorWidget(GuiWidget*       parent, 
                                    HilitedText::Ptr hilitedText, 
                                    CreateOptions    options,
@@ -130,6 +169,8 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
         textData(getTextData()),
         readOnlyFlag(options.isSet(READ_ONLY))
 {
+    setKeyActionHandler(MyKeyActionHandler::create(this));
+    
     if (!options.isSet(READ_ONLY)) {
         pasteDataReceiver = PasteDataReceiver::create(this,
                                                       PasteDataContentHandler::create(this));
@@ -724,7 +765,7 @@ void TextEditorWidget::handleScrollRepeating()
     }    
 }
 
-
+#if 0
 GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
 {
     if (handleLowPriorityKeyPress(keyPressEvent)) {
@@ -733,23 +774,8 @@ GuiElement::ProcessingResult TextEditorWidget::processKeyboardEvent(const KeyPre
         return NOT_PROCESSED;
     }
 }
+#endif
 
-bool TextEditorWidget::invokeActionMethod(ActionId actionId)
-{
-    ActionCategory oldLastActionCategory    = lastActionCategory;
-    ActionCategory oldCurrentActionCategory = currentActionCategory;
-    
-    lastActionCategory    = currentActionCategory;
-    currentActionCategory = ACTION_UNSPECIFIED;
-
-    bool rslt = TextWidget::invokeActionMethod(actionId);
-
-    if (!rslt) {
-        lastActionCategory    = oldLastActionCategory;
-        currentActionCategory = oldCurrentActionCategory;
-    }
-    return rslt;
-}
 
 bool TextEditorWidget::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent)
 {

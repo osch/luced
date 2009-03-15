@@ -81,7 +81,8 @@ CommandOutputBox::CommandOutputBox(TopWin* referingWindow, TextData::Ptr textDat
     multiLineOut->show();
 
 
-    PanelDialogWin::addActionMethods(Actions::create(this));
+    getActionMethodContainer()->addActionMethods(Actions::create(this));
+    getActionMethodContainer()->addActionMethodContainer(multiLineOut->getActionMethodContainer());
 }
 
 
@@ -95,19 +96,6 @@ void CommandOutputBox::handleButtonPressed(Button* button, Button::ActivationVar
 void CommandOutputBox::requestCloseWindow(TopWin::CloseReason reason)
 {
     PanelDialogWin::requestCloseWindow(reason);
-}
-
-
-bool CommandOutputBox::invokeActionMethod(ActionId actionId)
-{
-    return     multiLineOut->invokeActionMethod(actionId)
-          || PanelDialogWin::invokeActionMethod(actionId);
-}
-
-bool CommandOutputBox::hasActionMethod(ActionId actionId)
-{
-    return     multiLineOut->hasActionMethod(actionId)
-          || PanelDialogWin::hasActionMethod(actionId);
 }
 
 

@@ -19,36 +19,47 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef NULL_HPP
-#define NULL_HPP
+#ifndef ACTION_METHOD_CONTAINER_HPP
+#define ACTION_METHOD_CONTAINER_HPP
+
+#include "HeapObject.hpp"
+#include "OwningPtr.hpp"
+#include "RawPtr.hpp"
+#include "ObjectArray.hpp"
+#include "ActionMethods.hpp"
 
 namespace LucED
 {
 
-class NullType
-{};
-
-const NullType Null = NullType();
-
-inline bool operator==(const void* lhs, const NullType& rhs)
+class ActionMethodContainer : public HeapObject
 {
-    return lhs == NULL;
-}
-inline bool operator==(const NullType& lhs, const void* rhs)
-{
-    return rhs == NULL;
-}
+public:
+    typedef OwningPtr<ActionMethodContainer> Ptr;
+    
+    static Ptr create() {
+        return Ptr(new ActionMethodContainer());
+    }
+    
+    void addActionMethods(ActionMethods::Ptr methods) {
+        actionMethods.append(methods);
+    }
+    void addActionMethodContainer(RawPtr<ActionMethodContainer> rhs) {
+        for (int i = 0, n = rhs->actionMethods.getLength(); i < n; ++i) {
+            actionMethods.append(rhs->actionMethods[i]);
+        }
+    }
+    
+    virtual bool invokeActionMethod(ActionId actionId);
+    virtual bool hasActionMethod(ActionId actionId);
 
-inline bool operator!=(const void* lhs, const NullType& rhs)
-{
-    return lhs != NULL;
-}
+protected:
+    ActionMethodContainer()
+    {}
 
-inline bool operator!=(const NullType& lhs, const void* rhs)
-{
-    return rhs != NULL;
-}
+private:
+    ObjectArray<ActionMethods::Ptr> actionMethods;
+};
 
 } // namespace LucED
 
-#endif // NULL_HPP
+#endif // ACTION_METHOD_CONTAINER_HPP

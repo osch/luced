@@ -33,9 +33,7 @@
 #include "KeyMapping.hpp"
 #include "RawPtr.hpp"
 #include "ObjectArray.hpp"
-#include "ActionMethods.hpp"
 #include "KeyPressEvent.hpp"
-#include "ActionKeyConfig.hpp"
 
 namespace LucED
 {
@@ -75,24 +73,8 @@ public:
     virtual void show();
     virtual void hide();
     
-    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent) { return NOT_PROCESSED; }
-
-    virtual bool handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent) { return false; }
-    virtual bool handleLowPriorityKeyPress (const KeyPressEvent& keyPressEvent) { return false; }
-
-    virtual void notifyAboutHotKeyEventForOtherWidget() {}
-
-    virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id) {}
-    virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id) {}
-    virtual void treatHotKeyEvent(const KeyMapping::Id& id) {}
-    
     
     void setWinGravity(int winGravity);
-    
-    virtual void addActionMethods(ActionMethods::Ptr methods);
-    
-    virtual bool invokeActionMethod(ActionId actionId);
-    virtual bool hasActionMethod(ActionId actionId);
 
     class EventProcessorAccess
     {
@@ -138,15 +120,12 @@ protected:
     void setBitGravity(int bitGravity);
 
 protected:
-    virtual void reportMouseClickFrom(GuiWidget* w) {
-        if (parent != NULL) parent->reportMouseClickFrom(w);
-    }
-    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w) {
-        if (parent != NULL) parent->requestHotKeyRegistrationFor(id, w);
-    }
-    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w) {
-        if (parent != NULL) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
-    }
+    virtual void reportMouseClickFrom(GuiWidget* w);
+
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
+
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
+
     RawPtr<GuiWidget> getParentWidget() const {
         return parent;
     }
@@ -164,7 +143,7 @@ protected:
     void addToXEventMask(long eventMask);
     void removeFromXEventMask(long eventMask);
     
-    ProcessingResult propagateEventToParentWidget(const XEvent *event) {
+    ProcessingResult propagateEventToParentWidget(const XEvent* event) {
         if (parent.isValid()) {
             return parent->processEvent(event);
         } else {
@@ -205,9 +184,7 @@ private:
     Position position;
     GC gcid;
 
-    WeakPtr<GuiWidget> parent;
-
-    ObjectArray<ActionMethods::Ptr> actionMethods;
+    RawPtr<GuiWidget> parent;
 };
 
 

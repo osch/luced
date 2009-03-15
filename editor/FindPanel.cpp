@@ -158,7 +158,7 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
     
     editField->getTextData()->registerModifiedFlagListener(newCallback(this, &FindPanel::handleModifiedEditField,
                                                                              &FindPanel::handleException));
-    editField->addActionMethods(EditFieldActions::create(this));
+    editField->getKeyActionHandler()->addActionMethods(EditFieldActions::create(this));
     
     label0->setMiddleMouseButtonCallback(newCallback(editField, &SingleLineEditField::replaceTextWithPrimarySelection));
 }

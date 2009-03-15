@@ -56,7 +56,9 @@ CheckBox::CheckBox(GuiWidget* parent, String buttonText)
         this->buttonText = buttonText;
     }
     
-    GuiWidget::addActionMethods(Actions::create(this));
+    KeyActionHandler::Ptr keyActionHandler = KeyActionHandler::create();
+    keyActionHandler->addActionMethods(Actions::create(this));
+    setKeyActionHandler(keyActionHandler);
 }
 
 GuiElement::Measures CheckBox::getDesiredMeasures()

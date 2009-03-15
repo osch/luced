@@ -100,7 +100,7 @@ EventDispatcher* GuiWidget::getEventDispatcher()
 
 GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width)
     : isTopWindow(true),
-      parent(NULL),
+      parent(),
       eventMask(0),
       position(x, y, width, height),
       gcid(GuiWidgetSingletonData::getInstance()->getGcid())
@@ -588,30 +588,9 @@ void GuiWidget::setBitGravity(int bitGravity)
             CWBitGravity, &at);
 }
 
-void GuiWidget::addActionMethods(ActionMethods::Ptr methods)
+void GuiWidget::reportMouseClickFrom(GuiWidget* w)
 {
-    actionMethods.append(methods);
-}
-
-bool GuiWidget::invokeActionMethod(ActionId actionId)
-{
-    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
-        if (actionMethods[i]->invokeActionMethod(actionId)) {
-            ASSERT(hasActionMethod(actionId));
-            return true;
-        }
-    }
-    return false;
-}
-
-bool GuiWidget::hasActionMethod(ActionId actionId)
-{
-    for (int i = actionMethods.getLength() - 1; i >= 0; --i) {
-        if (actionMethods[i]->hasActionMethod(actionId)) {
-            return true;
-        }
-    }
-    return false;
+    if (parent != Null) parent->reportMouseClickFrom(w);
 }
 
 void GuiWidget::requestFocusFor(RawPtr<FocusableWidget> w)
@@ -619,3 +598,12 @@ void GuiWidget::requestFocusFor(RawPtr<FocusableWidget> w)
     if (parent.isValid()) parent->requestFocusFor(w);
 }
 
+void GuiWidget::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
+{
+    if (parent != Null) parent->requestHotKeyRegistrationFor(id, w);
+}
+
+void GuiWidget::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
+{
+    if (parent != Null) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
+}

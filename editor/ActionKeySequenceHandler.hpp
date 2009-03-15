@@ -30,6 +30,8 @@
 #include "KeyId.hpp"
 #include "KeyPressEvent.hpp"
 #include "GlobalConfig.hpp"
+#include "ActionMethodContainer.hpp"
+#include "KeyActionHandler.hpp"
 
 namespace LucED
 {
@@ -37,8 +39,8 @@ namespace LucED
 class ActionKeySequenceHandler
 {
 public:
-    ActionKeySequenceHandler(RawPtr<GuiWidget> thisWidget)
-        : thisWidget(thisWidget),
+    ActionKeySequenceHandler(WeakPtr<ActionMethodContainer> theseActions)
+        : theseActions(theseActions),
           hasJustQuitSequenceFlag(false),
           hasJustEnteredSequenceFlag(false),
 
@@ -72,14 +74,13 @@ public:
         return combinationKeys;
     }
     
-
-    bool handleKeyPress(const KeyPressEvent& keyPressEvent, 
-                        RawPtr<GuiWidget>    focusedWidget = Null);
+    bool handleKeyPress(const KeyPressEvent&    keyPressEvent, 
+                        RawPtr<KeyActionHandler> focusedKeyActionHandler = Null);
     
 private:
-    RawPtr<GuiWidget>       thisWidget;
-    ActionKeyConfig::Ptr    rootActionKeyConfig;
-    ActionKeyConfig::Ptr    currentActionKeyConfig;
+    WeakPtr<ActionMethodContainer> theseActions;
+    ActionKeyConfig::Ptr           rootActionKeyConfig;
+    ActionKeyConfig::Ptr           currentActionKeyConfig;
 
     KeyModifier             sequenceKeyModifier;
     String                  combinationKeys;

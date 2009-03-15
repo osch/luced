@@ -154,10 +154,10 @@ MessageBox::MessageBox(TopWin* referingWindow, const MessageBoxParameter& p)
     this->invokeNotifyCallback = p.invokeNotifyCallback;
     this->closeNotifyCallback  = p.closeNotifyCallback;
 
-    PanelDialogWin::addActionMethods(Actions::create(this));
+    getActionMethodContainer()->addActionMethods(Actions::create(this));
     
     if (p.actionMethods.isValid()) {
-        PanelDialogWin::addActionMethods(p.actionMethods);
+        getActionMethodContainer()->addActionMethods(p.actionMethods);
     }
 }
 
@@ -207,15 +207,4 @@ void MessageBox::requestCloseWindow(TopWin::CloseReason reason)
         closeNotifyCallback->call(this);
     }
 }
-
-
-bool MessageBox::invokeActionMethod(ActionId actionId)
-{
-    bool rslt = PanelDialogWin::invokeActionMethod(actionId);
-    if (rslt) {
-        PanelDialogWin::requestCloseWindow(TopWin::CLOSED_BY_USER);
-    }
-    return rslt;
-}
-
 

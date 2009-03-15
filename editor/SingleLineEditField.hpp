@@ -80,13 +80,9 @@ public:
         editorWidget->replaceTextWithPrimarySelection();
     }
 
-    virtual void addActionMethods(ActionMethods::Ptr methods);
-    virtual bool invokeActionMethod(ActionId actionId);
-    virtual bool hasActionMethod(ActionId actionId);
 
     virtual ProcessingResult processEvent(const XEvent* event);
 
-    virtual bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
 
     virtual void notifyAboutHotKeyEventForOtherWidget();
     

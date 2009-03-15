@@ -47,7 +47,9 @@ Button::Button(GuiWidget* parent, String buttonText)
     setBackgroundColor(getGuiRoot()->getGuiColor03());
     setButtonText(buttonText);
     
-    GuiWidget::addActionMethods(Actions::create(this));
+    KeyActionHandler::Ptr keyActionHandler = KeyActionHandler::create();
+    keyActionHandler->addActionMethods(Actions::create(this));
+    setKeyActionHandler(keyActionHandler);
 }
 
 void Button::setButtonText(String buttonText)

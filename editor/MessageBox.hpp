@@ -53,7 +53,6 @@ public:
                                    TopWinList::getInstance());
     }
     
-    virtual bool invokeActionMethod(ActionId actionId);
     
     virtual void requestCloseWindow(TopWin::CloseReason reason);
 

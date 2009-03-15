@@ -361,7 +361,7 @@ LuaCFunctionResult ViewLuaInterface::executeAction(const LuaCFunctionArguments& 
     String   actionName = args[1].toString();
     ActionId actionId   = ActionIdRegistry::getInstance()->getActionId(actionName);
 
-    bool rslt = e->invokeActionMethod(actionId);
+    bool rslt = e->getKeyActionHandler()->invokeActionMethod(actionId);
     
     return LuaCFunctionResult(luaAccess) << rslt;
 }

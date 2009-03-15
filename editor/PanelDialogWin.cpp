@@ -51,23 +51,14 @@ void PanelDialogWin::treatFocusOut()
     dialogPanel->treatFocusOut();
 }
 
-void PanelDialogWin::setRootElement(OwningPtr<GuiElement> rootElement)
-{
-    dialogPanel->setRootElement(rootElement);
-}
 
 
-void PanelDialogWin::setFocus(RawPtr<FocusableWidget> element)
-{
-    dialogPanel->setFocus(element);
-}
-
-void PanelDialogWin::requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w)
+void PanelDialogWin::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
 {
     dialogPanel->requestHotKeyRegistrationFor(id, w);
 }
 
-void PanelDialogWin::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w)
+void PanelDialogWin::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
 {
     dialogPanel->requestRemovalOfHotKeyRegistrationFor(id, w);
 }

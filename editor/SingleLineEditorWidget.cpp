@@ -33,8 +33,8 @@ SingleLineEditorWidget::SingleLineEditorWidget(GuiWidget* parent, HilitedText::P
 {
     getTextData()->setInsertFilterCallback(newCallback(this, &SingleLineEditorWidget::filterInsert));
 
-    TextEditorWidget::addActionMethods(SingleLineDisplayActions::create(this));
-    GuiWidget::addActionMethods(SingleLineEditActions::create(this));
+    getKeyActionHandler()->addActionMethods(SingleLineDisplayActions::create(this));
+    getKeyActionHandler()->addActionMethods(SingleLineEditActions::create(this));
 }
 
 

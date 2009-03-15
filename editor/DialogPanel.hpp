@@ -54,15 +54,11 @@ public:
     virtual void treatNewWindowPosition(Position newPosition);
     virtual ProcessingResult processEvent(const XEvent* event);
 
-    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
-    virtual bool handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent);
-    virtual bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
-    
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
-    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
 
     void setRootElement(OwningPtr<GuiElement> rootElement);
     void setFocus(RawPtr<FocusableWidget> element);
@@ -70,8 +66,6 @@ public:
 
     virtual void setPosition(Position newPosition);
     
-    virtual bool invokeActionMethod(ActionId actionId);
-    virtual bool hasActionMethod(ActionId actionId);
     
 protected:
     DialogPanel(GuiWidget* parent, Callback<DialogPanel*>::Ptr requestCloseCallback);
@@ -84,6 +78,8 @@ protected:
     virtual void requestClose();
     
 private:
+    class MyKeyActionHandler;
+    
     class Actions : public ActionMethodBinding<Actions>
     {
     public:
@@ -115,19 +111,22 @@ private:
     };
     friend class ActionMethodBinding<Actions>;
 
+    bool handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent);
+    bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
+    
     void setHotKeySuccessor(DialogPanel* hotKeySuccessor) {
         ASSERT(hotKeySuccessor->hotKeyMapping->isEmpty());
         this->hotKeySuccessor = hotKeySuccessor;
     }
     
-    bool takesAwayDefaultKey(GuiWidget* widget);
+    bool takesAwayDefaultKey(RawPtr<FocusableWidget> widget);
     
     bool processHotKey(KeyMapping::Id keyMappingId);
 
     OwningPtr<GuiElement> rootElement;
     bool wasNeverShown;
     
-    typedef WeakPtrQueue<GuiWidget> WidgetQueue;
+    typedef WeakPtrQueue<FocusableWidget> WidgetQueue;
     typedef HeapHashMap< KeyMapping::Id, WidgetQueue::Ptr > HotKeyMapping;
     HotKeyMapping::Ptr hotKeyMapping;
     

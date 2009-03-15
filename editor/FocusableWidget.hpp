@@ -23,6 +23,7 @@
 #define FOCUSABLE_WIDGET_HPP
 
 #include "GuiWidget.hpp"
+#include "KeyActionHandler.hpp"
 
 namespace LucED
 {
@@ -46,10 +47,19 @@ public:
     virtual void treatFocusIn()  = 0;
     virtual void treatFocusOut() = 0;
 
+    virtual void notifyAboutHotKeyEventForOtherWidget();
+    virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id);
+    virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
+    virtual void treatHotKeyEvent(const KeyMapping::Id& id);
+    
     void setNextFocusWidget(RawPtr<FocusableWidget> n) { nextFocusWidget = n; n->prevFocusWidget = this; }
 
     RawPtr<FocusableWidget> getNextFocusWidget() { return nextFocusWidget; }
     RawPtr<FocusableWidget> getPrevFocusWidget() { return prevFocusWidget; }
+    
+    OwningPtr<KeyActionHandler> getKeyActionHandler() const {
+        return keyActionHandler;
+    }
     
 protected:
     FocusableWidget(GuiWidget* parent,
@@ -68,13 +78,17 @@ protected:
     void setFocusableFlag(bool focusableFlag) {
         this->focusableFlag = focusableFlag;
     }
+    void setKeyActionHandler(KeyActionHandler::Ptr keyActionHandler) {
+        this->keyActionHandler = keyActionHandler;
+    }
     
 private:
     bool focusableFlag;
     bool focusFlag;
     FocusType focusType;
-    WeakPtr<FocusableWidget> nextFocusWidget;
-    WeakPtr<FocusableWidget> prevFocusWidget;
+    WeakPtr<FocusableWidget>   nextFocusWidget;
+    WeakPtr<FocusableWidget>   prevFocusWidget;
+    OwningPtr<KeyActionHandler> keyActionHandler;
 };
 
 } // namespace LucED

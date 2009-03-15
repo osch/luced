@@ -51,9 +51,12 @@ public:
 protected:
     DialogWin(TopWin* referingWindow);
     
-    void setRootElement(OwningPtr<GuiWidget> rootElement);
-    GuiWidget* getRootElement() {return rootElement.getRawPtr();}
+    void setRootElement(OwningPtr<FocusableWidget> rootElement);
+    RawPtr<FocusableWidget> getRootElement() {return rootElement; }
     
+    ActionMethodContainer::Ptr getActionMethodContainer() const {
+        return actionMethodContainer;
+    }
     
 private:
     void requestCloseWindowByUser();
@@ -62,13 +65,14 @@ private:
     
     void notifyAboutReferingWindowMapping(bool isReferingWindowMapped);
 
-    OwningPtr<GuiWidget> rootElement;
+    OwningPtr<FocusableWidget> rootElement;
     bool wasNeverShown;
     WeakPtr<TopWin> referingWindow;
     
     bool shouldBeMapped;
     
-    ActionKeySequenceHandler actionKeySequenceHandler;
+    ActionMethodContainer::Ptr actionMethodContainer;
+    ActionKeySequenceHandler   actionKeySequenceHandler;
 };
 
 } // namespace LucED

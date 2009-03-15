@@ -35,11 +35,11 @@ MultiLineEditorWidget::MultiLineEditorWidget(GuiWidget*       parent,
 
     : TextEditorWidget(parent, hilitedText, options)
 {
-    TextEditorWidget::addActionMethods(SingleLineDisplayActions::create(this));
-    TextEditorWidget::addActionMethods(MultiLineDisplayActions::create(this));
+    getKeyActionHandler()->addActionMethods(SingleLineDisplayActions::create(this));
+    getKeyActionHandler()->addActionMethods(MultiLineDisplayActions::create(this));
 
-    TextEditorWidget::addActionMethods(SingleLineEditActions::create(this));
-    TextEditorWidget::addActionMethods(MultiLineEditActions::create(this));
+    getKeyActionHandler()->addActionMethods(SingleLineEditActions::create(this));
+    getKeyActionHandler()->addActionMethods(MultiLineEditActions::create(this));
 }
 
 

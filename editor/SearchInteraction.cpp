@@ -468,12 +468,19 @@ void SearchInteraction::notifyAboutInvokedMessageBox(TopWin* messageBox)
     if (waitingForContinueFlag) {
         this->waitingMessageBox = messageBox;
     }
+    if (messageBox != Null) {
+        this->invokedMessageBox = messageBox;
+    }
 }
 void SearchInteraction::notifyAboutClosedMessageBox (TopWin* messageBox)
 {
     if (waitingForContinueFlag && this->waitingMessageBox == messageBox) {
         waitingForContinueFlag = false;
         this->waitingMessageBox.invalidate();
+    }
+    if (this->invokedMessageBox == messageBox)
+    {
+        this->invokedMessageBox.invalidate();
     }
 }
 

@@ -42,7 +42,8 @@
 #include "ActionKeySequenceHandler.hpp"
 #include "ViewLuaInterface.hpp"
 #include "FocusableWidget.hpp"
-                    
+#include "ActionMethodContainer.hpp"
+                
 namespace LucED
 {
 
@@ -164,8 +165,9 @@ private:
     OwningPtr<PanelInvoker>             panelInvoker;
     OwningPtr<ActionInterface>          actionInterface;
     OwningPtr<UserDefinedActionMethods> userDefinedActionMethods;
-
-    ActionKeySequenceHandler actionKeySequenceHandler;
+    
+    ActionMethodContainer::Ptr          actionMethodContainer;
+    ActionKeySequenceHandler            actionKeySequenceHandler;
     
     OwningPtr<ViewLuaInterface> viewLuaInterface;
 };

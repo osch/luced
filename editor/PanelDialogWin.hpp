@@ -41,16 +41,26 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
     
-    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
-    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, GuiWidget* w);
-    void setRootElement(OwningPtr<GuiElement> rootElement);
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
+
+    void setRootElement(OwningPtr<GuiElement> rootElement) {
+        dialogPanel->setRootElement(rootElement);
+    }
     
 protected:
     PanelDialogWin(TopWin* referingWindow);
-    void setFocus(RawPtr<FocusableWidget> element);
-
+    
+    void setFocus(RawPtr<FocusableWidget> element) {
+        dialogPanel->setFocus(element);
+    }
+    
     RawPtr<DialogPanel> getRootPanel() {
         return dialogPanel;
+    }
+    
+    KeyActionHandler::Ptr getKeyActionHandler() const {
+        return dialogPanel->getKeyActionHandler();
     }
 
 private:

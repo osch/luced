@@ -90,9 +90,7 @@ public:
 
     virtual ProcessingResult processEvent(const XEvent* event);
 
-    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
-    virtual bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
-    virtual bool invokeActionMethod(ActionId actionId);
+//    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
     
     virtual void treatFocusIn();
     virtual void treatFocusOut();
@@ -238,6 +236,10 @@ protected:
     void notifyAboutBeginOfPastingData();
 
 private:
+    class MyKeyActionHandler; 
+    
+    bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
+    
     void setNewMousePositionForMovingSelection(int x, int y);
     
     long rememberedCursorPixX;

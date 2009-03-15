@@ -19,36 +19,31 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef NULL_HPP
-#define NULL_HPP
+#ifndef KEY_ACTION_HANDLER_HPP
+#define KEY_ACTION_HANDLER_HPP
+
+#include "ActionMethodContainer.hpp"
 
 namespace LucED
 {
 
-class NullType
-{};
-
-const NullType Null = NullType();
-
-inline bool operator==(const void* lhs, const NullType& rhs)
+class KeyActionHandler : public ActionMethodContainer
 {
-    return lhs == NULL;
-}
-inline bool operator==(const NullType& lhs, const void* rhs)
-{
-    return rhs == NULL;
-}
+public:
+    typedef OwningPtr<KeyActionHandler> Ptr;
+    
+    static Ptr create() {
+        return Ptr(new KeyActionHandler());
+    }
+    
+    virtual bool handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent) { return false; }
+    virtual bool handleLowPriorityKeyPress (const KeyPressEvent& keyPressEvent) { return false; }
 
-inline bool operator!=(const void* lhs, const NullType& rhs)
-{
-    return lhs != NULL;
-}
-
-inline bool operator!=(const NullType& lhs, const void* rhs)
-{
-    return rhs != NULL;
-}
+protected:
+    KeyActionHandler()
+    {}
+};
 
 } // namespace LucED
 
-#endif // NULL_HPP
+#endif // KEY_ACTION_HANDLER_HPP

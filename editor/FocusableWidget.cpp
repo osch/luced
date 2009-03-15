@@ -32,3 +32,17 @@ FocusableWidget::~FocusableWidget()
         prevFocusWidget->nextFocusWidget = nextFocusWidget;
     }
 }
+
+
+void FocusableWidget::notifyAboutHotKeyEventForOtherWidget()
+{}
+
+void FocusableWidget::treatLostHotKeyRegistration(const KeyMapping::Id& id)
+{}
+
+void FocusableWidget::treatNewHotKeyRegistration(const KeyMapping::Id& id)
+{}
+
+void FocusableWidget::treatHotKeyEvent(const KeyMapping::Id& id)
+{}
+

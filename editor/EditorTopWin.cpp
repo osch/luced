@@ -266,7 +266,8 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
       hasInvokedPanelFocus(false),
       hasMessageBox(false),
       isMessageBoxModal(false),
-      actionKeySequenceHandler(this)
+      actionMethodContainer(ActionMethodContainer::create()),
+      actionKeySequenceHandler(actionMethodContainer)
 {
     addToXEventMask(ButtonPressMask);
     
@@ -331,15 +332,16 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
 
     panelInvoker = PanelInvoker::create(this);
 
-    GuiWidget::addActionMethods(EditorTopWinActions::create(
-                                TopWinActionsParameter(this, 
-                                                       textEditor,
-                                                       newCallback(this, &EditorTopWin::setModalMessageBox),
-                                                       panelInvoker,
-                                                       actionInterface)));
+    actionMethodContainer
+    ->addActionMethods(EditorTopWinActions::create(
+                       TopWinActionsParameter(this, 
+                                              textEditor,
+                                              newCallback(this, &EditorTopWin::setModalMessageBox),
+                                              panelInvoker,
+                                              actionInterface)));
 
     userDefinedActionMethods = UserDefinedActionMethods::create(this);
-    textEditor->addActionMethods(userDefinedActionMethods);
+    textEditor->getKeyActionHandler()->addActionMethods(userDefinedActionMethods);
     
     viewLuaInterface = ViewLuaInterface::create(textEditor);
 }
@@ -404,14 +406,15 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
         {
             textEditor->hideMousePointer();
             
-            RawPtr<GuiWidget> focusedWidget;
+            RawPtr<FocusableWidget> focusedWidget;
             
             if (invokedPanel.isValid() && hasInvokedPanelFocus) {
                 focusedWidget = invokedPanel;
             } else {
                 focusedWidget = textEditor;
             }
-            if (actionKeySequenceHandler.handleKeyPress(keyPressEvent, focusedWidget))
+            if (actionKeySequenceHandler.handleKeyPress(keyPressEvent, 
+                                                        focusedWidget->getKeyActionHandler()))
             {
                 rslt = EVENT_PROCESSED;
             }
@@ -444,33 +447,6 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
                 statusLine->clearMessage();
             }
         }
-        
-#if 0
-        if (rslt == NOT_PROCESSED && invokedPanel.isValid()) {
-            rslt = invokedPanel->processKeyboardEvent(keyPressEvent);
-        }
-#endif
-#if 0
-        if (rslt == NOT_PROCESSED)
-        {
-           m = keyMapping2->find(keyModifier, pressedKey);
-    
-           if (m.isValid())
-           {
-               textEditor->hideMousePointer();
-    
-               m->call();
-               rslt = EVENT_PROCESSED;
-           } 
-           else
-           {
-                rslt = textEditor->processKeyboardEvent(keyPressEvent);
-                if (rslt == EVENT_PROCESSED && invokedPanel.isValid()) {
-                    invokedPanel->notifyAboutHotKeyEventForOtherWidget();
-                }
-           }
-        }
-#endif
         return rslt;
     }
     catch (LuaException& ex) {

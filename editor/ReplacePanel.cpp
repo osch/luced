@@ -209,8 +209,8 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
                                                                                     &ReplacePanel::handleException));
     EditFieldActions::Ptr editFieldActions = EditFieldActions::create(this);
 
-    findEditField   ->addActionMethods(editFieldActions);
-    replaceEditField->addActionMethods(editFieldActions);
+    findEditField   ->getKeyActionHandler()->addActionMethods(editFieldActions);
+    replaceEditField->getKeyActionHandler()->addActionMethods(editFieldActions);
                       
     label0->setMiddleMouseButtonCallback(newCallback(findEditField,    &SingleLineEditField::replaceTextWithPrimarySelection));
     label1->setMiddleMouseButtonCallback(newCallback(replaceEditField, &SingleLineEditField::replaceTextWithPrimarySelection));

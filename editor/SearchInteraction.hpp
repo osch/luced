@@ -138,6 +138,7 @@ private:
             return Ptr(new MessageBoxActions(thisInteraction, variant));
         }
         void findAgainForward() {
+            closeInvokedMessageBox();
             switch (variant) {
                 case VARIANT_NOT_FOUND:              thisInteraction->closeLastMessageBox(); return;
                 case VARIANT_AUTO_CONTINUE_AT_END:   thisInteraction->findAgainForwardAndAutoContinue(); return;
@@ -145,6 +146,7 @@ private:
             }
         }
         void findAgainBackward() {
+            closeInvokedMessageBox();
             switch (variant) {
                 case VARIANT_NOT_FOUND:              thisInteraction->closeLastMessageBox(); return;
                 case VARIANT_AUTO_CONTINUE_AT_END:   thisInteraction->findAgainBackward();   return;
@@ -152,6 +154,7 @@ private:
             }
         }
         void findSelectionForward() {
+            closeInvokedMessageBox();
             switch (variant) {
                 case VARIANT_NOT_FOUND:              thisInteraction->closeLastMessageBox(); return;
                 case VARIANT_AUTO_CONTINUE_AT_END:   thisInteraction->findSelectionForwardAndAutoContinue(); return;
@@ -159,6 +162,7 @@ private:
             }
         }
         void findSelectionBackward() {
+            closeInvokedMessageBox();
             switch (variant) {
                 case VARIANT_NOT_FOUND:              thisInteraction->closeLastMessageBox(); return;
                 case VARIANT_AUTO_CONTINUE_AT_END:   thisInteraction->findSelectionBackward(); return;
@@ -171,6 +175,12 @@ private:
               thisInteraction(thisInteraction),
               variant(variant)
         {}
+        void closeInvokedMessageBox() {
+            if (thisInteraction->invokedMessageBox.isValid()) {
+                thisInteraction->invokedMessageBox->requestCloseWindow();
+                thisInteraction->invokedMessageBox.invalidate();
+            }
+        }
         RawPtr<SearchInteraction> thisInteraction;
         Variant variant;
     };
@@ -229,6 +239,7 @@ private:
     bool continueForwardFlag;
 
     WeakPtr<TopWin> waitingMessageBox;
+    WeakPtr<TopWin> invokedMessageBox;
 };
 
 } // namespace LucED

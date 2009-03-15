@@ -115,6 +115,9 @@ protected:
     virtual void notifyAboutBeingUnmapped()
     {}
 
+    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent) 
+    { return NOT_PROCESSED; }
+    
     void internalRaise();
     
 private:

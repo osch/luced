@@ -53,9 +53,6 @@ public:
     
     virtual void requestCloseWindow(TopWin::CloseReason reason);
 
-    virtual bool invokeActionMethod(ActionId actionId);
-    virtual bool hasActionMethod(ActionId actionId);
-
 private:
     class Actions : public ActionMethodBinding<Actions>
     {

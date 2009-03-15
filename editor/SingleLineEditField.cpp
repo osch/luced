@@ -25,13 +25,14 @@
 
 using namespace LucED;
 
-SingleLineEditField::SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr languageMode, TextData::Ptr textData)
+SingleLineEditField::SingleLineEditField(GuiWidget* parent, LanguageMode::Ptr languageMode, TextData::Ptr textData)
     : FocusableWidget(parent, 0, 0, 1, 1, 0),
       adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
       heightOffset(0),
       cursorStaysHidden(false)
 {
+    
     addToXEventMask(ExposureMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
     if (textData.isInvalid()) {
@@ -43,6 +44,8 @@ SingleLineEditField::SingleLineEditField(GuiWidget *parent, LanguageMode::Ptr la
                                             20, 1, 
                                             40, 1);
     editorWidget->show();
+
+    setKeyActionHandler(editorWidget->getKeyActionHandler());
 }
 
 void SingleLineEditField::setLayoutHeight(int height, VerticalAdjustment::Type adjust)
@@ -51,7 +54,7 @@ void SingleLineEditField::setLayoutHeight(int height, VerticalAdjustment::Type a
     adjustment = adjust;
 }
 
-GuiElement::ProcessingResult SingleLineEditField::processEvent(const XEvent *event)
+GuiElement::ProcessingResult SingleLineEditField::processEvent(const XEvent* event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
@@ -74,12 +77,6 @@ GuiElement::ProcessingResult SingleLineEditField::processEvent(const XEvent *eve
         return propagateEventToParentWidget(event);
     }
 }
-
-bool SingleLineEditField::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent)
-{
-    return editorWidget->handleLowPriorityKeyPress(keyPressEvent);
-}
-
 
 void SingleLineEditField::setDesiredWidthInChars(int minWidth, int bestWidth, int maxWidth)
 {
@@ -194,20 +191,5 @@ void SingleLineEditField::notifyAboutHotKeyEventForOtherWidget()
 void SingleLineEditField::setCursorPosition(int position)
 {
     editorWidget->moveCursorToTextPositionAndAdjustVisibility(position);
-}
-
-void SingleLineEditField::addActionMethods(ActionMethods::Ptr methods)
-{
-    editorWidget->addActionMethods(methods);
-}
-
-bool SingleLineEditField::invokeActionMethod(ActionId actionId)
-{
-    return editorWidget->invokeActionMethod(actionId);
-}
-
-bool SingleLineEditField::hasActionMethod(ActionId actionId)
-{
-    return editorWidget->hasActionMethod(actionId);
 }
 
