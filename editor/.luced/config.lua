@@ -24,7 +24,7 @@ local generalConfig =
           useOwnKeyPressRepeater = true,  -- try this on systems with slow keyboard repeat rate
           doNotUseX11XkbExtension = false, -- this should be set to false
           keyPressRepeatFirstMilliSecs = 200,
-          keyPressRepeatNextMilliSecs  =  20,
+          keyPressRepeatNextMilliSecs  =  18,
 
           scrollBarWidth = 12+2,
           scrollBarRepeatFirstMilliSecs = 300,
