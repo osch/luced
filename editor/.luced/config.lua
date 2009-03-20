@@ -105,7 +105,7 @@ local languageModes =
     { 
       name            = "cplusplus",
       syntaxName      = "default.cplusplus",
-      fileNameRegex   = [[^.*\.(?:cpp|hpp|cxx|hxx|c|h|cc|hh)(?:\.emlua)?$]],
+      fileNameRegex   = [[^.*\.(?:cpp|hpp|cxx|hxx|c|C|h|H|cc|hh)(?:\.emlua)?$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
