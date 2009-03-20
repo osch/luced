@@ -45,10 +45,16 @@ TextStyle::TextStyle(const String& fontName, const String& colorName)
     min_bounds = &(this->font->min_bounds);
     max_bounds = &(this->font->max_bounds);
 
-    if (this->font->min_byte1 != 0 || this->font->max_byte1 != 0) {
-        fprintf(stderr, "komischer Font\n");
-        exit(1);
-    }
+/*
+    printf("min_byte1        : %d, max_byte1        : %d,\n"
+           "min_char_or_byte2: %d, max_char_or_byte2: %d    unknown: %d\n", 
+           this->font->min_byte1,
+           this->font->max_byte1,
+           this->font->min_char_or_byte2,
+           this->font->max_char_or_byte2,
+           this->font->default_char);
+*/
+       
     int myMaxAscent = 0;        
     int myMaxDescent = 0;
     
