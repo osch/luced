@@ -24,11 +24,12 @@ return -- default actionName key binding
     -----------------------------------------
     -- default lua edit actions
     --
+--[[
     {
         actionName = "this.smartNewline",
         keys       = { "Return" },
     },
-    
+--]]
     -----------------------------------------
     -- default shell script actions
     --
