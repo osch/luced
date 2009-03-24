@@ -115,7 +115,7 @@ String File::getAbsoluteName() const
         Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./|/+$");
     
         while (r.findMatch(buffer, Regex::MatchOptions())) {
-            buffer.removeAmount(r.getCaptureBegin(0), r.getCaptureLength(0));
+            buffer.removeAmount(Pos(r.getCaptureBegin(0)), Len(r.getCaptureLength(0)));
         }
         absoluteName = buffer;
     }
@@ -174,7 +174,7 @@ String File::getDirName() const
         i -= 1;
     }
     if (i > 0) {
-        return absoluteName.getSubstring(0, i - 1);
+        return absoluteName.getHead(i - 1);
     } else {
         return absoluteName;
     }
@@ -244,7 +244,7 @@ void File::createDirectory() const
     while (i < len && fileName[i] == '/') ++i;
     do {
         while (i < len && fileName[i] != '/') ++i;
-        String path = fileName.getSubstringBetween(0, i);
+        String path = fileName.getHead(i);
         if (!File(path).exists())
         {
             int rc = mkdir(path.toCString(), S_IRUSR|S_IWUSR|S_IXUSR|

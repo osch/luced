@@ -334,7 +334,7 @@ LuaCFunctionResult ViewLuaInterface::findMatch(const LuaCFunctionArguments& args
                 if (beg != -1) {
                     start[i] = beg; 
                     end  [i] = beg + len;
-                    match[i] = e->getTextData()->getSubstring(beg, len);
+                    match[i] = e->getTextData()->getSubstring(Pos(beg), Len(len));
                 } else {
                     start[i] = false; 
                     end  [i] = false;

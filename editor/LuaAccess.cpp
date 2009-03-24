@@ -121,8 +121,8 @@ LuaVar LuaAccess::loadString(const char* script, const String& pseudoFileName) c
             String errorMessage;
     
             if (r.matches(errorText)) {
-                lineNumber   = errorText.getSubstringBetween(r.getCaptureBegin(1), 
-                                                             r.getCaptureEnd(1)).toInt() - 1;
+                lineNumber   = errorText.getSubstring(Pos(r.getCaptureBegin(1)), 
+                                                      Pos(r.getCaptureEnd(1))).toInt() - 1;
                 errorMessage = errorText.getTail(r.getCaptureEnd(0));
             } else {
                 lineNumber   = -1;
@@ -157,8 +157,8 @@ LuaVar LuaAccess::loadFile(const String& fileName) const
             String errorMessage;
 
             if (r.findMatch(errorText)) {
-                lineNumber   = errorText.getSubstringBetween(r.getCaptureBegin(1), 
-                                                             r.getCaptureEnd(1)).toInt() - 1;
+                lineNumber   = errorText.getSubstring(Pos(r.getCaptureBegin(1)), 
+                                                      Pos(r.getCaptureEnd(1))).toInt() - 1;
                 errorMessage = errorText.getTail(r.getCaptureEnd(0));
             } else {
                 lineNumber   = -1;

@@ -19,21 +19,63 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "QualifiedName.hpp"
-#include "Regex.hpp"
+#ifndef LEN_HPP
+#define LEN_HPP
 
-using namespace LucED;
-
-QualifiedName::QualifiedName(const String& str)
+namespace LucED
 {
-    Regex  r("^(.*)\\.([^.]*?)$");
 
-    if (r.matches(str))
-    {
-        qualifier = str.getSubstring(Pos(r.getCaptureBegin(1)),
-                                     Len(r.getCaptureLength(1)));
-
-        name      = str.getSubstring(Pos(r.getCaptureBegin(2)),
-                                     Len(r.getCaptureLength(2)));
+class Len
+{
+public:
+    Len()
+        : value(0)
+    {}
+    
+    explicit Len(int value)
+        : value(value)
+    {}
+    
+    operator int() const {
+        return value;
     }
-}
+    
+    Len& operator+=(Len len) {
+        value += len;
+        return *this;
+    }
+    
+    Len operator+(Len len) const {
+        return Len(value + len);
+    }
+
+    Len& operator-=(Len len) {
+        value -= len;
+        return *this;
+    }
+    
+    Len operator-(Len len) const {
+        return Len(value - len);
+    }
+    
+    Len& operator++() {
+        ++value;
+        return *this;
+    }
+    Len& operator--() {
+        --value;
+        return *this;
+    }
+    
+    Len operator-() const {
+        return Len(-value);
+    }
+    
+
+private:
+    int value;
+};
+
+} // namespace LucED
+
+#endif // LEN_HPP

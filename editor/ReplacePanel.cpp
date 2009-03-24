@@ -326,7 +326,7 @@ void ReplacePanel::handleButtonPressed(Button* button, Button::ActivationVariant
         }
         String newRememberedSelection;
         if (button == replaceSelectionButton) {
-            newRememberedSelection = e->getTextData()->getSubstring(spos, epos - spos);
+            newRememberedSelection = e->getTextData()->getSubstring(Pos(spos), Pos(epos));
         }
         SearchParameter p = getSearchParameterFromGuiControls();
                         p.setSearchForwardFlag(true);

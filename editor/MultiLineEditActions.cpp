@@ -852,8 +852,8 @@ void MultiLineEditActions::openCorrespondingFile()
         
         if (r.matches(currentFile))
         {
-            String ext = currentFile.getSubstring(r.getCaptureBegin(2),
-                                                  r.getCaptureLength(2));
+            String ext = currentFile.getSubstring(Pos(r.getCaptureBegin(2)),
+                                                  Len(r.getCaptureLength(2)));
             String newExt;
             
             if (ext == "c") {
@@ -865,11 +865,11 @@ void MultiLineEditActions::openCorrespondingFile()
             } else if (ext == "hpp") {
                 newExt = "cpp";
             }                                  
-            correspondingFile = String() << currentFile.getSubstring(r.getCaptureBegin(1),
-                                                                     r.getCaptureLength(1))
+            correspondingFile = String() << currentFile.getSubstring(Pos(r.getCaptureBegin(1)),
+                                                                     Len(r.getCaptureLength(1)))
                                          << newExt
-                                         << currentFile.getSubstring(r.getCaptureBegin(3),
-                                                                     r.getCaptureLength(3));
+                                         << currentFile.getSubstring(Pos(r.getCaptureBegin(3)),
+                                                                     Len(r.getCaptureLength(3)));
             if (File(correspondingFile).exists())
             {
                 FileOpener::start(correspondingFile);
@@ -880,8 +880,8 @@ void MultiLineEditActions::openCorrespondingFile()
 
                 if (r2.matches(currentFile))
                 {
-                    String ext = currentFile.getSubstring(r2.getCaptureBegin(2),
-                                                          r2.getCaptureLength(2));
+                    String ext = currentFile.getSubstring(Pos(r2.getCaptureBegin(2)),
+                                                          Len(r2.getCaptureLength(2)));
                     String newExt;
                     
                     if (ext == "1.c") {
@@ -889,11 +889,11 @@ void MultiLineEditActions::openCorrespondingFile()
                     } else if (ext == "2.h") {
                         newExt = "1.c";
                     }                                  
-                    correspondingFile = String() << currentFile.getSubstring(r2.getCaptureBegin(1),
-                                                                             r2.getCaptureLength(1))
+                    correspondingFile = String() << currentFile.getSubstring(Pos(r2.getCaptureBegin(1)),
+                                                                             Len(r2.getCaptureLength(1)))
                                                  << newExt
-                                                 << currentFile.getSubstring(r2.getCaptureBegin(3),
-                                                                             r2.getCaptureLength(3));
+                                                 << currentFile.getSubstring(Pos(r2.getCaptureBegin(3)),
+                                                                             Len(r2.getCaptureLength(3)));
                     if (File(correspondingFile).exists())
                     {
                         FileOpener::start(correspondingFile);

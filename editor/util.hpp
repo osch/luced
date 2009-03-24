@@ -43,13 +43,19 @@
 namespace LucED {
 namespace util {
 
-template<class T> static inline void maximize(T* a, T b)
+template<class T1,
+         class T2
+        >
+static inline void maximize(T1* a, T2 b)
 {
     if (*a < b)
         *a = b;
 }
 
-template<class T> static inline void minimize(T* a, T b)
+template<class T1,
+         class T2
+        >
+static inline void minimize(T1* a, T2 b)
 {
     if (*a > b)
         *a = b;

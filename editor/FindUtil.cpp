@@ -204,7 +204,7 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& findString, const int
             throw RegexException(String() << "Missing Lua callout expression within '(*...)'.", 
                                  pos+2);
         }
-        String varName = findString.getSubstring(pos+2, varEnd - (pos+2));
+        String varName = findString.getSubstring(Pos(pos+2), Len(varEnd - (pos+2)));
 
         LuaAccess::Result exprResult = luaAccess.executeExpression(varName);
 
@@ -228,7 +228,7 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& findString, const int
                 }
                 if (p2 > p)
                 {
-                    String paramString = findString.getSubstring(p, p2 - p);
+                    String paramString = findString.getSubstring(Pos(p), Len(p2 - p));
                     arguments.append(paramString);
                     positions.append(p);
                 }

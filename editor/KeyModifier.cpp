@@ -137,7 +137,7 @@ KeyModifier::KeyModifier(const String& asString)
         int j = i;
         while (j < asString.getLength() &&  isalnum(asString[j])) ++j;
         
-        String w = asString.getSubstring(i, j - i);
+        String w = asString.getSubstring(Pos(i), Pos(j));
         
         if (w.equalsIgnoreCase("Shift")) {
             value.set(SHIFT);

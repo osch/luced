@@ -330,8 +330,8 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
                         } else {
                             int pushedSubstrNo = syntaxPatterns->getPushedSubstrNo(sp, cid);
                             
-                            pushedSubstr = textData->getSubstringBetween(searchStartPos + ovector[pushedSubstrNo * 2 + 0],
-                                                                         searchStartPos + ovector[pushedSubstrNo * 2 + 1]);
+                            pushedSubstr = textData->getSubstring(Pos(searchStartPos + ovector[pushedSubstrNo * 2 + 0]),
+                                                                  Pos(searchStartPos + ovector[pushedSubstrNo * 2 + 1]));
 
                             patternStack.append(syntaxPatterns->getChildPatternId(sp, cid),
                                                 pushedSubstr);

@@ -354,7 +354,7 @@ void FindPanel::executeHistoryBackwardAction()
 
     if (historyIndex < 0) {
         int    editFieldLength  = editField->getTextData()->getLength();
-        String editFieldContent = editField->getTextData()->getSubstring(0, editFieldLength);
+        String editFieldContent = editField->getTextData()->getHead(editFieldLength);
 
         SearchHistory::Entry newEntry;
                              newEntry.setFindString    (editFieldContent);
@@ -371,7 +371,7 @@ void FindPanel::executeHistoryBackwardAction()
     }
     --h;
     RawPtr<TextData> textData = editField->getTextData();
-    String editFieldContent = textData->getSubstring(0, textData->getLength());
+    String editFieldContent = textData->getAsString();
     while (h >= 0) {
         SearchHistory::Entry entry = history->getEntry(h);
         String lastFindString = entry.getFindString();
@@ -395,8 +395,7 @@ void FindPanel::executeHistoryForwardAction()
     RawPtr<TextData> textData = editField->getTextData();
 
     if (historyIndex < 0) {
-        int editFieldLength = editField->getTextData()->getLength();
-        String editFieldContent = editField->getTextData()->getSubstring(0, editFieldLength);
+        String editFieldContent = editField->getTextData()->getAsString();
 
         SearchHistory::Entry newEntry;
                              newEntry.setFindString    (editFieldContent);
@@ -410,7 +409,7 @@ void FindPanel::executeHistoryForwardAction()
     }
 
     if (historyIndex >= 0) {
-        String editFieldContent = textData->getSubstring(0, textData->getLength());
+        String editFieldContent = textData->getAsString();
         int h = historyIndex;
         bool found = false;
         while (h + 1 < history->getEntryCount()) {

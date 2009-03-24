@@ -32,6 +32,9 @@
 #include "debug.hpp"
 #include "types.hpp"
 
+#include "Pos.hpp"
+#include "Len.hpp"
+
 namespace LucED
 {
 
@@ -72,8 +75,8 @@ public:
         : s(stringify(i))
     {}
 
-    int getLength() const {
-        return s.length();
+    Len getLength() const {
+        return Len(s.length());
     }
     const char* toCString() const {
         return s.c_str();
@@ -92,18 +95,18 @@ public:
         ASSERT(0 <= i && i < getLength());
         return s[i];
     }
-    String getSubstring(int pos, int length) const {
+    String getSubstring(Pos pos, Len length) const {
         if (length == 0) {
             return String();
         }
         ASSERT(0 <= length);
         ASSERT(0 <= pos && pos <= getLength());
         if (pos + length > getLength()) {
-            length = getLength() - pos;
+            length = Pos(0) + getLength() - pos;
         }
         return s.substr(pos, length);
     }
-    String getSubstringBetween(int pos1, int pos2) const {
+    String getSubstring(Pos pos1, Pos pos2) const {
         return getSubstring(pos1, pos2 - pos1);
     }
     String& append(const String& rhs) {
@@ -124,7 +127,7 @@ public:
         s.append(rhs, length);
         return *this;
     }
-    String& appendSubstring(const String& rhs, int pos, int length) {
+    String& appendSubstring(const String& rhs, Pos pos, Len length) {
         ASSERT(pos + length <= rhs.getLength());
         s.append(rhs.toCString() + pos, length);
         return *this;
@@ -195,7 +198,7 @@ public:
         }
     }
     
-    bool equalsSubstringAt(long pos, const char* rhs) const
+    bool equalsSubstringAt(Pos pos, const char* rhs) const
     {
         long len = strlen(rhs);
         
@@ -307,22 +310,26 @@ public:
     bool operator!=(const String& rhs) const {
         return s != rhs.s;
     }
-    void removeAmount(int pos, int amount) {
+    void removeAmount(Pos pos, Len amount) {
         ASSERT(0 <= amount);
         ASSERT(0 <= pos && pos + amount <= getLength());
         s.erase(pos, amount);
     }
-    void removeBetween(int pos1, int pos2) {
+    void removeBetween(Pos pos1, Pos pos2) {
         removeAmount(pos1, pos2 - pos1);
     }
-    void removeTail(int pos) {
-        removeAmount(pos, getLength() - pos);
+    void removeTail(Pos pos) {
+        removeAmount(pos, Pos(0) + getLength() - pos);
+    }
+    String getHead(int len) const {
+        ASSERT(0 <= len && len <= getLength());
+        return getSubstring(Pos(0), Len(len));
     }
     String getTail(int pos) const {
         ASSERT(0 <= pos && pos <= getLength());
         return s.substr(pos);
     }
-    int findFirstOf(char c, int startPos = 0) const {
+    int findFirstOf(char c, Pos startPos = Pos(0)) const {
         ASSERT(0 <= startPos && startPos <= getLength());
         int rslt = s.find_first_of(c, startPos);
         if (rslt == std::string::npos) {
@@ -341,7 +348,7 @@ public:
         while (j > i && ((*this)[j - 1] == ' ' || (*this)[j - 1] == '\t')) {
             --j;
         }
-        return getSubstringBetween(i, j);
+        return getSubstring(Pos(i), Pos(j));
     }
     
     void trim() {
@@ -376,11 +383,11 @@ public:
             if (n == std::string::npos) {
                 break;
             }
-            rslt.appendSubstring(*this, i, n - i);
+            rslt.appendSubstring(*this, Pos(i), Len(n - i));
             rslt.append(newPart, newPartLength);
             i = n + oldPartLength;
         }
-        rslt.appendSubstring(*this, i, thisLength - i);
+        rslt.appendSubstring(*this, Pos(i), Len(thisLength - i));
         return rslt;
     }
 

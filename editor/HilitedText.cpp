@@ -442,8 +442,8 @@ printf("------HilitedText::process start = %ld / %ld .. %ld --> %d\n", getBreakS
                                 
                                 int pushedSubstrNo = syntaxPatterns->getPushedSubstrNo(sp, cid);
                             
-                                pushedSubstr = textData->getSubstringBetween(pos + ovector[pushedSubstrNo * 2 + 0],
-                                                                             pos + ovector[pushedSubstrNo * 2 + 1]);
+                                pushedSubstr = textData->getSubstring(Pos(pos + ovector[pushedSubstrNo * 2 + 0]),
+                                                                      Pos(pos + ovector[pushedSubstrNo * 2 + 1]));
     
                                 patternStack.append(syntaxPatterns->getChildPatternId(sp, cid),
                                                     pushedSubstr);

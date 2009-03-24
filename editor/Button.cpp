@@ -60,15 +60,15 @@ void Button::setButtonText(String buttonText)
         requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
         hasHotKeyFlag = false;
     }
-    int p1 = buttonText.findFirstOf(']', 1);
+    int p1 = buttonText.findFirstOf(']', Pos(1));
     
     String oldButtonText = this->buttonText;
     char oldHotkeyChar   = this->hotKeyChar;
     
     if (p1 != -1) {
         hotKeyChar = buttonText[p1 - 1];
-        this->buttonText = String() << buttonText.getSubstring(0, p1) << buttonText.getTail(p1 + 1);
-        hotKeyPixX = getGuiTextStyle()->getTextWidth(buttonText.getSubstring(0, p1 - 1));
+        this->buttonText = String() << buttonText.getHead(p1) << buttonText.getTail(p1 + 1);
+        hotKeyPixX = getGuiTextStyle()->getTextWidth(buttonText.getSubstring(Pos(0), Len(p1 - 1)));
         hotKeyPixW = getGuiTextStyle()->getCharWidth(hotKeyChar);
         hasHotKeyFlag = true;
         // showHotKeyFlag = true;

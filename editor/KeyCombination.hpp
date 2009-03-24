@@ -49,7 +49,7 @@ public:
             }
         }
         if (p >= 0) {
-            keyModifier = KeyModifier(combination.getSubstringBetween(0, p));
+            keyModifier = KeyModifier(combination.getHead(p));
             keyIds      = combination.getTail(p + 1);
         } else {
             keyIds = combination;
@@ -73,7 +73,7 @@ public:
         if (p <= 0) {
             rslt = keyIds;
         } else {
-            rslt = keyIds.getSubstringBetween(0, p);
+            rslt = keyIds.getHead(p);
         }
         if (rslt.getLength() == 1) {
             rslt = rslt.toUpper();
@@ -81,7 +81,7 @@ public:
         return KeyId(rslt);
     }
     void removeFirstKeyId() {
-        int p = keyIds.findFirstOf(',', 1);
+        int p = keyIds.findFirstOf(',', Pos(1));
         if (p <= 0) {
             keyIds = "";
         } else {

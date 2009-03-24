@@ -187,10 +187,10 @@ public:
     byte* getAmount(long pos, long amount) {
         return buffer.getAmount(pos, amount);
     }
-    String getSubstring(long pos, long amount) {
+    String getSubstring(Pos pos, Len amount) {
         return String((const char*) getAmount(pos, amount), amount);
     }
-    String getSubstringBetween(long pos1, long pos2) {
+    String getSubstring(Pos pos1, Pos pos2) {
         long amount = pos2 - pos1;
         return String((const char*) getAmount(pos1, amount), amount);
     }
@@ -199,8 +199,11 @@ public:
         ASSERT(0 <= amount);
         return String((const char*) getAmount(getTextPositionOfMark(beginMark), amount), amount);
     }
+    String getHead(int length) {
+        return getSubstring(Pos(0), Len(length));
+    }
     String getAsString() {
-        return getSubstring(0, getLength());
+        return getSubstring(Pos(0), Len(getLength()));
     }
     
     void setToString(const String& newContent) {

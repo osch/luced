@@ -415,7 +415,7 @@ void SyntaxPatterns::compile(int i)
                         ++i;
                     }
                 } else {
-                    if (sp->endPattern.equalsSubstringAt(i, "(*")) {
+                    if (sp->endPattern.equalsSubstringAt(Pos(i), "(*")) {
                         int j1 = i + 2;
                         while (j1 < n && (sp->endPattern[j1] == ' ' || sp->endPattern[j1] == '\t')) {
                             ++j1;
@@ -430,9 +430,9 @@ void SyntaxPatterns::compile(int i)
                             while (j < n && sp->endPattern[j] != ')') {
                                 ++j;
                             }
-                            String s = sp->endPattern.getSubstringBetween(j1, j2);
+                            String s = sp->endPattern.getSubstring(Pos(j1), Pos(j2));
                             if (s == sp->pushedSubPatternName) {
-                                patStr.appendSubstring(sp->endPattern, a, i - a);
+                                patStr.appendSubstring(sp->endPattern, Pos(a), Len(i - a));
                                 patStr.append("(?C1)");
                                 i = j;
                                 a = j + 1;
@@ -445,7 +445,7 @@ void SyntaxPatterns::compile(int i)
                     }
                 }
             }
-            patStr.appendSubstring(sp->endPattern, a, sp->endPattern.getLength() - a);
+            patStr.appendSubstring(sp->endPattern, Pos(a), Len(sp->endPattern.getLength() - a));
         }
         else
         {

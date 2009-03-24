@@ -41,11 +41,11 @@ CheckBox::CheckBox(GuiWidget* parent, String buttonText)
 {
     addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
-    int p1 = buttonText.findFirstOf(']', 1);
+    int p1 = buttonText.findFirstOf(']', Pos(1));
     if (p1 != -1) {
         hotKeyChar = buttonText[p1 - 1];
-        this->buttonText = String() << buttonText.getSubstring(0, p1) << buttonText.getTail(p1 + 1);
-        hotKeyPixX = getGuiTextStyle()->getTextWidth(buttonText.getSubstring(0, p1 - 1));
+        this->buttonText = String() << buttonText.getHead(p1) << buttonText.getTail(p1 + 1);
+        hotKeyPixX = getGuiTextStyle()->getTextWidth(buttonText.getHead(p1 - 1));
         hotKeyPixW = getGuiTextStyle()->getCharWidth(hotKeyChar);
         hasHotKey = true;
         // showHotKey = true;

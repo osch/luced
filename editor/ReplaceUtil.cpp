@@ -89,7 +89,7 @@ String ReplaceUtil::getSubstitutedString()
                     case 'f': rslt.append('\f'); break;
                     case 'v': rslt.append('\v'); break;
                     case 'x': {
-                        String hexCode = replaceString.getSubstring(i+2, 2);
+                        String hexCode = replaceString.getSubstring(Pos(i+2), Len(2));
                         if (!hexCode.isHex()) {
                             throw SubstitutionException("\\x needs two hex digits", i);
                         }
@@ -101,14 +101,14 @@ String ReplaceUtil::getSubstitutedString()
                     }
                     default:  {
                         if (isdigit(replaceString[i+1])) {
-                            int capturedIndex  = replaceString.getSubstring(i+1, 1).toInt(); 
+                            int capturedIndex  = replaceString.getSubstring(Pos(i+1), Len(1)).toInt(); 
                             int capturedPos    = getCapturedSubpatternBeginPos(capturedIndex);
                             int capturedLength = getCapturedSubpatternLength  (capturedIndex);
                             if (capturedPos == -1) {
                                 throw SubstitutionException(
                                     String() << "illegal index '" << replaceString[i+1] << "' for captured pattern", i);
                             }
-                            String capturedText = getTextData()->getSubstring(capturedPos, capturedLength);
+                            String capturedText = getTextData()->getSubstring(Pos(capturedPos), Len(capturedLength));
                             rslt.append(capturedText);
                         } else {
                             rslt.append(replaceString[i+1]);
@@ -135,7 +135,7 @@ String ReplaceUtil::getSubstitutedString()
                         int spos = getCapturedSubpatternBeginPos(capturedIndex);
                         int len  = getCapturedSubpatternLength(capturedIndex);
 
-                        callResult = objectToCall[getTextData()->getSubstring(spos, len)];
+                        callResult = objectToCall[getTextData()->getSubstring(Pos(spos), Len(len))];
                     }
                     else if (objectToCall.isFunction())
                     {
@@ -146,7 +146,7 @@ String ReplaceUtil::getSubstitutedString()
                             int capturedIndex = callout->getCaptureIndexForArgument(i);
                             int spos = getCapturedSubpatternBeginPos(capturedIndex);
                             int len  = getCapturedSubpatternLength(capturedIndex);
-                            args << getTextData()->getSubstring(spos, len);
+                            args << getTextData()->getSubstring(Pos(spos), Len(len));
                         }
                         callResult = objectToCall.call(args);
                     }

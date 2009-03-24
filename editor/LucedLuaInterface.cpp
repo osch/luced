@@ -54,8 +54,8 @@ LuaCFunctionResult LucedLuaInterface::getModulePrefix(const LuaCFunctionArgument
     
     if (r.matches(thisModuleName))
     {
-        rslt = thisModuleName.getSubstring(r.getCaptureBegin(1),
-                                           r.getCaptureLength(1));
+        rslt = thisModuleName.getSubstring(Pos(r.getCaptureBegin(1)),
+                                           Len(r.getCaptureLength(1)));
     }
     
     return LuaCFunctionResult(luaAccess) << rslt;

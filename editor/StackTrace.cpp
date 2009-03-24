@@ -141,7 +141,7 @@ void StackTrace::print(FILE* fprintfOutput)
     
     for (int i = 0, j = 0, n = 0; i < data.getLength(); ++i) {
         if (data[i] == '\n') {
-            String line = data.getSubstringBetween(j, i);
+            String line = data.getSubstring(Pos(j), Pos(i));
             j = i + 1;
             if (n >= 2)
             {
