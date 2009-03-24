@@ -31,14 +31,14 @@ namespace LucED
 {
 
 /**
- * This class could also have been called "MemberPtr",
- * because this is technically a pointer to an object's
- * data member that becomes invalid if the owning
- * object is destructed.
+ * This pointer type can contain a pointer to an object's
+ * data member or a pointer to an object's base object,
+ * that becomes invalid if the owning object resp. the
+ * derived object is destructed.
  *
- * However it is only used as pointer to an interface 
- * implementation, the owning object isn't visible 
- * from outside. Therefore the name "InterfacePtr".
+ * This can be used for interface implementation by
+ * derivation from the interface class or be containing 
+ * a implementing data member object.
  */
 template
 <
@@ -51,6 +51,10 @@ public:
         : holder(),
           interface(NULL)
     {}
+    
+    //
+    // Constructors for data member objects
+    //
     
     template<class T,
              class I2
@@ -83,6 +87,42 @@ public:
         : holder(holder),
           interface(&(holder->*interface))
     {}
+
+
+    //
+    // Constructors for base class objects
+    //
+
+    template<class T
+            >
+    InterfacePtr(OwningPtr<T> object)
+        : holder(object),
+          interface(object)
+    {}
+    
+    template<class T
+            >
+    InterfacePtr(WeakPtr<T> object)
+        : holder(object),
+          interface(object)
+    {}
+    template<class T
+            >
+    InterfacePtr(RawPtr<T> object)
+        : holder(object),
+          interface(object)
+    {}
+    template<class T
+            >
+    InterfacePtr(T* object)
+        : holder(object),
+          interface(object)
+    {}
+
+
+    //
+    // pointer methods
+    //
 
     I* operator->() const {
         ASSERT(holder.isValid());
