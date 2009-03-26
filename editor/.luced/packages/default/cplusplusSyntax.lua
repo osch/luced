@@ -160,7 +160,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {classBegin = "keyword", classBegin2 = "default"},
                 endSubstyles     = {classEnd   = "keyword"},
-                childPatterns    = { "emluaexpr", "emlualine", "comment1", "comment2", "keywords", "classoperators"},
+                childPatterns    = { "emluaexpr", "emlualine", "preprop", "comment1", "comment2", "keywords", "classoperators"},
         },
         struct1 = {
         	style = "comment",
@@ -170,7 +170,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {structBegin = "keyword", structBegin2 = "type"},
                 endSubstyles     = {structEnd   = "keyword"},
-                childPatterns    = { "emluaexpr", "emlualine", "comment1", "comment2", "keywords", "classoperators"},
+                childPatterns    = { "emluaexpr", "emlualine", "preprop", "comment1", "comment2", "keywords", "classoperators"},
         },
         struct2 = {
         	style = "type",
@@ -180,7 +180,7 @@ return
                 maxEndExtend     = 1,
                 beginSubstyles   = {struct2Begin = "keyword", struct2Begin2 = "default"},
                 endSubstyles     = {struct2End   = "keyword"},
-                childPatterns    = { "emluaexpr", "emlualine", "comment1", "comment2", "keywords", "classoperators"},
+                childPatterns    = { "emluaexpr", "emlualine", "preprop", "comment1", "comment2", "keywords", "classoperators"},
         },
         classoperators = {
         	style = "keyword",
