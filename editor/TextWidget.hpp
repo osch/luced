@@ -36,12 +36,12 @@
 #include "RawPtr.hpp"
 #include "Flags.hpp"
 #include "ScrollBar.hpp"
-#include "FocusableWidget.hpp"
+#include "FocusableElement.hpp"
                     
 namespace LucED
 {
 
-class TextWidget : public FocusableWidget
+class TextWidget : public FocusableElement
 {
 public:
     typedef OwningPtr<TextWidget> Ptr;

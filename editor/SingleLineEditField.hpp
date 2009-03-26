@@ -26,12 +26,12 @@
 #include "TextData.hpp"
 #include "EditFieldGroup.hpp"
 #include "RawPtr.hpp"
-#include "FocusableWidget.hpp"
+#include "FocusableElement.hpp"
 
 namespace LucED
 {
 
-class SingleLineEditField : public FocusableWidget
+class SingleLineEditField : public FocusableElement
 {
 public:
     typedef OwningPtr<SingleLineEditField> Ptr;
@@ -87,7 +87,7 @@ public:
     virtual void notifyAboutHotKeyEventForOtherWidget();
     
 protected:    
-    virtual void requestFocusFor(RawPtr<FocusableWidget> w);
+    virtual void requestFocusFor(RawPtr<FocusableElement> w);
 
 private:
     SingleLineEditField(GuiWidget* parent, LanguageMode::Ptr languageMode, TextData::Ptr textData);

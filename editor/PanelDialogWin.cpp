@@ -53,12 +53,12 @@ void PanelDialogWin::treatFocusOut()
 
 
 
-void PanelDialogWin::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
+void PanelDialogWin::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
 {
     dialogPanel->requestHotKeyRegistrationFor(id, w);
 }
 
-void PanelDialogWin::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
+void PanelDialogWin::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
 {
     dialogPanel->requestRemovalOfHotKeyRegistrationFor(id, w);
 }

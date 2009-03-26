@@ -67,7 +67,7 @@ void DialogWin::requestCloseWindow(TopWin::CloseReason reason)
     TopWin::requestCloseWindow(reason);
 }
 
-void DialogWin::setRootElement(OwningPtr<FocusableWidget> rootElement)
+void DialogWin::setRootElement(OwningPtr<FocusableElement> rootElement)
 {
     this->rootElement = rootElement;
 }

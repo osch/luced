@@ -41,7 +41,7 @@ namespace LucED
 class EventDispatcher;
 class GuiRoot;
 class TopWin;
-class FocusableWidget;
+class FocusableElement;
 
 class GuiWidget : public GuiElement
 {
@@ -122,9 +122,9 @@ protected:
 protected:
     virtual void reportMouseClickFrom(GuiWidget* w);
 
-    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
 
-    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
 
     RawPtr<GuiWidget> getParentWidget() const {
         return parent;
@@ -138,7 +138,7 @@ public:
     virtual void setBorderColor(GuiColor color);
 
 protected:
-    virtual void requestFocusFor(RawPtr<FocusableWidget> w);
+    virtual void requestFocusFor(RawPtr<FocusableElement> w);
     
     void addToXEventMask(long eventMask);
     void removeFromXEventMask(long eventMask);

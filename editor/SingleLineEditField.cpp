@@ -26,7 +26,7 @@
 using namespace LucED;
 
 SingleLineEditField::SingleLineEditField(GuiWidget* parent, LanguageMode::Ptr languageMode, TextData::Ptr textData)
-    : FocusableWidget(parent, 0, 0, 1, 1, 0),
+    : FocusableElement(parent, 0, 0, 1, 1, 0),
       adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
       heightOffset(0),
@@ -156,7 +156,7 @@ void SingleLineEditField::setPosition(Position p)
     editorWidget->setPosition(p);
 }
 
-void SingleLineEditField::requestFocusFor(RawPtr<FocusableWidget> w)
+void SingleLineEditField::requestFocusFor(RawPtr<FocusableElement> w)
 {
     if (editorWidget.getRawPtr() == w) {
         GuiWidget::requestFocusFor(this);

@@ -406,7 +406,7 @@ GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEv
         {
             textEditor->hideMousePointer();
             
-            RawPtr<FocusableWidget> focusedWidget;
+            RawPtr<FocusableElement> focusedWidget;
             
             if (invokedPanel.isValid() && hasInvokedPanelFocus) {
                 focusedWidget = invokedPanel;
@@ -521,7 +521,7 @@ void EditorTopWin::reportMouseClickFrom(GuiWidget* w)
     }
 }
 
-void EditorTopWin::requestFocusFor(RawPtr<FocusableWidget> w)
+void EditorTopWin::requestFocusFor(RawPtr<FocusableElement> w)
 {
     reportMouseClickFrom(w);
 }

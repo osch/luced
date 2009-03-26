@@ -31,7 +31,7 @@ using namespace LucED;
 const int BUTTON_OUTER_BORDER = 1;
 
 CheckBox::CheckBox(GuiWidget* parent, String buttonText)
-      : FocusableWidget(parent, 0, 0, 1, 1, 0),
+      : FocusableElement(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
         isBoxChecked(false),
         isMouseButtonPressed(false),

@@ -32,7 +32,7 @@ using namespace LucED;
 const int BUTTON_OUTER_BORDER = 1;
 
 Button::Button(GuiWidget* parent, String buttonText)
-      : FocusableWidget(parent, 0, 0, 1, 1, 0),
+      : FocusableElement(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
         isButtonPressed(false),
         isMouseButtonPressed(false),

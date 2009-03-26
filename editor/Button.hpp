@@ -29,12 +29,12 @@
 #include "Callback.hpp"
 #include "TimeVal.hpp"
 #include "ActionMethodBinding.hpp"
-#include "FocusableWidget.hpp"
+#include "FocusableElement.hpp"
                     
 namespace LucED
 {
 
-class Button : public FocusableWidget
+class Button : public FocusableElement
 {
 public:
     enum ActivationVariant {

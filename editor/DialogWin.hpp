@@ -51,8 +51,8 @@ public:
 protected:
     DialogWin(TopWin* referingWindow);
     
-    void setRootElement(OwningPtr<FocusableWidget> rootElement);
-    RawPtr<FocusableWidget> getRootElement() {return rootElement; }
+    void setRootElement(OwningPtr<FocusableElement> rootElement);
+    RawPtr<FocusableElement> getRootElement() {return rootElement; }
     
     ActionMethodContainer::Ptr getActionMethodContainer() const {
         return actionMethodContainer;
@@ -65,7 +65,7 @@ private:
     
     void notifyAboutReferingWindowMapping(bool isReferingWindowMapped);
 
-    OwningPtr<FocusableWidget> rootElement;
+    OwningPtr<FocusableElement> rootElement;
     bool wasNeverShown;
     WeakPtr<TopWin> referingWindow;
     

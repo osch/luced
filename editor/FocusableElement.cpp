@@ -19,11 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "FocusableWidget.hpp"
+#include "FocusableElement.hpp"
 
 using namespace LucED;
 
-FocusableWidget::~FocusableWidget()
+FocusableElement::~FocusableElement()
 {
     if (nextFocusWidget.isValid() && nextFocusWidget->prevFocusWidget == this) {
         nextFocusWidget->prevFocusWidget = prevFocusWidget;
@@ -34,15 +34,15 @@ FocusableWidget::~FocusableWidget()
 }
 
 
-void FocusableWidget::notifyAboutHotKeyEventForOtherWidget()
+void FocusableElement::notifyAboutHotKeyEventForOtherWidget()
 {}
 
-void FocusableWidget::treatLostHotKeyRegistration(const KeyMapping::Id& id)
+void FocusableElement::treatLostHotKeyRegistration(const KeyMapping::Id& id)
 {}
 
-void FocusableWidget::treatNewHotKeyRegistration(const KeyMapping::Id& id)
+void FocusableElement::treatNewHotKeyRegistration(const KeyMapping::Id& id)
 {}
 
-void FocusableWidget::treatHotKeyEvent(const KeyMapping::Id& id)
+void FocusableElement::treatHotKeyEvent(const KeyMapping::Id& id)
 {}
 

@@ -72,7 +72,7 @@ private:
 
 DialogPanel::DialogPanel(GuiWidget*                  parent, 
                          Callback<DialogPanel*>::Ptr requestCloseCallback)
-    : FocusableWidget(parent, 0, 0, 1, 1, 0),
+    : FocusableElement(parent, 0, 0, 1, 1, 0),
       wasNeverShown(true),
       
       hotKeyMapping(HotKeyMapping::create()),
@@ -189,7 +189,7 @@ void DialogPanel::treatFocusIn()
 {
     {
         KeyMapping::Id defaultKey(KeyModifier::NONE, KeyId("Return"));
-        RawPtr<FocusableWidget> last = defaultKeyWidgets->getLast();
+        RawPtr<FocusableElement> last = defaultKeyWidgets->getLast();
 
         if (!focusedElementTakesAwayDefaultKey) {
             if (last != Null) {
@@ -210,7 +210,7 @@ void DialogPanel::treatFocusIn()
     {
         WidgetQueue::Ptr widgets = i.getValue();
         ASSERT(widgets.isValid());
-        RawPtr<FocusableWidget> w = widgets->getLast();
+        RawPtr<FocusableElement> w = widgets->getLast();
         if (w != Null) {
             w->treatNewHotKeyRegistration(i.getKey());
         }        
@@ -222,7 +222,7 @@ void DialogPanel::treatFocusOut()
 {
     {
         KeyMapping::Id defaultKey(KeyModifier::NONE, KeyId("Return"));
-        RawPtr<FocusableWidget> last = defaultKeyWidgets->getLast();
+        RawPtr<FocusableElement> last = defaultKeyWidgets->getLast();
 
         if (!focusedElementTakesAwayDefaultKey) {
             if (last != Null) {
@@ -245,7 +245,7 @@ void DialogPanel::treatFocusOut()
         {
             WidgetQueue::Ptr widgets = i.getValue();
             ASSERT(widgets.isValid());
-            RawPtr<FocusableWidget> w = widgets->getLast();
+            RawPtr<FocusableElement> w = widgets->getLast();
             if (w != Null) {
                 w->treatLostHotKeyRegistration(i.getKey());
             }        
@@ -256,7 +256,7 @@ void DialogPanel::treatFocusOut()
 void DialogPanel::Actions::focusNext()
 {
     if (thisPanel->focusedElement.isValid()) {
-        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
+        RawPtr<FocusableElement> e = thisPanel->focusedElement;
         do {
             e = e->getNextFocusWidget();
         } while (e != thisPanel->focusedElement && e.isValid() && !e->isFocusable());
@@ -270,7 +270,7 @@ void DialogPanel::Actions::focusNext()
 void DialogPanel::Actions::focusPrevious()
 {
     if (thisPanel->focusedElement.isValid()) {
-        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
+        RawPtr<FocusableElement> e = thisPanel->focusedElement;
         do {
             e = e->getPrevFocusWidget();
         } while (e != thisPanel->focusedElement && e.isValid() && !e->isFocusable());
@@ -284,8 +284,8 @@ void DialogPanel::Actions::focusRight()
 {
     if (thisPanel->focusedElement.isValid())
     {
-        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
-        RawPtr<FocusableWidget> best;
+        RawPtr<FocusableElement> e = thisPanel->focusedElement;
+        RawPtr<FocusableElement> best;
         int minX = e->getPosition().x + e->getPosition().w;
         int minY = e->getPosition().y;
         int maxY = e->getPosition().y + e->getPosition().h;
@@ -347,8 +347,8 @@ void DialogPanel::Actions::focusLeft()
 {
     if (thisPanel->focusedElement.isValid())
     {
-        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
-        RawPtr<FocusableWidget> best;
+        RawPtr<FocusableElement> e = thisPanel->focusedElement;
+        RawPtr<FocusableElement> best;
         int maxX = e->getPosition().x;
         int minY = e->getPosition().y;
         int maxY = e->getPosition().y + e->getPosition().h;
@@ -410,8 +410,8 @@ void DialogPanel::Actions::focusUp()
 {
     if (thisPanel->focusedElement.isValid())
     {
-        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
-        RawPtr<FocusableWidget> best;
+        RawPtr<FocusableElement> e = thisPanel->focusedElement;
+        RawPtr<FocusableElement> best;
         int maxY = e->getPosition().y;
         int minX = e->getPosition().x;
         int maxX = e->getPosition().x + e->getPosition().w;
@@ -445,8 +445,8 @@ void DialogPanel::Actions::focusDown()
 {
     if (thisPanel->focusedElement.isValid())
     {
-        RawPtr<FocusableWidget> e = thisPanel->focusedElement;
-        RawPtr<FocusableWidget> best;
+        RawPtr<FocusableElement> e = thisPanel->focusedElement;
+        RawPtr<FocusableElement> best;
         int minY = e->getPosition().y + e->getPosition().h;
         int minX = e->getPosition().x;
         int maxX = e->getPosition().x + e->getPosition().w;
@@ -483,7 +483,7 @@ bool DialogPanel::processHotKey(KeyMapping::Id keyMappingId)
     
     if (focusedElement.isValid()) {
         if (focusedElement->getFocusType() == NO_FOCUS) {
-            RawPtr<FocusableWidget> e = focusedElement;
+            RawPtr<FocusableElement> e = focusedElement;
             do {
                 e = e->getNextFocusWidget();
             } while (e.isValid() && e != focusedElement && !e->isFocusable());
@@ -508,7 +508,7 @@ bool DialogPanel::processHotKey(KeyMapping::Id keyMappingId)
         if (foundHotKeyWidgets.isValid()) {
             WidgetQueue::Ptr widgets = foundHotKeyWidgets.get();
             ASSERT(widgets.isValid());
-            RawPtr<FocusableWidget> w = widgets->getLast();
+            RawPtr<FocusableElement> w = widgets->getLast();
             if (w.isValid()) {
                 w->treatHotKeyEvent(KeyMapping::Id(keyMappingId.getKeyModifier(), keyMappingId.getKeyId()));
                 if (focusedElement.isValid() && w != focusedElement) {
@@ -525,7 +525,7 @@ bool DialogPanel::processHotKey(KeyMapping::Id keyMappingId)
 void DialogPanel::Actions::pressDefaultButton()
 {
     KeyMapping::Id defaultKey(KeyModifier::NONE, KeyId("Return"));
-    RawPtr<FocusableWidget>  w = thisPanel->defaultKeyWidgets->getLast();
+    RawPtr<FocusableElement>  w = thisPanel->defaultKeyWidgets->getLast();
 
     if (w != Null) {
         w->treatHotKeyEvent(defaultKey);
@@ -541,7 +541,7 @@ bool DialogPanel::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent)
     
     if (focusedElement.isValid()) {
         if (focusedElement->getFocusType() == NO_FOCUS) {
-            RawPtr<FocusableWidget> e = focusedElement;
+            RawPtr<FocusableElement> e = focusedElement;
             do {
                 e = e->getNextFocusWidget();
             } while (e.isValid() && e != focusedElement && !e->isFocusable());
@@ -567,7 +567,7 @@ bool DialogPanel::handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent)
     
     if (focusedElement.isValid()) {
         if (focusedElement->getFocusType() == NO_FOCUS) {
-            RawPtr<FocusableWidget> e = focusedElement;
+            RawPtr<FocusableElement> e = focusedElement;
             do {
                 e = e->getNextFocusWidget();
             } while (e.isValid() && e != focusedElement && !e->isFocusable());
@@ -587,7 +587,7 @@ bool DialogPanel::handleHighPriorityKeyPress(const KeyPressEvent& keyPressEvent)
 
 
 
-bool DialogPanel::takesAwayDefaultKey(RawPtr<FocusableWidget> widget)
+bool DialogPanel::takesAwayDefaultKey(RawPtr<FocusableElement> widget)
 {
     if (widget == Null) {
         return false;
@@ -620,7 +620,7 @@ bool DialogPanel::takesAwayDefaultKey(RawPtr<FocusableWidget> widget)
 }
 
 
-void DialogPanel::setFocus(RawPtr<FocusableWidget> element)
+void DialogPanel::setFocus(RawPtr<FocusableElement> element)
 {
     if (focusedElement != element)
     {
@@ -636,7 +636,7 @@ void DialogPanel::setFocus(RawPtr<FocusableWidget> element)
                 
                 bool newFocusedElementTakesAwayDefaultKey = takesAwayDefaultKey(focusedElement);
                 
-                RawPtr<FocusableWidget> last = defaultKeyWidgets->getLast();
+                RawPtr<FocusableElement> last = defaultKeyWidgets->getLast();
                 if (last != Null)
                 {
                     if (focusedElementTakesAwayDefaultKey) {
@@ -669,12 +669,12 @@ void DialogPanel::reportMouseClickFrom(GuiWidget* w)
     }
 }
 
-void DialogPanel::requestFocusFor(RawPtr<FocusableWidget> w)
+void DialogPanel::requestFocusFor(RawPtr<FocusableElement> w)
 {
     setFocus(w);
 }
 
-void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
+void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
 {
     ASSERT(w != Null);
     
@@ -682,7 +682,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<
     
     if (id == defaultKey)
     {
-        RawPtr<FocusableWidget> last = defaultKeyWidgets->getLast();
+        RawPtr<FocusableElement> last = defaultKeyWidgets->getLast();
                                        defaultKeyWidgets->append(w);
         if (!focusedElementTakesAwayDefaultKey) {
             if (last != Null) {
@@ -702,7 +702,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<
     if (foundWidgets.isValid()) {
         widgets = foundWidgets.get();
         ASSERT(widgets.isValid());
-        RawPtr<FocusableWidget> activeWidget = widgets->getLast();
+        RawPtr<FocusableElement> activeWidget = widgets->getLast();
         if (hotKeyPredecessor.isInvalid() && activeWidget != Null) {
             if (activeWidget == w) {
                 return;
@@ -723,7 +723,7 @@ void DialogPanel::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<
     }
 }
 
-void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
+void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
 {
     ASSERT(w != Null);
 
@@ -735,7 +735,7 @@ void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id
         defaultKeyWidgets->removeAll(w);
 
         if (hasFocus() && !focusedElementTakesAwayDefaultKey) {
-            RawPtr<FocusableWidget> last = defaultKeyWidgets->getLast();
+            RawPtr<FocusableElement> last = defaultKeyWidgets->getLast();
             if (last != Null) {
                 last->treatNewHotKeyRegistration(id);
             }
@@ -755,7 +755,7 @@ void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id
             if (doIt) {
                 w->treatLostHotKeyRegistration(id);
             }
-            RawPtr<FocusableWidget> newActive = widgets->getLast();
+            RawPtr<FocusableElement> newActive = widgets->getLast();
             if (doIt && newActive != Null && hasFocus()) {
                 newActive->treatNewHotKeyRegistration(id);
             }

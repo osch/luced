@@ -41,7 +41,7 @@
 #include "ActionKeyConfig.hpp"
 #include "ActionKeySequenceHandler.hpp"
 #include "ViewLuaInterface.hpp"
-#include "FocusableWidget.hpp"
+#include "FocusableElement.hpp"
 #include "ActionMethodContainer.hpp"
                 
 namespace LucED
@@ -111,7 +111,7 @@ private:
     
     EditorTopWin(HilitedText::Ptr hilitedText, int width, int height);
 
-    virtual void requestFocusFor(RawPtr<FocusableWidget> w);
+    virtual void requestFocusFor(RawPtr<FocusableElement> w);
     virtual void reportMouseClickFrom(GuiWidget* w);
 
     void treatConfigUpdate();

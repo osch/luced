@@ -28,7 +28,7 @@
 #include "GlobalConfig.hpp"
 #include "SingletonInstance.hpp"
 #include "TextStyleCache.hpp"
-#include "FocusableWidget.hpp"
+#include "FocusableElement.hpp"
 
 namespace LucED
 {
@@ -593,17 +593,17 @@ void GuiWidget::reportMouseClickFrom(GuiWidget* w)
     if (parent != Null) parent->reportMouseClickFrom(w);
 }
 
-void GuiWidget::requestFocusFor(RawPtr<FocusableWidget> w)
+void GuiWidget::requestFocusFor(RawPtr<FocusableElement> w)
 {
     if (parent.isValid()) parent->requestFocusFor(w);
 }
 
-void GuiWidget::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
+void GuiWidget::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
 {
     if (parent != Null) parent->requestHotKeyRegistrationFor(id, w);
 }
 
-void GuiWidget::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w)
+void GuiWidget::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
 {
     if (parent != Null) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
 }

@@ -107,7 +107,7 @@ SingletonInstance<TextWidgetSingletonData> TextWidgetSingletonData::instance;
 TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int border,
                        CreateOptions options)
 
-    : FocusableWidget(parent, 0, 0, 
+    : FocusableElement(parent, 0, 0, 
                       hilitedText->getSyntaxPatterns()->getDefaultTextStyle()->getSpaceWidth()*200, 
                       hilitedText->getSyntaxPatterns()->getDefaultTextStyle()->getLineHeight(), 
                       border),

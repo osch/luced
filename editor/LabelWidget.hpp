@@ -28,7 +28,7 @@
 #include "GuiWidget.hpp"
 #include "Callback.hpp"
 #include "OwningPtr.hpp"
-#include "FocusableWidget.hpp"
+#include "FocusableElement.hpp"
 
 namespace LucED
 {

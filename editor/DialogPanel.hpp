@@ -29,12 +29,12 @@
 #include "Callback.hpp"
 #include "HeapHashMap.hpp"
 #include "ActionMethodBinding.hpp"
-#include "FocusableWidget.hpp"
+#include "FocusableElement.hpp"
                     
 namespace LucED
 {
 
-class DialogPanel : public FocusableWidget
+class DialogPanel : public FocusableElement
 {
 public:
     typedef OwningPtr<DialogPanel> Ptr;
@@ -57,11 +57,11 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
-    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableWidget> w);
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
 
     void setRootElement(OwningPtr<GuiElement> rootElement);
-    void setFocus(RawPtr<FocusableWidget> element);
+    void setFocus(RawPtr<FocusableElement> element);
     virtual void notifyAboutHotKeyEventForOtherWidget();
 
     virtual void setPosition(Position newPosition);
@@ -72,7 +72,7 @@ protected:
     
     GuiElement* getRootElement() {return rootElement.getRawPtr();}
     
-    virtual void requestFocusFor(RawPtr<FocusableWidget> w);
+    virtual void requestFocusFor(RawPtr<FocusableElement> w);
     virtual void reportMouseClickFrom(GuiWidget* w);
     
     virtual void requestClose();
@@ -119,18 +119,18 @@ private:
         this->hotKeySuccessor = hotKeySuccessor;
     }
     
-    bool takesAwayDefaultKey(RawPtr<FocusableWidget> widget);
+    bool takesAwayDefaultKey(RawPtr<FocusableElement> widget);
     
     bool processHotKey(KeyMapping::Id keyMappingId);
 
     OwningPtr<GuiElement> rootElement;
     bool wasNeverShown;
     
-    typedef WeakPtrQueue<FocusableWidget> WidgetQueue;
+    typedef WeakPtrQueue<FocusableElement> WidgetQueue;
     typedef HeapHashMap< KeyMapping::Id, WidgetQueue::Ptr > HotKeyMapping;
     HotKeyMapping::Ptr hotKeyMapping;
     
-    WeakPtr<FocusableWidget> focusedElement;
+    WeakPtr<FocusableElement> focusedElement;
     bool                     focusedElementTakesAwayDefaultKey;
     WidgetQueue::Ptr         defaultKeyWidgets;
     

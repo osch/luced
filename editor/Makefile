@@ -104,7 +104,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
 		ActionKeySequenceHandler StackTrace             ActionIdRegistry           MultiLineDisplayActions \
 		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess \
 		LucedLuaInterface        KeyPressEvent          QualifiedName              SyntaxPatternsConfig \
-		TextStyleCache           ConfigPackageLoader    FocusableWidget
+		TextStyleCache           ConfigPackageLoader    FocusableElement
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

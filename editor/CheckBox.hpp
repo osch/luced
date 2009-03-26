@@ -29,12 +29,12 @@
 #include "Callback.hpp"
 #include "TimeVal.hpp"
 #include "ActionMethodBinding.hpp"
-#include "FocusableWidget.hpp"
+#include "FocusableElement.hpp"
 
 namespace LucED
 {
 
-class CheckBox : public FocusableWidget
+class CheckBox : public FocusableElement
 {
 public:
     typedef OwningPtr<CheckBox> Ptr;

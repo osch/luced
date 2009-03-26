@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FOCUSABLE_WIDGET_HPP
-#define FOCUSABLE_WIDGET_HPP
+#ifndef FOCUSABLE_ELEMENT_HPP
+#define FOCUSABLE_ELEMENT_HPP
 
 #include "GuiWidget.hpp"
 #include "KeyActionHandler.hpp"
@@ -28,11 +28,11 @@
 namespace LucED
 {
 
-class FocusableWidget : public GuiWidget
+class FocusableElement : public GuiWidget
 {
 public:
-    typedef OwningPtr<FocusableWidget> Ptr;
-    typedef OwningPtr<const FocusableWidget> ConstPtr;
+    typedef OwningPtr<FocusableElement> Ptr;
+    typedef OwningPtr<const FocusableElement> ConstPtr;
 
     enum FocusType {
         NO_FOCUS,
@@ -52,17 +52,17 @@ public:
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatHotKeyEvent(const KeyMapping::Id& id);
     
-    void setNextFocusWidget(RawPtr<FocusableWidget> n) { nextFocusWidget = n; n->prevFocusWidget = this; }
+    void setNextFocusWidget(RawPtr<FocusableElement> n) { nextFocusWidget = n; n->prevFocusWidget = this; }
 
-    RawPtr<FocusableWidget> getNextFocusWidget() { return nextFocusWidget; }
-    RawPtr<FocusableWidget> getPrevFocusWidget() { return prevFocusWidget; }
+    RawPtr<FocusableElement> getNextFocusWidget() { return nextFocusWidget; }
+    RawPtr<FocusableElement> getPrevFocusWidget() { return prevFocusWidget; }
     
     OwningPtr<KeyActionHandler> getKeyActionHandler() const {
         return keyActionHandler;
     }
     
 protected:
-    FocusableWidget(GuiWidget* parent,
+    FocusableElement(GuiWidget* parent,
                     int x, int y, unsigned int width, unsigned int height, unsigned border_width)
         : GuiWidget(parent, x, y, width, height, border_width),
           focusableFlag(true),
@@ -70,7 +70,7 @@ protected:
           focusType(NORMAL_FOCUS)
     {}
             
-    virtual ~FocusableWidget();
+    virtual ~FocusableElement();
 
     void setFocusFlag(bool focusFlag) {
         this->focusFlag = focusFlag;
@@ -86,11 +86,11 @@ private:
     bool focusableFlag;
     bool focusFlag;
     FocusType focusType;
-    WeakPtr<FocusableWidget>   nextFocusWidget;
-    WeakPtr<FocusableWidget>   prevFocusWidget;
+    WeakPtr<FocusableElement>   nextFocusWidget;
+    WeakPtr<FocusableElement>   prevFocusWidget;
     OwningPtr<KeyActionHandler> keyActionHandler;
 };
 
 } // namespace LucED
 
-#endif // FOCUSABLE_WIDGET_HPP
+#endif // FOCUSABLE_ELEMENT_HPP
