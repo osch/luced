@@ -279,7 +279,7 @@ return
                                         (?P<declType>(?>\b(?>const|unsigned|struct)\b(?>\s+))*
                                                      (?>(?>\:\:)?\b[A-Za-z_](?:\w|\s*::(?>\s*(?>(?>typename|struct|signed|unsigned|template|const)\s*)*))*)
                                                      (?>(?> \s | \b(?>const|unsigned|struct)\b )*)
-                                                     (?P<templparm><((?>[^<\->;|{}?]*)|(?P>templparm))*>(?>\s*::\s*\w*(?P>templparm)?)?)?
+                                                     (?P<templparm><(?!(?>\s*)<)((?>[^()<\->;|{}?]*)|(?P>templparm))*>(?>\s*::\s*\w*(?P>templparm)?)?)?
                                                      
                                                      (?>(?>\s*)(?<=\s)[&*]+(?=\S)
                                                        |(?>\s*)(?<=\s)[&*]+(?=\s*\n)
@@ -287,7 +287,7 @@ return
                                                        |(?>\s*))
                                                      (?>\s*)
                                         )
-                                        (?! ["@~%*&?<>;(),\[\]!=\-+/|.:}] )
+                                        (?! ["@~%*&?<>;(),\[\]!=\-+/|.:}\d] )
                                       ]],
                                    
                 endPattern       = [[(?=[@\[;,{()}>]|\b(?:for|while|do)\b)|(?=^[\t\ ]*\#|[=)])]],
@@ -297,7 +297,7 @@ return
                 beginSubstyles   = { declType = "type" }, --emluaInType = "regex" },
                 endSubstyles     = {},
         },
-        
+                
         operatorInDecl = {
         	style = "keyword",
                 pattern          = [[ [:] | (?>operator(?>\s*)(?>->|\||\|=|==|!=|<<|>>|\[\]|[<>+\-*=]+)) ]],
