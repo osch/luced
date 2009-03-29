@@ -331,7 +331,7 @@ public:
     }
     int findFirstOf(char c, Pos startPos = Pos(0)) const {
         ASSERT(0 <= startPos && startPos <= getLength());
-        int rslt = s.find_first_of(c, startPos);
+        std::string::size_type rslt = s.find_first_of(c, startPos);
         if (rslt == std::string::npos) {
             return -1;
         } else {
@@ -379,7 +379,7 @@ public:
         int i = 0;
         while (i < thisLength) 
         {
-            int n = s.find(oldPart, i);
+            std::string::size_type n = s.find(oldPart, i);
             if (n == std::string::npos) {
                 break;
             }

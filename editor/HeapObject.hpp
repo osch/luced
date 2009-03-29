@@ -65,9 +65,9 @@ class HeapObjectCounters : private NonCopyable
 private:
     friend class HeapObjectBase;
     friend class HeapObjectRefManipulator;
-    HeapObjectCounters() : weakCounter(0), 
-                           strongCounter(1),
-                           wasNeverOwned(true)
+    HeapObjectCounters() : wasNeverOwned(true),
+                           weakCounter(0), 
+                           strongCounter(1)
 #ifdef DEBUG
         , magic(MAGIC)
 #endif
@@ -80,13 +80,13 @@ private:
 #endif
         wasNeverOwned = false;
     }
+    bool wasNeverOwned;
+    int weakCounter;
+    int strongCounter;
 #ifdef DEBUG
     enum {MAGIC = 12345678};
     int magic;
 #endif
-    bool wasNeverOwned;
-    int weakCounter;
-    int strongCounter;
 public:
     bool hasWeakReferences() const {
         return weakCounter >= 1;
