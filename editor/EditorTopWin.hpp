@@ -50,6 +50,7 @@ namespace LucED
 class ViewLuaInterface;
 
 class EditorTopWin : public  TopWin,
+                     public  FocusManager,
                      private ViewCounterTextDataAccess
 {
 public:
@@ -77,6 +78,7 @@ public:
     virtual void treatFocusOut();
     virtual void setSize(int width, int height);
     virtual void show();
+    virtual void hide();
     
     void invokeSaveAsPanel(Callback<>::Ptr saveCallback);
 
@@ -104,15 +106,18 @@ public:
     
     void gotoLineNumber(int lineNumber);
 
+private: // FocusManager methods 
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
+    virtual void requestFocusFor(RawPtr<FocusableElement> w);
+    virtual void reportMouseClickFrom(RawPtr<FocusableElement> w);
+
 private:
     class PanelInvoker;
     class ActionInterface;
     class UserDefinedActionMethods;
     
     EditorTopWin(HilitedText::Ptr hilitedText, int width, int height);
-
-    virtual void requestFocusFor(RawPtr<FocusableElement> w);
-    virtual void reportMouseClickFrom(GuiWidget* w);
 
     void treatConfigUpdate();
 

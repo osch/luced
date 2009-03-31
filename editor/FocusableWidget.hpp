@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,38 +19,32 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "PanelDialogWin.hpp"
-#include "GlobalConfig.hpp"
-#include "GuiLayoutRow.hpp"
-#include "GuiLayoutSpacer.hpp"
-#include "TextData.hpp"
-#include "GlobalConfig.hpp"
-#include "LabelWidget.hpp"
-#include "DialogPanel.hpp"
+#ifndef FOCUSABLE_WIDGET_HPP
+#define FOCUSABLE_WIDGET_HPP
 
-using namespace LucED;
+#include "GuiWidget.hpp"
+#include "FocusableElement.hpp"
+#include "Position.hpp"
+#include "RawPtr.hpp"
 
-PanelDialogWin::PanelDialogWin(TopWin* referingWindow)
-    : DialogWin(referingWindow),
-      dialogPanel(DialogPanel::create(this))
+namespace LucED
 {
-    GuiWidget::setFocusManagerForChildWidgets(dialogPanel);
 
-    DialogWin::setRootElement(dialogPanel);
-
-    dialogPanel->show();
-}
-
-
-void PanelDialogWin::treatFocusIn()
+class FocusableWidget : public FocusableElement,
+                        public GuiWidget
 {
-    DialogWin::treatFocusIn();
-    dialogPanel->treatFocusIn();
-}
+public:
+    virtual void treatNewWindowPosition(Position newPosition);
+    virtual void show();
+    virtual void hide();
 
-void PanelDialogWin::treatFocusOut()
-{
-    DialogWin::treatFocusOut();
-    dialogPanel->treatFocusOut();
-}
+protected:
+    FocusableWidget(RawPtr<GuiWidget> parent, int x, int y, unsigned int width, unsigned int height, unsigned border_width)
+        : FocusableElement(parent),
+          GuiWidget(parent, x, y, width, height, border_width)
+    {}
+};
 
+} // namespace LucED
+
+#endif // FOCUSABLE_WIDGET_HPP

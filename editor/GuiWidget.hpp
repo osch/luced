@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -34,21 +34,16 @@
 #include "RawPtr.hpp"
 #include "ObjectArray.hpp"
 #include "KeyPressEvent.hpp"
+#include "RawPtrGuarded.hpp"
+#include "FocusManager.hpp"
 
 namespace LucED
 {
 
-class EventDispatcher;
-class GuiRoot;
-class TopWin;
-class FocusableElement;
-
-class GuiWidget : public GuiElement
+class GuiWidget : public NonCopyable,
+                  public RawPtrGuarded
 {
 public:
-    typedef OwningPtr<GuiWidget> Ptr;
-    typedef OwningPtr<const GuiWidget> ConstPtr;
-    
     class EventProcessorAccess;
     
     class EventRegistration
@@ -63,11 +58,17 @@ public:
         WidgetId wid;
     };
     
+    enum ProcessingResult
+    {
+        NOT_PROCESSED = 0,
+        EVENT_PROCESSED = 1
+    };
+    
     virtual ProcessingResult processEvent(const XEvent *event);
     virtual void setPosition(Position newPosition);
     virtual void setSize(int width, int height);
-    virtual void treatNewWindowPosition(Position newPosition) {}
-    const Position& getPosition() { return position; }
+    virtual void treatNewWindowPosition(Position newPosition) = 0;
+//    const Position& getPosition() { return position; }
     Position getAbsolutePosition();
     
     virtual void show();
@@ -91,18 +92,17 @@ public:
             return GuiWidget::EventRegistration(guiWidget, wid);
         }
     };
+    
 protected:
-
     GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width);
     
     GuiWidget(GuiWidget* parent,
-            int x, int y, unsigned int width, unsigned int height, unsigned border_width);
+              int x, int y, unsigned int width, unsigned int height, unsigned border_width);
 
     virtual ~GuiWidget();
 
     static WidgetId getRootWid();
     static Display* getDisplay();
-    static EventDispatcher* getEventDispatcher();
     static GuiRoot* getGuiRoot() { return GuiRoot::getInstance(); }
     
     class GuiClipping
@@ -120,15 +120,14 @@ protected:
     void setBitGravity(int bitGravity);
 
 protected:
-    virtual void reportMouseClickFrom(GuiWidget* w);
-
-    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
-
-    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
-
     RawPtr<GuiWidget> getParentWidget() const {
         return parent;
     }
+    
+    void setFocusManagerForChildWidgets(RawPtr<FocusManager> focusManager) {
+        this->focusManagerForChildWidgets = focusManager;
+    }
+    
 public:
     WidgetId getWid() const {
         return wid;
@@ -137,9 +136,11 @@ public:
     virtual void setBackgroundColor(GuiColor color);
     virtual void setBorderColor(GuiColor color);
 
+    RawPtr<FocusManager> getFocusManagerForChildWidgets() const {
+        return focusManagerForChildWidgets;
+    }
+
 protected:
-    virtual void requestFocusFor(RawPtr<FocusableElement> w);
-    
     void addToXEventMask(long eventMask);
     void removeFromXEventMask(long eventMask);
     
@@ -185,6 +186,7 @@ private:
     GC gcid;
 
     RawPtr<GuiWidget> parent;
+    RawPtr<FocusManager> focusManagerForChildWidgets;
 };
 
 

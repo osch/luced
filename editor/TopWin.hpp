@@ -24,6 +24,7 @@
 #ifndef TOP_WIN_HPP
 #define TOP_WIN_HPP
 
+#include "HeapObject.hpp"
 #include "GuiWidget.hpp"
 #include "WeakPtr.hpp"
 #include "OwningPtr.hpp"
@@ -35,7 +36,8 @@ namespace LucED
 
 class KeyPressRepeater;
 
-class TopWin : public GuiWidget
+class TopWin : public HeapObject,
+               public GuiWidget
 {
 public:
     typedef WeakPtr<TopWin> Ptr;
@@ -52,13 +54,25 @@ public:
 
     virtual void requestFocus();
     virtual void requestCloseWindow(TopWin::CloseReason reason);
+
     void requestCloseWindow() {
         requestCloseWindow(CLOSED_SILENTLY);
     }
-    virtual void treatNewWindowPosition(Position newPosition) {}
-    virtual void treatFocusIn() {}
-    virtual void treatFocusOut() {}
+    Position getPosition() const {
+        return position;
+    }
+    
+    virtual void treatNewWindowPosition(Position newPosition);
+    virtual void treatFocusIn();
+    virtual void treatFocusOut();
 
+    virtual void show();
+    virtual void hide();
+
+    bool isVisible() const {
+        return isVisibleFlag;
+    }
+    
     void setTitle(const char* title);
     void setTitle(const String& title) {
         setTitle(title.toCString());
@@ -109,14 +123,11 @@ protected:
     > 
     static WeakPtr<T> transferOwnershipTo(T* topWin, OwnerPtr owner);
     
-    virtual void notifyAboutBeingMapped()
-    {}
+    virtual void notifyAboutBeingMapped();
     
-    virtual void notifyAboutBeingUnmapped()
-    {}
+    virtual void notifyAboutBeingUnmapped();
 
-    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent) 
-    { return NOT_PROCESSED; }
+    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
     
     void internalRaise();
     
@@ -146,6 +157,9 @@ private:
     
     bool shouldRaiseAfterFocusIn;
     bool isClosingFlag;
+    Position position;
+
+    bool isVisibleFlag;
 };
 
 

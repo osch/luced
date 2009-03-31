@@ -46,7 +46,8 @@ TopWin::TopWin()
       focusFlag(false),
       raiseWindowAtom(XInternAtom(getDisplay(), "_NET_ACTIVE_WINDOW", False)),
       shouldRaiseAfterFocusIn(false),
-      isClosingFlag(false)
+      isClosingFlag(false),
+      isVisibleFlag(false)
 {
     setWindowManagerHints();
 
@@ -157,7 +158,7 @@ void TopWin::repeatKeyPress(const XEvent* event)
 }
 
 
-GuiElement::ProcessingResult TopWin::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult TopWin::processEvent(const XEvent* event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED)
     {
@@ -535,3 +536,37 @@ void TopWin::internalRaise()
     }
 }
 
+void TopWin::treatNewWindowPosition(Position newPosition)
+{
+    this->position = newPosition;
+}
+
+void TopWin::treatFocusIn()
+{}
+
+void TopWin::treatFocusOut()
+{}
+
+void TopWin::notifyAboutBeingMapped()
+{}
+
+void TopWin::notifyAboutBeingUnmapped()
+{}
+
+GuiWidget::ProcessingResult TopWin::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
+{
+    return NOT_PROCESSED;
+}
+
+void TopWin::show()
+{
+    GuiWidget::show();
+    isVisibleFlag = true;
+}
+
+
+void TopWin::hide()
+{
+    GuiWidget::hide();
+    isVisibleFlag = false;
+}

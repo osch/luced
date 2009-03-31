@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,38 +19,35 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "PanelDialogWin.hpp"
-#include "GlobalConfig.hpp"
-#include "GuiLayoutRow.hpp"
-#include "GuiLayoutSpacer.hpp"
-#include "TextData.hpp"
-#include "GlobalConfig.hpp"
-#include "LabelWidget.hpp"
-#include "DialogPanel.hpp"
+#ifndef FOCUS_MANAGER_HPP
+#define FOCUS_MANAGER_HPP
 
-using namespace LucED;
+#include "KeyMapping.hpp"
+#include "RawPtr.hpp"
+#include "RawPtrGuarded.hpp"
 
-PanelDialogWin::PanelDialogWin(TopWin* referingWindow)
-    : DialogWin(referingWindow),
-      dialogPanel(DialogPanel::create(this))
+namespace LucED
 {
-    GuiWidget::setFocusManagerForChildWidgets(dialogPanel);
 
-    DialogWin::setRootElement(dialogPanel);
+class FocusManager;
+class FocusableElement;
 
-    dialogPanel->show();
-}
-
-
-void PanelDialogWin::treatFocusIn()
+class FocusManager : public RawPtrGuarded
 {
-    DialogWin::treatFocusIn();
-    dialogPanel->treatFocusIn();
-}
+public:
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w) = 0;
 
-void PanelDialogWin::treatFocusOut()
-{
-    DialogWin::treatFocusOut();
-    dialogPanel->treatFocusOut();
-}
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w) = 0;
 
+    virtual void requestFocusFor(RawPtr<FocusableElement> w) = 0;
+
+    virtual void reportMouseClickFrom(RawPtr<FocusableElement> w) = 0;
+
+protected:
+    FocusManager()
+    {}
+};
+
+} // namespace LucED
+
+#endif // FOCUS_MANAGER_HPP

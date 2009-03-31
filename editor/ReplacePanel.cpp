@@ -238,7 +238,7 @@ void ReplacePanel::notifyAboutCollectedPasteData(String collectedSelectionData)
 }
 
 
-GuiElement::ProcessingResult ReplacePanel::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult ReplacePanel::processEvent(const XEvent* event)
 {
     if (pasteDataReceiver->processPasteDataReceiverEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;

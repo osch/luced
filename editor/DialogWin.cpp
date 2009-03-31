@@ -75,7 +75,7 @@ void DialogWin::setRootElement(OwningPtr<FocusableElement> rootElement)
 void DialogWin::prepareSizeHints()
 {
     if (rootElement.isValid()) {
-        Measures m = rootElement->getDesiredMeasures();
+        GuiElement::Measures m = rootElement->getDesiredMeasures();
         if (wasNeverShown) {
             Position pp;
             if (referingWindow != NULL)  {
@@ -130,7 +130,7 @@ void DialogWin::treatNewWindowPosition(Position newPosition)
 
 
 
-GuiElement::ProcessingResult DialogWin::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
+GuiWidget::ProcessingResult DialogWin::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
 {
     bool processed = false;
 

@@ -23,6 +23,7 @@
 #define KEY_ACTION_HANDLER_HPP
 
 #include "ActionMethodContainer.hpp"
+#include "KeyPressEvent.hpp"
 
 namespace LucED
 {

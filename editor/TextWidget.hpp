@@ -36,12 +36,12 @@
 #include "RawPtr.hpp"
 #include "Flags.hpp"
 #include "ScrollBar.hpp"
-#include "FocusableElement.hpp"
+#include "FocusableWidget.hpp"
                     
 namespace LucED
 {
 
-class TextWidget : public FocusableElement
+class TextWidget : public FocusableWidget
 {
 public:
     typedef OwningPtr<TextWidget> Ptr;
@@ -210,7 +210,7 @@ public:
     long insertAtCursor(const ByteArray& buffer);
     void removeAtCursor(long amount);
     
-    virtual ProcessingResult processEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent* event);
 
     bool isCursorBlinking() const {
         return cursorIsBlinking;

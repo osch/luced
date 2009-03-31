@@ -33,6 +33,7 @@
 #include "debug.hpp"
 #include "NonCopyable.hpp"
 #include "String.hpp"
+#include "RawPtrGuarded.hpp"
 
 #undef HEAP_OBJECT_USES_DYNAMIC_CAST
 //#define PRINT_MALLOCS
@@ -302,8 +303,9 @@ protected:
     }
 };
 
+
 class HeapObject : public HeapObjectBase,
-                   public RawPtrGuardHolder
+                   public RawPtrGuarded
 {
 protected:
     HeapObject()

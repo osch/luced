@@ -29,17 +29,17 @@
 #include "Callback.hpp"
 #include "TimeVal.hpp"
 #include "ActionMethodBinding.hpp"
-#include "FocusableElement.hpp"
+#include "FocusableWidget.hpp"
 
 namespace LucED
 {
 
-class CheckBox : public FocusableElement
+class CheckBox : public FocusableWidget
 {
 public:
     typedef OwningPtr<CheckBox> Ptr;
     
-    static Ptr create(GuiWidget* parent, String buttonText) {
+    static Ptr create(RawPtr<GuiWidget> parent, String buttonText) {
         return Ptr(new CheckBox(parent, buttonText));
     }
     
@@ -88,7 +88,7 @@ private:
     };
     friend class ActionMethodBinding<Actions>;
 
-    CheckBox(GuiWidget* parent, String buttonText);
+    CheckBox(RawPtr<GuiWidget> parent, String buttonText);
 
     void draw();
     bool isMouseInsideButtonArea(int mouseX, int mouseY);

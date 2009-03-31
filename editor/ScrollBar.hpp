@@ -19,17 +19,18 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SCROLLBAR_H
-#define SCROLLBAR_H
+#ifndef SCROLLBAR_HPP
+#define SCROLLBAR_HPP
 
-#include "GuiWidget.hpp"
+#include "NonFocusableWidget.hpp"
 #include "Callback.hpp"
 #include "types.hpp"
 #include "OwningPtr.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-class ScrollBar : public GuiWidget
+class ScrollBar : public NonFocusableWidget
 {
 public:
 
@@ -108,4 +109,4 @@ private:
 } // namespace LucED
 
 
-#endif // SCROLLBAR_H
+#endif // SCROLLBAR_HPP

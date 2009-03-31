@@ -269,6 +269,8 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
       actionMethodContainer(ActionMethodContainer::create()),
       actionKeySequenceHandler(actionMethodContainer)
 {
+    GuiWidget::setFocusManagerForChildWidgets(this);
+
     addToXEventMask(ButtonPressMask);
     
     statusLine = StatusLine::create(this);
@@ -309,7 +311,7 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
     statusLine->show();
     scrollableTextCompound->show();
 
-    Measures m = rootElement->getDesiredMeasures();
+    GuiElement::Measures m = rootElement->getDesiredMeasures();
 
     if (width == -1 || height == -1)
     {
@@ -384,8 +386,15 @@ void EditorTopWin::show()
 ////        setSizeHints(getPosition().x, getPosition().y, 
 ////                             m.minWidth, m.minHeight, 1, 1);
     }
-    GuiWidget::show();
+    TopWin::show();
 }
+
+
+void EditorTopWin::hide()
+{
+    TopWin::hide();
+}
+
 
 void EditorTopWin::treatNewWindowPosition(Position newPosition)
 {
@@ -393,7 +402,8 @@ void EditorTopWin::treatNewWindowPosition(Position newPosition)
     rootElement->setPosition(Position(0, 0, newPosition.w, newPosition.h));
 }
 
-GuiElement::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
+
+GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
 {
     try
     {
@@ -482,7 +492,7 @@ void EditorTopWin::handleBeforeMouseClick()
     EventDispatcher::getInstance()->deregisterBeforeMouseClickListenerFor(this);
 }
 
-GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult EditorTopWin::processEvent(const XEvent* event)
 {
     if (TopWin::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
@@ -502,7 +512,12 @@ GuiElement::ProcessingResult EditorTopWin::processEvent(const XEvent* event)
     }
 }
 
-void EditorTopWin::reportMouseClickFrom(GuiWidget* w)
+void EditorTopWin::reportMouseClickFrom(RawPtr<FocusableElement> w)
+{
+    requestFocusFor(w);
+}
+
+void EditorTopWin::requestFocusFor(RawPtr<FocusableElement> w)
 {
     if (!hasMessageBox || !isMessageBoxModal)
     {
@@ -521,9 +536,14 @@ void EditorTopWin::reportMouseClickFrom(GuiWidget* w)
     }
 }
 
-void EditorTopWin::requestFocusFor(RawPtr<FocusableElement> w)
+void EditorTopWin::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
 {
-    reportMouseClickFrom(w);
+    ASSERT(false);
+}
+
+void EditorTopWin::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
+{
+    ASSERT(false);
 }
 
 

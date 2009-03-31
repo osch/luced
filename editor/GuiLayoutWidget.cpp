@@ -25,7 +25,7 @@
 using namespace LucED;
 
 GuiLayoutWidget::GuiLayoutWidget(GuiWidget* parent, const Measures& m, GuiColor color)
-      : GuiWidget(parent, 0, 0, 1, 1, 0),
+      : NonFocusableWidget(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
         measures(m)
 {

@@ -30,7 +30,7 @@
 using namespace LucED;
 
 StatusLine::StatusLine(GuiWidget* parent)
-    : GuiWidget(parent, 0, 0, 1, 1, 0),
+    : NonFocusableWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
       fileLength(0), selectionLength(0),
       lengthPos(0), line(0), column(0), pos(0), lineAndColumnWidth(0),
@@ -65,7 +65,7 @@ GuiElement::Measures StatusLine::getDesiredMeasures()
     return Measures(0, statusHeight, 0, statusHeight, INT_MAX, statusHeight);
 }
 
-GuiElement::ProcessingResult StatusLine::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult StatusLine::processEvent(const XEvent* event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;

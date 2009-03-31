@@ -76,7 +76,7 @@ SingletonInstance<ScrollBarSingletonData> ScrollBarSingletonData::instance;
 
 
 ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
-    : GuiWidget(parent, 0, 0, 1, 1, 0),
+    : NonFocusableWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
       isV(orientation == Orientation::VERTICAL),
       hilitedPart(NONE),
@@ -96,7 +96,7 @@ ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
  }
 
 
-GuiElement::ProcessingResult ScrollBar::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult ScrollBar::processEvent(const XEvent *event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;

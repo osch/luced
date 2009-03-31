@@ -26,12 +26,13 @@
 #include "TextData.hpp"
 #include "EditFieldGroup.hpp"
 #include "RawPtr.hpp"
-#include "FocusableElement.hpp"
+#include "FocusableWidget.hpp"
 
 namespace LucED
 {
 
-class SingleLineEditField : public FocusableElement
+class SingleLineEditField : public FocusableWidget,
+                            public FocusManager
 {
 public:
     typedef OwningPtr<SingleLineEditField> Ptr;
@@ -86,11 +87,17 @@ public:
 
     virtual void notifyAboutHotKeyEventForOtherWidget();
     
-protected:    
+
+private: // FocusManager methods 
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
     virtual void requestFocusFor(RawPtr<FocusableElement> w);
+    virtual void reportMouseClickFrom(RawPtr<FocusableElement> w);
 
 private:
     SingleLineEditField(GuiWidget* parent, LanguageMode::Ptr languageMode, TextData::Ptr textData);
+    
+
     SingleLineEditorWidget::Ptr editorWidget;
     void draw();
     VerticalAdjustment::Type adjustment;

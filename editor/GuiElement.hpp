@@ -87,12 +87,6 @@ public:
         int incrHeight;
     };
     
-    enum ProcessingResult
-    {
-        NOT_PROCESSED = 0,
-        EVENT_PROCESSED = 1
-    };
-    
     
     class DesiredMeasuresChangedException : public BaseException
     {
@@ -132,6 +126,10 @@ public:
     virtual Measures getDesiredMeasures() { return Measures(0, 0, 0, 0, 0, 0); };
     virtual void setPosition(Position p) = 0;
 
+    const Position& getPosition() const {
+        return position;
+    }
+
     virtual void show() {
         isVisibleFlag = true;
     }
@@ -145,8 +143,13 @@ protected:
         : isVisibleFlag(true)
     {}
     
+    void treatNewWindowPosition(Position newPosition) {
+        position = newPosition;
+    }
+
 private:
     bool isVisibleFlag;
+    Position position;
 };
 
 

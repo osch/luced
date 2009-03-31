@@ -28,12 +28,12 @@
 #include "GuiWidget.hpp"
 #include "Callback.hpp"
 #include "OwningPtr.hpp"
-#include "FocusableElement.hpp"
+#include "NonFocusableWidget.hpp"
 
 namespace LucED
 {
 
-class LabelWidget : public GuiWidget
+class LabelWidget : public NonFocusableWidget
 {
 public:
 
@@ -47,10 +47,10 @@ public:
     virtual ProcessingResult processEvent(const XEvent *event);
     virtual void setPosition(Position newPosition);
 
-    void setDesiredMeasures(Measures m);
+    void setDesiredMeasures(GuiElement::Measures m);
 
-    virtual Measures getDesiredMeasures();
-    Measures getOwnDesiredMeasures();
+    virtual GuiElement::Measures getDesiredMeasures();
+    GuiElement::Measures getOwnDesiredMeasures();
 
     void setLayoutHeight(int height, VerticalAdjustment::Type adjust);
 
@@ -70,7 +70,7 @@ private:
     VerticalAdjustment::Type adjustment;
     int layoutHeight;
     bool hasForcedMeasuresFlag;
-    Measures forcedMeasures;
+    GuiElement::Measures forcedMeasures;
     Callback<>::Ptr middleMouseButtonCallback;
 };
 

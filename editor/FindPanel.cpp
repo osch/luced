@@ -338,7 +338,7 @@ void FindPanel::internalFindSelection(bool forwardFlag)
 }
 
 
-GuiElement::ProcessingResult FindPanel::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult FindPanel::processEvent(const XEvent* event)
 {
     if (pasteDataReceiver->processPasteDataReceiverEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;

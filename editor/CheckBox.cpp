@@ -23,15 +23,14 @@
 
 #include "CheckBox.hpp"
 #include "GuiRoot.hpp"
-#include "TopWin.hpp"
 #include "GlobalConfig.hpp"
 
 using namespace LucED;
 
 const int BUTTON_OUTER_BORDER = 1;
 
-CheckBox::CheckBox(GuiWidget* parent, String buttonText)
-      : FocusableElement(parent, 0, 0, 1, 1, 0),
+CheckBox::CheckBox(RawPtr<GuiWidget> parent, String buttonText)
+      : FocusableWidget(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
         isBoxChecked(false),
         isMouseButtonPressed(false),
@@ -51,7 +50,7 @@ CheckBox::CheckBox(GuiWidget* parent, String buttonText)
         // showHotKey = true;
         String keySymString;
         keySymString.appendUpperChar(hotKeyChar);
-        requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
+        requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
     } else {
         this->buttonText = buttonText;
     }
@@ -155,7 +154,7 @@ bool CheckBox::isMouseInsideButtonArea(int mouseX, int mouseY)
                             && y >= BUTTON_OUTER_BORDER - 1 && y <= position.h - 2*BUTTON_OUTER_BORDER + 1);
 }
 
-GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult CheckBox::processEvent(const XEvent *event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
@@ -177,7 +176,7 @@ GuiElement::ProcessingResult CheckBox::processEvent(const XEvent *event)
 
             case ButtonPress: {
                 if (!hasFocus()) {
-                    reportMouseClickFrom(this);
+                    reportMouseClick();
                 }
                 if (event->xbutton.button == Button1)
                 {

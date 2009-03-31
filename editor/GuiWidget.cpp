@@ -28,7 +28,6 @@
 #include "GlobalConfig.hpp"
 #include "SingletonInstance.hpp"
 #include "TextStyleCache.hpp"
-#include "FocusableElement.hpp"
 
 namespace LucED
 {
@@ -93,10 +92,6 @@ WidgetId GuiWidget::getRootWid()
     return GuiRoot::getInstance()->getRootWid();
 }
 
-EventDispatcher* GuiWidget::getEventDispatcher()
-{
-    return EventDispatcher::getInstance();
-}
 
 GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width)
     : isTopWindow(true),
@@ -105,7 +100,7 @@ GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsi
       position(x, y, width, height),
       gcid(GuiWidgetSingletonData::getInstance()->getGcid())
 {
-    GuiElement::hide();
+//    GuiElement::hide();
     
     wid = WidgetId(XCreateSimpleWindow(getDisplay(), getRootWid(), 
                                        x, y, width, height, border_width, 
@@ -131,7 +126,7 @@ GuiWidget::GuiWidget(GuiWidget* parent,
                                        GuiRoot::getInstance()->getWhiteColor()));
 #endif
 
-    GuiElement::hide();
+//    GuiElement::hide();
     
     XSetWindowAttributes at;
     at.background_pixmap = None;
@@ -158,7 +153,7 @@ GuiWidget::~GuiWidget()
     }
 }
 
-GuiElement::ProcessingResult GuiWidget::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent *event)
 {
     switch (event->type)
     {
@@ -209,13 +204,13 @@ void GuiWidget::setSize(int width, int height)
 void GuiWidget::show()
 {
     XMapWindow(getDisplay(), wid);
-    GuiElement::show();
+//    GuiElement::show();
 }
 
 void GuiWidget::hide()
 {
     XUnmapWindow(getDisplay(), wid);
-    GuiElement::hide();
+//    GuiElement::hide();
 }
 
 void GuiWidget::setBackgroundColor(GuiColor color)
@@ -588,22 +583,3 @@ void GuiWidget::setBitGravity(int bitGravity)
             CWBitGravity, &at);
 }
 
-void GuiWidget::reportMouseClickFrom(GuiWidget* w)
-{
-    if (parent != Null) parent->reportMouseClickFrom(w);
-}
-
-void GuiWidget::requestFocusFor(RawPtr<FocusableElement> w)
-{
-    if (parent.isValid()) parent->requestFocusFor(w);
-}
-
-void GuiWidget::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
-{
-    if (parent != Null) parent->requestHotKeyRegistrationFor(id, w);
-}
-
-void GuiWidget::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
-{
-    if (parent != Null) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
-}

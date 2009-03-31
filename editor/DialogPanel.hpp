@@ -29,12 +29,13 @@
 #include "Callback.hpp"
 #include "HeapHashMap.hpp"
 #include "ActionMethodBinding.hpp"
-#include "FocusableElement.hpp"
+#include "FocusableWidget.hpp"
                     
 namespace LucED
 {
 
-class DialogPanel : public FocusableElement
+class DialogPanel : public  FocusableWidget,
+                    public  FocusManager
 {
 public:
     typedef OwningPtr<DialogPanel> Ptr;
@@ -57,9 +58,6 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
-    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
-
     void setRootElement(OwningPtr<GuiElement> rootElement);
     void setFocus(RawPtr<FocusableElement> element);
     virtual void notifyAboutHotKeyEventForOtherWidget();
@@ -68,14 +66,18 @@ public:
     
     
 protected:
-    DialogPanel(GuiWidget* parent, Callback<DialogPanel*>::Ptr requestCloseCallback);
+    DialogPanel(RawPtr<GuiWidget> parent, Callback<DialogPanel*>::Ptr requestCloseCallback);
     
-    GuiElement* getRootElement() {return rootElement.getRawPtr();}
+    RawPtr<GuiElement> getRootElement() { return rootElement; }
     
-    virtual void requestFocusFor(RawPtr<FocusableElement> w);
-    virtual void reportMouseClickFrom(GuiWidget* w);
+    virtual void reportMouseClickFrom(RawPtr<FocusableElement> w);
     
     virtual void requestClose();
+
+private: // FocusManager
+    virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
+    virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
+    virtual void requestFocusFor(RawPtr<FocusableElement> w);
     
 private:
     class MyKeyActionHandler;

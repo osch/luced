@@ -133,16 +133,16 @@ const ByteArray& Clipboard::getClipboardBuffer() {
 }
 
 
-GuiElement::ProcessingResult Clipboard::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult Clipboard::processEvent(const XEvent* event)
 {
-    if (selectionOwner   ->processSelectionOwnerEvent(event)     == GuiElement::EVENT_PROCESSED
-     || pasteDataReceiver->processPasteDataReceiverEvent(event)  == GuiElement::EVENT_PROCESSED)
+    if (selectionOwner   ->processSelectionOwnerEvent(event)     == GuiWidget::EVENT_PROCESSED
+     || pasteDataReceiver->processPasteDataReceiverEvent(event)  == GuiWidget::EVENT_PROCESSED)
     {
-        return GuiElement::EVENT_PROCESSED;
+        return GuiWidget::EVENT_PROCESSED;
     }
     else
     {
-        return GuiElement::NOT_PROCESSED;
+        return GuiWidget::NOT_PROCESSED;
     }
 }
 
@@ -165,6 +165,10 @@ void Clipboard::notifyAboutEndOfPastingData()
     }
     newBuffer.clear();
 }
+
+void Clipboard::treatNewWindowPosition(Position newPosition)
+{}
+
 
 
 

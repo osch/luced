@@ -22,13 +22,16 @@
 #ifndef FOCUSABLE_ELEMENT_HPP
 #define FOCUSABLE_ELEMENT_HPP
 
+#include "GuiElement.hpp"
 #include "GuiWidget.hpp"
 #include "KeyActionHandler.hpp"
+#include "KeyMapping.hpp"
+#include "FocusManager.hpp"
 
 namespace LucED
 {
 
-class FocusableElement : public GuiWidget
+class FocusableElement : public GuiElement
 {
 public:
     typedef OwningPtr<FocusableElement> Ptr;
@@ -62,9 +65,9 @@ public:
     }
     
 protected:
-    FocusableElement(GuiWidget* parent,
-                    int x, int y, unsigned int width, unsigned int height, unsigned border_width)
-        : GuiWidget(parent, x, y, width, height, border_width),
+    FocusableElement(RawPtr<GuiWidget> parent)
+        : parent(parent),
+          focusManager(parent->getFocusManagerForChildWidgets()),
           focusableFlag(true),
           focusFlag(false),
           focusType(NORMAL_FOCUS)
@@ -82,7 +85,26 @@ protected:
         this->keyActionHandler = keyActionHandler;
     }
     
+    void requestHotKeyRegistration(const KeyMapping::Id& id) {
+        focusManager->requestHotKeyRegistrationFor(id, this);
+    }
+
+    void requestRemovalOfHotKeyRegistration(const KeyMapping::Id& id) {
+        focusManager->requestRemovalOfHotKeyRegistrationFor(id, this);
+    }
+
+    void requestFocus() {
+        focusManager->requestFocusFor(this);
+    }
+    
+    void reportMouseClick() {
+        focusManager->reportMouseClickFrom(this);
+    }
+
 private:
+    RawPtr<GuiWidget>    parent;
+    RawPtr<FocusManager> focusManager;
+
     bool focusableFlag;
     bool focusFlag;
     FocusType focusType;

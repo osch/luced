@@ -70,9 +70,9 @@ private:
     RawPtr<DialogPanel> p;
 };
 
-DialogPanel::DialogPanel(GuiWidget*                  parent, 
+DialogPanel::DialogPanel(RawPtr<GuiWidget>           parent, 
                          Callback<DialogPanel*>::Ptr requestCloseCallback)
-    : FocusableElement(parent, 0, 0, 1, 1, 0),
+    : FocusableWidget(parent, 0, 0, 1, 1, 0),
       wasNeverShown(true),
       
       hotKeyMapping(HotKeyMapping::create()),
@@ -82,6 +82,8 @@ DialogPanel::DialogPanel(GuiWidget*                  parent,
       
       requestCloseCallback(requestCloseCallback)
 {
+    GuiWidget::setFocusManagerForChildWidgets(this);
+    
     addToXEventMask(ExposureMask|ButtonPressMask);
 
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -103,7 +105,6 @@ void DialogPanel::treatNewWindowPosition(Position newPosition)
     {
         int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
 
-        GuiWidget::treatNewWindowPosition(newPosition);
         int border = guiSpacing;
         int dx = border;
         int dy = border;
@@ -156,7 +157,7 @@ GuiElement::Measures DialogPanel::getDesiredMeasures()
 
 
 
-GuiElement::ProcessingResult DialogPanel::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult DialogPanel::processEvent(const XEvent* event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
@@ -165,7 +166,7 @@ GuiElement::ProcessingResult DialogPanel::processEvent(const XEvent* event)
         {
             case ButtonPress:
                 if (!hasFocus()) {
-                    GuiWidget::reportMouseClickFrom(this);
+                    reportMouseClick();
                 }
                 break;
             case GraphicsExpose:
@@ -662,10 +663,10 @@ void DialogPanel::setFocus(RawPtr<FocusableElement> element)
 }
 
 
-void DialogPanel::reportMouseClickFrom(GuiWidget* w)
+void DialogPanel::reportMouseClickFrom(RawPtr<FocusableElement> w)
 {
     if (!hasFocus()) {
-        GuiWidget::reportMouseClickFrom(this);
+        reportMouseClick();
     }
 }
 

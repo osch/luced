@@ -26,12 +26,13 @@
 using namespace LucED;
 
 SingleLineEditField::SingleLineEditField(GuiWidget* parent, LanguageMode::Ptr languageMode, TextData::Ptr textData)
-    : FocusableElement(parent, 0, 0, 1, 1, 0),
+    : FocusableWidget(parent, 0, 0, 1, 1, 0),
       adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
       heightOffset(0),
       cursorStaysHidden(false)
 {
+    GuiWidget::setFocusManagerForChildWidgets(this);
     
     addToXEventMask(ExposureMask);
     setBackgroundColor(getGuiRoot()->getGuiColor03());
@@ -54,7 +55,7 @@ void SingleLineEditField::setLayoutHeight(int height, VerticalAdjustment::Type a
     adjustment = adjust;
 }
 
-GuiElement::ProcessingResult SingleLineEditField::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult SingleLineEditField::processEvent(const XEvent* event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
@@ -156,12 +157,6 @@ void SingleLineEditField::setPosition(Position p)
     editorWidget->setPosition(p);
 }
 
-void SingleLineEditField::requestFocusFor(RawPtr<FocusableElement> w)
-{
-    if (editorWidget.getRawPtr() == w) {
-        GuiWidget::requestFocusFor(this);
-    }
-}
 
 void SingleLineEditField::treatFocusIn()
 {
@@ -191,5 +186,30 @@ void SingleLineEditField::notifyAboutHotKeyEventForOtherWidget()
 void SingleLineEditField::setCursorPosition(int position)
 {
     editorWidget->moveCursorToTextPositionAndAdjustVisibility(position);
+}
+
+
+void SingleLineEditField::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
+{
+    ASSERT(false);
+}
+
+void SingleLineEditField::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
+{
+    ASSERT(false);
+}
+
+void SingleLineEditField::requestFocusFor(RawPtr<FocusableElement> w)
+{
+    if (editorWidget == w) {
+        requestFocus();
+    }
+}
+
+void SingleLineEditField::reportMouseClickFrom(RawPtr<FocusableElement> w)
+{
+    if (editorWidget == w) {
+        reportMouseClick();
+    }
 }
 

@@ -19,20 +19,20 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GUILAYOUTWIDGET_H
-#define GUILAYOUTWIDGET_H
+#ifndef GUILAYOUTWIDGET_HPP
+#define GUILAYOUTWIDGET_HPP
 
 #include "String.hpp"
 
 #include "GuiWidget.hpp"
 #include "OwningPtr.hpp"
 #include "GuiRoot.hpp"
+#include "NonFocusableWidget.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-
-
-class GuiLayoutWidget : public GuiWidget
+class GuiLayoutWidget : public NonFocusableWidget
 {
 public:
     typedef OwningPtr<GuiLayoutWidget> Ptr;
@@ -55,4 +55,4 @@ private:
 
 } // namespace LucED
 
-#endif // GUILAYOUTWIDGET_H
+#endif // GUILAYOUTWIDGET_HPP

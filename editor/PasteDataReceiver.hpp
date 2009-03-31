@@ -59,7 +59,7 @@ public:
     void requestClipboardPasting();
     bool isReceivingPasteData();
 
-    GuiElement::ProcessingResult processPasteDataReceiverEvent(const XEvent* event);
+    GuiWidget::ProcessingResult processPasteDataReceiverEvent(const XEvent* event);
 
 private:
     PasteDataReceiver(RawPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler);

@@ -46,3 +46,19 @@ void FocusableElement::treatNewHotKeyRegistration(const KeyMapping::Id& id)
 void FocusableElement::treatHotKeyEvent(const KeyMapping::Id& id)
 {}
 
+
+/*void FocusableElement::requestFocusFor(RawPtr<FocusableElement> w)
+{
+    if (parent.isValid()) parent->requestFocusFor(w);
+}
+
+void FocusableElement::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
+{
+    if (parent != Null) parent->requestHotKeyRegistrationFor(id, w);
+}
+
+void FocusableElement::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
+{
+    if (parent != Null) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
+}
+*/

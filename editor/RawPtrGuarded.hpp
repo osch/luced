@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,38 +19,24 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "PanelDialogWin.hpp"
-#include "GlobalConfig.hpp"
-#include "GuiLayoutRow.hpp"
-#include "GuiLayoutSpacer.hpp"
-#include "TextData.hpp"
-#include "GlobalConfig.hpp"
-#include "LabelWidget.hpp"
-#include "DialogPanel.hpp"
+#ifndef RAW_PTR_GUARDED_HPP
+#define RAW_PTR_GUARDED_HPP
 
-using namespace LucED;
+#include "RawPtrGuardHolder.hpp"
 
-PanelDialogWin::PanelDialogWin(TopWin* referingWindow)
-    : DialogWin(referingWindow),
-      dialogPanel(DialogPanel::create(this))
+namespace LucED
 {
-    GuiWidget::setFocusManagerForChildWidgets(dialogPanel);
 
-    DialogWin::setRootElement(dialogPanel);
-
-    dialogPanel->show();
-}
-
-
-void PanelDialogWin::treatFocusIn()
+class RawPtrGuarded
+#ifdef DEBUG
+                    : public virtual RawPtrGuardHolder
+#endif
 {
-    DialogWin::treatFocusIn();
-    dialogPanel->treatFocusIn();
-}
+protected:
+    RawPtrGuarded()
+    {}
+};
 
-void PanelDialogWin::treatFocusOut()
-{
-    DialogWin::treatFocusOut();
-    dialogPanel->treatFocusOut();
-}
+} // namespace LucED
 
+#endif // RAW_PTR_GUARDED_HPP

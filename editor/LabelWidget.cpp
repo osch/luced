@@ -29,7 +29,7 @@
 using namespace LucED;
 
 LabelWidget::LabelWidget(GuiWidget* parent, const String& leftText, const String& rightText)
-    : GuiWidget(parent, 0, 0, 1, 1, 0),
+    : NonFocusableWidget(parent, 0, 0, 1, 1, 0),
       position(0, 0, 1, 1),
       leftText(leftText),
       rightText(rightText),
@@ -55,7 +55,7 @@ void LabelWidget::setPosition(Position newPosition)
     }
 }
 
-void LabelWidget::setDesiredMeasures(Measures m)
+void LabelWidget::setDesiredMeasures(GuiElement::Measures m)
 {
     hasForcedMeasuresFlag = true;
     forcedMeasures = m;
@@ -75,10 +75,10 @@ GuiElement::Measures LabelWidget::getOwnDesiredMeasures()
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
     int height = util::maximum(getGuiTextHeight() + guiSpacing, layoutHeight);
     int width  = getGuiTextStyle()->getTextWidth(leftText.toCString(), leftText.getLength()) + guiSpacing;
-    return Measures(width, height, width, height, width, height);
+    return GuiElement::Measures(width, height, width, height, width, height);
 }
 
-GuiElement::ProcessingResult LabelWidget::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult LabelWidget::processEvent(const XEvent *event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;

@@ -60,7 +60,7 @@ public:
     }
     ~SelectionOwner();
     
-    GuiElement::ProcessingResult processSelectionOwnerEvent(const XEvent *event);
+    GuiWidget::ProcessingResult processSelectionOwnerEvent(const XEvent *event);
     
     bool requestSelectionOwnership();
     void releaseSelectionOwnership();

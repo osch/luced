@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef STATUSLINE_H
-#define STATUSLINE_H
+#ifndef STATUSLINE_HPP
+#define STATUSLINE_HPP
 
 #include "String.hpp"
 
@@ -28,12 +28,12 @@
 #include "Callback.hpp"
 #include "OwningPtr.hpp"
 #include "CursorPositionData.hpp"
+#include "NonFocusableWidget.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-
-
-class StatusLine : public GuiWidget
+class StatusLine : public NonFocusableWidget
 {
 public:
 
@@ -44,7 +44,7 @@ public:
         return StatusLine::Ptr(new StatusLine(parent));
     }
 
-    virtual ProcessingResult processEvent(const XEvent *event);
+    virtual ProcessingResult processEvent(const XEvent* event);
     virtual void setPosition(Position newPosition);
     virtual Measures getDesiredMeasures();
 
@@ -95,5 +95,4 @@ private:
 
 } // namespace LucED
 
-
-#endif // STATUSLINE_H
+#endif // STATUSLINE_HPP

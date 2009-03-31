@@ -23,7 +23,6 @@
 
 #include "Button.hpp"
 #include "GuiRoot.hpp"
-#include "TopWin.hpp"
 #include "GlobalConfig.hpp"
 #include "System.hpp"
 
@@ -32,7 +31,7 @@ using namespace LucED;
 const int BUTTON_OUTER_BORDER = 1;
 
 Button::Button(GuiWidget* parent, String buttonText)
-      : FocusableElement(parent, 0, 0, 1, 1, 0),
+      : FocusableWidget(parent, 0, 0, 1, 1, 0),
         position(0, 0, 1, 1),
         isButtonPressed(false),
         isMouseButtonPressed(false),
@@ -57,7 +56,7 @@ void Button::setButtonText(String buttonText)
     if (hasHotKeyFlag) {
         String keySymString;
         keySymString.appendUpperChar(hotKeyChar);
-        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
+        requestRemovalOfHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
         hasHotKeyFlag = false;
     }
     int p1 = buttonText.findFirstOf(']', Pos(1));
@@ -74,7 +73,7 @@ void Button::setButtonText(String buttonText)
         // showHotKeyFlag = true;
         String keySymString;
         keySymString.appendUpperChar(hotKeyChar);
-        requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)), this);
+        requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
     } else {
         this->buttonText = buttonText;
     }
@@ -199,7 +198,7 @@ static void waitShort(MicroSeconds microSecs = shortTime)
     }
 }
 
-GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult Button::processEvent(const XEvent *event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;
@@ -221,7 +220,7 @@ GuiElement::ProcessingResult Button::processEvent(const XEvent *event)
 
             case ButtonPress: {
                 if (!hasFocus()) {
-                    reportMouseClickFrom(this);
+                    reportMouseClick();
                 }
                 if (event->xbutton.button == Button1 || (this->doesReactOnRightClick() && event->xbutton.button == Button3))
                 {
@@ -384,7 +383,7 @@ void Button::treatNewHotKeyRegistration(const KeyMapping::Id& id)
 void Button::treatFocusIn()
 {
     if (!isDefaultButton) {
-        requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier(), KeyId("Return")),   this);
+        requestHotKeyRegistration(KeyMapping::Id(KeyModifier(), KeyId("Return")));
     }
     if (!hasFocus()) {
         setFocusFlag(true);
@@ -397,7 +396,7 @@ void Button::treatFocusOut()
 {
     setFocusFlag(false);
     if (!isExplicitDefaultButton) {
-        requestRemovalOfHotKeyRegistrationFor(KeyMapping::Id(KeyModifier(), KeyId("Return")),   this);
+        requestRemovalOfHotKeyRegistration(KeyMapping::Id(KeyModifier(), KeyId("Return")));
     }
     drawButton();
 }
@@ -449,7 +448,7 @@ void Button::setAsDefaultButton(bool isDefault)
 {
     if (isDefault != isExplicitDefaultButton) {
         if (isDefault) {
-            requestHotKeyRegistrationFor(KeyMapping::Id(KeyModifier(), KeyId("Return")),   this);
+            requestHotKeyRegistration(KeyMapping::Id(KeyModifier(), KeyId("Return")));
             isExplicitDefaultButton = true;
         } else {
             isExplicitDefaultButton = false;

@@ -361,7 +361,7 @@ static inline MicroSeconds calculateScrollTime(int diffPix, int lineHeight)
     return MicroSeconds(rslt);
 }
 
-GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
 {
     if (   (selectionOwner.isValid()    && selectionOwner   ->processSelectionOwnerEvent   (event) == EVENT_PROCESSED) 
         || (pasteDataReceiver.isValid() && pasteDataReceiver->processPasteDataReceiverEvent(event) == EVENT_PROCESSED)
@@ -375,8 +375,8 @@ GuiElement::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
             {
                 showMousePointer();
                 if (!hasFocus()) {
-                    reportMouseClickFrom(this);
-                    requestFocusFor(this);
+                    reportMouseClick();
+                    requestFocus();
                 }
                 if (event->xbutton.button == Button1)
                 {

@@ -107,7 +107,7 @@ SingletonInstance<TextWidgetSingletonData> TextWidgetSingletonData::instance;
 TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int border,
                        CreateOptions options)
 
-    : FocusableElement(parent, 0, 0, 
+    : FocusableWidget(parent, 0, 0, 
                       hilitedText->getSyntaxPatterns()->getDefaultTextStyle()->getSpaceWidth()*200, 
                       hilitedText->getSyntaxPatterns()->getDefaultTextStyle()->getLineHeight(), 
                       border),
@@ -120,7 +120,7 @@ TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int bord
       updateVerticalScrollBar(false),
       updateHorizontalScrollBar(false),
       
-      position(GuiWidget::getPosition()),
+      position(FocusableWidget::getPosition()),
       hasPosition(false),
       hilitedText(hilitedText),
       textData(hilitedText->getTextData()),
@@ -1973,7 +1973,7 @@ static inline bool areIntersected(XRectangle* r1, XRectangle* r2)
     return false;
 }
 
-GuiElement::ProcessingResult TextWidget::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult TextWidget::processEvent(const XEvent* event)
 {
     if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
         return EVENT_PROCESSED;

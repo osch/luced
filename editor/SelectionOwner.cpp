@@ -102,7 +102,7 @@ bool SelectionOwner::hasSelectionOwnership()
     return hasRequestedSelectionOwnership;
 }
 
-GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEvent *event)
+GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEvent *event)
 {
     switch (event->type) {
     
@@ -114,7 +114,7 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                     primarySelectionOwner = NULL;
                 }
                 contentHandler->notifyAboutLostSelectionOwnership();
-                return GuiElement::EVENT_PROCESSED;
+                return GuiWidget::EVENT_PROCESSED;
             }
             break;
         }
@@ -179,7 +179,7 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
             }
             XSendEvent(display, e.requestor, 0, 0, (XEvent *)&e);
 
-            return GuiElement::EVENT_PROCESSED;
+            return GuiWidget::EVENT_PROCESSED;
             break;
         }
         case PropertyNotify:
@@ -217,10 +217,10 @@ GuiElement::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XE
                             sendLength);
                     alreadySentPos += sendLength;
                 }
-                return GuiElement::EVENT_PROCESSED;
+                return GuiWidget::EVENT_PROCESSED;
             }
             break;
         }
     }
-    return GuiElement::NOT_PROCESSED;
+    return GuiWidget::NOT_PROCESSED;
 }

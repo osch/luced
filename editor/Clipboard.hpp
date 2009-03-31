@@ -33,7 +33,8 @@
 
 namespace LucED {
 
-class Clipboard : public GuiWidget
+class Clipboard : public HeapObject,
+                  public GuiWidget
 {
 public:
     
@@ -64,6 +65,8 @@ private:
     static SingletonInstance<Clipboard> instance;
     
     Clipboard();
+    
+    virtual void treatNewWindowPosition(Position newPosition) ;
     
     void notifyAboutReceivedPasteData(const byte* data, long length);
     void notifyAboutEndOfPastingData();
