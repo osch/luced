@@ -30,13 +30,13 @@ void NonFocusableWidget::treatNewWindowPosition(Position newPosition)
 
 void NonFocusableWidget::show()
 {
-    GuiElement::show();
     GuiWidget::show();
+    GuiElement::show();
 }
 
 void NonFocusableWidget::hide()
 {
-    GuiElement::hide();
     GuiWidget::hide();
+    GuiElement::hide();
 }
 

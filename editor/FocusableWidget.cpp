@@ -30,13 +30,13 @@ void FocusableWidget::treatNewWindowPosition(Position newPosition)
 
 void FocusableWidget::show()
 {
-    FocusableElement::show();
     GuiWidget::show();
+    GuiElement::show();
 }
 
 void FocusableWidget::hide()
 {
-    FocusableElement::hide();
     GuiWidget::hide();
+    GuiElement::hide();
 }
 

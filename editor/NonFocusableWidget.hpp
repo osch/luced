@@ -39,8 +39,11 @@ public:
 
 protected:
     NonFocusableWidget(RawPtr<GuiWidget> parent, int x, int y, unsigned int width, unsigned int height, unsigned border_width)
-        : GuiWidget(parent, x, y, width, height, border_width)
-    {}
+        : GuiElement(x, y, width, height),
+          GuiWidget(parent, x, y, width, height, border_width)
+    {
+        GuiElement::hide();
+    }
 };
 
 } // namespace LucED

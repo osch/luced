@@ -65,8 +65,9 @@ public:
     }
     
 protected:
-    FocusableElement(RawPtr<GuiWidget> parent)
-        : parent(parent),
+    FocusableElement(RawPtr<GuiWidget> parent, int x = 0, int y = 0, unsigned int width = 0, unsigned int height = 0)
+        : GuiElement(x, y, width, height),
+          parent(parent),
           focusManager(parent->getFocusManagerForChildWidgets()),
           focusableFlag(true),
           focusFlag(false),

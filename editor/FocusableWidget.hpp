@@ -40,9 +40,11 @@ public:
 
 protected:
     FocusableWidget(RawPtr<GuiWidget> parent, int x, int y, unsigned int width, unsigned int height, unsigned border_width)
-        : FocusableElement(parent),
+        : FocusableElement(parent, x, y, width, height),
           GuiWidget(parent, x, y, width, height, border_width)
-    {}
+    {
+        GuiElement::hide();
+    }
 };
 
 } // namespace LucED

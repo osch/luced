@@ -51,6 +51,13 @@ public:
         LAYOUT_RIGHT
     };
     
+    enum Visibility
+    {
+        UNDEFINED_VISIBILITY,
+        VISIBLE,
+        HIDDEN
+    };
+    
     typedef Flags<LayoutOption> LayoutOptions;
 
     class Measures
@@ -121,8 +128,13 @@ public:
 
 
     bool isVisible() const {
-        return isVisibleFlag;
+        return visibility == VISIBLE;
     }
+    
+    Visibility getVisibility() const {
+        return visibility;
+    }
+    
     virtual Measures getDesiredMeasures() { return Measures(0, 0, 0, 0, 0, 0); };
     virtual void setPosition(Position p) = 0;
 
@@ -131,16 +143,21 @@ public:
     }
 
     virtual void show() {
-        isVisibleFlag = true;
+        visibility = VISIBLE;
     }
     virtual void hide() {
-        isVisibleFlag = false;
+        visibility = HIDDEN;
     }
     
 protected:
     
     GuiElement()
-        : isVisibleFlag(true)
+        : visibility(VISIBLE) // UNDEFINED_VISIBILITY)
+    {}
+    
+    GuiElement(int x, int y, unsigned int width, unsigned int height)
+        : visibility(VISIBLE), // UNDEFINED_VISIBILITY),
+          position(x, y, width, height)
     {}
     
     void treatNewWindowPosition(Position newPosition) {
@@ -148,7 +165,7 @@ protected:
     }
 
 private:
-    bool isVisibleFlag;
+    Visibility visibility;
     Position position;
 };
 
