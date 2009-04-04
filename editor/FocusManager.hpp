@@ -24,7 +24,7 @@
 
 #include "KeyMapping.hpp"
 #include "RawPtr.hpp"
-#include "RawPtrGuarded.hpp"
+#include "RawPointable.hpp"
 
 namespace LucED
 {
@@ -32,7 +32,7 @@ namespace LucED
 class FocusManager;
 class FocusableElement;
 
-class FocusManager : public RawPtrGuarded
+class FocusManager : public RawPointable
 {
 public:
     virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w) = 0;

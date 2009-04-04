@@ -23,7 +23,7 @@
 #define MEM_ARRAY_HPP
 
 #include "HeapMem.hpp"
-#include "ValueObject.hpp"
+#include "RawPointable.hpp"
 
 namespace LucED {
 
@@ -35,7 +35,7 @@ template
 <
     typename T
 >
-class MemArray : public ValueObject
+class MemArray : public RawPointable
 {
 public:
     MemArray(long size = 0) {

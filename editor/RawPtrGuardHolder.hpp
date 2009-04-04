@@ -84,7 +84,7 @@ private:
 #include "WeakPtr.hpp"
 #include "OwningPtr.hpp"
 #include "RawPtrGuard.hpp"
-#include "ValueObject.hpp"
+#include "RawPointable.hpp"
 
 namespace LucED
 {

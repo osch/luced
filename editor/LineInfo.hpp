@@ -24,12 +24,12 @@
 
 #include "NonCopyable.hpp"
 #include "ByteArray.hpp"
-#include "ValueObject.hpp"
+#include "RawPointable.hpp"
 
 namespace LucED
 {
 
-class LineInfo : public ValueObject
+class LineInfo : public RawPointable
 {
 public:
     LineInfo() : valid(false) {}

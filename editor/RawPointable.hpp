@@ -19,24 +19,24 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef RAW_PTR_GUARDED_HPP
-#define RAW_PTR_GUARDED_HPP
-
 #include "RawPtrGuardHolder.hpp"
+
+#ifndef RAW_POINTABLE_HPP
+#define RAW_POINTABLE_HPP
 
 namespace LucED
 {
 
-class RawPtrGuarded
+class RawPointable
 #ifdef DEBUG
                     : public virtual RawPtrGuardHolder
 #endif
 {
 protected:
-    RawPtrGuarded()
+    RawPointable()
     {}
 };
 
 } // namespace LucED
 
-#endif // RAW_PTR_GUARDED_HPP
+#endif // RAW_POINTABLE_HPP

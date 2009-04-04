@@ -29,7 +29,7 @@
 #include "HeapMem.hpp"
 #include "MemArray.hpp"
 #include "RawPtrGuardHolder.hpp"
-#include "ValueObject.hpp"
+#include "RawPointable.hpp"
 
 namespace LucED
 {
@@ -42,7 +42,7 @@ template
 <
     class T
 >
-class ObjectArray : public  ValueObject
+class ObjectArray : public  RawPointable
 {
 public:
     ObjectArray() : memArray(0) {}

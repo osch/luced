@@ -34,14 +34,14 @@
 #include "RawPtr.hpp"
 #include "ObjectArray.hpp"
 #include "KeyPressEvent.hpp"
-#include "RawPtrGuarded.hpp"
+#include "RawPointable.hpp"
 #include "FocusManager.hpp"
 
 namespace LucED
 {
 
 class GuiWidget : public NonCopyable,
-                  public RawPtrGuarded
+                  public RawPointable
 {
 public:
     class EventProcessorAccess;
