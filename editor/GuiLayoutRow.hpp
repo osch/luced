@@ -47,10 +47,10 @@ public:
     virtual void setPosition(Position p);
     
     void removeElementAtPosition(int i) {
-        elements.remove(i);
+        childElements.remove(i);
     }
     void insertElementAtPosition(GuiElement::Ptr element, int i) {
-        elements.insert(i, element);
+        childElements.insert(i, element);
     }
     
     enum ReportRasteringOption {
@@ -71,7 +71,6 @@ private:
     GuiLayoutRow()
     {}
     
-    ObjectArray<LayoutedElement> elements;
     ObjectArray<Measures> columnMeasures;
 
     ReportRasteringOptions reportRasteringOptions;

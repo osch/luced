@@ -44,11 +44,11 @@ public:
     int addElement(GuiElement::Ptr element, LayoutOptions layoutOptions = LayoutOptions());
 
     void removeElementAtPosition(int i) {
-        elements.remove(i);
+        childElements.remove(i);
     }
     int getElementIndex(GuiElement::Ptr element) {
-        for (int i = 0; i < elements.getLength(); ++i) {
-            if (elements[i].getPtr() == element) {
+        for (int i = 0; i < childElements.getLength(); ++i) {
+            if (childElements[i] == element) {
                 return i;
             }
         }
@@ -57,19 +57,19 @@ public:
     bool removeElement(GuiElement::Ptr element) {
         int i = getElementIndex(element);
         if (i >= 0) {
-            elements.remove(i);
+            childElements.remove(i);
             return true;
         } else {
             return false;
         }
     }
     void insertElementAtPosition(GuiElement::Ptr element, int i) {
-        elements.insert(i, element);
+        childElements.insert(i, element);
     }
     bool insertElementBeforeElement(GuiElement::Ptr e1, GuiElement::Ptr e2) {
         int i = getElementIndex(e2);
         if (i >= 0) {
-            elements.insert(i, e1);
+            childElements.insert(i, e1);
             return true;
         } else {
             return false;
@@ -78,7 +78,7 @@ public:
     bool insertElementAfterElement(GuiElement::Ptr e1, GuiElement::Ptr e2) {
         int i = getElementIndex(e2);
         if (i >= 0) {
-            elements.insert(i + 1, e1);
+            childElements.insert(i + 1, e1);
             return true;
         } else {
             return false;
@@ -107,7 +107,6 @@ public:
 private:
     GuiLayoutColumn() {}
     
-    ObjectArray<LayoutedElement> elements;
     ObjectArray<Measures> rowMeasures;
 
     ReportRasteringOptions reportRasteringOptions;

@@ -55,3 +55,14 @@ void GuiElement::Measures::maximize(const GuiElement::Measures& rhs)
 }
 
 
+void GuiElement::show()
+{
+    visibility = VISIBLE;
+}
+
+void GuiElement::hide()
+{
+    visibility = HIDDEN;
+}
+
+

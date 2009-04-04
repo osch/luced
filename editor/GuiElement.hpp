@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -30,7 +30,8 @@
 #include "WeakPtr.hpp"
 #include "Flags.hpp"
 #include "BaseException.hpp"
-
+#include "ObjectArray.hpp"
+                
 namespace LucED
 {
 
@@ -103,29 +104,10 @@ public:
         {}
         virtual const char* what() const throw();
     };
-
-    class LayoutedElement
-    {
-    public:
-        LayoutedElement(GuiElement::Ptr element,
-                        LayoutOptions layoutOptions = LayoutOptions())
-            : element(element),
-              layoutOptions(layoutOptions)
-        {}
-        
-        GuiElement* getPtr() const {
-            return element;
-        }
-        
-        LayoutOptions getLayoutOptions() const {
-            return layoutOptions;
-        }
-        
-    private:
-        GuiElement::Ptr element;
-        LayoutOptions layoutOptions;
-    };
-
+    
+    LayoutOptions getLayoutOptions() const {
+        return layoutOptions;
+    }
 
     bool isVisible() const {
         return visibility == VISIBLE;
@@ -142,13 +124,20 @@ public:
         return position;
     }
 
-    virtual void show() {
-        visibility = VISIBLE;
+    virtual void show();
+    virtual void hide();
+
+    int getNumberOfChildElements() {
+        return childElements.getLength();
     }
-    virtual void hide() {
-        visibility = HIDDEN;
+    GuiElement::Ptr getChildElement(int index) {
+        return childElements[index];
     }
     
+    void setLayoutOptions(LayoutOptions layoutOptions) {
+        this->layoutOptions = layoutOptions;
+    }
+
 protected:
     
     GuiElement()
@@ -163,10 +152,14 @@ protected:
     void treatNewWindowPosition(Position newPosition) {
         position = newPosition;
     }
+    
+    ObjectArray<GuiElement::Ptr> childElements;
 
 private:
     Visibility visibility;
     Position position;
+    
+    LayoutOptions layoutOptions;
 };
 
 

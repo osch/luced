@@ -98,7 +98,7 @@ template<class Adapter> class GuiLayouter
 {
 public:
 
-    static GuiElement::Measures getDesiredMeasures(ObjectArray<GuiElement::LayoutedElement> elements)
+    static GuiElement::Measures getDesiredMeasures(ObjectArray<GuiElement::Ptr>& elements)
     {
         int bestCoValue = 0;
         int bestValue   = 0;
@@ -117,10 +117,10 @@ public:
         
         for (int i = 0; i < elements.getLength(); ++i)
         {
-            GuiElement::Measures m = elements[i].getPtr()->getDesiredMeasures();
+            GuiElement::Measures m = elements[i]->getDesiredMeasures();
             Adapter a(m);
 
-            if (elements[i].getPtr()->isVisible())
+            if (elements[i]->isVisible())
             {
                 addimize(&minVisibleValue,   a.getMinValue());
                 addimize(&bestVisibleValue,  a.getBestValue());
