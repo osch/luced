@@ -24,7 +24,7 @@ local generalConfig =
           useOwnKeyPressRepeater = true,  -- try this on systems with slow keyboard repeat rate
           doNotUseX11XkbExtension = false, -- this should be set to false
           keyPressRepeatFirstMilliSecs = 200,
-          keyPressRepeatNextMilliSecs  =  18,
+          keyPressRepeatNextMilliSecs  =  15,
 
           scrollBarWidth = 12+2,
           scrollBarRepeatFirstMilliSecs = 300,
@@ -105,7 +105,7 @@ local languageModes =
     { 
       name            = "cplusplus",
       syntaxName      = "default.cplusplus",
-      fileNameRegex   = [[^.*\.(?:cpp|hpp|cxx|hxx|c|C|h|H|cc|hh)(?:\.emlua)?$]],
+      fileNameRegex   = [[^.*\.(?:cpp|CPP|hpp|HPP|cxx|hxx|c|C|h|H|cc|hh)(?:\.emlua)?$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
