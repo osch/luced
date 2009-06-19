@@ -24,16 +24,6 @@ local cachedActionKeyBinding  = nil
 
 local cachedSyntaxDefinitions = {}
 
-local syntaxModuleNames       = {
-                                    cplusplus = "this.cplusplusSyntax",
-                                    lua       = "this.luaSyntax",
-                                    rexx      = "this.rexxSyntax",
-                                    emlua     = "this.emluaSyntax",
-                                    makefile  = "this.makefileSyntax",
-                                    java      = "this.javaSyntax",
-                                }
-
-
 return 
 {
     getAction            =  function(actionName)
@@ -55,7 +45,7 @@ return
                                 if rslt then
                                     return rslt
                                 else
-                                    local moduleName = syntaxModuleNames[syntaxName]
+                                    local moduleName = "this."..syntaxName.."Syntax"
                                     if moduleName then
                                         local ok,rslt = pcall(require, moduleName)
                                         if ok then
