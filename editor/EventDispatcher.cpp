@@ -154,9 +154,8 @@ EventDispatcher::EventDispatcher()
             struct sigaction handler;
        
             handler.sa_handler = sigchildHandler;
-            ::sigfillset(&handler.sa_mask);
+            sigfillset(&handler.sa_mask);
             handler.sa_flags = SA_NOCLDSTOP;
-           
         #ifdef SA_RESTART
             handler.sa_flags |= SA_RESTART;
         #endif
