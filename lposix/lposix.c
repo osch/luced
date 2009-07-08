@@ -879,7 +879,16 @@ static void Fstat(lua_State *L, int i, const void *data)
 		case 5: lua_pushinteger(L, s->st_gid); break;
 		case 6: lua_pushinteger(L, s->st_size); break;
 		case 7: lua_pushinteger(L, s->st_atime); break;
+#if defined(STAT_HAS_ST_MTIM_TV_NSEC)
+		case 8: lua_pushnumber(L,    (lua_Number)(s->st_mtime)
+		                          + ((lua_Number)(s->st_mtim.tv_nsec)) / 1000000.0 ); 
+		                          printf("xxxxxxxxxxx %ld %ld\n", s->st_mtim.tv_sec, s->st_mtim.tv_nsec); break;
+#elif defined(STAT_HAS_ST_MTIMENSE)
+		case 8: lua_pushnumber(L,    (lua_Number)(s->st_mtime)
+		                          + ((lua_Number)(s->st_mtim.st_mtimensec)) / 1000000.0 ); break;
+#else
 		case 8: lua_pushinteger(L, s->st_mtime); break;
+#endif
 		case 9: lua_pushinteger(L, s->st_ctime); break;
 		case 10:lua_pushstring(L, filetype(s->st_mode)); break;
 	}
