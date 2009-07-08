@@ -19,6 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "GuiLayoutAdapter.hpp"
+
 #ifndef GUI_ELEMENT_HPP
 #define GUI_ELEMENT_HPP
 
@@ -31,9 +33,14 @@
 #include "Flags.hpp"
 #include "BaseException.hpp"
 #include "ObjectArray.hpp"
+#include "RawPtr.hpp"
+#include "GuiRoot.hpp"
                 
 namespace LucED
 {
+
+class FocusManager;
+class GuiWidget;
 
 class GuiElement : public HeapObject
 {
@@ -54,47 +61,12 @@ public:
     
     enum Visibility
     {
-        UNDEFINED_VISIBILITY,
         VISIBLE,
         HIDDEN
     };
     
     typedef Flags<LayoutOption> LayoutOptions;
-
-    class Measures
-    {
-    public:
-        Measures() 
-                : minWidth(0),  minHeight(0),
-                  bestWidth(0), bestHeight(0),
-                  maxWidth(0),  maxHeight(0),
-                  incrWidth(0), incrHeight(0)
-        {}
-        Measures(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight) 
-                : minWidth(minWidth),   minHeight(minHeight),
-                  bestWidth(bestWidth), bestHeight(bestHeight),
-                  maxWidth(maxWidth),   maxHeight(maxHeight),
-                  incrWidth(1),         incrHeight(1)
-        {}
-        Measures(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight,
-                 int incrWidth,int incrHeight) 
-                : minWidth(minWidth),   minHeight(minHeight),
-                  bestWidth(bestWidth), bestHeight(bestHeight),
-                  maxWidth(maxWidth),   maxHeight(maxHeight),
-                  incrWidth(incrWidth), incrHeight(incrHeight)
-        {}
-        void maximize(const Measures& rhs);
-        
-        int bestWidth;
-        int bestHeight;
-        int minWidth;
-        int minHeight;
-        int maxWidth;
-        int maxHeight;
-        int incrWidth;
-        int incrHeight;
-    };
-    
+    typedef GuiMeasures Measures;
     
     class DesiredMeasuresChangedException : public BaseException
     {
@@ -117,12 +89,32 @@ public:
         return visibility;
     }
     
-    virtual Measures getDesiredMeasures() { return Measures(0, 0, 0, 0, 0, 0); };
-    virtual void setPosition(Position p) = 0;
+    Measures getDesiredMeasures() {
+        if (layoutAdapter.isValid()) {
+            return layoutAdapter->getDesiredMeasures();
+        } else {
+            return internalGetDesiredMeasures();
+        }
+    }
+    
+    class GuiLayoutAdapterAccess
+    {
+        friend class GuiLayoutAdapter;
+        
+        static Measures internalGetDesiredMeasures(RawPtr<GuiElement> element) {
+            return element->internalGetDesiredMeasures();
+        }
+    };
+    
+    virtual void setPosition(const Position& p);
 
     const Position& getPosition() const {
         return position;
     }
+    
+    virtual void adopt(RawPtr<GuiElement>   parentElement,
+                       RawPtr<GuiWidget>    parentWidget,
+                       RawPtr<FocusManager> focusManagerForChilds);
 
     virtual void show();
     virtual void hide();
@@ -133,33 +125,95 @@ public:
     GuiElement::Ptr getChildElement(int index) {
         return childElements[index];
     }
+    GuiElement::Ptr getRootElement() {
+        return rootElement;
+    }
     
     void setLayoutOptions(LayoutOptions layoutOptions) {
         this->layoutOptions = layoutOptions;
     }
-
-protected:
-    
-    GuiElement()
-        : visibility(VISIBLE) // UNDEFINED_VISIBILITY)
-    {}
-    
-    GuiElement(int x, int y, unsigned int width, unsigned int height)
-        : visibility(VISIBLE), // UNDEFINED_VISIBILITY),
-          position(x, y, width, height)
-    {}
-    
-    void treatNewWindowPosition(Position newPosition) {
-        position = newPosition;
+    void setLayoutAdapter(OwningPtr<GuiLayoutAdapter> layoutAdapter) {
+        this->layoutAdapter = layoutAdapter;
     }
     
-    ObjectArray<GuiElement::Ptr> childElements;
+    bool wasAdopted() const {
+        return wasAdoptedFlag;
+    }
+    
+    bool wasAdopted(RawPtr<GuiElement>   parentElement,
+                    RawPtr<GuiWidget>    parentWidget) const
+    {
+        if (wasAdoptedFlag) {
+            ASSERT(this->parentElement == parentElement);
+            ASSERT(this->parentWidget  == parentWidget);
+        }
+        return wasAdoptedFlag;
+    }
 
+protected:
+    static Display* getDisplay() { return GuiRoot::getInstance()->getDisplay(); }
+    static GuiRoot* getGuiRoot() { return GuiRoot::getInstance(); }
+
+    GuiElement(Visibility defaultVisibility = VISIBLE, int x = 0, int y = 0, int width = 0, int height = 0)
+        : position(x, y, width, height),
+          visibility(defaultVisibility),
+          wasAdoptedFlag(false)
+    {}
+    
+    virtual Measures internalGetDesiredMeasures() = 0;
+
+    GuiElement::Ptr addChildElement(GuiElement::Ptr child) {
+        if (wasAdoptedFlag) {
+            internalAdoptChild(child);
+        }
+        childElements.append(child);
+        return child;
+    }
+    
+    GuiElement::Ptr setChildElement(int index, GuiElement::Ptr child) {
+        if (wasAdoptedFlag) {
+            internalAdoptChild(child);
+        }
+        childElements[index] = child;
+        return child;
+    }
+    GuiElement::Ptr setRootElement(GuiElement::Ptr child) {
+        if (wasAdoptedFlag) {
+            internalAdoptChild(child);
+        }
+        rootElement = child;
+        return child;
+    }
+    
+    GuiElement::Ptr insertChildElement(int index, GuiElement::Ptr child) {
+        if (wasAdoptedFlag) {
+            internalAdoptChild(child);
+        }
+        childElements.insert(index, child);
+        return child;
+    }
+    
+    void removeChildElement(int index) {
+        childElements.remove(index);
+    }
+    
 private:
+    void internalAdoptChild(RawPtr<GuiElement> child);
+
     Visibility visibility;
     Position position;
     
     LayoutOptions layoutOptions;
+
+    bool wasAdoptedFlag;
+    RawPtr<GuiElement>   parentElement;
+    RawPtr<GuiWidget>    parentWidget;
+    RawPtr<FocusManager> focusManagerForChilds;
+
+    OwningPtr<GuiElement>                rootElement;
+    ObjectArray< OwningPtr<GuiElement> > childElements;
+
+    OwningPtr<GuiLayoutAdapter> layoutAdapter;
 };
 
 

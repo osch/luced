@@ -41,20 +41,17 @@ namespace LucED
 class TopWinActionsParameter
 {
 public:
-    TopWinActionsParameter(RawPtr<GuiWidget>                         parentWidget, 
-                           RawPtr<TextEditorWidget>                  editorWidget, 
+    TopWinActionsParameter(RawPtr<TextEditorWidget>                  editorWidget, 
                            Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
                            PanelInvoker::Ptr                         panelInvoker,
                            TopWinActionInterface::Ptr                topWinActionInterface)
-        : parentWidget(parentWidget),
-          editorWidget(editorWidget),
+        : editorWidget(editorWidget),
           messageBoxInvoker(messageBoxInvoker),
           panelInvoker(panelInvoker),
           topWinActionInterface(topWinActionInterface)
     {}
 
 protected:
-    RawPtr<GuiWidget>                         parentWidget;
     RawPtr<TextEditorWidget>                  editorWidget;
     Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
     PanelInvoker::Ptr                         panelInvoker;

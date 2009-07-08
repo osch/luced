@@ -37,7 +37,6 @@
 #include "FindPanel.hpp"
 #include "PasteDataCollector.hpp"
 #include "SearchInteraction.hpp"
-#include "PanelInvoker.hpp"
 #include "ActionMethodBinding.hpp"
 
 namespace LucED
@@ -47,14 +46,17 @@ class ReplacePanel : public  DialogPanel,
                      private FindPanelAccess
 {
 public:
-    typedef OwningPtr<ReplacePanel> Ptr;
+    typedef DialogPanel              BaseClass;
+    typedef OwningPtr<ReplacePanel>  Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
+    static Ptr create(TextEditorWidget* editorWidget, FindPanel* findPanel,
                       Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                      PanelInvoker::Ptr                         panelInvoker)
+                      Callback<>::Ptr                           panelInvoker,
+                      Callback<>::Ptr                           panelClose)
     {
-        return Ptr(new ReplacePanel(parent, editorWidget, findPanel, messageBoxInvoker, 
-                                                                     panelInvoker));
+        return Ptr(new ReplacePanel(editorWidget, findPanel, messageBoxInvoker, 
+                                                             panelInvoker,
+                                                             panelClose));
     }
     
     void replaceAgainForward();
@@ -100,9 +102,10 @@ private:
     friend class ActionMethodBinding<EditFieldActions>;
     friend class PasteDataCollector<ReplacePanel>;
     
-    ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel,
+    ReplacePanel(TextEditorWidget* editorWidget, FindPanel* findPanel,
                  Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                 PanelInvoker::Ptr                         panelInvoker);
+                 Callback<>::Ptr                           panelInvoker,
+                 Callback<>::Ptr                           panelClose);
 
     void executeHistoryBackwardAction();
     void executeHistoryForwardAction();
@@ -117,13 +120,8 @@ private:
 
     void invalidateOutdatedInteraction();
     
-    void notifyAboutCollectedPasteData(String collectedSelectionData);
-
-    void requestCurrentSelectionForInteraction(SearchInteraction* interaction, Callback<String>::Ptr selectionRequestedCallback);
     void requestCloseFromInteraction(SearchInteraction* interaction);
 
-    ProcessingResult processEvent(const XEvent* event);
-    
     void handleException();
     
     void handleButtonPressed(Button* button,      Button::ActivationVariant variant);
@@ -137,8 +135,6 @@ private:
 
     void forgetRememberedSelection();
 
-    PasteDataReceiver::Ptr pasteDataReceiver;
-    
     WeakPtr<TextEditorWidget> e;
 
     SingleLineEditField::Ptr findEditField;
@@ -155,7 +151,7 @@ private:
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
     Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
-    PanelInvoker::Ptr                         panelInvoker;
+    Callback<>::Ptr                           panelInvoker;
     BasicRegex regex;
     Direction::Type defaultDirection;
     int historyIndex;
@@ -165,8 +161,6 @@ private:
     String rememberedSelection;
 
     WeakPtr<FindPanel> findPanel;
-
-    Callback<String>::Ptr selectionRequestedCallback;
 
     SearchInteraction::Ptr         currentInteraction;
     SearchInteraction::Callbacks   interactionCallbacks;

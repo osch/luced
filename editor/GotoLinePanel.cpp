@@ -28,18 +28,18 @@
 
 using namespace LucED;
 
-GotoLinePanel::GotoLinePanel(GuiWidget* parent, TextEditorWidget* editorWidget, PanelInvoker::Ptr panelInvoker)
-    : DialogPanel(parent, panelInvoker->getCloseCallback()),
+GotoLinePanel::GotoLinePanel(TextEditorWidget* editorWidget,
+                             Callback<>::Ptr   panelCloser)
+    : DialogPanel(panelCloser),
       editorWidget(editorWidget)
 {
-    gotoButton = Button::create(this, "G]oto Line");
-    cancelButton = Button::create(this, "C]ancel");
+    gotoButton = Button::create("G]oto Line");
+    cancelButton = Button::create("C]ancel");
    
-    this->editField = SingleLineEditField::create(this, 
-                                                  GlobalConfig::getInstance()->getDefaultLanguageMode());
+    this->editField = SingleLineEditField::create(GlobalConfig::getInstance()->getDefaultLanguageMode());
     editField->setDesiredWidthInChars(5, 10, 15);
 
-    LabelWidget::Ptr label0 = LabelWidget::create(this, "Line Number:");
+    LabelWidget::Ptr label0 = LabelWidget::create("Line Number:");
     GuiLayoutRow::Ptr row0 = GuiLayoutRow::create();
     GuiLayoutSpacerFrame::Ptr frame0 = GuiLayoutSpacerFrame::create(row0, 0);
     setRootElement(frame0);

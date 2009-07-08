@@ -45,7 +45,8 @@ public:
     void invokeGotoLinePanel()
     {
         if (gotoLinePanel.isInvalid()) {
-            gotoLinePanel = GotoLinePanel::create(parentWidget, editorWidget, panelInvoker);
+            gotoLinePanel = GotoLinePanel::create(editorWidget,
+                                                  newCallback(this, &EditorTopWinActions::closeGotoLinePanel));
         }
         panelInvoker->invokePanel(gotoLinePanel);
     }
@@ -102,7 +103,7 @@ public:
     
     void findAgainForward()
     {
-        if (replacePanel->isVisible()) {
+        if (replacePanel->isMapped()) {
             replacePanel->findAgainForward();
         } else {
             findPanel->findAgainForward();
@@ -111,7 +112,7 @@ public:
     
     void findAgainBackward()
     {
-        if (replacePanel->isVisible()) {
+        if (replacePanel->isMapped()) {
             replacePanel->findAgainBackward();
         } else {
             findPanel->findAgainBackward();
@@ -166,13 +167,31 @@ private:
         : ActionMethodBinding<EditorTopWinActions>(this),
           TopWinActionsParameter(parameter)
     {
-        findPanel = FindPanel::create(parentWidget, editorWidget, 
+        findPanel = FindPanel::create(editorWidget, 
                                       messageBoxInvoker,
-                                      panelInvoker);
+                                      newCallback(this, &EditorTopWinActions::invokeFindPanel),
+                                      newCallback(this, &EditorTopWinActions::closeFindPanel));
 
-        replacePanel = ReplacePanel::create(parentWidget, editorWidget, findPanel,
+        replacePanel = ReplacePanel::create(editorWidget, findPanel,
                                             messageBoxInvoker,
-                                            panelInvoker);
+                                            newCallback(this, &EditorTopWinActions::invokeReplacePanel),
+                                            newCallback(this, &EditorTopWinActions::closeReplacePanel));
+    }
+    
+    void invokeFindPanel() {
+        panelInvoker->invokePanel(findPanel);
+    }
+    void closeFindPanel() {
+        panelInvoker->getCloseCallback()->call(findPanel);
+    }
+    void invokeReplacePanel() {
+        panelInvoker->invokePanel(replacePanel);
+    }
+    void closeReplacePanel() {
+        panelInvoker->getCloseCallback()->call(replacePanel);
+    }
+    void closeGotoLinePanel() {
+        panelInvoker->getCloseCallback()->call(gotoLinePanel);
     }
 
     FindPanel::Ptr                           findPanel;

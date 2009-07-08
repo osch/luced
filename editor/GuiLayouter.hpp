@@ -98,7 +98,7 @@ template<class Adapter> class GuiLayouter
 {
 public:
 
-    static GuiElement::Measures getDesiredMeasures(ObjectArray<GuiElement::Ptr>& elements)
+    static GuiElement::Measures getDesiredMeasures(RawPtr<GuiElement> parentElement)
     {
         int bestCoValue = 0;
         int bestValue   = 0;
@@ -115,12 +115,12 @@ public:
 
         int numberOfRasteredValues = 0;
         
-        for (int i = 0; i < elements.getLength(); ++i)
+        for (int i = 0; i < parentElement->getNumberOfChildElements(); ++i)
         {
-            GuiElement::Measures m = elements[i]->getDesiredMeasures();
+            GuiElement::Measures m = parentElement->getChildElement(i)->getDesiredMeasures();
             Adapter a(m);
 
-            if (elements[i]->isVisible())
+            if (parentElement->getChildElement(i)->isVisible())
             {
                 addimize(&minVisibleValue,   a.getMinValue());
                 addimize(&bestVisibleValue,  a.getBestValue());

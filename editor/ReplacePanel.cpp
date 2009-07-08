@@ -35,13 +35,11 @@
           
 using namespace LucED;
 
-ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, FindPanel* findPanel, 
+ReplacePanel::ReplacePanel(TextEditorWidget* editorWidget, FindPanel* findPanel, 
                            Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                           PanelInvoker::Ptr                         panelInvoker)
-    : DialogPanel(parent, panelInvoker->getCloseCallback()),
-
-      pasteDataReceiver(PasteDataReceiver::create(this,
-                                                  PasteDataCollector<ReplacePanel>::create(this))),
+                           Callback<>::Ptr                           panelInvoker,
+                           Callback<>::Ptr                           panelCloser)
+    : BaseClass(panelCloser),
 
       e(editorWidget),
       messageBoxInvoker(messageBoxInvoker),
@@ -54,7 +52,6 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
       interactionCallbacks(messageBoxInvoker,
                            SearchHistory::getInstance()->getMessageBoxQueue(),
                            newCallback(this, &ReplacePanel::requestCloseFromInteraction),
-                           newCallback(this, &ReplacePanel::requestCurrentSelectionForInteraction),
                            newCallback(this, &ReplacePanel::handleException),
                            this)
       
@@ -73,31 +70,29 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
 
     editFieldGroup = EditFieldGroup::create();
 
-    findEditField    = SingleLineEditField::create(this, 
-                                               GlobalConfig::getInstance()->getDefaultLanguageMode(),
-                                               FindPanelAccess::getFindEditFieldTextData(findPanel));
+    findEditField    = SingleLineEditField::create(GlobalConfig::getInstance()->getDefaultLanguageMode(),
+                                                   FindPanelAccess::getFindEditFieldTextData(findPanel));
     findEditField->setDesiredWidthInChars(5, 10, INT_MAX);
     findEditField->setToEditFieldGroup(editFieldGroup);
 
-    replaceEditField  = SingleLineEditField::create(this, 
-                                               GlobalConfig::getInstance()->getDefaultLanguageMode());
+    replaceEditField  = SingleLineEditField::create(GlobalConfig::getInstance()->getDefaultLanguageMode());
     replaceEditField->setDesiredWidthInChars(5, 10, INT_MAX);
     replaceEditField->setToEditFieldGroup(editFieldGroup);
 
-    findNextButton          = Button::create     (this, "Find N]ext");
-    findPrevButton          = Button::create     (this, "Find P]revious");
-    replaceNextButton       = Button::create     (this, "Replace & Nex]t");
-    replacePrevButton       = Button::create     (this, "Replace & Pre]v");
-    replaceSelectionButton  = Button::create     (this, "All in S]election");
-    replaceWindowButton     = Button::create     (this, "All in W]indow");
-    cancelButton            = Button::create     (this, "Cl]ose");
-    LabelWidget::Ptr label0 = LabelWidget::create(this, "Find:");
-    LabelWidget::Ptr label1 = LabelWidget::create(this, "Replace:");
+    findNextButton          = Button::create     ("Find N]ext");
+    findPrevButton          = Button::create     ("Find P]revious");
+    replaceNextButton       = Button::create     ("Replace & Nex]t");
+    replacePrevButton       = Button::create     ("Replace & Pre]v");
+    replaceSelectionButton  = Button::create     ("All in S]election");
+    replaceWindowButton     = Button::create     ("All in W]indow");
+    cancelButton            = Button::create     ("Cl]ose");
+    LabelWidget::Ptr label0 = LabelWidget::create("Find:");
+    LabelWidget::Ptr label1 = LabelWidget::create("Replace:");
     
     
-    caseSensitiveCheckBox   = CheckBox::create   (this, "C]ase Sensitive");
-    wholeWordCheckBox       = CheckBox::create   (this, "Wh]ole Word");
-    regularExprCheckBox     = CheckBox::create   (this, "R]egular Expression");
+    caseSensitiveCheckBox   = CheckBox::create   ("C]ase Sensitive");
+    wholeWordCheckBox       = CheckBox::create   ("Wh]ole Word");
+    regularExprCheckBox     = CheckBox::create   ("R]egular Expression");
     
     Callback<CheckBox*>::Ptr checkBoxCallback = newCallback(this, &ReplacePanel::handleCheckBoxPressed);
 
@@ -217,13 +212,6 @@ ReplacePanel::ReplacePanel(GuiWidget* parent, TextEditorWidget* editorWidget, Fi
 }
 
 
-void ReplacePanel::requestCurrentSelectionForInteraction(SearchInteraction* interaction, Callback<String>::Ptr selectionRequestedCallback)
-{
-    if (currentInteraction.getRawPtr() == interaction) {
-        this->selectionRequestedCallback = selectionRequestedCallback;
-        pasteDataReceiver->requestSelectionPasting();
-    }
-}
 
 void ReplacePanel::requestCloseFromInteraction(SearchInteraction* interaction)
 {
@@ -231,22 +219,6 @@ void ReplacePanel::requestCloseFromInteraction(SearchInteraction* interaction)
         requestClose();
     }
 }
-
-void ReplacePanel::notifyAboutCollectedPasteData(String collectedSelectionData)
-{
-    selectionRequestedCallback->call(collectedSelectionData);
-}
-
-
-GuiWidget::ProcessingResult ReplacePanel::processEvent(const XEvent* event)
-{
-    if (pasteDataReceiver->processPasteDataReceiverEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
-    } else {
-        return DialogPanel::processEvent(event);
-    }
-}
-
 
 
 void ReplacePanel::handleButtonPressed(Button* button, Button::ActivationVariant variant)
@@ -407,7 +379,7 @@ void ReplacePanel::internalFindAgain(bool forwardFlag)
 {
     try
     {
-        if (this->isVisible() && findEditField->getTextData()->getLength() == 0) {
+        if (this->isMapped() && findEditField->getTextData()->getLength() == 0) {
             return;
         }
         
@@ -415,7 +387,7 @@ void ReplacePanel::internalFindAgain(bool forwardFlag)
 
         SearchParameter p;
         
-        if (this->isVisible()) {
+        if (this->isMapped()) {
             p = getSearchParameterFromGuiControls();
             p.setSearchForwardFlag(forwardFlag);
             findEditField->getTextData()->setModifiedFlag(false);
@@ -457,7 +429,7 @@ void ReplacePanel::internalReplaceAgain(bool forwardFlag)
 {
     try
     {
-        if (this->isVisible() && findEditField->getTextData()->getLength() == 0) {
+        if (this->isMapped() && findEditField->getTextData()->getLength() == 0) {
             return;
         }
     
@@ -465,7 +437,7 @@ void ReplacePanel::internalReplaceAgain(bool forwardFlag)
 
         SearchParameter p;
         
-        if (this->isVisible()) {
+        if (this->isMapped()) {
             p = getSearchParameterFromGuiControls();
             p.setSearchForwardFlag(forwardFlag);
             findEditField   ->getTextData()->setModifiedFlag(false);
@@ -611,7 +583,7 @@ void ReplacePanel::hide()
 {
     rememberedSelection = String();
     
-    DialogPanel::hide();
+    BaseClass::hide();
 }
 
 
@@ -651,7 +623,7 @@ void ReplacePanel::show()
         regularExprCheckBox->setChecked(false);
         wholeWordCheckBox->setChecked(false);
     }
-    DialogPanel::show();
+    BaseClass::show();
 }
 
 void ReplacePanel::handleModifiedEditField(bool modifiedFlag)
@@ -679,7 +651,7 @@ void ReplacePanel::handleException()
             replaceEditField->setCursorPosition(position);
             setFocus(replaceEditField);
         }
-        panelInvoker->invokePanel(this);
+        panelInvoker->call();
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Replace Error")
                                 .setMessage(String() << "Error within replace string: " << ex.getMessage())
@@ -692,7 +664,7 @@ void ReplacePanel::handleException()
             findEditField->setCursorPosition(position);
             setFocus(findEditField);
         }
-        panelInvoker->invokePanel(this);
+        panelInvoker->call();
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Regex Error")
                                 .setMessage(String() << "Error within regular expression: " << ex.getMessage())
@@ -700,7 +672,7 @@ void ReplacePanel::handleException()
     }
     catch (LuaException& ex)
     {
-        panelInvoker->invokePanel(this);
+        panelInvoker->call();
         messageBoxInvoker->call(MessageBoxParameter()
                                 .setTitle("Lua Error")
                                 .setMessage(ex.getMessage())

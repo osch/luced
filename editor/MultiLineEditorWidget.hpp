@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -32,19 +32,16 @@ class MultiLineEditorWidget : public TextEditorWidget
 public:
     typedef OwningPtr<MultiLineEditorWidget> Ptr;
 
-    static Ptr create(GuiWidget*       parent, 
-                      HilitedText::Ptr hilitedText,
+    static Ptr create(HilitedText::Ptr hilitedText,
                       CreateOptions    options = CreateOptions())
     {
-        return Ptr(new MultiLineEditorWidget(parent, hilitedText, options));
+        return Ptr(new MultiLineEditorWidget(hilitedText, options));
     }
 
 
 private:
-    MultiLineEditorWidget(GuiWidget*       parent,
-                          HilitedText::Ptr hilitedText,
+    MultiLineEditorWidget(HilitedText::Ptr hilitedText,
                           CreateOptions    options);
-
 };
 
 } // namespapce LucED

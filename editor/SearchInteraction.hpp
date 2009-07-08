@@ -49,13 +49,11 @@ public:
         Callbacks(Callback<const MessageBoxParameter&>::Ptr        messageBoxInvoker,
                   MessageBoxQueue::Ptr                             messageBoxQueue,
                   Callback<ThisClass*>::Ptr                        requestCloseOfInvokingPanel,
-                  Callback<ThisClass*,Callback<String>::Ptr>::Ptr  requestCurrentSelectionCallback,
                   Callback<>::Ptr                                  exceptionHandler,
                   DialogPanel*                                     hotKeyPredecessor)
             : messageBoxInvoker(messageBoxInvoker),
               messageBoxQueue(messageBoxQueue),
               requestCloseOfInvokingPanel(requestCloseOfInvokingPanel),
-              requestCurrentSelectionCallback(requestCurrentSelectionCallback),
               exceptionHandler(exceptionHandler),
               hotKeyPredecessor(hotKeyPredecessor)
         {}
@@ -65,7 +63,6 @@ public:
         Callback<const MessageBoxParameter&>::Ptr       messageBoxInvoker;
         MessageBoxQueue::Ptr                            messageBoxQueue;
         Callback<ThisClass*>::Ptr                       requestCloseOfInvokingPanel;
-        Callback<ThisClass*,Callback<String>::Ptr>::Ptr requestCurrentSelectionCallback;
         Callback<>::Ptr                                 exceptionHandler;
         WeakPtr<DialogPanel>                            hotKeyPredecessor;
     };

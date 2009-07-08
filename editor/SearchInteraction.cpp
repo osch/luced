@@ -22,6 +22,7 @@
 #include "SearchInteraction.hpp"
 #include "SearchHistory.hpp"
 #include "GuiRoot.hpp"
+#include "Clipboard.hpp"
 
 using namespace LucED;
 
@@ -55,7 +56,8 @@ void SearchInteraction::internalStartFind(bool findSelection)
     {
         if (findSelection)
         {
-            cb.requestCurrentSelectionCallback->call(this, newCallback(this, &ThisClass::continueWithFindSelectionWithoutAutoContinue));
+            Clipboard::getInstance()
+                     ->addActiveSelectionRequest(newCallback(this, &ThisClass::continueWithFindSelectionWithoutAutoContinue));
         }
         else {
             if (p.getFindString().getLength() <= 0) {
@@ -334,7 +336,8 @@ void SearchInteraction::findSelectionForward()
 
     p.setSearchForwardFlag(true);
 
-    cb.requestCurrentSelectionCallback->call(this, newCallback(this, &ThisClass::continueWithFindSelectionWithoutAutoContinue));
+    Clipboard::getInstance()
+             ->addActiveSelectionRequest(newCallback(this, &ThisClass::continueWithFindSelectionWithoutAutoContinue));
 }
 
 
@@ -344,7 +347,8 @@ void SearchInteraction::findSelectionForwardAndAutoContinue()
 
     p.setSearchForwardFlag(true);
 
-    cb.requestCurrentSelectionCallback->call(this, newCallback(this, &ThisClass::continueWithFindSelectionAndAutoContinue));
+    Clipboard::getInstance()
+             ->addActiveSelectionRequest(newCallback(this, &ThisClass::continueWithFindSelectionAndAutoContinue));
 }
 
 
@@ -354,7 +358,8 @@ void SearchInteraction::findSelectionBackward()
 
     p.setSearchForwardFlag(false);
 
-    cb.requestCurrentSelectionCallback->call(this, newCallback(this, &ThisClass::continueWithFindSelectionWithoutAutoContinue));
+    Clipboard::getInstance()
+             ->addActiveSelectionRequest(newCallback(this, &ThisClass::continueWithFindSelectionWithoutAutoContinue));
 }
 
 
@@ -364,7 +369,8 @@ void SearchInteraction::findSelectionBackwardAndAutoContinue()
 
     p.setSearchForwardFlag(false);
 
-    cb.requestCurrentSelectionCallback->call(this, newCallback(this, &ThisClass::continueWithFindSelectionAndAutoContinue));
+    Clipboard::getInstance()
+             ->addActiveSelectionRequest(newCallback(this, &ThisClass::continueWithFindSelectionAndAutoContinue));
 }
 
 

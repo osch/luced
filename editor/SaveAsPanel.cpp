@@ -28,21 +28,20 @@
 
 using namespace LucED;
 
-SaveAsPanel::SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget, 
-                                            Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                            PanelInvoker::Ptr                         panelInvoker)
-    : DialogPanel(parent, panelInvoker->getCloseCallback()),
+SaveAsPanel::SaveAsPanel(TextEditorWidget* editorWidget, 
+                         Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                         Callback<>::Ptr                           panelCloser)
+    : DialogPanel(panelCloser),
       editorWidget(editorWidget),
       messageBoxInvoker(messageBoxInvoker)
 {
-    saveButton = Button::create(this, "S]ave File");
-    cancelButton = Button::create(this, "C]ancel");
+    saveButton = Button::create("S]ave File");
+    cancelButton = Button::create("C]ancel");
    
-    this->editField = SingleLineEditField::create(this, 
-                                                  GlobalConfig::getInstance()->getDefaultLanguageMode());
+    this->editField = SingleLineEditField::create(GlobalConfig::getInstance()->getDefaultLanguageMode());
     editField->setDesiredWidthInChars(10, 30, INT_MAX);
 
-    LabelWidget::Ptr label0 = LabelWidget::create(this, "File Name:");
+    LabelWidget::Ptr label0 = LabelWidget::create("File Name:");
     GuiLayoutRow::Ptr row0 = GuiLayoutRow::create();
     GuiLayoutSpacerFrame::Ptr frame0 = GuiLayoutSpacerFrame::create(row0, 0);
     setRootElement(frame0);

@@ -25,12 +25,17 @@
 
 using namespace LucED;
 
+GuiElement::Measures GuiLayoutSpacer::internalGetDesiredMeasures()
+{
+    return measures;
+}
+
 
 GuiLayoutSpacerFrame::GuiLayoutSpacerFrame(GuiElement::Ptr member, int thickness)
 {
     GuiLayoutColumn::Ptr column0 = GuiLayoutColumn::create();
     GuiLayoutRow::Ptr    row0    = GuiLayoutRow::create();
-    this->root = column0;
+    setRootElement(column0);
 
     column0->addElement(GuiLayoutSpacer::create(0, 0, 0, thickness, INT_MAX, thickness));
     column0->addElement(row0);
@@ -42,16 +47,18 @@ GuiLayoutSpacerFrame::GuiLayoutSpacerFrame(GuiElement::Ptr member, int thickness
 }
 
 
-GuiElement::Measures GuiLayoutSpacerFrame::getDesiredMeasures()
+GuiElement::Measures GuiLayoutSpacerFrame::internalGetDesiredMeasures()
 {
-    Measures rslt = root->getDesiredMeasures();
+    Measures rslt = getRootElement()->getDesiredMeasures();
     return rslt;
 }
 
 
-void GuiLayoutSpacerFrame::setPosition(Position p)
+void GuiLayoutSpacerFrame::setPosition(const Position& newPosition)
 {
-    Measures desired = root->getDesiredMeasures();
+    Position p = newPosition;
+    
+    Measures desired = getRootElement()->getDesiredMeasures();
     if (desired.maxHeight < p.h) {
         int d = p.h - desired.maxHeight;
         p.y += d/2;
@@ -62,7 +69,7 @@ void GuiLayoutSpacerFrame::setPosition(Position p)
         p.x += d/2;
         p.w -= d/2;
     }
-    root->setPosition(p);
+    getRootElement()->setPosition(p);
 }
 
 

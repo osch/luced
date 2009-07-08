@@ -31,6 +31,7 @@
 namespace LucED
 {
 
+template<class T> class RawPtr;
 
 template
 <
@@ -56,6 +57,8 @@ public:
         HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
     }
     
+    WeakPtr(RawPtr<T> ptr);
+
     WeakPtr(const WeakPtr& src)
         : ptr(src.getRawPtr())
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    
@@ -230,6 +233,27 @@ private:
 #endif
     
 };
+
+
+} // namespace LucED
+
+#include "RawPtr.hpp"
+
+namespace LucED
+{
+
+template
+<
+    class T
+>
+inline WeakPtr<T>::WeakPtr(RawPtr<T> ptr)
+    : ptr(ptr)
+#ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    
+    , heapObjectCounters(HeapObjectRefManipulator::getHeapObjectCounters(ptr))
+#endif
+{
+    HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
+}
 
 
 } // namespace LucED

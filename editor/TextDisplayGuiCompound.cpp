@@ -28,10 +28,9 @@
 using namespace LucED;
 
 
-TextDisplayGuiCompound::Ptr TextDisplayGuiCompound::create(GuiWidget* parent, TextData::Ptr textData)
+TextDisplayGuiCompound::Ptr TextDisplayGuiCompound::create(TextData::Ptr textData)
 {
-    TextEditorWidget::Ptr textWidget = TextEditorWidget::create(parent, 
-                                                                HilitedText::create(textData, GlobalConfig::getInstance()->getDefaultLanguageMode()),
+    TextEditorWidget::Ptr textWidget = TextEditorWidget::create(HilitedText::create(textData, GlobalConfig::getInstance()->getDefaultLanguageMode()),
                                                                 TextWidget::CreateOptions() | TextWidget::READ_ONLY
                                                                                             | TextWidget::NEVER_SHOW_CURSOR);
     textWidget->setBackgroundColor(GuiRoot::getInstance()->getGuiColor04());
@@ -49,19 +48,16 @@ TextDisplayGuiCompound::Ptr TextDisplayGuiCompound::create(GuiWidget* parent, Te
 
 
     textWidget->hideCursor();
-    textWidget->show();
 
-
-    return Ptr(new TextDisplayGuiCompound(parent, textWidget,   ScrollableTextGuiCompound::Options() 
-                                                              | ScrollableTextGuiCompound::DYNAMIC_SCROLL_BAR_DISPLAY));
+    return Ptr(new TextDisplayGuiCompound(textWidget,   ScrollableTextGuiCompound::Options() 
+                                                      | ScrollableTextGuiCompound::DYNAMIC_SCROLL_BAR_DISPLAY));
 }
 
 
-TextDisplayGuiCompound::TextDisplayGuiCompound(GuiWidget*                         parent, 
-                                               TextEditorWidget::Ptr              textWidget, 
+TextDisplayGuiCompound::TextDisplayGuiCompound(TextEditorWidget::Ptr              textWidget, 
                                                ScrollableTextGuiCompound::Options options)
 
-    : ScrollableTextGuiCompound(parent, textWidget, options),
+    : ScrollableTextGuiCompound(textWidget, options),
       actionMethods(ActionMethodContainer::create())
 {
     actionMethods->addActionMethods(SingleLineDisplayActions::create(textWidget));

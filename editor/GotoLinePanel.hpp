@@ -27,7 +27,6 @@
 #include "CheckBox.hpp"
 #include "TextEditorWidget.hpp"
 #include "SingleLineEditField.hpp"
-#include "PanelInvoker.hpp"
 
 namespace LucED
 {
@@ -37,15 +36,17 @@ class GotoLinePanel : public DialogPanel
 public:
     typedef OwningPtr<GotoLinePanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, PanelInvoker::Ptr panelInvoker) {
-        return Ptr(new GotoLinePanel(parent, editorWidget, panelInvoker));
+    static Ptr create(TextEditorWidget* editorWidget,
+                      Callback<>::Ptr   panelCloser)
+    {
+        return Ptr(new GotoLinePanel(editorWidget, panelCloser));
     }
 
     virtual void show();
     
 private:
-    GotoLinePanel(GuiWidget* parent, TextEditorWidget*   editorWidget, 
-                                     PanelInvoker::Ptr   panelInvoker);
+    GotoLinePanel(TextEditorWidget* editorWidget, 
+                  Callback<>::Ptr   panelCloser);
 
     void handleButtonPressed(Button* button, Button::ActivationVariant variant);
 

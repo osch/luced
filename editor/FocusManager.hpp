@@ -25,6 +25,7 @@
 #include "KeyMapping.hpp"
 #include "RawPtr.hpp"
 #include "RawPointable.hpp"
+#include "NonCopyable.hpp"
 
 namespace LucED
 {
@@ -36,16 +37,62 @@ class FocusManager : public RawPointable
 {
 public:
     virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w) = 0;
-
     virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w) = 0;
-
     virtual void requestFocusFor(RawPtr<FocusableElement> w) = 0;
-
     virtual void reportMouseClickFrom(RawPtr<FocusableElement> w) = 0;
 
+    
+    class Access
+    {
+        friend class FocusableElement;
+        
+        static bool isReady(RawPtr<FocusManager> focusManager) {
+            return focusManager->queueTransactionCounter == 0;
+        }
+        static void queueHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
+        static void queueRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
+        static void queueFocusFor(RawPtr<FocusableElement> w);
+
+        class QueueTransaction : public NonCopyable
+        {
+        public: 
+            QueueTransaction(RawPtr<FocusManager> focusManager)
+                : focusManager(focusManager)
+            {
+                if (focusManager.isValid()) {
+                    focusManager->queueTransactionCounter += 1;
+                }
+            }
+            
+            void execute() const {
+                if (focusManager.isValid() && focusManager->queueTransactionCounter == 1) {
+                    internalProcessQueuedFor(focusManager);
+                }
+            }
+            
+            ~QueueTransaction()
+            {
+                if (focusManager.isValid()) {
+                    focusManager->queueTransactionCounter -= 1;
+                }
+            }
+
+        private:
+            RawPtr<FocusManager> focusManager;
+        };
+    };
+    
 protected:
     FocusManager()
+        : queueTransactionCounter(0)
     {}
+
+private:
+    class RequestQueue;
+    
+    static void internalProcessQueuedFor(RawPtr<FocusManager> focusManager);
+    
+    int queueTransactionCounter;
 };
 
 } // namespace LucED

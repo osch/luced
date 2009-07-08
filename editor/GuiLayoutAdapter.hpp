@@ -19,24 +19,39 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include "GuiLayoutWidget.hpp"
-#include "GuiRoot.hpp"
+#ifndef GUI_LAYOUT_ADAPTER_HPP
+#define GUI_LAYOUT_ADAPTER_HPP
 
-using namespace LucED;
+#include "HeapObject.hpp"
+#include "RawPtr.hpp"
+#include "GuiMeasures.hpp"
 
-GuiLayoutWidget::GuiLayoutWidget(const Measures& m, GuiColor color)
-      : measures(m),
-        color(color)
-{}
-
-void GuiLayoutWidget::processGuiWidgetCreatedEvent()
+namespace LucED
 {
-    getGuiWidget()->setBackgroundColor(color);
+
+class GuiElement;
+
+class GuiLayoutAdapter : public HeapObject
+{
+public:
+    virtual GuiMeasures getDesiredMeasures() = 0;
+
+protected:
+    static GuiMeasures internalGetDesiredMeasures(RawPtr<GuiElement> element);
+};
+
+} // namespace LucED
+
+#include "GuiElement.hpp"
+
+namespace LucED
+{
+
+inline GuiMeasures GuiLayoutAdapter::internalGetDesiredMeasures(RawPtr<GuiElement> element)
+{
+    return GuiElement::GuiLayoutAdapterAccess::internalGetDesiredMeasures(element);
 }
 
-GuiElement::Measures GuiLayoutWidget::internalGetDesiredMeasures()
-{
-    return measures;
-}
+} // namespace LucED
 
-
+#endif // GUI_LAYOUT_ADAPTER_HPP

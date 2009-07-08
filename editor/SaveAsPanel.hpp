@@ -27,7 +27,6 @@
 #include "TextEditorWidget.hpp"
 #include "SingleLineEditField.hpp"
 #include "MessageBox.hpp"
-#include "PanelInvoker.hpp"
 
 namespace LucED
 {
@@ -37,13 +36,13 @@ class SaveAsPanel : public DialogPanel
 public:
     typedef OwningPtr<SaveAsPanel> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextEditorWidget* editorWidget, 
-                                         Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                         PanelInvoker::Ptr                         panelInvoker)
+    static Ptr create(TextEditorWidget* editorWidget, 
+                      Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                      Callback<>::Ptr                           panelCloser)
     {
-        return Ptr(new SaveAsPanel(parent, editorWidget, 
-                                           messageBoxInvoker, 
-                                           panelInvoker));
+        return Ptr(new SaveAsPanel(editorWidget, 
+                                   messageBoxInvoker, 
+                                   panelCloser));
     }
     
     virtual void show();
@@ -53,9 +52,9 @@ public:
     }
     
 private:
-    SaveAsPanel(GuiWidget* parent, TextEditorWidget* editorWidget,
-                                   Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                   PanelInvoker::Ptr                         panelInvoker);
+    SaveAsPanel(TextEditorWidget* editorWidget,
+                Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                Callback<>::Ptr                           panelCloser);
 
     void handleButtonPressed(Button* button, Button::ActivationVariant variant);
     

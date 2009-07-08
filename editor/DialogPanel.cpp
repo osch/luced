@@ -70,38 +70,40 @@ private:
     RawPtr<DialogPanel> p;
 };
 
-DialogPanel::DialogPanel(RawPtr<GuiWidget>           parent, 
-                         Callback<DialogPanel*>::Ptr requestCloseCallback)
-    : FocusableWidget(parent, 0, 0, 1, 1, 0),
-      wasNeverShown(true),
-      
-      hotKeyMapping(HotKeyMapping::create()),
+DialogPanel::DialogPanel(Callback<>::Ptr requestCloseCallback)
+    : hotKeyMapping(HotKeyMapping::create()),
       
       focusedElementTakesAwayDefaultKey(false),
       defaultKeyWidgets(WidgetQueue::create()),
       
       requestCloseCallback(requestCloseCallback)
 {
-    GuiWidget::setFocusManagerForChildWidgets(this);
-    
-    addToXEventMask(ExposureMask|ButtonPressMask);
-
-    setBackgroundColor(getGuiRoot()->getGuiColor03());
-
     MyKeyActionHandler::Ptr keyActionHandler = MyKeyActionHandler::create(this);
     setKeyActionHandler(keyActionHandler);
 
     keyActionHandler->addActionMethods(Actions::create(this));
 }
 
-void DialogPanel::setRootElement(OwningPtr<GuiElement> rootElement)
+
+void DialogPanel::setPosition(const Position& newPosition)
 {
-    this->rootElement = rootElement;
+    Position p = newPosition;
+    Measures m = getRootElement()->getDesiredMeasures();
+    
+    if (m.minWidth > p.w) {
+        p.w = m.minWidth;
+    }
+    if (m.minHeight > p.h) {
+        p.h = m.minHeight;
+    }
+    
+    FocusableWidget::setPosition(p);
 }
 
-void DialogPanel::treatNewWindowPosition(Position newPosition)
+
+void DialogPanel::processGuiWidgetNewPositionEvent(const Position& newPosition)
 {
-    if (rootElement.isValid())
+    if (getRootElement().isValid())
     {
         int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
 
@@ -112,31 +114,18 @@ void DialogPanel::treatNewWindowPosition(Position newPosition)
            dx = (2*dx - newPosition.w)/2;
         if (newPosition.h < 2*dy)
            dy = (2*dy - newPosition.h)/2;
-        rootElement->setPosition(Position(dx, dy, newPosition.w - 2*dx - guiSpacing, newPosition.h - 2*dy - guiSpacing));
+        getRootElement()->setPosition(Position(dx, dy, newPosition.w - 2*dx - guiSpacing, newPosition.h - 2*dy - guiSpacing));
     }
+    FocusableWidget::processGuiWidgetNewPositionEvent(newPosition);
 }
 
-void DialogPanel::setPosition(Position p)
+GuiElement::Measures DialogPanel::internalGetDesiredMeasures()
 {
-    Measures m = rootElement->getDesiredMeasures();
-    
-    if (m.minWidth > p.w) {
-        p.w = m.minWidth;
-    }
-    if (m.minHeight > p.h) {
-        p.h = m.minHeight;
-    }
-    
-    GuiWidget::setPosition(p);
-}
-
-GuiElement::Measures DialogPanel::getDesiredMeasures()
-{
-    if (rootElement.isValid())
+    if (getRootElement().isValid())
     {
         int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
         
-        Measures m = rootElement->getDesiredMeasures();
+        Measures m = getRootElement()->getDesiredMeasures();
         int border = guiSpacing;
         m.minWidth += 2*border + guiSpacing;
         m.minHeight += 2*border + guiSpacing;
@@ -157,34 +146,35 @@ GuiElement::Measures DialogPanel::getDesiredMeasures()
 
 
 
-GuiWidget::ProcessingResult DialogPanel::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult DialogPanel::processGuiWidgetEvent(const XEvent* event)
 {
-    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
-    } else {
-        switch (event->type)
-        {
-            case ButtonPress:
-                if (!hasFocus()) {
-                    reportMouseClick();
-                }
-                break;
-            case GraphicsExpose:
-                if (event->xgraphicsexpose.count > 0) {
-                    break;
-                }
-            case Expose: {
-                if (event->xexpose.count > 0) {
-                    break;
-                }
-                drawRaisedBox(0, 0, getPosition().w, getPosition().h);
-                return EVENT_PROCESSED;
+    switch (event->type)
+    {
+        case ButtonPress:
+            if (!hasFocus()) {
+                reportMouseClick();
             }
+            break;
+        case GraphicsExpose:
+            if (event->xgraphicsexpose.count > 0) {
+                break;
+            }
+        case Expose: {
+            if (event->xexpose.count > 0) {
+                break;
+            }
+            getGuiWidget()->drawRaisedBox(0, 0, getPosition().w, getPosition().h);
+            return GuiWidget::EVENT_PROCESSED;
         }
-        return NOT_PROCESSED;
     }
+    return GuiWidget::NOT_PROCESSED;
 }
 
+void DialogPanel::processGuiWidgetCreatedEvent()
+{
+    getGuiWidget()->addToXEventMask(ExposureMask|ButtonPressMask);
+    getGuiWidget()->setBackgroundColor(getGuiRoot()->getGuiColor03());
+}
 
 void DialogPanel::treatFocusIn()
 {
@@ -513,7 +503,7 @@ bool DialogPanel::processHotKey(KeyMapping::Id keyMappingId)
             if (w.isValid()) {
                 w->treatHotKeyEvent(KeyMapping::Id(keyMappingId.getKeyModifier(), keyMappingId.getKeyId()));
                 if (focusedElement.isValid() && w != focusedElement) {
-                    focusedElement->notifyAboutHotKeyEventForOtherWidget();
+                    focusedElement->treatNotificationOfHotKeyEventForOtherWidget();
                 }
                 processed = true;
             }
@@ -531,7 +521,7 @@ void DialogPanel::Actions::pressDefaultButton()
     if (w != Null) {
         w->treatHotKeyEvent(defaultKey);
         if (thisPanel->focusedElement.isValid() && w != thisPanel->focusedElement) {
-            thisPanel->focusedElement->notifyAboutHotKeyEventForOtherWidget();
+            thisPanel->focusedElement->treatNotificationOfHotKeyEventForOtherWidget();
         }
     }
 }
@@ -768,16 +758,25 @@ void DialogPanel::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id
     }
 }
 
-void DialogPanel::notifyAboutHotKeyEventForOtherWidget()
+void DialogPanel::treatNotificationOfHotKeyEventForOtherWidget()
 {
     if (focusedElement.isValid()) {
-        focusedElement->notifyAboutHotKeyEventForOtherWidget();
+        focusedElement->treatNotificationOfHotKeyEventForOtherWidget();
     }    
 }
 
 void DialogPanel::requestClose()
 {
-    requestCloseCallback->call(this);
+    requestCloseCallback->call();
 }
 
 
+void DialogPanel::adopt(RawPtr<GuiElement>   parentElement,
+                        RawPtr<GuiWidget>    parentWidget,
+                        RawPtr<FocusManager> focusManager)
+{
+    FocusableWidget::adopt(parentElement, 
+                           parentWidget, 
+                           focusManager,  // FocusManager for this
+                           this);         // FocusManager for childs
+}

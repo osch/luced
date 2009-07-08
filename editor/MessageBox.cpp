@@ -37,23 +37,23 @@ MessageBox::MessageBox(TopWin* referingWindow, const MessageBoxParameter& p)
         getRootPanel()->setHotKeyPredecessor(p.hotKeyPredecessor);
     }
     if (p.defaultButtonLabel == "" && p.cancelButtonLabel == "") {
-        button1 = Button::create(this, "O]K");
+        button1 = Button::create("O]K");
     } else {
         if (p.defaultButtonLabel.getLength() > 0) {
-            button1 = Button::create(this, p.defaultButtonLabel);
+            button1 = Button::create(p.defaultButtonLabel);
         }
         if (p.cancelButtonLabel == "") {
-            button3 = Button::create(this, "C]ancel");
+            button3 = Button::create("C]ancel");
         } else {
-            button3 = Button::create(this, p.cancelButtonLabel);
+            button3 = Button::create(p.cancelButtonLabel);
         }
     }
 
     if (p.alternativeButtonLabel.getLength() > 0) {
-        button2 = Button::create(this, p.alternativeButtonLabel);
+        button2 = Button::create(p.alternativeButtonLabel);
     }
    
-    LabelWidget::Ptr label0 = LabelWidget::create(this, p.message);
+    LabelWidget::Ptr label0 = LabelWidget::create(p.message);
     GuiLayoutColumn::Ptr column0 = GuiLayoutColumn::create();
     GuiLayoutRow::Ptr row0 = GuiLayoutRow::create();
     GuiLayoutSpacerFrame::Ptr frame0 = GuiLayoutSpacerFrame::create(column0, 10);
@@ -99,16 +99,6 @@ MessageBox::MessageBox(TopWin* referingWindow, const MessageBoxParameter& p)
         cancelButtonCallback = p.cancelButtonCallback;
     }
 
-    label0->show();
-    if (button1.isValid()) {
-        button1->show();
-    }
-    if (button3.isValid()) {
-        button3->show();
-    }
-    if (button2.isValid()) {
-        button2->show();
-    }
     
     if (button1.isValid()) {
         button1->setAsDefaultButton();

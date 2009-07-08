@@ -44,22 +44,22 @@ public:
     
     typedef Flags<Border> Borders;
     
-    static Ptr create(GuiWidget*      parent, 
-                      GuiElement::Ptr rootElement, 
+    static Ptr create(GuiElement::Ptr rootElement, 
                       Borders         borders,
                       GuiColor        color = GuiRoot::getInstance()->getGuiColor01())
     {
-        return Ptr(new FramedGuiCompound(parent, rootElement, borders, color));
+        return Ptr(new FramedGuiCompound(rootElement, borders, color));
     }
 
-    virtual Measures getDesiredMeasures();
-    virtual void setPosition(Position p);
+    virtual void setPosition(const Position& p);
     
     virtual void show();
     virtual void hide();
     
 private:
-    FramedGuiCompound(GuiWidget* parent, GuiElement::Ptr rootElement, Borders borders, GuiColor color);
+    FramedGuiCompound(GuiElement::Ptr rootElement, Borders borders, GuiColor color);
+
+    virtual Measures internalGetDesiredMeasures();
 
     GuiElement::Ptr root;
 

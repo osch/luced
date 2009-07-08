@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SCROLLBAR_HPP
-#define SCROLLBAR_HPP
+#ifndef SCROLL_BAR_HPP
+#define SCROLL_BAR_HPP
 
 #include "NonFocusableWidget.hpp"
 #include "Callback.hpp"
@@ -36,9 +36,9 @@ public:
 
     typedef OwningPtr<ScrollBar> Ptr;
 
-    static ScrollBar::Ptr create(GuiWidget* parent, Orientation::Type orientation)
+    static ScrollBar::Ptr create(Orientation::Type orientation)
     {
-        return ScrollBar::Ptr(new ScrollBar(parent, orientation));
+        return ScrollBar::Ptr(new ScrollBar(orientation));
     }
 
     void setChangedValueCallback(Callback<long>::Ptr callback) {
@@ -49,18 +49,21 @@ public:
         this->scrollStepCallback = callback;
     }
 
-    virtual ProcessingResult processEvent(const XEvent *event);
-    virtual void setPosition(Position newPosition);
-    virtual Measures getDesiredMeasures();
-
     void setValue(long value);
     void setValueRange(long totalValue, long heightValue, long value);
 
 private:
+    virtual Measures internalGetDesiredMeasures();
+    virtual void processGuiWidgetCreatedEvent();
 
+private: // GuiWidget::EventListener interface implementation
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+    virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
+
+private:
     enum HilitedPart { TOP_ARROW, SCROLLER, BOTTOM_ARROW, NONE };
 
-    ScrollBar(GuiWidget* parent, Orientation::Type orientation);
+    ScrollBar(Orientation::Type orientation);
 
     void calculateValuesFromPosition();
     long calcScrollHeight();
@@ -80,8 +83,6 @@ private:
     Callback<long>::Ptr changedValueCallback;
     Callback<ScrollStep::Type>::Ptr scrollStepCallback;
     
-    Position position;
-
     const bool isV;
     
     int scrollHeight;
@@ -109,4 +110,4 @@ private:
 } // namespace LucED
 
 
-#endif // SCROLLBAR_HPP
+#endif // SCROLL_BAR_HPP

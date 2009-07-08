@@ -94,20 +94,22 @@ private:
 };
 
 Clipboard::Clipboard()
-      : GuiWidget(0,0,1,1,0),
-        selectionOwner(SelectionOwner::create(this, 
-                                              SelectionOwner::TYPE_CLIPBOARD, 
-                                              SelectionContentHandler::create(this))),
-
-        pasteDataReceiver(PasteDataReceiver::create(this,
-                                                    PasteDataContentHandler::create(this))),
-
-        sendingMultiPart(false)
+      : sendingMultiPart(false),
+        hasRequestedActiveSelectionForClipboard(false)
 {
-    addToXEventMask(PropertyChangeMask);
-    x11AtomForClipboard = XInternAtom(getDisplay(), "CLIPBOARD", False);
-    x11AtomForTargets   = XInternAtom(getDisplay(), "TARGETS", False);
-    x11AtomForIncr      = XInternAtom(getDisplay(), "INCR", False);
+    guiWidget = GuiWidget::create(Null, this, Position(0,0,1,1));
+    
+    guiWidget->addToXEventMask(PropertyChangeMask);
+    x11AtomForClipboard = XInternAtom(GuiWidget::getDisplay(), "CLIPBOARD", False);
+    x11AtomForTargets   = XInternAtom(GuiWidget::getDisplay(), "TARGETS", False);
+    x11AtomForIncr      = XInternAtom(GuiWidget::getDisplay(), "INCR", False);
+    
+    selectionOwner = SelectionOwner::create(guiWidget, 
+                                            SelectionOwner::TYPE_CLIPBOARD, 
+                                            SelectionContentHandler::create(this));
+
+    pasteDataReceiver = PasteDataReceiver::create(guiWidget,
+                                                  PasteDataContentHandler::create(this));
 }
 
 
@@ -123,7 +125,10 @@ void Clipboard::copyToClipboard(const byte* ptr, long length)
 void Clipboard::copyActiveSelectionToClipboard()
 {
     if (selectionOwner->requestSelectionOwnership()) {
-        pasteDataReceiver->requestSelectionPasting();
+        hasRequestedActiveSelectionForClipboard = true;
+        if (!pasteDataReceiver->isReceivingPasteData()) {
+            pasteDataReceiver->requestSelectionPasting();
+        }
     }
 }
 
@@ -133,7 +138,7 @@ const ByteArray& Clipboard::getClipboardBuffer() {
 }
 
 
-GuiWidget::ProcessingResult Clipboard::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult Clipboard::processGuiWidgetEvent(const XEvent* event)
 {
     if (selectionOwner   ->processSelectionOwnerEvent(event)     == GuiWidget::EVENT_PROCESSED
      || pasteDataReceiver->processPasteDataReceiverEvent(event)  == GuiWidget::EVENT_PROCESSED)
@@ -145,6 +150,9 @@ GuiWidget::ProcessingResult Clipboard::processEvent(const XEvent* event)
         return GuiWidget::NOT_PROCESSED;
     }
 }
+
+void Clipboard::processGuiWidgetNewPositionEvent(const Position& newPosition)
+{}
 
 
 void Clipboard::notifyAboutBeginOfPastingData()
@@ -160,8 +168,16 @@ void Clipboard::notifyAboutReceivedPasteData(const byte* data, long length)
 
 void Clipboard::notifyAboutEndOfPastingData()
 {
-    if (selectionOwner->hasSelectionOwnership() && newBuffer.getLength() > 0) {
+    if (   hasRequestedActiveSelectionForClipboard
+        && selectionOwner->hasSelectionOwnership() && newBuffer.getLength() > 0)
+    {
+        hasRequestedActiveSelectionForClipboard = false;
         clipboardBuffer = newBuffer;
+    }
+    if (selectionRequestCallbacks.hasCallbacks()) {
+        String selectionString = newBuffer.toString();
+        selectionRequestCallbacks.invokeAllCallbacks(selectionString);
+        selectionRequestCallbacks.clear();
     }
     newBuffer.clear();
 }
@@ -170,5 +186,10 @@ void Clipboard::treatNewWindowPosition(Position newPosition)
 {}
 
 
-
-
+void Clipboard::addActiveSelectionRequest(Callback<String>::Ptr selectionRequestCallback)
+{
+    selectionRequestCallbacks.registerCallback(selectionRequestCallback);
+    if (!pasteDataReceiver->isReceivingPasteData()) {
+        pasteDataReceiver->requestSelectionPasting();
+    }
+}

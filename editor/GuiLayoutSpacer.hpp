@@ -27,7 +27,7 @@
 #include "GuiElement.hpp"
 #include "ObjectArray.hpp"
 #include "debug.hpp"
-#include "OwningPtr.hpp"
+#include "WeakPtr.hpp"
 
 namespace LucED {
 
@@ -44,15 +44,11 @@ public:
         return create(0, 0, 0, 0, 0, 0);
     }
 
-    virtual Measures getDesiredMeasures() {
-        return measures;
-    }
-    virtual void setPosition(Position p) {
-    }
-
 protected:
     GuiLayoutSpacer(const Measures& m) : measures(m)
     {}
+
+    virtual Measures internalGetDesiredMeasures();
     
     Measures measures;
 };
@@ -82,7 +78,7 @@ private:
 class GuiLayoutSpacerV : public GuiLayoutSpacer
 {
 public:
-    typedef OwningPtr<GuiLayoutSpacerV> Ptr;
+    typedef WeakPtr<GuiLayoutSpacerV> Ptr;
 
     static Ptr create(int minHeight, int bestHeight, int maxHeight) {
         return Ptr(new GuiLayoutSpacerV(Measures(0, minHeight, 0, bestHeight, 0, maxHeight)));
@@ -110,23 +106,12 @@ public:
         return Ptr(new GuiLayoutSpacerFrame(element, thickness));
     }
     
-    virtual Measures getDesiredMeasures();
+    virtual void setPosition(const Position& p);
 
-    virtual void setPosition(Position p);
-
-    virtual void show() {
-        root->show();
-        GuiElement::show();
-    }
-    virtual void hide() {
-        root->hide();
-        GuiElement::hide();
-    }
-    
 protected:
     GuiLayoutSpacerFrame(GuiElement::Ptr member, int thickness);
 
-    GuiElement::Ptr root;
+    virtual Measures internalGetDesiredMeasures();
 };
 
 } // namespace LucED

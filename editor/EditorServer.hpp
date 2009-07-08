@@ -28,8 +28,6 @@
 #include "SingletonInstance.hpp"
 #include "GuiRootProperty.hpp"
 #include "HeapObjectArray.hpp"
-#include "MessageBox.hpp"
-#include "EditorTopWin.hpp"
 #include "ConfigException.hpp"
 #include "WeakPtr.hpp"
 #include "RawPtr.hpp"

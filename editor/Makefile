@@ -105,14 +105,14 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
 		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess \
 		LucedLuaInterface        KeyPressEvent          QualifiedName              SyntaxPatternsConfig \
 		TextStyleCache           ConfigPackageLoader    FocusableWidget            FocusableElement \
-		NonFocusableWidget
+		NonFocusableWidget       FocusableContainerWidget
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \
                 HilitingBuffer          HeapMem                File                   BasicRegex  \
                 BackliteBuffer          GuiLayoutRow           GuiLayoutColumn        HeapObject  \
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
-                ViewLuaInterface        LuaSerializer          ActionMethodContainer
+                ViewLuaInterface        LuaSerializer          ActionMethodContainer  FocusManager
                 
 CONFIG_FILES := .luced/config.lua \
                 $(wildcard .luced/packages/default/*.lua)

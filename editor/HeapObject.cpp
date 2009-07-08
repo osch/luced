@@ -23,6 +23,8 @@
 
 using namespace LucED;
 
+#undef TRACE_HEAP_OBJECT_STACK_TRACES
+
 #ifdef DEBUG
 
 int HeapObjectChecker::initCounter = 0;
@@ -34,10 +36,92 @@ void HeapObjectChecker::assertAllCleared()
 #ifdef PRINT_MALLOCS
     printf("------------------------>  init: %d, alloc: %d, destruct: %d\n", initCounter, allocCounter, destructCounter);
 #else
+    if (   initCounter != allocCounter
+        || initCounter != destructCounter)
+    {
+printf("initCounter=%d, allocCounter=%d, destructCounter=%d\n",
+        initCounter, allocCounter, destructCounter);
+        HeapObject::printAllStackTraces();
+    }
     ASSERT(initCounter == allocCounter);
     ASSERT(initCounter == destructCounter);
 #endif
 }
+
+HeapObject* HeapObject::first = NULL;
+
+HeapObject::HeapObject()
+{
+#ifdef TRACE_HEAP_OBJECT_STACK_TRACES
+    stackTrace = StackTrace::getCurrent();
+    prev = NULL;
+    next = first;
+    first = this;
+    if (next != NULL) {
+        next->prev = this;
+    }
+#endif
+}
+
+HeapObject::~HeapObject()
+{
+#ifdef TRACE_HEAP_OBJECT_STACK_TRACES
+    HeapObject** pprevnext;
+    
+    if (prev == NULL) {
+        pprevnext = &first;
+    } else {
+        pprevnext = &(prev->next);
+    }
+    ASSERT(*pprevnext == this);
+    
+    *pprevnext = next;
+    
+    if (next != NULL) {
+        next->prev = prev;
+    }
+#endif
+}
+
+
+class XXX : private HeapObjectRefManipulator
+{
+public:
+    static HeapObjectCounters* getHeapObjectCounters(const HeapObjectBase* heapObject)
+    {
+        return HeapObjectRefManipulator::getHeapObjectCounters(heapObject);
+    }
+};
+
+void HeapObject::printAllStackTraces()
+{
+#ifdef TRACE_HEAP_OBJECT_STACK_TRACES
+    printf("printAllStackTraces START\n");
+
+    HeapObject* p = first;
+    int counter = 0;
+
+    if (p != NULL)
+    {
+        while (p->next != NULL)
+        {
+            p = p->next;
+        }
+        while (p != NULL)
+        {
+            if (XXX::getHeapObjectCounters(p)->getWasNeverOwnedFlag()) {
+                counter += 1;
+                printf("HeapObjectConstructor: %p\n%s\n", p, p->stackTrace.toCString());
+            }
+            p = p->prev;
+        }
+    }
+    printf("counter=%d\n", counter);
+    printf("printAllStackTraces END\n");
+#endif
+}
+
+
 
 #endif // DEBUG
 

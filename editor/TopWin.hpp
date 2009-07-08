@@ -37,7 +37,7 @@ namespace LucED
 class KeyPressRepeater;
 
 class TopWin : public HeapObject,
-               public GuiWidget
+               public GuiWidget::EventListener
 {
 public:
     typedef WeakPtr<TopWin> Ptr;
@@ -50,8 +50,6 @@ public:
     
     virtual ~TopWin();
 
-    virtual ProcessingResult processEvent(const XEvent* event);
-
     virtual void requestFocus();
     virtual void requestCloseWindow(TopWin::CloseReason reason);
 
@@ -61,8 +59,8 @@ public:
     Position getPosition() const {
         return position;
     }
+    virtual void setPosition(const Position& position);
     
-    virtual void treatNewWindowPosition(Position newPosition);
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
@@ -73,10 +71,8 @@ public:
         return isVisibleFlag;
     }
     
-    void setTitle(const char* title);
-    void setTitle(const String& title) {
-        setTitle(title.toCString());
-    }
+    void setTitle(const String& title);
+
     virtual void raise();
     
     bool isMapped() const {
@@ -109,12 +105,24 @@ public:
     bool isClosing() const {
         return isClosingFlag;
     }
+    
+    bool hasAbsolutePosition() const {
+        return guiWidget.isValid();
+    }
+    
+    Position getAbsolutePosition() const {
+        return guiWidget->getAbsolutePosition();
+    }
 
 protected:
     TopWin();
+
+    static Display* getDisplay() { return GuiRoot::getInstance()->getDisplay(); }
+    static GuiRoot* getGuiRoot() { return GuiRoot::getInstance(); }
     
     void setSizeHints(int minWidth, int minHeight, int dx, int dy);
     void setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy);
+    void setSize(int width, int height);
     
     template
     <
@@ -127,11 +135,35 @@ protected:
     
     virtual void notifyAboutBeingUnmapped();
 
-    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
+    virtual GuiWidget::ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
     
+    void createWidget();
+
     void internalRaise();
     
+    void setTransientFor(RawPtr<TopWin> referingTopWin);
+
+    RawPtr<GuiWidget> getGuiWidget() {
+        return guiWidget;
+    }
+    
+    void setRootElement(GuiElement::Ptr rootElement);
+
+    void setFocusManager(RawPtr<FocusManager> focusManager);
+
+protected:
+    virtual void processGuiWidgetCreatedEvent();
+
+protected: // GuiWidget::EventListener interface implementation
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+    virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
+
 private:
+    static bool hasCurrentX11Focus(TopWin* topWin);
+    
+    
+    void internalSetSizeHints();
+    
     void setWindowManagerHints();
     void handleConfigChanged();
     
@@ -160,6 +192,19 @@ private:
     Position position;
 
     bool isVisibleFlag;
+
+    GuiWidget::Ptr guiWidget;
+
+    WeakPtr<TopWin> referingTopWin;
+    XSizeHints*     sizeHints;
+    int             initialWidth;
+    int             initialHeight;
+    
+    OwningPtr<GuiElement> rootElement;
+    
+    String title;
+    
+    RawPtr<FocusManager> focusManager;
 };
 
 

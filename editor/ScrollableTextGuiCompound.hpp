@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -45,20 +45,19 @@ public:
     
     typedef Flags<Option> Options;
     
-    static Ptr create(GuiWidget*            parent, 
-                      TextEditorWidget::Ptr textWidget, 
+    static Ptr create(TextEditorWidget::Ptr textWidget, 
                       Options               options = Options())
     {
-        return Ptr(new ScrollableTextGuiCompound(parent, textWidget, options));
+        return Ptr(new ScrollableTextGuiCompound(textWidget, options));
     }    
 
-    virtual Measures getDesiredMeasures();
-    virtual void setPosition(Position p);
+    virtual void setPosition(const Position& p);
 
 protected:
-    ScrollableTextGuiCompound(GuiWidget*            parent, 
-                              TextEditorWidget::Ptr textWidget, 
+    ScrollableTextGuiCompound(TextEditorWidget::Ptr textWidget, 
                               Options               options);
+
+    virtual Measures internalGetDesiredMeasures();
 private:
     TextEditorWidget::Ptr textWidget;
     bool dynamicScrollBarDisplayFlag;

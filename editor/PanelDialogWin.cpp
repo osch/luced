@@ -23,22 +23,17 @@
 #include "GlobalConfig.hpp"
 #include "GuiLayoutRow.hpp"
 #include "GuiLayoutSpacer.hpp"
-#include "TextData.hpp"
 #include "GlobalConfig.hpp"
 #include "LabelWidget.hpp"
 #include "DialogPanel.hpp"
 
 using namespace LucED;
 
-PanelDialogWin::PanelDialogWin(TopWin* referingWindow)
+PanelDialogWin::PanelDialogWin(RawPtr<TopWin> referingWindow)
     : DialogWin(referingWindow),
-      dialogPanel(DialogPanel::create(this))
+      dialogPanel(DialogPanel::create())
 {
-    GuiWidget::setFocusManagerForChildWidgets(dialogPanel);
-
     DialogWin::setRootElement(dialogPanel);
-
-    dialogPanel->show();
 }
 
 

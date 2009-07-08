@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LABELWIDGET_HPP
-#define LABELWIDGET_HPP
+#ifndef LABEL_WIDGET_HPP
+#define LABEL_WIDGET_HPP
 
 #include "String.hpp"
 
@@ -39,17 +39,14 @@ public:
 
     typedef OwningPtr<LabelWidget> Ptr;
 
-    static Ptr create(GuiWidget* parent, const String& leftText, const String& rightText = "")
+    static Ptr create(const String& leftText, const String& rightText = "")
     {
-        return Ptr(new LabelWidget(parent, leftText, rightText));
+        return Ptr(new LabelWidget(leftText, rightText));
     }
-
-    virtual ProcessingResult processEvent(const XEvent *event);
-    virtual void setPosition(Position newPosition);
 
     void setDesiredMeasures(GuiElement::Measures m);
 
-    virtual GuiElement::Measures getDesiredMeasures();
+    virtual GuiElement::Measures internalGetDesiredMeasures();
     GuiElement::Measures getOwnDesiredMeasures();
 
     void setLayoutHeight(int height, VerticalAdjustment::Type adjust);
@@ -59,12 +56,17 @@ public:
     }
     
 private:
+    virtual void processGuiWidgetCreatedEvent();
 
-    LabelWidget(GuiWidget* parent, const String& leftText, const String& rightText);
+private: // GuiWidget::EventListener interface implementation
+
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+
+private:
+   LabelWidget(const String& leftText, const String& rightText);
 
     void draw();
     
-    Position position;
     String leftText;
     String rightText;
     VerticalAdjustment::Type adjustment;
@@ -76,4 +78,4 @@ private:
 
 } // namespace LucED
 
-#endif // LABELWIDGET_HPP
+#endif // LABEL_WIDGET_HPP

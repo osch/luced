@@ -36,14 +36,37 @@
 #include "KeyPressEvent.hpp"
 #include "RawPointable.hpp"
 #include "FocusManager.hpp"
+#include "HeapObject.hpp"
+#include "OwningPtr.hpp"
 
 namespace LucED
 {
 
-class GuiWidget : public NonCopyable,
-                  public RawPointable
+class GuiWidget : public HeapObject
 {
 public:
+    typedef OwningPtr<GuiWidget> Ptr;
+    
+    enum ProcessingResult
+    {
+        NOT_PROCESSED = 0,
+        EVENT_PROCESSED = 1
+    };
+
+    class EventListener : public RawPointable
+    {
+    public:
+        virtual ProcessingResult processGuiWidgetEvent(const XEvent* event) = 0; // TODO: this X11 specific method should vanish some day...
+        virtual void             processGuiWidgetNewPositionEvent(const Position& newPosition) = 0;
+    };
+    
+    static Ptr create(RawPtr<GuiWidget>     parentWidget, 
+                      RawPtr<EventListener> eventListener,
+                      const Position&       position, 
+                      int                   borderWidth = 0) {
+        return Ptr(new GuiWidget(parentWidget, eventListener, position, borderWidth));
+    }
+
     class EventProcessorAccess;
     
     class EventRegistration
@@ -58,18 +81,10 @@ public:
         WidgetId wid;
     };
     
-    enum ProcessingResult
-    {
-        NOT_PROCESSED = 0,
-        EVENT_PROCESSED = 1
-    };
     
-    virtual ProcessingResult processEvent(const XEvent *event);
-    virtual void setPosition(Position newPosition);
-    virtual void setSize(int width, int height);
-    virtual void treatNewWindowPosition(Position newPosition) = 0;
-//    const Position& getPosition() { return position; }
-    Position getAbsolutePosition();
+    virtual ProcessingResult processEvent(const XEvent* event);
+    virtual void setPosition(const Position& newPosition);
+    Position getAbsolutePosition() const;
     
     virtual void show();
     virtual void hide();
@@ -94,15 +109,16 @@ public:
     };
     
 protected:
-    GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width);
+    GuiWidget(RawPtr<GuiWidget>     parentWidget,
+              RawPtr<EventListener> eventListener,
+              const Position&       position,
+              int borderWidth);
     
-    GuiWidget(GuiWidget* parent,
-              int x, int y, unsigned int width, unsigned int height, unsigned border_width);
-
     virtual ~GuiWidget();
 
-    static WidgetId getRootWid();
-    static Display* getDisplay();
+public:
+    static WidgetId getRootWid() { return GuiRoot::getInstance()->getRootWid(); }
+    static Display* getDisplay() { return GuiRoot::getInstance()->getDisplay(); }
     static GuiRoot* getGuiRoot() { return GuiRoot::getInstance(); }
     
     class GuiClipping
@@ -119,13 +135,16 @@ protected:
     GuiClipping obtainGuiClipping(int x, int y, int w, int h);
     void setBitGravity(int bitGravity);
 
+    int getWidth() const {
+        return width;
+    }
+    int getHeight() const {
+        return height;
+    }
+
 protected:
     RawPtr<GuiWidget> getParentWidget() const {
         return parent;
-    }
-    
-    void setFocusManagerForChildWidgets(RawPtr<FocusManager> focusManager) {
-        this->focusManagerForChildWidgets = focusManager;
     }
     
 public:
@@ -136,11 +155,7 @@ public:
     virtual void setBackgroundColor(GuiColor color);
     virtual void setBorderColor(GuiColor color);
 
-    RawPtr<FocusManager> getFocusManagerForChildWidgets() const {
-        return focusManagerForChildWidgets;
-    }
-
-protected:
+public:
     void addToXEventMask(long eventMask);
     void removeFromXEventMask(long eventMask);
     
@@ -152,14 +167,16 @@ protected:
         }
     }
     
-    RawPtr<TextStyle> getGuiTextStyle();
+    static RawPtr<TextStyle> getGuiTextStyle();
+    static int getGuiTextHeight();
+    static int getRaisedBoxBorderWidth();
+
     void drawLine(int x, int y, int dx, int dy);
     void drawLine(int x, int y, int dx, int dy, GuiColor color);
     void drawRaisedSurface(int x, int y, int w, int h);
     void drawRaisedSurface(int x, int y, int w, int h, GuiColor color);
     void drawRaisedBox(int x, int y, int w, int h, GuiColor color);
     void drawRaisedBox(int x, int y, int w, int h);
-    int getRaisedBoxBorderWidth();
     void drawPressedBox(int x, int y, int w, int h, GuiColor color);
     void drawPressedBox(int x, int y, int w, int h);
     void drawArrow(int x, int y, int w, int h, const Direction::Type direct);
@@ -175,10 +192,10 @@ protected:
     void drawFrame(int x, int y, int w, int h);
     void undrawFrame(int x, int y, int w, int h);
     void drawDottedFrame(int x, int y, int w, int h);
-    int getGuiTextHeight();
     
     
 private:
+    int  borderWidth;
     bool isTopWindow;
     WidgetId wid;
     long eventMask;
@@ -186,7 +203,10 @@ private:
     GC gcid;
 
     RawPtr<GuiWidget> parent;
-    RawPtr<FocusManager> focusManagerForChildWidgets;
+    RawPtr<EventListener> eventListener;
+    
+    int width;
+    int height;
 };
 
 

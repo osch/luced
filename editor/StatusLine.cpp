@@ -29,76 +29,67 @@
 
 using namespace LucED;
 
-StatusLine::StatusLine(GuiWidget* parent)
-    : NonFocusableWidget(parent, 0, 0, 1, 1, 0),
-      position(0, 0, 1, 1),
-      fileLength(0), selectionLength(0),
+StatusLine::StatusLine()
+    : fileLength(0), selectionLength(0),
       lengthPos(0), line(0), column(0), pos(0), lineAndColumnWidth(0),
       hasMessage(false)
 {
-    addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
-    setBackgroundColor(getGuiRoot()->getGuiColor03());
+    RawPtr<TextStyle> guiTextStyle = GuiWidget::getGuiTextStyle();
     
+    labelSWidth    = guiTextStyle->getTextWidth("S: ");
+    labelPWidth    = guiTextStyle->getTextWidth("P: ");
+    labelLWidth    = guiTextStyle->getTextWidth("L: ");
+    labelCWidth    = guiTextStyle->getTextWidth("C: ");
+    spaceWidth     = guiTextStyle->getTextWidth("  ");
     
-    labelSWidth    = getGuiTextStyle()->getTextWidth("S: ");
-    labelPWidth    = getGuiTextStyle()->getTextWidth("P: ");
-    labelLWidth    = getGuiTextStyle()->getTextWidth("L: ");
-    labelCWidth    = getGuiTextStyle()->getTextWidth("C: ");
-    spaceWidth     = getGuiTextStyle()->getTextWidth("  ");
-    
-    smallWidth  = getGuiTextStyle()->getTextWidth("888");
-    middleWidth = getGuiTextStyle()->getTextWidth("888");
-    bigWidth    = getGuiTextStyle()->getTextWidth("888888");
+    smallWidth  = guiTextStyle->getTextWidth("888");
+    middleWidth = guiTextStyle->getTextWidth("888");
+    bigWidth    = guiTextStyle->getTextWidth("888888");
 }
 
-void StatusLine::setPosition(Position newPosition)
+
+void StatusLine::processGuiWidgetCreatedEvent()
 {
-    if (position != newPosition) {
-        GuiWidget::setPosition(newPosition);
-        this->position = newPosition;
-    }
+    getGuiWidget()->addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
+    getGuiWidget()->setBackgroundColor(getGuiRoot()->getGuiColor03());
 }
 
-GuiElement::Measures StatusLine::getDesiredMeasures()
+
+GuiElement::Measures StatusLine::internalGetDesiredMeasures()
 {
-    int statusHeight = getGuiTextHeight() + 4;
+    int statusHeight = GuiWidget::getGuiTextHeight() + 4;
     return Measures(0, statusHeight, 0, statusHeight, INT_MAX, statusHeight);
 }
 
-GuiWidget::ProcessingResult StatusLine::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult StatusLine::processGuiWidgetEvent(const XEvent* event)
 {
-    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
-    } else {
-        
-        switch (event->type) {
-            
-            case GraphicsExpose:
-                if (event->xgraphicsexpose.count > 0) {
-                    break;
-                }
-            case Expose: {
-                if (event->xexpose.count > 0) {
-                    break;
-                }
-                this->drawArea();
-                return EVENT_PROCESSED;
-            }
-
-            case ButtonPress: {
+    switch (event->type)
+    {
+        case GraphicsExpose:
+            if (event->xgraphicsexpose.count > 0) {
                 break;
             }
-
-            case ButtonRelease: {
+        case Expose: {
+            if (event->xexpose.count > 0) {
                 break;
             }
-
-            case MotionNotify: {
-                break;
-            }
+            this->drawArea();
+            return GuiWidget::EVENT_PROCESSED;
         }
-        return propagateEventToParentWidget(event);
+
+        case ButtonPress: {
+            break;
+        }
+
+        case ButtonRelease: {
+            break;
+        }
+
+        case MotionNotify: {
+            break;
+        }
     }
+    return getGuiWidget()->propagateEventToParentWidget(event);
 }
 
 void StatusLine::drawFileName()
@@ -109,13 +100,16 @@ void StatusLine::drawFileName()
     } else {
         displayText = fileName;
     }
-    GuiClipping c = obtainGuiClipping(
-            getRaisedBoxBorderWidth(), getRaisedBoxBorderWidth(), 
-            position.w - 2 * getRaisedBoxBorderWidth(), position.h - 2 * getRaisedBoxBorderWidth());
+    GuiWidget::GuiClipping c = getGuiWidget()->obtainGuiClipping(
+            GuiWidget::getRaisedBoxBorderWidth(), GuiWidget::getRaisedBoxBorderWidth(), 
+            getPosition().w - 2 * GuiWidget::getRaisedBoxBorderWidth(), getPosition().h - 2 * GuiWidget::getRaisedBoxBorderWidth());
     
-    drawGuiText(  4, 2, displayText.toCString(), displayText.getLength());
-    lengthPos = getGuiTextStyle()->getTextWidth(displayText.toCString(), displayText.getLength())
-            + 3 * getGuiTextStyle()->getSpaceWidth();
+    getGuiWidget()->drawGuiText(  4, 2, displayText.toCString(), displayText.getLength());
+
+    RawPtr<TextStyle> guiTextStyle = GuiWidget::getGuiTextStyle();
+
+    lengthPos = guiTextStyle->getTextWidth(displayText.toCString(), displayText.getLength())
+            + 3 * guiTextStyle->getSpaceWidth();
 }
 
 
@@ -123,15 +117,17 @@ void StatusLine::drawFileLength()
 {
     if (!hasMessage)
     {
-        GuiClipping c = obtainGuiClipping(
-                getRaisedBoxBorderWidth(), getRaisedBoxBorderWidth(), 
-                position.w - 2 * getRaisedBoxBorderWidth(), position.h - 2 * getRaisedBoxBorderWidth());
+        GuiWidget::GuiClipping c = getGuiWidget()->obtainGuiClipping(
+                GuiWidget::getRaisedBoxBorderWidth(), GuiWidget::getRaisedBoxBorderWidth(), 
+                getPosition().w - 2 * GuiWidget::getRaisedBoxBorderWidth(), getPosition().h - 2 * GuiWidget::getRaisedBoxBorderWidth());
     
         char buffer[100];
         sprintf(buffer, "%ld bytes", fileLength);
     
-        drawRaisedSurface(lengthPos, 2, getGuiTextStyle()->getTextWidth(buffer, strlen(buffer)), getGuiTextHeight());
-        drawGuiText(      lengthPos, 2, buffer, strlen(buffer));
+        RawPtr<TextStyle> guiTextStyle = GuiWidget::getGuiTextStyle();
+    
+        getGuiWidget()->drawRaisedSurface(lengthPos, 2, guiTextStyle->getTextWidth(buffer, strlen(buffer)), GuiWidget::getGuiTextHeight());
+        getGuiWidget()->drawGuiText(      lengthPos, 2, buffer, strlen(buffer));
     }
 }
 
@@ -139,7 +135,10 @@ int StatusLine::calcWidth(long value)
 {
     char buffer[100];
     sprintf(buffer, "%ld", value);
-    return getGuiTextStyle()->getTextWidth(buffer);
+
+    RawPtr<TextStyle> guiTextStyle = GuiWidget::getGuiTextStyle();
+
+    return guiTextStyle->getTextWidth(buffer);
 }
 
 void StatusLine::drawLineAndColumn()
@@ -161,26 +160,26 @@ void StatusLine::drawLineAndColumn()
         //sprintf(buffer, "S: %-6ld    P: %-6ld    L: %-5ld  C: %-3ld  ", selectionLength, pos, line + 1, column);
     
     int w = util::maximum(width, lineAndColumnWidth);
-    drawRaisedSurface(position.w - getRaisedBoxBorderWidth() - w,     2, w, getGuiTextHeight());
+    getGuiWidget()->drawRaisedSurface(getPosition().w - GuiWidget::getRaisedBoxBorderWidth() - w,     2, w, GuiWidget::getGuiTextHeight());
 
-    int p = position.w - getRaisedBoxBorderWidth() - width;
+    int p = getPosition().w - GuiWidget::getRaisedBoxBorderWidth() - width;
     
     if (selectionLength != 0) {
         sprintf(buffer, "S: %ld", selectionLength);
-        drawGuiText(p, 2, buffer);
+        getGuiWidget()->drawGuiText(p, 2, buffer);
         p += labelSWidth + util::maximum(smallWidth, calcWidth(selectionLength)) + spaceWidth;
     }
     {
         sprintf(buffer, "P: %ld", pos);
-        drawGuiText(p, 2, buffer);
+        getGuiWidget()->drawGuiText(p, 2, buffer);
         p += labelPWidth + util::maximum(bigWidth,    calcWidth(pos))      + 2*spaceWidth;
 
         sprintf(buffer, "L: %ld", line + 1);
-        drawGuiText(p, 2, buffer);
+        getGuiWidget()->drawGuiText(p, 2, buffer);
         p += labelLWidth + util::maximum(middleWidth, calcWidth(line + 1)) +  spaceWidth;
 
         sprintf(buffer, "C: %ld", column);
-        drawGuiText(p, 2, buffer);
+        getGuiWidget()->drawGuiText(p, 2, buffer);
         p += labelCWidth + util::maximum(smallWidth,  calcWidth(column));
     }
     lineAndColumnWidth = width;
@@ -189,7 +188,7 @@ void StatusLine::drawLineAndColumn()
 
 void StatusLine::drawArea()
 {
-    drawRaisedBox(0, 0, position.w, position.h);
+    getGuiWidget()->drawRaisedBox(0, 0, getPosition().w, getPosition().h);
     drawFileName();
     drawFileLength();
     drawLineAndColumn();
@@ -198,7 +197,9 @@ void StatusLine::drawArea()
 void StatusLine::setFileName(const String& fileName)
 {
     this->fileName = fileName;
-    drawArea();
+    if (getGuiWidget().isValid()) {
+        drawArea();
+    }
 }
 
 void StatusLine::setMessage(const String& message)
@@ -220,11 +221,15 @@ void StatusLine::setFileLength(long fileLength)
 {
     if (fileLength < this->fileLength) {
         this->fileLength = fileLength;
-        drawArea();
+        if (getGuiWidget().isValid()) {
+            drawArea();
+        }
     }
     else {
         this->fileLength = fileLength;
-        drawFileLength();
+        if (getGuiWidget().isValid()) {
+            drawFileLength();
+        }
     }
 }
 

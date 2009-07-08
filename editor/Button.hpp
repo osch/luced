@@ -46,8 +46,8 @@ public:
 
     typedef OwningPtr<Button> Ptr;
     
-    static Ptr create(GuiWidget* parent, String buttonText) {
-        return Ptr(new Button(parent, buttonText));
+    static Ptr create(String buttonText) {
+        return Ptr(new Button(buttonText));
     }
     
     void setButtonText(String buttonText);
@@ -82,19 +82,22 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    virtual ProcessingResult processEvent(const XEvent* event);
     
     Measures getOwnDesiredMeasures();
     void setDesiredMeasures(Measures m);
-    
-    virtual Measures getDesiredMeasures();
-    virtual void setPosition(Position newPosition);
     
     virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatHotKeyEvent(const KeyMapping::Id& id);
     
     void setAsDefaultButton(bool isDefault = true);
+
+private:
+    virtual Measures internalGetDesiredMeasures();
+    virtual void processGuiWidgetCreatedEvent();
+
+private: // GuiWidget::EventListener interface implementation
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
     
 private:
     class Actions : public ActionMethodBinding<Actions>
@@ -118,13 +121,12 @@ private:
     friend class ActionMethodBinding<Actions>;
 
 
-    Button(GuiWidget* parent, String buttonText);
+    Button(String buttonText);
 
     void emulateButtonPress(bool isDefaultKey, bool isRightClicked);
     void drawButton();
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
-    Position position;
     String buttonText;
     bool isButtonPressed;
     bool isMouseButtonPressed;

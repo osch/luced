@@ -82,41 +82,18 @@ using namespace LucED;
 SingletonInstance<GuiWidgetSingletonData> GuiWidgetSingletonData::instance;
 
 
-Display* GuiWidget::getDisplay()
-{
-    return GuiRoot::getInstance()->getDisplay();
-}
-
-WidgetId GuiWidget::getRootWid()
-{
-    return GuiRoot::getInstance()->getRootWid();
-}
-
-
-GuiWidget::GuiWidget(int x, int y, unsigned int width, unsigned int height, unsigned border_width)
-    : isTopWindow(true),
-      parent(),
+GuiWidget::GuiWidget(RawPtr<GuiWidget>     parentWidget, 
+                     RawPtr<EventListener> eventListener,
+                     const Position&       position, 
+                     int                   borderWidth)
+    : borderWidth(borderWidth),
+      isTopWindow(!parentWidget.isValid()),
+      parent(parentWidget),
+      eventListener(eventListener),
       eventMask(0),
-      position(x, y, width, height),
-      gcid(GuiWidgetSingletonData::getInstance()->getGcid())
-{
-//    GuiElement::hide();
-    
-    wid = WidgetId(XCreateSimpleWindow(getDisplay(), getRootWid(), 
-                                       x, y, width, height, border_width, 
-                                       GuiRoot::getInstance()->getGreyColor(), 
-                                       GuiRoot::getInstance()->getGreyColor()));
-
-    EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
-    addToXEventMask(StructureNotifyMask);
-}
-    
-GuiWidget::GuiWidget(GuiWidget* parent,
-                     int x, int y, unsigned int width, unsigned int height, unsigned border_width)
-    : isTopWindow(false),
-      parent(parent),
-      eventMask(0),
-      position(x, y, width, height),
+      position(position),
+      width (position.w - 2 * borderWidth),
+      height(position.h - 2 * borderWidth),
       gcid(GuiWidgetSingletonData::getInstance()->getGcid())
 {
 #if 0
@@ -132,14 +109,22 @@ GuiWidget::GuiWidget(GuiWidget* parent,
     at.background_pixmap = None;
     at.backing_store = WhenMapped;
 
-    wid = WidgetId(XCreateWindow(getDisplay(), parent->getWid(), 
-                                 x, y, width, height, border_width, 
-                                 CopyFromParent, // <-- depth from parent
-                                 InputOutput,
-                                 CopyFromParent, // <-- visual from parent
-                                 CWBackPixmap|CWBackingStore, 
-                                 &at));
-    
+    if (parent.isValid())
+    {
+        wid = WidgetId(XCreateWindow(getDisplay(), parent->getWid(), 
+                                     position.x, position.y, width, height, borderWidth, 
+                                     CopyFromParent, // <-- depth from parent
+                                     InputOutput,
+                                     CopyFromParent, // <-- visual from parent
+                                     CWBackPixmap|CWBackingStore, 
+                                     &at));
+    } else
+    {
+        wid = WidgetId(XCreateSimpleWindow(getDisplay(), getRootWid(), 
+                                           position.x, position.y, width, height, borderWidth, 
+                                           GuiRoot::getInstance()->getGreyColor(), 
+                                           GuiRoot::getInstance()->getGreyColor()));
+    }    
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
     addToXEventMask(StructureNotifyMask);
 }
@@ -153,7 +138,7 @@ GuiWidget::~GuiWidget()
     }
 }
 
-GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent* event)
 {
     switch (event->type)
     {
@@ -164,10 +149,13 @@ GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent *event)
                 int y = event->xconfigure.y;
                 int w = event->xconfigure.width;
                 int h = event->xconfigure.height;
-                Position newPosition(x,y,w,h);
+                Position newPosition(x, y, w + 2 * borderWidth,
+                                           h + 2 * borderWidth);
                 if (position != newPosition) {
-                    this->treatNewWindowPosition(newPosition);
                     position = newPosition;
+                    this->width  = position.w - 2 * borderWidth;
+                    this->height = position.h - 2 * borderWidth;
+                    eventListener->processGuiWidgetNewPositionEvent(newPosition);
                 }
                 return EVENT_PROCESSED;
             } else {
@@ -175,18 +163,24 @@ GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent *event)
             }
         }
         default: {
-            return NOT_PROCESSED;
+            return eventListener->processGuiWidgetEvent(event);
         }
     }
 }
 
-void GuiWidget::setPosition(Position p)
+void GuiWidget::setPosition(const Position& p)
 {
-    XMoveResizeWindow(getDisplay(), wid, p.x, p.y, p.w, p.h);
+    int w = p.w - 2 * borderWidth;
+    int h = p.h - 2 * borderWidth;
+
+    if (w <= 0) { w = 2 * borderWidth; }
+    if (h <= 0) { h = 2 * borderWidth; }
+    
+    XMoveResizeWindow(getDisplay(), wid, p.x, p.y, w, h);
     // this->position is set via ConfigureNotify event
 }
 
-Position GuiWidget::getAbsolutePosition()
+Position GuiWidget::getAbsolutePosition() const
 {
     Position rslt(this->position);
     Window child_return;
@@ -195,11 +189,6 @@ Position GuiWidget::getAbsolutePosition()
     return rslt;
 }
 
-void GuiWidget::setSize(int width, int height)
-{
-    XResizeWindow(getDisplay(), wid, width, height);
-    // this->position is set via ConfigureNotify event
-}
 
 void GuiWidget::show()
 {

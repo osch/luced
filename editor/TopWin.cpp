@@ -39,19 +39,32 @@ using namespace LucED;
 
 
 TopWin::TopWin()
-    : GuiWidget(0, 0, 1, 1, 0),
-      ownedTopWins(OwnedTopWins::create()),
+    : ownedTopWins(OwnedTopWins::create()),
       mapped(false),
       requestFocusAfterMapped(false),
       focusFlag(false),
-      raiseWindowAtom(XInternAtom(getDisplay(), "_NET_ACTIVE_WINDOW", False)),
       shouldRaiseAfterFocusIn(false),
       isClosingFlag(false),
-      isVisibleFlag(false)
+      position(0,0,1,1),
+      isVisibleFlag(false),
+      sizeHints(NULL),
+      initialWidth(-1),
+      initialHeight(-1)      
 {
-    setWindowManagerHints();
+    GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TopWin::handleConfigChanged));
+}
 
-    x11InternAtomForDeleteWindow = XInternAtom(getDisplay(), 
+void TopWin::createWidget()
+{
+    ASSERT(!guiWidget.isValid());
+
+    guiWidget = GuiWidget::create(Null, this, getPosition());
+    
+    setTitle(title);
+    
+    raiseWindowAtom = XInternAtom(guiWidget->getDisplay(), "_NET_ACTIVE_WINDOW", False),
+
+    x11InternAtomForDeleteWindow = XInternAtom(GuiRoot::getInstance()->getDisplay(), 
             "WM_DELETE_WINDOW", False);
 //    x11InternAtomForTakeFocus = XInternAtom(getDisplay(), 
 //            "WM_TAKE_FOCUS", False);
@@ -59,18 +72,41 @@ TopWin::TopWin()
     Atom atoms[] = { x11InternAtomForDeleteWindow, 
                      //x11InternAtomForTakeFocus 
                    };
-    XSetWMProtocols(getDisplay(), getWid(), 
+    XSetWMProtocols(guiWidget->getDisplay(), guiWidget->getWid(), 
                     atoms, sizeof(atoms) / sizeof(Atom));
     
-    addToXEventMask(KeyPressMask|KeyReleaseMask|FocusChangeMask|StructureNotifyMask);
+    guiWidget->addToXEventMask(KeyPressMask|KeyReleaseMask|FocusChangeMask|StructureNotifyMask);
+    setTransientFor(referingTopWin);
+    
+    if (sizeHints != NULL) {
+        internalSetSizeHints();
+    }
+    if (initialWidth != -1 && initialHeight != -1) {
+        XResizeWindow(guiWidget->getDisplay(), guiWidget->getWid(), initialWidth, initialHeight);
+    }
+    
+    setWindowManagerHints();
 
-    GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TopWin::handleConfigChanged));
+    processGuiWidgetCreatedEvent();
+}
+
+void TopWin::internalSetSizeHints()
+{
+    ASSERT(sizeHints != NULL);
+
+    XSetWMNormalHints(guiWidget->getDisplay(), guiWidget->getWid(), sizeHints);
+    XFree(sizeHints);
+    sizeHints = NULL;
 }
 
 static TopWin* expectedFocusTopWin; // cannot be WeakPtr, because it is used in the destructor
 
 TopWin::~TopWin()
 {
+    if (sizeHints != NULL) {
+        XFree(sizeHints);
+        sizeHints = NULL;
+    }
     if (this == expectedFocusTopWin) {
         expectedFocusTopWin = NULL;
         if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
@@ -83,16 +119,16 @@ TopWin::~TopWin()
     }
 }
 
-static inline bool hasCurrentX11Focus(TopWin* topWin)
+inline bool TopWin::hasCurrentX11Focus(TopWin* topWin)
 {
     Window focusWidget;
     int    revertToReturn;
     
-    XGetInputFocus(GuiRoot::getInstance()->getDisplay(), 
+    XGetInputFocus(topWin->guiWidget->getDisplay(), 
                    &focusWidget,
                    &revertToReturn);
                    
-    return (focusWidget == topWin->getWid());
+    return (focusWidget == topWin->guiWidget->getWid());
 }
 
 
@@ -117,29 +153,46 @@ fprintf(stderr, "****************** expected FocusTopWin mismatch\n");
 
 void TopWin::setSizeHints(int minWidth, int minHeight, int dx, int dy)
 {
-    XSizeHints* hints = XAllocSizeHints();
-    hints->flags = PMinSize|PResizeInc;
-    hints->min_width  = minWidth;
-    hints->min_height = minHeight;
-    hints->width_inc  = dx;
-    hints->height_inc = dy;
-    XSetWMNormalHints(getDisplay(), getWid(), hints);
-    XFree(hints);
+    if (sizeHints == NULL) {
+        sizeHints = XAllocSizeHints();
+    }
+    sizeHints->flags = PMinSize|PResizeInc;
+    sizeHints->min_width  = minWidth;
+    sizeHints->min_height = minHeight;
+    sizeHints->width_inc  = dx;
+    sizeHints->height_inc = dy;
+    if (guiWidget.isValid()) {
+        internalSetSizeHints();
+    }
 }
 
 void TopWin::setSizeHints(int x, int y, int minWidth, int minHeight, int dx, int dy)
 {
-    XSizeHints* hints = XAllocSizeHints();
-    hints->flags = USPosition|PMinSize|PResizeInc;
-    hints->x = x;
-    hints->y = y;
-    hints->min_width  = minWidth;
-    hints->min_height = minHeight;
-    hints->width_inc  = dx;
-    hints->height_inc = dy;
-    XSetWMNormalHints(getDisplay(), getWid(), hints);
-    XFree(hints);
+    if (sizeHints == NULL) {
+        sizeHints = XAllocSizeHints();
+    }
+    sizeHints->flags = USPosition|PMinSize|PResizeInc;
+    sizeHints->x = x;
+    sizeHints->y = y;
+    sizeHints->min_width  = minWidth;
+    sizeHints->min_height = minHeight;
+    sizeHints->width_inc  = dx;
+    sizeHints->height_inc = dy;
+    if (guiWidget.isValid()) {
+        internalSetSizeHints();
+    }
 }
+
+void TopWin::setSize(int width, int height)
+{
+    if (guiWidget.isValid()) {
+        XResizeWindow(guiWidget->getDisplay(), guiWidget->getWid(), width, height);
+    } else {
+        this->initialWidth = width;
+        this->initialHeight = height;
+    }
+}
+
 
 void TopWin::requestFocus()
 {
@@ -147,7 +200,7 @@ void TopWin::requestFocus()
         this->show();
         this->requestFocusAfterMapped = true;
     } else {
-        XSetInputFocus(getDisplay(), getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
+        XSetInputFocus(guiWidget->getDisplay(), guiWidget->getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
     }
 }
 
@@ -158,207 +211,215 @@ void TopWin::repeatKeyPress(const XEvent* event)
 }
 
 
-GuiWidget::ProcessingResult TopWin::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult TopWin::processGuiWidgetEvent(const XEvent* event)
 {
-    if (GuiWidget::processEvent(event) == EVENT_PROCESSED)
+    switch (event->type)
     {
-        return EVENT_PROCESSED;
-    } 
-    else
-    {
-        switch (event->type)
-        {
-            case MapNotify: {
-                if (event->xmap.window == getWid()) {
-                    mapped = true;
-                    if (requestFocusAfterMapped) {
-                        XSetInputFocus(getDisplay(), getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
-                        requestFocusAfterMapped = false;
-                    }
-                    notifyAboutBeingMapped();
-                    mappingNotifyCallbacks.invokeAllCallbacks(true);
-                    return EVENT_PROCESSED;
-                } else {
-                    return NOT_PROCESSED;
+        case MapNotify: {
+            if (event->xmap.window == guiWidget->getWid()) {
+                mapped = true;
+                if (requestFocusAfterMapped) {
+                    XSetInputFocus(guiWidget->getDisplay(), guiWidget->getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
+                    requestFocusAfterMapped = false;
                 }
+                notifyAboutBeingMapped();
+                mappingNotifyCallbacks.invokeAllCallbacks(true);
+                return GuiWidget::EVENT_PROCESSED;
+            } else {
+                return GuiWidget::NOT_PROCESSED;
             }
+        }
 
-            case UnmapNotify: {
-                if (event->xunmap.window == getWid()) {
-                    mapped = false;
-                    notifyAboutBeingUnmapped();
-                    mappingNotifyCallbacks.invokeAllCallbacks(false);
-                    return EVENT_PROCESSED;
-                } else {
-                    return NOT_PROCESSED;
-                }
+        case UnmapNotify: {
+            if (event->xunmap.window == guiWidget->getWid()) {
+                mapped = false;
+                notifyAboutBeingUnmapped();
+                mappingNotifyCallbacks.invokeAllCallbacks(false);
+                return GuiWidget::EVENT_PROCESSED;
+            } else {
+                return GuiWidget::NOT_PROCESSED;
             }
+        }
 
-            case ClientMessage: {
-                if (event->xclient.data.l[0] == this->x11InternAtomForDeleteWindow) {
-                    this->requestCloseWindow(TopWin::CLOSED_BY_USER);
-                    return EVENT_PROCESSED;
+        case ClientMessage: {
+            if (event->xclient.data.l[0] == this->x11InternAtomForDeleteWindow) {
+                this->requestCloseWindow(TopWin::CLOSED_BY_USER);
+                return GuiWidget::EVENT_PROCESSED;
 /*                } else if (event->xclient.data.l[0] == this->x11InternAtomForTakeFocus) {
 printf("TakeFocus\n");
-                    long timestamp = event->xclient.data.l[1];
-                    bool focusInFromExternal = (expectedFocusTopWin == NULL);
-                    XSetInputFocus(getDisplay(), getWid(), RevertToNone, timestamp);
-                    return true;
+                long timestamp = event->xclient.data.l[1];
+                bool focusInFromExternal = (expectedFocusTopWin == NULL);
+                XSetInputFocus(getDisplay(), getWid(), RevertToNone, timestamp);
+                return true;
 */
-                } else {
-                    return NOT_PROCESSED;
-                }   
-            }
-            
-            case KeyPress: {
-                if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+            } else {
+                return GuiWidget::NOT_PROCESSED;
+            }   
+        }
+        
+        case KeyPress: {
+            if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+            {
+                if (KeyPressRepeater::getInstance()->isRepeating())
                 {
-                    if (KeyPressRepeater::getInstance()->isRepeating())
-                    {
-                        if (KeyPressRepeater::getInstance()->addKeyModifier(event)) {
-                            return EVENT_PROCESSED;
-                        }
-                        if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
-                            return EVENT_PROCESSED;
-                        }
-                        KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
-                        ProcessingResult processed = processKeyboardEvent(KeyPressEvent(event));
-                        return processed;
+                    if (KeyPressRepeater::getInstance()->addKeyModifier(event)) {
+                        return GuiWidget::EVENT_PROCESSED;
                     }
-                    else {
-                        KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
-                        ProcessingResult processed = processKeyboardEvent(KeyPressEvent(event));
-                        return processed;
-                    }
-                }
-                else
-                {
-                    return processKeyboardEvent(KeyPressEvent(event));
-                }
-            
-/*                if (KeyPressRepeater::getInstance()->isRepeating())
-                {
                     if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
-                        bool processed = processKeyboardEvent(event);
-                        KeyPressRepeater::getInstance()->repeatEvent(event);
-                        return processed;
+                        return GuiWidget::EVENT_PROCESSED;
                     }
-                    else {
-                        KeyPressRepeater::getInstance()->addKeyModifier(event);
-                        return true;
-                    }
+                    KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
+                    GuiWidget::ProcessingResult processed = processKeyboardEvent(KeyPressEvent(event));
+                    return processed;
                 }
                 else {
+                    KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
+                    GuiWidget::ProcessingResult processed = processKeyboardEvent(KeyPressEvent(event));
+                    return processed;
+                }
+            }
+            else
+            {
+                return processKeyboardEvent(KeyPressEvent(event));
+            }
+        
+/*                if (KeyPressRepeater::getInstance()->isRepeating())
+            {
+                if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
                     bool processed = processKeyboardEvent(event);
                     KeyPressRepeater::getInstance()->repeatEvent(event);
                     return processed;
                 }
+                else {
+                    KeyPressRepeater::getInstance()->addKeyModifier(event);
+                    return true;
+                }
+            }
+            else {
+                bool processed = processKeyboardEvent(event);
+                KeyPressRepeater::getInstance()->repeatEvent(event);
+                return processed;
+            }
 */            
-            }
-            
-            case KeyRelease: {
-                if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
-                {
-                    bool isTrueRelease = true;
-                    
-                    if (   !GuiRoot::getInstance()->hasDetectableAutorepeat()
-                        && XEventsQueued(getDisplay(), QueuedAlready) > 0)
-                    {
-                        XEvent nextEvent;
-                        XPeekEvent(getDisplay(), &nextEvent);
-                        if (   nextEvent.type == KeyPress
-                            && nextEvent.xkey.keycode == event->xkey.keycode
-                            && nextEvent.xkey.time    == event->xkey.time)
-                        {
-                            isTrueRelease = false;
-                        }
-                    }
-                    if (isTrueRelease)
-                    {
-                        if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
-                            KeyPressRepeater::getInstance()->reset();
-                        }
-                        if (KeyPressRepeater::getInstance()->isRepeating()) {
-                           KeyPressRepeater::getInstance()->removeKeyModifier(event);
-                        }
-                    }
-                }
-                return EVENT_PROCESSED;
-            }
-
-            case FocusOut:
+        }
+        
+        case KeyRelease: {
+            if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
             {
-                if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+                bool isTrueRelease = true;
+                
+                if (   !GuiRoot::getInstance()->hasDetectableAutorepeat()
+                    && XEventsQueued(guiWidget->getDisplay(), QueuedAlready) > 0)
                 {
-                    KeyPressRepeater::getInstance()->reset();
-                    GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
-                }
-                if (focusFlag) {
-                    focusFlag = false;
-                    treatFocusOut();
-                }
-                if (expectedFocusTopWin == this)
-                {
-                    expectedFocusTopWin = NULL;
-                }
-                else if (expectedFocusTopWin != NULL && !hasCurrentX11Focus(expectedFocusTopWin))
-                {
-                    // I don't understand, why this can happen: 
-                    // but without this workaround sometimes a window
-                    // in the background still has a blinking cursor
-                    // this also happens with NEdit, perhaps a bug in
-                    // some window manager
-                    
-                    if (expectedFocusTopWin->focusFlag) {
-                        expectedFocusTopWin->focusFlag = false;
-                        expectedFocusTopWin->treatFocusOut();
+                    XEvent nextEvent;
+                    XPeekEvent(guiWidget->getDisplay(), &nextEvent);
+                    if (   nextEvent.type == KeyPress
+                        && nextEvent.xkey.keycode == event->xkey.keycode
+                        && nextEvent.xkey.time    == event->xkey.time)
+                    {
+                        isTrueRelease = false;
                     }
-                    expectedFocusTopWin = NULL;
                 }
-                return EVENT_PROCESSED;
-            }
-
-            case FocusIn:
-            {
-                if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+                if (isTrueRelease)
                 {
-                    KeyPressRepeater::getInstance()->reset();
+                    if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
+                        KeyPressRepeater::getInstance()->reset();
+                    }
+                    if (KeyPressRepeater::getInstance()->isRepeating()) {
+                       KeyPressRepeater::getInstance()->removeKeyModifier(event);
+                    }
+                }
+            }
+            return GuiWidget::EVENT_PROCESSED;
+        }
+
+        case FocusOut:
+        {
+            if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+            {
+                KeyPressRepeater::getInstance()->reset();
+                GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
+            }
+            if (focusFlag) {
+                focusFlag = false;
+                treatFocusOut();
+            }
+            if (expectedFocusTopWin == this)
+            {
+                expectedFocusTopWin = NULL;
+            }
+            else if (expectedFocusTopWin != NULL && !hasCurrentX11Focus(expectedFocusTopWin))
+            {
+                // I don't understand, why this can happen: 
+                // but without this workaround sometimes a window
+                // in the background still has a blinking cursor
+                // this also happens with NEdit, perhaps a bug in
+                // some window manager
+                
+                if (expectedFocusTopWin->focusFlag) {
+                    expectedFocusTopWin->focusFlag = false;
+                    expectedFocusTopWin->treatFocusOut();
+                }
+                expectedFocusTopWin = NULL;
+            }
+            return GuiWidget::EVENT_PROCESSED;
+        }
+
+        case FocusIn:
+        {
+            if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+            {
+                KeyPressRepeater::getInstance()->reset();
 #if 0
-                    if (!GuiRoot::getInstance()->hasDetectableAutorepeat()) {
-                        GuiRoot::getInstance()->setKeyboardAutoRepeatOff();
-                    }
+                if (!GuiRoot::getInstance()->hasDetectableAutorepeat()) {
+                    GuiRoot::getInstance()->setKeyboardAutoRepeatOff();
+                }
 #endif
-                }
-                if (expectedFocusTopWin != NULL && expectedFocusTopWin != this)
-                {
-                    // There was no FocusOut for the focus top win
-                    // this sometimes happens, perhaps a bug in
-                    // the window manager, but I'm not sure.
-                    
-                    if (expectedFocusTopWin->focusFlag) {
-                        expectedFocusTopWin->focusFlag = false;
-                        expectedFocusTopWin->treatFocusOut();
-                    }
-                }
-                if (shouldRaiseAfterFocusIn) {
-                    shouldRaiseAfterFocusIn = false;
-                    internalRaise();
-                }
-                expectedFocusTopWin = this;
-                if (!focusFlag) {
-                    focusFlag = true;
-                    treatFocusIn();
-                }
-                return EVENT_PROCESSED;
             }
+            if (expectedFocusTopWin != NULL && expectedFocusTopWin != this)
+            {
+                // There was no FocusOut for the focus top win
+                // this sometimes happens, perhaps a bug in
+                // the window manager, but I'm not sure.
+                
+                if (expectedFocusTopWin->focusFlag) {
+                    expectedFocusTopWin->focusFlag = false;
+                    expectedFocusTopWin->treatFocusOut();
+                }
+            }
+            if (shouldRaiseAfterFocusIn) {
+                shouldRaiseAfterFocusIn = false;
+                internalRaise();
+            }
+            expectedFocusTopWin = this;
+            if (!focusFlag) {
+                focusFlag = true;
+                treatFocusIn();
+            }
+            return GuiWidget::EVENT_PROCESSED;
+        }
 
 
-            default: {
-                return NOT_PROCESSED;
-            }
+        default: {
+            return GuiWidget::NOT_PROCESSED;
         }
     }
 }
+
+void TopWin::processGuiWidgetNewPositionEvent(const Position& newPosition)
+{
+    this->position = newPosition;
+}
+
+void TopWin::setPosition(const Position& position)
+{
+    if (guiWidget.isValid()) {
+        guiWidget->setPosition(position);
+    } else {
+        this->position = position;
+    }
+}
+
 
 void TopWin::handleConfigChanged()
 {
@@ -380,9 +441,12 @@ void TopWin::handleConfigChanged()
     }
 }
 
-void TopWin::setTitle(const char* title)
+void TopWin::setTitle(const String& title)
 {
-    XStoreName(getDisplay(), getWid(), title);
+    this->title = title;
+    if (guiWidget.isValid()) {
+        XStoreName(guiWidget->getDisplay(), guiWidget->getWid(), title.toCString());
+    }
 }
    
 
@@ -445,7 +509,7 @@ void TopWin::setWindowManagerHints()
             hints->flags  = IconPixmapHint|InputHint;// | IconMaskHint ;//| IconWindowHint;
             hints->icon_pixmap = pixMap;
             hints->input = True;
-            XSetWMHints(getDisplay(), getWid(), hints);
+            XSetWMHints(guiWidget->getDisplay(), guiWidget->getWid(), hints);
             
             XFree(hints);
         }        
@@ -470,7 +534,7 @@ void TopWin::setWindowManagerHints()
         }
         classHint->res_name  = const_cast<char*>(resName.toCString());
         classHint->res_class = const_cast<char*>("LucED");
-        XSetClassHint(getDisplay(), getWid(), classHint);
+        XSetClassHint(guiWidget->getDisplay(), guiWidget->getWid(), classHint);
         XFree(classHint);
     }
 }
@@ -517,28 +581,23 @@ void TopWin::internalRaise()
             event.xclient.type = ClientMessage;
             //unsigned long serial;     /* # of last request processed by server */
             event.xclient.send_event = true;        /* true if this came from a SendEvent request */
-            event.xclient.display = getDisplay();       /* Display the event was read from */
-            event.xclient.window = getWid();
+            event.xclient.display = guiWidget->getDisplay();       /* Display the event was read from */
+            event.xclient.window = guiWidget->getWid();
             event.xclient.message_type = raiseWindowAtom;
             event.xclient.format = 32;
             event.xclient.data.l[0] = 1;
             event.xclient.data.l[1] = EventDispatcher::getInstance()->getLastX11Timestamp();
             event.xclient.data.l[2] = 0;
     
-            XSendEvent(getDisplay(), getRootWid(), false, 
+            XSendEvent(guiWidget->getDisplay(), guiWidget->getRootWid(), false, 
                                                    SubstructureNotifyMask|SubstructureRedirectMask,
                                                    &event);
         }
     
         // older Windowmanager only need XRaiseWindow
             
-        XRaiseWindow(getGuiRoot()->getDisplay(), this->getWid());
+        XRaiseWindow(guiWidget->getDisplay(), guiWidget->getWid());
     }
-}
-
-void TopWin::treatNewWindowPosition(Position newPosition)
-{
-    this->position = newPosition;
 }
 
 void TopWin::treatFocusIn()
@@ -555,18 +614,53 @@ void TopWin::notifyAboutBeingUnmapped()
 
 GuiWidget::ProcessingResult TopWin::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
 {
-    return NOT_PROCESSED;
+    return GuiWidget::NOT_PROCESSED;
 }
 
 void TopWin::show()
 {
-    GuiWidget::show();
+    if (!guiWidget.isValid())
+    {
+        createWidget();
+    }
+    guiWidget->show();
     isVisibleFlag = true;
+}
+
+
+void TopWin::setTransientFor(RawPtr<TopWin> referingTopWin)
+{
+    this->referingTopWin = referingTopWin;
+    
+    if (guiWidget.isValid() && referingTopWin.isValid()) {
+        XSetTransientForHint(getDisplay(), guiWidget->getWid(), referingTopWin->guiWidget->getWid());
+    }
+}
+
+
+void TopWin::setRootElement(GuiElement::Ptr rootElement)
+{
+    ASSERT(!this->rootElement.isValid());
+    this->rootElement = rootElement;
+}
+
+void TopWin::setFocusManager(RawPtr<FocusManager> focusManager)
+{
+    this->focusManager = focusManager;
+}
+
+void TopWin::processGuiWidgetCreatedEvent()
+{
+    ASSERT(rootElement.isValid());
+    
+    rootElement->adopt(Null,             // parentElement
+                       guiWidget,        // parentWidget
+                       focusManager);    // focusManager
 }
 
 
 void TopWin::hide()
 {
-    GuiWidget::hide();
+    guiWidget->hide();
     isVisibleFlag = false;
 }

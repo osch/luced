@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -56,7 +56,7 @@ public:
     virtual ~TextWidget();
     
 protected:
-    TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int border,
+    TextWidget(HilitedText::Ptr hilitedText, int border,
                CreateOptions options);
 
     void setScrollBarVerticalValueRangeChangedCallback(Callback<long,long,long>::Ptr callback) {
@@ -65,7 +65,7 @@ protected:
     }
     void setScrollBarHorizontalValueRangeChangedCallback(Callback<long,long,long>::Ptr callback) {
         scrollBarHorizontalValueRangeChangedCallback = callback;
-        scrollBarHorizontalValueRangeChangedCallback->call(totalPixWidth, position.w, leftPix);
+        scrollBarHorizontalValueRangeChangedCallback->call(totalPixWidth, getWidth(), leftPix);
     }
 
     BackliteBuffer* getBackliteBuffer() {
@@ -85,8 +85,8 @@ protected:
     
     
 public:
-    virtual void setPosition(Position newPosition);
-    
+    virtual void setPosition(const Position& p);
+                                                                 
     enum VerticalAdjustmentStrategy {
            STRICT_TOP_LINE_ANCHOR,
        NOT_STRICT_TOP_LINE_ANCHOR,
@@ -108,8 +108,6 @@ public:
     };
     
     void setLastEmptyLineStrategy(LastEmptyLineStrategy lastEmptyLineStrategy);
-    
-    virtual Measures getDesiredMeasures();
     
     void setDesiredMeasuresInChars(int minWidth, int minHeight, 
             int bestWidth, int bestHeight, int maxWidth, int maxHeight);
@@ -159,13 +157,13 @@ public:
         return leftPix;
     }
     long getRightPix() const {
-        return leftPix + position.w;
+        return leftPix + getWidth();
     }
     long getPixWidth() const {
-        return position.w;
+        return getWidth();
     }
     unsigned int getHeightPix() const {
-        return position.h;
+        return getHeight();
     }
     int getLineHeight() const {
         return lineHeight;
@@ -210,8 +208,6 @@ public:
     long insertAtCursor(const ByteArray& buffer);
     void removeAtCursor(long amount);
     
-    virtual ProcessingResult processEvent(const XEvent* event);
-
     bool isCursorBlinking() const {
         return cursorIsBlinking;
     }    
@@ -224,8 +220,17 @@ public:
 
     void registerCursorPositionDataListener(Callback<CursorPositionData>::Ptr listener);
 
-    void notifyAboutHotKeyEventForOtherWidget();
+    void treatNotificationOfHotKeyEventForOtherWidget();
         
+protected:
+    virtual void processGuiWidgetCreatedEvent();
+
+protected: // GuiWidget::EventListener interface implementation
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+    virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
+
+    virtual Measures internalGetDesiredMeasures();
+
 private:
     
     GuiColor getColorForBackground(byte background);
@@ -271,7 +276,6 @@ private:
     
     TimeVal cursorNextBlinkTime;
     
-    Position position;
     bool hasPosition;
     HilitedText::Ptr hilitedText;
     TextData::Ptr    textData;

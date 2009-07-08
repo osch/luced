@@ -27,6 +27,7 @@
 #include "OwningPtr.hpp"
 #include "WeakPtr.hpp"
 #include "RawPtr.hpp"
+#include "Null.hpp"
 
 namespace LucED
 {
@@ -228,6 +229,9 @@ private:
     typedef typename Callback::ImplPtr ImplPtr;
 public:
     CallbackPtr()
+    {}
+    
+    CallbackPtr(const NullType& null)
     {}
 
     CallbackPtr(ImplPtr implPtr)

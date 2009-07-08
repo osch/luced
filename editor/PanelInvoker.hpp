@@ -26,6 +26,7 @@
 #include "OwningPtr.hpp"
 #include "DialogPanel.hpp"
 #include "Callback.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED
 {
@@ -35,12 +36,12 @@ class PanelInvoker : public HeapObject
 public:
     typedef OwningPtr<PanelInvoker> Ptr;
 
-    virtual void invokePanel(DialogPanel* panel) = 0;
+    virtual void invokePanel(DialogPanel::Ptr panel) = 0;
     virtual bool hasInvokedPanel() = 0;
     virtual void closeInvokedPanel() = 0;
-    virtual void closePanel(DialogPanel* panel) = 0;
+    virtual void closePanel(RawPtr<DialogPanel> panel) = 0;
     
-    Callback<DialogPanel*>::Ptr getCloseCallback() {
+    Callback< RawPtr<DialogPanel> >::Ptr getCloseCallback() {
         if (!closeCallback.isValid()) {
             closeCallback = newCallback(this, &PanelInvoker::closePanel);
         }
@@ -51,7 +52,7 @@ protected:
     PanelInvoker()
     {}
     
-    Callback<DialogPanel*>::Ptr closeCallback;    
+    Callback< RawPtr<DialogPanel> >::Ptr closeCallback;    
 };
 
 } // namespace LucED

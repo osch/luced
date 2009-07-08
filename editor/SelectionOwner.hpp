@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SELECTIONOWNER_HPP
-#define SELECTIONOWNER_HPP
+#ifndef SELECTION_OWNER_HPP
+#define SELECTION_OWNER_HPP
 
 #include "WidgetId.hpp"
 #include "GuiWidget.hpp"
@@ -107,7 +107,6 @@ private:
     static WeakPtr<SelectionOwner> primarySelectionOwner;
 };
 
-
 } // namespace LucED
 
-#endif // SELECTIONOWNER_HPP
+#endif // SELECTION_OWNER_HPP

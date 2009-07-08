@@ -44,11 +44,11 @@ public:
     int addElement(GuiElement::Ptr element, LayoutOptions layoutOptions = LayoutOptions());
 
     void removeElementAtPosition(int i) {
-        childElements.remove(i);
+        GuiElement::removeChildElement(i);
     }
     int getElementIndex(GuiElement::Ptr element) {
-        for (int i = 0; i < childElements.getLength(); ++i) {
-            if (childElements[i] == element) {
+        for (int i = 0; i < getNumberOfChildElements(); ++i) {
+            if (getChildElement(i) == element) {
                 return i;
             }
         }
@@ -57,19 +57,19 @@ public:
     bool removeElement(GuiElement::Ptr element) {
         int i = getElementIndex(element);
         if (i >= 0) {
-            childElements.remove(i);
+            GuiElement::removeChildElement(i);
             return true;
         } else {
             return false;
         }
     }
     void insertElementAtPosition(GuiElement::Ptr element, int i) {
-        childElements.insert(i, element);
+        GuiElement::insertChildElement(i, element);
     }
     bool insertElementBeforeElement(GuiElement::Ptr e1, GuiElement::Ptr e2) {
         int i = getElementIndex(e2);
         if (i >= 0) {
-            childElements.insert(i, e1);
+            GuiElement::insertChildElement(i, e1);
             return true;
         } else {
             return false;
@@ -78,7 +78,7 @@ public:
     bool insertElementAfterElement(GuiElement::Ptr e1, GuiElement::Ptr e2) {
         int i = getElementIndex(e2);
         if (i >= 0) {
-            childElements.insert(i + 1, e1);
+            GuiElement::insertChildElement(i + 1, e1);
             return true;
         } else {
             return false;
@@ -87,8 +87,7 @@ public:
     void addSpacer();
     void addSpacer(int height);
     void addSpacer(int minHeight, int maxHeight);
-    virtual Measures getDesiredMeasures();
-    virtual void setPosition(Position p);
+    virtual void setPosition(const Position& p);
     
     enum ReportRasteringOption {
         DO_NOT_REPORT_HORIZONTAL_RASTERING,
@@ -107,6 +106,8 @@ public:
 private:
     GuiLayoutColumn() {}
     
+    virtual Measures internalGetDesiredMeasures();
+
     ObjectArray<Measures> rowMeasures;
 
     ReportRasteringOptions reportRasteringOptions;

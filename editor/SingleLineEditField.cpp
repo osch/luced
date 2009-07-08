@@ -25,29 +25,33 @@
 
 using namespace LucED;
 
-SingleLineEditField::SingleLineEditField(GuiWidget* parent, LanguageMode::Ptr languageMode, TextData::Ptr textData)
-    : FocusableWidget(parent, 0, 0, 1, 1, 0),
-      adjustment(VerticalAdjustment::TOP),
+SingleLineEditField::SingleLineEditField(LanguageMode::Ptr languageMode, TextData::Ptr textData)
+    : adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
       heightOffset(0),
       cursorStaysHidden(false)
 {
-    GuiWidget::setFocusManagerForChildWidgets(this);
-    
-    addToXEventMask(ExposureMask);
-    setBackgroundColor(getGuiRoot()->getGuiColor03());
     if (textData.isInvalid()) {
         textData = TextData::create();
     }
-    editorWidget = SingleLineEditorWidget::create(this, 
-                                                  HilitedText::create(textData, languageMode));
+    editorWidget = SingleLineEditorWidget::create(HilitedText::create(textData, languageMode));
+    
     editorWidget->setDesiredMeasuresInChars( 5, 1, 
                                             20, 1, 
                                             40, 1);
-    editorWidget->show();
-
+    addChildElement(editorWidget);
+    
     setKeyActionHandler(editorWidget->getKeyActionHandler());
 }
+
+void SingleLineEditField::processGuiWidgetCreatedEvent()
+{
+    getGuiWidget()->addToXEventMask(ExposureMask);
+    getGuiWidget()->setBackgroundColor(getGuiRoot()->getGuiColor03());
+
+    BaseClass::processGuiWidgetCreatedEvent();
+}
+
 
 void SingleLineEditField::setLayoutHeight(int height, VerticalAdjustment::Type adjust)
 {
@@ -55,28 +59,23 @@ void SingleLineEditField::setLayoutHeight(int height, VerticalAdjustment::Type a
     adjustment = adjust;
 }
 
-GuiWidget::ProcessingResult SingleLineEditField::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult SingleLineEditField::processGuiWidgetEvent(const XEvent* event)
 {
-    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
-    } else {
-        
-        switch (event->type)
-        {
-            case GraphicsExpose:
-                if (event->xgraphicsexpose.count > 0) {
-                    break;
-                }
-            case Expose: {
-                if (event->xexpose.count > 0) {
-                    break;
-                }
-                draw();
-                return EVENT_PROCESSED;
+    switch (event->type)
+    {
+        case GraphicsExpose:
+            if (event->xgraphicsexpose.count > 0) {
+                break;
             }
+        case Expose: {
+            if (event->xexpose.count > 0) {
+                break;
+            }
+            draw();
+            return GuiWidget::EVENT_PROCESSED;
         }
-        return propagateEventToParentWidget(event);
     }
+    return getGuiWidget()->propagateEventToParentWidget(event);
 }
 
 void SingleLineEditField::setDesiredWidthInChars(int minWidth, int bestWidth, int maxWidth)
@@ -90,23 +89,26 @@ static const int BORDER = 1;
 
 void SingleLineEditField::draw()
 {
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
-    int ud = heightOffset;
-    int ld = (adjustment == VerticalAdjustment::CENTER) ? heightOffset : 0;
-    
-    int x = guiSpacing;
-    int y = ud + guiSpacing;
-    int w = getPosition().w - guiSpacing;
-    int h = getPosition().h - ud - ld - guiSpacing;
-    
-    if (hasFocus()) {
-        drawActiveSunkenFrame(  x, y, w, h);
-    } else {
-        drawInactiveSunkenFrame(x, y, w, h);
+    if (getGuiWidget().isValid())
+    {
+        int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+        int ud = heightOffset;
+        int ld = (adjustment == VerticalAdjustment::CENTER) ? heightOffset : 0;
+        
+        int x = guiSpacing;
+        int y = ud + guiSpacing;
+        int w = getPosition().w - guiSpacing;
+        int h = getPosition().h - ud - ld - guiSpacing;
+        
+        if (hasFocus()) {
+            getGuiWidget()->drawActiveSunkenFrame(  x, y, w, h);
+        } else {
+            getGuiWidget()->drawInactiveSunkenFrame(x, y, w, h);
+        }
     }
 }
 
-GuiElement::Measures SingleLineEditField::getDesiredMeasures()
+GuiElement::Measures SingleLineEditField::internalGetDesiredMeasures()
 {
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
 
@@ -129,11 +131,11 @@ GuiElement::Measures SingleLineEditField::getDesiredMeasures()
     return rslt;
 }
 
-void SingleLineEditField::setPosition(Position p) 
+void SingleLineEditField::processGuiWidgetNewPositionEvent(const Position& newPosition) 
 {
+    Position p = newPosition;
+    
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
-
-    GuiWidget::setPosition(p);
 
     Measures m = editorWidget->getDesiredMeasures();
 
@@ -155,6 +157,8 @@ void SingleLineEditField::setPosition(Position p)
         }
     }
     editorWidget->setPosition(p);
+
+    BaseClass::processGuiWidgetNewPositionEvent(newPosition);
 }
 
 
@@ -176,7 +180,7 @@ void SingleLineEditField::treatFocusOut()
     editorWidget->treatFocusOut();
 }
 
-void SingleLineEditField::notifyAboutHotKeyEventForOtherWidget()
+void SingleLineEditField::treatNotificationOfHotKeyEventForOtherWidget()
 {
     if (hasFocus() && editorWidget->isCursorBlinking()) {
         editorWidget->startCursorBlinking(); // redraw Cursor while Hotkey for other widget
@@ -186,30 +190,5 @@ void SingleLineEditField::notifyAboutHotKeyEventForOtherWidget()
 void SingleLineEditField::setCursorPosition(int position)
 {
     editorWidget->moveCursorToTextPositionAndAdjustVisibility(position);
-}
-
-
-void SingleLineEditField::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
-{
-    ASSERT(false);
-}
-
-void SingleLineEditField::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
-{
-    ASSERT(false);
-}
-
-void SingleLineEditField::requestFocusFor(RawPtr<FocusableElement> w)
-{
-    if (editorWidget == w) {
-        requestFocus();
-    }
-}
-
-void SingleLineEditField::reportMouseClickFrom(RawPtr<FocusableElement> w)
-{
-    if (editorWidget == w) {
-        reportMouseClick();
-    }
 }
 

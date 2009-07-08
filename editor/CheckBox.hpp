@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -39,8 +39,8 @@ class CheckBox : public FocusableWidget
 public:
     typedef OwningPtr<CheckBox> Ptr;
     
-    static Ptr create(RawPtr<GuiWidget> parent, String buttonText) {
-        return Ptr(new CheckBox(parent, buttonText));
+    static Ptr create(String buttonText) {
+        return Ptr(new CheckBox(buttonText));
     }
     
 
@@ -51,11 +51,6 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    virtual ProcessingResult processEvent(const XEvent* event);
-
-    virtual Measures getDesiredMeasures();
-    virtual void setPosition(Position newPosition);
-    
     virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatHotKeyEvent(const KeyMapping::Id& id);
@@ -65,6 +60,14 @@ public:
     
     bool isChecked() const;
     
+private:
+    virtual Measures internalGetDesiredMeasures();
+    virtual void processGuiWidgetCreatedEvent();
+
+private: // GuiWidget::EventListener interface implementation
+
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+
 private:
     class Actions : public ActionMethodBinding<Actions>
     {
@@ -88,12 +91,11 @@ private:
     };
     friend class ActionMethodBinding<Actions>;
 
-    CheckBox(RawPtr<GuiWidget> parent, String buttonText);
+    CheckBox(String buttonText);
 
     void draw();
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
-    Position position;
     String buttonText;
     bool isBoxChecked;
     bool isMouseButtonPressed;

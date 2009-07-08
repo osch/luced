@@ -44,7 +44,7 @@ static int childOutFd = -1;
 static int childInpFd = -1;
 
 
-void StackTrace::print(FILE* fprintfOutput)
+String StackTrace::getCurrent()
 {
 #ifdef HAS_STACKTRACE
     String message;
@@ -167,7 +167,14 @@ void StackTrace::print(FILE* fprintfOutput)
         message << buffer;
     }
     message << "******\n";
-    fprintf(fprintfOutput, "%s", message.toCString());
+    return message;
+#endif
+}
+
+void StackTrace::print(FILE* fprintfOutput)
+{
+#ifdef HAS_STACKTRACE
+    fprintf(fprintfOutput, "%s", getCurrent().toCString());
 #endif
 }
 

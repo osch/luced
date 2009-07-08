@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GUILAYOUTROW_H
-#define GUILAYOUTROW_H
+#ifndef GUI_LAYOUT_ROW_HPP
+#define GUI_LAYOUT_ROW_HPP
 
 #include "util.hpp"
 #include "GuiElement.hpp"
@@ -28,7 +28,8 @@
 #include "OwningPtr.hpp"
 #include "Flags.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class GuiLayoutRow : public GuiElement
 {
@@ -43,14 +44,13 @@ public:
     void addSpacer(int width);
     void addSpacer();
     void addSpacer(int minWidth, int maxWidth);
-    virtual Measures getDesiredMeasures();
-    virtual void setPosition(Position p);
+    virtual void setPosition(const Position& p);
     
     void removeElementAtPosition(int i) {
-        childElements.remove(i);
+        GuiElement::removeChildElement(i);
     }
     void insertElementAtPosition(GuiElement::Ptr element, int i) {
-        childElements.insert(i, element);
+        GuiElement::insertChildElement(i, element);
     }
     
     enum ReportRasteringOption {
@@ -71,6 +71,8 @@ private:
     GuiLayoutRow()
     {}
     
+    virtual Measures internalGetDesiredMeasures();
+
     ObjectArray<Measures> columnMeasures;
 
     ReportRasteringOptions reportRasteringOptions;
@@ -78,4 +80,4 @@ private:
 
 } // namespace LucED
 
-#endif // GUILAYOUTROW_H
+#endif // GUI_LAYOUT_ROW_HPP

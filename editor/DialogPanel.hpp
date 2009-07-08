@@ -40,8 +40,8 @@ class DialogPanel : public  FocusableWidget,
 public:
     typedef OwningPtr<DialogPanel> Ptr;
     
-    static Ptr create(GuiWidget* parent) {
-        return Ptr(new DialogPanel(parent, Callback<DialogPanel*>::Ptr()));
+    static Ptr create() {
+        return Ptr(new DialogPanel(Null));
     }
     
     void setHotKeyPredecessor(DialogPanel* hotKeyPredecessor) {
@@ -50,34 +50,44 @@ public:
         hotKeyPredecessor->setHotKeySuccessor(this);
     }
 
-    virtual Measures getDesiredMeasures();
-
-    virtual void treatNewWindowPosition(Position newPosition);
-    virtual ProcessingResult processEvent(const XEvent* event);
-
     virtual void treatFocusIn();
     virtual void treatFocusOut();
 
-    void setRootElement(OwningPtr<GuiElement> rootElement);
+    void setRootElement(GuiElement::Ptr rootElement) {
+        FocusableWidget::setRootElement(rootElement);
+    }
     void setFocus(RawPtr<FocusableElement> element);
-    virtual void notifyAboutHotKeyEventForOtherWidget();
+    virtual void treatNotificationOfHotKeyEventForOtherWidget();
 
-    virtual void setPosition(Position newPosition);
-    
+    virtual void setPosition(const Position& newPosition);
     
 protected:
-    DialogPanel(RawPtr<GuiWidget> parent, Callback<DialogPanel*>::Ptr requestCloseCallback);
+    DialogPanel(Callback<>::Ptr requestCloseCallback);
     
-    RawPtr<GuiElement> getRootElement() { return rootElement; }
-    
-    virtual void reportMouseClickFrom(RawPtr<FocusableElement> w);
+    RawPtr<GuiElement> getRootElement() { 
+        return FocusableWidget::getRootElement(); 
+    }
     
     virtual void requestClose();
+    virtual void processGuiWidgetCreatedEvent();
+
+private:
+    virtual Measures internalGetDesiredMeasures();
+
+protected: // GuiWidget::EventListener interface implementation
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+    virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
 
 private: // FocusManager
     virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
     virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
     virtual void requestFocusFor(RawPtr<FocusableElement> w);
+    virtual void reportMouseClickFrom(RawPtr<FocusableElement> w);
+
+private:
+    void adopt(RawPtr<GuiElement>   parentElement,
+               RawPtr<GuiWidget>    parentWidget,
+               RawPtr<FocusManager> focusManager);
     
 private:
     class MyKeyActionHandler;
@@ -125,9 +135,6 @@ private:
     
     bool processHotKey(KeyMapping::Id keyMappingId);
 
-    OwningPtr<GuiElement> rootElement;
-    bool wasNeverShown;
-    
     typedef WeakPtrQueue<FocusableElement> WidgetQueue;
     typedef HeapHashMap< KeyMapping::Id, WidgetQueue::Ptr > HotKeyMapping;
     HotKeyMapping::Ptr hotKeyMapping;
@@ -136,7 +143,7 @@ private:
     bool                     focusedElementTakesAwayDefaultKey;
     WidgetQueue::Ptr         defaultKeyWidgets;
     
-    Callback<DialogPanel*>::Ptr requestCloseCallback;
+    Callback<>::Ptr requestCloseCallback;
     
     WeakPtr<DialogPanel> hotKeySuccessor;
     WeakPtr<DialogPanel> hotKeyPredecessor;

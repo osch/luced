@@ -99,6 +99,10 @@ public:
     void clear() {
         listeners.clear();
     }
+    
+    bool hasCallbacks() const {
+        return listeners.getLength() > 0;
+    }
 
 private:
     ObjectArray< @(typename) Callback<@(argList('A',argCount))>::Ptr > listeners;

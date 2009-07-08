@@ -33,13 +33,13 @@ class SingleLineEditorWidget : public TextEditorWidget
 public:
     typedef OwningPtr<SingleLineEditorWidget> Ptr;
 
-    static SingleLineEditorWidget::Ptr create(GuiWidget* parent, HilitedText::Ptr hilitedText)
+    static Ptr create(HilitedText::Ptr hilitedText)
     {
-        return SingleLineEditorWidget::Ptr(new SingleLineEditorWidget(parent, hilitedText));
+        return Ptr(new SingleLineEditorWidget(hilitedText));
     }
 
 protected:
-    SingleLineEditorWidget(GuiWidget* parent, HilitedText::Ptr hilitedText);
+    SingleLineEditorWidget(HilitedText::Ptr hilitedText);
     
 private:
     void filterInsert(const byte** buffer, long* length);

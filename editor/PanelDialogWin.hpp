@@ -27,7 +27,6 @@
 #include "Button.hpp"
 #include "GuiLayoutColumn.hpp"
 #include "DialogWin.hpp"
-#include "SingleLineEditField.hpp"
 #include "DialogPanel.hpp"
 
 namespace LucED
@@ -41,12 +40,12 @@ public:
     virtual void treatFocusIn();
     virtual void treatFocusOut();
     
-    void setRootElement(OwningPtr<GuiElement> rootElement) {
+    void setRootElement(GuiElement::Ptr rootElement) {
         dialogPanel->setRootElement(rootElement);
     }
     
 protected:
-    PanelDialogWin(TopWin* referingWindow);
+    PanelDialogWin(RawPtr<TopWin> referingWindow);
     
     void setFocus(RawPtr<FocusableElement> element) {
         dialogPanel->setFocus(element);

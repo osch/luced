@@ -30,18 +30,24 @@
 
 using namespace LucED;
 
-DialogWin::DialogWin(TopWin* referingWindow)
+DialogWin::DialogWin(RawPtr<TopWin> referingWindow)
     : wasNeverShown(true),
       referingWindow(referingWindow),
       shouldBeMapped(false),
       actionMethodContainer(ActionMethodContainer::create()),
       actionKeySequenceHandler(actionMethodContainer)
 {
-    if (referingWindow != NULL) {
-        XSetTransientForHint(getDisplay(), getWid(), referingWindow->getWid());
+    if (referingWindow != Null) {
+        setTransientFor(referingWindow);
         referingWindow->registerMappingNotifyCallback(newCallback(this, &DialogWin::notifyAboutReferingWindowMapping));
     }
-    setBackgroundColor(getGuiRoot()->getGuiColor03());
+}
+
+void DialogWin::processGuiWidgetCreatedEvent()
+{
+    getGuiWidget()->setBackgroundColor(getGuiRoot()->getGuiColor03());
+
+    setRootElement(rootElement);
 }
 
 void DialogWin::requestCloseWindowByUser()
@@ -51,25 +57,32 @@ void DialogWin::requestCloseWindowByUser()
 
 void DialogWin::requestCloseWindow(TopWin::CloseReason reason)
 {
-
-    if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
-        && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100
-        && reason == CLOSED_SILENTLY
-        && !this->hasFocus()
-        && referingWindow.isValid() && !referingWindow->isClosing()
-        &&  this->isMapped()
-        && !this->isClosing())
+    if (getGuiWidget().isValid())
     {
-        // strange workaround for exceed (vendor = <Hummingbird Communications Ltd.> <6100>)
-        XSetInputFocus(getDisplay(), getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
+        if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
+            && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100
+            && reason == CLOSED_SILENTLY
+            && !this->hasFocus()
+            && referingWindow.isValid() && !referingWindow->isClosing()
+            &&  this->isMapped()
+            && !this->isClosing())
+        {
+            // strange workaround for exceed (vendor = <Hummingbird Communications Ltd.> <6100>)
+            XSetInputFocus(getDisplay(), getGuiWidget()->getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
+        }
     }
-
     TopWin::requestCloseWindow(reason);
 }
 
-void DialogWin::setRootElement(OwningPtr<FocusableElement> rootElement)
+void DialogWin::setRootElement(FocusableElement::Ptr rootElement)
 {
     this->rootElement = rootElement;
+    if (getGuiWidget().isValid())
+    {
+        rootElement->adopt(Null,             // parentElement
+                           getGuiWidget(),   // parentWidget
+                           Null);            // focusManager
+    }
 }
 
 void DialogWin::prepareSizeHints()
@@ -78,7 +91,7 @@ void DialogWin::prepareSizeHints()
         GuiElement::Measures m = rootElement->getDesiredMeasures();
         if (wasNeverShown) {
             Position pp;
-            if (referingWindow != NULL)  {
+            if (referingWindow.isValid() && referingWindow->hasAbsolutePosition())  {
                 pp = referingWindow->getAbsolutePosition();
             } else {
                 pp = GuiRoot::getInstance()->getRootPosition();
@@ -102,6 +115,9 @@ void DialogWin::show()
     }
     else
     {
+        if (!getGuiWidget().isValid()) {
+            createWidget();
+        }
         prepareSizeHints();
         TopWin::show();
     }
@@ -117,11 +133,10 @@ void DialogWin::notifyAboutReferingWindowMapping(bool isReferingWindowMapped)
 }
 
 
-void DialogWin::treatNewWindowPosition(Position newPosition)
+void DialogWin::processGuiWidgetNewPositionEvent(const Position& newPosition)
 {
-    if (rootElement.isValid())
-    {
-        TopWin::treatNewWindowPosition(newPosition);
+    TopWin::processGuiWidgetNewPositionEvent(newPosition);
+    if (rootElement.isValid()) {
         rootElement->setPosition(Position(0, 0, newPosition.w, newPosition.h));
     }
 }
@@ -144,7 +159,8 @@ GuiWidget::ProcessingResult DialogWin::processKeyboardEvent(const KeyPressEvent&
         processed = true;
     }
 
-    return processed ? EVENT_PROCESSED : NOT_PROCESSED;
+    return processed ? GuiWidget::EVENT_PROCESSED 
+                     : GuiWidget::NOT_PROCESSED;
 }
 
 

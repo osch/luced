@@ -34,8 +34,8 @@ namespace LucED
 class FocusableElement : public GuiElement
 {
 public:
-    typedef OwningPtr<FocusableElement> Ptr;
-    typedef OwningPtr<const FocusableElement> ConstPtr;
+    typedef WeakPtr<FocusableElement> Ptr;
+    typedef WeakPtr<const FocusableElement> ConstPtr;
 
     enum FocusType {
         NO_FOCUS,
@@ -50,7 +50,7 @@ public:
     virtual void treatFocusIn()  = 0;
     virtual void treatFocusOut() = 0;
 
-    virtual void notifyAboutHotKeyEventForOtherWidget();
+    virtual void treatNotificationOfHotKeyEventForOtherWidget();
     virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatNewHotKeyRegistration(const KeyMapping::Id& id);
     virtual void treatHotKeyEvent(const KeyMapping::Id& id);
@@ -64,11 +64,22 @@ public:
         return keyActionHandler;
     }
     
+    bool hasThisFocusManager(RawPtr<FocusManager> rhs) const {
+        return focusManagerForThis == rhs;
+    }
+
+    virtual void adopt(RawPtr<GuiElement>   parentElement,
+                       RawPtr<GuiWidget>    parentWidget,
+                       RawPtr<FocusManager> focusManagerForThis,
+                       RawPtr<FocusManager> focusManagerForChilds);
+
+    virtual void adopt(RawPtr<GuiElement>   parentElement,
+                       RawPtr<GuiWidget>    parentWidget,
+                       RawPtr<FocusManager> focusManager);
+
 protected:
-    FocusableElement(RawPtr<GuiWidget> parent, int x = 0, int y = 0, unsigned int width = 0, unsigned int height = 0)
-        : GuiElement(x, y, width, height),
-          parent(parent),
-          focusManager(parent->getFocusManagerForChildWidgets()),
+    FocusableElement(Visibility defaultVisibility = VISIBLE, int x = 0, int y = 0, int width = 0, int height = 0)
+        : GuiElement(defaultVisibility, x, y, width, height),
           focusableFlag(true),
           focusFlag(false),
           focusType(NORMAL_FOCUS)
@@ -86,25 +97,20 @@ protected:
         this->keyActionHandler = keyActionHandler;
     }
     
-    void requestHotKeyRegistration(const KeyMapping::Id& id) {
-        focusManager->requestHotKeyRegistrationFor(id, this);
-    }
+    void requestHotKeyRegistration(const KeyMapping::Id& id);
 
-    void requestRemovalOfHotKeyRegistration(const KeyMapping::Id& id) {
-        focusManager->requestRemovalOfHotKeyRegistrationFor(id, this);
-    }
+    void requestRemovalOfHotKeyRegistration(const KeyMapping::Id& id);
 
-    void requestFocus() {
-        focusManager->requestFocusFor(this);
-    }
+    void requestFocus();
     
     void reportMouseClick() {
-        focusManager->reportMouseClickFrom(this);
+        focusManagerForThis->reportMouseClickFrom(this);
     }
 
 private:
-    RawPtr<GuiWidget>    parent;
-    RawPtr<FocusManager> focusManager;
+    class RequestQueue;
+    
+    RawPtr<FocusManager> focusManagerForThis;
 
     bool focusableFlag;
     bool focusFlag;

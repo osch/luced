@@ -24,13 +24,17 @@
 
 #include <stdio.h>
 
+
 namespace LucED
 {
+
+class String;
 
 class StackTrace
 {
 public:
     static void print(FILE* fprintfOutput = stdout);
+    static String getCurrent();
 private:
 };
 

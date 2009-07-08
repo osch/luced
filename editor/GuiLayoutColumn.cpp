@@ -32,24 +32,24 @@ using namespace LucED;
 int GuiLayoutColumn::addElement(GuiElement::Ptr element, LayoutOptions layoutOptions)
 {
     element->setLayoutOptions(layoutOptions);
-    childElements.append(element);
-    return childElements.getLength() - 1;
+    GuiElement::addChildElement(element);
+    return getNumberOfChildElements() - 1;
 }
 
 void GuiLayoutColumn::addSpacer(int height)
 {
-    childElements.append(GuiLayoutSpacer::create(0, 0, 0, height, INT_MAX, INT_MAX));
+    GuiElement::addChildElement(GuiLayoutSpacer::create(0, 0, 0, height, INT_MAX, INT_MAX));
 }
 
 void GuiLayoutColumn::addSpacer()
 {
-    childElements.append(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, INT_MAX));
+    GuiElement::addChildElement(GuiLayoutSpacer::create(0, 0, 0, 0, INT_MAX, INT_MAX));
 }
 
 
-GuiElement::Measures GuiLayoutColumn::getDesiredMeasures()
+GuiElement::Measures GuiLayoutColumn::internalGetDesiredMeasures()
 {
-    Measures rslt =  GuiLayouter<VerticalAdapter>::getDesiredMeasures(childElements);
+    Measures rslt =  GuiLayouter<VerticalAdapter>::getDesiredMeasures(this);
 
     if (reportRasteringOptions.isSet(DO_NOT_REPORT_HORIZONTAL_RASTERING)) {
         rslt.incrWidth = 1;
@@ -60,7 +60,7 @@ GuiElement::Measures GuiLayoutColumn::getDesiredMeasures()
     return rslt;
 }
 
-void GuiLayoutColumn::setPosition(Position p)
+void GuiLayoutColumn::setPosition(const Position& p)
 {
     bool doItAgain = true;
     
@@ -70,10 +70,10 @@ void GuiLayoutColumn::setPosition(Position p)
         {
             rowMeasures.clear();
             
-            for (int i = 0; i < childElements.getLength(); ++i)
+            for (int i = 0; i < getNumberOfChildElements(); ++i)
             {
-                Measures m = childElements[i]->getDesiredMeasures();
-                if (!childElements[i]->isVisible()) {
+                Measures m = getChildElement(i)->getDesiredMeasures();
+                if (!getChildElement(i)->isVisible()) {
                     m = Measures();
                 }
                 rowMeasures.append(m);
@@ -82,16 +82,16 @@ void GuiLayoutColumn::setPosition(Position p)
             GuiLayouter<VerticalAdapter>::adjust(rowMeasures, p.h);
             
             int y = p.y;
-            for (int i = 0; i < childElements.getLength(); ++i)
+            for (int i = 0; i < getNumberOfChildElements(); ++i)
             {
-                if (childElements[i]->isVisible())
+                if (getChildElement(i)->isVisible())
                 {
                     Measures& m = rowMeasures[i];
                     
                     int h = m.bestHeight;
                     int w = p.w;
                     
-                    LayoutOptions layoutOptions = childElements[i]->getLayoutOptions();
+                    LayoutOptions layoutOptions = getChildElement(i)->getLayoutOptions();
             
                     if (layoutOptions.isSet(LAYOUT_VERTICAL_RASTERING))
                     {
@@ -107,7 +107,7 @@ void GuiLayoutColumn::setPosition(Position p)
                             w = m.minWidth + (w - m.minWidth) / m.incrWidth * m.incrWidth;
                         }
                     }
-                    childElements[i]->setPosition(Position(p.x, y, w, h));
+                    getChildElement(i)->setPosition(Position(p.x, y, w, h));
             
                     y += m.bestHeight;
                 }
@@ -122,16 +122,16 @@ void GuiLayoutColumn::setPosition(Position p)
 
 void GuiLayoutColumn::show()
 {
-    for (int i = 0; i < childElements.getLength(); ++i) {
-        childElements[i]->show();
+    for (int i = 0; i < getNumberOfChildElements(); ++i) {
+        getChildElement(i)->show();
     }
     GuiElement::show();
 }
 
 void GuiLayoutColumn::hide()
 {
-    for (int i = 0; i < childElements.getLength(); ++i) {
-        childElements[i]->hide();
+    for (int i = 0; i < getNumberOfChildElements(); ++i) {
+        getChildElement(i)->hide();
     }
     GuiElement::hide();
 }

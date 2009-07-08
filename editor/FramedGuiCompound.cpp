@@ -25,8 +25,7 @@
 
 using namespace LucED;
 
-FramedGuiCompound::FramedGuiCompound(GuiWidget*      parent, 
-                                     GuiElement::Ptr rootElement,
+FramedGuiCompound::FramedGuiCompound(GuiElement::Ptr rootElement,
                                      Borders         borders,
                                      GuiColor        color)
 
@@ -36,36 +35,34 @@ FramedGuiCompound::FramedGuiCompound(GuiWidget*      parent,
       bi(0),
       li(0)
 {
+    addChildElement(rootElement);
+    
     if (borders.isSet(RIGHT)) {
-        right  = GuiLayoutWidget::create(parent, 1, 1, 1, 1, 1, INT_MAX);
-        right ->setBackgroundColor(color);
-        right->show();
+        right  = GuiLayoutWidget::create(1, 1, 1, 1, 1, INT_MAX, color);
         ri = 1;
+        addChildElement(right);
     }
     if (borders.isSet(BOTTOM)) {
-        bottom = GuiLayoutWidget::create(parent, 1, 1, 1, 1, INT_MAX, 1);
-        bottom->setBackgroundColor(color);
-        bottom->show();
+        bottom = GuiLayoutWidget::create(1, 1, 1, 1, INT_MAX, 1, color);
         bi = 1;
+        addChildElement(bottom);
     }
 
     if (borders.isSet(TOP)) {
-        top  = GuiLayoutWidget::create(parent, 1, 1, 1, 1, INT_MAX, 1);
-        top ->setBackgroundColor(color);
-        top->show();
+        top  = GuiLayoutWidget::create(1, 1, 1, 1, INT_MAX, 1, color);
         ti = 1;
+        addChildElement(top);
     }
     
     if (borders.isSet(LEFT)) {
-        left = GuiLayoutWidget::create(parent, 1, 1, 1, 1, 1, INT_MAX);
-        left->setBackgroundColor(color);
-        left->show();
+        left = GuiLayoutWidget::create(1, 1, 1, 1, 1, INT_MAX, color);
         li = 1;
+        addChildElement(left);
     }
 }
 
 
-GuiElement::Measures FramedGuiCompound::getDesiredMeasures()
+GuiElement::Measures FramedGuiCompound::internalGetDesiredMeasures()
 {
     Measures rslt = root->getDesiredMeasures();
     
@@ -86,8 +83,10 @@ GuiElement::Measures FramedGuiCompound::getDesiredMeasures()
     return rslt;
 }
 
-void FramedGuiCompound::setPosition(Position p)
+void FramedGuiCompound::setPosition(const Position& p)
 {
+    GuiElement::setPosition(p);
+    
     Position p1;
     p1.x = p.x + li;
     p1.y = p.y + ti;

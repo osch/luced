@@ -19,10 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "WeakPtr.hpp"
+
 #ifndef RAW_PTR_HPP
 #define RAW_PTR_HPP
 
-#include "WeakPtr.hpp"
 #include "Null.hpp"
 
 namespace LucED

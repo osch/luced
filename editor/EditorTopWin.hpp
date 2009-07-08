@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -69,19 +69,16 @@ public:
         return viewLuaInterface;
     }
     
-    virtual ProcessingResult processEvent(const XEvent* event);
-    
-    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
+    virtual GuiWidget::ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
 
-    virtual void treatNewWindowPosition(Position newPosition);
     virtual void treatFocusIn();
     virtual void treatFocusOut();
-    virtual void setSize(int width, int height);
     virtual void show();
     virtual void hide();
     
     void invokeSaveAsPanel(Callback<>::Ptr saveCallback);
-
+    void closeSaveAsPanel();
+    
     virtual void requestCloseWindow(TopWin::CloseReason reason);
 
     String getFileName() const;
@@ -106,6 +103,13 @@ public:
     
     void gotoLineNumber(int lineNumber);
 
+protected:
+    virtual void processGuiWidgetCreatedEvent();
+
+protected: // GuiWidget::EventListener interface implementation
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+    virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
+
 private: // FocusManager methods 
     virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
     virtual void requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);
@@ -123,7 +127,7 @@ private:
 
     void requestCloseFor(DialogPanel* w);
 
-    void invokePanel(DialogPanel* panel);
+    void invokePanel(DialogPanel::Ptr panel);
     
     void handleNewFileName(const String& fileName);
     void handleChangedModifiedFlag(bool modifiedFlag);
@@ -146,7 +150,6 @@ private:
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
     GotoLinePanel::Ptr gotoLinePanel;
-    bool flagForSetSizeHintAtFirstShow;
 
     int upperPanelIndex;
     int lowerPanelIndex;

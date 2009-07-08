@@ -34,6 +34,7 @@
 #include "NonCopyable.hpp"
 #include "String.hpp"
 #include "RawPointable.hpp"
+#include "StackTrace.hpp"
 
 #undef HEAP_OBJECT_USES_DYNAMIC_CAST
 //#define PRINT_MALLOCS
@@ -100,6 +101,9 @@ public:
     }
     int getOwningCounter() const {
         return strongCounter;
+    }
+    bool getWasNeverOwnedFlag() const {
+        return wasNeverOwned;
     }
 };
 
@@ -307,9 +311,30 @@ protected:
 class HeapObject : public HeapObjectBase,
                    public RawPointable
 {
+public:
+#ifdef DEBUG
+    static void printAllStackTraces();
+#endif
+
 protected:
     HeapObject()
+#ifdef DEBUG
+    ;
+#else
     {}
+#endif
+
+#ifdef DEBUG
+    virtual ~HeapObject();
+#endif
+    
+private:
+#ifdef DEBUG
+    static HeapObject* first;
+    HeapObject* prev;
+    HeapObject* next;
+    String stackTrace;
+#endif
 };
 
 } // namespace LucED

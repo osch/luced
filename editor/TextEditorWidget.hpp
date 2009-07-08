@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -55,11 +55,10 @@ public:
         CURSOR_TO_END_OF_PASTED_DATA
     };
 
-    static Ptr create(GuiWidget*       parent,
-                      HilitedText::Ptr hilitedText,
+    static Ptr create(HilitedText::Ptr hilitedText,
                       CreateOptions    options = CreateOptions())
     {
-        return Ptr(new TextEditorWidget(parent, hilitedText, options));
+        return Ptr(new TextEditorWidget(hilitedText, options));
     }
 
     void connectToVerticalScrollBar(ScrollBar::Ptr scrollBar)
@@ -87,8 +86,6 @@ public:
     
     void showCursor();
     void hideCursor();
-
-    virtual ProcessingResult processEvent(const XEvent* event);
 
 //    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
     
@@ -119,7 +116,7 @@ public:
     }
     void hideMousePointer() {
         TextWidget::hideMousePointer();
-        addToXEventMask(PointerMotionMask);
+        getGuiWidget()->addToXEventMask(PointerMotionMask);
     }
     
     bool isReadOnly() const {
@@ -225,9 +222,14 @@ public:
         getBackliteBuffer()->registerListenerForNextChange(callback);
     }
     
+private:
+    virtual void processGuiWidgetCreatedEvent();
+
+public: // GuiWidget::EventListener interface implementation
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+
 protected:
-    TextEditorWidget(GuiWidget*       parent, 
-                     HilitedText::Ptr hilitedText, 
+    TextEditorWidget(HilitedText::Ptr hilitedText, 
                      CreateOptions    options = CreateOptions(),
                      int              borderWidth = BORDER_WIDTH);
 

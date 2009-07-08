@@ -20,6 +20,8 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "GuiElement.hpp"
+#include "GuiWidget.hpp"
+#include "FocusManager.hpp"
 
 using namespace LucED;
 
@@ -54,6 +56,38 @@ void GuiElement::Measures::maximize(const GuiElement::Measures& rhs)
     }
 }
 
+void GuiElement::internalAdoptChild(RawPtr<GuiElement> child)
+{
+    ASSERT(wasAdoptedFlag);
+    
+    child->adopt(parentElement, parentWidget, focusManagerForChilds);
+}
+
+
+void GuiElement::adopt(RawPtr<GuiElement>   parentElement,
+                       RawPtr<GuiWidget>    parentWidget,
+                       RawPtr<FocusManager> focusManagerForChilds)
+{
+    if (wasAdoptedFlag && this->parentElement == parentElement) {
+        return;
+    }
+    ASSERT(!wasAdoptedFlag);
+    wasAdoptedFlag = true;
+    this->parentElement = parentElement;
+    this->parentWidget  = parentWidget;
+    this->focusManagerForChilds  = focusManagerForChilds;
+    
+    if (rootElement.isValid()) {
+        rootElement->adopt(parentElement, parentWidget, focusManagerForChilds);
+    }
+    for (int i = 0; i < childElements.getLength(); ++i)
+    {
+        if (childElements[i].isValid())
+        {
+            childElements[i]->adopt(parentElement, parentWidget, focusManagerForChilds);
+        }
+    }
+}
 
 void GuiElement::show()
 {
@@ -65,4 +99,9 @@ void GuiElement::hide()
     visibility = HIDDEN;
 }
 
+
+void GuiElement::setPosition(const Position& p)
+{
+    this->position = p;
+}
 

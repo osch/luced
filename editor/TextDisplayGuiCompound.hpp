@@ -42,15 +42,14 @@ class TextDisplayGuiCompound : public ScrollableTextGuiCompound
 public:
     typedef OwningPtr<TextDisplayGuiCompound> Ptr;
 
-    static Ptr create(GuiWidget* parent, TextData::Ptr textData);
+    static Ptr create(TextData::Ptr textData);
 
     ActionMethodContainer::Ptr getActionMethodContainer() const {
         return actionMethods;
     }
     
 private:
-    TextDisplayGuiCompound(GuiWidget*                         parent, 
-                           TextEditorWidget::Ptr              textWidget, 
+    TextDisplayGuiCompound(TextEditorWidget::Ptr              textWidget, 
                            ScrollableTextGuiCompound::Options options);
 
     ActionMethodContainer::Ptr actionMethods;

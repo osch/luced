@@ -24,8 +24,7 @@
 
 using namespace LucED;
 
-ScrollableTextGuiCompound::ScrollableTextGuiCompound(GuiWidget*            parent, 
-                                                     TextEditorWidget::Ptr textWidget, 
+ScrollableTextGuiCompound::ScrollableTextGuiCompound(TextEditorWidget::Ptr textWidget, 
                                                      Options               options)
     : textWidget(textWidget),
       dynamicScrollBarDisplayFlag(options.isSet(DYNAMIC_SCROLL_BAR_DISPLAY))
@@ -38,26 +37,25 @@ ScrollableTextGuiCompound::ScrollableTextGuiCompound(GuiWidget*            paren
     }
     else
     {
-        FramedGuiCompound::Ptr rootFrame2 = FramedGuiCompound::create(parent, 
-                                                                      rootRow, 
+        FramedGuiCompound::Ptr rootFrame2 = FramedGuiCompound::create(rootRow, 
                                                                         FramedGuiCompound::Borders() 
                                                                       | FramedGuiCompound::TOP 
                                                                       | FramedGuiCompound::LEFT);
     
-        FramedGuiCompound::Ptr rootFrame1 = FramedGuiCompound::create(parent,
-                                                                      rootFrame2,
+        FramedGuiCompound::Ptr rootFrame1 = FramedGuiCompound::create(rootFrame2,
                                                                         FramedGuiCompound::Borders() 
                                                                       | FramedGuiCompound::BOTTOM 
                                                                       | FramedGuiCompound::RIGHT, 
                                                                       GuiRoot::getInstance()->getGuiColor05());
         rootElement = rootFrame1;
     }
+    addChildElement(rootElement);
 
     layoutColumn1 = GuiLayoutColumn::create();
 
     rootRow->addElement(layoutColumn1);
 
-    verticalScrollBarLeftBorder = GuiLayoutWidget::create(parent, 1, 1, 1, 1, 1, INT_MAX);
+    verticalScrollBarLeftBorder = GuiLayoutWidget::create(1, 1, 1, 1, 1, INT_MAX);
     verticalScrollBarLeftBorder->hide();
 
     GuiLayoutRow::Ptr r1 = GuiLayoutRow::create();
@@ -68,11 +66,10 @@ ScrollableTextGuiCompound::ScrollableTextGuiCompound(GuiWidget*            paren
 
     textWidget->show();
 
-    scrollBarV = ScrollBar::create(parent, Orientation::VERTICAL);
-    scrollBarH = ScrollBar::create(parent, Orientation::HORIZONTAL);
+    scrollBarV = ScrollBar::create(Orientation::VERTICAL);
+    scrollBarH = ScrollBar::create(Orientation::HORIZONTAL);
     
-    horizontalScrollBarFrame = FramedGuiCompound::create(parent, 
-                                                         scrollBarH, 
+    horizontalScrollBarFrame = FramedGuiCompound::create(scrollBarH, 
                                                            FramedGuiCompound::Borders() 
                                                          | FramedGuiCompound::TOP);
     horizontalScrollBarFrame->hide();
@@ -83,8 +80,7 @@ ScrollableTextGuiCompound::ScrollableTextGuiCompound(GuiWidget*            paren
 
     int w = GlobalConfig::getInstance()->getScrollBarWidth();
 
-    scrollBarSpacer = GuiLayoutWidget::create(parent, 
-                                              w, w, w, w, w, w,
+    scrollBarSpacer = GuiLayoutWidget::create(w, w, w, w, w, w,
                                               GuiRoot::getInstance()->getGuiColor02());
 
     layoutColumn2->addElement(scrollBarV);
@@ -105,7 +101,7 @@ ScrollableTextGuiCompound::ScrollableTextGuiCompound(GuiWidget*            paren
 }
 
 
-GuiElement::Measures ScrollableTextGuiCompound::getDesiredMeasures()
+GuiElement::Measures ScrollableTextGuiCompound::internalGetDesiredMeasures()
 {
     Measures rslt = rootElement->getDesiredMeasures();
 
@@ -113,7 +109,7 @@ GuiElement::Measures ScrollableTextGuiCompound::getDesiredMeasures()
 }
 
 
-void ScrollableTextGuiCompound::setPosition(Position p) 
+void ScrollableTextGuiCompound::setPosition(const Position& p) 
 {
     long numberOfLines = textWidget->getNumberOfLines();
     

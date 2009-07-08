@@ -31,20 +31,54 @@ namespace LucED
 {
 
 class FocusableWidget : public FocusableElement,
-                        public GuiWidget
+                        public GuiWidget::EventListener
 {
 public:
-    virtual void treatNewWindowPosition(Position newPosition);
     virtual void show();
     virtual void hide();
+    
+    bool isMapped() const {
+        return guiWidget.isValid() && isVisible();
+    }
+
+    virtual void setPosition(const Position& p);
+
+    virtual void adopt(RawPtr<GuiElement>   parentElement,
+                       RawPtr<GuiWidget>    parentWidget,
+                       RawPtr<FocusManager> focusManagerForThis,
+                       RawPtr<FocusManager> focusManagerForChilds);
+
+    int getWidth() const {
+        return width;
+    }
+    int getHeight() const {
+        return height;
+    }
 
 protected:
-    FocusableWidget(RawPtr<GuiWidget> parent, int x, int y, unsigned int width, unsigned int height, unsigned border_width)
-        : FocusableElement(parent, x, y, width, height),
-          GuiWidget(parent, x, y, width, height, border_width)
-    {
-        GuiElement::hide();
+    FocusableWidget(Visibility                       defaultVisibility = VISIBLE, 
+                    int                              borderWidth = 0)
+        : FocusableElement(defaultVisibility, 0, 0, 1 + 2*borderWidth, 1 + 2*borderWidth),
+          borderWidth(borderWidth),
+          width(1), height(1)
+    {}
+
+    RawPtr<GuiWidget> getGuiWidget() {
+        return guiWidget;
     }
+
+protected:
+    virtual void processGuiWidgetCreatedEvent()
+    {}
+
+protected: // GuiWidget::EventListener methods
+    virtual void processGuiWidgetNewPositionEvent(const Position& newPosition);
+
+private:
+    int                              borderWidth;
+    GuiWidget::Ptr                   guiWidget;
+    int                              width;
+    int                              height;
 };
 
 } // namespace LucED

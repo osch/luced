@@ -75,10 +75,8 @@ SingletonInstance<ScrollBarSingletonData> ScrollBarSingletonData::instance;
 
 
 
-ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
-    : NonFocusableWidget(parent, 0, 0, 1, 1, 0),
-      position(0, 0, 1, 1),
-      isV(orientation == Orientation::VERTICAL),
+ScrollBar::ScrollBar(Orientation::Type orientation)
+    : isV(orientation == Orientation::VERTICAL),
       hilitedPart(NONE),
       scrollBar_gcid(ScrollBarSingletonData::getInstance()->getGcId())
 {
@@ -89,187 +87,186 @@ ScrollBar::ScrollBar(GuiWidget* parent, Orientation::Type orientation)
     movingBar = false;
     movingYOffset = 0;
     isButtonPressedForScrollStep = false;
-    addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     calculateValuesFromPosition();
+}
 
-//    setBackgroundColor(getGuiRoot()->getGuiColor02());
- }
-
-
-GuiWidget::ProcessingResult ScrollBar::processEvent(const XEvent *event)
+void ScrollBar::processGuiWidgetCreatedEvent()
 {
-    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
-    } else {
-        
-        switch (event->type) {
-            
-            case GraphicsExpose:
-            case Expose: {
-                this->drawArrows();
-                this->drawArea();
-                return EVENT_PROCESSED;
-            }
+    getGuiWidget()->addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
+    // getGuiWidget()->setBackgroundColor(getGuiRoot()->getGuiColor02());
+    calculateValuesFromPosition();
+}
 
-            case ButtonPress: {
-                if (event->xbutton.button == Button1)
-                {
-                    int y;
-                    int h;
-                    isButtonPressedForScrollStep = false;
-                    if (this->isV) {
-                        y = event->xbutton.y;
-                        h = position.h;
-                    } else {
-                        y = event->xbutton.x;
-                        h = position.w;
-                    }
-                    if ((y >= this->scrollY + arrowLength) 
-                            && (y < this->scrollY + arrowLength + this->scrollHeight)) {
-                        //printf("Button pressed\n");
-                        this->movingBar = true;
-                        this->movingYOffset = y - this->scrollY;
-                    }
-                    else if (0 <= y && y < arrowLength) {
-                        isButtonPressedForScrollStep = true;
-                        drawPressedUpButton();
-                        if (value == 0 && scrollY != 0) {
-                            this->scrollY = calcScrollY();
-                            //printf("setValue -> scrollY = %d\n", this->scrollY);
-                            drawArea();
-                        }
-                        scrollStepCallback->call(scrollStep = ScrollStep::LINE_UP);
-                    }
-                    else if (h - arrowLength <= y && y < h) {
-                        isButtonPressedForScrollStep = true;
-                        drawPressedDownButton();
-                        if (value == totalValue - heightValue && scrollY != calcHighestScrollY()) {
-                            this->scrollY = calcHighestScrollY();
-                            //printf("setValue -> scrollY = %d\n", this->scrollY);
-                            drawArea();
-                        }
-                        scrollStepCallback->call(scrollStep = ScrollStep::LINE_DOWN);
-                    }
-                    else if (arrowLength <= y && y < this->scrollY + arrowLength) {
-                        isButtonPressedForScrollStep = true;
-                        scrollStepCallback->call(scrollStep = ScrollStep::PAGE_UP);
-                    }
-                    else if (this->scrollY + arrowLength + scrollHeight <= y && y < h - arrowLength) {
-                        isButtonPressedForScrollStep = true;
-                        scrollStepCallback->call(scrollStep = ScrollStep::PAGE_DOWN);
-                    }
-                    if (isButtonPressedForScrollStep) {
-                        EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
-                                GlobalConfig::getInstance()->getScrollBarRepeatFirstMicroSecs(),
-                                newCallback(this, &ScrollBar::handleScrollStepRepeating));
-                    }
-                    return EVENT_PROCESSED;
+GuiWidget::ProcessingResult ScrollBar::processGuiWidgetEvent(const XEvent* event)
+{
+    switch (event->type)
+    {
+        case GraphicsExpose:
+        case Expose: {
+            this->drawArrows();
+            this->drawArea();
+            return GuiWidget::EVENT_PROCESSED;
+        }
+
+        case ButtonPress: {
+            if (event->xbutton.button == Button1)
+            {
+                int y;
+                int h;
+                isButtonPressedForScrollStep = false;
+                if (this->isV) {
+                    y = event->xbutton.y;
+                    h = getPosition().h;
+                } else {
+                    y = event->xbutton.x;
+                    h = getPosition().w;
                 }
-                break;
-            }
-
-            case ButtonRelease: {
-                bool wasProcessed = false;
-                if (this->movingBar) {
-                    //printf("ButtonReleased\n");
-                    this->movingBar = false;
-                    wasProcessed = true;
+                if ((y >= this->scrollY + arrowLength) 
+                        && (y < this->scrollY + arrowLength + this->scrollHeight)) {
+                    //printf("Button pressed\n");
+                    this->movingBar = true;
+                    this->movingYOffset = y - this->scrollY;
+                }
+                else if (0 <= y && y < arrowLength) {
+                    isButtonPressedForScrollStep = true;
+                    drawPressedUpButton();
+                    if (value == 0 && scrollY != 0) {
+                        this->scrollY = calcScrollY();
+                        //printf("setValue -> scrollY = %d\n", this->scrollY);
+                        drawArea();
+                    }
+                    scrollStepCallback->call(scrollStep = ScrollStep::LINE_UP);
+                }
+                else if (h - arrowLength <= y && y < h) {
+                    isButtonPressedForScrollStep = true;
+                    drawPressedDownButton();
+                    if (value == totalValue - heightValue && scrollY != calcHighestScrollY()) {
+                        this->scrollY = calcHighestScrollY();
+                        //printf("setValue -> scrollY = %d\n", this->scrollY);
+                        drawArea();
+                    }
+                    scrollStepCallback->call(scrollStep = ScrollStep::LINE_DOWN);
+                }
+                else if (arrowLength <= y && y < this->scrollY + arrowLength) {
+                    isButtonPressedForScrollStep = true;
+                    scrollStepCallback->call(scrollStep = ScrollStep::PAGE_UP);
+                }
+                else if (this->scrollY + arrowLength + scrollHeight <= y && y < h - arrowLength) {
+                    isButtonPressedForScrollStep = true;
+                    scrollStepCallback->call(scrollStep = ScrollStep::PAGE_DOWN);
                 }
                 if (isButtonPressedForScrollStep) {
-                    if (scrollStep == ScrollStep::LINE_UP) {
-                        drawUpButton();
-                    } else if (scrollStep == ScrollStep::LINE_DOWN) {
-                        drawDownButton();
-                    }
-                    isButtonPressedForScrollStep = false;
-                    wasProcessed = true;
+                    EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
+                            GlobalConfig::getInstance()->getScrollBarRepeatFirstMicroSecs(),
+                            newCallback(this, &ScrollBar::handleScrollStepRepeating));
                 }
-                if (wasProcessed) {
-                    long v = calcValue();
-                    if (v == 0 && this->scrollY > 0) {
-                        this->scrollY = 0;
-                        drawArea();
-                    }
-                    else if (   v >= this->totalValue - this->heightValue 
-                             && this->scrollY + this->scrollHeight < this->scrollAreaLength)
-                    {
-                        this->scrollY = this->scrollAreaLength - this->scrollHeight;
-                        drawArea();
-                    }
-                }
-                if (wasProcessed) {
-                    return EVENT_PROCESSED;
-                }
-                break;
+                return GuiWidget::EVENT_PROCESSED;
             }
-
-            case MotionNotify: {
-                if (this->movingBar) {
-                    int newY;
-                    XEvent newEvent;
-
-                    XSync(getDisplay(), False);
-                    if (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask, &newEvent) == True) {
-                        event = &newEvent;
-                        while (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask, &newEvent) == True);
-                    }
-
-                    if (this->isV) {
-                        newY = event->xmotion.y - this->movingYOffset;
-                    } else {
-                        newY = event->xmotion.x - this->movingYOffset;
-                    }
-                    if (newY < 0) 
-                        newY = 0;
-                    else if (newY > calcHighestScrollY())
-                        newY = calcHighestScrollY();
-                    //printf("newY %d (%d, %d) %d %d\n", newY, this->scrollY, highestScrollY(), this->scrollHeight, getWid()getHeight);
-                    if (newY != this->scrollY) {
-                        long newValue;
-                        this->scrollY = newY;
-                        newValue = calcValue();
-
-                        this->totalValue = this->originalTotalValue;
-                        this->scrollHeight = calcScrollHeight();
-                        if (this->scrollY + this->scrollHeight > scrollAreaLength) {
-                            this->scrollHeight = scrollAreaLength - this->scrollY;
-                        }
-                        if (newValue + this->heightValue > this->totalValue) {
-                            this->totalValue = newValue + this->heightValue;
-                        }
-            
-                        drawArea();
-                        if (newValue != this->value) {
-                            //printf("Motion %d\n", newValue);
-                            //ScrollBarV_setValue(, newValue);
-                            this->value = newValue;
-                            this->changedValueCallback->call(newValue);
-                        }
-                    }
-                }
-                hiliteScrollBarPartAtMousePosition(event->xmotion.x, event->xmotion.y);
-                return EVENT_PROCESSED;
-            }
-            case EnterNotify: {
-                int x = event->xcrossing.x;
-                int y = event->xcrossing.y;
-                hiliteScrollBarPartAtMousePosition(x, y);
-                addToXEventMask(PointerMotionMask);
-                return EVENT_PROCESSED;
-            }
-            
-            case LeaveNotify: {
-                int x = event->xcrossing.x;
-                int y = event->xcrossing.y;
-                hiliteScrollBarPartAtMousePosition(x, y);
-                removeFromXEventMask(PointerMotionMask);
-                return EVENT_PROCESSED;
-            }
+            break;
         }
-        return propagateEventToParentWidget(event);
+
+        case ButtonRelease: {
+            bool wasProcessed = false;
+            if (this->movingBar) {
+                //printf("ButtonReleased\n");
+                this->movingBar = false;
+                wasProcessed = true;
+            }
+            if (isButtonPressedForScrollStep) {
+                if (scrollStep == ScrollStep::LINE_UP) {
+                    drawUpButton();
+                } else if (scrollStep == ScrollStep::LINE_DOWN) {
+                    drawDownButton();
+                }
+                isButtonPressedForScrollStep = false;
+                wasProcessed = true;
+            }
+            if (wasProcessed) {
+                long v = calcValue();
+                if (v == 0 && this->scrollY > 0) {
+                    this->scrollY = 0;
+                    drawArea();
+                }
+                else if (   v >= this->totalValue - this->heightValue 
+                         && this->scrollY + this->scrollHeight < this->scrollAreaLength)
+                {
+                    this->scrollY = this->scrollAreaLength - this->scrollHeight;
+                    drawArea();
+                }
+            }
+            if (wasProcessed) {
+                return GuiWidget::EVENT_PROCESSED;
+            }
+            break;
+        }
+
+        case MotionNotify: {
+            if (this->movingBar) {
+                int newY;
+                XEvent newEvent;
+
+                XSync(getDisplay(), False);
+                if (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ButtonMotionMask, &newEvent) == True) {
+                    event = &newEvent;
+                    while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ButtonMotionMask, &newEvent) == True);
+                }
+
+                if (this->isV) {
+                    newY = event->xmotion.y - this->movingYOffset;
+                } else {
+                    newY = event->xmotion.x - this->movingYOffset;
+                }
+                if (newY < 0) 
+                    newY = 0;
+                else if (newY > calcHighestScrollY())
+                    newY = calcHighestScrollY();
+                //printf("newY %d (%d, %d) %d %d\n", newY, this->scrollY, highestScrollY(), this->scrollHeight, getWid()getHeight);
+                if (newY != this->scrollY) {
+                    long newValue;
+                    this->scrollY = newY;
+                    newValue = calcValue();
+
+                    this->totalValue = this->originalTotalValue;
+                    this->scrollHeight = calcScrollHeight();
+                    if (this->scrollY + this->scrollHeight > scrollAreaLength) {
+                        this->scrollHeight = scrollAreaLength - this->scrollY;
+                    }
+                    if (newValue + this->heightValue > this->totalValue) {
+                        this->totalValue = newValue + this->heightValue;
+                    }
+        
+                    drawArea();
+                    if (newValue != this->value) {
+                        //printf("Motion %d\n", newValue);
+                        //ScrollBarV_setValue(, newValue);
+                        this->value = newValue;
+                        this->changedValueCallback->call(newValue);
+                    }
+                }
+            }
+            hiliteScrollBarPartAtMousePosition(event->xmotion.x, event->xmotion.y);
+            return GuiWidget::EVENT_PROCESSED;
+        }
+        case EnterNotify: {
+            int x = event->xcrossing.x;
+            int y = event->xcrossing.y;
+            hiliteScrollBarPartAtMousePosition(x, y);
+            getGuiWidget()->addToXEventMask(PointerMotionMask);
+            return GuiWidget::EVENT_PROCESSED;
+        }
+        
+        case LeaveNotify: {
+            int x = event->xcrossing.x;
+            int y = event->xcrossing.y;
+            hiliteScrollBarPartAtMousePosition(x, y);
+            getGuiWidget()->removeFromXEventMask(PointerMotionMask);
+            return GuiWidget::EVENT_PROCESSED;
+        }
     }
+    return getGuiWidget()->propagateEventToParentWidget(event);
 }
     
+
 void ScrollBar::hiliteScrollBarPartAtMousePosition(int mouseX, int mouseY)
 {
     int x, y;
@@ -277,13 +274,13 @@ void ScrollBar::hiliteScrollBarPartAtMousePosition(int mouseX, int mouseY)
     if (this->isV) {
         x = mouseX;
         y = mouseY;
-        w = position.w;
-        h = position.h;
+        w = getPosition().w;
+        h = getPosition().h;
     } else {
         x = mouseY;
         y = mouseX;
-        w = position.h;
-        h = position.w;
+        w = getPosition().h;
+        h = getPosition().w;
     }
     HilitedPart newPart = NONE;
     if (0 <= x && x < w)
@@ -348,11 +345,10 @@ void ScrollBar::hiliteScrollBarPartAtMousePosition(int mouseX, int mouseY)
     }
 }
 
-void ScrollBar::setPosition(Position newPosition)
+void ScrollBar::processGuiWidgetNewPositionEvent(const Position& newPosition)
 {
-    if (position != newPosition) {
-        GuiWidget::setPosition(newPosition);
-        this->position = newPosition;
+    if (getPosition() != newPosition) {
+        NonFocusableWidget::processGuiWidgetNewPositionEvent(newPosition);
         calculateValuesFromPosition();
         drawArea();
     }
@@ -360,7 +356,7 @@ void ScrollBar::setPosition(Position newPosition)
 
 #define MIN_SCROLLER_HEIGHT 10
 
-GuiElement::Measures ScrollBar::getDesiredMeasures()
+GuiElement::Measures ScrollBar::internalGetDesiredMeasures()
 {
     int scrollBarWidth = GlobalConfig::getInstance()->getScrollBarWidth();
 
@@ -389,19 +385,19 @@ void ScrollBar::drawUpButton()
 
     if (this->isV)
     {
-        int w = position.w; //scrollAreaWidth;
-        int h = position.h; //scrollAreaLength;
+        int w = getPosition().w; //scrollAreaWidth;
+        int h = getPosition().h; //scrollAreaLength;
 
-        drawRaisedBox(0, 0, arrowLength, arrowLength, color);
-        drawArrow(    0, 0, arrowLength, arrowLength, Direction::UP);
+        getGuiWidget()->drawRaisedBox(0, 0, arrowLength, arrowLength, color);
+        getGuiWidget()->drawArrow(    0, 0, arrowLength, arrowLength, Direction::UP);
     }
     else
     {
-        int w = position.w; // scrollAreaLength;
-        int h = position.h; // scrollAreaWidth;
+        int w = getPosition().w; // scrollAreaLength;
+        int h = getPosition().h; // scrollAreaWidth;
 
-        drawRaisedBox(0, 0, arrowLength, arrowLength, color);
-        drawArrow(    0, 0, arrowLength, arrowLength, Direction::LEFT);
+        getGuiWidget()->drawRaisedBox(0, 0, arrowLength, arrowLength, color);
+        getGuiWidget()->drawArrow(    0, 0, arrowLength, arrowLength, Direction::LEFT);
     }
 }
 
@@ -419,19 +415,19 @@ void ScrollBar::drawDownButton()
 
     if (this->isV)
     {
-        int w = position.w; //scrollAreaWidth;
-        int h = position.h; //scrollAreaLength;
+        int w = getPosition().w; //scrollAreaWidth;
+        int h = getPosition().h; //scrollAreaLength;
         
-        drawRaisedBox(0, h - arrowLength, arrowLength, arrowLength, color);
-        drawArrow(    0, h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
+        getGuiWidget()->drawRaisedBox(0, h - arrowLength, arrowLength, arrowLength, color);
+        getGuiWidget()->drawArrow(    0, h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
     }
     else
     {
-        int w = position.w; // scrollAreaLength;
-        int h = position.h; // scrollAreaWidth;
+        int w = getPosition().w; // scrollAreaLength;
+        int h = getPosition().h; // scrollAreaWidth;
 
-        drawRaisedBox(w - arrowLength, 0, arrowLength, arrowLength, color);
-        drawArrow(    w - arrowLength, 0, arrowLength, arrowLength, Direction::RIGHT);
+        getGuiWidget()->drawRaisedBox(w - arrowLength, 0, arrowLength, arrowLength, color);
+        getGuiWidget()->drawArrow(    w - arrowLength, 0, arrowLength, arrowLength, Direction::RIGHT);
     }
 }
 
@@ -449,19 +445,19 @@ void ScrollBar::drawPressedUpButton()
 
     if (this->isV)
     {
-        int w = position.w; //scrollAreaWidth;
-        int h = position.h; //scrollAreaLength;
+        int w = getPosition().w; //scrollAreaWidth;
+        int h = getPosition().h; //scrollAreaLength;
 
-        drawPressedBox(0, 0, arrowLength, arrowLength, color);
-        drawArrow(     1 + 0, 1 + 0, arrowLength, arrowLength, Direction::UP);
+        getGuiWidget()->drawPressedBox(0, 0, arrowLength, arrowLength, color);
+        getGuiWidget()->drawArrow(     1 + 0, 1 + 0, arrowLength, arrowLength, Direction::UP);
     }
     else
     {
-        int w = position.w; // scrollAreaLength;
-        int h = position.h; // scrollAreaWidth;
+        int w = getPosition().w; // scrollAreaLength;
+        int h = getPosition().h; // scrollAreaWidth;
 
-        drawPressedBox(0, 0, arrowLength, arrowLength, color);
-        drawArrow(     1 + 0, 1 + 0, arrowLength, arrowLength, Direction::LEFT);
+        getGuiWidget()->drawPressedBox(0, 0, arrowLength, arrowLength, color);
+        getGuiWidget()->drawArrow(     1 + 0, 1 + 0, arrowLength, arrowLength, Direction::LEFT);
     }
 }
 
@@ -479,19 +475,19 @@ void ScrollBar::drawPressedDownButton()
 
     if (this->isV)
     {
-        int w = position.w; //scrollAreaWidth;
-        int h = position.h; //scrollAreaLength;
+        int w = getPosition().w; //scrollAreaWidth;
+        int h = getPosition().h; //scrollAreaLength;
         
-        drawPressedBox(0, h - arrowLength, arrowLength, arrowLength, color);
-        drawArrow(     1 + 0, 1 + h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
+        getGuiWidget()->drawPressedBox(0, h - arrowLength, arrowLength, arrowLength, color);
+        getGuiWidget()->drawArrow(     1 + 0, 1 + h - arrowLength, arrowLength, arrowLength, Direction::DOWN);
     }
     else
     {
-        int w = position.w; // scrollAreaLength;
-        int h = position.h; // scrollAreaWidth;
+        int w = getPosition().w; // scrollAreaLength;
+        int h = getPosition().h; // scrollAreaWidth;
 
-        drawPressedBox(w - arrowLength, 0, arrowLength, arrowLength, color);
-        drawArrow(     1 + w - arrowLength, 1 + 0, arrowLength, arrowLength, Direction::RIGHT);
+        getGuiWidget()->drawPressedBox(w - arrowLength, 0, arrowLength, arrowLength, color);
+        getGuiWidget()->drawArrow(     1 + w - arrowLength, 1 + 0, arrowLength, arrowLength, Direction::RIGHT);
     }
 }
 
@@ -508,15 +504,15 @@ void ScrollBar::drawArea()
     GuiRoot* guiRoot = getGuiRoot();
     
     if (this->isV) {
-        int w = position.w; //scrollAreaWidth;
-        int h = position.h; //scrollAreaLength;
+        int w = getPosition().w; //scrollAreaWidth;
+        int h = getPosition().h; //scrollAreaLength;
 
 //        XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor01());
 //        XDrawLine(display, getWid(), scrollBar_gcid, 
 //                0, 0, 0, h - 1);
 
         XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02()); // orig war 03
-        XDrawLine(display, getWid(), scrollBar_gcid, 
+        XDrawLine(display, getGuiWidget()->getWid(), scrollBar_gcid, 
                 w - 1, arrowLength, w - 1, h - 1 - arrowLength);
                 
         // Scroller
@@ -525,7 +521,7 @@ void ScrollBar::drawArea()
 
         if (this->scrollY > 0) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());
-            XFillRectangle(display, getWid(), scrollBar_gcid,
+            XFillRectangle(display, getGuiWidget()->getWid(), scrollBar_gcid,
                     0, arrowLength, w - 1, this->scrollY);
         }
 
@@ -535,25 +531,25 @@ void ScrollBar::drawArea()
         } else {
             color = GuiRoot::getInstance()->getGuiColor03();
         }
-        drawRaisedBox(0, scrollY, arrowLength, this->scrollHeight, color);
+        getGuiWidget()->drawRaisedBox(0, scrollY, arrowLength, this->scrollHeight, color);
 
         if (this->scrollY < calcHighestScrollY()) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());
-            XFillRectangle(display, getWid(), scrollBar_gcid,
+            XFillRectangle(display, getGuiWidget()->getWid(), scrollBar_gcid,
                     0, scrollY + this->scrollHeight, w - 1, h - scrollY - this->scrollHeight - arrowLength);
         }
 
     } else {
 
-        int w = position.w; // scrollAreaLength;
-        int h = position.h; // scrollAreaWidth;
+        int w = getPosition().w; // scrollAreaLength;
+        int h = getPosition().h; // scrollAreaWidth;
 
 //        XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor01());
 //        XDrawLine(display, getWid(), scrollBar_gcid, 
 //                0, 0, w - 1, 0);
 
         XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02()); // orig war 03
-        XDrawLine(display, getWid(), scrollBar_gcid, 
+        XDrawLine(display, getGuiWidget()->getWid(), scrollBar_gcid, 
                 arrowLength, h - 1,  w - 1 - arrowLength, h - 1);
 
         // Scroller
@@ -562,7 +558,7 @@ void ScrollBar::drawArea()
 
         if (this->scrollY > 0) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());
-            XFillRectangle(display, getWid(), scrollBar_gcid,
+            XFillRectangle(display, getGuiWidget()->getWid(), scrollBar_gcid,
                     arrowLength, 0, this->scrollY, h - 1);
         }
 
@@ -572,14 +568,14 @@ void ScrollBar::drawArea()
         } else {
             color = GuiRoot::getInstance()->getGuiColor03();
         }
-        drawRaisedBox(scrollY, 0, this->scrollHeight, arrowLength, color);
+        getGuiWidget()->drawRaisedBox(scrollY, 0, this->scrollHeight, arrowLength, color);
 
         if (this->scrollY < calcHighestScrollY()) {
             XSetForeground(display, scrollBar_gcid, guiRoot->getGuiColor02());
-            XFillRectangle(display, getWid(), scrollBar_gcid,
+            XFillRectangle(display, getGuiWidget()->getWid(), scrollBar_gcid,
                     scrollY + this->scrollHeight, 0, w - scrollY - this->scrollHeight - arrowLength, h - 1);
         }
-    }                
+    }
 }
 
 void ScrollBar::setValue(long value)
@@ -592,7 +588,9 @@ void ScrollBar::setValue(long value)
         this->value = value;
         this->scrollY = calcScrollY();
         //printf("setValue -> scrollY = %d\n", this->scrollY);
-        drawArea();
+        if (getGuiWidget().isValid()) {
+            drawArea();
+        }
     }
 }
 
@@ -624,7 +622,9 @@ void ScrollBar::setValueRange(long totalValue, long heightValue, long value)
 
         if (changed || scrollY != this->scrollY) {
             this->scrollY = scrollY;
-            drawArea();
+            if (getGuiWidget().isValid()) {
+                drawArea();
+            }
         }
     }
 }
@@ -674,13 +674,13 @@ inline long ScrollBar::calcValue()
 void ScrollBar::calculateValuesFromPosition()
 {
     if (isV) {
-        scrollAreaWidth  = position.w;
+        scrollAreaWidth  = getPosition().w;
         arrowLength = scrollAreaWidth;
-        scrollAreaLength = position.h - 2 * arrowLength;
+        scrollAreaLength = getPosition().h - 2 * arrowLength;
     } else {
-        scrollAreaWidth  = position.h;
+        scrollAreaWidth  = getPosition().h;
         arrowLength = scrollAreaWidth;
-        scrollAreaLength = position.w - 2 * arrowLength;
+        scrollAreaLength = getPosition().w - 2 * arrowLength;
     }
 
     scrollHeight = calcScrollHeight();

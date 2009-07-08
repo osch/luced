@@ -20,8 +20,10 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "FocusableElement.hpp"
+#include "Nullable.hpp"
 
 using namespace LucED;
+
 
 FocusableElement::~FocusableElement()
 {
@@ -34,7 +36,7 @@ FocusableElement::~FocusableElement()
 }
 
 
-void FocusableElement::notifyAboutHotKeyEventForOtherWidget()
+void FocusableElement::treatNotificationOfHotKeyEventForOtherWidget()
 {}
 
 void FocusableElement::treatLostHotKeyRegistration(const KeyMapping::Id& id)
@@ -47,18 +49,57 @@ void FocusableElement::treatHotKeyEvent(const KeyMapping::Id& id)
 {}
 
 
-/*void FocusableElement::requestFocusFor(RawPtr<FocusableElement> w)
+
+void FocusableElement::adopt(RawPtr<GuiElement>   parentElement,
+                             RawPtr<GuiWidget>    parentWidget,
+                             RawPtr<FocusManager> focusManagerForThis,
+                             RawPtr<FocusManager> focusManagerForChilds)
 {
-    if (parent.isValid()) parent->requestFocusFor(w);
+    if (!focusManagerForChilds.isValid()) {
+        focusManagerForChilds = focusManagerForThis;
+    }
+    FocusManager::Access::QueueTransaction queueTransaction(focusManagerForChilds);
+
+    this->focusManagerForThis = focusManagerForThis;
+    
+    GuiElement::adopt(parentElement, parentWidget, focusManagerForChilds);
+    
+    queueTransaction.execute();
 }
 
-void FocusableElement::requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
+void FocusableElement::adopt(RawPtr<GuiElement>   parentElement,
+                             RawPtr<GuiWidget>    parentWidget,
+                             RawPtr<FocusManager> focusManager)
 {
-    if (parent != Null) parent->requestHotKeyRegistrationFor(id, w);
+    adopt(parentElement, parentWidget, focusManager, focusManager);
 }
 
-void FocusableElement::requestRemovalOfHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w)
+
+void FocusableElement::requestHotKeyRegistration(const KeyMapping::Id& id)
 {
-    if (parent != Null) parent->requestRemovalOfHotKeyRegistrationFor(id, w);
+    if (wasAdopted() && FocusManager::Access::isReady(focusManagerForThis)) {
+        focusManagerForThis->requestHotKeyRegistrationFor(id, this);
+    } else {
+        FocusManager::Access::queueHotKeyRegistrationFor(id, this);
+    }
 }
-*/
+
+void FocusableElement::requestRemovalOfHotKeyRegistration(const KeyMapping::Id& id)
+{
+    if (wasAdopted() && FocusManager::Access::isReady(focusManagerForThis)) {
+        focusManagerForThis->requestRemovalOfHotKeyRegistrationFor(id, this);
+    } else {
+        FocusManager::Access::queueRemovalOfHotKeyRegistrationFor(id, this);
+    }
+}
+
+void FocusableElement::requestFocus()
+{
+    if (wasAdopted() && FocusManager::Access::isReady(focusManagerForThis)) {
+        focusManagerForThis->requestFocusFor(this);
+    } else {
+        FocusManager::Access::queueFocusFor(this);
+    }
+}
+
+

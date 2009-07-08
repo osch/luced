@@ -33,13 +33,12 @@ CommandOutputBox::CommandOutputBox(TopWin* referingWindow, TextData::Ptr textDat
     : PanelDialogWin(referingWindow),
       wasClosed(false)
 {
-    button1 = Button::create(this, "O]K");
+    button1 = Button::create("O]K");
     
-    multiLineOut = TextDisplayGuiCompound::create(this, 
-                                                  textData);
+    multiLineOut = TextDisplayGuiCompound::create(textData);
     
 
-    LabelWidget::Ptr label0 = LabelWidget::create(this, "CommandOutputBox");
+    LabelWidget::Ptr label0 = LabelWidget::create("CommandOutputBox");
     GuiLayoutColumn::Ptr column0 = GuiLayoutColumn::create();
     GuiLayoutRow::Ptr row0 = GuiLayoutRow::create();
 

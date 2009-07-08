@@ -29,70 +29,46 @@ using namespace LucED;
 
 const int BUTTON_OUTER_BORDER = 1;
 
-CheckBox::CheckBox(RawPtr<GuiWidget> parent, String buttonText)
-      : FocusableWidget(parent, 0, 0, 1, 1, 0),
-        position(0, 0, 1, 1),
+CheckBox::CheckBox(String buttonText)
+      : buttonText(buttonText),
         isBoxChecked(false),
         isMouseButtonPressed(false),
         isMouseOverButton(false),
         hasHotKey(false),
         showHotKey(false)
 {
-    addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
-    setBackgroundColor(getGuiRoot()->getGuiColor03());
-    int p1 = buttonText.findFirstOf(']', Pos(1));
-    if (p1 != -1) {
-        hotKeyChar = buttonText[p1 - 1];
-        this->buttonText = String() << buttonText.getHead(p1) << buttonText.getTail(p1 + 1);
-        hotKeyPixX = getGuiTextStyle()->getTextWidth(buttonText.getHead(p1 - 1));
-        hotKeyPixW = getGuiTextStyle()->getCharWidth(hotKeyChar);
-        hasHotKey = true;
-        // showHotKey = true;
-        String keySymString;
-        keySymString.appendUpperChar(hotKeyChar);
-        requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
-    } else {
-        this->buttonText = buttonText;
-    }
-    
     KeyActionHandler::Ptr keyActionHandler = KeyActionHandler::create();
     keyActionHandler->addActionMethods(Actions::create(this));
     setKeyActionHandler(keyActionHandler);
 }
 
-GuiElement::Measures CheckBox::getDesiredMeasures()
+
+GuiElement::Measures CheckBox::internalGetDesiredMeasures()
 {
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
 
     int buttonInnerSpacing = GlobalConfig::getInstance()->getButtonInnerSpacing();
-    int minWidth = getGuiTextStyle()->getLineHeight() * 2;
-    int minHeight = getGuiTextHeight() + 2 * getRaisedBoxBorderWidth()  + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
+    int minWidth  = GuiWidget::getGuiTextStyle()->getLineHeight() * 2;
+    int minHeight = GuiWidget::getGuiTextHeight() + 2 * GuiWidget::getRaisedBoxBorderWidth()  + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
 
-    int bestWidth = (getGuiTextStyle()->getTextWidth(buttonText) + 2 * getRaisedBoxBorderWidth() + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing) 
-                  + 4 * getGuiTextStyle()->getSpaceWidth() + 2*BUTTON_OUTER_BORDER + guiSpacing;
+    int bestWidth = (GuiWidget::getGuiTextStyle()->getTextWidth(buttonText) + 2 * GuiWidget::getRaisedBoxBorderWidth() + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing) 
+                  + 4 * GuiWidget::getGuiTextStyle()->getSpaceWidth() + 2*BUTTON_OUTER_BORDER + guiSpacing;
     int bestHeight = minHeight;
 
     return Measures(minWidth, minHeight, bestWidth, bestHeight, bestWidth, bestHeight);
 }
 
 
-void CheckBox::setPosition(Position newPosition)
-{
-    if (position != newPosition) {
-        GuiWidget::setPosition(newPosition);
-        this->position = newPosition;
-    }
-}
 
 void CheckBox::draw()
 {
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
 
     int textOffset = 0;
-    int w = getGuiTextStyle()->getTextWidth(buttonText);
-    int x = (position.w - getGuiTextStyle()->getLineHeight() - 2*BUTTON_OUTER_BORDER - w - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing + getGuiTextStyle()->getLineHeight();
-    if (x < BUTTON_OUTER_BORDER + guiSpacing + getGuiTextStyle()->getLineHeight()) { x = BUTTON_OUTER_BORDER + guiSpacing + getGuiTextStyle()->getLineHeight(); }
-    int y = (position.h - 2*BUTTON_OUTER_BORDER - getGuiTextHeight() - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
+    int w = GuiWidget::getGuiTextStyle()->getTextWidth(buttonText);
+    int x = (getPosition().w - GuiWidget::getGuiTextStyle()->getLineHeight() - 2*BUTTON_OUTER_BORDER - w - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight();
+    if (x < BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight()) { x = BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight(); }
+    int y = (getPosition().h - 2*BUTTON_OUTER_BORDER - GuiWidget::getGuiTextHeight() - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
     if (y < BUTTON_OUTER_BORDER + guiSpacing) { y = BUTTON_OUTER_BORDER + guiSpacing; }
 
     GuiColor color;
@@ -103,14 +79,14 @@ void CheckBox::draw()
     }
     {
 //        drawRaisedBox(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
-//                position.w - 2*BUTTON_OUTER_BORDER - guiSpacing, position.h - 2*BUTTON_OUTER_BORDER - guiSpacing, color);
-        drawRaisedSurface(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
-                position.w - 2*BUTTON_OUTER_BORDER - guiSpacing, position.h - 2*BUTTON_OUTER_BORDER - guiSpacing, GuiRoot::getInstance()->getGuiColor03());
+//                getPosition().w - 2*BUTTON_OUTER_BORDER - guiSpacing, getPosition().h - 2*BUTTON_OUTER_BORDER - guiSpacing, color);
+        getGuiWidget()->drawRaisedSurface(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
+                getPosition().w - 2*BUTTON_OUTER_BORDER - guiSpacing, getPosition().h - 2*BUTTON_OUTER_BORDER - guiSpacing, GuiRoot::getInstance()->getGuiColor03());
 
         int bx = BUTTON_OUTER_BORDER + guiSpacing + 3;
         int by = y + 1; // +2
-        int bw = getGuiTextStyle()->getLineHeight() - 1; // -2
-        drawPressedBox(bx, by, bw, bw, color);
+        int bw = GuiWidget::getGuiTextStyle()->getLineHeight() - 1; // -2
+        getGuiWidget()->drawPressedBox(bx, by, bw, bw, color);
         if (isBoxChecked) {
             int cx = bx + 3;
             int cy = by + 3;
@@ -121,28 +97,28 @@ void CheckBox::draw()
             int ch1 = cw1;
             int ch2 = ch - ch1;
             
-            drawLine(cx,       cy +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
-            drawLine(cx + cw1, cy + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
+            getGuiWidget()->drawLine(cx,       cy +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
+            getGuiWidget()->drawLine(cx + cw1, cy + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
 
-            drawLine(cx,       cy + 1 +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
-            drawLine(cx + cw1, cy + 1 + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
+            getGuiWidget()->drawLine(cx,       cy + 1 +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
+            getGuiWidget()->drawLine(cx + cw1, cy + 1 + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
         }
     }
     const int d = BUTTON_OUTER_BORDER - 1;
-    undrawFrame(d + guiSpacing, d + guiSpacing, position.w - 2 * d - guiSpacing, position.h - 2 * d - guiSpacing);
+    getGuiWidget()->undrawFrame(d + guiSpacing, d + guiSpacing, getPosition().w - 2 * d - guiSpacing, getPosition().h - 2 * d - guiSpacing);
     if (hasFocus()) {
         const int d = BUTTON_OUTER_BORDER;
-        drawDottedFrame(d + guiSpacing, d + guiSpacing + 1, position.w - 2 * d - 1 - guiSpacing, position.h - 2 * d - 1 - guiSpacing);
+        getGuiWidget()->drawDottedFrame(d + guiSpacing, d + guiSpacing + 1, getPosition().w - 2 * d - 1 - guiSpacing, getPosition().h - 2 * d - 1 - guiSpacing);
     }
     if (showHotKey) {
-        //drawLine(x + textOffset + hotKeyPixX, y + textOffset + getGuiTextHeight(), hotKeyPixW, 0);
-        int lineY = getGuiTextStyle()->getLineAscent() + 1;
-        if (lineY > getGuiTextHeight() - 1) {
-            lineY = getGuiTextHeight() - 1;
+        //drawLine(x + textOffset + hotKeyPixX, y + textOffset + GuiWidget::getGuiTextHeight(), hotKeyPixW, 0);
+        int lineY = GuiWidget::getGuiTextStyle()->getLineAscent() + 1;
+        if (lineY > GuiWidget::getGuiTextHeight() - 1) {
+            lineY = GuiWidget::getGuiTextHeight() - 1;
         }
-        drawLine(x + textOffset + hotKeyPixX, y + textOffset + lineY, hotKeyPixW, 0);
+        getGuiWidget()->drawLine(x + textOffset + hotKeyPixX, y + textOffset + lineY, hotKeyPixW, 0);
     }
-    drawGuiText(x + textOffset, y + textOffset, buttonText);
+    getGuiWidget()->drawGuiText(x + textOffset, y + textOffset, buttonText);
 }
 
 
@@ -150,112 +126,127 @@ bool CheckBox::isMouseInsideButtonArea(int mouseX, int mouseY)
 {
     int x = mouseX;
     int y = mouseY;
-    return (x >= BUTTON_OUTER_BORDER - 1 && x <= position.w - 2*BUTTON_OUTER_BORDER + 1
-                            && y >= BUTTON_OUTER_BORDER - 1 && y <= position.h - 2*BUTTON_OUTER_BORDER + 1);
+    return (x >= BUTTON_OUTER_BORDER - 1 && x <= getPosition().w - 2*BUTTON_OUTER_BORDER + 1
+                            && y >= BUTTON_OUTER_BORDER - 1 && y <= getPosition().h - 2*BUTTON_OUTER_BORDER + 1);
 }
 
-GuiWidget::ProcessingResult CheckBox::processEvent(const XEvent *event)
-{
-    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
-    } else {
-        
-        switch (event->type) {
-            
-            case GraphicsExpose:
-                if (event->xgraphicsexpose.count > 0) {
-                    break;
-                }
-            case Expose: {
-                if (event->xexpose.count > 0) {
-                    break;
-                }
-                draw();
-                return EVENT_PROCESSED;
-            }
 
-            case ButtonPress: {
-                if (!hasFocus()) {
-                    reportMouseClick();
-                }
-                if (event->xbutton.button == Button1)
-                {
-                    isMouseButtonPressed = true;
-                    int x = event->xbutton.x;
-                    int y = event->xbutton.y;
-                    
-                    if (isMouseInsideButtonArea(x, y))
-                    {
-                        isBoxChecked = !isBoxChecked;
-                        draw();
-                        pressedCallback->call(this);
-                    } else {
-                        draw();
-                    }
-                    return EVENT_PROCESSED;
-                }
+GuiWidget::ProcessingResult CheckBox::processGuiWidgetEvent(const XEvent* event)
+{
+    switch (event->type) 
+    {
+        case GraphicsExpose:
+            if (event->xgraphicsexpose.count > 0) {
                 break;
             }
-
-            case ButtonRelease: {
-                isMouseButtonPressed = false;
-                return EVENT_PROCESSED;
+        case Expose: {
+            if (event->xexpose.count > 0) {
+                break;
             }
+            draw();
+            return GuiWidget::EVENT_PROCESSED;
+        }
 
-            case MotionNotify:
+        case ButtonPress: {
+            if (!hasFocus()) {
+                reportMouseClick();
+            }
+            if (event->xbutton.button == Button1)
             {
-                bool mustDraw = false;
-                XEvent newEvent;
-
-                XSync(getDisplay(), False);
-                if (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask|PointerMotionMask, &newEvent) == True) {
-                    event = &newEvent;
-                    while (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask|PointerMotionMask, &newEvent) == True);
-                }
-                int x = event->xmotion.x;
-                int y = event->xmotion.y;
-
-                if (isMouseInsideButtonArea(x, y)) {
-                    if (!isMouseOverButton) {
-                        isMouseOverButton = true;
-                        mustDraw = true;
-                    }
+                isMouseButtonPressed = true;
+                int x = event->xbutton.x;
+                int y = event->xbutton.y;
+                
+                if (isMouseInsideButtonArea(x, y))
+                {
+                    isBoxChecked = !isBoxChecked;
+                    draw();
+                    pressedCallback->call(this);
                 } else {
-                    if (isMouseOverButton) {
-                        isMouseOverButton = false;
-                        mustDraw = true;
-                    }
-                }
-                if (mustDraw) {
                     draw();
                 }
-                return EVENT_PROCESSED;
+                return GuiWidget::EVENT_PROCESSED;
             }
-            
-            case EnterNotify: {
-                int x = event->xcrossing.x;
-                int y = event->xcrossing.y;
-                if (isMouseInsideButtonArea(x, y) && !isMouseOverButton) {
+            break;
+        }
+
+        case ButtonRelease: {
+            isMouseButtonPressed = false;
+            return GuiWidget::EVENT_PROCESSED;
+        }
+
+        case MotionNotify:
+        {
+            bool mustDraw = false;
+            XEvent newEvent;
+
+            XSync(getDisplay(), False);
+            if (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ButtonMotionMask|PointerMotionMask, &newEvent) == True) {
+                event = &newEvent;
+                while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ButtonMotionMask|PointerMotionMask, &newEvent) == True);
+            }
+            int x = event->xmotion.x;
+            int y = event->xmotion.y;
+
+            if (isMouseInsideButtonArea(x, y)) {
+                if (!isMouseOverButton) {
                     isMouseOverButton = true;
-                    draw();
-                }            
-                addToXEventMask(PointerMotionMask);
-                return EVENT_PROCESSED;
-            }
-            
-            case LeaveNotify: {
+                    mustDraw = true;
+                }
+            } else {
                 if (isMouseOverButton) {
                     isMouseOverButton = false;
-                    draw();
+                    mustDraw = true;
                 }
-                removeFromXEventMask(PointerMotionMask);
-                return EVENT_PROCESSED;
             }
+            if (mustDraw) {
+                draw();
+            }
+            return GuiWidget::EVENT_PROCESSED;
         }
-        return propagateEventToParentWidget(event);
+        
+        case EnterNotify: {
+            int x = event->xcrossing.x;
+            int y = event->xcrossing.y;
+            if (isMouseInsideButtonArea(x, y) && !isMouseOverButton) {
+                isMouseOverButton = true;
+                draw();
+            }            
+            getGuiWidget()->addToXEventMask(PointerMotionMask);
+            return GuiWidget::EVENT_PROCESSED;
+        }
+        
+        case LeaveNotify: {
+            if (isMouseOverButton) {
+                isMouseOverButton = false;
+                draw();
+            }
+            getGuiWidget()->removeFromXEventMask(PointerMotionMask);
+            return GuiWidget::EVENT_PROCESSED;
+        }
     }
+    return getGuiWidget()->propagateEventToParentWidget(event);
 }
 
+void CheckBox::processGuiWidgetCreatedEvent()
+{
+    getGuiWidget()->addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
+    getGuiWidget()->setBackgroundColor(getGuiRoot()->getGuiColor03());
+
+    int p1 = buttonText.findFirstOf(']', Pos(1));
+    if (p1 != -1) {
+        hotKeyChar = buttonText[p1 - 1];
+        this->buttonText = String() << buttonText.getHead(p1) << buttonText.getTail(p1 + 1);
+        hotKeyPixX = GuiWidget::getGuiTextStyle()->getTextWidth(buttonText.getHead(p1 - 1));
+        hotKeyPixW = GuiWidget::getGuiTextStyle()->getCharWidth(hotKeyChar);
+        hasHotKey = true;
+        // showHotKey = true;
+        String keySymString;
+        keySymString.appendUpperChar(hotKeyChar);
+        requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
+    }
+    
+}
 
 void CheckBox::treatLostHotKeyRegistration(const KeyMapping::Id& id)
 {

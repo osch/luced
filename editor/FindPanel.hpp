@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -33,11 +33,9 @@
 #include "Callback.hpp"
 #include "BasicRegex.hpp"
 #include "types.hpp"
-#include "PasteDataReceiver.hpp"
 #include "KeyMapping.hpp"
 #include "SearchInteraction.hpp"
 #include "PasteDataCollector.hpp"
-#include "PanelInvoker.hpp"
 #include "ActionMethodBinding.hpp"
 
 namespace LucED
@@ -46,12 +44,14 @@ namespace LucED
 class FindPanel : public DialogPanel
 {
 public:
-    typedef OwningPtr<FindPanel> Ptr;
+    typedef DialogPanel            BaseClass;
+    typedef OwningPtr<FindPanel>   Ptr;
 
-    static Ptr create(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                                                                PanelInvoker::Ptr                         panelInvoker)
+    static Ptr create(RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                                             Callback<>::Ptr                           panelInvoker,
+                                                             Callback<>::Ptr                           panelCloser)
     {
-        return Ptr(new FindPanel(parent, editorWidget, messageBoxInvoker, panelInvoker));
+        return Ptr(new FindPanel(editorWidget, messageBoxInvoker, panelInvoker, panelCloser));
     }
     
     void setDefaultDirection(Direction::Type direction) {
@@ -67,8 +67,6 @@ public:
     void findSelectionForward();
     void findSelectionBackward();
 
-    virtual ProcessingResult processEvent(const XEvent* event);
-    
     virtual void show();
     
 private:
@@ -97,8 +95,9 @@ private:
     friend class FindPanelAccess;
     friend class PasteDataCollector<FindPanel>;
     
-    FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                                                        PanelInvoker::Ptr                         panelInvoker);
+    FindPanel(RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                                     Callback<>::Ptr                           panelInvoker,
+                                                     Callback<>::Ptr                           panelCloser);
     void executeHistoryBackwardAction();
     void executeHistoryForwardAction();
 
@@ -115,9 +114,6 @@ private:
     
     void handleModifiedEditField(bool modifiedFlag);
 
-    void notifyAboutCollectedPasteData(String collectedSelectionData);
-    
-    void requestCurrentSelectionForInteraction(SearchInteraction* interaction, Callback<String>::Ptr selectionRequestedCallback);
     void requestCloseFromInteraction(SearchInteraction* interaction);
 
     SearchParameter getSearchParameterFromGuiControls() const {
@@ -138,16 +134,12 @@ private:
     CheckBox::Ptr wholeWordCheckBox;
     CheckBox::Ptr regularExprCheckBox;
     Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
-    PanelInvoker::Ptr                         panelInvoker;
+    Callback<>::Ptr                           panelInvoker;
     BasicRegex regex;
     Direction::Type defaultDirection;
     int historyIndex;
 
     TextData::Ptr editFieldTextData;
-
-    PasteDataReceiver::Ptr pasteDataReceiver;
-    
-    Callback<String>::Ptr selectionRequestedCallback;
 
     SearchInteraction::Ptr         currentInteraction;
     SearchInteraction::Callbacks   interactionCallbacks;

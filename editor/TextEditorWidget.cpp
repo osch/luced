@@ -146,16 +146,11 @@ private:
     RawPtr<TextEditorWidget> w;
 };
 
-TextEditorWidget::TextEditorWidget(GuiWidget*       parent, 
-                                   HilitedText::Ptr hilitedText, 
+TextEditorWidget::TextEditorWidget(HilitedText::Ptr hilitedText, 
                                    CreateOptions    options,
                                    int              borderWidth)
                                    
-      : TextWidget(parent, hilitedText, borderWidth, options),
-
-        selectionOwner(SelectionOwner::create(this, 
-                                              SelectionOwner::TYPE_PRIMARY,
-                                              SelectionContentHandler::create(this))),
+      : TextWidget(hilitedText, borderWidth, options),
 
         rememberedCursorPixX(0),
         scrollRepeatCallback(newCallback(this, &TextEditorWidget::handleScrollRepeating)),
@@ -171,12 +166,23 @@ TextEditorWidget::TextEditorWidget(GuiWidget*       parent,
 {
     setKeyActionHandler(MyKeyActionHandler::create(this));
     
-    if (!options.isSet(READ_ONLY)) {
-        pasteDataReceiver = PasteDataReceiver::create(this,
+    textData->activateHistory();
+}
+
+void TextEditorWidget::processGuiWidgetCreatedEvent()
+{
+    TextWidget::processGuiWidgetCreatedEvent();
+    
+    getGuiWidget()->addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
+
+    selectionOwner = SelectionOwner::create(getGuiWidget(), 
+                                            SelectionOwner::TYPE_PRIMARY,
+                                            SelectionContentHandler::create(this));
+
+    if (!readOnlyFlag) {
+        pasteDataReceiver = PasteDataReceiver::create(getGuiWidget(),
                                                       PasteDataContentHandler::create(this));
     }
-    addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
-    textData->activateHistory();
 }
 
 
@@ -361,13 +367,13 @@ static inline MicroSeconds calculateScrollTime(int diffPix, int lineHeight)
     return MicroSeconds(rslt);
 }
 
-GuiWidget::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent* event)
 {
-    if (   (selectionOwner.isValid()    && selectionOwner   ->processSelectionOwnerEvent   (event) == EVENT_PROCESSED) 
-        || (pasteDataReceiver.isValid() && pasteDataReceiver->processPasteDataReceiverEvent(event) == EVENT_PROCESSED)
-        || TextWidget::processEvent(event) == EVENT_PROCESSED)
+    if (   (selectionOwner.isValid()    && selectionOwner   ->processSelectionOwnerEvent   (event) == GuiWidget::EVENT_PROCESSED) 
+        || (pasteDataReceiver.isValid() && pasteDataReceiver->processPasteDataReceiverEvent(event) == GuiWidget::EVENT_PROCESSED)
+        || TextWidget::processGuiWidgetEvent(event) == GuiWidget::EVENT_PROCESSED)
     {
-        return EVENT_PROCESSED;
+        return GuiWidget::EVENT_PROCESSED;
     } else {
         switch (event->type)
         {
@@ -473,7 +479,7 @@ GuiWidget::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                         lastButtonPressedTime = event->xbutton.time;
                         currentActionCategory = ACTION_UNSPECIFIED;
                     }
-                    return EVENT_PROCESSED;
+                    return GuiWidget::EVENT_PROCESSED;
                 }
                 else if (event->xbutton.button == Button2)
                 {
@@ -498,7 +504,7 @@ GuiWidget::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                     if (hasMovingSelection) {
                         setNewMousePositionForMovingSelection(event->xbutton.x, event->xbutton.y);
                     }
-                    return EVENT_PROCESSED;
+                    return GuiWidget::EVENT_PROCESSED;
                 }
                 else if (event->xbutton.button == Button5)
                 {
@@ -510,7 +516,7 @@ GuiWidget::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                     if (hasMovingSelection) {
                         setNewMousePositionForMovingSelection(event->xbutton.x, event->xbutton.y);
                     }
-                    return EVENT_PROCESSED;
+                    return GuiWidget::EVENT_PROCESSED;
                 }
                 break;
             }
@@ -522,7 +528,7 @@ GuiWidget::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                         hasMovingSelection = false;
                         isMovingSelectionScrolling = false;
                         currentActionCategory = ACTION_UNSPECIFIED;
-                        return EVENT_PROCESSED;
+                        return GuiWidget::EVENT_PROCESSED;
                     }
                 }
                 break;
@@ -533,23 +539,23 @@ GuiWidget::ProcessingResult TextEditorWidget::processEvent(const XEvent *event)
                 if (hasMovingSelection) {
                     XEvent newEvent;
                     XSync(getDisplay(), False);
-                    if (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask, &newEvent) == True) {
+                    if (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ButtonMotionMask, &newEvent) == True) {
                         event = &newEvent;
-                        while (XCheckWindowEvent(getDisplay(), getWid(), ButtonMotionMask, &newEvent) == True);
+                        while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ButtonMotionMask, &newEvent) == True);
                     }
 
                     int x = event->xmotion.x;
                     int y = event->xmotion.y;
                     setNewMousePositionForMovingSelection(x, y);
                     currentActionCategory = ACTION_UNSPECIFIED;
-                    return EVENT_PROCESSED;
+                    return GuiWidget::EVENT_PROCESSED;
                 } else {
-                    removeFromXEventMask(PointerMotionMask);
+                    getGuiWidget()->removeFromXEventMask(PointerMotionMask);
                 }
                 break;
             }
         }
-        return propagateEventToParentWidget(event);
+        return getGuiWidget()->propagateEventToParentWidget(event);
     }
 }
 
@@ -841,9 +847,9 @@ bool TextEditorWidget::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEv
             }
             assureCursorVisible();
             rememberedCursorPixX = getCursorPixX();
-            return EVENT_PROCESSED;
+            return GuiWidget::EVENT_PROCESSED;
         } else {
-            return NOT_PROCESSED;
+            return GuiWidget::NOT_PROCESSED;
         }
     }
 }

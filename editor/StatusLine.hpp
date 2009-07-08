@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef STATUSLINE_HPP
-#define STATUSLINE_HPP
+#ifndef STATUS_LINE_HPP
+#define STATUS_LINE_HPP
 
 #include "String.hpp"
 
@@ -36,17 +36,12 @@ namespace LucED
 class StatusLine : public NonFocusableWidget
 {
 public:
-
     typedef OwningPtr<StatusLine> Ptr;
 
-    static StatusLine::Ptr create(GuiWidget* parent)
+    static StatusLine::Ptr create()
     {
-        return StatusLine::Ptr(new StatusLine(parent));
+        return StatusLine::Ptr(new StatusLine());
     }
-
-    virtual ProcessingResult processEvent(const XEvent* event);
-    virtual void setPosition(Position newPosition);
-    virtual Measures getDesiredMeasures();
 
     void setCursorPositionData(CursorPositionData data);
 
@@ -57,8 +52,15 @@ public:
     void clearMessage();
     
 private:
+    virtual Measures internalGetDesiredMeasures();
 
-    StatusLine(GuiWidget* parent);
+    virtual void processGuiWidgetCreatedEvent();
+
+private: // GuiWidget::EventListener interface implementation
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+
+private:
+    StatusLine();
 
     int calcWidth(long value);
     
@@ -67,7 +69,6 @@ private:
     void drawFileLength();
     void drawLineAndColumn();
     
-    Position position;
     String fileName;
     long fileLength;
     long selectionLength;
@@ -95,4 +96,4 @@ private:
 
 } // namespace LucED
 
-#endif // STATUSLINE_HPP
+#endif // STATUS_LINE_HPP

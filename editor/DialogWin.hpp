@@ -26,6 +26,7 @@
 #include "HeapObjectArray.hpp"
 #include "WeakPtrQueue.hpp"
 #include "ActionKeySequenceHandler.hpp"
+#include "FocusableElement.hpp"
 
 namespace LucED
 {
@@ -35,9 +36,7 @@ class DialogWin : public TopWin
 public:
     typedef WeakPtr<DialogWin> Ptr;
 
-    virtual void treatNewWindowPosition(Position newPosition);
-
-    virtual ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
+    virtual GuiWidget::ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
 
     virtual void show();
     
@@ -49,14 +48,20 @@ public:
     virtual void treatFocusOut();
 
 protected:
-    DialogWin(TopWin* referingWindow);
+    DialogWin(RawPtr<TopWin> referingWindow);
     
-    void setRootElement(OwningPtr<FocusableElement> rootElement);
-    RawPtr<FocusableElement> getRootElement() {return rootElement; }
+    void setRootElement(FocusableElement::Ptr rootElement);
+    FocusableElement::Ptr getRootElement() {return rootElement; }
     
     ActionMethodContainer::Ptr getActionMethodContainer() const {
         return actionMethodContainer;
     }
+
+protected:
+    virtual void processGuiWidgetCreatedEvent();
+
+protected: // GuiWidget::EventListener interface implementation
+    virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
     
 private:
     void requestCloseWindowByUser();
@@ -65,7 +70,7 @@ private:
     
     void notifyAboutReferingWindowMapping(bool isReferingWindowMapped);
 
-    OwningPtr<FocusableElement> rootElement;
+    FocusableElement::Ptr rootElement;
     bool wasNeverShown;
     WeakPtr<TopWin> referingWindow;
     

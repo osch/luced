@@ -56,17 +56,17 @@ using namespace LucED;
 namespace // anonymous namespace
 {
 
-class PanelLayoutAdapter : public GuiElement
+class PanelLayoutAdapter : public GuiLayoutAdapter
 {
 public:
     typedef OwningPtr<PanelLayoutAdapter> Ptr;
     
-    static Ptr create(MultiLineEditorWidget* editorWidget, GuiElement* panel) {
+    static Ptr create(RawPtr<MultiLineEditorWidget> editorWidget, RawPtr<GuiElement> panel) {
         return Ptr(new PanelLayoutAdapter(editorWidget, panel));
     }
 
-    virtual Measures getDesiredMeasures() {
-        Measures rslt = panel->getDesiredMeasures();
+    virtual GuiMeasures getDesiredMeasures() {
+        GuiMeasures rslt = internalGetDesiredMeasures(panel);
         int lineHeight = editorWidget->getLineHeight();
         rslt.minHeight  = ROUNDED_UP_DIV(rslt.minHeight,  lineHeight) * lineHeight;
         rslt.bestHeight = ROUNDED_UP_DIV(rslt.bestHeight, lineHeight) * lineHeight;
@@ -76,16 +76,11 @@ public:
         return rslt;
     }
     
-    virtual void setPosition(Position p) {
-        panel->setPosition(p);
-    }
-    
 private:
-    PanelLayoutAdapter(MultiLineEditorWidget* editorWidget, GuiElement* panel)
+    PanelLayoutAdapter(RawPtr<MultiLineEditorWidget> editorWidget, RawPtr<GuiElement> panel)
         : editorWidget(editorWidget),
           panel(panel)
     {}
-    
 
     RawPtr<MultiLineEditorWidget> editorWidget;
     RawPtr<GuiElement> panel;
@@ -104,7 +99,7 @@ public:
         return Ptr(new PanelInvoker(editorTopWin));
     }
 
-    virtual void invokePanel(DialogPanel* panel) {
+    virtual void invokePanel(DialogPanel::Ptr panel) {
         editorTopWin->invokePanel(panel);
     }
     virtual bool hasInvokedPanel() {
@@ -115,8 +110,8 @@ public:
             editorTopWin->requestCloseFor(editorTopWin->invokedPanel);
         }
     }
-    virtual void closePanel(DialogPanel* panel) {
-        if (panel != NULL) {
+    virtual void closePanel(RawPtr<DialogPanel> panel) {
+        if (panel.isValid()) {
             editorTopWin->requestCloseFor(panel);
         }
     }
@@ -262,28 +257,25 @@ private:
 
 EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
-      flagForSetSizeHintAtFirstShow(true),
       hasInvokedPanelFocus(false),
       hasMessageBox(false),
       isMessageBoxModal(false),
       actionMethodContainer(ActionMethodContainer::create()),
       actionKeySequenceHandler(actionMethodContainer)
 {
-    GuiWidget::setFocusManagerForChildWidgets(this);
-
-    addToXEventMask(ButtonPressMask);
+    TopWin::setFocusManager(this);
+    TopWin::setRootElement(rootElement);
     
-    statusLine = StatusLine::create(this);
+    statusLine = StatusLine::create();
     int statusLineIndex = rootElement->addElement(statusLine);
     upperPanelIndex = statusLineIndex + 1;
     
-    textEditor = MultiLineEditorWidget::create(this, hilitedText);
+    textEditor = MultiLineEditorWidget::create(hilitedText);
 
     textEditor->setVerticalAdjustmentStrategy(TextWidget::STRICT_TOP_LINE_ANCHOR);
 
 
-    scrollableTextCompound = ScrollableTextGuiCompound::create(this,
-                                                               textEditor,
+    scrollableTextCompound = ScrollableTextGuiCompound::create(textEditor,
                                                                  ScrollableTextGuiCompound::Options()
                                                                | ScrollableTextGuiCompound::WITHOUT_OUTER_FRAME);
     
@@ -308,8 +300,6 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
     );
 
 
-    statusLine->show();
-    scrollableTextCompound->show();
 
     GuiElement::Measures m = rootElement->getDesiredMeasures();
 
@@ -326,8 +316,6 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
         rootElement->setPosition(Position(0, 0, width, height));
     }
 
-    flagForSetSizeHintAtFirstShow = true;
-    
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &EditorTopWin::treatConfigUpdate));
 
     actionInterface = EditorTopWin::ActionInterface::create(this);
@@ -336,8 +324,7 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
 
     actionMethodContainer
     ->addActionMethods(EditorTopWinActions::create(
-                       TopWinActionsParameter(this, 
-                                              textEditor,
+                       TopWinActionsParameter(textEditor,
                                               newCallback(this, &EditorTopWin::setModalMessageBox),
                                               panelInvoker,
                                               actionInterface)));
@@ -347,6 +334,15 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
     
     viewLuaInterface = ViewLuaInterface::create(textEditor);
 }
+
+
+void EditorTopWin::processGuiWidgetCreatedEvent()
+{
+    getGuiWidget()->addToXEventMask(ButtonPressMask);
+
+    TopWin::processGuiWidgetCreatedEvent();
+}
+
 
 EditorTopWin::~EditorTopWin()
 {
@@ -373,18 +369,6 @@ void EditorTopWin::show()
 {
     if (rootElement.isValid())
     {
-// TODO: What was the following code good for?!? ( -- it causes problems for initial window sizes)
-//    
-//        if (flagForSetSizeHintAtFirstShow) {
-////            setPosition(Position(getPosition().x, getPosition().y, 
-////                                 m.bestWidth, m.bestHeight));
-//            Measures m = rootElement->getDesiredMeasures();
-//            setSizeHints(m.minWidth, m.minHeight, m.incrWidth, m.incrHeight);
-//            setSize(m.bestWidth, m.bestHeight);
-//            flagForSetSizeHintAtFirstShow = false;
-//        }
-////        setSizeHints(getPosition().x, getPosition().y, 
-////                             m.minWidth, m.minHeight, 1, 1);
     }
     TopWin::show();
 }
@@ -396,9 +380,9 @@ void EditorTopWin::hide()
 }
 
 
-void EditorTopWin::treatNewWindowPosition(Position newPosition)
+void EditorTopWin::processGuiWidgetNewPositionEvent(const Position& newPosition)
 {
-    TopWin::treatNewWindowPosition(newPosition);
+    TopWin::processGuiWidgetNewPositionEvent(newPosition);
     rootElement->setPosition(Position(0, 0, newPosition.w, newPosition.h));
 }
 
@@ -410,7 +394,7 @@ GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEve
         KeyId       pressedKey  = keyPressEvent.getKeyId();
         KeyModifier keyModifier = keyPressEvent.getKeyModifier();
     
-        ProcessingResult rslt = NOT_PROCESSED;
+        GuiWidget::ProcessingResult rslt = GuiWidget::NOT_PROCESSED;
     
         if (!pressedKey.isModifierKey())
         {
@@ -426,14 +410,14 @@ GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEve
             if (actionKeySequenceHandler.handleKeyPress(keyPressEvent, 
                                                         focusedWidget->getKeyActionHandler()))
             {
-                rslt = EVENT_PROCESSED;
+                rslt = GuiWidget::EVENT_PROCESSED;
             }
 
             if (   actionKeySequenceHandler.isWithinSequence() 
-                && rslt != EVENT_PROCESSED)
+                && rslt != GuiWidget::EVENT_PROCESSED)
             {
                 actionKeySequenceHandler.reset();
-                rslt = EVENT_PROCESSED;
+                rslt = GuiWidget::EVENT_PROCESSED;
             }
             if (actionKeySequenceHandler.hasJustEnteredSequence())
             {
@@ -461,17 +445,17 @@ GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEve
     }
     catch (LuaException& ex) {
         ConfigErrorHandler::startWithCatchedException();
-        return EVENT_PROCESSED;
+        return GuiWidget::EVENT_PROCESSED;
     }
     catch (ConfigException& ex) {
         ConfigErrorHandler::startWithCatchedException();
-        return EVENT_PROCESSED;
+        return GuiWidget::EVENT_PROCESSED;
     }
     catch (UnknownActionNameException& ex)
     {
         setMessageBox(MessageBoxParameter().setTitle("Config Error")
                                            .setMessage(ex.getMessage()));
-        return NOT_PROCESSED;
+        return GuiWidget::NOT_PROCESSED;
     }
 }
 
@@ -492,10 +476,10 @@ void EditorTopWin::handleBeforeMouseClick()
     EventDispatcher::getInstance()->deregisterBeforeMouseClickListenerFor(this);
 }
 
-GuiWidget::ProcessingResult EditorTopWin::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult EditorTopWin::processGuiWidgetEvent(const XEvent* event)
 {
-    if (TopWin::processEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
+    if (TopWin::processGuiWidgetEvent(event) == GuiWidget::EVENT_PROCESSED) {
+        return GuiWidget::EVENT_PROCESSED;
     } else {
         switch (event->type)
         {
@@ -503,12 +487,12 @@ GuiWidget::ProcessingResult EditorTopWin::processEvent(const XEvent* event)
                 if (event->xbutton.button == Button4
                  || event->xbutton.button == Button5)
                 {
-                    textEditor->processEvent(event);
-                    return EVENT_PROCESSED;
+                    textEditor->processGuiWidgetEvent(event);
+                    return GuiWidget::EVENT_PROCESSED;
                 }
             }
         }
-        return NOT_PROCESSED;
+        return GuiWidget::NOT_PROCESSED;
     }
 }
 
@@ -708,9 +692,7 @@ void EditorTopWin::notifyRequestCloseChildWindow(TopWin* topWin, TopWin::CloseRe
     }
 }
 
-
-
-void EditorTopWin::invokePanel(DialogPanel* panel)
+void EditorTopWin::invokePanel(DialogPanel::Ptr panel)
 {
     if (panel == invokedPanel) {
         panel->treatFocusIn();
@@ -728,11 +710,12 @@ void EditorTopWin::invokePanel(DialogPanel* panel)
             textEditor->setVerticalAdjustmentStrategy(TextWidget::STRICT_TOP_LINE_ANCHOR);
             this->invokedPanelIndex = lowerPanelIndex;
         }
-        rootElement->insertElementAtPosition(PanelLayoutAdapter::create(textEditor, panel), 
+        panel->setLayoutAdapter(PanelLayoutAdapter::create(textEditor, panel));
+        rootElement->insertElementAtPosition(panel, 
                                              this->invokedPanelIndex);
         Position p = getPosition();
-        rootElement->setPosition(Position(0, 0, p.w, p.h));
         panel->show();
+        rootElement->setPosition(Position(0, 0, p.w, p.h));
         panel->treatFocusIn();
         hasInvokedPanelFocus = true;
         textEditor->treatFocusOut();
@@ -825,12 +808,17 @@ void EditorTopWin::saveAndClose()
 void EditorTopWin::invokeSaveAsPanel(Callback<>::Ptr saveCallback)
 {
     if (saveAsPanel.isInvalid()) {
-        saveAsPanel = SaveAsPanel::create(this, this->textEditor, 
+        saveAsPanel = SaveAsPanel::create(this->textEditor, 
                                           newCallback(this, &EditorTopWin::setMessageBox),
-                                          panelInvoker);
+                                          newCallback(this, &EditorTopWin::closeSaveAsPanel));
     }
     saveAsPanel->setSaveCallback(saveCallback);
     invokePanel(saveAsPanel);
+}
+
+void EditorTopWin::closeSaveAsPanel()
+{
+    panelInvoker->closePanel(saveAsPanel);
 }
 
 void EditorTopWin::requestCloseWindow(TopWin::CloseReason reason)
@@ -856,13 +844,6 @@ void EditorTopWin::requestCloseWindow(TopWin::CloseReason reason)
 void EditorTopWin::requestCloseWindowAndDiscardChanges()
 {
     TopWin::requestCloseWindow(TopWin::CLOSED_SILENTLY);
-}
-
-
-void EditorTopWin::setSize(int width, int height)
-{
-    flagForSetSizeHintAtFirstShow = false;
-    TopWin::setSize(width, height);
 }
 
 

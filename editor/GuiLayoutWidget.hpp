@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,8 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GUILAYOUTWIDGET_HPP
-#define GUILAYOUTWIDGET_HPP
+#ifndef GUI_LAYOUT_WIDGET_HPP
+#define GUI_LAYOUT_WIDGET_HPP
 
 #include "String.hpp"
 
@@ -37,22 +37,23 @@ class GuiLayoutWidget : public NonFocusableWidget
 public:
     typedef OwningPtr<GuiLayoutWidget> Ptr;
     
-    static Ptr create(GuiWidget* parent, int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight,
+    static Ptr create(int minWidth, int minHeight, int bestWidth, int bestHeight, int maxWidth, int maxHeight,
                       GuiColor color = GuiRoot::getInstance()->getGuiColor01())
     {
-        return Ptr(new GuiLayoutWidget(parent, Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight), color));
+        return Ptr(new GuiLayoutWidget(Measures(minWidth, minHeight, bestWidth, bestHeight, maxWidth, maxHeight), color));
     }
 
-    //virtual bool processEvent(const XEvent *event);
-    virtual Measures getDesiredMeasures();
-    virtual void setPosition(Position newPosition);
-    
 private:
-    GuiLayoutWidget(GuiWidget* parent, const Measures& m, GuiColor color);
+    virtual void processGuiWidgetCreatedEvent();
+    virtual Measures internalGetDesiredMeasures();
+
+private:
+    GuiLayoutWidget(const Measures& m, GuiColor color);
+
+    GuiColor color;
     Measures measures;
-    Position position;
 };
 
 } // namespace LucED
 
-#endif // GUILAYOUTWIDGET_HPP
+#endif // GUI_LAYOUT_WIDGET_HPP

@@ -28,18 +28,13 @@
 
 using namespace LucED;
 
-LabelWidget::LabelWidget(GuiWidget* parent, const String& leftText, const String& rightText)
-    : NonFocusableWidget(parent, 0, 0, 1, 1, 0),
-      position(0, 0, 1, 1),
-      leftText(leftText),
+LabelWidget::LabelWidget(const String& leftText, const String& rightText)
+    : leftText(leftText),
       rightText(rightText),
       adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
       hasForcedMeasuresFlag(false)
-{
-    addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
-    setBackgroundColor(getGuiRoot()->getGuiColor03());
-}
+{}
 
 void LabelWidget::setLayoutHeight(int height, VerticalAdjustment::Type adjust)
 {
@@ -47,13 +42,6 @@ void LabelWidget::setLayoutHeight(int height, VerticalAdjustment::Type adjust)
     adjustment = adjust;
 }
 
-void LabelWidget::setPosition(Position newPosition)
-{
-    if (position != newPosition) {
-        GuiWidget::setPosition(newPosition);
-        this->position = newPosition;
-    }
-}
 
 void LabelWidget::setDesiredMeasures(GuiElement::Measures m)
 {
@@ -61,7 +49,7 @@ void LabelWidget::setDesiredMeasures(GuiElement::Measures m)
     forcedMeasures = m;
 }
 
-GuiElement::Measures LabelWidget::getDesiredMeasures()
+GuiElement::Measures LabelWidget::internalGetDesiredMeasures()
 {
     if (hasForcedMeasuresFlag) {
         return forcedMeasures;
@@ -73,60 +61,61 @@ GuiElement::Measures LabelWidget::getDesiredMeasures()
 GuiElement::Measures LabelWidget::getOwnDesiredMeasures()
 {
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
-    int height = util::maximum(getGuiTextHeight() + guiSpacing, layoutHeight);
-    int width  = getGuiTextStyle()->getTextWidth(leftText.toCString(), leftText.getLength()) + guiSpacing;
+    int height = util::maximum(GuiWidget::getGuiTextHeight() + guiSpacing, layoutHeight);
+    int width  = GuiWidget::getGuiTextStyle()->getTextWidth(leftText.toCString(), leftText.getLength()) + guiSpacing;
     return GuiElement::Measures(width, height, width, height, width, height);
 }
 
-GuiWidget::ProcessingResult LabelWidget::processEvent(const XEvent *event)
+GuiWidget::ProcessingResult LabelWidget::processGuiWidgetEvent(const XEvent* event)
 {
-    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
-    } else {
-        
-        switch (event->type) {
-            
-            case GraphicsExpose:
-                if (event->xgraphicsexpose.count > 0) {
-                    break;
-                }
-            case Expose: {
-                if (event->xexpose.count > 0) {
-                    break;
-                }
-                this->draw();
-                return EVENT_PROCESSED;
-            }
-
-            case ButtonPress: {
-                if (event->xbutton.button == Button2) {
-                    middleMouseButtonCallback->call();
-                }
+    switch (event->type)
+    {
+        case GraphicsExpose:
+            if (event->xgraphicsexpose.count > 0) {
                 break;
             }
-
-            case ButtonRelease: {
+        case Expose: {
+            if (event->xexpose.count > 0) {
                 break;
             }
-
-            case MotionNotify: {
-                break;
-            }
+            this->draw();
+            return GuiWidget::EVENT_PROCESSED;
         }
-        return propagateEventToParentWidget(event);
+
+        case ButtonPress: {
+            if (event->xbutton.button == Button2) {
+                middleMouseButtonCallback->call();
+            }
+            break;
+        }
+
+        case ButtonRelease: {
+            break;
+        }
+
+        case MotionNotify: {
+            break;
+        }
     }
+    return getGuiWidget()->propagateEventToParentWidget(event);
+}
+
+void LabelWidget::processGuiWidgetCreatedEvent()
+{
+    getGuiWidget()->addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
+    getGuiWidget()->setBackgroundColor(getGuiRoot()->getGuiColor03());
 }
 
 void LabelWidget::draw()
 {
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
-    drawRaisedSurface(0, 0, position.w, position.h);
+    getGuiWidget()->drawRaisedSurface(0, 0, getPosition().w, getPosition().h);
     if (adjustment == VerticalAdjustment::TOP) {
-        drawGuiText(guiSpacing, guiSpacing, leftText.toCString(), leftText.getLength());
+        getGuiWidget()->drawGuiText(guiSpacing, guiSpacing, leftText.toCString(), leftText.getLength());
     } else if (adjustment == VerticalAdjustment::BOTTOM) {
-        drawGuiText(guiSpacing, position.h - getGuiTextHeight(), leftText.toCString(), leftText.getLength());
+        getGuiWidget()->drawGuiText(guiSpacing, getPosition().h - GuiWidget::getGuiTextHeight(), leftText.toCString(), leftText.getLength());
     } else {
-        drawGuiText(guiSpacing, (position.h - getGuiTextHeight()) / 2, leftText.toCString(), leftText.getLength());
+        getGuiWidget()->drawGuiText(guiSpacing, (getPosition().h - GuiWidget::getGuiTextHeight()) / 2, leftText.toCString(), leftText.getLength());
     }
 }
 

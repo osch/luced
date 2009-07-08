@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -31,17 +31,19 @@
 #include "PasteDataReceiver.hpp"
 #include "ProgramRunningKeeper.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class Clipboard : public HeapObject,
-                  public GuiWidget
+                  public GuiWidget::EventListener
 {
 public:
-    
     static Clipboard* getInstance();
     
     void copyToClipboard(const byte* buffer, long length);
     void copyActiveSelectionToClipboard();
+    
+    void addActiveSelectionRequest(Callback<String>::Ptr selectionRequestCallback);
     
     Atom getX11AtomForClipboard() {
         return x11AtomForClipboard;
@@ -52,21 +54,23 @@ public:
     const ByteArray& getClipboardBuffer();    
     
     virtual void show() {ASSERT(false);} // always hidden
-    virtual ProcessingResult processEvent(const XEvent *event);
     
     bool hasClipboardOwnership() {
         return selectionOwner->hasSelectionOwnership();
     }
 
+private: // GuiWidget::EventListener interface implementation
+    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+    virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
+
 private:
-    
     friend class SingletonInstance<Clipboard>;
 
     static SingletonInstance<Clipboard> instance;
     
     Clipboard();
     
-    virtual void treatNewWindowPosition(Position newPosition) ;
+    virtual void treatNewWindowPosition(Position newPosition);
     
     void notifyAboutReceivedPasteData(const byte* data, long length);
     void notifyAboutEndOfPastingData();
@@ -91,6 +95,12 @@ private:
 
     class PasteDataContentHandler;
     PasteDataReceiver::Ptr pasteDataReceiver;
+    
+    GuiWidget::Ptr guiWidget;
+    
+    CallbackContainer<String> selectionRequestCallbacks;
+    
+    bool hasRequestedActiveSelectionForClipboard;
 };
 
 } // namespace LucED

@@ -33,12 +33,10 @@
 using namespace LucED;
 
 
-FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
-                                                                               PanelInvoker::Ptr                         panelInvoker)
-    : DialogPanel(parent, panelInvoker->getCloseCallback()),
-
-      pasteDataReceiver(PasteDataReceiver::create(this,
-                                                  PasteDataCollector<FindPanel>::create(this))),
+FindPanel::FindPanel(RawPtr<TextEditorWidget> editorWidget, Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                                            Callback<>::Ptr                           panelInvoker,
+                                                            Callback<>::Ptr                           panelCloser)
+    : BaseClass(panelCloser),
 
       e(editorWidget),
       messageBoxInvoker(messageBoxInvoker),
@@ -49,7 +47,6 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
       interactionCallbacks(messageBoxInvoker,
                            SearchHistory::getInstance()->getMessageBoxQueue(),
                            newCallback(this, &FindPanel::requestCloseFromInteraction),
-                           newCallback(this, &FindPanel::requestCurrentSelectionForInteraction),
                            newCallback(this, &FindPanel::handleException),
                            this)
       
@@ -68,18 +65,17 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
 
     editFieldTextData = TextData::create();
 
-    editField = SingleLineEditField::create(this, 
-                                            GlobalConfig::getInstance()->getDefaultLanguageMode(),
+    editField = SingleLineEditField::create(GlobalConfig::getInstance()->getDefaultLanguageMode(),
                                             editFieldTextData);
     editField->setDesiredWidthInChars(5, 10, INT_MAX);
-    findNextButton          = Button::create     (this, "N]ext");
-    findPrevButton          = Button::create     (this, "P]revious");
-    //goBackButton            = Button::create     (this, "Go B]ack");
-    cancelButton            = Button::create     (this, "Cl]ose");
-    LabelWidget::Ptr label0 = LabelWidget::create(this, "Find:");
-    caseSensitiveCheckBox   = CheckBox::create   (this, "C]ase Sensitive");
-    wholeWordCheckBox       = CheckBox::create   (this, "Wh]ole Word");
-    regularExprCheckBox     = CheckBox::create   (this, "R]egular Expression");
+    findNextButton          = Button::create     ("N]ext");
+    findPrevButton          = Button::create     ("P]revious");
+    //goBackButton            = Button::create     ("Go B]ack");
+    cancelButton            = Button::create     ("Cl]ose");
+    LabelWidget::Ptr label0 = LabelWidget::create("Find:");
+    caseSensitiveCheckBox   = CheckBox::create   ("C]ase Sensitive");
+    wholeWordCheckBox       = CheckBox::create   ("Wh]ole Word");
+    regularExprCheckBox     = CheckBox::create   ("R]egular Expression");
     
     Callback<CheckBox*>::Ptr checkBoxCallback = newCallback(this, &FindPanel::handleCheckBoxPressed);
     
@@ -164,13 +160,6 @@ FindPanel::FindPanel(GuiWidget* parent, RawPtr<TextEditorWidget> editorWidget, C
 }
 
 
-void FindPanel::requestCurrentSelectionForInteraction(SearchInteraction* interaction, Callback<String>::Ptr selectionRequestedCallback)
-{
-    if (currentInteraction.getRawPtr() == interaction) {
-        this->selectionRequestedCallback = selectionRequestedCallback;
-        pasteDataReceiver->requestSelectionPasting();
-    }
-}
 
 void FindPanel::requestCloseFromInteraction(SearchInteraction* interaction)
 {
@@ -261,7 +250,7 @@ void FindPanel::internalFindAgain(bool forwardFlag)
 {
     try
     {
-        if (this->isVisible() && editField->getTextData()->getLength() == 0) {
+        if (this->isMapped() && editField->getTextData()->getLength() == 0) {
             return;
         }
         
@@ -269,7 +258,7 @@ void FindPanel::internalFindAgain(bool forwardFlag)
 
         SearchParameter p;
         
-        if (this->isVisible()) {
+        if (this->isMapped()) {
             p = getSearchParameterFromGuiControls();
             p.setSearchForwardFlag(forwardFlag);
             editField->getTextData()->setModifiedFlag(false);
@@ -312,7 +301,7 @@ void FindPanel::internalFindSelection(bool forwardFlag)
 {
     try
     {
-        if (this->isVisible()) {
+        if (this->isMapped()) {
             requestClose();
         }
 
@@ -337,15 +326,6 @@ void FindPanel::internalFindSelection(bool forwardFlag)
 
 }
 
-
-GuiWidget::ProcessingResult FindPanel::processEvent(const XEvent* event)
-{
-    if (pasteDataReceiver->processPasteDataReceiverEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
-    } else {
-        return DialogPanel::processEvent(event);
-    }
-}
 
 
 void FindPanel::executeHistoryBackwardAction()
@@ -443,7 +423,7 @@ void FindPanel::executeHistoryForwardAction()
 void FindPanel::show()
 {
     setFocus(editField);
-    DialogPanel::show();
+    BaseClass::show();
     if (editField->getTextData()->getModifiedFlag() == false) {
         editField->getTextData()->clear();
         editField->getTextData()->setModifiedFlag(false);
@@ -464,11 +444,6 @@ void FindPanel::handleModifiedEditField(bool modifiedFlag)
 }
 
 
-void FindPanel::notifyAboutCollectedPasteData(String collectedSelectionData)
-{
-    selectionRequestedCallback->call(collectedSelectionData);
-}
-
 
 void FindPanel::handleException()
 {
@@ -480,7 +455,7 @@ void FindPanel::handleException()
     {
         if (currentInteraction.isValid())
         {
-            panelInvoker->invokePanel(this);
+            panelInvoker->call();
     
             editField->getTextData()->setToString(currentInteraction->getFindString());
             int position = ex.getPosition();
@@ -497,7 +472,7 @@ void FindPanel::handleException()
     {
         if (currentInteraction.isValid())
         {
-            panelInvoker->invokePanel(this);
+            panelInvoker->call();
     
             editField->getTextData()->setToString(currentInteraction->getFindString());
         }

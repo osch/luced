@@ -51,7 +51,7 @@ public:
     virtual void notifyAboutEndOfPastingData() {
         String rslt = collectedData;
                       collectedData.clear();
-        referingWidget->notifyAboutCollectedPasteData(rslt);
+        referingWidget->treatCollectedSelectionData(rslt);
     }
 private:
     PasteDataCollector(RawPtr<T> referingWidget)

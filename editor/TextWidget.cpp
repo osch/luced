@@ -104,13 +104,10 @@ SingletonInstance<TextWidgetSingletonData> TextWidgetSingletonData::instance;
 /**
  * TextWidget-Constructor.
  */
-TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int border,
+TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
                        CreateOptions options)
 
-    : FocusableWidget(parent, 0, 0, 
-                      hilitedText->getSyntaxPatterns()->getDefaultTextStyle()->getSpaceWidth()*200, 
-                      hilitedText->getSyntaxPatterns()->getDefaultTextStyle()->getLineHeight(), 
-                      border),
+    : FocusableWidget(VISIBLE, border),
 
       totalPixWidth(0),
       leftPix(0),
@@ -120,7 +117,6 @@ TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int bord
       updateVerticalScrollBar(false),
       updateHorizontalScrollBar(false),
       
-      position(FocusableWidget::getPosition()),
       hasPosition(false),
       hilitedText(hilitedText),
       textData(hilitedText->getTextData()),
@@ -159,17 +155,13 @@ TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int bord
       neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR)),
       exposureNeedsSync(false)
 {
-    //setBackgroundColor(backgroundColor);
-    setBorderColor(backgroundColor);
-
     lineHeight  = defaultTextStyle->getLineHeight();
     lineAscent  = defaultTextStyle->getLineAscent();
 
-    visibleLines = position.h / lineHeight; // not rounded;
+    visibleLines = getHeight() / lineHeight; // not rounded;
 
-    lineInfos.setLength(ROUNDED_UP_DIV(position.h, lineHeight));
+    lineInfos.setLength(ROUNDED_UP_DIV(getHeight(), lineHeight));
 
-    addToXEventMask(ExposureMask);
 
 #if 0
     XSetWindowAttributes at;
@@ -187,9 +179,6 @@ TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int bord
               CWBackPixmap
             , &at);
 #endif
-
-    setBitGravity(NorthWestGravity);
-            
     textData->flushPendingUpdates();
     textData->registerUpdateListener(newCallback(this, &TextWidget::treatTextDataUpdate));
     
@@ -201,9 +190,19 @@ TextWidget::TextWidget(GuiWidget* parent, HilitedText::Ptr hilitedText, int bord
     
     redrawRegion = XCreateRegion();
     
-    XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
-
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TextWidget::treatConfigUpdate));
+}
+
+void TextWidget::processGuiWidgetCreatedEvent()
+{
+    getGuiWidget()->addToXEventMask(ExposureMask);
+
+    setBackgroundColor(backgroundColor);
+    
+    getGuiWidget()->setBitGravity(NorthWestGravity);
+    XDefineCursor(getDisplay(), getGuiWidget()->getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
+
+    processGuiWidgetNewPositionEvent(getPosition());
 }
 
 TextWidget::~TextWidget()
@@ -479,7 +478,7 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
         {
             ASSERT(print == 1);
             
-            if (i.getPixelPos() + i.getCharLBearing() >= this->leftPix + this->position.w)
+            if (i.getPixelPos() + i.getCharLBearing() >= this->leftPix + this->getWidth())
             {
                 print = 2;
                 break;
@@ -597,7 +596,7 @@ inline void TextWidget::clearLine(RawPtr<LineInfo> li, int y)
     
     XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getWhiteColor());
     XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-            x, y, position.w - x, lineHeight);
+            x, y, getWidth() - x, lineHeight);
 }*/
 ///////////////////
 
@@ -636,8 +635,10 @@ inline void TextWidget::clearPartialLine(RawPtr<LineInfo> li, int y, int x1, int
                     int useX1 = accX;
                     int useX2 = x;
                     if (useX1 < x2 && useX2 >= x1) {
-                        XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                                useX1, y, useX2 - useX1, lineHeight);
+                        if (getGuiWidget().isValid()) {
+                            XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                                    useX1, y, useX2 - useX1, lineHeight);
+                        }
                     }
                 }
                 accBackground = background;
@@ -651,33 +652,41 @@ inline void TextWidget::clearPartialLine(RawPtr<LineInfo> li, int y, int x1, int
         XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(accBackground));
         if (accBackground == li->backgroundToEnd) {
             int useX1 = accX;
-            int useX2 = position.w;
+            int useX2 = getWidth();
             if (useX1 < x2 && useX2 >= x1) {
-                XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                        useX1, y, useX2 - useX1, lineHeight);
+                if (getGuiWidget().isValid()) {
+                    XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                            useX1, y, useX2 - useX1, lineHeight);
+                }
             }
         } else {
             int useX1 = accX;
             int useX2 = x;
             if (useX1 < x2 && useX2 >= x1) {
-                XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                        useX1, y, useX2 - useX1, lineHeight);
+                if (getGuiWidget().isValid()) {
+                    XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                            useX1, y, useX2 - useX1, lineHeight);
+                }
             }
             XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
             useX1 = x;
-            useX2 = position.w;
+            useX2 = getWidth();
             if (useX1 < x2 && useX2 >= x1) {
-                XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                        useX1, y, useX2 - useX1, lineHeight);
+                if (getGuiWidget().isValid()) {
+                    XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                            useX1, y, useX2 - useX1, lineHeight);
+                }
             }
         }
     } else {
         XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
         int useX1 = x;
-        int useX2 = position.w;
+        int useX2 = getWidth();
         if (useX1 < x2 && useX2 >= x1) {
-            XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                    useX1, y, useX2 - useX1, lineHeight);
+            if (getGuiWidget().isValid()) {
+                XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                        useX1, y, useX2 - useX1, lineHeight);
+            }
         }
     }
 
@@ -734,8 +743,10 @@ inline void TextWidget::printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y
                 ptrp2 = ptrp;
                 
                 applyTextStyle(styleIndex);
-                XDrawString(getDisplay(), getWid(), 
-                        textWidget_gcid, xp1, y + lineAscent, (char*) ptrp1, ptrp2 - ptrp1);
+                if (getGuiWidget().isValid()) {
+                    XDrawString(getDisplay(), getGuiWidget()->getWid(), 
+                            textWidget_gcid, xp1, y + lineAscent, (char*) ptrp1, ptrp2 - ptrp1);
+                }
                 //XDrawString(getDisplay(), tw->wid, 
                 //        tw->gcid, x, y + tw->lineAscent, ptr, len);
                 //printf("print <%.*s> \n", len, ptr);
@@ -768,8 +779,10 @@ inline void TextWidget::printPartialLine(RawPtr<LineInfo> li, int y, int x1, int
             } else {
                 XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getGreyColor());
             }
-            XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                    cursorX, y, CURSOR_WIDTH, lineHeight);
+            if (getGuiWidget().isValid()) {
+                XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                        cursorX, y, CURSOR_WIDTH, lineHeight);
+            }
         }
         
     }
@@ -818,9 +831,10 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
             int bx2 = tx2;
 
             XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(background));
-            XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                    bx1, y, bx2 - bx1, lineHeight);
-            
+            if (getGuiWidget().isValid()) {
+                XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                        bx1, y, bx2 - bx1, lineHeight);
+            }
             lastBackgroundX = x + pixWidth;
             
             if (len > 0 && *ptr != '\t' ) 
@@ -835,8 +849,10 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
                     } else {
                         XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
                     }
-                    XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                            tx2, y, txCorrection, lineHeight);
+                    if (getGuiWidget().isValid()) {
+                        XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                                tx2, y, txCorrection, lineHeight);
+                    }
                     lastBackgroundX += txCorrection;
                     bx2 += txCorrection;
                 }
@@ -850,14 +866,18 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
                 }
                 int cx1 = util::maximum(cursorX, bx1);
                 int cx2 = util::minimum(cursorX + CURSOR_WIDTH, bx2);
-                XFillRectangle(getDisplay(), getWid(), textWidget_gcid,     // DrawCursor
-                        cx1, y, cx2 - cx1, lineHeight);
+                if (getGuiWidget().isValid()) {
+                    XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid,     // DrawCursor
+                            cx1, y, cx2 - cx1, lineHeight);
+                }
             }
 
             if (len > 0 && *ptr != '\t') {
                 applyTextStyle(styleIndex);
-                XDrawString(getDisplay(), getWid(), 
-                        textWidget_gcid, -leftPixOffset + x, y + lineAscent, (char*) ptr, len);
+                if (getGuiWidget().isValid()) {
+                    XDrawString(getDisplay(), getGuiWidget()->getWid(), 
+                            textWidget_gcid, -leftPixOffset + x, y + lineAscent, (char*) ptr, len);
+                }
                 //printf("print <%.*s> \n", len, ptr);
             }
             ptr += len;
@@ -866,11 +886,12 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
     }
     {
         int bx1 = -leftPixOffset + lastBackgroundX;
-        int bx2 = position.w;
+        int bx2 = getWidth();
         XSetForeground(getDisplay(), textWidget_gcid, getColorForBackground(li->backgroundToEnd));
-        XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                bx1, y, bx2 - bx1, lineHeight);
-
+        if (getGuiWidget().isValid()) {
+            XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                    bx1, y, bx2 - bx1, lineHeight);
+        }
         if (considerCursor && cursorX < bx2 && cursorX + CURSOR_WIDTH > bx1) {
             if (cursorIsActive) {
                 XSetForeground(getDisplay(), textWidget_gcid, getGuiRoot()->getBlackColor());
@@ -879,8 +900,10 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
             }
             int cx1 = util::maximum(cursorX, bx1);
             int cx2 = util::minimum(cursorX + CURSOR_WIDTH, bx2);
-            XFillRectangle(getDisplay(), getWid(), textWidget_gcid,     // DrawCursor
-                    cx1, y, cx2 - cx1, lineHeight);
+            if (getGuiWidget().isValid()) {
+                XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid,     // DrawCursor
+                        cx1, y, cx2 - cx1, lineHeight);
+            }
         }
     }
 }
@@ -1011,7 +1034,7 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
             if (xMin == -1) {
                 xMin = util::minimum(newX + newCharLBearing, oldX + oldCharLBearing);
                 if (xMin < 0) xMin = 0;
-                xMax = position.w;
+                xMax = getWidth();
             }
         } else {
             newX += newCharWidth;
@@ -1025,8 +1048,8 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
         printPartialLine(newLi, y, xMin, xMax);
         unclip();
     } else {
-        clip(xMin, y, position.w - xMin, lineHeight);
-        printPartialLine(newLi, y, xMin, position.w);
+        clip(xMin, y, getWidth() - xMin, lineHeight);
+        printPartialLine(newLi, y, xMin, getWidth());
         unclip();
     }
 }
@@ -1054,16 +1077,18 @@ void TextWidget::drawPartialArea(int minY, int maxY, int x1, int x2)
         oldpos = pos;
         pos  += textData->getLengthOfLineEnding(pos);
     
-    } while (oldpos != pos && y < position.h);
+    } while (oldpos != pos && y < getHeight());
     
-    if (y < position.h) {
+    if (y < getHeight()) {
 
 //        XClearArea(XGlobal_display_pst, tw->wid, 
 //                0, y, 0, 0, False);
 
         XSetForeground(getDisplay(), textWidget_gcid, backgroundColor);
-        XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                0, y, position.w, position.h - y);
+        if (getGuiWidget().isValid()) {
+            XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                    0, y, getWidth(), getHeight() - y);
+        }
     }
     endPos = pos;
 }
@@ -1093,17 +1118,19 @@ void TextWidget::drawArea(int minY, int maxY)
             oldpos = pos;
             pos  += textData->getLengthOfLineEnding(pos);
 
-        } while (oldpos != pos && y < position.h);
+        } while (oldpos != pos && y < getHeight());
     }
     
-    if (y < position.h) {
+    if (y < getHeight()) {
 
 //        XClearArea(getDisplay(), tw->wid, 
 //                0, y, 0, 0, False);
 
         XSetForeground(getDisplay(), textWidget_gcid, backgroundColor);
-        XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                0, y, position.w, position.h - y);
+        if (getGuiWidget().isValid()) {
+            XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                    0, y, getWidth(), getHeight() - y);
+        }
     }
     endPos = pos;
 }
@@ -1112,7 +1139,7 @@ void TextWidget::drawArea(int minY, int maxY)
 void TextWidget::redrawChanged(long spos, long epos)
 {
     int minY = 0;
-    int maxY = position.h;
+    int maxY = getHeight();
     int y = 0;
     int line = 0;
     long pos = getTopLeftTextPosition();
@@ -1165,8 +1192,10 @@ void TextWidget::redrawChanged(long spos, long epos)
 //                0, y, 0, 0, False);
 
         XSetForeground(getDisplay(), textWidget_gcid, backgroundColor);
-        XFillRectangle(getDisplay(), getWid(), textWidget_gcid, 
-                0, y, position.w, position.h - y);
+        if (getGuiWidget().isValid()) {
+            XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
+                    0, y, getWidth(), getHeight() - y);
+        }
     }
     endPos = pos;
 }
@@ -1174,7 +1203,7 @@ void TextWidget::redrawChanged(long spos, long epos)
 
 
 inline void TextWidget::redraw() {
-    drawArea(0, position.h);
+    drawArea(0, getHeight());
 }
 
 RawPtr<LineInfo> TextWidget::getValidLineInfo(long line)
@@ -1227,7 +1256,7 @@ void TextWidget::drawCursor(long cursorPos)
             y    += lineHeight;
             line += 1;
 
-        } while (!li->isEndOfText && y < position.h);
+        } while (!li->isEndOfText && y < getHeight());
     }
 }
 
@@ -1289,7 +1318,7 @@ long TextWidget::calcLongestVisiblePixWidth()
             oldpos = pos;
             pos  += textData->getLengthOfLineEnding(pos);
 
-        } while (oldpos != pos && y < position.h);
+        } while (oldpos != pos && y < getHeight());
     }
     rslt += CURSOR_WIDTH;
 
@@ -1301,7 +1330,7 @@ void TextWidget::calcTotalPixWidth()
     long rslt = calcLongestVisiblePixWidth();
 
     totalPixWidth = 0;
-    MAXIMIZE(&totalPixWidth, leftPix + position.w);
+    MAXIMIZE(&totalPixWidth, leftPix + getWidth());
     MAXIMIZE(&totalPixWidth, rslt);
 }
 
@@ -1338,11 +1367,13 @@ void TextWidget::setTopLineNumber(long n)
             } else {
                 long diff = oldTopLineNumber - n;
                 
-                XCopyArea(getDisplay(), getWid(), getWid(), 
-                        textWidget_gcid,
-                        0, 0,
-                        position.w, position.h - diff * lineHeight,
-                        0, diff * lineHeight);
+                if (getGuiWidget().isValid()) {
+                    XCopyArea(getDisplay(), getGuiWidget()->getWid(), getGuiWidget()->getWid(), 
+                            textWidget_gcid,
+                            0, 0,
+                            getWidth(), getHeight() - diff * lineHeight,
+                            0, diff * lineHeight);
+                }
                 exposureNeedsSync = true;
                 drawArea(0, diff * lineHeight);
             }
@@ -1352,13 +1383,15 @@ void TextWidget::setTopLineNumber(long n)
             } else {
                 long diff = n - oldTopLineNumber;
                 
-                XCopyArea(getDisplay(), getWid(), getWid(), 
-                        textWidget_gcid,
-                        0, diff * lineHeight,
-                        position.w, position.h - diff * lineHeight,
-                        0, 0);
+                if (getGuiWidget().isValid()) {
+                    XCopyArea(getDisplay(), getGuiWidget()->getWid(), getGuiWidget()->getWid(), 
+                            textWidget_gcid,
+                            0, diff * lineHeight,
+                            getWidth(), getHeight() - diff * lineHeight,
+                            0, 0);
+                }
                 exposureNeedsSync = true;
-                drawArea(position.h - (diff * lineHeight), position.h);
+                drawArea(getHeight() - (diff * lineHeight), getHeight());
             }
 
         }
@@ -1483,8 +1516,8 @@ void TextWidget::internSetLeftPix(long newLeftPix)
     textData->flushPendingUpdates();
     calcTotalPixWidth();
 
-    if (newLeftPix > totalPixWidth - position.w) {
-        newLeftPix = totalPixWidth - position.w;
+    if (newLeftPix > totalPixWidth - getWidth()) {
+        newLeftPix = totalPixWidth - getWidth();
     }
     if (newLeftPix == leftPix) {
         return;
@@ -1496,17 +1529,19 @@ void TextWidget::internSetLeftPix(long newLeftPix)
         if (!cursorVisible && cursorIsBlinking) {
             startCursorBlinking();
         }
-        if (diffPix < position.w) {
+        if (diffPix < getWidth()) {
             redrawChanged(getTopLeftTextPosition(), textData->getLength()); // assure that new lineinfos match screen content
-            XCopyArea(getDisplay(), getWid(), getWid(), textWidget_gcid,
-                    diffPix, 0,
-                    position.w - diffPix, position.h,
-                    0, 0);
+            if (getGuiWidget().isValid()) {
+                XCopyArea(getDisplay(), getGuiWidget()->getWid(), getGuiWidget()->getWid(), textWidget_gcid,
+                        diffPix, 0,
+                        getWidth() - diffPix, getHeight(),
+                        0, 0);
+            }
             exposureNeedsSync = true;
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
-            clip(position.w - diffPix, 0, diffPix, position.h);
-            drawPartialArea(0, position.h, position.w - diffPix, position.w);
+            clip(getWidth() - diffPix, 0, diffPix, getHeight());
+            drawPartialArea(0, getHeight(), getWidth() - diffPix, getWidth());
             unclip();
         } else {
             leftPix = newLeftPix;
@@ -1519,17 +1554,19 @@ void TextWidget::internSetLeftPix(long newLeftPix)
         if (!cursorVisible && cursorIsBlinking) {
             startCursorBlinking();
         }
-        if (diffPix < position.w) {
+        if (diffPix < getWidth()) {
             redrawChanged(getTopLeftTextPosition(), textData->getLength()); // assure that new lineinfos match screen content
-            XCopyArea(getDisplay(), getWid(), getWid(), textWidget_gcid,
-                    0, 0,
-                    position.w - diffPix, position.h,
-                    diffPix, 0);
+            if (getGuiWidget().isValid()) {
+                XCopyArea(getDisplay(), getGuiWidget()->getWid(), getGuiWidget()->getWid(), textWidget_gcid,
+                        0, 0,
+                        getWidth() - diffPix, getHeight(),
+                        diffPix, 0);
+            }
             exposureNeedsSync = true;
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
-            clip(0, 0, diffPix, position.h);
-            drawPartialArea(0, position.h, 0, diffPix);
+            clip(0, 0, diffPix, getHeight());
+            drawPartialArea(0, getHeight(), 0, diffPix);
             unclip();
         } else {
             leftPix = newLeftPix;
@@ -1560,16 +1597,22 @@ void TextWidget::setLastEmptyLineStrategy(LastEmptyLineStrategy lastEmptyLineStr
     this->lastEmptyLineStrategy = lastEmptyLineStrategy;
 }
 
-
-void TextWidget::setPosition(Position newPosition)
+void TextWidget::setPosition(const Position& p)
 {
-    if (!hasPosition)
+    FocusableWidget::setPosition(p);
+}
+
+void TextWidget::processGuiWidgetNewPositionEvent(const Position& p)
+{
+    Position newPosition = p;
+    
+    if (getPosition() != newPosition || !hasPosition)
     {
-        exposureNeedsSync = true;
-        hasPosition       = true;
-    }
-    if (position != newPosition)
-    {
+        if (!hasPosition)
+        {
+            exposureNeedsSync = true;
+            hasPosition       = true;
+        }
         textData->flushPendingUpdates();
         
         long oldTopLineNumber = getTopLineNumber();
@@ -1597,14 +1640,14 @@ void TextWidget::setPosition(Position newPosition)
                 oldCursorPixXToRight = getRightPix() - cursorPixX;
             }
         }
-        int oldPositionH = position.h;
-        int oldPositionW = position.w;
+        int oldPositionH = getHeight();
+        int oldPositionW = getWidth();
         int oldLeftPix   = getLeftPix();
         
-        newPosition.w = calculateWidthOrHeightWithoutBorder(newPosition.w, border);
-        newPosition.h = calculateWidthOrHeightWithoutBorder(newPosition.h, border);
+        //newPosition.w = calculateWidthOrHeightWithoutBorder(newPosition.w, border);
+        //newPosition.h = calculateWidthOrHeightWithoutBorder(newPosition.h, border);
 
-        int newVisibleLines = newPosition.h / lineHeight; // not rounded
+        int newVisibleLines = util::maximum(0, (newPosition.h - 2 * border) / lineHeight); // not rounded
         long newTopLine;
         bool forceRedraw = false;
         
@@ -1612,13 +1655,13 @@ void TextWidget::setPosition(Position newPosition)
             || verticalAdjustmentStrategy == NOT_STRICT_TOP_LINE_ANCHOR)
         {
             newTopLine = oldTopLineNumber;
-            GuiWidget::setPosition(newPosition);
+            FocusableWidget::processGuiWidgetNewPositionEvent(newPosition);
         }
         else if (oldTopLineNumber + oldVisibleLines - newVisibleLines >= 0)
         {
-            setBitGravity(StaticGravity); // screen content can be preservered
-            GuiWidget::setPosition(newPosition);
-            setBitGravity(NorthWestGravity);
+            getGuiWidget()->setBitGravity(StaticGravity); // screen content can be preservered
+            FocusableWidget::processGuiWidgetNewPositionEvent(newPosition);
+            getGuiWidget()->setBitGravity(NorthWestGravity);
 
             newTopLine = oldTopLineNumber + oldVisibleLines - newVisibleLines;
 
@@ -1628,13 +1671,12 @@ void TextWidget::setPosition(Position newPosition)
         } else {
             newTopLine = 0;
             forceRedraw = true;
-            setBitGravity(StaticGravity); // prevent flickering
-            GuiWidget::setPosition(newPosition);
-            setBitGravity(NorthWestGravity);
+            getGuiWidget()->setBitGravity(StaticGravity); // prevent flickering
+            FocusableWidget::processGuiWidgetNewPositionEvent(newPosition);
+            getGuiWidget()->setBitGravity(NorthWestGravity);
         }
 
 
-        position = newPosition;
         unclip();
 
         
@@ -1697,9 +1739,9 @@ void TextWidget::setPosition(Position newPosition)
         {
             long longestVisiblePixWidth = calcLongestVisiblePixWidth(); // calcLongestVisiblePixWidth after topline has been set
             
-            if (newLeftPix + position.w > longestVisiblePixWidth)
+            if (newLeftPix + getWidth() > longestVisiblePixWidth)
             {
-                long newLeftPix2 = longestVisiblePixWidth - position.w;
+                long newLeftPix2 = longestVisiblePixWidth - getWidth();
                 if (newLeftPix2 < 0) {
                     newLeftPix2 = 0;
                 }
@@ -1712,7 +1754,7 @@ void TextWidget::setPosition(Position newPosition)
         else if (horizontalAdjustmentStrategy == RIGHT_COLUMN_ANCHOR)
         {
             long longestVisiblePixWidth = calcLongestVisiblePixWidth(); // calcLongestVisiblePixWidth after topline has been set
-            long newLeftPix2 = longestVisiblePixWidth - position.w;
+            long newLeftPix2 = longestVisiblePixWidth - getWidth();
             if (newLeftPix2 < 0) {
                 newLeftPix2 = 0;
             }
@@ -1732,7 +1774,7 @@ void TextWidget::setPosition(Position newPosition)
     }
 }
 
-GuiElement::Measures TextWidget::getDesiredMeasures()
+GuiElement::Measures TextWidget::internalGetDesiredMeasures()
 {
     int incrWidth  = getSpaceCharWidth();
     int incrHeight = getLineHeight();
@@ -1973,100 +2015,100 @@ static inline bool areIntersected(XRectangle* r1, XRectangle* r2)
     return false;
 }
 
-GuiWidget::ProcessingResult TextWidget::processEvent(const XEvent* event)
+GuiWidget::ProcessingResult TextWidget::processGuiWidgetEvent(const XEvent* event)
 {
-    if (GuiWidget::processEvent(event) == EVENT_PROCESSED) {
-        return EVENT_PROCESSED;
-    } else {
-        switch (event->type) {
-
-            case NoExpose: {
-                exposureNeedsSync = false;
-                return EVENT_PROCESSED;
-            }
-            case GraphicsExpose:
-            case Expose: {
-
-                XRectangle r;
-                int count;
-                if (event->type == GraphicsExpose) {
-                    r.x      = event->xgraphicsexpose.x;
-                    r.y      = event->xgraphicsexpose.y;
-                    r.width  = event->xgraphicsexpose.width;
-                    r.height = event->xgraphicsexpose.height;
-                    count    = event->xgraphicsexpose.count; // Anzahl der noch folgenden Events
-                    if (count == 0) {
-                        exposureNeedsSync = false;
-                    }
-                } else {
-                    r.x      = event->xexpose.x;
-                    r.y      = event->xexpose.y;
-                    r.width  = event->xexpose.width;
-                    r.height = event->xexpose.height;
-                    count    = event->xexpose.count; // Anzahl der noch folgenden Events
-                }
-                {
-                    Region newRegion = XCreateRegion();
-                    XUnionRectWithRegion(&r, redrawRegion, newRegion);
-                    XDestroyRegion(redrawRegion);
-                    redrawRegion = newRegion;
-                }
-                XEvent newEvent;
-                while (XCheckWindowEvent(getDisplay(), getWid(), ExposureMask, &newEvent) == True)
-                {
-                    if (newEvent.type == GraphicsExpose) {
-                        r.x      = newEvent.xgraphicsexpose.x;
-                        r.y      = newEvent.xgraphicsexpose.y;
-                        r.width  = newEvent.xgraphicsexpose.width;
-                        r.height = newEvent.xgraphicsexpose.height;
-                        count    = newEvent.xgraphicsexpose.count; // Anzahl der noch folgenden Events
-                    } else {
-                        r.x      = newEvent.xexpose.x;
-                        r.y      = newEvent.xexpose.y;
-                        r.width  = newEvent.xexpose.width;
-                        r.height = newEvent.xexpose.height;
-                        count    = newEvent.xexpose.count; // Anzahl der noch folgenden Events
-                    }
-                    Region newRegion = XCreateRegion();
-                    XUnionRectWithRegion(&r, redrawRegion, newRegion);
-                    XDestroyRegion(redrawRegion);
-                    redrawRegion = newRegion;
-                }
-                if (count == 0)
-                {
-                    XSetRegion(getDisplay(), textWidget_gcid, redrawRegion);
-                    redraw();
-                    unclip();
-                    XDestroyRegion(redrawRegion);
-                    redrawRegion = XCreateRegion();
-                }
-                return EVENT_PROCESSED;
-            }
-            default:
-                return NOT_PROCESSED;
+    switch (event->type)
+    {
+        case NoExpose: {
+            exposureNeedsSync = false;
+            return GuiWidget::EVENT_PROCESSED;
         }
+        case GraphicsExpose:
+        case Expose: {
+
+            XRectangle r;
+            int count;
+            if (event->type == GraphicsExpose) {
+                r.x      = event->xgraphicsexpose.x;
+                r.y      = event->xgraphicsexpose.y;
+                r.width  = event->xgraphicsexpose.width;
+                r.height = event->xgraphicsexpose.height;
+                count    = event->xgraphicsexpose.count; // Anzahl der noch folgenden Events
+                if (count == 0) {
+                    exposureNeedsSync = false;
+                }
+            } else {
+                r.x      = event->xexpose.x;
+                r.y      = event->xexpose.y;
+                r.width  = event->xexpose.width;
+                r.height = event->xexpose.height;
+                count    = event->xexpose.count; // Anzahl der noch folgenden Events
+            }
+            {
+                Region newRegion = XCreateRegion();
+                XUnionRectWithRegion(&r, redrawRegion, newRegion);
+                XDestroyRegion(redrawRegion);
+                redrawRegion = newRegion;
+            }
+/*            XEvent newEvent;
+            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask, &newEvent) == True)
+            {
+                if (newEvent.type == GraphicsExpose) {
+                    r.x      = newEvent.xgraphicsexpose.x;
+                    r.y      = newEvent.xgraphicsexpose.y;
+                    r.width  = newEvent.xgraphicsexpose.width;
+                    r.height = newEvent.xgraphicsexpose.height;
+                    count    = newEvent.xgraphicsexpose.count; // Anzahl der noch folgenden Events
+                } else {
+                    r.x      = newEvent.xexpose.x;
+                    r.y      = newEvent.xexpose.y;
+                    r.width  = newEvent.xexpose.width;
+                    r.height = newEvent.xexpose.height;
+                    count    = newEvent.xexpose.count; // Anzahl der noch folgenden Events
+                }
+                Region newRegion = XCreateRegion();
+                XUnionRectWithRegion(&r, redrawRegion, newRegion);
+                XDestroyRegion(redrawRegion);
+                redrawRegion = newRegion;
+            }
+*/            if (count == 0)
+            {
+                XSetRegion(getDisplay(), textWidget_gcid, redrawRegion);
+                redraw();
+                unclip();
+                XDestroyRegion(redrawRegion);
+                redrawRegion = XCreateRegion();
+            }
+            return GuiWidget::EVENT_PROCESSED;
+        }
+        default:
+            return GuiWidget::NOT_PROCESSED;
     }
 }
 
 
 void TextWidget::processAllExposureEvents()
 {
-    XEvent newEvent;
+/*    if (getGuiWidget().isValid())
     {
-        while (XCheckWindowEvent(getDisplay(), getWid(), ExposureMask, &newEvent) == True)
+        XEvent newEvent;
         {
-            this->processEvent(&newEvent);
+            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask, &newEvent) == True)
+            {
+                this->processGuiWidgetEvent(&newEvent);
+            }
+        }
+        if (exposureNeedsSync)
+        {
+            XSync(getDisplay(), False);
+            exposureNeedsSync = false;   
+            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask, &newEvent) == True)
+            {
+                this->processGuiWidgetEvent(&newEvent);
+            }
         }
     }
-    if (exposureNeedsSync)
-    {
-        XSync(getDisplay(), False);
-        exposureNeedsSync = false;   
-        while (XCheckWindowEvent(getDisplay(), getWid(), ExposureMask, &newEvent) == True)
-        {
-            this->processEvent(&newEvent);
-        }
-    }
+*/
 }
 
 static inline bool adjustLineInfoPosition(long* pos, long beginChangedPos, long oldEndChangedPos, long changedAmount)
@@ -2173,7 +2215,7 @@ void TextWidget::flushPendingUpdates()
     if (updateHorizontalScrollBar) {
         scrollBarHorizontalValueRangeChangedCallback->call(
                     totalPixWidth,
-                    position.w, leftPix);
+                    getWidth(), leftPix);
         updateHorizontalScrollBar = false;
     }
     long newLine = getCursorLineNumber();
@@ -2216,7 +2258,7 @@ void TextWidget::setDesiredMeasuresInChars(int bestWidth, int bestHeight)
     this->bestHeightChars = bestHeight;
 }
 
-void TextWidget::notifyAboutHotKeyEventForOtherWidget()
+void TextWidget::treatNotificationOfHotKeyEventForOtherWidget()
 {
     if (isCursorBlinking()) {
         startCursorBlinking(); // redraw Cursor while Hotkey for other widget
@@ -2226,14 +2268,18 @@ void TextWidget::notifyAboutHotKeyEventForOtherWidget()
 void TextWidget::internalShowMousePointer()
 {
     isMousePointerHidden = false;
-    XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
+    if (getGuiWidget().isValid()) {
+        XDefineCursor(getDisplay(), getGuiWidget()->getWid(), TextWidgetSingletonData::getInstance()->getTextMouseCursor());
+    }
 }
 
 
 void TextWidget::internalHideMousePointer()
 {
     isMousePointerHidden = true;
-    XDefineCursor(getDisplay(), getWid(), TextWidgetSingletonData::getInstance()->getEmptyMouseCursor());
+    if (getGuiWidget().isValid()) {
+        XDefineCursor(getDisplay(), getGuiWidget()->getWid(), TextWidgetSingletonData::getInstance()->getEmptyMouseCursor());
+    }
 }
 
 
@@ -2241,6 +2287,8 @@ void TextWidget::setBackgroundColor(GuiColor color)
 {
     // do not set background in the parent class, because we have no x11 handeld background!
     backgroundColor = color;
-    setBorderColor(backgroundColor);
+    if (getGuiWidget().isValid()) {
+        getGuiWidget()->setBorderColor(backgroundColor);
+    }
 }
 
