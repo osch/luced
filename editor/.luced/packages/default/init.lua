@@ -46,14 +46,10 @@ return
                                     return rslt
                                 else
                                     local moduleName = "this."..syntaxName.."Syntax"
-                                    if moduleName then
-                                        local ok,rslt = pcall(require, moduleName)
-                                        if ok then
-                                            cachedSyntaxDefinitions[syntaxName] = rslt
-                                            return rslt
-                                        else
-                                            return nil
-                                        end
+                                    local ok,rslt = pcall(require, moduleName)
+                                    if ok then
+                                        cachedSyntaxDefinitions[syntaxName] = rslt
+                                        return rslt
                                     else
                                         return nil
                                     end
