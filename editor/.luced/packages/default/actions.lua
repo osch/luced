@@ -102,7 +102,7 @@ return
     cvsEdit =
     {
         shellScript = [[ set -e
-                         file=`readlink -f $FILE`
+                         file=`readlink -f $FILE 2>/dev/null|| echo $FILE`
                          cd "`dirname $file`"
                          fn="`basename $file`"
                          cvs update "$fn"
@@ -113,7 +113,7 @@ return
     cvsUnedit =
     {
         shellScript = [[ set -e
-                         file=`readlink -f $FILE`
+                         file=`readlink -f $FILE 2>/dev/null|| echo $FILE`
                          cd "`dirname $file`" 
                          fn="`basename $file`" 
                          rev="`cat CVS/Entries | grep /$fn/ | cut -d/ -f3`" 
@@ -123,7 +123,7 @@ return
     cvsCommit =
     {
         shellScript = [[ set -e
-                         file=`readlink -f $FILE`
+                         file=`readlink -f $FILE 2>/dev/null|| echo $FILE`
                          cd `dirname $file`
                          
                          term="xterm"
@@ -154,7 +154,7 @@ return
     cvsDiff =
     {
         shellScript = [[ set -e
-                         file=`readlink -f $FILE`
+                         file=`readlink -f $FILE 2>/dev/null|| echo $FILE`
                          cd `dirname $file` 
                          fn=`basename $file`
                          if [ -e CVS ]
@@ -187,7 +187,7 @@ return
     cvsLog =
     {
         shellScript = [[ set -e
-                         file=`readlink -f $FILE`
+                         file=`readlink -f $FILE 2>/dev/null|| echo $FILE`
                          cd `dirname $file` 
                          fn=`basename $file`
                          if [ -e CVS ]
