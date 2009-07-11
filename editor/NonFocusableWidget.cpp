@@ -24,70 +24,10 @@
 using namespace LucED;
 
 
-void NonFocusableWidget::show()
-{
-    if (guiWidget.isValid())
-    {
-        guiWidget->show();
-    }
-    GuiElement::show();
-}
-
-void NonFocusableWidget::hide()
-{
-    if (guiWidget.isValid())
-    {
-        guiWidget->hide();
-    }
-    GuiElement::hide();
-}
 
 void NonFocusableWidget::adopt(RawPtr<GuiElement>   parentElement,
                                RawPtr<GuiWidget>    parentWidget,
                                RawPtr<FocusManager> focusManager)
 {
-    guiWidget = GuiWidget::create(parentWidget, 
-                                  this, // GuiWidget::EventListener
-                                  getPosition(), 
-                                  borderWidth);
-    this->width  = guiWidget->getWidth();
-    this->height = guiWidget->getHeight();
-
-    GuiElement::adopt(parentElement, guiWidget, focusManager);
-
-    if (isVisible()) {
-        guiWidget->show();
-    }
-    processGuiWidgetCreatedEvent();
+    BaseClass::adopt(parentElement, parentWidget, focusManager);
 }
-
-
-void NonFocusableWidget::setPosition(const Position& p)
-{
-    if (p != getPosition()) {
-        if (guiWidget.isValid()) {
-            guiWidget->setPosition(p);
-        }
-        else {
-            GuiElement::setPosition(p);
-            this->width  = p.w - 2 * borderWidth;
-            this->height = p.h - 2 * borderWidth;
-        }
-    }
-}
-
-void NonFocusableWidget::processGuiWidgetNewPositionEvent(const Position& newPosition)
-{
-    GuiElement::setPosition(newPosition);
-
-    this->width  = guiWidget->getWidth();
-    this->height = guiWidget->getHeight();
-}
-
-
-GuiWidget::ProcessingResult NonFocusableWidget::processGuiWidgetEvent(const XEvent* event)
-{
-    return GuiWidget::NOT_PROCESSED;
-}
-
-

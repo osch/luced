@@ -26,59 +26,31 @@
 #include "FocusableElement.hpp"
 #include "Position.hpp"
 #include "RawPtr.hpp"
+#include "GuiWidgetMixin.hpp"
 
 namespace LucED
 {
 
-class FocusableWidget : public FocusableElement,
-                        public GuiWidget::EventListener
+class FocusableWidget : public GuiWidgetMixin<FocusableElement>
 {
 public:
-    virtual void show();
-    virtual void hide();
+    typedef GuiWidgetMixin<FocusableElement> BaseClass;
     
-    bool isMapped() const {
-        return guiWidget.isValid() && isVisible();
-    }
-
-    virtual void setPosition(const Position& p);
-
     virtual void adopt(RawPtr<GuiElement>   parentElement,
                        RawPtr<GuiWidget>    parentWidget,
                        RawPtr<FocusManager> focusManagerForThis,
                        RawPtr<FocusManager> focusManagerForChilds);
 
-    int getWidth() const {
-        return width;
-    }
-    int getHeight() const {
-        return height;
-    }
+    virtual void adopt(RawPtr<GuiElement>   parentElement,
+                       RawPtr<GuiWidget>    parentWidget,
+                       RawPtr<FocusManager> focusManager);
 
 protected:
     FocusableWidget(Visibility                       defaultVisibility = VISIBLE, 
                     int                              borderWidth = 0)
-        : FocusableElement(defaultVisibility, 0, 0, 1 + 2*borderWidth, 1 + 2*borderWidth),
-          borderWidth(borderWidth),
-          width(1), height(1)
+        : BaseClass(defaultVisibility, borderWidth)
     {}
 
-    RawPtr<GuiWidget> getGuiWidget() {
-        return guiWidget;
-    }
-
-protected:
-    virtual void processGuiWidgetCreatedEvent()
-    {}
-
-protected: // GuiWidget::EventListener methods
-    virtual void processGuiWidgetNewPositionEvent(const Position& newPosition);
-
-private:
-    int                              borderWidth;
-    GuiWidget::Ptr                   guiWidget;
-    int                              width;
-    int                              height;
 };
 
 } // namespace LucED

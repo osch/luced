@@ -50,11 +50,13 @@ void FocusableElement::treatHotKeyEvent(const KeyMapping::Id& id)
 
 
 
-void FocusableElement::adopt(RawPtr<GuiElement>   parentElement,
-                             RawPtr<GuiWidget>    parentWidget,
-                             RawPtr<FocusManager> focusManagerForThis,
-                             RawPtr<FocusManager> focusManagerForChilds)
+void FocusableElement::adopt(RawPtr<GuiElement>    parentElement,
+                             RawPtr<GuiWidget>     parentWidget,
+                             const FocusManagers&  focusManagers)
 {
+    RawPtr<FocusManager> focusManagerForThis   = focusManagers.getFocusManagerForThis();
+    RawPtr<FocusManager> focusManagerForChilds = focusManagers.getFocusManagerForChilds();
+                                                 
     if (!focusManagerForChilds.isValid()) {
         focusManagerForChilds = focusManagerForThis;
     }
@@ -71,7 +73,8 @@ void FocusableElement::adopt(RawPtr<GuiElement>   parentElement,
                              RawPtr<GuiWidget>    parentWidget,
                              RawPtr<FocusManager> focusManager)
 {
-    adopt(parentElement, parentWidget, focusManager, focusManager);
+    adopt(parentElement, parentWidget, FocusManagers().setFocusManagerForThis  (focusManager)
+                                                      .setFocusManagerForChilds(focusManager));
 }
 
 

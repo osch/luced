@@ -425,15 +425,15 @@
     </dia:object>
     <dia:object type="Standard - ZigZagLine" version="1" id="O10">
       <dia:attribute name="obj_pos">
-        <dia:point val="7,-1"/>
+        <dia:point val="5,-6"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="7,-1.05;9.07071,-0.95"/>
+        <dia:rectangle val="4.95,-6.05;9.05,-0.5"/>
       </dia:attribute>
       <dia:attribute name="orth_points">
+        <dia:point val="5,-6"/>
+        <dia:point val="7,-6"/>
         <dia:point val="7,-1"/>
-        <dia:point val="7,-1"/>
-        <dia:point val="9,-1"/>
         <dia:point val="9,-1"/>
       </dia:attribute>
       <dia:attribute name="orth_orient">
@@ -3280,15 +3280,15 @@ actions-&gt;wrappedParent(LIFO)
     </dia:object>
     <dia:object type="Standard - ZigZagLine" version="1" id="O80">
       <dia:attribute name="obj_pos">
-        <dia:point val="3,0"/>
+        <dia:point val="-11,10"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="-11.05,-0.05;3.05,36.05"/>
+        <dia:rectangle val="-11.05,9.92929;1.5,36.05"/>
       </dia:attribute>
       <dia:attribute name="orth_points">
-        <dia:point val="3,0"/>
-        <dia:point val="3,1"/>
-        <dia:point val="-11,1"/>
+        <dia:point val="-11,10"/>
+        <dia:point val="-11,10"/>
+        <dia:point val="-11,10"/>
         <dia:point val="-11,34"/>
         <dia:point val="-5,34"/>
         <dia:point val="-5,34"/>
@@ -3317,7 +3317,6 @@ actions-&gt;wrappedParent(LIFO)
         <dia:real val="0.5"/>
       </dia:attribute>
       <dia:connections>
-        <dia:connection handle="0" to="O87" connection="13"/>
         <dia:connection handle="1" to="O79" connection="2"/>
       </dia:connections>
     </dia:object>
@@ -3557,13 +3556,13 @@ MultiLineDisplayActions #</dia:string>
     </dia:object>
     <dia:object type="Flowchart - Box" version="0" id="O87">
       <dia:attribute name="obj_pos">
-        <dia:point val="-1,-2"/>
+        <dia:point val="-3,-7"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="-1.05,-2.05;7.05,0.05"/>
+        <dia:rectangle val="-3.05,-7.05;5.05,-4.95"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
-        <dia:point val="-1,-2"/>
+        <dia:point val="-3,-7"/>
       </dia:attribute>
       <dia:attribute name="elem_width">
         <dia:real val="8"/>
@@ -3592,7 +3591,7 @@ MultiLineDisplayActions #</dia:string>
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="3,-0.8575"/>
+            <dia:point val="1,-5.8575"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000"/>
@@ -3605,14 +3604,14 @@ MultiLineDisplayActions #</dia:string>
     </dia:object>
     <dia:object type="Standard - ZigZagLine" version="1" id="O88">
       <dia:attribute name="obj_pos">
-        <dia:point val="3,0"/>
+        <dia:point val="-6,0"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="0.5,-0.05;3.05,3.05"/>
+        <dia:rectangle val="-6.05,-0.05;1.5,3.05"/>
       </dia:attribute>
       <dia:attribute name="orth_points">
-        <dia:point val="3,0"/>
-        <dia:point val="3,1"/>
+        <dia:point val="-6,0"/>
+        <dia:point val="-6,1"/>
         <dia:point val="1,1"/>
         <dia:point val="1,3"/>
       </dia:attribute>
@@ -3634,19 +3633,19 @@ MultiLineDisplayActions #</dia:string>
         <dia:real val="0.5"/>
       </dia:attribute>
       <dia:connections>
-        <dia:connection handle="0" to="O87" connection="13"/>
+        <dia:connection handle="0" to="O97" connection="14"/>
         <dia:connection handle="1" to="O15" connection="2"/>
       </dia:connections>
     </dia:object>
     <dia:object type="Flowchart - Box" version="0" id="O89">
       <dia:attribute name="obj_pos">
-        <dia:point val="-9,-7"/>
+        <dia:point val="-9,-11"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="-9.05,-7.05;-0.95,-4.95"/>
+        <dia:rectangle val="-9.05,-11.05;-0.95,-8.95"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
-        <dia:point val="-9,-7"/>
+        <dia:point val="-9,-11"/>
       </dia:attribute>
       <dia:attribute name="elem_width">
         <dia:real val="8"/>
@@ -3675,7 +3674,7 @@ MultiLineDisplayActions #</dia:string>
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="-5,-5.8575"/>
+            <dia:point val="-5,-9.8575"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000"/>
@@ -3688,16 +3687,16 @@ MultiLineDisplayActions #</dia:string>
     </dia:object>
     <dia:object type="Standard - ZigZagLine" version="1" id="O90">
       <dia:attribute name="obj_pos">
-        <dia:point val="-5,-5"/>
+        <dia:point val="-5,-9"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="-5.05,-5.05;3.5,-1.95"/>
+        <dia:rectangle val="-5.05,-9.05;1.5,-6.95"/>
       </dia:attribute>
       <dia:attribute name="orth_points">
-        <dia:point val="-5,-5"/>
-        <dia:point val="-5,-4"/>
-        <dia:point val="3,-4"/>
-        <dia:point val="3,-2"/>
+        <dia:point val="-5,-9"/>
+        <dia:point val="-5,-8"/>
+        <dia:point val="1,-8"/>
+        <dia:point val="1,-7"/>
       </dia:attribute>
       <dia:attribute name="orth_orient">
         <dia:enum val="1"/>
@@ -3723,16 +3722,16 @@ MultiLineDisplayActions #</dia:string>
     </dia:object>
     <dia:object type="Flowchart - Box" version="0" id="O91">
       <dia:attribute name="obj_pos">
-        <dia:point val="-10,3"/>
+        <dia:point val="-11,2"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="-10.05,2.95;-4.95,5.05"/>
+        <dia:rectangle val="-11.05,1.95;-4.95,4.05"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
-        <dia:point val="-10,3"/>
+        <dia:point val="-11,2"/>
       </dia:attribute>
       <dia:attribute name="elem_width">
-        <dia:real val="5"/>
+        <dia:real val="6"/>
       </dia:attribute>
       <dia:attribute name="elem_height">
         <dia:real val="2"/>
@@ -3758,7 +3757,7 @@ MultiLineDisplayActions #</dia:string>
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="-7.5,4.1425"/>
+            <dia:point val="-8,3.1425"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000"/>
@@ -3771,13 +3770,13 @@ MultiLineDisplayActions #</dia:string>
     </dia:object>
     <dia:object type="Flowchart - Box" version="0" id="O92">
       <dia:attribute name="obj_pos">
-        <dia:point val="-20,3"/>
+        <dia:point val="-21,3"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="-20.05,2.95;-11.95,5.05"/>
+        <dia:rectangle val="-21.05,2.95;-12.95,5.05"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
-        <dia:point val="-20,3"/>
+        <dia:point val="-21,3"/>
       </dia:attribute>
       <dia:attribute name="elem_width">
         <dia:real val="8"/>
@@ -3806,7 +3805,7 @@ MultiLineDisplayActions #</dia:string>
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="-16,4.1425"/>
+            <dia:point val="-17,4.1425"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000"/>
@@ -3819,16 +3818,16 @@ MultiLineDisplayActions #</dia:string>
     </dia:object>
     <dia:object type="Standard - ZigZagLine" version="1" id="O93">
       <dia:attribute name="obj_pos">
-        <dia:point val="-5,-5"/>
+        <dia:point val="-5,-9"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="-16.5,-5.05;-4.95,3.05"/>
+        <dia:rectangle val="-10.5,-9.05;-4.95,-1.95"/>
       </dia:attribute>
       <dia:attribute name="orth_points">
-        <dia:point val="-5,-5"/>
-        <dia:point val="-5,-4"/>
-        <dia:point val="-16,-4"/>
-        <dia:point val="-16,3"/>
+        <dia:point val="-5,-9"/>
+        <dia:point val="-5,-8"/>
+        <dia:point val="-10,-8"/>
+        <dia:point val="-10,-2"/>
       </dia:attribute>
       <dia:attribute name="orth_orient">
         <dia:enum val="1"/>
@@ -3849,56 +3848,21 @@ MultiLineDisplayActions #</dia:string>
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O89" connection="13"/>
-        <dia:connection handle="1" to="O92" connection="2"/>
+        <dia:connection handle="1" to="O97" connection="1"/>
       </dia:connections>
     </dia:object>
     <dia:object type="Standard - ZigZagLine" version="1" id="O94">
       <dia:attribute name="obj_pos">
-        <dia:point val="-3,4"/>
+        <dia:point val="-8,0"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="-5,3.95;-2.95,4.05"/>
+        <dia:rectangle val="-8.05,0;-7.95,2.07071"/>
       </dia:attribute>
       <dia:attribute name="orth_points">
-        <dia:point val="-3,4"/>
-        <dia:point val="-5,4"/>
-        <dia:point val="-5,4"/>
-        <dia:point val="-5,4"/>
-      </dia:attribute>
-      <dia:attribute name="orth_orient">
-        <dia:enum val="0"/>
-        <dia:enum val="1"/>
-        <dia:enum val="0"/>
-      </dia:attribute>
-      <dia:attribute name="autorouting">
-        <dia:boolean val="false"/>
-      </dia:attribute>
-      <dia:attribute name="end_arrow">
-        <dia:enum val="2"/>
-      </dia:attribute>
-      <dia:attribute name="end_arrow_length">
-        <dia:real val="0.5"/>
-      </dia:attribute>
-      <dia:attribute name="end_arrow_width">
-        <dia:real val="0.5"/>
-      </dia:attribute>
-      <dia:connections>
-        <dia:connection handle="0" to="O15" connection="7"/>
-        <dia:connection handle="1" to="O91" connection="8"/>
-      </dia:connections>
-    </dia:object>
-    <dia:object type="Standard - ZigZagLine" version="1" id="O95">
-      <dia:attribute name="obj_pos">
-        <dia:point val="-12,4"/>
-      </dia:attribute>
-      <dia:attribute name="obj_bb">
-        <dia:rectangle val="-12,3.95;-9.92929,4.05"/>
-      </dia:attribute>
-      <dia:attribute name="orth_points">
-        <dia:point val="-12,4"/>
-        <dia:point val="-12,4"/>
-        <dia:point val="-10,4"/>
-        <dia:point val="-10,4"/>
+        <dia:point val="-8,0"/>
+        <dia:point val="-8,0"/>
+        <dia:point val="-8,2"/>
+        <dia:point val="-8,2"/>
       </dia:attribute>
       <dia:attribute name="orth_orient">
         <dia:enum val="0"/>
@@ -3918,11 +3882,11 @@ MultiLineDisplayActions #</dia:string>
         <dia:real val="0.5"/>
       </dia:attribute>
       <dia:connections>
-        <dia:connection handle="0" to="O92" connection="8"/>
-        <dia:connection handle="1" to="O91" connection="7"/>
+        <dia:connection handle="0" to="O97" connection="13"/>
+        <dia:connection handle="1" to="O91" connection="2"/>
       </dia:connections>
     </dia:object>
-    <dia:object type="Flowchart - Box" version="0" id="O96">
+    <dia:object type="Flowchart - Box" version="0" id="O95">
       <dia:attribute name="obj_pos">
         <dia:point val="2,7"/>
       </dia:attribute>
@@ -3970,7 +3934,7 @@ MultiLineDisplayActions #</dia:string>
         </dia:composite>
       </dia:attribute>
     </dia:object>
-    <dia:object type="Standard - ZigZagLine" version="1" id="O97">
+    <dia:object type="Standard - ZigZagLine" version="1" id="O96">
       <dia:attribute name="obj_pos">
         <dia:point val="6,9"/>
       </dia:attribute>
@@ -4001,8 +3965,126 @@ MultiLineDisplayActions #</dia:string>
         <dia:real val="0.5"/>
       </dia:attribute>
       <dia:connections>
-        <dia:connection handle="0" to="O96" connection="13"/>
+        <dia:connection handle="0" to="O95" connection="13"/>
         <dia:connection handle="1" to="O14" connection="2"/>
+      </dia:connections>
+    </dia:object>
+    <dia:object type="Flowchart - Box" version="0" id="O97">
+      <dia:attribute name="obj_pos">
+        <dia:point val="-12,-2"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="-12.05,-2.05;-3.95,0.05"/>
+      </dia:attribute>
+      <dia:attribute name="elem_corner">
+        <dia:point val="-12,-2"/>
+      </dia:attribute>
+      <dia:attribute name="elem_width">
+        <dia:real val="8"/>
+      </dia:attribute>
+      <dia:attribute name="elem_height">
+        <dia:real val="2"/>
+      </dia:attribute>
+      <dia:attribute name="show_background">
+        <dia:boolean val="true"/>
+      </dia:attribute>
+      <dia:attribute name="corner_radius">
+        <dia:real val="1"/>
+      </dia:attribute>
+      <dia:attribute name="padding">
+        <dia:real val="0.5"/>
+      </dia:attribute>
+      <dia:attribute name="text">
+        <dia:composite type="text">
+          <dia:attribute name="string">
+            <dia:string>#GuiWidgetMixin#</dia:string>
+          </dia:attribute>
+          <dia:attribute name="font">
+            <dia:font family="sans" style="0" name="Helvetica"/>
+          </dia:attribute>
+          <dia:attribute name="height">
+            <dia:real val="0.80000000000000004"/>
+          </dia:attribute>
+          <dia:attribute name="pos">
+            <dia:point val="-8,-0.8575"/>
+          </dia:attribute>
+          <dia:attribute name="color">
+            <dia:color val="#000000"/>
+          </dia:attribute>
+          <dia:attribute name="alignment">
+            <dia:enum val="1"/>
+          </dia:attribute>
+        </dia:composite>
+      </dia:attribute>
+    </dia:object>
+    <dia:object type="Standard - ZigZagLine" version="1" id="O98">
+      <dia:attribute name="obj_pos">
+        <dia:point val="-10,0"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="-17.5,-0.05;-9.95,3.05"/>
+      </dia:attribute>
+      <dia:attribute name="orth_points">
+        <dia:point val="-10,0"/>
+        <dia:point val="-10,1"/>
+        <dia:point val="-17,1"/>
+        <dia:point val="-17,3"/>
+      </dia:attribute>
+      <dia:attribute name="orth_orient">
+        <dia:enum val="1"/>
+        <dia:enum val="0"/>
+        <dia:enum val="1"/>
+      </dia:attribute>
+      <dia:attribute name="autorouting">
+        <dia:boolean val="false"/>
+      </dia:attribute>
+      <dia:attribute name="end_arrow">
+        <dia:enum val="22"/>
+      </dia:attribute>
+      <dia:attribute name="end_arrow_length">
+        <dia:real val="0.5"/>
+      </dia:attribute>
+      <dia:attribute name="end_arrow_width">
+        <dia:real val="0.5"/>
+      </dia:attribute>
+      <dia:connections>
+        <dia:connection handle="0" to="O97" connection="12"/>
+        <dia:connection handle="1" to="O92" connection="2"/>
+      </dia:connections>
+    </dia:object>
+    <dia:object type="Standard - ZigZagLine" version="1" id="O99">
+      <dia:attribute name="obj_pos">
+        <dia:point val="1,-5"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="-6.5,-5.05;1.05,-1.95"/>
+      </dia:attribute>
+      <dia:attribute name="orth_points">
+        <dia:point val="1,-5"/>
+        <dia:point val="1,-4"/>
+        <dia:point val="-6,-4"/>
+        <dia:point val="-6,-2"/>
+      </dia:attribute>
+      <dia:attribute name="orth_orient">
+        <dia:enum val="1"/>
+        <dia:enum val="0"/>
+        <dia:enum val="1"/>
+      </dia:attribute>
+      <dia:attribute name="autorouting">
+        <dia:boolean val="false"/>
+      </dia:attribute>
+      <dia:attribute name="end_arrow">
+        <dia:enum val="22"/>
+      </dia:attribute>
+      <dia:attribute name="end_arrow_length">
+        <dia:real val="0.5"/>
+      </dia:attribute>
+      <dia:attribute name="end_arrow_width">
+        <dia:real val="0.5"/>
+      </dia:attribute>
+      <dia:connections>
+        <dia:connection handle="0" to="O87" connection="13"/>
+        <dia:connection handle="1" to="O97" connection="3"/>
       </dia:connections>
     </dia:object>
   </dia:layer>

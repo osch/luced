@@ -25,56 +25,28 @@
 #include "GuiWidget.hpp"
 #include "Position.hpp"
 #include "RawPtr.hpp"
+#include "GuiWidgetMixin.hpp"
 
 namespace LucED
 {
 
-class NonFocusableWidget : public GuiElement,
-                           public GuiWidget::EventListener
+class NonFocusableWidget : public GuiWidgetMixin<GuiElement>
 {
 public:
-    virtual void show();
-    virtual void hide();
-
-    bool isMapped() const {
-        return guiWidget.isValid() && isVisible();
-    }
-
-    virtual void setPosition(const Position& p);
-
+    typedef GuiWidgetMixin<GuiElement> BaseClass;
+    
     virtual void adopt(RawPtr<GuiElement>   parentElement,
                        RawPtr<GuiWidget>    parentWidget,
                        RawPtr<FocusManager> focusManager);
 
-    int getWidth() const {
-        return width;
-    }
-    int getHeight() const {
-        return height;
-    }
 protected:
     NonFocusableWidget(Visibility                       defaultVisibility = VISIBLE, 
                        int                              borderWidth = 0)
-        : GuiElement(defaultVisibility, 0, 0, 1 + borderWidth, 1 + borderWidth),
-          borderWidth(borderWidth),
-          width(1), height(1)
+        : BaseClass(defaultVisibility, borderWidth)
     {}
-
-    RawPtr<GuiWidget> getGuiWidget() {
-        return guiWidget;
-    }
 
     virtual void processGuiWidgetCreatedEvent() = 0;
 
-protected: // GuiWidget::EventListener methods
-    virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
-    virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
-
-private:
-    int                              borderWidth;
-    GuiWidget::Ptr                   guiWidget;
-    int                              width;
-    int                              height;
 };
 
 } // namespace LucED

@@ -24,69 +24,24 @@
 using namespace LucED;
 
 
-void FocusableWidget::show()
-{
-    if (guiWidget.isValid())
-    {
-        guiWidget->show();
-    }
-    FocusableElement::show();
-}
-
-void FocusableWidget::hide()
-{
-    if (guiWidget.isValid())
-    {
-        guiWidget->hide();
-    }
-    FocusableElement::hide();
-}
-
 
 void FocusableWidget::adopt(RawPtr<GuiElement>   parentElement,
                             RawPtr<GuiWidget>    parentWidget,
                             RawPtr<FocusManager> focusManagerForThis,
                             RawPtr<FocusManager> focusManagerForChilds)
 {
-    if (!wasAdopted(parentElement, guiWidget))
-    {
-        guiWidget = GuiWidget::create(parentWidget, 
-                                      this, // GuiWidget::EventListener
-                                      getPosition(),
-                                      borderWidth);
-    
-        this->width  = guiWidget->getWidth();
-        this->height = guiWidget->getHeight();
-    
-        FocusableElement::adopt(parentElement, guiWidget, focusManagerForThis,
-                                                          focusManagerForChilds);
-        if (isVisible()) {
-            guiWidget->show();
-        }
-        processGuiWidgetCreatedEvent();
-    }
+    BaseClass::adopt(parentElement, 
+                     parentWidget, 
+                     FocusableElement::FocusManagers().setFocusManagerForThis  (focusManagerForThis)
+                                                      .setFocusManagerForChilds(focusManagerForChilds));
 }
 
-
-void FocusableWidget::setPosition(const Position& p)
+void FocusableWidget::adopt(RawPtr<GuiElement>   parentElement,
+                            RawPtr<GuiWidget>    parentWidget,
+                            RawPtr<FocusManager> focusManager)
 {
-    if (p != getPosition()) {
-        if (guiWidget.isValid()) {
-            guiWidget->setPosition(p);
-        }
-        else {
-            FocusableElement::setPosition(p);
-            this->width  = p.w - 2 * borderWidth;
-            this->height = p.h - 2 * borderWidth;
-        }
-    }
+    BaseClass::adopt(parentElement, 
+                     parentWidget, 
+                     FocusableElement::FocusManagers().setFocusManagerForThis  (focusManager)
+                                                      .setFocusManagerForChilds(focusManager));
 }
-
-void FocusableWidget::processGuiWidgetNewPositionEvent(const Position& newPosition)
-{
-    FocusableElement::setPosition(newPosition);
-
-    this->width  = guiWidget->getWidth();
-    this->height = guiWidget->getHeight();
-}
-
