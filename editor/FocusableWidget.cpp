@@ -40,8 +40,6 @@ void FocusableWidget::adopt(RawPtr<GuiElement>   parentElement,
                             RawPtr<GuiWidget>    parentWidget,
                             RawPtr<FocusManager> focusManager)
 {
-    BaseClass::adopt(parentElement, 
-                     parentWidget, 
-                     FocusableElement::FocusManagers().setFocusManagerForThis  (focusManager)
-                                                      .setFocusManagerForChilds(focusManager));
+    adopt(parentElement, parentWidget, focusManager, 
+                                       focusManager);
 }
