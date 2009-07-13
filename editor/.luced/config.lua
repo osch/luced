@@ -22,7 +22,9 @@
 local generalConfig =
 {
           useOwnKeyPressRepeater = true,  -- try this on systems with slow keyboard repeat rate
-          doNotUseX11XkbExtension = false, -- this should be set to false
+          doNotUseX11XkbExtension = true, -- this must be set to true for newer x servers
+                                          -- because of strange (broken?) DetectableAutorepeat  
+                                          -- in x11XkbExtension
           keyPressRepeatFirstMilliSecs = 200,
           keyPressRepeatNextMilliSecs  =  15,
 
