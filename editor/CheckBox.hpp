@@ -37,6 +37,7 @@ namespace LucED
 class CheckBox : public FocusableWidget
 {
 public:
+    typedef FocusableWidget     BaseClass;
     typedef OwningPtr<CheckBox> Ptr;
     
     static Ptr create(String buttonText) {

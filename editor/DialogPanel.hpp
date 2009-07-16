@@ -38,6 +38,7 @@ class DialogPanel : public  FocusableWidget,
                     public  FocusManager
 {
 public:
+    typedef FocusableWidget        BaseClass;
     typedef OwningPtr<DialogPanel> Ptr;
     
     static Ptr create() {
@@ -54,7 +55,7 @@ public:
     virtual void treatFocusOut();
 
     void setRootElement(GuiElement::Ptr rootElement) {
-        FocusableWidget::setRootElement(rootElement);
+        BaseClass::setRootElement(rootElement);
     }
     void setFocus(RawPtr<FocusableElement> element);
     virtual void treatNotificationOfHotKeyEventForOtherWidget();
@@ -65,7 +66,7 @@ protected:
     DialogPanel(Callback<>::Ptr requestCloseCallback);
     
     RawPtr<GuiElement> getRootElement() { 
-        return FocusableWidget::getRootElement(); 
+        return BaseClass::getRootElement(); 
     }
     
     virtual void requestClose();

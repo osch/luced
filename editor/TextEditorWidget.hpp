@@ -37,6 +37,7 @@ namespace LucED
 class TextEditorWidget : public TextWidget
 {
 public:
+    typedef TextWidget                  BaseClass;
     typedef OwningPtr<TextEditorWidget> Ptr;
     
     static const int BORDER_WIDTH = 4;
@@ -112,10 +113,10 @@ public:
     void handleScrollStepH(ScrollStep::Type scrollStep);
 
     void showMousePointer() {
-        TextWidget::showMousePointer();
+        BaseClass::showMousePointer();
     }
     void hideMousePointer() {
-        TextWidget::hideMousePointer();
+        BaseClass::hideMousePointer();
         getGuiWidget()->addToXEventMask(PointerMotionMask);
     }
     

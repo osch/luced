@@ -269,7 +269,7 @@ void CheckBox::treatNewHotKeyRegistration(const KeyMapping::Id& id)
 void CheckBox::treatFocusIn()
 {
     if (!hasFocus()) {
-        setFocusFlag(true);
+        BaseClass::treatFocusIn();
         draw();
     }
 }
@@ -277,7 +277,7 @@ void CheckBox::treatFocusIn()
 
 void CheckBox::treatFocusOut()
 {
-    setFocusFlag(false);
+    BaseClass::treatFocusOut();
     draw();
 }
 

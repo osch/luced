@@ -47,8 +47,12 @@ public:
     bool      isFocusable()  const { return focusableFlag; }
     FocusType getFocusType() const { return focusType; }
 
-    virtual void treatFocusIn()  = 0;
-    virtual void treatFocusOut() = 0;
+    virtual void treatFocusIn() {
+        this->focusFlag = true;
+    }
+    virtual void treatFocusOut() {
+        this->focusFlag = false;
+    }
 
     virtual void treatNotificationOfHotKeyEventForOtherWidget();
     virtual void treatLostHotKeyRegistration(const KeyMapping::Id& id);
@@ -111,9 +115,6 @@ protected:
             
     virtual ~FocusableElement();
 
-    void setFocusFlag(bool focusFlag) {
-        this->focusFlag = focusFlag;
-    }
     void setFocusableFlag(bool focusableFlag) {
         this->focusableFlag = focusableFlag;
     }

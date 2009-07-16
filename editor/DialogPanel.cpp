@@ -97,7 +97,7 @@ void DialogPanel::setPosition(const Position& newPosition)
         p.h = m.minHeight;
     }
     
-    FocusableWidget::setPosition(p);
+    BaseClass::setPosition(p);
 }
 
 
@@ -116,7 +116,7 @@ void DialogPanel::processGuiWidgetNewPositionEvent(const Position& newPosition)
            dy = (2*dy - newPosition.h)/2;
         getRootElement()->setPosition(Position(dx, dy, newPosition.w - 2*dx - guiSpacing, newPosition.h - 2*dy - guiSpacing));
     }
-    FocusableWidget::processGuiWidgetNewPositionEvent(newPosition);
+    BaseClass::processGuiWidgetNewPositionEvent(newPosition);
 }
 
 GuiElement::Measures DialogPanel::internalGetDesiredMeasures()
@@ -189,7 +189,7 @@ void DialogPanel::treatFocusIn()
         }
     }
 
-    setFocusFlag(true);
+    BaseClass::treatFocusIn();
     if (focusedElement.isValid()) {
         focusedElement->treatFocusIn();
     }
@@ -222,7 +222,7 @@ void DialogPanel::treatFocusOut()
         }
     }
 
-    setFocusFlag(false);
+    BaseClass::treatFocusOut();
     if (focusedElement.isValid()) {
         focusedElement->treatFocusOut();
     }
@@ -775,8 +775,8 @@ void DialogPanel::adopt(RawPtr<GuiElement>   parentElement,
                         RawPtr<GuiWidget>    parentWidget,
                         RawPtr<FocusManager> focusManager)
 {
-    FocusableWidget::adopt(parentElement, 
-                           parentWidget, 
-                           focusManager,  // FocusManager for this
-                           this);         // FocusManager for childs
+    BaseClass::adopt(parentElement, 
+                     parentWidget, 
+                     focusManager,  // FocusManager for this
+                     this);         // FocusManager for childs
 }

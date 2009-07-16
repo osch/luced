@@ -171,7 +171,7 @@ TextEditorWidget::TextEditorWidget(HilitedText::Ptr hilitedText,
 
 void TextEditorWidget::processGuiWidgetCreatedEvent()
 {
-    TextWidget::processGuiWidgetCreatedEvent();
+    BaseClass::processGuiWidgetCreatedEvent();
     
     getGuiWidget()->addToXEventMask(ButtonPressMask|ButtonReleaseMask|ButtonMotionMask);
 
@@ -371,7 +371,7 @@ GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent
 {
     if (   (selectionOwner.isValid()    && selectionOwner   ->processSelectionOwnerEvent   (event) == GuiWidget::EVENT_PROCESSED) 
         || (pasteDataReceiver.isValid() && pasteDataReceiver->processPasteDataReceiverEvent(event) == GuiWidget::EVENT_PROCESSED)
-        || TextWidget::processGuiWidgetEvent(event) == GuiWidget::EVENT_PROCESSED)
+        || BaseClass::processGuiWidgetEvent(event) == GuiWidget::EVENT_PROCESSED)
     {
         return GuiWidget::EVENT_PROCESSED;
     } else {
@@ -877,7 +877,7 @@ void TextEditorWidget::treatFocusIn()
         startCursorBlinking();
     }
     showMousePointer();
-    setFocusFlag(true);
+    BaseClass::treatFocusIn();
 
     isSelectionPersistent = false;
 }
@@ -888,7 +888,7 @@ void TextEditorWidget::treatFocusOut()
     setCursorInactive();
     stopCursorBlinking();
     showMousePointer();
-    setFocusFlag(false);
+    BaseClass::treatFocusOut();
 
     if (getBackliteBuffer()->hasActiveSelection()) {
         isSelectionPersistent = true;
@@ -899,16 +899,16 @@ void TextEditorWidget::treatFocusOut()
 void TextEditorWidget::showCursor()
 {
     if (hasFocus()) {
-        TextWidget::startCursorBlinking();
+        BaseClass::startCursorBlinking();
     } else {
-        TextWidget::showCursor();
+        BaseClass::showCursor();
     }
 }
 
 
 void TextEditorWidget::hideCursor()
 {
-    TextWidget::hideCursor();
+    BaseClass::hideCursor();
 }
 
 void TextEditorWidget::handleScrollStepV(ScrollStep::Type scrollStep)

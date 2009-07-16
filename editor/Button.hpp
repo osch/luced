@@ -38,13 +38,14 @@ namespace LucED
 class Button : public FocusableWidget
 {
 public:
+    typedef FocusableWidget   BaseClass;
+    typedef OwningPtr<Button> Ptr;
+
     enum ActivationVariant {
         WAS_MOUSE_CLICK,
         WAS_HOT_KEY,
         WAS_DEFAULT_KEY
     };
-
-    typedef OwningPtr<Button> Ptr;
     
     static Ptr create(String buttonText) {
         return Ptr(new Button(buttonText));

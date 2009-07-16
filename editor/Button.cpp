@@ -378,7 +378,7 @@ void Button::treatFocusIn()
         requestHotKeyRegistration(KeyMapping::Id(KeyModifier(), KeyId("Return")));
     }
     if (!hasFocus()) {
-        setFocusFlag(true);
+        BaseClass::treatFocusIn();
         drawButton();
     }
 }
@@ -386,7 +386,7 @@ void Button::treatFocusIn()
 
 void Button::treatFocusOut()
 {
-    setFocusFlag(false);
+    BaseClass::treatFocusOut();
     if (!isExplicitDefaultButton) {
         requestRemovalOfHotKeyRegistration(KeyMapping::Id(KeyModifier(), KeyId("Return")));
     }

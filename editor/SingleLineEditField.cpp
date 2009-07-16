@@ -164,7 +164,7 @@ void SingleLineEditField::processGuiWidgetNewPositionEvent(const Position& newPo
 
 void SingleLineEditField::treatFocusIn()
 {
-    setFocusFlag(true);
+    BaseClass::treatFocusIn();
     cursorStaysHidden = false;
     draw();
     editorWidget->treatFocusIn();
@@ -175,7 +175,7 @@ void SingleLineEditField::treatFocusIn()
 
 void SingleLineEditField::treatFocusOut()
 {
-    setFocusFlag(false);
+    BaseClass::treatFocusOut();
     draw();
     editorWidget->treatFocusOut();
 }
