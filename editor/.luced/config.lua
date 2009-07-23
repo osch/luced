@@ -107,7 +107,18 @@ local languageModes =
     { 
       name            = "cplusplus",
       syntaxName      = "default.cplusplus",
-      fileNameRegex   = [[^.*\.(?:cpp|CPP|hpp|HPP|cxx|hxx|c|C|h|H|cc|hh)(?:\.emlua)?$]],
+      fileNameRegex   = [[^.*\.(?:CPP|HPP|H|cpp|hpp|cxx|hxx|c|h|cc|hh)(?:\.emlua)?$]],
+      approximateUnknownHiliting = true,
+      approximateUnknownHilitingReparseRange = 2000,
+      hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 4,
+    },
+    
+    {
+      name            = "jsp",
+      syntaxName      = "default.jsp",
+      fileNameRegex   =  [[^.*\.(jspf?|html?)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
