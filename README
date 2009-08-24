@@ -38,4 +38,3 @@ Try the following commands for building LucED:
    make
    
 See the file "Makefile" for possible adjustments for the "sandbox.mk" file.
-
