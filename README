@@ -2,7 +2,7 @@
 #
 #   LucED - The Lucid Editor
 #
-#   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+#   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 #
 #   This program is free software; you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License Version 2 as published
@@ -35,9 +35,7 @@ Try the following commands for building LucED:
 
    cd editor
    touch sandbox.mk
-   touch sandbox_options.h
    make
    
-See the file "Makefile" for possible adjustments for the "sandbox.mk" file and the
-file "options.h" for possible defines for the "sandbox_options.h" file.
+See the file "Makefile" for possible adjustments for the "sandbox.mk" file.
 
