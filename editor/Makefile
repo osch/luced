@@ -58,11 +58,12 @@ CPPCOMP_SLOW_OPTS := -Os
 BUILD_DIR       := build
 
 LINK_X11_OPTS   := -L /usr/X11R6/lib/ -lX11 -lXpm -lXext
-LINK_PCRE_OPTS  := -lpcre
+LINK_PCRE_OPTS  := ../pcre/.libs/libpcre.a
 LINK_EXTRA_OPTS := 
 LINK_OPTS       :=
 
 INCL_LUA_OPTS   := -I ../lua/src
+INCL_PCRE_OPTS  := -I ../pcre/
 INCL_EXTRA_OPTS :=
 INCL_OPTS       :=
 
@@ -72,7 +73,7 @@ INCL_OPTS       :=
 include sandbox.mk
 
 LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_EXTRA_OPTS)
-INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_EXTRA_OPTS)
+INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_PCRE_OPTS) $(INCL_EXTRA_OPTS)
 
 LUA_SCRIPTS            := functions             BuiltinActionDefinitions  BuiltinClassDefinitions
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
