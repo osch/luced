@@ -34,6 +34,16 @@
 #include "File.hpp"
 #include "RawPtr.hpp"
 
+
+extern "C"
+{
+    // These tables are defined in ../pcre/pcre_tables.c
+    
+    extern const int           _pcre_utf8_table3[];
+    extern const unsigned char _pcre_utf8_table4[];
+}
+
+
 namespace LucED
 {
 
@@ -244,26 +254,15 @@ public:
             *pos += 1;
         }
         else
-        {   
-            int count;
-                                                 // 0xE0 = 1110 0000
-            if      ((b & 0xE0) == 0xC0) {       // 0xC0 = 1100 0000
-                rslt  = (b & 0x1F);              // 0x1F = 0001 1111
-                count = 1;
-            }
-                                                 // 0xF0 = 1111 0000
-            else if ((b & 0xF0) == 0xE0) {       // 0xE0 = 1110 0000
-                rslt  = (b & 0x0F);              // 0x0F = 0000 1111
-                count = 2;
-            }
-                                                 // 0xF8 = 1111 1000
-            else if ((b & 0xF8) == 0xF0) {       // 0xF0 = 1111 0000
-                rslt = (b & 0x07);               // 0x07 = 0000 0111
-                count = 3;
-            }                
-            else {
-                count = -1;
-            }
+        {                                            // number of additional bytes
+            int count = _pcre_utf8_table4[b & 0x3F]; // 0x3F = 0011 1111
+            
+            rslt = (b & _pcre_utf8_table3[count]);   // first byte mask:
+                                                     // 0x1F = 0001 1111  <- count == 1
+                                                     // 0x0F = 0000 1111  <- count == 2
+                                                     // 0x07 = 0000 0111  <- count == 3
+                                                     // 0x03 = 0000 0011  <- count == 4
+                                                     // 0x01 = 0000 0001  <- count == 5
             while (true)
             {
                 *pos += 1;
