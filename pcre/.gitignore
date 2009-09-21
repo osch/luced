@@ -1,4 +1,5 @@
 /.deps
+/.libs
 /Makefile
 /config.h
 /config.log
@@ -11,3 +12,12 @@
 /pcre_stringpiece.h
 /pcrecpparg.h
 /stamp-h1
+/*.o
+/*.lo
+/*.la
+/pcre_chartables.c
+/pcre_scanner_unittest
+/pcre_stringpiece_unittest
+/pcrecpp_unittest
+/pcregrep
+/pcretest
