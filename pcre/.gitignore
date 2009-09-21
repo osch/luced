@@ -1,0 +1,13 @@
+/.deps
+/Makefile
+/config.h
+/config.log
+/config.status
+/libpcre.pc
+/libpcrecpp.pc
+/libtool
+/pcre-config
+/pcre.h
+/pcre_stringpiece.h
+/pcrecpparg.h
+/stamp-h1
