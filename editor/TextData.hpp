@@ -231,6 +231,81 @@ public:
         return buffer[marks[m.index].pos];
     }
     
+    int getWCharAndIncrementPos(long* pos) const
+    {
+        ASSERT(isBeginOfWChar(*pos));
+
+        int  rslt = 0;
+        byte b    = buffer[*pos];
+
+        if ((b & 0x80) == 0)                     // 0x80 = 1000 0000
+        {
+            rslt  = b;
+            *pos += 1;
+        }
+        else
+        {   
+            int count;
+                                                 // 0xE0 = 1110 0000
+            if      ((b & 0xE0) == 0xC0) {       // 0xC0 = 1100 0000
+                rslt  = (b & 0x1F);              // 0x1F = 0001 1111
+                count = 1;
+            }
+                                                 // 0xF0 = 1111 0000
+            else if ((b & 0xF0) == 0xE0) {       // 0xE0 = 1110 0000
+                rslt  = (b & 0x0F);              // 0x0F = 0000 1111
+                count = 2;
+            }
+                                                 // 0xF8 = 1111 1000
+            else if ((b & 0xF8) == 0xF0) {       // 0xF0 = 1111 0000
+                rslt = (b & 0x07);               // 0x07 = 0000 0111
+                count = 3;
+            }                
+            else {
+                count = -1;
+            }
+            while (true)
+            {
+                *pos += 1;
+                
+                if (isEndOfText(*pos)) {
+                    break;
+                }
+                b = buffer[*pos];
+                                                     // 0xC0 = 1100 0000
+                if ((b & 0xC0) == 0x80) {            // 0x80 = 1000 0000
+                    rslt = (rslt << 6) + (b & 0x3F); // 0x3F = 0011 1111
+                    count -= 1;
+                }
+                else {
+                    break;
+                }
+            }
+            if (count != 0) {
+                rslt = -1;
+            }
+        }
+        return rslt;
+    }
+    int getWChar(long pos) const {
+        return getWCharAndIncrementPos(&pos);
+    }
+    
+    bool isBeginOfWChar(long pos) const {
+        return pos == 0 || (buffer[pos - 1] & 0x80) == 0      // 0x80 = 1000 0000
+                        || (buffer[pos    ] & 0xC0) != 0x80;  // 0xC0 = 1100 0000
+    }
+    long getPrevWCharPos(long pos) const {
+        ASSERT(pos > 0);
+        ASSERT(isBeginOfWChar(pos));
+        do { pos -= 1; } while (!isBeginOfWChar(pos));
+    }
+    long getNextWCharPos(long pos) const {
+        ASSERT(!isEndOfText(pos));
+        ASSERT(isBeginOfWChar(pos));
+        do { pos += 1; } while (!isEndOfText(pos) && !isBeginOfWChar(pos));
+    }
+    
     bool isEndOfText(long pos) const {
         return pos == buffer.getLength();
     }
