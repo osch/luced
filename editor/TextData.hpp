@@ -241,6 +241,13 @@ public:
         return buffer[marks[m.index].pos];
     }
     
+    static bool isAsciiChar(byte b) { 
+        return (b & 0x80) == 0x00;             // 0x80 = 1000 0000
+    }                                          // 0x00 = 0000 0000
+    static bool isUft8FollowerChar(byte b) { 
+        return (b & 0xC0) == 0x80;             // 0xC0 = 1100 0000
+    }                                          // 0x80 = 1000 0000
+    
     int getWCharAndIncrementPos(long* pos) const
     {
         ASSERT(isBeginOfWChar(*pos));
@@ -248,7 +255,7 @@ public:
         int  rslt = 0;
         byte b    = buffer[*pos];
 
-        if ((b & 0x80) == 0)                     // 0x80 = 1000 0000
+        if (isAsciiChar(b))
         {
             rslt  = b;
             *pos += 1;
@@ -271,8 +278,8 @@ public:
                     break;
                 }
                 b = buffer[*pos];
-                                                     // 0xC0 = 1100 0000
-                if ((b & 0xC0) == 0x80) {            // 0x80 = 1000 0000
+                
+                if (isUft8FollowerChar(b)) {
                     rslt = (rslt << 6) + (b & 0x3F); // 0x3F = 0011 1111
                     count -= 1;
                 }
@@ -291,18 +298,27 @@ public:
     }
     
     bool isBeginOfWChar(long pos) const {
-        return pos == 0 || (buffer[pos - 1] & 0x80) == 0      // 0x80 = 1000 0000
-                        || (buffer[pos    ] & 0xC0) != 0x80;  // 0xC0 = 1100 0000
+        return pos == 0 ||  isAsciiChar(buffer[pos - 1])
+                        || !isUft8FollowerChar(buffer[pos]);
     }
     long getPrevWCharPos(long pos) const {
         ASSERT(pos > 0);
         ASSERT(isBeginOfWChar(pos));
         do { pos -= 1; } while (!isBeginOfWChar(pos));
+        return pos;
     }
     long getNextWCharPos(long pos) const {
         ASSERT(!isEndOfText(pos));
         ASSERT(isBeginOfWChar(pos));
-        do { pos += 1; } while (!isEndOfText(pos) && !isBeginOfWChar(pos));
+        
+        if (isAsciiChar(buffer[pos])) {
+            pos += 1;
+        }
+        else {
+            do { pos += 1; } while (  !isEndOfText(pos) 
+                                    && isUft8FollowerChar(buffer[pos]));
+        }
+        return pos;
     }
     
     bool isEndOfText(long pos) const {
