@@ -106,7 +106,7 @@ void TextData::reloadFile()
     for (long i = 0; i < marks.getLength(); ++i) {
         if (marks[i].inUseCounter > 0) {
             oldMarkPositions.append(LineAndColumn(marks[i].line,
-                                                  marks[i].column));
+                                                  marks[i].byteColumn));
         } else {
             oldMarkPositions.append(LineAndColumn(0, 0));
         }
@@ -230,7 +230,7 @@ TextData::TextMark TextData::createNewMark() {
     }
     marks[i].inUseCounter = 0;
     marks[i].pos          = 0;
-    marks[i].column       = 0;
+    marks[i].byteColumn   = 0;
     marks[i].line         = 0;
     return TextMark(this, i);
 }
@@ -242,9 +242,9 @@ TextData::TextMark TextData::createNewMark(MarkHandle src)
 
     TextMark rslt = createNewMark();
     TextMarkData& rsltMark = marks[rslt.index];
-    rsltMark.pos    = srcMark.pos;
-    rsltMark.column = srcMark.column;
-    rsltMark.line   = srcMark.line;
+    rsltMark.pos        = srcMark.pos;
+    rsltMark.byteColumn = srcMark.byteColumn;
+    rsltMark.line       = srcMark.line;
     return rslt;
 }
 
@@ -267,7 +267,7 @@ void TextData::updateMarks(
                 continue;
             }
             if (marks[i].pos >= oldEndChangedPos) {
-                if (marks[i].pos   - oldEndChangedPos > marks[i].column) {
+                if (marks[i].pos   - oldEndChangedPos > marks[i].byteColumn) {
                     marks[i].pos  += changedAmount;
                     marks[i].line += changedLineNumberAmount;
                 } else {
@@ -275,9 +275,9 @@ void TextData::updateMarks(
                         endColCalculated = true;
                         endColumns = newEndChangedPos - getThisLineBegin(newEndChangedPos);
                     }
-                    marks[i].column = marks[i].pos - oldEndChangedPos + endColumns;
-                    marks[i].pos   += changedAmount;
-                    marks[i].line  += changedLineNumberAmount;
+                    marks[i].byteColumn = marks[i].pos - oldEndChangedPos + endColumns;
+                    marks[i].pos       += changedAmount;
+                    marks[i].line      += changedLineNumberAmount;
                 }
                 continue;
             }
@@ -286,9 +286,9 @@ void TextData::updateMarks(
                 beginColCalculated = true;
                 beginColumns = beginChangedPos - bol;
             }
-            marks[i].pos    = beginChangedPos;
-            marks[i].column = beginColumns;
-            marks[i].line   = beginLineNumber;
+            marks[i].pos        = beginChangedPos;
+            marks[i].byteColumn = beginColumns;
+            marks[i].line       = beginLineNumber;
             ASSERT(marks[i].pos <= this->getLength());
         }
     }
@@ -695,42 +695,42 @@ void TextData::moveMarkToLineAndColumn(MarkHandle m, long newLine, long newColum
     for (int i = mark.pos; !isEndOfLine(i) && i < mark.pos + newColumn; ++i) {
         ++c;
     }
-    mark.pos   += c;
-    mark.column = c;
+    mark.pos       += c;
+    mark.byteColumn = c;
 }
 
 void TextData::moveMarkToBeginOfLine(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos = getThisLineBegin(mark.pos);
-    mark.pos = pos;
-    mark.column = 0;
+    long pos           = getThisLineBegin(mark.pos);
+    mark.pos           = pos;
+    mark.byteColumn    = 0;
 }
 
 void TextData::moveMarkToEndOfLine(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos = getThisLineEnding(mark.pos);
-    mark.column += pos - mark.pos;
-    mark.pos = pos;
+    long pos         = getThisLineEnding(mark.pos);
+    mark.byteColumn += pos - mark.pos;
+    mark.pos         = pos;
 }
 
 void TextData::moveMarkToNextLineBegin(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos = getNextLineBegin(mark.pos);
-    mark.line += 1;
-    mark.pos = pos;
-    mark.column = 0;
+    long pos           = getNextLineBegin(mark.pos);
+    mark.line         += 1;
+    mark.pos           = pos;
+    mark.byteColumn    = 0;
 }
 
 void TextData::moveMarkToPrevLineBegin(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos = getPrevLineBegin(mark.pos);
-    mark.line -= 1;
-    mark.pos = pos;
-    mark.column = 0;
+    long pos        = getPrevLineBegin(mark.pos);
+    mark.line      -= 1;
+    mark.pos        = pos;
+    mark.byteColumn = 0;
 }
 
 void TextData::moveMarkToPos(MarkHandle m, long pos)
@@ -750,7 +750,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos += 1;
                 }
             }
-            mark.column = pos - getThisLineBegin(pos);
+            mark.byteColumn = pos - getThisLineBegin(pos);
         } else {
             do {
                 if (isBeginOfLine(mark.pos)) {
@@ -760,7 +760,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos -= 1;
                 }
             } while (pos < mark.pos);
-            mark.column = pos - getThisLineBegin(pos);
+            mark.byteColumn = pos - getThisLineBegin(pos);
         }
     } 
     else if (mark.pos < pos)
@@ -776,7 +776,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos -= 1;
                 }
             }
-            mark.column = pos - getThisLineBegin(pos);
+            mark.byteColumn = pos - getThisLineBegin(pos);
         } else {
             do {
                 if (isEndOfLine(mark.pos)) {
@@ -786,7 +786,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos += 1;
                 }
             } while (mark.pos < pos);
-            mark.column = pos - getThisLineBegin(pos);
+            mark.byteColumn = pos - getThisLineBegin(pos);
         }
     }    
 }
@@ -799,9 +799,9 @@ void TextData::moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark)
         ASSERT(marks[toMark.index].inUseCounter > 0);
         TextMarkData& mark = marks[     m.index];
         TextMarkData& to   = marks[toMark.index];
-        mark.pos = to.pos;
-        mark.line = to.line;
-        mark.column = to.column;
+        mark.pos           = to.pos;
+        mark.line          = to.line;
+        mark.byteColumn    = to.byteColumn;
     }
 }
 

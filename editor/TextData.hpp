@@ -167,7 +167,7 @@ public:
         int inUseCounter;
         long pos;
         long line;
-        long column;
+        long byteColumn;
     };
     
     static Ptr create() {
@@ -403,9 +403,9 @@ public:
                 markPos += 1;
             }
         }
-        mark.pos    = markPos;
-        mark.line   = markLine;
-        mark.column = pos - getThisLineBegin(pos);
+        mark.pos        = markPos;
+        mark.line       = markLine;
+        mark.byteColumn = pos - getThisLineBegin(pos);
     }
     
     void incMark(MarkHandle m) {
@@ -437,7 +437,7 @@ public:
         return marks[mark.index].pos;
     }
     long getColumnNumberOfMark(MarkHandle mark) const {
-        return marks[mark.index].column;
+        return marks[mark.index].byteColumn;
     }
     long getLineNumberOfMark(MarkHandle mark) const {
         return marks[mark.index].line;
