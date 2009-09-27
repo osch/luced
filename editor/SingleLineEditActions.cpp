@@ -40,7 +40,8 @@ void SingleLineEditActions::cursorLeft()
         e->releaseSelection();
         long cursorPos = e->getCursorTextPosition();
         if (cursorPos > 0) {
-            e->moveCursorToTextPosition(cursorPos - 1);
+            long newPos = e->getTextData()->getPrevWCharPos(cursorPos);
+            e->moveCursorToTextPosition(newPos);
         }
     }
     e->assureCursorVisible();
@@ -55,7 +56,8 @@ void SingleLineEditActions::cursorRight()
         e->releaseSelection();
         long cursorPos = e->getCursorTextPosition();
         if (cursorPos < e->getTextData()->getLength()) {
-            e->moveCursorToTextPosition(cursorPos + 1);
+            long newPos = e->getTextData()->getNextWCharPos(cursorPos);
+            e->moveCursorToTextPosition(newPos);
         }
     }
     e->assureCursorVisible();
@@ -78,7 +80,7 @@ void SingleLineEditActions::gotoMatchingBracket()
             
             RawPtr<TextData> textData = e->getTextData();
             
-            switch (textData->getChar(cursorPos - 1)) {
+            switch (textData->getWCharBefore(cursorPos)) {
                 case '(': hasBracket = true; forward = true; openBracket = '('; closeBracket = ')'; break;
                 case '{': hasBracket = true; forward = true; openBracket = '{'; closeBracket = '}'; break;
                 case '[': hasBracket = true; forward = true; openBracket = '['; closeBracket = ']'; break;
@@ -100,7 +102,7 @@ void SingleLineEditActions::gotoMatchingBracket()
                     pos = cursorPos;
                     const long textLength = textData->getLength();
                     while (pos < textLength && counter != 0) {
-                        byte c = textData->getChar(pos);
+                        int c = textData->getWChar(pos);
                         if (c == closeBracket) {
                             --counter;
                         } else if (c == openBracket) {
@@ -115,7 +117,7 @@ void SingleLineEditActions::gotoMatchingBracket()
                     int counter = 1;
                     pos = cursorPos - 2;
                     while (pos > 0 && counter != 0) {
-                        byte c = textData->getChar(pos);
+                        int c = textData->getWChar(pos);
                         if (c == openBracket) {
                             --counter;
                         } else if (c == closeBracket) {
@@ -148,10 +150,10 @@ void SingleLineEditActions::cursorWordLeft()
         long cursorPos = e->getCursorTextPosition();
         long pos = cursorPos;
         
-        while (pos > 0 && !e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
+        while (pos > 0 && !e->isWordCharacter(e->getTextData()->getWCharBefore(pos))) {
             --pos;
         }
-        while (pos > 0 && e->isWordCharacter(e->getTextData()->getChar(pos - 1))) {
+        while (pos > 0 && e->isWordCharacter(e->getTextData()->getWCharBefore(pos))) {
             --pos;
         }
         e->moveCursorToTextPosition(pos);
@@ -174,15 +176,15 @@ void SingleLineEditActions::cursorWordRight()
 
 #if 0        
         bool gotoEndOfWordFlag = true;
-        if ((pos == 0 || !e->isWordCharacter(e->getTextData()->getChar(pos - 1)))
-          && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
+        if ((pos == 0 || !e->isWordCharacter(e->getTextData()->getWCharBefore(pos)))
+          && !e->isWordCharacter(e->getTextData()->getWChar(pos))) {
             gotoEndOfWordFlag = false;
         }
-        while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
+        while (pos < len && !e->isWordCharacter(e->getTextData()->getWChar(pos))) {
             ++pos;
         }
         if (gotoEndOfWordFlag) {
-            while (pos < len && e->isWordCharacter(e->getTextData()->getChar(pos))) {
+            while (pos < len && e->isWordCharacter(e->getTextData()->getWChar(pos))) {
                 ++pos;
             }
         }
@@ -191,8 +193,8 @@ void SingleLineEditActions::cursorWordRight()
             ++pos;
             if (pos > 0) {
                 while (pos < len 
-                  && !(  !e->isWordCharacter(e->getTextData()->getChar(pos - 1))
-                       && e->isWordCharacter(e->getTextData()->getChar(pos))))
+                  && !(  !e->isWordCharacter(e->getTextData()->getWCharBefore(pos))
+                       && e->isWordCharacter(e->getTextData()->getWChar(pos))))
                 {
                     ++pos;
                 }
@@ -259,10 +261,10 @@ void SingleLineEditActions::selectionCursorWordLeft()
         long oldCursorPos = e->getCursorTextPosition();
 
         long newCursorPos = oldCursorPos;
-        while (newCursorPos > 0 && !e->isWordCharacter(e->getTextData()->getChar(newCursorPos - 1))) {
+        while (newCursorPos > 0 && !e->isWordCharacter(e->getTextData()->getWCharBefore(newCursorPos))) {
             --newCursorPos;
         }
-        while (newCursorPos > 0 && e->isWordCharacter(e->getTextData()->getChar(newCursorPos - 1))) {
+        while (newCursorPos > 0 && e->isWordCharacter(e->getTextData()->getWCharBefore(newCursorPos))) {
             --newCursorPos;
         }
         e->moveCursorToTextPosition(newCursorPos);
@@ -289,15 +291,15 @@ void SingleLineEditActions::selectionCursorWordRight()
 
 #if 0
         bool gotoEndOfWordFlag = true;
-        if ((pos == 0 || !e->isWordCharacter(e->getTextData()->getChar(pos - 1)))
-          && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
+        if ((pos == 0 || !e->isWordCharacter(e->getTextData()->getWCharBefore(pos)))
+          && !e->isWordCharacter(e->getTextData()->getWChar(pos))) {
             gotoEndOfWordFlag = false;
         }
-        while (pos < len && !e->isWordCharacter(e->getTextData()->getChar(pos))) {
+        while (pos < len && !e->isWordCharacter(e->getTextData()->getWChar(pos))) {
             ++pos;
         }
         if (gotoEndOfWordFlag) {
-            while (pos < len && e->isWordCharacter(e->getTextData()->getChar(pos))) {
+            while (pos < len && e->isWordCharacter(e->getTextData()->getWChar(pos))) {
                 ++pos;
             }
         }
@@ -306,8 +308,8 @@ void SingleLineEditActions::selectionCursorWordRight()
             ++pos;
             if (pos > 0) {
                 while (pos < len 
-                  && !(  !e->isWordCharacter(e->getTextData()->getChar(pos - 1))
-                       && e->isWordCharacter(e->getTextData()->getChar(pos))))
+                  && !(  !e->isWordCharacter(e->getTextData()->getWCharBefore(pos))
+                       && e->isWordCharacter(e->getTextData()->getWChar(pos))))
                 {
                     ++pos;
                 }
@@ -507,7 +509,7 @@ void SingleLineEditActions::backSpace()
                     RawPtr<TextData> textData = e->getTextData();
                     bool wasAllSpace = true;
                     for (long p = cursorPos - e->getCursorColumn(); p < cursorPos; ++p) {
-                        byte c = textData->getChar(p);
+                        byte c = textData->getWChar(p);
                         if (c != ' ') {
                             wasAllSpace = false;
                             break;
@@ -526,7 +528,7 @@ void SingleLineEditActions::backSpace()
                     long p                      = cursorPos;
                     long opticalColumn          = e->getOpticalCursorColumn();
                     
-                    while (p - 1 >= 0 && textData->getChar(p - 1) == ' ') {
+                    while (p - 1 >= 0 && textData->getWCharBefore(p) == ' ') {
                         p             -= 1;
                         opticalColumn -= 1;
                         if ((opticalColumn / softTabWidth) * softTabWidth == opticalColumn) {
@@ -729,7 +731,7 @@ void SingleLineEditActions::selectWordForward()
             const long spos0 = spos;
             
             while (spos - 1 >= 0
-                   && e->isWordCharacter(textData->getChar(spos - 1)))
+                   && e->isWordCharacter(textData->getWCharBefore(spos)))
             {
                 --spos;
             }
@@ -737,13 +739,13 @@ void SingleLineEditActions::selectWordForward()
             if (spos == spos0)
             {
                 while (epos < len
-                       && !e->isWordCharacter(textData->getChar(epos)))
+                       && !e->isWordCharacter(textData->getWChar(epos)))
                 {
                     ++epos;
                 }
             }
             while (epos < len
-                   && e->isWordCharacter(textData->getChar(epos)))
+                   && e->isWordCharacter(textData->getWChar(epos)))
             {
                 ++epos;
             }
@@ -762,12 +764,12 @@ void SingleLineEditActions::selectWordForward()
             epos = cursorPos;
 
             while (spos - 1 >= 0
-                   && e->isWordCharacter(textData->getChar(spos - 1)))
+                   && e->isWordCharacter(textData->getWChar(spos - 1)))
             {
                 --spos;
             }
             while (epos < len
-                   && e->isWordCharacter(textData->getChar(epos)))
+                   && e->isWordCharacter(textData->getWChar(epos)))
             {
                 ++epos;
             }
@@ -797,12 +799,12 @@ void SingleLineEditActions::selectWordBackward()
             epos = e->getEndSelectionPos();
         
             while (epos - 1 >= 0
-                   && e->isWordCharacter(textData->getChar(epos - 1)))
+                   && e->isWordCharacter(textData->getWCharBefore(epos)))
             {
                 --epos;
             }
             while (epos - 1 >= 0
-                   && !e->isWordCharacter(textData->getChar(epos - 1)))
+                   && !e->isWordCharacter(textData->getWCharBefore(epos)))
             {
                 --epos;
             }

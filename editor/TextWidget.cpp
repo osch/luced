@@ -273,23 +273,26 @@ public:
           pixelPos(0),
           textPos(textPos),
           isEndOfLineFlag(textData->isEndOfLine(textPos)),
-          c(isEndOfLineFlag ? 0 : textData->getChar(textPos)),
+          c(isEndOfLineFlag ? 0 : textData->getWChar(textPos)),
           styleIndex(hilitingBuffer->getTextStyle(textPos)),
           style((*textStyles)[styleIndex]),
           spaceWidth(defaultTextStyle->getSpaceWidth()),
           tabWidth(hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth()),
           charWidth(isEndOfLineFlag ? 0 : style->getCharWidth(c)),
           doBackgroundFlag(true),
-          background(backliteBuffer->getBackground(textPos))
+          background(backliteBuffer->getBackground(textPos)),
+          numberWChars(0)
     {}
-    bool isAtEndOfLine()    const { return isEndOfLineFlag; }
-    long getTextPos()       const { return textPos; }
-    long getPixelPos()      const { return pixelPos; }
-    unsigned char getChar() const { return c; }
-    int getCharWidth() const { return charWidth; }
-    int getTabWidth()  const { return tabWidth; }
-    int getSpaceWidth() const { return spaceWidth; }
-    int getBackground() const { ASSERT(doBackgroundFlag == true); return background; }
+    bool isAtEndOfLine() const { return isEndOfLineFlag; }
+    long getTextPos()    const { return textPos; }
+    long getPixelPos()   const { return pixelPos; }
+    int  getWChar()      const { return c; }
+    int getCharWidth()   const { return charWidth; }
+    int getTabWidth()    const { return tabWidth; }
+    int getSpaceWidth()  const { return spaceWidth; }
+    int getBackground()  const { ASSERT(doBackgroundFlag == true); return background; }
+
+    long getNumberOfIteratedWChars() const { return numberWChars; }
 
     void setDoBackground(bool flag)
     {
@@ -319,9 +322,10 @@ public:
         } else {
             pixelPos += charWidth;
         }
-        textPos += 1;
+        textPos = textData->getNextWCharPos(textPos); numberWChars += 1;
+        
         if (!textData->isEndOfLine(textPos)) {
-            c          = textData->getChar(textPos);
+            c          = textData->getWChar(textPos);
             styleIndex = hilitingBuffer->getTextStyle(textPos);
             style      = (*textStyles)[styleIndex];
             charWidth  = style->getCharWidth(c);
@@ -346,7 +350,7 @@ private:
     long pixelPos;
     long textPos;
     bool isEndOfLineFlag;
-    unsigned char c;
+    int  c;
     int  styleIndex;
     RawPtr<TextStyle> style;
     const int tabWidth;
@@ -354,6 +358,7 @@ private:
     int charWidth;
     bool doBackgroundFlag;
     int background;
+    long numberWChars;
 };
 
 class TextWidgetFragmentFiller
@@ -364,14 +369,14 @@ public:
           lastStyle(-1),
           lastBackground(-1),
           lastStylePixBegin(-1),
-          lastStyleBeginTextPos(-1)
+          lastStyleBeginNumberOfIteratedWChars(-1)
     {}
 
     bool hasStyleChanged(const TextWidgetFillLineInfoIterator& i) const
     {
         return lastStyle      != i.getStyleIndex() 
             || lastBackground != i.getBackground()
-            || i.getChar() == '\t';
+            || i.getWChar() == '\t';
     }
 
     bool hasRememberedStyle() const
@@ -381,32 +386,32 @@ public:
 
     void completeFragment(const TextWidgetFillLineInfoIterator& i) 
     {
-        ASSERT(lastStyle             != -1);
-        ASSERT(lastStyleBeginTextPos != -1);
-        ASSERT(lastStylePixBegin     != -1);
-        ASSERT(fragments->getLength() >=  1);
+        ASSERT(lastStyle                            != -1);
+        ASSERT(lastStyleBeginNumberOfIteratedWChars != -1);
+        ASSERT(lastStylePixBegin                    != -1);
+        ASSERT(fragments->getLength()               >=  1);
 
-        fragments->getLast().numberBytes = i.getTextPos() - lastStyleBeginTextPos;
-        fragments->getLast().pixWidth    = i.getPixelPos() - lastStylePixBegin;
+        fragments->getLast().numberWChars = i.getNumberOfIteratedWChars() - lastStyleBeginNumberOfIteratedWChars;
+        fragments->getLast().pixWidth     = i.getPixelPos() - lastStylePixBegin;
     }
 
     void beginNewFragment(const TextWidgetFillLineInfoIterator& i)
     {
-        if (i.getChar() == '\t') {
+        if (i.getWChar() == '\t') {
             lastStyle = -2;
         } else {
             lastStyle = i.getStyleIndex();
         }
         lastBackground        = i.getBackground();
         lastStylePixBegin     = i.getPixelPos();
-        lastStyleBeginTextPos = i.getTextPos();
+        lastStyleBeginNumberOfIteratedWChars = i.getNumberOfIteratedWChars();
 
         fragments->appendAmount(1);
         fragments->getLast().background = i.getBackground();
         fragments->getLast().styleIndex = i.getStyleIndex();
     #ifdef DEBUG
-        fragments->getLast().numberBytes = -1;
-        fragments->getLast().pixWidth    = -1;
+        fragments->getLast().numberWChars = -1;
+        fragments->getLast().pixWidth     = -1;
     #endif
     }
 
@@ -415,7 +420,7 @@ private:
     int                                     lastStyle;
     int                                     lastBackground;
     long                                    lastStylePixBegin;
-    long                                    lastStyleBeginTextPos;
+    long                                    lastStyleBeginNumberOfIteratedWChars;
 };
 
 } // namespace LucED
@@ -462,8 +467,10 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
             i.increment();
         }
         while (!i.isAtEndOfLine());
-        i.setDoBackground(true);
 
+        i.setDoBackground(true);
+        const long startPosNumberOfIteratedWChars = i.getNumberOfIteratedWChars();
+        
         if (print == 1)
         {
             li->leftPixOffset = leftPix - i.getPixelPos();
@@ -496,19 +503,28 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
             f.completeFragment(i);
 
             li->endPos = i.getTextPos();
-            
-            long addLength = i.getTextPos() - li->startPos;
-            memcpy(li->outBuf.appendAmount(addLength), 
-                   textData->getAmount(li->startPos, addLength),
-                   addLength);
 
-            byte* stylesPtr = hilitingBuffer->getTextStyles(li->startPos, addLength);
+            // long numberWChars = i.getTextPos() - li->startPos;
+
+            const long numberWChars = i.getNumberOfIteratedWChars() - startPosNumberOfIteratedWChars;
+            
+            {
+                byte* outPtr = li->outBuf.appendAmount(numberWChars);
+                long p    = li->startPos;
+                long pend = i.getTextPos();
+
+                while (p < pend) {
+                    *(outPtr++) = (byte)(textData->getWCharAndIncrementPos(&p));
+                }
+            }
+
+            byte* stylesPtr = hilitingBuffer->getTextStyles(li->startPos, numberWChars);
             if (stylesPtr != NULL) {
-                memcpy(li->styles.appendAmount(addLength), 
+                memcpy(li->styles.appendAmount(numberWChars), 
                        stylesPtr,
-                       addLength);
+                       numberWChars);
             } else {
-                memset(li->styles.appendAmount(addLength), 0, addLength);
+                memset(li->styles.appendAmount(numberWChars), 0, numberWChars);
             }
         }
 
@@ -539,7 +555,6 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
            )
         || (print != 0 && li->startPos >=  0 && li->endPos >=  li->startPos));
         
-    ASSERT(li->styles.getLength() == li->endPos - li->startPos);
 }
 
 inline void TextWidget::applyTextStyle(int styleIndex)
@@ -555,14 +570,13 @@ inline void TextWidget::applyTextStyle(int styleIndex)
 inline int TextWidget::calcVisiblePixX(RawPtr<LineInfo> li, long pos)
 {
     int x = -li->leftPixOffset;
-    int  p, i;
     
     ASSERT(li->valid);
     ASSERT(li->startPos <= pos && pos <= li->endPos);
-    ASSERT(pos - li->startPos <= li->styles.getLength());
     
-    for (i = 0, p = li->startPos; p < pos; ++i, ++p) {
-        unsigned char c = textData->getChar(p);
+    long p = li->startPos;
+    for (int i = 0; p < pos; ++i) {
+        int c = textData->getWChar(p);
         int style = li->styles[i];
         if (c == '\t') {
             int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
@@ -572,6 +586,7 @@ inline int TextWidget::calcVisiblePixX(RawPtr<LineInfo> li, long pos)
         } else {
             x += textStyles[style]->getCharWidth(c);
         }
+        p = textData->getNextWCharPos(p);
     }
     return x;
 }
@@ -626,7 +641,7 @@ inline void TextWidget::clearPartialLine(RawPtr<LineInfo> li, int y, int x1, int
             
             int background = (*fragments)[i].background;
             int styleIndex = (*fragments)[i].styleIndex;
-            int len        = (*fragments)[i].numberBytes;
+            int len        = (*fragments)[i].numberWChars;
             int pixWidth   = (*fragments)[i].pixWidth;
 
             if (background != accBackground) {
@@ -696,7 +711,8 @@ inline void TextWidget::printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y
 {
     ByteArray& buf = li->outBuf;
     MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
-    unsigned char *ptr, *end;
+    unsigned char* ptr;
+    unsigned char* end;
     int x = -li->leftPixOffset;
     
     if (buf.getLength() > 0) {
@@ -710,7 +726,7 @@ inline void TextWidget::printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y
             
             int background = fragments[i].background;
             int styleIndex = fragments[i].styleIndex;
-            int len        = fragments[i].numberBytes;
+            int len        = fragments[i].numberWChars;
             int pixWidth   = fragments[i].pixWidth;
 
             const RawPtr<TextStyle> style = textStyles[styleIndex];
@@ -821,7 +837,7 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
             
             int background = fragments[i].background;
             int styleIndex = fragments[i].styleIndex;
-            int len        = fragments[i].numberBytes;
+            int len        = fragments[i].numberWChars;
             int pixWidth   = fragments[i].pixWidth;
 
             int tx1 = -leftPixOffset + x;
@@ -948,8 +964,8 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
     
     /////
     
-    int newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberBytes;
-    int oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberBytes;
+    int newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberWChars;
+    int oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberWChars;
 
     int newStyleIndex = newFragments[newFragmentIndex].styleIndex;
     int oldStyleIndex = oldFragments[oldFragmentIndex].styleIndex;
@@ -1010,7 +1026,7 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
             newFragmentIndex += 1;
             if (newFragmentIndex < newFragmentCount)
             {
-                newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberBytes;
+                newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberWChars;
                 newStyleIndex          = newFragments[newFragmentIndex].styleIndex;
                 newBackground          = newFragments[newFragmentIndex].background;
                 newStyle               = textStyles[newStyleIndex];
@@ -1022,7 +1038,7 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
             oldFragmentIndex += 1;
             if (oldFragmentIndex < oldFragmentCount)
             {
-                oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberBytes;
+                oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberWChars;
                 oldStyleIndex          = oldFragments[oldFragmentIndex].styleIndex;
                 oldBackground          = oldFragments[oldFragmentIndex].background;
                 oldStyle               = textStyles[oldStyleIndex];
@@ -1282,8 +1298,8 @@ long TextWidget::getCursorPixX()
     }
     // Fallback if not visible
     long x = 0;
-    for (long p = lineBegin; p < cursorPos; ++p) {
-        unsigned char c = textData->getChar(p);
+    for (long p = lineBegin; p < cursorPos; ) {
+        int c = textData->getWChar(p);
         if (c == '\t') {
             int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
             x = (x / tabWidth + 1) * tabWidth;
@@ -1291,6 +1307,7 @@ long TextWidget::getCursorPixX()
             int style = hilitingBuffer->getTextStyle(p);
             x += textStyles[style]->getCharWidth(c);
         }
+        p = textData->getNextWCharPos(p);
     }
     return x;
 }
@@ -1413,7 +1430,7 @@ long TextWidget::getTextPosForPixX(long pixX, long beginOfLinePos)
     long x = 0, ox = 0;
     ASSERT(textData->isBeginOfLine(p));
     while (x < pixX && !textData->isEndOfLine(p)) {
-        int c = textData->getChar(p);
+        int c = textData->getWChar(p);
         ox = x;
         if (c == '\t') {
             long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
@@ -1421,7 +1438,7 @@ long TextWidget::getTextPosForPixX(long pixX, long beginOfLinePos)
         } else {
             x += textStyles[hilitingBuffer->getTextStyle(p)]->getCharWidth(c);
         }
-        p += 1;
+        p = textData->getNextWCharPos(p);
     }
     if (p >= 1) {
         if (x - pixX > pixX - ox) {
@@ -1478,16 +1495,18 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
         int endI = li->styles.getLength();
 
         int x, nextX;
+        long p = li->startPos;
         for (x = 0, nextX = 0; nextX < pixX && i < endI; ++i) {
             x = nextX;
             const RawPtr<TextStyle> style = textStyles[li->styles[i]];
-            byte c = textData->getChar(li->startPos + i);
+            int c = textData->getWChar(p);
             if (c == '\t') {
                 long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
                 nextX = (x / tabWidth + 1) * tabWidth;
             } else {
                 nextX += style->getCharWidth(c);
             }
+            p = textData->getNextWCharPos(p);
         }
         if (optimizeForThinCursor) {
             if (i == 0 || nextX - pixX < pixX -x) {
@@ -2177,7 +2196,7 @@ long TextWidget::getOpticalCursorColumn() const
     const long hardTabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth();
     long       opticalCursorColumn = 0;
     for (long p = cursorPos - getCursorColumn(); p < cursorPos; ++p) {
-        if (textData->getChar(p) == '\t') {
+        if (textData->hasWCharAtPos('\t', p)) {
             opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
         } else {
             ++opticalCursorColumn;
@@ -2193,7 +2212,7 @@ long TextWidget::getOpticalColumn(long pos) const
     const long lineBegin    = textData->getThisLineBegin(pos);
     long       opticalCursorColumn = 0;
     for (long p = lineBegin; p < pos; ++p) {
-        if (textData->getChar(p) == '\t') {
+        if (textData->hasWCharAtPos('\t', p)) {
             opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
         } else {
             ++opticalCursorColumn;

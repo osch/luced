@@ -237,7 +237,7 @@ void MultiLineEditActions::shiftBlockLeft()
         expandedTabMinusOne.appendAndFillAmountWith(tabWidth - 1, ' ');
 
         while (mark.getPos() < endPos) {
-            byte c = textData->getChar(mark);
+            int c = textData->getWChar(mark);
             if (c == '\t') {
                 textData->removeAtMark(mark, 1);
                 textData->insertAtMark(mark, expandedTabMinusOne);
@@ -491,7 +491,7 @@ void MultiLineEditActions::newLineAutoIndent(bool insert)
 
         mark.moveToBeginOfLine();
         while (!mark.isEndOfText() && mark.getPos() < e->getCursorTextPosition()) {
-            byte c = mark.getChar();
+            int c = mark.getWChar();
             if (c == ' ' || c == '\t') {
                 whiteSpace.append(c);
             } else {
@@ -537,7 +537,7 @@ void MultiLineEditActions::newLineFixedColumnIndent(bool forward)
 
         mark.moveToBeginOfLine();
         while (!mark.isEndOfText() && mark.getPos() < e->getCursorTextPosition()) {
-            byte c = mark.getChar();
+            int c = mark.getWChar();
             if (c == ' ' || c == '\t') {
                 whiteSpace.append(c);
                 if (c == '\t') {

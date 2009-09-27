@@ -63,7 +63,7 @@ private:
     public:
         int background;
         int styleIndex;
-        int numberBytes;
+        int numberWChars;
         int pixWidth;
     };
     MemArray<FragmentInfo> fragments;

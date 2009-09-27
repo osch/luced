@@ -98,7 +98,7 @@ public:
     bool areCursorChangesDisabled()  { return cursorChangesDisabled; }
     void rememberCursorPixX()        { rememberedCursorPixX = getCursorPixX(); }
     int  getRememberedCursorPixX()   { return rememberedCursorPixX; }
-    bool isWordCharacter(unsigned char c);
+    bool isWordCharacter(int c);
     
     bool scrollUp();
     bool scrollDown();

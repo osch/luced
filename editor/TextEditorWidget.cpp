@@ -186,7 +186,7 @@ void TextEditorWidget::processGuiWidgetCreatedEvent()
 }
 
 
-bool TextEditorWidget::isWordCharacter(unsigned char c)
+bool TextEditorWidget::isWordCharacter(int c)
 {
     return c == '_' || isalnum(c);
 }
@@ -428,18 +428,18 @@ GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent
                             long p2 = p1;
                             if (doubleClickPos < textData->getLength())
                             {
-                                if (isWordCharacter(textData->getChar(p1))) {
-                                    while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
+                                if (isWordCharacter(textData->getWChar(p1))) {
+                                    while (p1 > 0 && isWordCharacter(textData->getWChar(p1 - 1))) {
                                         --p1;
                                     }
-                                    while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
+                                    while (p2 < textData->getLength() && isWordCharacter(textData->getWChar(p2))) {
                                         ++p2;
                                     }
-                                } else if (ispunct(textData->getChar(p1))) {
-                                    while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
+                                } else if (ispunct(textData->getWChar(p1))) {
+                                    while (p1 > 0 && ispunct(textData->getWChar(p1 - 1))) {
                                         --p1;
                                     }
-                                    while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
+                                    while (p2 < textData->getLength() && ispunct(textData->getWChar(p2))) {
                                         ++p2;
                                     }
                                 }
@@ -591,18 +591,18 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
 
             if (doubleClickPos < textData->getLength())
             {
-                if (isWordCharacter(textData->getChar(p1))) {
-                    while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
+                if (isWordCharacter(textData->getWChar(p1))) {
+                    while (p1 > 0 && isWordCharacter(textData->getWChar(p1 - 1))) {
                         --p1;
                     }
-                    while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
+                    while (p2 < textData->getLength() && isWordCharacter(textData->getWChar(p2))) {
                         ++p2;
                     }
-                } else if (ispunct(textData->getChar(p1))) {
-                    while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
+                } else if (ispunct(textData->getWChar(p1))) {
+                    while (p1 > 0 && ispunct(textData->getWChar(p1 - 1))) {
                         --p1;
                     }
-                    while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
+                    while (p2 < textData->getLength() && ispunct(textData->getWChar(p2))) {
                         ++p2;
                     }
                 }
@@ -615,12 +615,12 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                     if (p1 < getBackliteBuffer()->getSelectionAnchorPos()) {
                         if (getBackliteBuffer()->isAnchorAtBegin()) {
                             long p = getBackliteBuffer()->getSelectionAnchorPos();
-                            if (isWordCharacter(textData->getChar(p))) {
-                                while (p < textData->getLength() && isWordCharacter(textData->getChar(p))) {
+                            if (isWordCharacter(textData->getWChar(p))) {
+                                while (p < textData->getLength() && isWordCharacter(textData->getWChar(p))) {
                                     ++p;
                                 }
-                            } else if (ispunct(textData->getChar(p))) {
-                                while (p < textData->getLength() && ispunct(textData->getChar(p))) {
+                            } else if (ispunct(textData->getWChar(p))) {
+                                while (p < textData->getLength() && ispunct(textData->getWChar(p))) {
                                     ++p;
                                 }
                             }
@@ -632,12 +632,12 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                     } else {
                         if (!getBackliteBuffer()->isAnchorAtBegin()) {
                             long p = getBackliteBuffer()->getSelectionAnchorPos();
-                            if (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
-                                while (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
+                            if (p > 0 && isWordCharacter(textData->getWChar(p - 1))) {
+                                while (p > 0 && isWordCharacter(textData->getWChar(p - 1))) {
                                     --p;
                                 }
-                            } else if (p > 0 && ispunct(textData->getChar(p - 1))) {
-                                while (p > 0 && ispunct(textData->getChar(p - 1))) {
+                            } else if (p > 0 && ispunct(textData->getWChar(p - 1))) {
+                                while (p > 0 && ispunct(textData->getWChar(p - 1))) {
                                    --p;
                                 }
                             }

@@ -130,8 +130,11 @@ public:
         void moveToNextLineBegin() {
             textData->moveMarkToNextLineBegin(*this);
         }
-        byte getChar() {
-            return textData->getChar(*this);
+        byte getByte() {
+            return textData->getByte(*this);
+        }
+        int getWChar() {
+            return textData->getWChar(*this);
         }
         void inc() {
             textData->incMark(*this);
@@ -234,10 +237,10 @@ public:
     const byte& operator[](long pos) const {
         return buffer[pos];
     }
-    byte getChar(long pos) const {
+    byte getByte(long pos) const {
         return buffer[pos];
     }
-    byte getChar(MarkHandle m) const {
+    byte getByte(MarkHandle m) const {
         return buffer[marks[m.index].pos];
     }
     
@@ -294,6 +297,21 @@ public:
         return rslt;
     }
     int getWChar(long pos) const {
+        return getWCharAndIncrementPos(&pos);
+    }
+    int getWChar(MarkHandle m) const {
+        long pos = marks[m.index].pos;
+        return getWChar(pos);
+    }
+    bool hasWCharAtPos(int wchar, long pos) const {
+        if (0 <= wchar && wchar < 0x80) {
+            return buffer[pos] == wchar;
+        } else {
+            return wchar = getWChar(pos);
+        }
+    }
+    int getWCharBefore(long pos) const {
+        pos = getPrevWCharPos(pos);
         return getWCharAndIncrementPos(&pos);
     }
     
