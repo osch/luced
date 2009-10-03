@@ -56,24 +56,24 @@ public:
         return color;
     }    
     short getCharWidth(Char2b c) const {
-        if (c.byte1 == 0) {
-            return charWidths[c.byte2];
+        if (hasCharInfoFor(c)) {
+            return charWidths[getCharInfoIndex(c)];
         } else {
-            return internalGetCharWidth(c);
+            return unknownWidth;
         }
     }
     short getCharLBearing(Char2b c) const {
-        if (c.byte1 == 0) {
-            return charLBearings[c.byte1];
+        if (hasCharInfoFor(c)) {
+            return charLBearings[getCharInfoIndex(c)];
         } else {
-            return internalGetCharLBearing(c);
+            return unknownLBearing;
         }
     }
     short getCharRBearing(Char2b c) const {
-        if (c.byte1 == 0) {
-            return charRBearings[c.byte1];
+        if (hasCharInfoFor(c)) {
+            return charRBearings[getCharInfoIndex(c)];
         } else {
-            return internalGetCharRBearing(c);
+            return unknownRBearing;
         }
     }
     short getSpaceWidth() const {
@@ -117,12 +117,17 @@ public:
 private:
     TextStyle(const String& fontname, const String& colorName);
 
-    const XCharStruct* getXCharStructFor(Char2b c) const;
+    long getCharInfoIndex(Char2b c) const {
+        return (c.byte1 - minByte1) * numberBytes2 + (c.byte2 - minByte2);
+    }
+    bool hasCharInfoFor(Char2b c) const {
+        return minByte1 <= c.byte1 && c.byte1 <= maxByte1
+            && minByte2 <= c.byte2 && c.byte2 <= maxByte2;
+    }
+    long getNumberOfCharInfos() const {
+        return numberBytes2 * numberBytes1;
+    }
 
-    short internalGetCharWidth(Char2b c) const;
-    short internalGetCharLBearing(Char2b c) const;
-    short internalGetCharRBearing(Char2b c) const;
-    
     String fontName;
     String colorName;
 #ifdef X11_GUI
@@ -131,18 +136,25 @@ private:
     FontHandle fontHandle;
     GuiColor color;
 
-    short charWidths[256];
-    short charLBearings[256];
-    short charRBearings[256];
+    MemArray<short> charWidths;
+    MemArray<short> charLBearings;
+    MemArray<short> charRBearings;
     short spaceWidth;
 
     int lineHeight;
     int lineAscent;
     int lineDescent;
     
-    byte minByte1;
-    byte minByte2;
-    byte numberBytes2;
+    int minByte1;
+    int maxByte1;
+    int minByte2;
+    int maxByte2;
+    int numberBytes2;
+    int numberBytes1;
+    
+    short unknownWidth;
+    short unknownLBearing;
+    short unknownRBearing;
     
     Char2b defaultChar;
 };
