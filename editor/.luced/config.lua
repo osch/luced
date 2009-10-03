@@ -39,7 +39,7 @@ local generalConfig =
           guiColor03 = "grey80",
           guiColor04 = "grey85",
           guiColor05 = "grey90",
-          guiFont      = "-*-helvetica-medium-r-*-*-*-120-75-75-*-*-*-*",
+          guiFont      = "-*-helvetica-medium-r-*-*-*-120-75-75-*-*-iso10646-1",
           guiFontColor = "black",
           primarySelectionColor = "grey",
           pseudoSelectionColor  = "rgb:f1/f1/f1",
@@ -58,9 +58,9 @@ local generalConfig =
 }
 
 
-local normal_font = "-*-courier-medium-r-*-*-*-120-75-75-*-*-*-*"
-local italic_font = "-*-courier-medium-o-*-*-*-120-75-75-*-*-*-*"
-local bold_font   = "-*-courier-bold-r-*-*-*-120-75-75-*-*-*-*"
+local normal_font = "-*-courier-medium-r-*-*-*-120-75-75-*-*-iso10646-1"
+local italic_font = "-*-courier-medium-o-*-*-*-120-75-75-*-*-iso10646-1"
+local bold_font   = "-*-courier-bold-r-*-*-*-120-75-75-*-*-iso10646-1"
 
 
 local textStyles =
