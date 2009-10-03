@@ -25,6 +25,7 @@
 #include "NonCopyable.hpp"
 #include "ByteArray.hpp"
 #include "RawPointable.hpp"
+#include "Char2b.hpp"
 
 namespace LucED
 {
@@ -67,7 +68,7 @@ private:
         int pixWidth;
     };
     MemArray<FragmentInfo> fragments;
-    ByteArray outBuf;
+    MemArray<Char2b> outBuf;
 
     ByteArray styles;
 };

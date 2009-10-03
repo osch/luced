@@ -31,6 +31,7 @@
 #include "RawPtr.hpp"
 #include "OwningPtr.hpp"
 #include "FontHandle.hpp"
+#include "Char2b.hpp"
 
 namespace LucED
 {
@@ -54,14 +55,26 @@ public:
     GuiColor getColor() const {
         return color;
     }    
-    short getCharWidth(byte c) const {
-        return charWidths[c];
+    short getCharWidth(Char2b c) const {
+        if (c.byte1 == 0) {
+            return charWidths[c.byte2];
+        } else {
+            return internalGetCharWidth(c);
+        }
     }
-    short getCharLBearing(byte c) const {
-        return charLBearings[c];
+    short getCharLBearing(Char2b c) const {
+        if (c.byte1 == 0) {
+            return charLBearings[c.byte1];
+        } else {
+            return internalGetCharLBearing(c);
+        }
     }
-    short getCharRBearing(byte c) const {
-        return charRBearings[c];
+    short getCharRBearing(Char2b c) const {
+        if (c.byte1 == 0) {
+            return charRBearings[c.byte1];
+        } else {
+            return internalGetCharRBearing(c);
+        }
     }
     short getSpaceWidth() const {
         return spaceWidth;
@@ -97,10 +110,19 @@ public:
     String getColorName() const {
         return colorName;
     }
+    Char2b getDefaultChar() const {
+        return defaultChar;
+    }
 
 private:
     TextStyle(const String& fontname, const String& colorName);
 
+    const XCharStruct* getXCharStructFor(Char2b c) const;
+
+    short internalGetCharWidth(Char2b c) const;
+    short internalGetCharLBearing(Char2b c) const;
+    short internalGetCharRBearing(Char2b c) const;
+    
     String fontName;
     String colorName;
 #ifdef X11_GUI
@@ -117,6 +139,12 @@ private:
     int lineHeight;
     int lineAscent;
     int lineDescent;
+    
+    byte minByte1;
+    byte minByte2;
+    byte numberBytes2;
+    
+    Char2b defaultChar;
 };
 
 } // namespace LucED

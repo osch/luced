@@ -509,12 +509,12 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
             const long numberWChars = i.getNumberOfIteratedWChars() - startPosNumberOfIteratedWChars;
             
             {
-                byte* outPtr = li->outBuf.appendAmount(numberWChars);
+                Char2b* outPtr = li->outBuf.appendAmount(numberWChars);
                 long p    = li->startPos;
                 long pend = i.getTextPos();
 
                 while (p < pend) {
-                    *(outPtr++) = (byte)(textData->getWCharAndIncrementPos(&p));
+                    *(outPtr++) = textData->getWCharAndIncrementPos(&p);
                 }
             }
 
@@ -622,10 +622,10 @@ inline void TextWidget::clearLine(RawPtr<LineInfo> li, int y)
 
 inline void TextWidget::clearPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2)
 {
-    ByteArray& buf = li->outBuf;
+    MemArray<Char2b>&                         buf       = li->outBuf;
     RawPtr<MemArray<LineInfo::FragmentInfo> > fragments = &li->fragments;
-    byte* ptr;
-    byte* end;
+    Char2b* ptr;
+    Char2b* end;
     long x = -li->leftPixOffset;;
     long accX = -li->leftPixOffset;;
     int  accBackground = -1;
@@ -709,10 +709,10 @@ inline void TextWidget::clearPartialLine(RawPtr<LineInfo> li, int y, int x1, int
 
 inline void TextWidget::printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y, int x1, int x2)
 {
-    ByteArray& buf = li->outBuf;
+    MemArray<Char2b>&                 buf       = li->outBuf;
     MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
-    unsigned char* ptr;
-    unsigned char* end;
+    Char2b* ptr;
+    Char2b* end;
     int x = -li->leftPixOffset;
     
     if (buf.getLength() > 0) {
@@ -739,10 +739,10 @@ inline void TextWidget::printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y
                     && x + pixWidth 
                          - style->getCharWidth(ptr[len - 1])
                          + style->getCharRBearing(ptr[len - 1]) >= x1) {
-                unsigned char* ptrpend = ptr + len;
-                unsigned char* ptrp = ptr;
-                unsigned char* ptrp1;
-                unsigned char* ptrp2;
+                Char2b* ptrpend = ptr + len;
+                Char2b* ptrp = ptr;
+                Char2b* ptrp1;
+                Char2b* ptrp2;
                 int xp = x;
                 int xp1;
                 
@@ -760,8 +760,8 @@ inline void TextWidget::printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y
                 
                 applyTextStyle(styleIndex);
                 if (getGuiWidget().isValid()) {
-                    XDrawString(getDisplay(), getGuiWidget()->getWid(), 
-                            textWidget_gcid, xp1, y + lineAscent, (char*) ptrp1, ptrp2 - ptrp1);
+                    XDrawString16(getDisplay(), getGuiWidget()->getWid(), 
+                                  textWidget_gcid, xp1, y + lineAscent, ptrp1, ptrp2 - ptrp1);
                 }
                 //XDrawString(getDisplay(), tw->wid, 
                 //        tw->gcid, x, y + tw->lineAscent, ptr, len);
@@ -818,10 +818,10 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
         cursorX = calcVisiblePixX(li, cursorPos);
     }
 
-    ByteArray& buf                    = li->outBuf;
+    MemArray<Char2b>&                 buf       = li->outBuf;
     MemArray<LineInfo::FragmentInfo>& fragments = li->fragments;
-    byte* ptr;
-    byte* end;
+    Char2b* ptr;
+    Char2b* end;
     long x = 0;
     long lastBackgroundX = 0;
     int leftPixOffset = li->leftPixOffset;
@@ -891,8 +891,8 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
             if (len > 0 && *ptr != '\t') {
                 applyTextStyle(styleIndex);
                 if (getGuiWidget().isValid()) {
-                    XDrawString(getDisplay(), getGuiWidget()->getWid(), 
-                            textWidget_gcid, -leftPixOffset + x, y + lineAscent, (char*) ptr, len);
+                    XDrawString16(getDisplay(), getGuiWidget()->getWid(), 
+                                  textWidget_gcid, -leftPixOffset + x, y + lineAscent, ptr, len);
                 }
                 //printf("print <%.*s> \n", len, ptr);
             }
@@ -926,8 +926,8 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
 
 void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<LineInfo> oldLi)
 {
-    ByteArray& newBuf                              = newLi->outBuf;
-    ByteArray& oldBuf                              = oldLi->outBuf;
+    MemArray<Char2b>& newBuf = newLi->outBuf;
+    MemArray<Char2b>& oldBuf = oldLi->outBuf;
     
     long newBufLength = newBuf.getLength();
     long oldBufLength = oldBuf.getLength();
@@ -980,8 +980,8 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
     
     do
     {
-        byte newChar = newBuf[newBufIndex];
-        byte oldChar = oldBuf[oldBufIndex];
+        Char2b newChar = newBuf[newBufIndex];
+        Char2b oldChar = oldBuf[oldBufIndex];
         
         int  newCharLBearing = newStyle->getCharLBearing(newChar);
         int  newCharWidth;
