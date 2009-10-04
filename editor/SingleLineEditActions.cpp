@@ -215,7 +215,8 @@ void SingleLineEditActions::selectionCursorLeft()
         long oldCursorPos = e->getCursorTextPosition();
         if (oldCursorPos > 0)
         {
-            e->moveCursorToTextPosition(oldCursorPos - 1);
+            long prevPos = e->getTextData()->getPrevWCharPos(oldCursorPos);
+            e->moveCursorToTextPosition(prevPos);
 
             long newCursorPos = e->getCursorTextPosition();
             
@@ -239,7 +240,8 @@ void SingleLineEditActions::selectionCursorRight()
 
         if (oldCursorPos < e->getTextData()->getLength())
         {
-            e->moveCursorToTextPosition(oldCursorPos + 1);
+            long nextPos = e->getTextData()->getNextWCharPos(oldCursorPos);
+            e->moveCursorToTextPosition(nextPos);
 
             long newCursorPos = e->getCursorTextPosition();
 
@@ -764,14 +766,14 @@ void SingleLineEditActions::selectWordForward()
             epos = cursorPos;
 
             while (spos - 1 >= 0
-                   && e->isWordCharacter(textData->getWChar(spos - 1)))
+                   && e->isWordCharacter(textData->getWCharBefore(spos)))
             {
-                --spos;
+                spos = textData->getPrevWCharPos(spos);
             }
             while (epos < len
                    && e->isWordCharacter(textData->getWChar(epos)))
             {
-                ++epos;
+                epos = textData->getNextWCharPos(epos);
             }
             e->setPrimarySelection(spos, epos);
         }
@@ -801,12 +803,12 @@ void SingleLineEditActions::selectWordBackward()
             while (epos - 1 >= 0
                    && e->isWordCharacter(textData->getWCharBefore(epos)))
             {
-                --epos;
+                epos = textData->getPrevWCharPos(epos);
             }
             while (epos - 1 >= 0
                    && !e->isWordCharacter(textData->getWCharBefore(epos)))
             {
-                --epos;
+                epos = textData->getPrevWCharPos(epos);
             }
             if (epos > spos)
             {
