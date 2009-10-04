@@ -30,6 +30,8 @@
 
 #define CURSOR_WIDTH 2
 
+static const int TAB_CHARACTER = 0x09;
+
 using namespace LucED;
 
 static inline unsigned int calculateWidthOrHeightWithoutBorder(unsigned int totalWidth, int border)
@@ -304,7 +306,7 @@ public:
 
     int getCharRBearing() const
     { 
-        if (c != '\t') {
+        if (c != TAB_CHARACTER) {
             return style->getCharRBearing(c);
         } else {
             return (((pixelPos / tabWidth) + 1) * tabWidth) - pixelPos;
@@ -317,12 +319,13 @@ public:
     {
         ASSERT(isEndOfLineFlag == false);
 
-        if (c== '\t') {
+        if (c== TAB_CHARACTER) {
             pixelPos  = ((pixelPos / tabWidth) + 1) * tabWidth;
         } else {
             pixelPos += charWidth;
         }
-        textPos = textData->getNextWCharPos(textPos); numberWChars += 1;
+        textPos       = textData->getNextWCharPos(textPos); 
+        numberWChars += 1;
         
         if (!textData->isEndOfLine(textPos)) {
             c          = textData->getWChar(textPos);
@@ -376,7 +379,7 @@ public:
     {
         return lastStyle      != i.getStyleIndex() 
             || lastBackground != i.getBackground()
-            || i.getWChar() == '\t';
+            || i.getWChar() == TAB_CHARACTER;
     }
 
     bool hasRememberedStyle() const
@@ -397,7 +400,7 @@ public:
 
     void beginNewFragment(const TextWidgetFillLineInfoIterator& i)
     {
-        if (i.getWChar() == '\t') {
+        if (i.getWChar() == TAB_CHARACTER) {
             lastStyle = -2;
         } else {
             lastStyle = i.getStyleIndex();
@@ -578,7 +581,7 @@ inline int TextWidget::calcVisiblePixX(RawPtr<LineInfo> li, long pos)
     for (int i = 0; p < pos; ++i) {
         int c = textData->getWChar(p);
         int style = li->styles[i];
-        if (c == '\t') {
+        if (c == TAB_CHARACTER) {
             int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
             long totalX = leftPix + x;
             totalX = (totalX / tabWidth + 1) * tabWidth;
@@ -735,7 +738,7 @@ inline void TextWidget::printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y
                 break;
             }
             
-            if (len > 0 && *ptr != '\t'
+            if (len > 0 && *ptr != TAB_CHARACTER
                     && x + pixWidth 
                          - style->getCharWidth(ptr[len - 1])
                          + style->getCharRBearing(ptr[len - 1]) >= x1) {
@@ -853,7 +856,7 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
             }
             lastBackgroundX = x + pixWidth;
             
-            if (len > 0 && *ptr != '\t' ) 
+            if (len > 0 && *ptr != TAB_CHARACTER ) 
             {
                 const RawPtr<TextStyle> style = textStyles[styleIndex];
                 int txCorrection = - style->getCharWidth(ptr[len - 1]) + style->getCharRBearing(ptr[len - 1]);
@@ -888,7 +891,7 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
                 }
             }
 
-            if (len > 0 && *ptr != '\t') {
+            if (len > 0 && *ptr != TAB_CHARACTER) {
                 applyTextStyle(styleIndex);
                 if (getGuiWidget().isValid()) {
                     XDrawString16(getDisplay(), getGuiWidget()->getWid(), 
@@ -986,7 +989,7 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
         int  newCharLBearing = newStyle->getCharLBearing(newChar);
         int  newCharWidth;
         int  newCharRBearing;
-        if (newChar == '\t') {
+        if (newChar == TAB_CHARACTER) {
             newCharWidth    = (((newX + leftPix) / tabWidth) + 1) * tabWidth - (newX + leftPix);
             newCharRBearing = newCharWidth;
         } else {
@@ -997,7 +1000,7 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
         int  oldCharLBearing = oldStyle->getCharLBearing(oldChar);
         int  oldCharWidth;
         int  oldCharRBearing;
-        if (oldChar == '\t') {
+        if (oldChar == TAB_CHARACTER) {
             oldCharWidth    = (((oldX + leftPix) / tabWidth) + 1) * tabWidth - (oldX + leftPix);
             oldCharRBearing = oldCharWidth;
         } else {
@@ -1300,7 +1303,7 @@ long TextWidget::getCursorPixX()
     long x = 0;
     for (long p = lineBegin; p < cursorPos; ) {
         int c = textData->getWChar(p);
-        if (c == '\t') {
+        if (c == TAB_CHARACTER) {
             int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
             x = (x / tabWidth + 1) * tabWidth;
         } else {
@@ -1432,7 +1435,7 @@ long TextWidget::getTextPosForPixX(long pixX, long beginOfLinePos)
     while (x < pixX && !textData->isEndOfLine(p)) {
         int c = textData->getWChar(p);
         ox = x;
-        if (c == '\t') {
+        if (c == TAB_CHARACTER) {
             long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
             x = (x / tabWidth + 1) * tabWidth;
         } else {
@@ -1442,7 +1445,7 @@ long TextWidget::getTextPosForPixX(long pixX, long beginOfLinePos)
     }
     if (p >= 1) {
         if (x - pixX > pixX - ox) {
-            p -= 1;
+            p = textData->getPrevWCharPos(p);
         }
     }
     return p;
@@ -1500,7 +1503,7 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
             x = nextX;
             const RawPtr<TextStyle> style = textStyles[li->styles[i]];
             int c = textData->getWChar(p);
-            if (c == '\t') {
+            if (c == TAB_CHARACTER) {
                 long tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
                 nextX = (x / tabWidth + 1) * tabWidth;
             } else {
@@ -1508,17 +1511,19 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
             }
             p = textData->getNextWCharPos(p);
         }
+        long rslt = p;
+        
         if (optimizeForThinCursor) {
             if (i == 0 || nextX - pixX < pixX -x) {
-                return li->startPos + i;
+                return rslt;
             } else {
-                return li->startPos + i - 1;
+                return textData->getPrevWCharPos(rslt);
             }
         } else {
             if (i == 0) {
-                return li->startPos + i;
+                return rslt;
             } else {
-                return li->startPos + i - 1;
+                return textData->getPrevWCharPos(rslt);
             }
         }
     }
@@ -2196,7 +2201,7 @@ long TextWidget::getOpticalCursorColumn() const
     const long hardTabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth();
     long       opticalCursorColumn = 0;
     for (long p = cursorPos - getCursorByteColumn(); p < cursorPos;) {
-        if (textData->hasWCharAtPos('\t', p)) {
+        if (textData->hasWCharAtPos(TAB_CHARACTER, p)) {
             opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
         } else {
             ++opticalCursorColumn;
@@ -2213,7 +2218,7 @@ long TextWidget::getOpticalColumn(long pos) const
     const long lineBegin    = textData->getThisLineBegin(pos);
     long       opticalCursorColumn = 0;
     for (long p = lineBegin; p < pos;) {
-        if (textData->hasWCharAtPos('\t', p)) {
+        if (textData->hasWCharAtPos(TAB_CHARACTER, p)) {
             opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
         } else {
             ++opticalCursorColumn;

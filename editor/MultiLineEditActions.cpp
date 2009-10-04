@@ -301,7 +301,7 @@ void MultiLineEditActions::cursorPageDown()
             targetTopLine = e->getTextData()->getNumberOfLines() - e->getNumberOfVisibleLines();
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToLineAndWCharColumn(targetLine, 0);
+        mark.moveToBeginOfLine(targetLine);
 
         long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
         mark.moveToPos(newPos);
@@ -328,7 +328,7 @@ void MultiLineEditActions::cursorPageUp()
             targetTopLine = 0;
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToLineAndWCharColumn(targetLine, 0);
+        mark.moveToBeginOfLine(targetLine);
 
         long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
         mark.moveToPos(newPos);
@@ -355,7 +355,7 @@ void MultiLineEditActions::selectionCursorPageDown()
             targetTopLine = e->getTextData()->getNumberOfLines() - e->getNumberOfVisibleLines();
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToLineAndWCharColumn(targetLine, 0);
+        mark.moveToBeginOfLine(targetLine);
 
         long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
         mark.moveToPos(newPos);
@@ -391,7 +391,7 @@ void MultiLineEditActions::selectionCursorPageUp()
             targetTopLine = 0;
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToLineAndWCharColumn(targetLine, 0);
+        mark.moveToBeginOfLine(targetLine);
 
         long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
         mark.moveToPos(newPos);

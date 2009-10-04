@@ -258,7 +258,8 @@ void TextData::updateMarks(
     long newEndChangedPos = oldEndChangedPos + changedAmount;
     bool endColCalculated = false;
     bool beginColCalculated = false;
-    long beginColumns = 0, endColumns = 0;
+    long beginByteColumns = 0;
+    long endByteColumns = 0;
     
     ASSERT(beginChangedPos <= oldEndChangedPos);
     ASSERT(beginChangedPos <= oldEndChangedPos + changedAmount);
@@ -275,9 +276,9 @@ void TextData::updateMarks(
                 } else {
                     if (!endColCalculated) {
                         endColCalculated = true;
-                        endColumns = newEndChangedPos - getThisLineBegin(newEndChangedPos);
+                        endByteColumns = newEndChangedPos - getThisLineBegin(newEndChangedPos);
                     }
-                    marks[i].byteColumn  = marks[i].pos - oldEndChangedPos + endColumns;
+                    marks[i].byteColumn  = marks[i].pos - oldEndChangedPos + endByteColumns;
                     marks[i].pos        += changedAmount;
                     marks[i].line       += changedLineNumberAmount;
                     marks[i].wcharColumn = -1;
@@ -287,11 +288,11 @@ void TextData::updateMarks(
             if (!beginColCalculated) {
                 long bol = getThisLineBegin(beginChangedPos);
                 beginColCalculated = true;
-                beginColumns = beginChangedPos - bol;
+                beginByteColumns = beginChangedPos - bol;
             }
             marks[i].pos         = beginChangedPos;
             marks[i].line        = beginLineNumber;
-            marks[i].byteColumn  = beginColumns;
+            marks[i].byteColumn  = beginByteColumns;
             marks[i].wcharColumn = -1;
             ASSERT(marks[i].pos <= this->getLength());
         }
@@ -656,7 +657,7 @@ void TextData::reset()
 }
 
 
-void TextData::moveMarkToLineAndWCharColumn(MarkHandle m, long newLine, long newWCharColumn)
+void TextData::moveMarkToBeginOfLine(MarkHandle m, long newLine)
 {
     if (newLine >= numberLines) {
         newLine = numberLines - 1;
@@ -693,8 +694,17 @@ void TextData::moveMarkToLineAndWCharColumn(MarkHandle m, long newLine, long new
     } else {
         mark.pos = getThisLineBegin(mark.pos);
     }
-    ASSERT(isBeginOfLine(mark.pos));
     mark.line   = newLine;
+
+    ASSERT(isBeginOfLine(mark.pos));
+}
+
+void TextData::moveMarkToLineAndWCharColumn(MarkHandle m, long newLine, long newWCharColumn)
+{
+    moveMarkToBeginOfLine(m, newLine);
+
+    TextMarkData& mark = marks[m.index];
+
     long c = 0;
     long i = mark.pos;
     while (!isEndOfLine(i) && c < newWCharColumn) {
@@ -705,6 +715,7 @@ void TextData::moveMarkToLineAndWCharColumn(MarkHandle m, long newLine, long new
     mark.pos         = i;
     mark.wcharColumn = newWCharColumn;
 }
+
 
 void TextData::moveMarkToBeginOfLine(MarkHandle m)
 {
@@ -718,10 +729,18 @@ void TextData::moveMarkToBeginOfLine(MarkHandle m)
 void TextData::moveMarkToEndOfLine(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos         = getThisLineEnding(mark.pos);
-    mark.byteColumn += pos - mark.pos;
-    mark.pos         = pos;
-    mark.wcharColumn = -1;
+
+    long p1          = mark.pos;
+    long p           = p1;
+    long wcharColumn = getWCharColumn(m);
+
+    while (!isEndOfLine(p)) {
+        p = getNextWCharPos(p);
+        ++wcharColumn;
+    }
+    mark.byteColumn += p - p1;
+    mark.pos         = p;
+    mark.wcharColumn = wcharColumn;
 }
 
 void TextData::moveMarkToNextLineBegin(MarkHandle m)
@@ -731,15 +750,17 @@ void TextData::moveMarkToNextLineBegin(MarkHandle m)
     mark.line         += 1;
     mark.pos           = pos;
     mark.byteColumn    = 0;
+    mark.wcharColumn   = 0;
 }
 
 void TextData::moveMarkToPrevLineBegin(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos        = getPrevLineBegin(mark.pos);
-    mark.line      -= 1;
-    mark.pos        = pos;
-    mark.byteColumn = 0;
+    long pos         = getPrevLineBegin(mark.pos);
+    mark.line       -= 1;
+    mark.pos         = pos;
+    mark.byteColumn  = 0;
+    mark.wcharColumn = 0;
 }
 
 void TextData::moveMarkToPos(MarkHandle m, long pos)
@@ -759,7 +780,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos += 1;
                 }
             }
-            mark.byteColumn = pos - getThisLineBegin(pos);
+            fillInColumns(mark);
         } else {
             do {
                 if (isBeginOfLine(mark.pos)) {
@@ -769,7 +790,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos -= 1;
                 }
             } while (pos < mark.pos);
-            mark.byteColumn = pos - getThisLineBegin(pos);
+            fillInColumns(mark);
         }
     } 
     else if (mark.pos < pos)
@@ -785,7 +806,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos -= 1;
                 }
             }
-            mark.byteColumn = pos - getThisLineBegin(pos);
+            fillInColumns(mark);
         } else {
             do {
                 if (isEndOfLine(mark.pos)) {
@@ -795,10 +816,9 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos += 1;
                 }
             } while (mark.pos < pos);
-            mark.byteColumn = pos - getThisLineBegin(pos);
+            fillInColumns(mark);
         }
     }
-    mark.wcharColumn = -1;
 }
 
 void TextData::moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark)

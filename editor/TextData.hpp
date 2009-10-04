@@ -124,6 +124,9 @@ public:
         long getWCharColumn() {
             return textData->getWCharColumn(*this);
         }
+        void moveToBeginOfLine(long line) {
+            textData->moveMarkToBeginOfLine(*this, line);
+        }
         void moveToBeginOfLine() {
             textData->moveMarkToBeginOfLine(*this);
         }
@@ -422,6 +425,7 @@ public:
     void reset();
     
     void moveMarkToLineAndWCharColumn(MarkHandle m, long line, long column);
+    void moveMarkToBeginOfLine(MarkHandle m, long line);
     void moveMarkToBeginOfLine(MarkHandle m);
     void moveMarkToEndOfLine(MarkHandle m);
     void moveMarkToNextLineBegin(MarkHandle m);
@@ -429,21 +433,28 @@ public:
     void moveMarkToPos(MarkHandle m, long pos);
     void moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark);
 
-
-    long getWCharColumn(TextMarkData& mark) {
-        long wcharColumn = mark.wcharColumn;
-        if (wcharColumn == -1) {
-            long epos = mark.pos;
-            long p    = epos - mark.byteColumn;
-            wcharColumn = 0;
-            while (p < epos) {
-                p = getNextWCharPos(p);
-                ++wcharColumn;
-            }
-            mark.wcharColumn = wcharColumn;
+private:
+    void fillInColumns(long pos, long* byteColumn, long* wcharColumn) {
+        long p = pos;
+        long w = 0;
+        while (!isBeginOfLine(p)) {
+            p = getPrevWCharPos(p);
+            ++w;
         }
-        return wcharColumn;
+        *wcharColumn = w;
+        *byteColumn  = pos - p;
     }
+    void fillInColumns(TextMarkData& mark) {
+        fillInColumns(mark.pos, &mark.byteColumn, 
+                                &mark.wcharColumn);
+    }
+    long getWCharColumn(TextMarkData& mark) {
+        if (mark.wcharColumn == -1) {
+            fillInColumns(mark);
+        }
+        return mark.wcharColumn;
+    }
+public:
     long getWCharColumn(MarkHandle m) {
         return getWCharColumn(marks[m.index]);
     }

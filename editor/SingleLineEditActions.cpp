@@ -735,7 +735,7 @@ void SingleLineEditActions::selectWordForward()
             while (spos - 1 >= 0
                    && e->isWordCharacter(textData->getWCharBefore(spos)))
             {
-                --spos;
+                spos = textData->getPrevWCharPos(spos);
             }
 
             if (spos == spos0)
@@ -743,13 +743,13 @@ void SingleLineEditActions::selectWordForward()
                 while (epos < len
                        && !e->isWordCharacter(textData->getWChar(epos)))
                 {
-                    ++epos;
+                    epos = textData->getNextWCharPos(epos);
                 }
             }
             while (epos < len
                    && e->isWordCharacter(textData->getWChar(epos)))
             {
-                ++epos;
+                epos = textData->getNextWCharPos(epos);
             }
 
             if (e->getBeginSelectionPos() != spos)
