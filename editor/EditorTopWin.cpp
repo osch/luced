@@ -949,7 +949,7 @@ void EditorTopWin::gotoLineNumber(int lineNumber)
     if (lineNumber < 0) lineNumber = 0;
     
     TextData::TextMark m = textEditor->createNewMarkFromCursor();
-    m.moveToLineAndColumn(lineNumber, m.getColumn());
+    m.moveToLineAndWCharColumn(lineNumber, m.getWCharColumn());
     textEditor->moveCursorToTextMarkAndAdjustVisibility(m);
     textEditor->rememberCursorPixX();
     if (!wasNegative) {

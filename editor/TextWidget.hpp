@@ -141,8 +141,11 @@ public:
     long getCursorLineNumber() const {
         return textData->getLineNumberOfMark(cursorMarkId);
     }
-    long getCursorColumn() const {
-        return textData->getColumnNumberOfMark(cursorMarkId);
+    long getCursorWCharColumn() const {
+        return textData->getWCharColumnNumberOfMark(cursorMarkId);
+    }
+    long getCursorByteColumn() const {
+        return textData->getByteColumnNumberOfMark(cursorMarkId);
     }
     long getOpticalCursorColumn() const;
 

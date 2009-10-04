@@ -188,8 +188,8 @@ public:
     void extendSelectionTo(long pos) {
         getBackliteBuffer()->extendSelectionTo(pos);
     }
-    long getSelectionLength() {
-        return getBackliteBuffer()->getSelectionLength();
+    long getSelectionByteLength() {
+        return getBackliteBuffer()->getSelectionByteLength();
     }
     
     void releaseSelection();

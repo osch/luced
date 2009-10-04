@@ -103,8 +103,8 @@ public:
             textData = src.textData;
             return *this;
         }
-        void moveToLineAndColumn(long line, long column) {
-            textData->moveMarkToLineAndColumn(*this, line, column);
+        void moveToLineAndWCharColumn(long line, long column) {
+            textData->moveMarkToLineAndWCharColumn(*this, line, column);
         }
         void moveToPos(long pos) {
             textData->moveMarkToPos(*this, pos);
@@ -118,8 +118,11 @@ public:
         long getLine() {
             return textData->getLineNumberOfMark(*this);
         }
-        long getColumn() {
-            return textData->getColumnNumberOfMark(*this);
+        long getByteColumn() {
+            return textData->getByteColumnNumberOfMark(*this);
+        }
+        long getWCharColumn() {
+            return textData->getWCharColumn(*this);
         }
         void moveToBeginOfLine() {
             textData->moveMarkToBeginOfLine(*this);
@@ -167,10 +170,12 @@ public:
     private:
         friend class TextData;
         friend class TextMark;
+        
         int inUseCounter;
         long pos;
         long line;
         long byteColumn;
+        long wcharColumn;
     };
     
     static Ptr create() {
@@ -416,7 +421,7 @@ public:
     void clear();
     void reset();
     
-    void moveMarkToLineAndColumn(MarkHandle m, long line, long column);
+    void moveMarkToLineAndWCharColumn(MarkHandle m, long line, long column);
     void moveMarkToBeginOfLine(MarkHandle m);
     void moveMarkToEndOfLine(MarkHandle m);
     void moveMarkToNextLineBegin(MarkHandle m);
@@ -424,6 +429,25 @@ public:
     void moveMarkToPos(MarkHandle m, long pos);
     void moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark);
 
+
+    long getWCharColumn(TextMarkData& mark) {
+        long wcharColumn = mark.wcharColumn;
+        if (wcharColumn == -1) {
+            long epos = mark.pos;
+            long p    = epos - mark.byteColumn;
+            wcharColumn = 0;
+            while (p < epos) {
+                p = getNextWCharPos(p);
+                ++wcharColumn;
+            }
+            mark.wcharColumn = wcharColumn;
+        }
+        return wcharColumn;
+    }
+    long getWCharColumn(MarkHandle m) {
+        return getWCharColumn(marks[m.index]);
+    }
+    
     void moveMarkForwardToPos(MarkHandle m, long pos) {
         TextMarkData& mark = marks[m.index];
         ASSERT(mark.pos <= pos);
@@ -470,7 +494,10 @@ public:
     long getTextPositionOfMark(MarkHandle mark) const {
         return marks[mark.index].pos;
     }
-    long getColumnNumberOfMark(MarkHandle mark) const {
+    long getByteColumnNumberOfMark(MarkHandle mark) const {
+        return marks[mark.index].byteColumn;
+    }
+    long getWCharColumnNumberOfMark(MarkHandle mark) const {
         return marks[mark.index].byteColumn;
     }
     long getLineNumberOfMark(MarkHandle mark) const {

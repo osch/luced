@@ -78,10 +78,6 @@ public:
         ASSERT(hasSelection);
         return beginSelection.getLine();
     }
-    long getBeginSelectionColumn() {
-        ASSERT(hasSelection);
-        return beginSelection.getColumn();
-    }
     TextData::TextMark createMarkToBeginOfSelection() const {
         ASSERT(hasSelection);
         return textData->createNewMark(beginSelection);
@@ -98,13 +94,17 @@ public:
         ASSERT(hasSelection);
         return endSelection.getLine();
     }
-    long getEndSelectionColumn() {
-        ASSERT(hasSelection);
-        return endSelection.getColumn();
-    }
-    long getSelectionLength() {
+    long getSelectionByteLength() {
         ASSERT(hasSelection);
         return endSelection.getPos() - beginSelection.getPos();
+    }
+    long getSelectionWCharsInSameLineLength() {
+        ASSERT(hasSelection);
+        if (beginSelection.getLine() == endSelection.getLine()) {
+            return endSelection.getWCharColumn() - beginSelection.getWCharColumn();
+        } else {
+            return 0;
+        }
     }
     long getSelectionAnchorPos() {
         ASSERT(hasSelection);

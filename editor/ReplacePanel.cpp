@@ -352,7 +352,7 @@ void ReplacePanel::handleButtonRightClicked(Button* button, Button::ActivationVa
         // right clicking replaceSelectionButton means "Restore Selection"
     
        TextData::TextMark mark = e->getNewMarkToBeginOfSelection();
-       long selLength = e->getSelectionLength();
+       long selLength = e->getSelectionByteLength();
         
        e->getTextData()->insertAtMark(mark, rememberedSelection);
        mark.moveForwardToPos(mark.getPos() + rememberedSelection.getLength());

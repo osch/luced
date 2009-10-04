@@ -1375,7 +1375,7 @@ void TextWidget::setTopLineNumber(long n)
     {
         
         lineInfos.moveFirst(n - oldTopLineNumber);
-        textData->moveMarkToLineAndColumn(topMarkId, n, 0);
+        textData->moveMarkToLineAndWCharColumn(topMarkId, n, 0);
         totalPixWidth = 0; // reset TextWidget::calcTotalPixWidth
         
         if (n < oldTopLineNumber) {
@@ -1685,7 +1685,7 @@ void TextWidget::processGuiWidgetNewPositionEvent(const Position& p)
             newTopLine = oldTopLineNumber + oldVisibleLines - newVisibleLines;
 
             oldTopLineNumber = newTopLine; // no forceRedraw below
-            textData->moveMarkToLineAndColumn(topMarkId, oldTopLineNumber, 0);
+            textData->moveMarkToLineAndWCharColumn(topMarkId, oldTopLineNumber, 0);
 
         } else {
             newTopLine = 0;
@@ -1744,7 +1744,7 @@ void TextWidget::processGuiWidgetNewPositionEvent(const Position& p)
         if (newTopLine != oldTopLineNumber || forceRedraw) {
             if (newLeftPix != oldLeftPix || forceRedraw) {
                 leftPix = newLeftPix;
-                textData->moveMarkToLineAndColumn(topMarkId, newTopLine, 0);
+                textData->moveMarkToLineAndWCharColumn(topMarkId, newTopLine, 0);
                 redraw();
             } else {
                 setTopLineNumber(newTopLine);
@@ -2195,12 +2195,13 @@ long TextWidget::getOpticalCursorColumn() const
     const long cursorPos    = getCursorTextPosition();
     const long hardTabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth();
     long       opticalCursorColumn = 0;
-    for (long p = cursorPos - getCursorColumn(); p < cursorPos; ++p) {
+    for (long p = cursorPos - getCursorByteColumn(); p < cursorPos;) {
         if (textData->hasWCharAtPos('\t', p)) {
             opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
         } else {
             ++opticalCursorColumn;
         }
+        p = textData->getNextWCharPos(p);
     }
     return opticalCursorColumn;
 }
@@ -2211,12 +2212,13 @@ long TextWidget::getOpticalColumn(long pos) const
     const long hardTabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth();
     const long lineBegin    = textData->getThisLineBegin(pos);
     long       opticalCursorColumn = 0;
-    for (long p = lineBegin; p < pos; ++p) {
+    for (long p = lineBegin; p < pos;) {
         if (textData->hasWCharAtPos('\t', p)) {
             opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
         } else {
             ++opticalCursorColumn;
         }
+        p = textData->getNextWCharPos(p);
     }
     return opticalCursorColumn;
 }
@@ -2243,7 +2245,7 @@ void TextWidget::flushPendingUpdates()
 
     long newSelectionLength = 0;
     if (backliteBuffer->hasActiveSelection() && backliteBuffer->isSelectionPrimary()) {
-        newSelectionLength = backliteBuffer->getSelectionLength();
+        newSelectionLength = backliteBuffer->getSelectionWCharsInSameLineLength();
     }
     if (   newLine != lastLineOfLineAndColumnListeners || newColumn != lastColumnOfLineAndColumnListeners
         || newPos != lastPosOfLineAndColumnListeners || newSelectionLength != lastLengthOfSelectionLengthListeners)
