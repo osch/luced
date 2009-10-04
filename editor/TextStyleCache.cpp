@@ -50,8 +50,37 @@ TextStyle::Ptr TextStyleCache::getTextStyle(const String& fontname, const String
     }
     if (!rslt.isValid())
     {
-        rslt = TextStyle::CacheAccess::create(fontname, colorName);
+        rslt = TextStyle::CacheAccess::create(getFontInfo(fontname), colorName);
         list.append(rslt);
+    }
+    ASSERT(rslt.isValid());
+    return rslt;
+}
+
+
+FontInfo::Ptr TextStyleCache::getFontInfo(const String& fontname)
+{
+    FontInfo::Ptr rslt;
+    
+    for (int i = 0; i < fontInfos.getLength();)
+    {
+        if (fontInfos[i]->getFontName() == fontname) {
+            rslt = fontInfos[i];
+            ++i;
+        }
+        else
+        {
+            if (fontInfos[i].getRefCounter() == 1) {
+                fontInfos.remove(i);
+            } else {
+                ++i;
+            }
+        }
+    }
+    if (!rslt.isValid())
+    {
+        rslt = FontInfo::CacheAccess::create(fontname);
+        fontInfos.append(rslt);
     }
     ASSERT(rslt.isValid());
     return rslt;

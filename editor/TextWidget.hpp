@@ -169,7 +169,7 @@ public:
         return lineHeight;
     }
     int getSpaceCharWidth() const {
-        return defaultTextStyle->getSpaceWidth();
+        return defaultTextStyle->getFontInfo()->getSpaceWidth();
     }
     long getMaximalVisiblePixWidth() const {
         return totalPixWidth;
