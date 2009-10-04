@@ -26,6 +26,8 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <pwd.h>
+#include <locale.h>
+#include <langinfo.h>
 
 #include "System.hpp"
 #include "SystemException.hpp"
@@ -78,6 +80,9 @@ System::System()
     } else {
         hostName = utsNameData.nodename;
     }
+    
+    codesetName = nl_langinfo(CODESET);
+    localeName  = setlocale(LC_ALL, NULL); // only query, because second param is NULL
 }
 
 

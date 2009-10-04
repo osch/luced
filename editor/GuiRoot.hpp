@@ -98,6 +98,10 @@ public:
         return x11ServerVendorRelease;
     }
     
+    XIM getInputMethod() const {
+        return x11InputMethod;
+    }
+    
 private:
     friend class SingletonInstance<GuiRoot>;
     static SingletonInstance<GuiRoot> instance;
@@ -128,6 +132,8 @@ private:
     
     String x11ServerVendorString;
     int    x11ServerVendorRelease;
+    
+    XIM x11InputMethod;
 };
 
 } // namespace LucED

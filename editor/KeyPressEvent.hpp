@@ -38,7 +38,11 @@ public:
           keyId(keyId)
     {}
 
-    KeyPressEvent(const XEvent* event);
+    KeyPressEvent(KeyModifier keyModifier, KeyId keyId, const String& input)
+        : keyModifier(keyModifier),
+          keyId(keyId),
+          input(input)
+    {}
     
     KeyId getKeyId() const {
         return keyId;

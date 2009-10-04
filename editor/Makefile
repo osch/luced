@@ -104,7 +104,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget       
 		SearchInteraction        ActionKeyConfig        SingleLineEditActions      MultiLineEditActions \
 		ActionKeySequenceHandler StackTrace             ActionIdRegistry           MultiLineDisplayActions \
 		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess \
-		LucedLuaInterface        KeyPressEvent          QualifiedName              SyntaxPatternsConfig \
+		LucedLuaInterface                               QualifiedName              SyntaxPatternsConfig \
 		TextStyleCache           ConfigPackageLoader    FocusableWidget            FocusableElement \
 		NonFocusableWidget       FocusableContainerWidget
                          

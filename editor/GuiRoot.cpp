@@ -26,6 +26,7 @@
 #include "GlobalConfig.hpp"
 #include "SystemException.hpp"
 #include "GuiRootProperty.hpp"
+#include "System.hpp"
 
 #ifdef USE_X11_XKB_EXTENSION
 #include <X11/XKBlib.h>
@@ -102,7 +103,8 @@ static bool GuiRoot_queryOriginalKeyboardModeWasAutoRepeat()
 GuiRoot::GuiRoot()
     : xkbExtensionFlag(false),
       hadDetecableAutorepeatFlag(false),
-      detecableAutorepeatFlag(false)
+      detecableAutorepeatFlag(false),
+      x11InputMethod(NULL)
 {
     XSetErrorHandler(myX11ErrorHandler);
     XSetIOErrorHandler(myFatalX11ErrorHandler);
@@ -111,6 +113,13 @@ GuiRoot::GuiRoot()
     if (display == NULL) {
         throw SystemException(String() << "Cannot open display \"" << XDisplayName(NULL) << "\"");
     }
+    XSetLocaleModifiers("");
+    if (!XSupportsLocale()) {
+        throw SystemException(String() << "Xlib: locale \"" << System::getInstance()->getLocaleName() << "\" not supported.");
+    }
+
+    x11InputMethod = XOpenIM(display, NULL, NULL, NULL);
+
     screenId = XDefaultScreen(display);
     screen = XScreenOfDisplay(display, screenId);
     rootWid = WidgetId(XRootWindow(display, screenId));
@@ -139,6 +148,9 @@ GuiRoot::~GuiRoot()
             Atom atom = XInternAtom(display, KEYBOARD_WAS_AUTOREPEAT_PROPERTY_NAME, False);
             XDeleteProperty(display, rootWid, atom);
         }            
+    }
+    if (x11InputMethod != NULL) {
+        XCloseIM(x11InputMethod);
     }
     XSync(display, False);
     XCloseDisplay(display);

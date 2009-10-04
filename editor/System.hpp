@@ -60,6 +60,13 @@ public:
     }
     
     static void setCloseOnExecFlag(int fileDescriptor);
+    
+    String getCodesetName() const {
+        return codesetName;
+    }
+    String getLocaleName() const {
+        return localeName;
+    }
 
 private:
     friend class SingletonInstance<System>;
@@ -70,6 +77,8 @@ private:
     String homeDirectory;
     String userName;
     String hostName;
+    String codesetName;
+    String localeName;
 };
 
 

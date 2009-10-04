@@ -49,7 +49,9 @@ TopWin::TopWin()
       isVisibleFlag(false),
       sizeHints(NULL),
       initialWidth(-1),
-      initialHeight(-1)      
+      initialHeight(-1),
+      x11InputContext(NULL),
+      lastKeyPressWasPartOfComposeSequence(false)
 {
     GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TopWin::handleConfigChanged));
 }
@@ -87,6 +89,14 @@ void TopWin::createWidget()
     
     setWindowManagerHints();
 
+    XIM x11InputMethod = GuiRoot::getInstance()->getInputMethod();
+    if (x11InputMethod != NULL) {
+        x11InputContext =  XCreateIC(x11InputMethod,
+                                     XNInputStyle,   XIMPreeditNothing|XIMStatusNothing,
+                                     XNClientWindow, GuiRoot::getInstance()->getRootWid().toX11Type(),
+                                     XNFocusWindow,  guiWidget->getWid().toX11Type(),
+                                     NULL);
+    }
     processGuiWidgetCreatedEvent();
 }
 
@@ -103,6 +113,9 @@ static TopWin* expectedFocusTopWin; // cannot be WeakPtr, because it is used in 
 
 TopWin::~TopWin()
 {
+    if (x11InputContext != NULL) {
+        XDestroyIC(x11InputContext);
+    }
     if (sizeHints != NULL) {
         XFree(sizeHints);
         sizeHints = NULL;
@@ -143,7 +156,7 @@ fprintf(stderr, "****************** expected FocusTopWin mismatch\n");
 #endif
             if (expectedFocusTopWin->focusFlag) {
                 expectedFocusTopWin->focusFlag = false;
-                expectedFocusTopWin->treatFocusOut();
+                expectedFocusTopWin->internalTreatFocusOut();
             }
             expectedFocusTopWin = NULL;
         }
@@ -204,10 +217,10 @@ void TopWin::requestFocus()
     }
 }
 
-void TopWin::repeatKeyPress(const XEvent* event)
+void TopWin::repeatKeyPress(unsigned int keycode, const XEvent* event)
 {
-    KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
-    processKeyboardEvent(KeyPressEvent(event));
+    KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(keycode, event, this);
+    processKeyboardEvent(event);
 }
 
 
@@ -258,49 +271,59 @@ printf("TakeFocus\n");
         }
         
         case KeyPress: {
+            GuiWidget::ProcessingResult rslt = GuiWidget::EVENT_PROCESSED;
+            
+            XEvent filteredEvent = *event;
+            bool ignoreEvent = XFilterEvent(&filteredEvent, None); // ignore for input of composed characters 
+            
             if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
             {
                 if (KeyPressRepeater::getInstance()->isRepeating())
                 {
-                    if (KeyPressRepeater::getInstance()->addKeyModifier(event)) {
-                        return GuiWidget::EVENT_PROCESSED;
+                    if (ignoreEvent) {
+                        KeyPressRepeater::getInstance()->reset();
+                        goto returnRslt;
                     }
-                    if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
-                        return GuiWidget::EVENT_PROCESSED;
+                    else
+                    {
+                        if (KeyPressRepeater::getInstance()->addKeyModifier(&filteredEvent)) {
+                            goto returnRslt;
+                        }
+                        if (KeyPressRepeater::getInstance()->isRepeatingEventForKeyCode(event->xkey.keycode)) {
+                            goto returnRslt;
+                        }
                     }
-                    KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
-                    GuiWidget::ProcessingResult processed = processKeyboardEvent(KeyPressEvent(event));
-                    return processed;
+                } else {
+                    if (ignoreEvent) {
+                        goto returnRslt;
+                    }
                 }
-                else {
-                    KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(event, this);
-                    GuiWidget::ProcessingResult processed = processKeyboardEvent(KeyPressEvent(event));
-                    return processed;
+                if (   lastKeyPressWasPartOfComposeSequence
+                    && lastEventTimeOfComposeSequence == filteredEvent.xkey.time)
+                {
+                    KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(lastKeyCodeOfComposeSequence,
+                                                                               &filteredEvent, this);
+                } else {
+                    KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(filteredEvent.xkey.keycode,
+                                                                               &filteredEvent, this);
                 }
-            }
-            else
-            {
-                return processKeyboardEvent(KeyPressEvent(event));
-            }
-        
-/*                if (KeyPressRepeater::getInstance()->isRepeating())
-            {
-                if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
-                    bool processed = processKeyboardEvent(event);
-                    KeyPressRepeater::getInstance()->repeatEvent(event);
-                    return processed;
-                }
-                else {
-                    KeyPressRepeater::getInstance()->addKeyModifier(event);
-                    return true;
-                }
+                rslt = processKeyboardEvent(&filteredEvent);
+                goto returnRslt;
             }
             else {
-                bool processed = processKeyboardEvent(event);
-                KeyPressRepeater::getInstance()->repeatEvent(event);
-                return processed;
+                if (!ignoreEvent) {
+                    rslt = processKeyboardEvent(&filteredEvent);
+                }
+                goto returnRslt;
             }
-*/            
+
+        returnRslt:
+            lastKeyPressWasPartOfComposeSequence = ignoreEvent;
+            if (ignoreEvent) {
+                lastKeyCodeOfComposeSequence   = event->xkey.keycode;
+                lastEventTimeOfComposeSequence = event->xkey.time;
+            }
+            return rslt;
         }
         
         case KeyRelease: {
@@ -322,7 +345,7 @@ printf("TakeFocus\n");
                 }
                 if (isTrueRelease)
                 {
-                    if (KeyPressRepeater::getInstance()->isRepeatingEvent(event)) {
+                    if (KeyPressRepeater::getInstance()->isRepeatingEventForKeyCode(event->xkey.keycode)) {
                         KeyPressRepeater::getInstance()->reset();
                     }
                     if (KeyPressRepeater::getInstance()->isRepeating()) {
@@ -342,7 +365,7 @@ printf("TakeFocus\n");
             }
             if (focusFlag) {
                 focusFlag = false;
-                treatFocusOut();
+                internalTreatFocusOut();
             }
             if (expectedFocusTopWin == this)
             {
@@ -358,7 +381,7 @@ printf("TakeFocus\n");
                 
                 if (expectedFocusTopWin->focusFlag) {
                     expectedFocusTopWin->focusFlag = false;
-                    expectedFocusTopWin->treatFocusOut();
+                    expectedFocusTopWin->internalTreatFocusOut();
                 }
                 expectedFocusTopWin = NULL;
             }
@@ -384,7 +407,7 @@ printf("TakeFocus\n");
                 
                 if (expectedFocusTopWin->focusFlag) {
                     expectedFocusTopWin->focusFlag = false;
-                    expectedFocusTopWin->treatFocusOut();
+                    expectedFocusTopWin->internalTreatFocusOut();
                 }
             }
             if (shouldRaiseAfterFocusIn) {
@@ -394,6 +417,9 @@ printf("TakeFocus\n");
             expectedFocusTopWin = this;
             if (!focusFlag) {
                 focusFlag = true;
+                if (x11InputContext != NULL) {
+                    XSetICFocus(x11InputContext);
+                }
                 treatFocusIn();
             }
             return GuiWidget::EVENT_PROCESSED;
@@ -404,6 +430,53 @@ printf("TakeFocus\n");
             return GuiWidget::NOT_PROCESSED;
         }
     }
+}
+
+KeyPressEvent TopWin::createKeyPressEventObjectFromX11Event(const XEvent* event)
+{
+    KeyId       keyId;
+    KeyModifier keyModifier;
+    String      input;
+
+    char buffer[1000];
+    KeySym keySym;
+    int len;
+    
+    if (x11InputContext != NULL)
+    {
+        len = Xutf8LookupString(x11InputContext, 
+                                &((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+    } else {
+        len = XLookupString    (&((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+    }
+        
+    KeySym lowerKeySym;
+    KeySym upperKeySym;
+    
+    XConvertCase(keySym, &lowerKeySym, &upperKeySym);
+    
+    keySym = upperKeySym;
+
+#ifdef XK_ISO_Left_Tab
+    // Shift + Tab becomes XK_ISO_Left_Tab through XLookupString,
+    // however we need XLookupString for otherwise correct
+    // interpretation of num_lock
+    if (keySym == XK_ISO_Left_Tab) {
+        keySym = XK_Tab;
+    }
+#endif
+#ifdef XK_KP_Tab
+    if (keySym == XK_KP_Tab) {
+        keySym = XK_Tab;
+    }
+#endif
+    keyId       = KeyId(keySym);
+    keyModifier = KeyModifier::createFromX11KeyState(event->xkey.state);
+    
+    if (len > 0) {
+        input = String(buffer, len);
+    }
+    return KeyPressEvent(keyModifier, keyId, input);
 }
 
 void TopWin::processGuiWidgetNewPositionEvent(const Position& newPosition)
@@ -602,6 +675,14 @@ void TopWin::internalRaise()
 
 void TopWin::treatFocusIn()
 {}
+
+void TopWin::internalTreatFocusOut()
+{
+    if (x11InputContext != NULL) {
+        XUnsetICFocus(x11InputContext);
+    }
+    treatFocusOut();
+}
 
 void TopWin::treatFocusOut()
 {}

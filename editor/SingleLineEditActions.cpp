@@ -31,6 +31,9 @@
 #include "Regex.hpp"
 #include "SingleLineEditActions.hpp"
 
+static const int TAB_CHARACTER   = 0x09;
+static const int SPACE_CHARACTER = 0x20;
+
 using namespace LucED;
 
 void SingleLineEditActions::cursorLeft()
@@ -433,13 +436,13 @@ void SingleLineEditActions::tabForward()
         long softTabWidth = e->getLanguageMode()->getSoftTabWidth();
 
         if (softTabWidth <= 0) {
-            whiteSpace.append('\t');
+            whiteSpace.append(TAB_CHARACTER);
         } else {
             long opticalCursorColumn = e->getOpticalCursorColumn();
             long newOpticalCursorColumn = ((opticalCursorColumn / softTabWidth) + 1) * softTabWidth;
             long diff = newOpticalCursorColumn - opticalCursorColumn;
             ASSERT(diff > 0);
-            whiteSpace.appendAndFillAmountWith(diff, ' ');
+            whiteSpace.appendAndFillAmountWith(diff, SPACE_CHARACTER);
         }
         
 
@@ -494,7 +497,8 @@ void SingleLineEditActions::backSpace()
             }
             e->setCurrentActionCategory(TextEditorWidget::ACTION_KEYBOARD_INPUT);
 
-            
+            RawPtr<TextData> textData = e->getTextData();
+
             if (cursorPos > 0)
             {
                 long softTabWidth = e->getLanguageMode()->getSoftTabWidth();
@@ -503,7 +507,7 @@ void SingleLineEditActions::backSpace()
                 if (softTabWidth <= 0 || (   e->getLastActionCategory() != TextEditorWidget::ACTION_TABULATOR
                                           && e->getLastActionCategory() != TextEditorWidget::ACTION_NEWLINE))
                 {
-                    amountToBeRemoved = 1;
+                    amountToBeRemoved = cursorPos - textData->getPrevWCharPos(cursorPos);
                 }
                 else 
                 {
@@ -512,7 +516,7 @@ void SingleLineEditActions::backSpace()
                     bool wasAllSpace = true;
                     for (long p = cursorPos - e->getCursorColumn(); p < cursorPos; ++p) {
                         byte c = textData->getWChar(p);
-                        if (c != ' ') {
+                        if (c != SPACE_CHARACTER) {
                             wasAllSpace = false;
                             break;
                         }
@@ -526,19 +530,18 @@ void SingleLineEditActions::backSpace()
                         amountToBeRemoved = 1;
                     }
 #else
-                    RawPtr<TextData> textData = e->getTextData();
                     long p                      = cursorPos;
                     long opticalColumn          = e->getOpticalCursorColumn();
                     
-                    while (p - 1 >= 0 && textData->getWCharBefore(p) == ' ') {
-                        p             -= 1;
+                    while (p > 0 && textData->getWCharBefore(p) == SPACE_CHARACTER) {
+                        p              = textData->getPrevWCharPos(p);
                         opticalColumn -= 1;
                         if ((opticalColumn / softTabWidth) * softTabWidth == opticalColumn) {
                             break;
                         }
                     }
                     if (p == cursorPos && p > 0) {
-                        p -= 1;
+                        p = textData->getPrevWCharPos(p);
                     }
                     amountToBeRemoved = cursorPos - p;
                     e->setCurrentActionCategory(TextEditorWidget::ACTION_TABULATOR);

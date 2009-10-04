@@ -97,8 +97,8 @@ public:
     {
         friend class KeyPressRepeater;
         
-        static void repeat(TopWin* topWin, const XEvent* event) {
-            topWin->repeatKeyPress(event);
+        static void repeat(TopWin* topWin, unsigned int keycode, const XEvent* event) {
+            topWin->repeatKeyPress(keycode, event);
         }
     };
     
@@ -160,14 +160,21 @@ protected: // GuiWidget::EventListener interface implementation
 
 private:
     static bool hasCurrentX11Focus(TopWin* topWin);
+
+    KeyPressEvent createKeyPressEventObjectFromX11Event(const XEvent* event);
+
+    GuiWidget::ProcessingResult processKeyboardEvent(const XEvent* event) {
+        return processKeyboardEvent(createKeyPressEventObjectFromX11Event(event));
+    }
     
+    void internalTreatFocusOut();
     
     void internalSetSizeHints();
     
     void setWindowManagerHints();
     void handleConfigChanged();
     
-    void repeatKeyPress(const XEvent* event);
+    void repeatKeyPress(unsigned int keycode, const XEvent* event);
     
     RawPtr<OwnedTopWins> getOwnedTopWins() {
         return ownedTopWins;
@@ -205,6 +212,11 @@ private:
     String title;
     
     RawPtr<FocusManager> focusManager;
+    
+    XIC x11InputContext;
+    bool lastKeyPressWasPartOfComposeSequence;
+    unsigned int lastKeyCodeOfComposeSequence;
+    Time         lastEventTimeOfComposeSequence;
 };
 
 

@@ -39,6 +39,9 @@ public:
     operator Window() const {
         return wid;
     }
+    Window toX11Type() const {
+        return wid;
+    }
 private:
     Window wid;
 

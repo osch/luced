@@ -825,9 +825,13 @@ bool TextEditorWidget::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEv
                     getBackliteBuffer()->activateSelection(getCursorTextPosition());
                     getBackliteBuffer()->makeSelectionToSecondarySelection();
                 }
-                long insertedLength = insertAtCursor(keyPressEvent.getInputString()[0]);
-                moveCursorToTextPosition(getCursorTextPosition() + insertedLength);
-
+                long insertedLength = insertAtCursor(keyPressEvent.getInputString());
+                {
+                    long newPos = getCursorTextPosition() + insertedLength;
+                    long length = textData->getLength();
+                    while (newPos < length && !textData->isBeginOfWChar(newPos)) { ++newPos; }
+                    moveCursorToTextPosition(newPos);
+                }
                 getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
 
                 if (getCursorLineNumber() < getTopLineNumber()) {
