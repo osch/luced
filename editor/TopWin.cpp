@@ -35,6 +35,10 @@
 #include "File.hpp"
 #include "ProgramName.hpp"
 
+
+#define KEYSYM2UCS_INCLUDED
+#include "keysym2ucs.c"
+
 using namespace LucED;
 
 
@@ -441,13 +445,48 @@ KeyPressEvent TopWin::createKeyPressEventObjectFromX11Event(const XEvent* event)
     char buffer[1000];
     KeySym keySym;
     int len;
-    
+
+#ifdef X_HAVE_UTF8_STRING
     if (x11InputContext != NULL)
     {
         len = Xutf8LookupString(x11InputContext, 
                                 &((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
-    } else {
-        len = XLookupString    (&((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+    } else
+#endif
+    {
+#ifndef X_HAVE_UTF8_STRING
+        if (x11InputContext != NULL)
+        {
+            len = XmbLookupString(x11InputContext, 
+                                  &((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+        } else
+#endif
+        {
+            len = XLookupString  (&((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+        }
+        long c = keysym2ucs(keySym);
+        
+        if (c < 0) {
+            len = 0;
+        } else if (c <= 0x7F) {
+            buffer[0] = c;
+            len = 1;
+        } else if (c <= 0x7FF) {
+            buffer[0] = 0xC0 | ((c >> 6) & 0x1F);
+            buffer[1] = 0x80 | (c & 0x3F);
+            len = 2;
+        } else if (c <= 0xFFFF) {
+            buffer[0] = 0xE0 | ((c >> 12) & 0x0F);
+            buffer[1] = 0x80 | ((c >> 6) & 0x3F);
+            buffer[2] = 0x80 | (c & 0x3F);
+            len = 3;
+        } else {
+            buffer[0] = 0xF0 | ((c >> 18) & 0x07);
+            buffer[1] = 0x80 | ((c >> 12) & 0x3f);
+            buffer[2] = 0x80 | ((c >> 6) & 0x3f);
+            buffer[3] = 0x80 | (c & 0x3f);
+            len = 4;
+        }
     }
         
     KeySym lowerKeySym;
