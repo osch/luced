@@ -329,7 +329,7 @@ public:
     }
     long getPrevWCharPos(long pos) const {
         ASSERT(pos > 0);
-        ASSERT(isBeginOfWChar(pos));
+        ASSERT(isEndOfText(pos) || isBeginOfWChar(pos));
         do { pos -= 1; } while (!isBeginOfWChar(pos));
         return pos;
     }
