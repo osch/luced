@@ -83,7 +83,7 @@ void SingleLineEditActions::gotoMatchingBracket()
             
             RawPtr<TextData> textData = e->getTextData();
             
-            switch (textData->getWCharBefore(cursorPos)) {
+            switch (textData->getByte(cursorPos - 1)) {
                 case '(': hasBracket = true; forward = true; openBracket = '('; closeBracket = ')'; break;
                 case '{': hasBracket = true; forward = true; openBracket = '{'; closeBracket = '}'; break;
                 case '[': hasBracket = true; forward = true; openBracket = '['; closeBracket = ']'; break;
@@ -105,7 +105,7 @@ void SingleLineEditActions::gotoMatchingBracket()
                     pos = cursorPos;
                     const long textLength = textData->getLength();
                     while (pos < textLength && counter != 0) {
-                        int c = textData->getWChar(pos);
+                        int c = textData->getByte(pos);
                         if (c == closeBracket) {
                             --counter;
                         } else if (c == openBracket) {
@@ -120,7 +120,7 @@ void SingleLineEditActions::gotoMatchingBracket()
                     int counter = 1;
                     pos = cursorPos - 2;
                     while (pos > 0 && counter != 0) {
-                        int c = textData->getWChar(pos);
+                        int c = textData->getByte(pos);
                         if (c == openBracket) {
                             --counter;
                         } else if (c == closeBracket) {
@@ -154,10 +154,10 @@ void SingleLineEditActions::cursorWordLeft()
         long pos = cursorPos;
         
         while (pos > 0 && !e->isWordCharacter(e->getTextData()->getWCharBefore(pos))) {
-            --pos;
+            pos = e->getTextData()->getPrevWCharPos(pos);
         }
         while (pos > 0 && e->isWordCharacter(e->getTextData()->getWCharBefore(pos))) {
-            --pos;
+            pos = e->getTextData()->getPrevWCharPos(pos);
         }
         e->moveCursorToTextPosition(pos);
     }
@@ -193,13 +193,13 @@ void SingleLineEditActions::cursorWordRight()
         }
 #else
         if (pos < len) {
-            ++pos;
+            pos = e->getTextData()->getNextWCharPos(pos);
             if (pos > 0) {
                 while (pos < len 
                   && !(  !e->isWordCharacter(e->getTextData()->getWCharBefore(pos))
                        && e->isWordCharacter(e->getTextData()->getWChar(pos))))
                 {
-                    ++pos;
+                    pos = e->getTextData()->getNextWCharPos(pos);
                 }
             }
         }
@@ -310,13 +310,13 @@ void SingleLineEditActions::selectionCursorWordRight()
         }
 #else
         if (pos < len) {
-            ++pos;
+            e->getTextData()->getNextWCharPos(pos);
             if (pos > 0) {
                 while (pos < len 
                   && !(  !e->isWordCharacter(e->getTextData()->getWCharBefore(pos))
                        && e->isWordCharacter(e->getTextData()->getWChar(pos))))
                 {
-                    ++pos;
+                    e->getTextData()->getNextWCharPos(pos);
                 }
             }
         }
