@@ -26,6 +26,7 @@
 #include <X11/Xutil.h>
 #endif
 
+#include <stdlib.h>
 
 #include "TopWin.hpp"
 #include "KeyPressRepeater.hpp"
@@ -340,9 +341,11 @@ printf("TakeFocus\n");
                 {
                     XEvent nextEvent;
                     XPeekEvent(guiWidget->getDisplay(), &nextEvent);
-                    if (   nextEvent.type == KeyPress
-                        && nextEvent.xkey.keycode == event->xkey.keycode
-                        && nextEvent.xkey.time    == event->xkey.time)
+
+                    if (         nextEvent.type         == KeyPress
+                        &&       nextEvent.xkey.keycode == event->xkey.keycode
+                        && (   /*nextEvent.xkey.time    == event->xkey.time*/        // autorepeated keys used to have same timestamp
+                            labs(nextEvent.xkey.time    -  event->xkey.time) <= 2))  // but newer xservers messed it up
                     {
                         isTrueRelease = false;
                     }
