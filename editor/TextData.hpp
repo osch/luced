@@ -33,15 +33,7 @@
 #include "TimeVal.hpp"
 #include "File.hpp"
 #include "RawPtr.hpp"
-
-
-extern "C"
-{
-    // These tables are defined in ../pcre/pcre_tables.c
-    
-    extern const int           _pcre_utf8_table3[];
-    extern const unsigned char _pcre_utf8_table4[];
-}
+#include "Utf8Parser.hpp"
 
 
 namespace LucED
@@ -252,99 +244,32 @@ public:
         return buffer[marks[m.index].pos];
     }
     
-    static bool isAsciiChar(byte b) { 
-        return (b & 0x80) == 0x00;             // 0x80 = 1000 0000
-    }                                          // 0x00 = 0000 0000
-    static bool isUft8FollowerChar(byte b) { 
-        return (b & 0xC0) == 0x80;             // 0xC0 = 1100 0000
-    }                                          // 0x80 = 1000 0000
-    
     int getWCharAndIncrementPos(long* pos) const
     {
-        ASSERT(isBeginOfWChar(*pos));
-
-        int  rslt = 0;
-        byte b    = buffer[*pos];
-
-        if (isAsciiChar(b))
-        {
-            rslt  = b;
-            *pos += 1;
-        }
-        else
-        {                                            // number of additional bytes
-            int count = _pcre_utf8_table4[b & 0x3F]; // 0x3F = 0011 1111
-            
-            rslt = (b & _pcre_utf8_table3[count]);   // first byte mask:
-                                                     // 0x1F = 0001 1111  <- count == 1
-                                                     // 0x0F = 0000 1111  <- count == 2
-                                                     // 0x07 = 0000 0111  <- count == 3
-                                                     // 0x03 = 0000 0011  <- count == 4
-                                                     // 0x01 = 0000 0001  <- count == 5
-            while (true)
-            {
-                *pos += 1;
-                
-                if (isEndOfText(*pos)) {
-                    break;
-                }
-                b = buffer[*pos];
-                
-                if (isUft8FollowerChar(b)) {
-                    rslt = (rslt << 6) + (b & 0x3F); // 0x3F = 0011 1111
-                    count -= 1;
-                }
-                else {
-                    break;
-                }
-            }
-            if (count != 0) {
-                rslt = -1;
-            }
-        }
-        return rslt;
+        return utf8Parser.getWCharAndIncrementPos(pos);
     }
     int getWChar(long pos) const {
-        return getWCharAndIncrementPos(&pos);
+        return utf8Parser.getWChar(pos);
     }
     int getWChar(MarkHandle m) const {
         long pos = marks[m.index].pos;
         return getWChar(pos);
     }
     bool hasWCharAtPos(int wchar, long pos) const {
-        if (0 <= wchar && wchar < 0x80) {
-            return buffer[pos] == wchar;
-        } else {
-            return wchar = getWChar(pos);
-        }
+        return utf8Parser.hasWCharAtPos(wchar, pos);
     }
     int getWCharBefore(long pos) const {
-        pos = getPrevWCharPos(pos);
-        return getWCharAndIncrementPos(&pos);
+        return utf8Parser.getWCharBefore(pos);
     }
     
     bool isBeginOfWChar(long pos) const {
-        return pos == 0 ||  isAsciiChar(buffer[pos - 1])
-                        || !isUft8FollowerChar(buffer[pos]);
+        return utf8Parser.isBeginOfWChar(pos);
     }
     long getPrevWCharPos(long pos) const {
-        ASSERT(pos > 0);
-        ASSERT(isEndOfText(pos) || isBeginOfWChar(pos));
-        do { pos -= 1; } while (!isBeginOfWChar(pos));
-        return pos;
+        return utf8Parser.getPrevWCharPos(pos);
     }
     long getNextWCharPos(long pos) const {
-        ASSERT(!isEndOfText(pos));
-        ASSERT(isBeginOfWChar(pos));
-        
-        if (isAsciiChar(buffer[pos])) {
-            pos += 1;
-        }
-        else {
-            do { pos += 1; } while (  !isEndOfText(pos) 
-                                    && isUft8FollowerChar(buffer[pos]));
-        }
-        return pos;
+        return utf8Parser.getNextWCharPos(pos);
     }
     
     bool isEndOfText(long pos) const {
@@ -649,7 +574,10 @@ private:
     friend class ViewCounterTextDataAccess;
 
     TextData();
-    MemBuffer<byte> buffer;
+    
+    MemBuffer<byte>               buffer;
+    Utf8Parser< MemBuffer<byte> > utf8Parser;
+    
     long numberLines;
     long beginChangedPos;
     long changedAmount;

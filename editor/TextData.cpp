@@ -29,7 +29,9 @@ using namespace std;
 using namespace LucED;
 
 TextData::TextData() 
-        : modifiedFlag(false),
+        : buffer(),
+          utf8Parser(&buffer),
+          modifiedFlag(false),
           viewCounter(0),
           hasHistoryFlag(false),
           isReadOnlyFlag(false),
