@@ -156,10 +156,6 @@ public:
         return ptr;
     }
 
-    operator WeakPtr<T>() const {
-        return WeakPtr<T>(ptr);
-    }
-
     template
     <
         class S
