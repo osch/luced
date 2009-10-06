@@ -1,0 +1,92 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef ENCODING_CONVERTER_HPP
+#define ENCODING_CONVERTER_HPP
+
+#include "types.hpp"
+#include "String.hpp"
+#include "Utf8Parser.hpp"
+#include "RawPointable.hpp"
+#include "RawPtr.hpp"
+
+namespace LucED
+{
+
+class EncodingConverter
+{
+public:
+    static String convertUtf8ToLatin1String(const byte* bytes, long length)
+    {
+        String rslt;
+        
+        Adapter adapter(bytes, length);
+        
+        Utf8Parser<Adapter> utf8Parser(&adapter);
+        
+        long pos = 0;
+        
+        while (pos < length)
+        {
+            long appendedPos = pos;
+
+            while (pos < length && utf8Parser.isAsciiChar(adapter[pos])) { ++pos; }
+
+            rslt.append(bytes + appendedPos, pos - appendedPos);
+            
+            while (pos < length && !utf8Parser.isAsciiChar(adapter[pos]))
+            {
+                int wchar = utf8Parser.getWCharAndIncrementPos(&pos);
+                if (0 <= wchar && wchar <= 0xff) {
+                    rslt.append((byte)(wchar));
+                } else {
+                    rslt.append('?');
+                }
+            }
+        }
+        return rslt;
+    }
+private:
+    class Adapter : public RawPointable
+    {
+    public:
+        Adapter(const byte* bytes, long length)
+            : bytes(bytes),
+              length(length)
+        {}
+        
+        long getLength() const {
+            return length;
+        }
+        byte operator[](long index) const {
+            ASSERT(0 <= index && index < length);
+            return bytes[index];
+        }
+        
+    private:
+        const byte* bytes;
+        const long  length;
+    };
+};
+
+} // namespace LucED
+
+#endif // ENCODING_CONVERTER_HPP

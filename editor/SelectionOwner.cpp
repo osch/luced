@@ -24,6 +24,7 @@
 #include "SelectionOwner.hpp"
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
+#include "EncodingConverter.hpp"
 
 using namespace LucED;
 
@@ -38,8 +39,9 @@ SelectionOwner::SelectionOwner(RawPtr<GuiWidget> baseWidget, Type type, ContentH
         sendingMultiPart(false),
         display(GuiRoot::getInstance()->getDisplay())
 {
-    x11AtomForTargets   = XInternAtom(display, "TARGETS", False);
-    x11AtomForIncr      = XInternAtom(display, "INCR", False);
+    x11AtomForTargets    = XInternAtom(display, "TARGETS", False);
+    x11AtomForIncr       = XInternAtom(display, "INCR", False);
+    x11AtomForUtf8String = XInternAtom(display, "UTF8_STRING", False);
     GuiWidget::EventProcessorAccess::addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 
@@ -128,11 +130,11 @@ GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEv
             e.time      = event->xselectionrequest.time;
             e.property  = event->xselectionrequest.property;
             if (e.target == x11AtomForTargets) {
-                Atom myTargets[] = {XA_STRING};
+                Atom myTargets[] = { x11AtomForUtf8String, XA_STRING };
                 XChangeProperty(display, e.requestor, e.property,
                                 XA_ATOM, sizeof(Atom)*8, 0, (unsigned char*)myTargets,
                                 sizeof(myTargets)/sizeof(Atom));
-            } else if (e.target == XA_STRING)
+            } else if (e.target == XA_STRING || e.target == x11AtomForUtf8String)
             {
                 if (sendingMultiPart) {
                     sendingMultiPart = false;
@@ -146,10 +148,18 @@ GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEv
                     {
                         // send all at once
                     
-                        XChangeProperty(display, e.requestor, e.property,
-                        XA_STRING, 8, PropModeReplace,
-                                (unsigned char *)contentHandler->getSelectionDataChunk(0, selectionDataLength),
-                                selectionDataLength);
+                        const byte* bytes = contentHandler->getSelectionDataChunk(0, selectionDataLength);
+                        
+                        if (e.target == x11AtomForUtf8String) {
+                            XChangeProperty(display, e.requestor, e.property,
+                                            e.target, 8, PropModeReplace,
+                                            (unsigned char*) bytes, selectionDataLength);
+                        } else {
+                            String latin1String = EncodingConverter::convertUtf8ToLatin1String(bytes, selectionDataLength);
+                            XChangeProperty(display, e.requestor, e.property,
+                                            e.target, 8, PropModeReplace,
+                                            (unsigned char*) latin1String.toCString(), latin1String.getLength());
+                        }
                         contentHandler->endSelectionDataRequest();
                     } 
                     else 
@@ -159,6 +169,7 @@ GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEv
                         this->multiPartTargetWid = WidgetId(e.requestor);
                         this->multiPartTargetProp = e.property;
                         this->sendingMultiPart = true;
+                        this->sendingTypeAtom  = e.target;
                         this->alreadySentPos = 0;
 
                         XChangeProperty(display, multiPartTargetWid, multiPartTargetProp,
@@ -195,9 +206,9 @@ GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEv
                     // multi-part finished
                     
                     XChangeProperty(display, multiPartTargetWid, 
-                            multiPartTargetProp,
-                            XA_STRING, 8, PropModeReplace,
-                            0, 0);
+                                    multiPartTargetProp,
+                                    sendingTypeAtom, 8, PropModeReplace,
+                                    0, 0);
                     sendingMultiPart = false;
                     XSelectInput(display, multiPartTargetWid, 0);
                     EventDispatcher::getInstance()->removeEventReceiver(GuiWidget::EventProcessorAccess::createEventRegistration(baseWidget, multiPartTargetWid));
@@ -210,11 +221,22 @@ GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEv
                     long sendLength = util::minimum(GlobalConfig::getInstance()->getX11SelectionChunkLength(),
                                                     selectionDataLength - alreadySentPos);
                     
-                    XChangeProperty(display, multiPartTargetWid, 
-                            multiPartTargetProp,
-                            XA_STRING, 8, PropModeReplace,
-                            (unsigned char *)contentHandler->getSelectionDataChunk(alreadySentPos, sendLength),
-                            sendLength);
+                    
+                    const byte* bytes = contentHandler->getSelectionDataChunk(alreadySentPos, sendLength);
+                    
+                    if (sendingTypeAtom == x11AtomForUtf8String) {
+                        XChangeProperty(display, multiPartTargetWid, 
+                                        multiPartTargetProp,
+                                        sendingTypeAtom, 8, PropModeReplace,
+                                        (unsigned char*) bytes, sendLength);
+                    } else {
+                        String latin1String = EncodingConverter::convertUtf8ToLatin1String(bytes, sendLength);
+
+                        XChangeProperty(display, multiPartTargetWid, 
+                                        multiPartTargetProp,
+                                        sendingTypeAtom, 8, PropModeReplace,
+                                        (unsigned char*) latin1String.toCString(), latin1String.getLength());
+                    }
                     alreadySentPos += sendLength;
                 }
                 return GuiWidget::EVENT_PROCESSED;

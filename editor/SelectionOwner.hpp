@@ -94,6 +94,7 @@ private:
     
     Atom x11AtomForSelection;
     bool sendingMultiPart;
+    Atom sendingTypeAtom;
     bool hasRequestedSelectionOwnership;
     long selectionDataLength;
     long alreadySentPos;
@@ -102,6 +103,7 @@ private:
     
     Atom x11AtomForTargets;
     Atom x11AtomForIncr;
+    Atom x11AtomForUtf8String;
     Display* const display;
     
     static WeakPtr<SelectionOwner> primarySelectionOwner;
