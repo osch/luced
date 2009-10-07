@@ -25,9 +25,3 @@ using namespace LucED;
 
 
 
-void NonFocusableWidget::adopt(RawPtr<GuiElement>   parentElement,
-                               RawPtr<GuiWidget>    parentWidget,
-                               RawPtr<FocusManager> focusManager)
-{
-    BaseClass::adopt(parentElement, parentWidget, focusManager);
-}

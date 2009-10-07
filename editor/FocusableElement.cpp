@@ -52,30 +52,19 @@ void FocusableElement::treatHotKeyEvent(const KeyMapping::Id& id)
 
 void FocusableElement::adopt(RawPtr<GuiElement>    parentElement,
                              RawPtr<GuiWidget>     parentWidget,
-                             const FocusManagers&  focusManagers)
+                             RawPtr<FocusManager>  focusManagerForThis,
+                             RawPtr<FocusManager>  focusManagerForChilds)
 {
-    RawPtr<FocusManager> focusManagerForThis   = focusManagers.getFocusManagerForThis();
-    RawPtr<FocusManager> focusManagerForChilds = focusManagers.getFocusManagerForChilds();
-                                                 
-    if (!focusManagerForChilds.isValid()) {
-        focusManagerForChilds = focusManagerForThis;
-    }
     FocusManager::Access::QueueTransaction queueTransaction(focusManagerForChilds);
 
     this->focusManagerForThis = focusManagerForThis;
     
-    GuiElement::adopt(parentElement, parentWidget, focusManagerForChilds);
+    GuiElement::adopt(parentElement, parentWidget, focusManagerForThis,
+                                                   focusManagerForChilds);
     
     queueTransaction.execute();
 }
 
-void FocusableElement::adopt(RawPtr<GuiElement>   parentElement,
-                             RawPtr<GuiWidget>    parentWidget,
-                             RawPtr<FocusManager> focusManager)
-{
-    adopt(parentElement, parentWidget, FocusManagers().setFocusManagerForThis  (focusManager)
-                                                      .setFocusManagerForChilds(focusManager));
-}
 
 
 void FocusableElement::requestHotKeyRegistration(const KeyMapping::Id& id)

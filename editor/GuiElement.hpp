@@ -114,6 +114,7 @@ public:
     
     virtual void adopt(RawPtr<GuiElement>   parentElement,
                        RawPtr<GuiWidget>    parentWidget,
+                       RawPtr<FocusManager> focusManagerForThis,
                        RawPtr<FocusManager> focusManagerForChilds);
 
     virtual void show();

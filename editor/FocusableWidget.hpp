@@ -36,15 +36,6 @@ class FocusableWidget : public GuiWidgetMixin<FocusableElement>
 public:
     typedef GuiWidgetMixin<FocusableElement> BaseClass;
     
-    virtual void adopt(RawPtr<GuiElement>   parentElement,
-                       RawPtr<GuiWidget>    parentWidget,
-                       RawPtr<FocusManager> focusManagerForThis,
-                       RawPtr<FocusManager> focusManagerForChilds);
-
-    virtual void adopt(RawPtr<GuiElement>   parentElement,
-                       RawPtr<GuiWidget>    parentWidget,
-                       RawPtr<FocusManager> focusManager);
-
 protected:
     FocusableWidget(Visibility                       defaultVisibility = VISIBLE, 
                     int                              borderWidth = 0)

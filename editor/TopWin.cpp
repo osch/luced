@@ -778,7 +778,8 @@ void TopWin::processGuiWidgetCreatedEvent()
     
     rootElement->adopt(Null,             // parentElement
                        guiWidget,        // parentWidget
-                       focusManager);    // focusManager
+                       focusManager,     // focusManagerForThis
+                       focusManager);    // focusManagerForChilds
 }
 
 

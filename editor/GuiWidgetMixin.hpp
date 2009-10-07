@@ -89,11 +89,10 @@ protected:
         return guiWidget;
     }
 
-    template<class FocusManagerContainer
-            >
-    void adopt(RawPtr<GuiElement>           parentElement,
-               RawPtr<GuiWidget>            parentWidget,
-               const FocusManagerContainer& focusManagerContainer)
+    virtual void adopt(RawPtr<GuiElement>           parentElement,
+                       RawPtr<GuiWidget>            parentWidget,
+                       RawPtr<FocusManager>         focusManagerForThis,
+                       RawPtr<FocusManager>         focusManagerForChilds)
     {
         if (!BaseClass::wasAdopted(parentElement, guiWidget))
         {
@@ -105,7 +104,8 @@ protected:
             this->width  = guiWidget->getWidth();
             this->height = guiWidget->getHeight();
         
-            BaseClass::adopt(parentElement, guiWidget, focusManagerContainer);
+            BaseClass::adopt(parentElement, guiWidget, focusManagerForThis,
+                                                       focusManagerForChilds);
             if (BaseClass::isVisible()) {
                 guiWidget->show();
             }

@@ -773,10 +773,11 @@ void DialogPanel::requestClose()
 
 void DialogPanel::adopt(RawPtr<GuiElement>   parentElement,
                         RawPtr<GuiWidget>    parentWidget,
-                        RawPtr<FocusManager> focusManager)
+                        RawPtr<FocusManager> focusManagerForThis,
+                        RawPtr<FocusManager> focusManagerForChilds)
 {
     BaseClass::adopt(parentElement, 
                      parentWidget, 
-                     focusManager,  // FocusManager for this
-                     this);         // FocusManager for childs
+                     focusManagerForThis,  // FocusManager for this
+                     this);                // FocusManager for childs
 }

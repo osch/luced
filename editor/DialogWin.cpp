@@ -81,7 +81,8 @@ void DialogWin::setRootElement(FocusableElement::Ptr rootElement)
     {
         rootElement->adopt(Null,             // parentElement
                            getGuiWidget(),   // parentWidget
-                           Null);            // focusManager
+                           Null,             // focusManagerForThis
+                           Null);            // focusManagerForChilds
     }
 }
 
