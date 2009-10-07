@@ -25,21 +25,4 @@ using namespace LucED;
 
 
 
-void FocusableWidget::adopt(RawPtr<GuiElement>   parentElement,
-                            RawPtr<GuiWidget>    parentWidget,
-                            RawPtr<FocusManager> focusManagerForThis,
-                            RawPtr<FocusManager> focusManagerForChilds)
-{
-    BaseClass::adopt(parentElement, 
-                     parentWidget, 
-                     FocusableElement::FocusManagers().setFocusManagerForThis  (focusManagerForThis)
-                                                      .setFocusManagerForChilds(focusManagerForChilds));
-}
 
-void FocusableWidget::adopt(RawPtr<GuiElement>   parentElement,
-                            RawPtr<GuiWidget>    parentWidget,
-                            RawPtr<FocusManager> focusManager)
-{
-    adopt(parentElement, parentWidget, focusManager, 
-                                       focusManager);
-}

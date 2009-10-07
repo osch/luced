@@ -35,10 +35,6 @@ class NonFocusableWidget : public GuiWidgetMixin<GuiElement>
 public:
     typedef GuiWidgetMixin<GuiElement> BaseClass;
     
-    virtual void adopt(RawPtr<GuiElement>   parentElement,
-                       RawPtr<GuiWidget>    parentWidget,
-                       RawPtr<FocusManager> focusManager);
-
 protected:
     NonFocusableWidget(Visibility                       defaultVisibility = VISIBLE, 
                        int                              borderWidth = 0)

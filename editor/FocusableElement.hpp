@@ -71,39 +71,11 @@ public:
     bool hasThisFocusManager(RawPtr<FocusManager> rhs) const {
         return focusManagerForThis == rhs;
     }
-    
-    class FocusManagers
-    {
-    public:
-        FocusManagers()
-        {}
-        FocusManagers& setFocusManagerForThis(RawPtr<FocusManager> focusManagerForThis) {
-            this->focusManagerForThis = focusManagerForThis;
-            return *this;
-        }
-        FocusManagers& setFocusManagerForChilds(RawPtr<FocusManager> focusManagerForChilds) {
-            this->focusManagerForChilds = focusManagerForChilds;
-            return *this;
-        }
-        RawPtr<FocusManager> getFocusManagerForThis() const {
-            return focusManagerForThis;
-        }
-        RawPtr<FocusManager> getFocusManagerForChilds() const {
-            return focusManagerForChilds;
-        }
-    private:
-        RawPtr<FocusManager> focusManagerForThis;
-        RawPtr<FocusManager> focusManagerForChilds;
-    };
-
 
     virtual void adopt(RawPtr<GuiElement>    parentElement,
                        RawPtr<GuiWidget>     parentWidget,
-                       const FocusManagers&  focusManagers);
-
-    virtual void adopt(RawPtr<GuiElement>   parentElement,
-                       RawPtr<GuiWidget>    parentWidget,
-                       RawPtr<FocusManager> focusManager);
+                       RawPtr<FocusManager>  focusManagerForThis,
+                       RawPtr<FocusManager>  focusManagerForChilds);
 
 protected:
     FocusableElement(Visibility defaultVisibility = VISIBLE, int x = 0, int y = 0, int width = 0, int height = 0)

@@ -60,12 +60,14 @@ void GuiElement::internalAdoptChild(RawPtr<GuiElement> child)
 {
     ASSERT(wasAdoptedFlag);
     
-    child->adopt(parentElement, parentWidget, focusManagerForChilds);
+    child->adopt(parentElement, parentWidget, focusManagerForChilds,
+                                              focusManagerForChilds);
 }
 
 
 void GuiElement::adopt(RawPtr<GuiElement>   parentElement,
                        RawPtr<GuiWidget>    parentWidget,
+                       RawPtr<FocusManager> focusManagerForThis,
                        RawPtr<FocusManager> focusManagerForChilds)
 {
     if (wasAdoptedFlag && this->parentElement == parentElement) {
@@ -78,13 +80,15 @@ void GuiElement::adopt(RawPtr<GuiElement>   parentElement,
     this->focusManagerForChilds  = focusManagerForChilds;
     
     if (rootElement.isValid()) {
-        rootElement->adopt(parentElement, parentWidget, focusManagerForChilds);
+        rootElement->adopt(parentElement, parentWidget, focusManagerForChilds,
+                                                        focusManagerForChilds);
     }
     for (int i = 0; i < childElements.getLength(); ++i)
     {
         if (childElements[i].isValid())
         {
-            childElements[i]->adopt(parentElement, parentWidget, focusManagerForChilds);
+            childElements[i]->adopt(parentElement, parentWidget, focusManagerForChilds,
+                                                                 focusManagerForChilds);
         }
     }
 }

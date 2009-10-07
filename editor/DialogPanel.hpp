@@ -86,9 +86,10 @@ private: // FocusManager
     virtual void reportMouseClickFrom(RawPtr<FocusableElement> w);
 
 private:
-    void adopt(RawPtr<GuiElement>   parentElement,
-               RawPtr<GuiWidget>    parentWidget,
-               RawPtr<FocusManager> focusManager);
+    virtual void adopt(RawPtr<GuiElement>   parentElement,
+                       RawPtr<GuiWidget>    parentWidget,
+                       RawPtr<FocusManager> focusManagerForThis,
+                       RawPtr<FocusManager> focusManagerForChilds);
     
 private:
     class MyKeyActionHandler;
