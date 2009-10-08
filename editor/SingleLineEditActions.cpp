@@ -267,10 +267,10 @@ void SingleLineEditActions::selectionCursorWordLeft()
 
         long newCursorPos = oldCursorPos;
         while (newCursorPos > 0 && !e->isWordCharacter(e->getTextData()->getWCharBefore(newCursorPos))) {
-            --newCursorPos;
+            newCursorPos = e->getTextData()->getPrevWCharPos(newCursorPos);
         }
         while (newCursorPos > 0 && e->isWordCharacter(e->getTextData()->getWCharBefore(newCursorPos))) {
-            --newCursorPos;
+            newCursorPos = e->getTextData()->getPrevWCharPos(newCursorPos);
         }
         e->moveCursorToTextPosition(newCursorPos);
 
@@ -301,22 +301,22 @@ void SingleLineEditActions::selectionCursorWordRight()
             gotoEndOfWordFlag = false;
         }
         while (pos < len && !e->isWordCharacter(e->getTextData()->getWChar(pos))) {
-            ++pos;
+            pos = e->getTextData()->getNextWCharPos(pos);
         }
         if (gotoEndOfWordFlag) {
             while (pos < len && e->isWordCharacter(e->getTextData()->getWChar(pos))) {
-                ++pos;
+                pos = e->getTextData()->getNextWCharPos(pos);
             }
         }
 #else
         if (pos < len) {
-            e->getTextData()->getNextWCharPos(pos);
+            pos = e->getTextData()->getNextWCharPos(pos);
             if (pos > 0) {
                 while (pos < len 
                   && !(  !e->isWordCharacter(e->getTextData()->getWCharBefore(pos))
                        && e->isWordCharacter(e->getTextData()->getWChar(pos))))
                 {
-                    e->getTextData()->getNextWCharPos(pos);
+                    pos = e->getTextData()->getNextWCharPos(pos);
                 }
             }
         }
