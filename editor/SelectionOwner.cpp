@@ -37,11 +37,11 @@ SelectionOwner::SelectionOwner(RawPtr<GuiWidget> baseWidget, Type type, ContentH
         x11AtomForSelection(type == TYPE_PRIMARY ? XA_PRIMARY : XInternAtom(GuiRoot::getInstance()->getDisplay(), "CLIPBOARD", False)),
         hasRequestedSelectionOwnership(false),
         sendingMultiPart(false),
-        display(GuiRoot::getInstance()->getDisplay())
+        display              (GuiRoot::getInstance()->getDisplay()),
+        x11AtomForTargets    (XInternAtom(display, "TARGETS", False)),
+        x11AtomForIncr       (XInternAtom(display, "INCR", False)),
+        x11AtomForUtf8String (GuiRoot::getInstance()->getX11Utf8StringAtom())
 {
-    x11AtomForTargets    = XInternAtom(display, "TARGETS", False);
-    x11AtomForIncr       = XInternAtom(display, "INCR", False);
-    x11AtomForUtf8String = XInternAtom(display, "UTF8_STRING", False);
     GuiWidget::EventProcessorAccess::addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 

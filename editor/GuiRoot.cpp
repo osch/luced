@@ -119,6 +119,7 @@ GuiRoot::GuiRoot()
     }
 
     x11InputMethod = XOpenIM(display, NULL, NULL, NULL);
+    x11AtomForUtf8String = XInternAtom(display, "UTF8_STRING", False);
 
     screenId = XDefaultScreen(display);
     screen = XScreenOfDisplay(display, screenId);

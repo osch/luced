@@ -101,6 +101,9 @@ public:
     XIM getInputMethod() const {
         return x11InputMethod;
     }
+    Atom getX11Utf8StringAtom() const {
+        return x11AtomForUtf8String;
+    }
     
 private:
     friend class SingletonInstance<GuiRoot>;
@@ -134,6 +137,7 @@ private:
     int    x11ServerVendorRelease;
     
     XIM x11InputMethod;
+    Atom x11AtomForUtf8String;
 };
 
 } // namespace LucED
