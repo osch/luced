@@ -201,7 +201,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                     isMultiPartPastingFlag   = false;
                 }
             } 
-            else if (isReceivingPasteDataFlag && event->xselection.property == None)
+            else if ((isRequestingTargetTypes || isReceivingPasteDataFlag) && event->xselection.property == None)
             {
                 lastPasteEventTime.setToCurrentTime();
                 isReceivingPasteDataFlag = false;
