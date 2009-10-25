@@ -26,6 +26,7 @@
 #include "debug.hpp"
 #include "RawPtr.hpp"
 #include "RawPointable.hpp"
+#include "CharUtil.hpp"
 
 extern "C"
 {
@@ -53,16 +54,9 @@ public:
         : buffer(buffer)
     {}
     
-    static bool isAsciiChar(byte b) { 
-        return (b & 0x80) == 0x00;             // 0x80 = 1000 0000
-    }                                          // 0x00 = 0000 0000
-    static bool isUft8FollowerChar(byte b) { 
-        return (b & 0xC0) == 0x80;             // 0xC0 = 1100 0000
-    }                                          // 0x80 = 1000 0000
-    
     bool isBeginOfWChar(long pos) const {
-        return pos == 0 ||  isAsciiChar((*buffer)[pos - 1])
-                        || !isUft8FollowerChar((*buffer)[pos]);
+        return pos == 0 ||  CharUtil::isAsciiChar((*buffer)[pos - 1])
+                        || !CharUtil::isUft8FollowerChar((*buffer)[pos]);
     }
 
     int getWCharAndIncrementPos(long* pos) const
@@ -72,7 +66,7 @@ public:
         int  rslt = 0;
         byte b    = (*buffer)[*pos];
 
-        if (isAsciiChar(b))
+        if (CharUtil::isAsciiChar(b))
         {
             rslt  = b;
             *pos += 1;
@@ -96,7 +90,7 @@ public:
                 }
                 b = (*buffer)[*pos];
                 
-                if (isUft8FollowerChar(b)) {
+                if (CharUtil::isUft8FollowerChar(b)) {
                     rslt = (rslt << 6) + (b & 0x3F); // 0x3F = 0011 1111
                     count -= 1;
                 }
@@ -135,12 +129,12 @@ public:
         ASSERT(!isEndOfBuffer(pos));
         ASSERT(isBeginOfWChar(pos));
         
-        if (isAsciiChar((*buffer)[pos])) {
+        if (CharUtil::isAsciiChar((*buffer)[pos])) {
             pos += 1;
         }
         else {
             do { pos += 1; } while (  !isEndOfBuffer(pos) 
-                                    && isUft8FollowerChar((*buffer)[pos]));
+                                    && CharUtil::isUft8FollowerChar((*buffer)[pos]));
         }
         return pos;
     }

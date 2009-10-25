@@ -27,6 +27,7 @@
 #include "Utf8Parser.hpp"
 #include "RawPointable.hpp"
 #include "RawPtr.hpp"
+#include "CharUtil.hpp"
 
 namespace LucED
 {
@@ -34,9 +35,6 @@ namespace LucED
 class EncodingConverter
 {
 public:
-    static bool isAsciiChar(byte b) { 
-        return (b & 0x80) == 0x00;             // 0x80 = 1000 0000
-    }                                          // 0x00 = 0000 0000
     static String convertUtf8ToLatin1String(const byte* bytes, long length)
     {
         String rslt;
@@ -51,11 +49,11 @@ public:
         {
             long appendedPos = pos;
 
-            while (pos < length && isAsciiChar(adapter[pos])) { ++pos; }
+            while (pos < length && CharUtil::isAsciiChar(adapter[pos])) { ++pos; }
 
             rslt.append(bytes + appendedPos, pos - appendedPos);
             
-            while (pos < length && !isAsciiChar(adapter[pos]))
+            while (pos < length && !CharUtil::isAsciiChar(adapter[pos]))
             {
                 int wchar = utf8Parser.getWCharAndIncrementPos(&pos);
                 if (0 <= wchar && wchar <= 0xff) {
@@ -79,11 +77,11 @@ public:
         {
             long appendedPos = pos;
 
-            while (pos < length && isAsciiChar(adapter[pos])) { ++pos; }
+            while (pos < length && CharUtil::isAsciiChar(adapter[pos])) { ++pos; }
 
             rslt.append(bytes + appendedPos, pos - appendedPos);
             
-            while (pos < length && !isAsciiChar(adapter[pos]))
+            while (pos < length && !CharUtil::isAsciiChar(adapter[pos]))
             {
                 int c = adapter[pos++];                        // 0xC0 = 1100 0000
                 rslt.append((byte)(0xC0 | ((c >> 6) & 0x1F))); // 0x1F = 0001 1111

@@ -26,6 +26,7 @@
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
 #include "Clipboard.hpp"
+#include "CharUtil.hpp"
 
 using namespace LucED;
 
@@ -188,7 +189,9 @@ void TextEditorWidget::processGuiWidgetCreatedEvent()
 
 bool TextEditorWidget::isWordCharacter(int c)
 {
-    return c == '_' || isalnum(c);
+    return    CharUtil::isLetter(c) 
+           || CharUtil::isNumber(c)
+           || c == '_';
 }
 
 bool TextEditorWidget::isCursorVisible()
