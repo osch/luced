@@ -321,7 +321,7 @@ void FindUtil::initialize()
                 }
                 try
                 {
-	            PreparsedCallout::Ptr preparsedCallout = PreparsedCallout::parse(findString, i);
+                    PreparsedCallout::Ptr preparsedCallout = PreparsedCallout::parse(findString, i);
                     i = preparsedCallout->getLastPosition();
                     preparsedCallouts.append(preparsedCallout);
                 }
@@ -414,15 +414,15 @@ void FindUtil::findNext()
         if (!wasInitialized()) {
             initialize();
         }
-	
+        
         if (textPosition < 0 || textPosition > textData->getLength()) {
             wasFoundFlag = false;
             return;
         }
 
-	long startingTextPosition = textPosition;
-	int doItCounter = 0;
-	
+        long startingTextPosition = textPosition;
+        int doItCounter = 0;
+        
     doItAgain:
 
         wasFoundFlag = false;
