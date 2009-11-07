@@ -40,7 +40,7 @@ public:
         append((const byte*) String.toCString(), String.getLength());
         return *this;
     }
-    const char* toCStr() const {
+    const char* toCString() const {
         if (getLength() <= 0 || (*this)[getLength() - 1] != 0) {
             mem.increaseTo(getLength() + 1);
             *mem.getPtr(getLength()) = 0;

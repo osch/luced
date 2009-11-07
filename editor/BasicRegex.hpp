@@ -64,7 +64,7 @@ public:
     {
         ASSERT(pcre_callout == pcreCalloutCallback);
 
-        return pcre_exec(re, NULL, subject, length, startoffset, matchOptions.getOptions(), 
+        return pcre_exec(re, NULL, subject, length, startoffset, matchOptions.getOptions()|PCRE_NO_UTF8_CHECK, 
                 ovector.getPtr(0), ovector.getLength()) > 0;
     }
     
@@ -84,7 +84,7 @@ public:
                    extra.flags        = PCRE_EXTRA_CALLOUT_DATA;
                    extra.callout_data = &calloutData;
         
-        bool rslt = pcre_exec(re, &extra, subject, length, startoffset, matchOptions.getOptions(), 
+        bool rslt = pcre_exec(re, &extra, subject, length, startoffset, matchOptions.getOptions()|PCRE_NO_UTF8_CHECK, 
                     ovector.getPtr(0), ovector.getLength()) > 0;
 
         return rslt;
@@ -92,6 +92,8 @@ public:
     
     
 private:
+
+    void initialize(const char* expr, CreateOptions createOptions);
 
     struct CalloutData
     {
