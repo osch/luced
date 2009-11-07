@@ -265,6 +265,18 @@ public:
     bool isBeginOfWChar(long pos) const {
         return utf8Parser.isBeginOfWChar(pos);
     }
+    long getBeginOfWChar(long pos) const {
+        while (!isBeginOfWChar(pos)) --pos;
+        return pos;
+    }
+    long getNextBeginOfWChar(long pos) const {
+        const long len = getLength();
+        if (pos < len) {
+            ++pos;
+            while (pos < len && !isBeginOfWChar(pos)) ++pos;
+        }
+        return pos;
+    }
     long getPrevWCharPos(long pos) const {
         return utf8Parser.getPrevWCharPos(pos);
     }

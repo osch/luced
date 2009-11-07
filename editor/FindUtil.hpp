@@ -278,7 +278,23 @@ private:
 protected:
     SearchParameter p;
 
-private:        
+private:
+
+    long getPrevPos(long pos) const {
+        if (pos > 0 && pos <= textData->getLength()) {
+            return textData->getPrevWCharPos(pos);
+        } else {
+            return pos - 1;
+        }
+    }
+    long getNextPos(long pos) const {
+        if (pos >= 0 && pos < textData->getLength()) {
+            return textData->getNextWCharPos(pos);
+        } else {
+            return pos + 1;
+        }
+    }
+    
     bool wasFoundFlag;
     long textPosition;
     long maximalEndOfMatchPosition;
