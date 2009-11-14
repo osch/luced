@@ -177,7 +177,7 @@ public:
         return Ptr(new TextData());
     }
 
-    void loadFile(const String& filename);
+    void loadFile(const String& filename, const String& encoding = "");
     void reloadFile();
     void setRealFileName(const String& filename);
     void setPseudoFileName(const String& filename);
@@ -621,6 +621,8 @@ private:
     File::Info fileInfo;
     
     bool fileNamePseudoFlag;
+    
+    String fileContentEncoding;
 };
 
 

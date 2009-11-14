@@ -73,6 +73,30 @@ void File::loadInto(ByteBuffer& buffer) const
     }
 }
 
+File::Writer::Ptr File::openForWriting() const
+{
+    int fd = open(name.toCString(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+
+    if (fd == -1) {
+        throw FileException(errno, String() << "error opening file '" << name << "' for writing: " << strerror(errno));
+    }
+    return Writer::create(fd, name);
+}
+
+File::Writer::~Writer()
+{
+    if (close(fd) == -1) {
+        throw FileException(errno, String() << "error closing file '" << name << "' after writing: " << strerror(errno));
+    }
+}
+
+void File::Writer::write(const char* data, long length) const
+{
+    if (::write(fd, data, length) == -1) {
+        throw FileException(errno, String() << "error writing to file '" << name << "': " << strerror(errno));
+    }
+}
+
 void File::storeData(const char* data, int length) const
 {
     int fd = open(name.toCString(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);

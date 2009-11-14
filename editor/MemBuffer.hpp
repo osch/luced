@@ -86,7 +86,7 @@ public:
         long endPos = startPos + amount;
         ASSERT(0 <= startPos && startPos <= endPos
                 && endPos <= getLength());
-        if (gapPos < startPos || endPos <= gapPos) {
+        if (gapPos <= startPos || endPos <= gapPos) {
             return getPtr(startPos);
         } else {
             long newGap;

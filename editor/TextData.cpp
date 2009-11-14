@@ -24,6 +24,8 @@
 #include "TextData.hpp"
 #include "EventDispatcher.hpp"
 #include "File.hpp"
+#include "EncodingConverter.hpp"
+#include "System.hpp"
 
 using namespace std;
 using namespace LucED;
@@ -47,11 +49,29 @@ TextData::TextData()
     EventDispatcher::getInstance()->registerUpdateSource(newCallback(this, &TextData::flushPendingUpdates));
 }
 
-void TextData::loadFile(const String& filename)
+void TextData::loadFile(const String& filename, const String& encoding)
 {
+    fileContentEncoding = encoding;
+    
     File file(filename);
 
     file.loadInto(buffer);
+    
+    if (fileContentEncoding == "") {
+        fileContentEncoding = System::getInstance()->getCodesetName();
+    }
+    if (   fileContentEncoding == "C" 
+        || fileContentEncoding == "POSIX"
+        || fileContentEncoding == "ASCII"
+        || fileContentEncoding == "ANSI_X3.4-1968")
+    {
+        fileContentEncoding = "ISO-8859-1";
+    }
+
+    if (fileContentEncoding != "UTF-8") {
+        EncodingConverter::convertInPlace(&buffer, fileContentEncoding, "UTF-8");
+    }
+    
     long len = buffer.getLength();
     byte* ptr = buffer.getTotalAmount();
 
@@ -116,6 +136,9 @@ void TextData::reloadFile()
     
     buffer.clear();
     file.loadInto(buffer);
+    if (fileContentEncoding != "UTF-8") {
+        EncodingConverter::convertInPlace(&buffer, fileContentEncoding, "UTF-8");
+    }
     long len = buffer.getLength();
     byte* ptr = buffer.getTotalAmount();
 
@@ -206,7 +229,11 @@ void TextData::save()
 
     File file(fileName);
     
-    file.storeData(buffer);
+    if (fileContentEncoding == "UTF-8") {
+        file.storeData(buffer);
+    } else {
+        EncodingConverter::convertToFile(buffer, "UTF-8", fileContentEncoding, file);
+    }
 
     if (hasHistory()) {
         history->setPreviousActionToSavedState();

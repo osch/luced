@@ -117,18 +117,31 @@ void FileOpener::openFiles()
                 {
                     textData->loadFile(fileName);
                 }
-                catch (FileException& ex)
+                catch (BaseException& ex)
                 {
                     isWaitingForMessageBox = true;
                     
-                    if (ex.getErrno() == ENOENT)
+                    bool fileNotExisting = false;
+                    
+                    try
+                    {
+                        throw;
+                    }
+                    catch (FileException& ex)
+                    {
+                        fileNotExisting = (ex.getErrno() == ENOENT);
+                    }
+                    catch (BaseException& ex)
+                    {}
+                    
+                    if (fileNotExisting)
                     {
                         textData->setRealFileName(fileName);
                     }
                     else {
                         textData->setPseudoFileName(fileName);
                     }
-                    
+
                     lastTopWin = EditorTopWin::create(hilitedText);
 
                     MessageBoxParameter p;
@@ -139,7 +152,7 @@ void FileOpener::openFiles()
                                          .setMessage(ex.getMessage())
                                          .setAlternativeButton("A]bort all next files", newCallback(this, &FileOpener::handleAbortButton))
                                          .setCancelButton     ("S]kip to next file",    newCallback(this, &FileOpener::handleSkipFileButton));
-                        if (ex.getErrno() == ENOENT) {
+                        if (fileNotExisting) {
                                         p.setDefaultButton    ("C]reate this file",     newCallback(this, &FileOpener::handleCreateFileButton));
                         } else {
                                         p.setDefaultButton    ("R]etry",                newCallback(this, &FileOpener::openFiles));
@@ -149,7 +162,7 @@ void FileOpener::openFiles()
                                         p.setTitle("Error opening file")
                                          .setMessage(ex.getMessage())
                                          .setCancelButton     ("Ca]ncel",               newCallback(this, &FileOpener::handleAbortButton));
-                        if (ex.getErrno() == ENOENT && fileName.getLength() > 0) {
+                        if (fileNotExisting && fileName.getLength() > 0) {
                                         p.setDefaultButton    ("C]reate this file",     newCallback(this, &FileOpener::handleCreateFileButton));
                         } else {
                                         p.setDefaultButton    ("R]etry",                newCallback(this, &FileOpener::openFiles));

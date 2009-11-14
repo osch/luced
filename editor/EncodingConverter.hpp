@@ -22,12 +22,16 @@
 #ifndef ENCODING_CONVERTER_HPP
 #define ENCODING_CONVERTER_HPP
 
+
 #include "types.hpp"
 #include "String.hpp"
 #include "Utf8Parser.hpp"
 #include "RawPointable.hpp"
 #include "RawPtr.hpp"
 #include "CharUtil.hpp"
+#include "ByteBuffer.hpp"
+#include "RawPtr.hpp"
+#include "File.hpp"
 
 namespace LucED
 {
@@ -65,6 +69,9 @@ public:
         }
         return rslt;
     }
+    static void convertInPlace(RawPtr<ByteBuffer> buffer, const String& fromCodeset, const String& toCodeset);
+    static void convertToFile (const ByteBuffer&  buffer, const String& fromCodeset, const String& toCodeset, const File& file);
+
     static String convertLatin1ToUtf8String(const byte* bytes, long length)
     {
         String rslt;
