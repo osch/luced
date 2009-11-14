@@ -119,12 +119,14 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer,
                 // case it sets errno to EILSEQ and returns (size_t)(-1). *inbuf is 
                 // left pointing to the beginning of the invalid multibyte sequence.
             
+                buffer->removeAmount(0, buffer->getLength() - fromLength);
                 throw EncodingException(String() << "Error converting from codeset '" << fromCodeset
                                                  << "' to codeset '" << toCodeset
                                                  << "': invalid byte sequence at position " 
                                                  << (long)(fromPtr1 - fromPtr0 + fromPos - (toPos + insertSize)));
             }
             else {
+                buffer->removeAmount(0, buffer->getLength() - fromLength);
                 throw SystemException(String() << "Error converting from codeset '" << fromCodeset
                                                << "' to codeset '" << toCodeset
                                                << "': " << strerror(errno));

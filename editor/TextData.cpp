@@ -68,7 +68,7 @@ void TextData::loadFile(const String& filename, const String& encoding)
         fileContentEncoding = "ISO-8859-1";
     }
 
-    if (fileContentEncoding != "UTF-8") {
+    if (fileContentEncoding.toSubstitutedString("-", "").toLower() != "utf8") {
         EncodingConverter::convertInPlace(&buffer, fileContentEncoding, "UTF-8");
     }
     
@@ -136,7 +136,7 @@ void TextData::reloadFile()
     
     buffer.clear();
     file.loadInto(buffer);
-    if (fileContentEncoding != "UTF-8") {
+    if (fileContentEncoding.toSubstitutedString("-", "").toLower() != "utf8") {
         EncodingConverter::convertInPlace(&buffer, fileContentEncoding, "UTF-8");
     }
     long len = buffer.getLength();
@@ -229,7 +229,7 @@ void TextData::save()
 
     File file(fileName);
     
-    if (fileContentEncoding == "UTF-8") {
+    if (fileContentEncoding.toSubstitutedString("-", "").toLower() == "utf8") {
         file.storeData(buffer);
     } else {
         EncodingConverter::convertToFile(buffer, "UTF-8", fileContentEncoding, file);

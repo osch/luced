@@ -50,6 +50,7 @@ public:
         {
             String  fileName;
             int     numberOfWindowsForThisFile = -1;
+            String  encodingForThisFile;
             
             while (i < argc && commandline->get(i).startsWith("-") && !commandline->get(i).startsWith("--"))
             {
@@ -79,6 +80,16 @@ public:
                         throw CommandlineException("Command option -w needs additional argument number >= 1.");
                     }
                 }
+                else if (commandline->get(i) == "-e")
+                {
+                    i += 1;
+
+                    if (i >= argc) {
+                        throw CommandlineException("Command option -e needs additional argument.");
+                    }
+                    
+                    encodingForThisFile = commandline->get(i);
+                }
                 else
                 {
                     throw CommandlineException(String() << "Unknown command option '" << commandline->get(i) << "'.");
@@ -97,7 +108,7 @@ public:
                 }
                 fileName = File(fileName).getAbsoluteName();
                 commandline->set(i, fileName); // replace with absolute filename in command array
-                actor.openFile(numberOfWindowsForThisFile, fileName);
+                actor.openFile(numberOfWindowsForThisFile, fileName, encodingForThisFile);
                 numberOfWindowsForThisFile = -1;
             }
             else if (numberOfWindowsForThisFile > 0)
