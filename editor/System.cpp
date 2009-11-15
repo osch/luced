@@ -81,7 +81,7 @@ System::System()
         hostName = utsNameData.nodename;
     }
     
-    codesetName = nl_langinfo(CODESET);
+    defaultEncoding = nl_langinfo(CODESET);
     localeName  = setlocale(LC_ALL, NULL); // only query, because second param is NULL
 }
 

@@ -61,8 +61,8 @@ public:
     
     static void setCloseOnExecFlag(int fileDescriptor);
     
-    String getCodesetName() const {
-        return codesetName;
+    String getDefaultEncoding() const {
+        return defaultEncoding;
     }
     String getLocaleName() const {
         return localeName;
@@ -77,7 +77,7 @@ private:
     String homeDirectory;
     String userName;
     String hostName;
-    String codesetName;
+    String defaultEncoding;
     String localeName;
 };
 

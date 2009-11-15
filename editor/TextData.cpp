@@ -55,7 +55,7 @@ void TextData::loadFile(const String& filename, const String& encoding)
     fileContentEncoding = encoding;
 
     if (fileContentEncoding == "") {
-        fileContentEncoding = System::getInstance()->getCodesetName();
+        fileContentEncoding = System::getInstance()->getDefaultEncoding();
     }
     
     File file(filename);
@@ -119,7 +119,7 @@ namespace
 void TextData::reloadFile()
 {
     if (fileContentEncoding == "") {
-        fileContentEncoding = System::getInstance()->getCodesetName();
+        fileContentEncoding = System::getInstance()->getDefaultEncoding();
     }
 
     File file(this->fileName);
@@ -242,7 +242,7 @@ void TextData::setToSavedState()
 void TextData::save()
 {
     if (fileContentEncoding == "") {
-        fileContentEncoding = System::getInstance()->getCodesetName();
+        fileContentEncoding = System::getInstance()->getDefaultEncoding();
     }
     try
     {
