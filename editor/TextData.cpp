@@ -86,10 +86,8 @@ void TextData::loadFile(const String& filename, const String& encoding)
     this->fileName = file.getAbsoluteName();
     fileNameListeners.invokeAllCallbacks(this->fileName);
 
-    if (modifiedFlag == true) {
-        modifiedFlag = false;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-    }
+    setModifiedFlag(false);
+
     this->fileInfo = file.getInfo();
     this->modifiedOnDiskFlag = false;
     this->ignoreModifiedOnDiskFlag = false;
@@ -161,10 +159,8 @@ void TextData::reloadFile()
                                                         oldMarkPositions[i].wcharColumn);
         }
     }
-    if (modifiedFlag == true) {
-        modifiedFlag = false;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-    }
+    setModifiedFlag(false);
+
     this->fileInfo = file.getInfo();
     this->modifiedOnDiskFlag = false;
     this->ignoreModifiedOnDiskFlag = false;
@@ -238,10 +234,8 @@ void TextData::save()
     if (hasHistory()) {
         history->setPreviousActionToSavedState();
     }
-    if (modifiedFlag == true) {
-        modifiedFlag = false;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-    }
+    setModifiedFlag(false);
+
     this->modifiedOnDiskFlag = false;
     this->ignoreModifiedOnDiskFlag = false;
     this->fileInfo = file.getInfo();
@@ -446,10 +440,8 @@ long TextData::undo(MarkHandle m)
             } while (!history->isPreviousActionSectionSeperator());
     
             bool newModifiedFlag = !history->isPreviousActionSavedState();
-            if (newModifiedFlag != modifiedFlag) {
-                modifiedFlag = newModifiedFlag;
-                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-            }
+
+            setModifiedFlag(newModifiedFlag);
         }
         if (epos >= spos) {
             moveMarkToPos(m, spos);
@@ -532,10 +524,8 @@ long TextData::redo(MarkHandle m)
             } while (!history->isLastAction() && !history->isPreviousActionSectionSeperator());
     
             bool newModifiedFlag = !history->isPreviousActionSavedState();
-            if (newModifiedFlag != modifiedFlag) {
-                modifiedFlag = newModifiedFlag;
-                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-            }
+
+            setModifiedFlag(newModifiedFlag);
         }
         if (epos >= spos) {
             moveMarkToPos(m, spos);
@@ -564,10 +554,7 @@ long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
             }
             internalInsertAtMark(m, insertBuffer, length);
     
-            if (modifiedFlag == false) {
-                modifiedFlag = true;
-                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-            }
+            setModifiedFlag(true);
         }
         return length;
     }
@@ -609,10 +596,7 @@ inline void TextData::internalRemoveAtMark(MarkHandle m, long amount)
         this->numberLines -= lineCounter;
         updateMarks(pos, pos + amount, -amount, lineNumber, -lineCounter);
     
-        if (modifiedFlag == false) {
-            modifiedFlag = true;
-            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-        }
+        setModifiedFlag(true);
     }
 }
 
@@ -640,10 +624,7 @@ void TextData::removeAtMark(MarkHandle m, long amount)
             }
             internalRemoveAtMark(m, amount);
     
-            if (modifiedFlag == false) {
-                modifiedFlag = true;
-                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-            }
+            setModifiedFlag(true);
         }
     }
 }
@@ -679,10 +660,7 @@ void TextData::reset()
         history->clear();
     }
 
-    if (modifiedFlag == false) {
-        modifiedFlag = true;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-    }
+    setModifiedFlag(true);
 }
 
 
