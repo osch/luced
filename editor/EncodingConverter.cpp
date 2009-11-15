@@ -192,6 +192,7 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer,
     }
 }
 
+
 void EncodingConverter::convertToFile(const ByteBuffer&  buffer, 
                                       const String&      fromCodeset, 
                                       const String&      toCodeset, 
@@ -306,5 +307,14 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
                                              << "': non-reversible conversions performed.");
         }
     }
+}
+
+
+String EncodingConverter::convertStringToString(const String& fromString, const String& fromCodeset, const String& toCodeset)
+{
+    ByteBuffer buffer;
+    buffer.appendString(fromString);
+    convertInPlace(&buffer, fromCodeset, toCodeset);
+    return buffer.toString();
 }
 

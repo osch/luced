@@ -24,9 +24,38 @@
 
 #include "MemBuffer.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
-typedef MemBuffer<byte> ByteBuffer;
+class ByteBuffer : public MemBuffer<byte> 
+{
+public:
+    ByteBuffer(long size = 0)
+        : MemBuffer<byte>(size)
+    {}
+    ByteBuffer& appendCStr(const char* cstring) {
+        append((const byte*) cstring, strlen(cstring));
+        return *this;
+    }
+    ByteBuffer& appendString(const String& String) {
+        append((const byte*) String.toCString(), String.getLength());
+        return *this;
+    }
+    String toString() const {
+        long len = getLength();
+        return String( (const char*) getAmount(0, len), len );
+    }
+    void fillAmountWith(long startPos, long amount, byte fillByte) {
+        ASSERT(0 <= startPos && startPos + amount <= getLength());
+        memset(getAmount(startPos, amount), fillByte, amount);
+    }
+    byte* appendAndFillAmountWith(long amount, byte fillByte) {
+        long pos = getLength();
+        byte* rslt = appendAmount(amount);
+        fillAmountWith(pos, amount, fillByte);
+        return rslt;
+    }
+};
 
 } // namespace LucED
 

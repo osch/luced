@@ -130,6 +130,10 @@ public:
         *appendAmount(1) = src;
         return *this; 
     }
+    MemBuffer& append(const T* source, long sourceLength) {
+        insert(getLength(), source, sourceLength);
+        return *this;
+    }
     MemBuffer& removeAmount(long pos, long amount) {
         ASSERT(0 <= pos && pos <= getLength());
         ASSERT(pos < getLength() || amount == 0);

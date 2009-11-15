@@ -69,8 +69,11 @@ public:
         }
         return rslt;
     }
+
     static void convertInPlace(RawPtr<ByteBuffer> buffer, const String& fromCodeset, const String& toCodeset);
     static void convertToFile (const ByteBuffer&  buffer, const String& fromCodeset, const String& toCodeset, const File& file);
+
+    static String convertStringToString(const String& fromString, const String& fromCodeset, const String& toCodeset);
 
     static String convertLatin1ToUtf8String(const byte* bytes, long length)
     {

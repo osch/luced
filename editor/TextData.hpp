@@ -589,8 +589,8 @@ private:
     
     void setToSavedState();
     
-    MemBuffer<byte>               buffer;
-    Utf8Parser< MemBuffer<byte> > utf8Parser;
+    ByteBuffer             buffer;
+    Utf8Parser<ByteBuffer> utf8Parser;
     
     long numberLines;
     long beginChangedPos;
