@@ -40,11 +40,20 @@ public:
                 const String& toCodeset) 
 
         : value(iconv_open(toCodeset.toCString(),
-                           fromCodeset.toCString()))
+                           fromCodeset.toCString())),
+          fromCodeset(fromCodeset),
+          toCodeset(toCodeset)
     {}
     ~IconvHandle() {
         if (isValid()) {
             iconv_close(value);
+        }
+    }
+    void reset() {
+        if (isValid()) {
+            iconv_close(value);
+            value = iconv_open(toCodeset.toCString(),
+                               fromCodeset.toCString());
         }
     }
     bool isValid() const {
@@ -55,6 +64,8 @@ public:
     }
 private:
     iconv_t value;
+    String fromCodeset;
+    String toCodeset;
 };
 
 } // anonymous namespace
@@ -64,15 +75,16 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer,
                                        const String&      fromCodeset, 
                                        const String&      toCodeset)
 {
-    bool hasErrors = false;
+    bool hasErrors       = false;
+    bool hasInvalidBytes = false;
     
     IconvHandle iconvHandle(fromCodeset, toCodeset);
     
     if (!iconvHandle.isValid())
     {
-        throw SystemException(String() << "Cannot convert from codeset '" << fromCodeset
-                                       << "' to codeset '" << toCodeset
-                                       << "': " << strerror(errno));
+        throw SystemException(String() << "Cannot convert from codeset " << fromCodeset
+                                       << " to codeset " << toCodeset
+                                       << ": " << strerror(errno));
     }
     long toPos   = 0;
     long fromPos = 0;
@@ -119,17 +131,31 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer,
                 // case it sets errno to EILSEQ and returns (size_t)(-1). *inbuf is 
                 // left pointing to the beginning of the invalid multibyte sequence.
             
-                buffer->removeAmount(0, buffer->getLength() - fromLength);
-                throw EncodingException(String() << "Error converting from codeset '" << fromCodeset
-                                                 << "' to codeset '" << toCodeset
-                                                 << "': invalid byte sequence at position " 
-                                                 << (long)(fromPtr1 - fromPtr0 + fromPos - (toPos + insertSize)));
+                if (outBytesLeft > 0 && fromBytesLeft > 0)
+                {
+                    *(toPtr1++) = *(fromPtr1++);
+                    --outBytesLeft;
+                    --fromBytesLeft;
+                    hasErrors       = true;
+                    hasInvalidBytes = true;
+                    iconvHandle.reset();
+                }
+                else {
+                    // should not happen
+                    buffer->removeAmount(0, buffer->getLength() - fromLength);
+                    throw SystemException(String() << "Error converting from codeset " << fromCodeset
+                                                   << " to codeset " << toCodeset
+                                                   << ": invalid byte sequence at position " 
+                                                   << (long)(fromPtr1 - fromPtr0 + fromPos - (toPos + insertSize)));
+                }
             }
             else {
+                // should not happen
                 buffer->removeAmount(0, buffer->getLength() - fromLength);
-                throw SystemException(String() << "Error converting from codeset '" << fromCodeset
-                                               << "' to codeset '" << toCodeset
-                                               << "': " << strerror(errno));
+                throw SystemException(String() << "Error converting from codeset " << fromCodeset
+                                               << " to codeset " << toCodeset
+                                               << " at poisition " << (long)(fromPtr1 - fromPtr0 + fromPos - (toPos + insertSize))
+                                               << ": " << strerror(errno));
             }
         } else {
             // The input byte sequence has been entirely converted, i.e. *inbytesleft has 
@@ -152,6 +178,18 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer,
 
         ASSERT(buffer->getLength() - fromPos == fromLength);
     }
+    if (hasErrors) {
+        if (hasInvalidBytes) {
+            throw EncodingException(String() << "Error converting from codeset " << fromCodeset
+                                             << " to codeset " << toCodeset
+                                             << ": non-convertible bytes occurred.");
+        
+        } else {
+            throw EncodingException(String() << "Error converting from codeset " << fromCodeset
+                                             << " to codeset " << toCodeset
+                                             << ": non-reversible conversions performed.");
+        }
+    }
 }
 
 void EncodingConverter::convertToFile(const ByteBuffer&  buffer, 
@@ -159,7 +197,8 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
                                       const String&      toCodeset, 
                                       const File&        file)
 {
-    bool hasErrors = false;
+    bool hasErrors       = false;
+    bool hasInvalidBytes = false;
 
     File::Writer::Ptr fileWriter = file.openForWriting();
     
@@ -167,9 +206,9 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
     
     if (!iconvHandle.isValid())
     {
-        throw SystemException(String() << "Cannot convert from codeset '" << fromCodeset
-                                       << "' to codeset '" << toCodeset
-                                       << "': " << strerror(errno));
+        throw SystemException(String() << "Cannot convert from codeset " << fromCodeset
+                                       << " to codeset " << toCodeset
+                                       << ": " << strerror(errno));
     }
     
     long fromLength = buffer.getLength();
@@ -216,15 +255,33 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
                 // case it sets errno to EILSEQ and returns (size_t)(-1). *inbuf is 
                 // left pointing to the beginning of the invalid multibyte sequence.
             
-                throw EncodingException(String() << "Error converting from codeset '" << fromCodeset
-                                                 << "' to codeset '" << toCodeset
-                                                 << "': invalid byte sequence at position " 
-                                                 << (long)(fromPtr1 - fromPtr0));
+                if (outBytesLeft > 0 && fromBytesLeft > 0)
+                {
+                    *(toPtr1++) = *(fromPtr1++);
+                    --outBytesLeft;
+                    --fromBytesLeft;
+                    hasErrors       = true;
+                    hasInvalidBytes = true;
+                    iconvHandle.reset();
+                }
+                else {
+                    // should not happen
+                    fileWriter->write(toPtr0, toPtr1 - toPtr0);
+                    fileWriter->write(fromPtr1, fromBytesLeft);
+                    throw SystemException(String() << "Error converting from codeset " << fromCodeset
+                                                   << " to codeset " << toCodeset
+                                                   << ": invalid byte sequence at position " 
+                                                   << (long)(fromPtr1 - fromPtr0));
+                }
             }
             else {
-                throw SystemException(String() << "Error converting from codeset '" << fromCodeset
-                                               << "' to codeset '" << toCodeset
-                                               << "': " << strerror(errno));
+                // should not happen
+                fileWriter->write(toPtr0, toPtr1 - toPtr0);
+                fileWriter->write(fromPtr1, fromBytesLeft);
+                throw SystemException(String() << "Error converting from codeset " << fromCodeset
+                                               << " to codeset " << toCodeset
+                                               << " at poisition " << (long)(fromPtr1 - fromPtr0)
+                                               << ": " << strerror(errno));
             }
         } else {
             // The input byte sequence has been entirely converted, i.e. *inbytesleft has 
@@ -233,9 +290,21 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
             
             hasErrors = hasErrors || (s > 0);
         }
-        const long processedToAmount   = toPtr1   - toPtr0;
+        fileWriter->write(toPtr0, toPtr1 - toPtr0);
+    }
+    if (hasErrors) {
+        if (hasInvalidBytes) {
+            throw EncodingException(String() << "Error converting from codeset " << fromCodeset
+                                             << " to codeset " << toCodeset
+                                             << " while writing to file '" << file.getAbsoluteName()
+                                             << "': non-convertible bytes occurred.");
         
-        fileWriter->write(toPtr0, processedToAmount);
+        } else {
+            throw EncodingException(String() << "Error converting from codeset " << fromCodeset
+                                             << " to codeset " << toCodeset
+                                             << " while writing to file '" << file.getAbsoluteName()
+                                             << "': non-reversible conversions performed.");
+        }
     }
 }
 

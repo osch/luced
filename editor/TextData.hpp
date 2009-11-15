@@ -587,6 +587,8 @@ private:
 
     TextData();
     
+    void setToSavedState();
+    
     MemBuffer<byte>               buffer;
     Utf8Parser< MemBuffer<byte> > utf8Parser;
     

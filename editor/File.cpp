@@ -92,6 +92,9 @@ File::Writer::~Writer()
 
 void File::Writer::write(const char* data, long length) const
 {
+    if (length <= 0) {
+        return;
+    }
     if (::write(fd, data, length) == -1) {
         throw FileException(errno, String() << "error writing to file '" << name << "': " << strerror(errno));
     }

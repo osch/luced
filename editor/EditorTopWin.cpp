@@ -33,6 +33,7 @@
 #include "WeakPtr.hpp"
 #include "File.hpp"
 #include "FileException.hpp"
+#include "EncodingException.hpp"
 #include "LuaInterpreter.hpp"
 #include "LuaException.hpp"
 #include "ConfigException.hpp"
@@ -152,6 +153,9 @@ public:
             }
         } catch (FileException& ex) {
             editorTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                                             .setMessage(ex.getMessage()));
+        } catch (EncodingException& ex) {
+            editorTopWin->setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
                                                              .setMessage(ex.getMessage()));
         } catch (LuaException& ex) {
             ConfigErrorHandler::startWithCatchedException();
@@ -798,6 +802,9 @@ void EditorTopWin::saveAndClose()
     } catch (FileException& ex) {
         setMessageBox(MessageBoxParameter().setTitle("File Error")
                                            .setMessage(ex.getMessage()));
+    } catch (EncodingException& ex) {
+        setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
+                                           .setMessage(ex.getMessage()));
     } catch (LuaException& ex) {
         ConfigErrorHandler::startWithCatchedException();
     } catch (ConfigException& ex) {
@@ -913,6 +920,9 @@ bool EditorTopWin::UserDefinedActionMethods::invokeActionMethod(ActionId actionI
     }
     catch (FileException& ex) {
         thisTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                                       .setMessage(ex.getMessage()));
+    } catch (EncodingException& ex) {
+        thisTopWin->setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
                                                        .setMessage(ex.getMessage()));
     }
     catch (LuaException& ex) {

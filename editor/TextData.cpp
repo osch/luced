@@ -25,6 +25,7 @@
 #include "EventDispatcher.hpp"
 #include "File.hpp"
 #include "EncodingConverter.hpp"
+#include "EncodingException.hpp"
 #include "System.hpp"
 
 using namespace std;
@@ -52,14 +53,15 @@ TextData::TextData()
 void TextData::loadFile(const String& filename, const String& encoding)
 {
     fileContentEncoding = encoding;
+
+    if (fileContentEncoding == "") {
+        fileContentEncoding = System::getInstance()->getCodesetName();
+    }
     
     File file(filename);
 
     file.loadInto(buffer);
     
-    if (fileContentEncoding == "") {
-        fileContentEncoding = System::getInstance()->getCodesetName();
-    }
     if (   fileContentEncoding == "C" 
         || fileContentEncoding == "POSIX"
         || fileContentEncoding == "ASCII"
@@ -116,6 +118,10 @@ namespace
 
 void TextData::reloadFile()
 {
+    if (fileContentEncoding == "") {
+        fileContentEncoding = System::getInstance()->getCodesetName();
+    }
+
     File file(this->fileName);
 
     long oldLength = getLength();
@@ -219,18 +225,9 @@ void TextData::setPseudoFileName(const String& filename)
     fileNameListeners.invokeAllCallbacks(this->fileName);
 }
 
-void TextData::save()
+
+void TextData::setToSavedState()
 {
-    ASSERT(!fileNamePseudoFlag);
-
-    File file(fileName);
-    
-    if (fileContentEncoding.toSubstitutedString("-", "").toLower() == "utf8") {
-        file.storeData(buffer);
-    } else {
-        EncodingConverter::convertToFile(buffer, "UTF-8", fileContentEncoding, file);
-    }
-
     if (hasHistory()) {
         history->setPreviousActionToSavedState();
     }
@@ -238,7 +235,41 @@ void TextData::save()
 
     this->modifiedOnDiskFlag = false;
     this->ignoreModifiedOnDiskFlag = false;
-    this->fileInfo = file.getInfo();
+    this->fileInfo = File(fileName).getInfo();
+}
+
+
+void TextData::save()
+{
+    if (fileContentEncoding == "") {
+        fileContentEncoding = System::getInstance()->getCodesetName();
+    }
+    try
+    {
+        ASSERT(!fileNamePseudoFlag);
+    
+        File file(fileName);
+        
+        if (fileContentEncoding.toSubstitutedString("-", "").toLower() == "utf8") {
+            file.storeData(buffer);
+        } else {
+            EncodingConverter::convertToFile(buffer, "UTF-8", fileContentEncoding, file);
+        }
+        
+        setToSavedState();
+    }
+    catch (EncodingException& ex)
+    {
+        setToSavedState();
+
+        throw;
+    }
+    catch (BaseException& ex)
+    {
+        this->ignoreModifiedOnDiskFlag = true;
+        
+        throw;
+    }
 }
 
 TextData::TextMark TextData::createNewMark() {
