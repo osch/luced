@@ -115,7 +115,7 @@ GuiRoot::GuiRoot()
     }
     XSetLocaleModifiers("");
     if (!XSupportsLocale()) {
-        throw SystemException(String() << "Xlib: locale \"" << System::getInstance()->getLocaleName() << "\" not supported.");
+        throw SystemException(String() << "Xlib: locale \"" << System::getInstance()->getDefaultLocale() << "\" not supported.");
     }
 
     x11InputMethod = XOpenIM(display, NULL, NULL, NULL);

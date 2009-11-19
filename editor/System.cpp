@@ -82,7 +82,17 @@ System::System()
     }
     
     defaultEncoding = nl_langinfo(CODESET);
-    localeName  = setlocale(LC_ALL, NULL); // only query, because second param is NULL
+    defaultLocale   = setlocale(LC_ALL, NULL); // only query, because second param is NULL
+    
+    // obtain encoding name for locale "C"
+    
+    setlocale(LC_CTYPE, "C");
+    cEncoding = nl_langinfo(CODESET);
+    setlocale(LC_CTYPE, defaultLocale.toCString());
+    
+    if (defaultEncoding == cEncoding) {
+        defaultEncoding = "ISO-8859-1";
+    }
 }
 
 

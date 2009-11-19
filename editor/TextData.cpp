@@ -65,7 +65,8 @@ void TextData::loadFile(const String& filename, const String& encoding)
     if (   fileContentEncoding == "C" 
         || fileContentEncoding == "POSIX"
         || fileContentEncoding == "ASCII"
-        || fileContentEncoding == "ANSI_X3.4-1968")
+        || fileContentEncoding == "ANSI_X3.4-1968"
+        || fileContentEncoding == System::getInstance()->getCEncoding())
     {
         fileContentEncoding = "ISO-8859-1";
     }

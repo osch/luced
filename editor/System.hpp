@@ -64,8 +64,11 @@ public:
     String getDefaultEncoding() const {
         return defaultEncoding;
     }
-    String getLocaleName() const {
-        return localeName;
+    String getCEncoding() const {
+        return cEncoding;
+    }
+    String getDefaultLocale() const {
+        return defaultLocale;
     }
 
 private:
@@ -77,8 +80,9 @@ private:
     String homeDirectory;
     String userName;
     String hostName;
+    String defaultLocale;
     String defaultEncoding;
-    String localeName;
+    String cEncoding;
 };
 
 
