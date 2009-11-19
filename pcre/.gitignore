@@ -21,3 +21,4 @@
 /pcrecpp_unittest
 /pcregrep
 /pcretest
+/libpcreposix.pc
