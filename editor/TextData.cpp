@@ -54,25 +54,15 @@ void TextData::loadFile(const String& filename, const String& encoding)
 {
     fileContentEncoding = encoding;
 
-    if (fileContentEncoding == "") {
-        fileContentEncoding = System::getInstance()->getDefaultEncoding();
-    }
-    
     File file(filename);
 
     file.loadInto(buffer);
     
-    if (   fileContentEncoding == "C" 
-        || fileContentEncoding == "POSIX"
-        || fileContentEncoding == "ASCII"
-        || fileContentEncoding == "ANSI_X3.4-1968"
-        || fileContentEncoding == System::getInstance()->getCEncoding())
+    EncodingConverter c(fileContentEncoding, "UTF-8");
+    
+    if (c.isConvertingBetweenDifferentCodesets())
     {
-        fileContentEncoding = "ISO-8859-1";
-    }
-
-    if (fileContentEncoding.toSubstitutedString("-", "").toLower() != "utf8") {
-        EncodingConverter::convertInPlace(&buffer, fileContentEncoding, "UTF-8");
+        c.convertInPlace(&buffer);
     }
     
     long len = buffer.getLength();
@@ -86,8 +76,9 @@ void TextData::loadFile(const String& filename, const String& encoding)
     this->beginChangedPos = 0;
     this->changedAmount = len;
     this->oldEndChangedPos = 0;
-    this->fileName = file.getAbsoluteName();
-    fileNameListeners.invokeAllCallbacks(this->fileName);
+    this->fileName               = file.getAbsoluteName();
+    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleStringToUtf8DisplayString(fileName);
+    fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);
 
     setModifiedFlag(false);
 
@@ -119,10 +110,6 @@ namespace
 
 void TextData::reloadFile()
 {
-    if (fileContentEncoding == "") {
-        fileContentEncoding = System::getInstance()->getDefaultEncoding();
-    }
-
     File file(this->fileName);
 
     long oldLength = getLength();
@@ -141,9 +128,14 @@ void TextData::reloadFile()
     
     buffer.clear();
     file.loadInto(buffer);
-    if (fileContentEncoding.toSubstitutedString("-", "").toLower() != "utf8") {
-        EncodingConverter::convertInPlace(&buffer, fileContentEncoding, "UTF-8");
+
+    EncodingConverter c(fileContentEncoding, "UTF-8");
+    
+    if (c.isConvertingBetweenDifferentCodesets())
+    {
+        c.convertInPlace(&buffer);
     }
+
     long len = buffer.getLength();
     byte* ptr = buffer.getTotalAmount();
 
@@ -214,16 +206,18 @@ void TextData::checkFileInfo()
 void TextData::setRealFileName(const String& filename)
 {
     this->fileNamePseudoFlag = false;
-    this->fileName = File(filename).getAbsoluteName();
-    fileNameListeners.invokeAllCallbacks(this->fileName);
+    this->fileName               = File(filename).getAbsoluteName();
+    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleStringToUtf8DisplayString(fileName);
+    fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);
     checkFileInfo();
 }
 
 void TextData::setPseudoFileName(const String& filename)
 {
     this->fileNamePseudoFlag = true;
-    this->fileName = File(filename).getAbsoluteName();
-    fileNameListeners.invokeAllCallbacks(this->fileName);
+    this->fileName               = File(filename).getAbsoluteName();
+    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleStringToUtf8DisplayString(fileName);
+    fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);
 }
 
 
@@ -242,21 +236,22 @@ void TextData::setToSavedState()
 
 void TextData::save()
 {
-    if (fileContentEncoding == "") {
-        fileContentEncoding = System::getInstance()->getDefaultEncoding();
-    }
     try
     {
         ASSERT(!fileNamePseudoFlag);
     
         File file(fileName);
         
-        if (fileContentEncoding.toSubstitutedString("-", "").toLower() == "utf8") {
-            file.storeData(buffer);
-        } else {
-            EncodingConverter::convertToFile(buffer, "UTF-8", fileContentEncoding, file);
-        }
+        EncodingConverter c("UTF-8", fileContentEncoding);
         
+        if (c.isConvertingBetweenDifferentCodesets())
+        {
+            c.convertToFile(buffer, file);
+        }
+        else {
+            file.storeData(buffer);
+        }
+
         setToSavedState();
     }
     catch (EncodingException& ex)

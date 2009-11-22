@@ -39,6 +39,11 @@ namespace LucED
 class EncodingConverter
 {
 public:
+
+    //
+    // Static Methods
+    // 
+
     static String convertUtf8ToLatin1String(const byte* bytes, long length)
     {
         String rslt;
@@ -69,11 +74,13 @@ public:
         }
         return rslt;
     }
+    static String convertUtf8ToLatin1String(const String& utf8String)
+    {
+        return convertUtf8ToLatin1String((const byte*)utf8String.toCString(), 
+                                                      utf8String.getLength());
+    }
 
-    static void convertInPlace(RawPtr<ByteBuffer> buffer, const String& fromCodeset, const String& toCodeset);
-    static void convertToFile (const ByteBuffer&  buffer, const String& fromCodeset, const String& toCodeset, const File& file);
-
-    static String convertStringToString(const String& fromString, const String& fromCodeset, const String& toCodeset);
+    static String convertLocaleStringToUtf8DisplayString(const String& fromString);
 
     static String convertLatin1ToUtf8String(const byte* bytes, long length)
     {
@@ -101,6 +108,21 @@ public:
         }
         return rslt;
     }
+
+    //
+    // Object Methods
+    // 
+
+    EncodingConverter(const String& fromCodeset, const String& toCodeset);
+
+    bool isConvertingBetweenDifferentCodesets();
+    
+    void convertInPlace(RawPtr<ByteBuffer> buffer);
+    void convertToFile (const ByteBuffer&  buffer, const File& file);
+
+    String convertStringToString(const String& fromString);
+    
+    
 private:
     class Adapter : public RawPointable
     {
@@ -122,6 +144,9 @@ private:
         const byte* bytes;
         const long  length;
     };
+    
+    String fromCodeset;
+    String toCodeset;
 };
 
 } // namespace LucED

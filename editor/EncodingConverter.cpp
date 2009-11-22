@@ -27,6 +27,7 @@
 #include "SystemException.hpp"
 #include "EncodingException.hpp"
 #include "ByteArray.hpp"
+#include "System.hpp"
 
 using namespace LucED;
 
@@ -68,12 +69,40 @@ private:
     String toCodeset;
 };
 
+String normalizeEncoding(String encoding)
+{
+    if (encoding == "") {
+        encoding = System::getInstance()->getDefaultEncoding();
+    }
+
+    String e = encoding.toSubstitutedString("-", "").toLower();
+    if (   e == "c" 
+        || e == "posix"
+        || e == "ascii"
+        || e == "iso88591"
+        || e == System::getInstance()->getCEncoding().toSubstitutedString("-", "").toLower())
+    {
+        encoding = "ISO-8859-1";
+    }
+    return encoding;
+}
+
 } // anonymous namespace
 
+EncodingConverter::EncodingConverter(const String& fromCodeset, 
+                                     const String& toCodeset)
 
-void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer, 
-                                       const String&      fromCodeset, 
-                                       const String&      toCodeset)
+    : fromCodeset(normalizeEncoding(fromCodeset)),
+      toCodeset  (normalizeEncoding(toCodeset))
+{}
+
+bool EncodingConverter::isConvertingBetweenDifferentCodesets()
+{
+    return    fromCodeset.toSubstitutedString("-", "").toLower()
+           !=   toCodeset.toSubstitutedString("-", "").toLower();
+}
+
+void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer)
 {
     bool hasErrors       = false;
     bool hasInvalidBytes = false;
@@ -194,8 +223,6 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer,
 
 
 void EncodingConverter::convertToFile(const ByteBuffer&  buffer, 
-                                      const String&      fromCodeset, 
-                                      const String&      toCodeset, 
                                       const File&        file)
 {
     bool hasErrors       = false;
@@ -310,11 +337,23 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
 }
 
 
-String EncodingConverter::convertStringToString(const String& fromString, const String& fromCodeset, const String& toCodeset)
+String EncodingConverter::convertStringToString(const String& fromString)
 {
     ByteBuffer buffer;
     buffer.appendString(fromString);
-    convertInPlace(&buffer, fromCodeset, toCodeset);
+    convertInPlace(&buffer);
     return buffer.toString();
 }
 
+String EncodingConverter::convertLocaleStringToUtf8DisplayString(const String& fromString)
+{
+    ByteBuffer buffer;
+    buffer.appendString(fromString);
+    try
+    {
+        EncodingConverter("", "UTF-8").convertInPlace(&buffer);
+    }
+    catch (EncodingException& ex)
+    {}
+    return buffer.toString();
+}

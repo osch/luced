@@ -31,8 +31,7 @@ using namespace LucED;
 const int BUTTON_OUTER_BORDER = 1;
 
 Button::Button(String buttonText)
-      : buttonText(buttonText),
-        isButtonPressed(false),
+      : isButtonPressed(false),
         isMouseButtonPressed(false),
         isMouseOverButton(false),
         isDefaultButton(false),
@@ -44,6 +43,7 @@ Button::Button(String buttonText)
     KeyActionHandler::Ptr keyActionHandler = KeyActionHandler::create();
     keyActionHandler->addActionMethods(Actions::create(this));
     setKeyActionHandler(keyActionHandler);
+    setButtonText(buttonText);
 }
 
 void Button::setButtonText(String buttonText)
@@ -56,32 +56,30 @@ void Button::setButtonText(String buttonText)
             requestRemovalOfHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
             hasHotKeyFlag = false;
         }
-        int p1 = buttonText.findFirstOf(']', Pos(1));
+        buttonTextWChars.setToUtf8String(buttonText);
+        int p1 = buttonTextWChars.findFirstOf(']', Pos(1));
         
-        String oldButtonText = this->buttonText;
-        char oldHotkeyChar   = this->hotKeyChar;
-        
-        if (p1 != -1) {
-            hotKeyChar = buttonText[p1 - 1];
-            this->buttonText = String() << buttonText.getHead(p1) << buttonText.getTail(p1 + 1);
-            hotKeyPixX = GuiWidget::getGuiTextStyle()->getTextWidth(buttonText.getSubstring(Pos(0), Len(p1 - 1)));
-            hotKeyPixW = GuiWidget::getGuiTextStyle()->getCharWidth(hotKeyChar);
-            hasHotKeyFlag = true;
-            // showHotKeyFlag = true;
-            String keySymString;
-            keySymString.appendUpperChar(hotKeyChar);
-            requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
-        } else {
-            this->buttonText = buttonText;
+        if (p1 > 0) {
+            int hotKeyWChar = buttonTextWChars[p1 - 1].toInt();
+            if (0 <= hotKeyWChar && hotKeyWChar <= 0xff)
+            {
+                hotKeyChar = hotKeyWChar;
+                buttonTextWChars.removeAmount(p1, 1);
+                hotKeyPixX = GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars.getPtr(0), p1 - 1);
+                hotKeyPixW = GuiWidget::getGuiTextStyle()->getCharWidth(hotKeyChar);
+                hasHotKeyFlag = true;
+                // showHotKeyFlag = true;
+                String keySymString;
+                keySymString.appendUpperChar(hotKeyChar);
+                requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
+            }
         }
-        if (isVisible() && (oldButtonText != this->buttonText
-                         || oldHotkeyChar != this->hotKeyChar)) {
+
+        if (isVisible() && buttonText != this->buttonText) {
             drawButton();
         }
     }
-    else {
-        this->buttonText = buttonText;
-    }
+    this->buttonText = buttonText;
 }
 
 int Button::getStandardHeight()
@@ -112,7 +110,7 @@ GuiElement::Measures Button::getOwnDesiredMeasures()
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
 
     int buttonInnerSpacing = GlobalConfig::getInstance()->getButtonInnerSpacing();
-    int minWidth  = GuiWidget::getGuiTextStyle()->getTextWidth(buttonText) + 2 * GuiWidget::getRaisedBoxBorderWidth() + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
+    int minWidth  = GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars) + 2 * GuiWidget::getRaisedBoxBorderWidth() + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
     int minHeight = GuiWidget::getGuiTextHeight() + 2 * GuiWidget::getRaisedBoxBorderWidth()  + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
 
     int bestWidth = minWidth + 4 * GuiWidget::getGuiTextStyle()->getSpaceWidth() + 2*BUTTON_OUTER_BORDER + guiSpacing;
@@ -158,7 +156,7 @@ void Button::drawButton()
                 getGuiWidget()->drawDottedFrame(d + guiSpacing, d + guiSpacing, getPosition().w - 2 * d - 1 - guiSpacing, getPosition().h - 2 * d - 1 - guiSpacing);
             }
         }
-        int w = GuiWidget::getGuiTextStyle()->getTextWidth(buttonText);
+        int w = GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars);
         int x = (getPosition().w - 2*BUTTON_OUTER_BORDER - w - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
         if (x < BUTTON_OUTER_BORDER + guiSpacing) { x = BUTTON_OUTER_BORDER + guiSpacing; }
         int y = (getPosition().h - 2*BUTTON_OUTER_BORDER - GuiWidget::getGuiTextHeight() - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
@@ -171,7 +169,7 @@ void Button::drawButton()
             }
             getGuiWidget()->drawLine(x + textOffset + hotKeyPixX, y + textOffset + lineY, hotKeyPixW, 0);
         }
-        getGuiWidget()->drawGuiText(x + textOffset, y + textOffset, buttonText);
+        getGuiWidget()->drawGuiTextWChars(x + textOffset, y + textOffset, buttonTextWChars);
     }
 }
 

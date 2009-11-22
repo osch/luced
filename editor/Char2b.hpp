@@ -74,6 +74,10 @@ public:
         *this = xchar;
     }
     
+    int toInt() const {
+        return byte1 * 0x0100 + byte2;
+    }
+    
     bool operator==(const Char2b& rhs) const {
         return    byte2 == rhs.byte2
                && byte1 == rhs.byte1;

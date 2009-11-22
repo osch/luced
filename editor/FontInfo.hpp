@@ -32,6 +32,7 @@
 #include "OwningPtr.hpp"
 #include "FontHandle.hpp"
 #include "Char2b.hpp"
+#include "Char2bArray.hpp"
 
 namespace LucED
 {
@@ -100,6 +101,16 @@ public:
     }
     int getTextWidth(const char* str) const {
         return getTextWidth(str, strlen(str));
+    }
+    int getTextWidth(const Char2b* p, long len) const {
+        int rslt = 0;
+        for (int i = 0; i < len; ++i) {
+            rslt += getCharWidth(p[i]);
+        }
+        return rslt;
+    }
+    int getTextWidth(const Char2bArray& wcharArray) const {
+        return getTextWidth(wcharArray.getPtr(0), wcharArray.getLength());
     }
     String getFontName() const {
         return fontName;

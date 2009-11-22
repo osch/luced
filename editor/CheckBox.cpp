@@ -30,16 +30,17 @@ using namespace LucED;
 const int BUTTON_OUTER_BORDER = 1;
 
 CheckBox::CheckBox(String buttonText)
-      : buttonText(buttonText),
-        isBoxChecked(false),
+      : isBoxChecked(false),
         isMouseButtonPressed(false),
         isMouseOverButton(false),
         hasHotKey(false),
-        showHotKey(false)
+        showHotKey(false),
+        hasHotKeyFlag(false)
 {
     KeyActionHandler::Ptr keyActionHandler = KeyActionHandler::create();
     keyActionHandler->addActionMethods(Actions::create(this));
     setKeyActionHandler(keyActionHandler);
+    setButtonText(buttonText);
 }
 
 
@@ -51,7 +52,7 @@ GuiElement::Measures CheckBox::internalGetDesiredMeasures()
     int minWidth  = GuiWidget::getGuiTextStyle()->getLineHeight() * 2;
     int minHeight = GuiWidget::getGuiTextHeight() + 2 * GuiWidget::getRaisedBoxBorderWidth()  + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
 
-    int bestWidth = (GuiWidget::getGuiTextStyle()->getTextWidth(buttonText) + 2 * GuiWidget::getRaisedBoxBorderWidth() + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing) 
+    int bestWidth = (GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars) + 2 * GuiWidget::getRaisedBoxBorderWidth() + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing) 
                   + 4 * GuiWidget::getGuiTextStyle()->getSpaceWidth() + 2*BUTTON_OUTER_BORDER + guiSpacing;
     int bestHeight = minHeight;
 
@@ -65,7 +66,7 @@ void CheckBox::draw()
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
 
     int textOffset = 0;
-    int w = GuiWidget::getGuiTextStyle()->getTextWidth(buttonText);
+    int w = GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars);
     int x = (getPosition().w - GuiWidget::getGuiTextStyle()->getLineHeight() - 2*BUTTON_OUTER_BORDER - w - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight();
     if (x < BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight()) { x = BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight(); }
     int y = (getPosition().h - 2*BUTTON_OUTER_BORDER - GuiWidget::getGuiTextHeight() - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
@@ -118,7 +119,7 @@ void CheckBox::draw()
         }
         getGuiWidget()->drawLine(x + textOffset + hotKeyPixX, y + textOffset + lineY, hotKeyPixW, 0);
     }
-    getGuiWidget()->drawGuiText(x + textOffset, y + textOffset, buttonText);
+    getGuiWidget()->drawGuiTextWChars(x + textOffset, y + textOffset, buttonTextWChars);
 }
 
 
@@ -232,21 +233,46 @@ void CheckBox::processGuiWidgetCreatedEvent()
 {
     getGuiWidget()->addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     getGuiWidget()->setBackgroundColor(getGuiRoot()->getGuiColor03());
-
-    int p1 = buttonText.findFirstOf(']', Pos(1));
-    if (p1 != -1) {
-        hotKeyChar = buttonText[p1 - 1];
-        this->buttonText = String() << buttonText.getHead(p1) << buttonText.getTail(p1 + 1);
-        hotKeyPixX = GuiWidget::getGuiTextStyle()->getTextWidth(buttonText.getHead(p1 - 1));
-        hotKeyPixW = GuiWidget::getGuiTextStyle()->getCharWidth(hotKeyChar);
-        hasHotKey = true;
-        // showHotKey = true;
-        String keySymString;
-        keySymString.appendUpperChar(hotKeyChar);
-        requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
-    }
-    
+    setButtonText(buttonText);
 }
+
+
+void CheckBox::setButtonText(String buttonText)
+{
+    if (getGuiWidget().isValid())
+    {
+        if (hasHotKeyFlag) {
+            String keySymString;
+            keySymString.appendUpperChar(hotKeyChar);
+            requestRemovalOfHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
+            hasHotKeyFlag = false;
+        }
+        buttonTextWChars.setToUtf8String(buttonText);
+        int p1 = buttonTextWChars.findFirstOf(']', Pos(1));
+        
+        if (p1 > 0) {
+            int hotKeyWChar = buttonTextWChars[p1 - 1].toInt();
+            if (0 <= hotKeyWChar && hotKeyWChar <= 0xff)
+            {
+                hotKeyChar = hotKeyWChar;
+                buttonTextWChars.removeAmount(p1, 1);
+                hotKeyPixX = GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars.getPtr(0), p1 - 1);
+                hotKeyPixW = GuiWidget::getGuiTextStyle()->getCharWidth(hotKeyChar);
+                hasHotKeyFlag = true;
+                // showHotKeyFlag = true;
+                String keySymString;
+                keySymString.appendUpperChar(hotKeyChar);
+                requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
+            }
+        }
+
+        if (isVisible() && buttonText != this->buttonText) {
+            draw();
+        }
+    }
+    this->buttonText = buttonText;
+}
+
 
 void CheckBox::treatLostHotKeyRegistration(const KeyMapping::Id& id)
 {

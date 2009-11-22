@@ -182,6 +182,7 @@ private:
     
     Atom x11InternAtomForDeleteWindow;
 //  Atom x11InternAtomForTakeFocus;
+    Atom x11InternAtomForUtf8WindowTitle;
     RawPtr<OwnedTopWins> myOwner;
     bool mapped;
     bool requestFocusAfterMapped;

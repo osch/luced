@@ -35,6 +35,7 @@
 #include "EditorServer.hpp"
 #include "File.hpp"
 #include "ProgramName.hpp"
+#include "EncodingConverter.hpp"
 
 
 #define KEYSYM2UCS_INCLUDED
@@ -67,14 +68,16 @@ void TopWin::createWidget()
 
     guiWidget = GuiWidget::create(Null, this, getPosition());
     
-    setTitle(title);
-    
     raiseWindowAtom = XInternAtom(guiWidget->getDisplay(), "_NET_ACTIVE_WINDOW", False),
 
     x11InternAtomForDeleteWindow = XInternAtom(GuiRoot::getInstance()->getDisplay(), 
             "WM_DELETE_WINDOW", False);
 //    x11InternAtomForTakeFocus = XInternAtom(getDisplay(), 
 //            "WM_TAKE_FOCUS", False);
+
+    x11InternAtomForUtf8WindowTitle = XInternAtom(guiWidget->getDisplay(), "_NET_WM_NAME", False);
+                        
+    setTitle(title);
 
     Atom atoms[] = { x11InternAtomForDeleteWindow, 
                      //x11InternAtomForTakeFocus 
@@ -559,8 +562,19 @@ void TopWin::handleConfigChanged()
 void TopWin::setTitle(const String& title)
 {
     this->title = title;
-    if (guiWidget.isValid()) {
-        XStoreName(guiWidget->getDisplay(), guiWidget->getWid(), title.toCString());
+    if (guiWidget.isValid())
+    {
+        String latin1Title = EncodingConverter::convertUtf8ToLatin1String(title);
+        XStoreName(guiWidget->getDisplay(), guiWidget->getWid(), latin1Title.toCString());
+
+        XChangeProperty(guiWidget->getDisplay(), 
+                        guiWidget->getWid(),
+                        x11InternAtomForUtf8WindowTitle,
+                        GuiRoot::getInstance()->getX11Utf8StringAtom(),
+                        8, PropModeReplace, 
+                        (unsigned char*) title.toCString(),
+                                         title.getLength());
+        
     }
 }
    

@@ -28,7 +28,8 @@
 #include "OwningPtr.hpp"
 #include "FontInfo.hpp"
 #include "RawPtr.hpp"
-
+#include "Char2bArray.hpp"
+                          
 namespace LucED
 {
 
@@ -83,6 +84,12 @@ public:
     }
     int getTextWidth(const String& str) const {
         return fontInfo->getTextWidth(str);
+    }
+    int getTextWidth(const Char2bArray& wcharArray) const {
+        return fontInfo->getTextWidth(wcharArray);
+    }
+    int getTextWidth(const Char2b* p, long len) const {
+        return fontInfo->getTextWidth(p, len);
     }
     int getTextWidth(const char* str) const {
         return fontInfo->getTextWidth(str);

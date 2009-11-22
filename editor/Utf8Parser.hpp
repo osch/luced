@@ -50,7 +50,7 @@ template
 class Utf8Parser : public RawPointable
 {
 public:
-    Utf8Parser(RawPtr<ByteContainer> buffer)
+    Utf8Parser(RawPtr<const ByteContainer> buffer)
         : buffer(buffer)
     {}
     
@@ -138,13 +138,23 @@ public:
         }
         return pos;
     }
+    long getNumberOfWChars() const {
+        long p = 0;
+        long rslt = 0;
+        long len = buffer->getLength();
+        while (p < len) {
+            p = getNextWCharPos(p);
+            rslt += 1;
+        }
+        return rslt;
+    }
 
 private:
     bool isEndOfBuffer(long pos) const {
         return buffer->getLength() == pos;
     }
 
-    const RawPtr<ByteContainer> buffer;
+    const RawPtr<const ByteContainer> buffer;
 };
 
 } // namespace LucED

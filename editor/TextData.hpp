@@ -611,6 +611,7 @@ private:
     Callback<const byte**, long*>::Ptr filterCallback;
     
     String fileName;
+    String utf8FileNameForDisplay;
     long oldLength;
     bool modifiedFlag;
     int viewCounter;

@@ -35,10 +35,12 @@
 #include "Pos.hpp"
 #include "Len.hpp"
 
+#include "RawPointable.hpp"
+
 namespace LucED
 {
 
-class String
+class String : public RawPointable
 {
 public:
     String()
