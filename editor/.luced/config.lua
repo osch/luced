@@ -26,7 +26,7 @@ local generalConfig =
                                           -- because of strange (broken?) DetectableAutorepeat  
                                           -- in x11XkbExtension
           keyPressRepeatFirstMilliSecs = 200,
-          keyPressRepeatNextMilliSecs  =  15,
+          keyPressRepeatNextMilliSecs  =  18,
 
           scrollBarWidth = 12+2,
           scrollBarRepeatFirstMilliSecs = 300,
