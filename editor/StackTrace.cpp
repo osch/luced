@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -30,12 +30,11 @@
 #include <execinfo.h>
 #endif
 
+#include <vector>
+
 #include "debug.hpp"
 #include "util.hpp"
 #include "StackTrace.hpp"
-#include "ObjectArray.hpp"
-#include "MemArray.hpp"
-#include "String.hpp"
 #include "ProgramName.hpp"
 
 using namespace LucED;
@@ -43,44 +42,44 @@ using namespace LucED;
 static int childOutFd = -1;
 static int childInpFd = -1;
 
-
-String StackTrace::getCurrent()
+std::string StackTrace::getCurrent()
 {
 #ifdef HAS_STACKTRACE
-    String message;
-           message << "\n****** StackTrace:\n";
+
+    std::string message;
+                message.append("\n****** StackTrace:\n");
 
     if (childOutFd == -1)
     {
-        ObjectArray<String> argStrings;
+        std::vector<std::string> argStrings;
         {
-            argStrings.append("addr2line");
+            argStrings.push_back("addr2line");
 
         #ifdef ADDR2LINE_SUPPORTS_INLINES    
-            argStrings.append("-i"); // <-- not supported under older addr2line
+            argStrings.push_back("-i"); // <-- not supported under older addr2line
         #endif
-            argStrings.append("-f");
-            argStrings.append("-s");
-            argStrings.append("-C");
+            argStrings.push_back("-f");
+            argStrings.push_back("-s");
+            argStrings.push_back("-C");
     
-            argStrings.append("-e"); argStrings.append(ProgramName::get());
+            argStrings.push_back("-e"); argStrings.push_back(ProgramName::get());
         }
-        MemArray<char*> argPtrs;
+        std::vector<char*> argPtrs;
         {
-            for (int i = 0, n = argStrings.getLength(); i < n; ++i) {
-                argPtrs.append(const_cast<char*>(argStrings[i].toCString()));
+            for (int i = 0, n = argStrings.size(); i < n; ++i) {
+                argPtrs.push_back(const_cast<char*>(argStrings[i].c_str()));
             }
-            argPtrs.append(NULL);
+            argPtrs.push_back(NULL);
         }
 
         int outPipe[2];
         int inpPipe[2];
         
         if (::pipe(outPipe) != 0) {
-            message << "*** Error: Could not create pipe: " << strerror(errno) << "\n";
+            message.append("*** Error: Could not create pipe: ").append(strerror(errno)).append("\n");
         }
         if (::pipe(inpPipe) != 0) {
-            message << "*** Error: Could not create pipe: " << strerror(errno) << "\n";
+            message.append("*** Error: Could not create pipe: ").append(strerror(errno)).append("\n");
         }
         
         pid_t pid = ::fork();
@@ -103,11 +102,11 @@ String StackTrace::getCurrent()
             ::close(outPipe[1]);
             ::close(inpPipe[0]);
             
-            execvp("addr2line", argPtrs.getPtr(0));
+            execvp("addr2line", &argPtrs[0]);
         }
         else if (pid < 0)
         {
-            message << "*** Error: Could not fork process: " << strerror(errno) << "\n";
+            message.append("*** Error: Could not fork process: ").append(strerror(errno)).append("\n");
         }
     
         // we are parent process
@@ -118,7 +117,7 @@ String StackTrace::getCurrent()
         childInpFd = inpPipe[1];
     }
     
-    String data;
+    std::string data;
     {
         void*  array[2000];
         int size = ::backtrace(array, 2000);
@@ -136,45 +135,47 @@ String StackTrace::getCurrent()
         }
     }
     
-    ObjectArray<String> functionLines; int maxFunctionLength = 0;
-    ObjectArray<String> fileLines;     int maxFileLength     = 0;
+    std::vector<std::string> functionLines; int maxFunctionLength = 0;
+    std::vector<std::string> fileLines;     int maxFileLength     = 0;
     
-    for (int i = 0, j = 0, n = 0; i < data.getLength(); ++i) {
+    for (int i = 0, j = 0, n = 0; i < data.length(); ++i) {
         if (data[i] == '\n') {
-            String line = data.getSubstring(Pos(j), Pos(i));
+            std::string line = data.substr(j, i - j);
             j = i + 1;
             if (n >= 2)
             {
                 if (n % 2 == 0) {
-                    functionLines.append(line);
-                    util::maximize(&maxFunctionLength, line.getLength());
+                    functionLines.push_back(line);
+                    util::maximize(&maxFunctionLength, line.length());
                 } else {
-                    fileLines.append(line);
-                    util::maximize(&maxFileLength, line.getLength());
+                    fileLines.push_back(line);
+                    util::maximize(&maxFileLength, line.length());
                 }
             }
             n += 1;
         }
     }
-    if (fileLines.getLength() < functionLines.getLength()) {
-        fileLines.append("");
+    if (fileLines.size() < functionLines.size()) {
+        fileLines.push_back("");
     }
-    for (int i = 0; i < functionLines.getLength(); ++i) {
+    for (int i = 0; i < functionLines.size(); ++i) {
         char buffer[4000];
         sprintf(buffer, "   %-*.*s %s\n", maxFileLength, maxFileLength, 
-                                          fileLines[i].toCString(), 
-                                          functionLines[i].toCString());
-        message << buffer;
+                                          fileLines[i].c_str(), 
+                                          functionLines[i].c_str());
+        message.append(buffer);
     }
-    message << "******\n";
+    message.append("******\n");
     return message;
+
 #endif
 }
+
 
 void StackTrace::print(FILE* fprintfOutput)
 {
 #ifdef HAS_STACKTRACE
-    fprintf(fprintfOutput, "%s", getCurrent().toCString());
+    fprintf(fprintfOutput, "%s", getCurrent().c_str());
 #endif
 }
 

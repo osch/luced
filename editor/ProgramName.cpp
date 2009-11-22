@@ -19,17 +19,18 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "debug.hpp"
 #include "ProgramName.hpp"
 
 using namespace LucED;
 
-String ProgramName::name;
+std::string ProgramName::name;
 
 #ifdef DEBUG
 static bool wasSet = false;
 #endif
 
-void ProgramName::set(const String& name)
+void ProgramName::set(const std::string& name)
 {
 #ifdef DEBUG
     ASSERT(!wasSet);
