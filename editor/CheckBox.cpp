@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -63,63 +63,66 @@ GuiElement::Measures CheckBox::internalGetDesiredMeasures()
 
 void CheckBox::draw()
 {
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
-
-    int textOffset = 0;
-    int w = GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars);
-    int x = (getPosition().w - GuiWidget::getGuiTextStyle()->getLineHeight() - 2*BUTTON_OUTER_BORDER - w - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight();
-    if (x < BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight()) { x = BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight(); }
-    int y = (getPosition().h - 2*BUTTON_OUTER_BORDER - GuiWidget::getGuiTextHeight() - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
-    if (y < BUTTON_OUTER_BORDER + guiSpacing) { y = BUTTON_OUTER_BORDER + guiSpacing; }
-
-    GuiColor color;
-    if (isMouseOverButton) {
-        color = GuiRoot::getInstance()->getGuiColor04();
-    } else {
-        color = GuiRoot::getInstance()->getGuiColor03();
-    }
+    if (getGuiWidget().isValid())
     {
-//        drawRaisedBox(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
-//                getPosition().w - 2*BUTTON_OUTER_BORDER - guiSpacing, getPosition().h - 2*BUTTON_OUTER_BORDER - guiSpacing, color);
-        getGuiWidget()->drawRaisedSurface(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
-                getPosition().w - 2*BUTTON_OUTER_BORDER - guiSpacing, getPosition().h - 2*BUTTON_OUTER_BORDER - guiSpacing, GuiRoot::getInstance()->getGuiColor03());
-
-        int bx = BUTTON_OUTER_BORDER + guiSpacing + 3;
-        int by = y + 1; // +2
-        int bw = GuiWidget::getGuiTextStyle()->getLineHeight() - 1; // -2
-        getGuiWidget()->drawPressedBox(bx, by, bw, bw, color);
-        if (isBoxChecked) {
-            int cx = bx + 3;
-            int cy = by + 3;
-            int cw = bw - 7;
-            int cw1 = cw / 3;
-            int cw2 = cw - cw1;
-            int ch  = cw;
-            int ch1 = cw1;
-            int ch2 = ch - ch1;
-            
-            getGuiWidget()->drawLine(cx,       cy +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
-            getGuiWidget()->drawLine(cx + cw1, cy + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
-
-            getGuiWidget()->drawLine(cx,       cy + 1 +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
-            getGuiWidget()->drawLine(cx + cw1, cy + 1 + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
+        int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+    
+        int textOffset = 0;
+        int w = GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars);
+        int x = (getPosition().w - GuiWidget::getGuiTextStyle()->getLineHeight() - 2*BUTTON_OUTER_BORDER - w - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight();
+        if (x < BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight()) { x = BUTTON_OUTER_BORDER + guiSpacing + GuiWidget::getGuiTextStyle()->getLineHeight(); }
+        int y = (getPosition().h - 2*BUTTON_OUTER_BORDER - GuiWidget::getGuiTextHeight() - guiSpacing) / 2 + BUTTON_OUTER_BORDER + guiSpacing;
+        if (y < BUTTON_OUTER_BORDER + guiSpacing) { y = BUTTON_OUTER_BORDER + guiSpacing; }
+    
+        GuiColor color;
+        if (isMouseOverButton) {
+            color = GuiRoot::getInstance()->getGuiColor04();
+        } else {
+            color = GuiRoot::getInstance()->getGuiColor03();
         }
-    }
-    const int d = BUTTON_OUTER_BORDER - 1;
-    getGuiWidget()->undrawFrame(d + guiSpacing, d + guiSpacing, getPosition().w - 2 * d - guiSpacing, getPosition().h - 2 * d - guiSpacing);
-    if (hasFocus()) {
-        const int d = BUTTON_OUTER_BORDER;
-        getGuiWidget()->drawDottedFrame(d + guiSpacing, d + guiSpacing + 1, getPosition().w - 2 * d - 1 - guiSpacing, getPosition().h - 2 * d - 1 - guiSpacing);
-    }
-    if (showHotKey) {
-        //drawLine(x + textOffset + hotKeyPixX, y + textOffset + GuiWidget::getGuiTextHeight(), hotKeyPixW, 0);
-        int lineY = GuiWidget::getGuiTextStyle()->getLineAscent() + 1;
-        if (lineY > GuiWidget::getGuiTextHeight() - 1) {
-            lineY = GuiWidget::getGuiTextHeight() - 1;
+        {
+    //        drawRaisedBox(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
+    //                getPosition().w - 2*BUTTON_OUTER_BORDER - guiSpacing, getPosition().h - 2*BUTTON_OUTER_BORDER - guiSpacing, color);
+            getGuiWidget()->drawRaisedSurface(BUTTON_OUTER_BORDER + guiSpacing, BUTTON_OUTER_BORDER + guiSpacing, 
+                    getPosition().w - 2*BUTTON_OUTER_BORDER - guiSpacing, getPosition().h - 2*BUTTON_OUTER_BORDER - guiSpacing, GuiRoot::getInstance()->getGuiColor03());
+    
+            int bx = BUTTON_OUTER_BORDER + guiSpacing + 3;
+            int by = y + 1; // +2
+            int bw = GuiWidget::getGuiTextStyle()->getLineHeight() - 1; // -2
+            getGuiWidget()->drawPressedBox(bx, by, bw, bw, color);
+            if (isBoxChecked) {
+                int cx = bx + 3;
+                int cy = by + 3;
+                int cw = bw - 7;
+                int cw1 = cw / 3;
+                int cw2 = cw - cw1;
+                int ch  = cw;
+                int ch1 = cw1;
+                int ch2 = ch - ch1;
+                
+                getGuiWidget()->drawLine(cx,       cy +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
+                getGuiWidget()->drawLine(cx + cw1, cy + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
+    
+                getGuiWidget()->drawLine(cx,       cy + 1 +     ch1,      cw1,       ch1, GuiRoot::getInstance()->getGuiColor01());
+                getGuiWidget()->drawLine(cx + cw1, cy + 1 + 2 * ch1,  2 * cw1, - 2 * ch1, GuiRoot::getInstance()->getGuiColor01());
+            }
         }
-        getGuiWidget()->drawLine(x + textOffset + hotKeyPixX, y + textOffset + lineY, hotKeyPixW, 0);
+        const int d = BUTTON_OUTER_BORDER - 1;
+        getGuiWidget()->undrawFrame(d + guiSpacing, d + guiSpacing, getPosition().w - 2 * d - guiSpacing, getPosition().h - 2 * d - guiSpacing);
+        if (hasFocus()) {
+            const int d = BUTTON_OUTER_BORDER;
+            getGuiWidget()->drawDottedFrame(d + guiSpacing, d + guiSpacing + 1, getPosition().w - 2 * d - 1 - guiSpacing, getPosition().h - 2 * d - 1 - guiSpacing);
+        }
+        if (showHotKey) {
+            //drawLine(x + textOffset + hotKeyPixX, y + textOffset + GuiWidget::getGuiTextHeight(), hotKeyPixW, 0);
+            int lineY = GuiWidget::getGuiTextStyle()->getLineAscent() + 1;
+            if (lineY > GuiWidget::getGuiTextHeight() - 1) {
+                lineY = GuiWidget::getGuiTextHeight() - 1;
+            }
+            getGuiWidget()->drawLine(x + textOffset + hotKeyPixX, y + textOffset + lineY, hotKeyPixW, 0);
+        }
+        getGuiWidget()->drawGuiTextWChars(x + textOffset, y + textOffset, buttonTextWChars);
     }
-    getGuiWidget()->drawGuiTextWChars(x + textOffset, y + textOffset, buttonTextWChars);
 }
 
 
@@ -233,13 +236,12 @@ void CheckBox::processGuiWidgetCreatedEvent()
 {
     getGuiWidget()->addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     getGuiWidget()->setBackgroundColor(getGuiRoot()->getGuiColor03());
-    setButtonText(buttonText);
 }
 
 
 void CheckBox::setButtonText(String buttonText)
 {
-    if (getGuiWidget().isValid())
+    if (buttonText != this->buttonText)
     {
         if (hasHotKeyFlag) {
             String keySymString;
@@ -265,12 +267,11 @@ void CheckBox::setButtonText(String buttonText)
                 requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
             }
         }
-
-        if (isVisible() && buttonText != this->buttonText) {
+        if (isVisible()) {
             draw();
         }
+        this->buttonText = buttonText;
     }
-    this->buttonText = buttonText;
 }
 
 

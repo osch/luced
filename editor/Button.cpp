@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -48,7 +48,7 @@ Button::Button(String buttonText)
 
 void Button::setButtonText(String buttonText)
 {
-    if (getGuiWidget().isValid())
+    if (buttonText != this->buttonText)
     {
         if (hasHotKeyFlag) {
             String keySymString;
@@ -74,12 +74,11 @@ void Button::setButtonText(String buttonText)
                 requestHotKeyRegistration(KeyMapping::Id(KeyModifier("Alt"), KeyId(keySymString)));
             }
         }
-
-        if (isVisible() && buttonText != this->buttonText) {
+        if (isVisible()) {
             drawButton();
         }
+        this->buttonText = buttonText;
     }
-    this->buttonText = buttonText;
 }
 
 int Button::getStandardHeight()
@@ -451,7 +450,6 @@ void Button::processGuiWidgetCreatedEvent()
 {
     getGuiWidget()->addToXEventMask(ExposureMask|ButtonPressMask|ButtonReleaseMask|ButtonMotionMask|EnterWindowMask|LeaveWindowMask);
     getGuiWidget()->setBackgroundColor(GuiRoot::getInstance()->getGuiColor03());
-    setButtonText(buttonText);
 }
 
 
