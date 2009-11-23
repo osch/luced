@@ -32,6 +32,8 @@
 #include <X11/XKBlib.h>
 #endif
 
+#undef ABORT_ON_X11_ERRORS
+
 using namespace LucED;
 
 SingletonInstance<GuiRoot> GuiRoot::instance;
@@ -43,6 +45,9 @@ static int myX11ErrorHandler(Display* display, XErrorEvent* errorEvent)
     XGetErrorText(display, errorEvent->error_code, buffer, sizeof(buffer));
     buffer[sizeof(buffer) - 1] = '\0';
     fprintf(stderr, "LucED: xlib error: %s\n", buffer);
+#ifdef ABORT_ON_X11_ERRORS
+    abort();
+#endif
     return 0;
 }
 
@@ -113,6 +118,9 @@ GuiRoot::GuiRoot()
     if (display == NULL) {
         throw SystemException(String() << "Cannot open display \"" << XDisplayName(NULL) << "\"");
     }
+#ifdef ABORT_ON_X11_ERRORS
+    XSynchronize(display, True);
+#endif
     XSetLocaleModifiers("");
     if (!XSupportsLocale()) {
         throw SystemException(String() << "Xlib: locale \"" << System::getInstance()->getDefaultLocale() << "\" not supported.");
