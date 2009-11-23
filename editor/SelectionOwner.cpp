@@ -131,9 +131,10 @@ GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEv
             e.property  = event->xselectionrequest.property;
             if (e.target == x11AtomForTargets) {
                 Atom myTargets[] = { x11AtomForUtf8String, XA_STRING };
+                static const int XSERVER_ATOM_BITSIZE = 32; // sizeof(Atom) == 64 on 64bit systems, but this value must be 32
                 XChangeProperty(display, e.requestor, e.property,
-                                XA_ATOM, sizeof(Atom)*8, 0, (unsigned char*)myTargets,
-                                sizeof(myTargets)/sizeof(Atom));
+                                XA_ATOM, XSERVER_ATOM_BITSIZE, 0, (unsigned char*)myTargets,
+                                sizeof(myTargets)/sizeof(myTargets[0]));
             } else if (e.target == XA_STRING || e.target == x11AtomForUtf8String)
             {
                 if (sendingMultiPart) {
