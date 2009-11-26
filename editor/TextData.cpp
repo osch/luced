@@ -77,7 +77,7 @@ void TextData::loadFile(const String& filename, const String& encoding)
     this->changedAmount = len;
     this->oldEndChangedPos = 0;
     this->fileName               = file.getAbsoluteName();
-    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleStringToUtf8DisplayString(fileName);
+    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(fileName);
     fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);
 
     setModifiedFlag(false);
@@ -207,7 +207,7 @@ void TextData::setRealFileName(const String& filename)
 {
     this->fileNamePseudoFlag = false;
     this->fileName               = File(filename).getAbsoluteName();
-    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleStringToUtf8DisplayString(fileName);
+    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(fileName);
     fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);
     checkFileInfo();
 }
@@ -216,7 +216,7 @@ void TextData::setPseudoFileName(const String& filename)
 {
     this->fileNamePseudoFlag = true;
     this->fileName               = File(filename).getAbsoluteName();
-    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleStringToUtf8DisplayString(fileName);
+    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(fileName);
     fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);
 }
 
@@ -899,7 +899,7 @@ void TextData::registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback)
 void TextData::registerFileNameListener(Callback<const String&>::Ptr fileNameCallback)
 {
     fileNameListeners.registerCallback(fileNameCallback);
-    fileNameCallback->call(fileName);
+    fileNameCallback->call(utf8FileNameForDisplay);
 }
 
 void TextData::registerReadOnlyListener(Callback<bool>::Ptr readOnlyCallback)

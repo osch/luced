@@ -345,13 +345,28 @@ String EncodingConverter::convertStringToString(const String& fromString)
     return buffer.toString();
 }
 
-String EncodingConverter::convertLocaleStringToUtf8DisplayString(const String& fromString)
+String EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(const String& fromString)
 {
     ByteBuffer buffer;
     buffer.appendString(fromString);
     try
     {
         EncodingConverter("", "UTF-8").convertInPlace(&buffer);
+    }
+    catch (EncodingException& ex)
+    {}
+    return buffer.toString();
+}
+
+
+
+String EncodingConverter::convertUtf8ToLocaleStringIgnoreErrors(const String& fromString)
+{
+    ByteBuffer buffer;
+    buffer.appendString(fromString);
+    try
+    {
+        EncodingConverter("UTF-8", "").convertInPlace(&buffer);
     }
     catch (EncodingException& ex)
     {}

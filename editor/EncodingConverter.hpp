@@ -80,7 +80,9 @@ public:
                                                       utf8String.getLength());
     }
 
-    static String convertLocaleStringToUtf8DisplayString(const String& fromString);
+    static String convertLocaleToUtf8StringIgnoreErrors(const String& fromString);
+
+    static String convertUtf8ToLocaleStringIgnoreErrors(const String& fromString);
 
     static String convertLatin1ToUtf8String(const byte* bytes, long length)
     {

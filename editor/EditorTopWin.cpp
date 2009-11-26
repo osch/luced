@@ -51,6 +51,7 @@
 #include "LucedLuaInterface.hpp"
 #include "GlobalLuaInterpreter.hpp"
 #include "QualifiedName.hpp"
+#include "EncodingConverter.hpp"
 
 using namespace LucED;
 
@@ -755,7 +756,7 @@ void EditorTopWin::setWindowTitle()
         title << EditorServer::getInstance()->getInstanceName() << ": ";
     }
     
-    title << file.getBaseName();
+    title << EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(file.getBaseName());
 
     if (textData->getModifiedFlag() == true
      && textData->isReadOnly())
@@ -766,7 +767,9 @@ void EditorTopWin::setWindowTitle()
     } else if (textData->getModifiedFlag() == true) {
         title << " (modified)";
     }
-    title << " - " << file.getDirName() << "/ ["
+    title << " - " 
+          << EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(file.getDirName())
+          << "/ ["
           << System::getInstance()->getUserName() << "@" 
           << System::getInstance()->getHostName() << "]";
 

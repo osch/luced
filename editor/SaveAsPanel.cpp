@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -25,6 +25,7 @@
 #include "GlobalConfig.hpp"
 #include "GuiLayoutSpacer.hpp"
 #include "LabelWidget.hpp"
+#include "EncodingConverter.hpp"
 
 using namespace LucED;
 
@@ -78,7 +79,9 @@ SaveAsPanel::SaveAsPanel(TextEditorWidget* editorWidget,
 
 void SaveAsPanel::continueSave()
 {
-    String newFileName = editField->getTextData()->getAsString();
+    String utf8FileName = editField->getTextData()->getAsString();
+    String newFileName  = EncodingConverter::convertUtf8ToLocaleStringIgnoreErrors(utf8FileName);
+
     RawPtr<TextData> textData = editorWidget->getTextData();
 
     if (textData->getFileName() != newFileName)
@@ -98,7 +101,9 @@ void SaveAsPanel::handleButtonPressed(Button* button, Button::ActivationVariant 
 {
     if (button == saveButton)
     {
-        String newFileName = editField->getTextData()->getAsString();
+        String utf8FileName = editField->getTextData()->getAsString();
+        String newFileName  = EncodingConverter::convertUtf8ToLocaleStringIgnoreErrors(utf8FileName);
+        
         RawPtr<TextData> textData = editorWidget->getTextData();
         
         if (   (textData->isFileNamePseudo() || textData->getFileName() != newFileName)
@@ -106,7 +111,7 @@ void SaveAsPanel::handleButtonPressed(Button* button, Button::ActivationVariant 
         {
             messageBoxInvoker->call(MessageBoxParameter()
                                     .setTitle("File exists")
-                                    .setMessage(String() << "File '" << newFileName << "' exists.")
+                                    .setMessage(String() << "File '" << utf8FileName << "' exists.")
                                     .setDefaultButton("S]ave", newCallback(this, &SaveAsPanel::continueSave))
                                     .setCancelButton("Ca]ncel"));
         }
@@ -124,11 +129,16 @@ void SaveAsPanel::handleButtonPressed(Button* button, Button::ActivationVariant 
 void SaveAsPanel::show()
 {
     RawPtr<TextData> textData = editorWidget->getTextData();
+    
     String newContent;
-    if (textData->isFileNamePseudo()) {
-        newContent = String() << File(textData->getFileName()).getDirName() << "/";
+    if (textData->isFileNamePseudo()) 
+    {
+        String dirName = File(textData->getFileName()).getDirName();
+        newContent = String() << EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(dirName)
+                              << "/";
     } else {
-        newContent = File(textData->getFileName()).getAbsoluteName();
+        String absName = File(textData->getFileName()).getAbsoluteName();
+        newContent     = EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(absName);
     }
     editField->getTextData()->setToString(newContent);
     editField->getTextData()->clearHistory();
