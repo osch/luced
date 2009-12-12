@@ -131,13 +131,13 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer)
         buffer->insertAmount(toPos, insertSize);
         fromPos += insertSize;
         
-        char*   fromPtr0      = (char*)    buffer->getAmount(fromPos, fromLength);
-        char*   fromPtr1      = fromPtr0;
-        size_t  fromBytesLeft = fromLength;
+        const char*  fromPtr0      = (char*)    buffer->getAmount(fromPos, fromLength);
+        const char*  fromPtr1      = fromPtr0;
+        size_t       fromBytesLeft = fromLength;
 
-        char*   toPtr0        = (char*)    buffer->getAmount(toPos, insertSize);
-        char*   toPtr1        = toPtr0;
-        size_t  outBytesLeft  = insertSize;
+        char*        toPtr0        = (char*)    buffer->getAmount(toPos, insertSize);
+        char*        toPtr1        = toPtr0;
+        size_t       outBytesLeft  = insertSize;
         
         size_t s = iconv(iconvHandle, &fromPtr1, &fromBytesLeft,
                                       &toPtr1,   &outBytesLeft);
@@ -241,9 +241,9 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
     
     long fromLength = buffer.getLength();
 
-    char*   fromPtr0      = (char*) buffer.getAmount(0, fromLength);
-    char*   fromPtr1      = fromPtr0;
-    size_t  fromBytesLeft = fromLength;
+    const char*   fromPtr0      = (char*) buffer.getAmount(0, fromLength);
+    const char*   fromPtr1      = fromPtr0;
+    size_t        fromBytesLeft = fromLength;
     
     ByteArray outBuffer;
 
