@@ -34,37 +34,48 @@ using namespace LucED;
 namespace // anonymous
 {
 
-class IconvHandle : public NonCopyable
+class IconvConverter : public NonCopyable
 {
 public:
-    IconvHandle(const String& fromCodeset, 
-                const String& toCodeset) 
+    IconvConverter(const String& fromCodeset, 
+                   const String& toCodeset) 
 
-        : value(iconv_open(toCodeset.toCString(),
-                           fromCodeset.toCString())),
+        : handle(iconv_open(toCodeset.toCString(),
+                            fromCodeset.toCString())),
           fromCodeset(fromCodeset),
           toCodeset(toCodeset)
     {}
-    ~IconvHandle() {
+    ~IconvConverter() {
         if (isValid()) {
-            iconv_close(value);
+            iconv_close(handle);
         }
+    }
+    size_t convert(const char** inbuf,  size_t* inbytesleft,
+                         char** outbuf, size_t* outbytesleft)
+    {
+#ifdef ICONV_IS_POSIX_CONFORM
+        return iconv(handle, inbuf,  inbytesleft,
+                             outbuf, outbytesleft);
+#else
+        return iconv(handle, (char**)inbuf,  inbytesleft,
+                                     outbuf, outbytesleft);
+#endif
     }
     void reset() {
         if (isValid()) {
-            iconv_close(value);
-            value = iconv_open(toCodeset.toCString(),
-                               fromCodeset.toCString());
+            iconv_close(handle);
+            handle = iconv_open(toCodeset.toCString(),
+                                fromCodeset.toCString());
         }
     }
     bool isValid() const {
-        return value != (iconv_t)(-1);
+        return handle != (iconv_t)(-1);
     }
     operator iconv_t() const {
-        return value;
+        return handle;
     }
 private:
-    iconv_t value;
+    iconv_t handle;
     String fromCodeset;
     String toCodeset;
 };
@@ -107,9 +118,9 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer)
     bool hasErrors       = false;
     bool hasInvalidBytes = false;
     
-    IconvHandle iconvHandle(fromCodeset, toCodeset);
+    IconvConverter iconvConverter(fromCodeset, toCodeset);
     
-    if (!iconvHandle.isValid())
+    if (!iconvConverter.isValid())
     {
         throw SystemException(String() << "Cannot convert from codeset " << fromCodeset
                                        << " to codeset " << toCodeset
@@ -139,8 +150,8 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer)
         char*        toPtr1        = toPtr0;
         size_t       outBytesLeft  = insertSize;
         
-        size_t s = iconv(iconvHandle, &fromPtr1, &fromBytesLeft,
-                                      &toPtr1,   &outBytesLeft);
+        size_t s = iconvConverter.convert(&fromPtr1, &fromBytesLeft,
+                                          &toPtr1,   &outBytesLeft);
         if (s == (size_t)(-1)) {
             if (errno == E2BIG) {
                 // The output buffer has no more room for the next converted character. 
@@ -167,7 +178,7 @@ void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer)
                     --fromBytesLeft;
                     hasErrors       = true;
                     hasInvalidBytes = true;
-                    iconvHandle.reset();
+                    iconvConverter.reset();
                 }
                 else {
                     // should not happen
@@ -230,9 +241,9 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
 
     File::Writer::Ptr fileWriter = file.openForWriting();
     
-    IconvHandle iconvHandle(fromCodeset, toCodeset);
+    IconvConverter iconvConverter(fromCodeset, toCodeset);
     
-    if (!iconvHandle.isValid())
+    if (!iconvConverter.isValid())
     {
         throw SystemException(String() << "Cannot convert from codeset " << fromCodeset
                                        << " to codeset " << toCodeset
@@ -262,8 +273,8 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
         char*   toPtr1        = toPtr0;
         size_t  outBytesLeft  = outBufferSize;
         
-        size_t s = iconv(iconvHandle, &fromPtr1, &fromBytesLeft,
-                                      &toPtr1,   &outBytesLeft);
+        size_t s = iconvConverter.convert(&fromPtr1, &fromBytesLeft,
+                                          &toPtr1,   &outBytesLeft);
         if (s == (size_t)(-1)) {
             if (errno == E2BIG) {
                 // The output buffer has no more room for the next converted character. 
@@ -290,7 +301,7 @@ void EncodingConverter::convertToFile(const ByteBuffer&  buffer,
                     --fromBytesLeft;
                     hasErrors       = true;
                     hasInvalidBytes = true;
-                    iconvHandle.reset();
+                    iconvConverter.reset();
                 }
                 else {
                     // should not happen
