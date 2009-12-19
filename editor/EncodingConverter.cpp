@@ -53,7 +53,7 @@ public:
     size_t convert(const char** inbuf,  size_t* inbytesleft,
                          char** outbuf, size_t* outbytesleft)
     {
-#ifdef ICONV_IS_POSIX_CONFORM
+#if ICONV_USES_CONST_POINTER
         return iconv(handle, inbuf,  inbytesleft,
                              outbuf, outbytesleft);
 #else

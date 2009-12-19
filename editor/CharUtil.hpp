@@ -24,7 +24,7 @@
 
 extern "C"
 {
-    #include "../pcre/config.h"
+    #include "config.h"
     #include "../pcre/pcre_internal.h"
 }
 

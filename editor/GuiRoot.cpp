@@ -22,11 +22,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "GuiRoot.hpp"
 #include "GlobalConfig.hpp"
 #include "SystemException.hpp"
 #include "GuiRootProperty.hpp"
 #include "System.hpp"
+
+#if HAVE_X11_XKBLIB_H && !defined(USE_X11_XKB_EXTENSION)
+#  define USE_X11_XKB_EXTENSION
+#endif
 
 #ifdef USE_X11_XKB_EXTENSION
 #include <X11/XKBlib.h>

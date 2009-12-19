@@ -32,7 +32,6 @@ class KeyId
 {
 public:
     
-#ifdef X11_GUI
     KeyId()
         : keySym(NoSymbol)
     {}
@@ -76,13 +75,9 @@ public:
             return false;
         }
     }
-#endif
 
 private:
-
-#ifdef X11_GUI
     KeySym keySym;
-#endif
 };
 
 } // namespace LucED

@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "config.h"
 #include "File.hpp"
 #include "ByteArray.hpp"
 #include "Regex.hpp"
@@ -235,12 +236,15 @@ File::Info File::getInfo() const
         Info rslt;
         rslt.isFileFlag                  = S_ISREG(statData.st_mode);
         rslt.isDirectoryFlag             = S_ISDIR(statData.st_mode);
-#if defined(STAT_HAS_ST_MTIM_TV_NSEC)
+#if HAVE_STAT_MTIME_TV_NSEC
         rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
                                                       MicroSeconds(statData.st_mtim.tv_nsec / 1000));
-#elif defined(STAT_HAS_ST_MTIMENSE)
+#elif HAVE_STAT_MTIME_MTIMENSEC
         rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
                                                       MicroSeconds(statData.st_mtimensec / 1000));
+#elif HAVE_STAT_MTIME_MTIMESPEC
+        rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
+                                                      MicroSeconds(statData.st_mtimespec.tv_nsec / 1000));
 #else
         rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
                                                       MicroSeconds(0));

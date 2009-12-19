@@ -1,0 +1,224 @@
+####################################################################
+#
+# configure.ac
+#
+# The script './configure' is created from this file
+# by the autoconf command.
+#
+####################################################################
+
+
+
+####################################################
+# init with project name
+#
+AC_INIT([luced],[0.01])
+AC_CONFIG_AUX_DIR([config-aux])
+AC_CONFIG_MACRO_DIR([config-m4])
+
+AM_INIT_AUTOMAKE
+
+AM_MAINTAINER_MODE
+
+
+####################################################
+# test for
+#
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_LIBTOOL
+AC_PROG_INSTALL
+AC_PROG_LN_S
+
+# Use the C++ compiler for the compile tests
+AC_LANG(C++)
+
+AC_CHECK_FUNCS(bcopy memmove strerror)
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(limits.h sys/types.h sys/stat.h dirent.h windows.h X11/xpm.h X11/Xutil.h X11/XKBlib.h execinfo.h sys/wait.h)
+
+AC_SEARCH_LIBS([cos],[m])
+
+
+AC_CHECK_MEMBER([struct stat.st_mtim.tv_nsec],[AC_DEFINE([HAVE_STAT_MTIME_TV_NSEC],[1],[Define to 1 if struct stat.st_mtim.tv_nsec exists])])
+AC_CHECK_MEMBER([struct stat.st_mtimensec],[AC_DEFINE([HAVE_STAT_MTIME_MTIMENSEC],[1],[Define to 1 if struct stat.st_mtimensec exists])])
+AC_CHECK_MEMBER([struct stat.st_mtimespec],[AC_DEFINE([HAVE_STAT_MTIME_MTIMESPEC],[1],[Define to 1 if struct stat.st_mtimespec exists])])
+
+
+AC_CHECK_DECLS([isatty, mkstemp, popen],[],[],[])
+AC_CHECK_DECLS([_longjmp],[],[],AC_INCLUDES_DEFAULT [
+                                #include <setjmp.h>])
+
+AC_CHECK_DECLS([dlopen],[],[],AC_INCLUDES_DEFAULT [
+                              #include <dlfcn.h>])
+AC_SEARCH_LIBS([dlopen],[dl])
+
+AC_CHECK_DECLS([NSLinkModule],[],[],AC_INCLUDES_DEFAULT [
+                                    #include <mach-o/dyld.h>])
+
+
+AC_CHECK_DECLS([readline],[],[], AC_INCLUDES_DEFAULT [
+                                 #include <readline/readline.h>
+                                 #include <readline/history.h>])
+
+luced_LIBS_without_readline="$LIBS"
+AC_SEARCH_LIBS([readline],[readline])
+luced_LIBS_with_readline="$LIBS"
+LIBS="$luced_LIBS_without_readline"
+AC_SUBST([LIBS_WITH_READLINE],[$luced_LIBS_with_readline])
+AC_SEARCH_LIBS([XOpenDisplay],[X11])
+AC_SEARCH_LIBS([XpmCreatePixmapFromData],[Xpm])
+
+pcre_have_strotolonglong=0
+AC_CHECK_FUNCS(strtoq strtoll _strtoi64, [pcre_have_strotolonglong="1"; break])
+# If we can't convert a string to a long long, pretend we don't even
+# have a long long.
+if test $pcre_have_strotolonglong = "0"; then
+   pcre_have_long_long="0"
+   pcre_have_ulong_long="0"
+else
+  AC_CHECK_TYPES([long long],
+                 [pcre_have_long_long="1"],
+                 [pcre_have_long_long="0"])
+  AC_CHECK_TYPES([unsigned long long],
+                 [pcre_have_ulong_long="1"],
+                 [pcre_have_ulong_long="0"])
+fi
+AC_SUBST(pcre_have_long_long)
+AC_SUBST(pcre_have_ulong_long)
+
+
+AC_CHECK_HEADERS([readline/readline.h], [HAVE_READLINE_H=1])
+AC_CHECK_HEADERS([readline/history.h], [HAVE_HISTORY_H=1])
+AC_CHECK_LIB([readline], [readline], [HAVE_LIB_READLINE=1])
+
+AC_DEFINE([PCRE_STATIC], [1], [
+  Define if linking statically])
+
+# pcre: utf8 handling
+AC_DEFINE([SUPPORT_UTF8], [], [
+  PCRE: Define to enable support for the UTF-8 Unicode encoding. This will
+  work even in an EBCDIC environment, but it is incompatible with
+  the EBCDIC macro. That is, PCRE can support *either* EBCDIC code
+  *or* ASCII/UTF-8, but not both at once.])
+
+# pcre: unicode properties
+AC_DEFINE([SUPPORT_UCP], [], [
+  PCRE: Define to enable support for Unicode properties])
+
+ac_pcre_newline_value=10
+AC_DEFINE_UNQUOTED([NEWLINE], [$ac_pcre_newline_value], [
+  The value of NEWLINE determines the newline character sequence. On
+  systems that support it, "configure" can be used to override the
+  default, which is 10. The possible values are 10 (LF), 13 (CR),
+  3338 (CRLF), -1 (ANY), or -2 (ANYCRLF).])
+
+if test "$enable_bsr_anycrlf" = "yes"; then
+  AC_DEFINE([BSR_ANYCRLF], [], [
+    By default, the \R escape sequence matches any Unicode line ending
+    character or sequence of characters. If BSR_ANYCRLF is defined, this is
+    changed so that backslash-R matches only CR, LF, or CRLF. The build-
+    time default can be overridden by the user of PCRE at runtime. On
+    systems that support it, "configure" can be used to override the
+    default.])
+fi
+
+with_link_size=4
+AC_DEFINE_UNQUOTED([LINK_SIZE], [$with_link_size], [
+  The value of LINK_SIZE determines the number of bytes used to store
+  links as offsets within the compiled regex. The default is 2, which
+  allows for compiled patterns up to 64K long. This covers the vast
+  majority of cases. However, PCRE can also be compiled to use 3 or 4
+  bytes instead. This allows for longer patterns in extreme cases. On
+  systems that support it, "configure" can be used to override this default.])
+
+with_posix_malloc_threshold=10
+AC_DEFINE_UNQUOTED([POSIX_MALLOC_THRESHOLD], [$with_posix_malloc_threshold], [
+  When calling PCRE via the POSIX interface, additional working storage
+  is required for holding the pointers to capturing substrings because
+  PCRE requires three integers per substring, whereas the POSIX
+  interface provides only two. If the number of expected substrings is
+  small, the wrapper function uses space on the stack, because this is
+  faster than using malloc() for each call. The threshold above which
+  the stack is no longer used is defined by POSIX_MALLOC_THRESHOLD. On
+  systems that support it, "configure" can be used to override this
+  default.])
+
+with_match_limit=10000000
+AC_DEFINE_UNQUOTED([MATCH_LIMIT], [$with_match_limit], [
+  The value of MATCH_LIMIT determines the default number of times the
+  internal match() function can be called during a single execution of
+  pcre_exec(). There is a runtime interface for setting a different
+  limit. The limit exists in order to catch runaway regular
+  expressions that take for ever to determine that they do not match.
+  The default is set very large so that it does not accidentally catch
+  legitimate cases. On systems that support it, "configure" can be
+  used to override this default default.])
+
+with_match_limit_recursion=MATCH_LIMIT
+AC_DEFINE_UNQUOTED([MATCH_LIMIT_RECURSION], [$with_match_limit_recursion], [
+  The above limit applies to all calls of match(), whether or not they
+  increase the recursion depth. In some environments it is desirable
+  to limit the depth of recursive calls of match() more strictly, in
+  order to restrict the maximum amount of stack (or heap, if
+  NO_RECURSE is defined) that is used. The value of
+  MATCH_LIMIT_RECURSION applies only to recursive calls of match(). To
+  have any useful effect, it must be less than the value of
+  MATCH_LIMIT. The default is to use the same value as MATCH_LIMIT.
+  There is a runtime method for setting a different limit. On systems
+  that support it, "configure" can be used to override the default.])
+
+AC_DEFINE([MAX_NAME_SIZE], [32], [
+  This limit is parameterized just in case anybody ever wants to
+  change it. Care must be taken if it is increased, because it guards
+  against integer overflow caused by enormously large patterns.])
+
+AC_DEFINE([MAX_NAME_COUNT], [10000], [
+  This limit is parameterized just in case anybody ever wants to
+  change it. Care must be taken if it is increased, because it guards
+  against integer overflow caused by enormously large patterns.])
+
+AH_VERBATIM([PCRE_EXP_DEFN], [
+/* If you are compiling for a system other than a Unix-like system or
+   Win32, and it needs some magic to be inserted before the definition
+   of a function that is exported by the library, define this macro to
+   contain the relevant magic. If you do not define this macro, it
+   defaults to "extern" for a C compiler and "extern C" for a C++
+   compiler on non-Win32 systems. This macro apears at the start of
+   every exported function that is part of the external API. It does
+   not appear on functions that are "external" in the C sense, but
+   which are internal to the library. */
+#undef PCRE_EXP_DEFN])
+
+
+AC_MSG_CHECKING([if iconv uses const pointers])
+AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <iconv.h>]],
+                                     [[
+                                       const char *fromPtr=0;
+                                       size_t     fromLen=0;
+                                       char       *toPtr=0;
+                                       size_t     toLen=0;
+                                       iconv_t    cv=0;
+                                       iconv(cv, &fromPtr, &fromLen, &toPtr, &toLen);
+                                      ]])],
+                    [
+                      AC_MSG_RESULT([yes])
+                      AC_DEFINE_UNQUOTED([ICONV_USES_CONST_POINTER], 1, [Define to 1 if you have to use const char* with iconv, to 0 if you must use char*.])
+                    ],
+                    [
+                      AC_MSG_RESULT([no])
+                      AC_DEFINE_UNQUOTED([ICONV_USES_CONST_POINTER], 0, [Define to 1 if you have to use const char* with iconv, to 0 if you must use char*.])
+                    ]
+                 )
+
+
+####################################################
+# create config.h from config.h.in
+#
+AC_CONFIG_FILES([dummy.mk Makefile2.mk])
+AC_CONFIG_HEADERS([config.h])
+AC_OUTPUT

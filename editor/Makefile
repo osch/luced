@@ -2,7 +2,7 @@
 #
 #   LucED - The Lucid Editor
 #
-#   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+#   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 #
 #   This program is free software; you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License Version 2 as published
@@ -19,35 +19,25 @@
 #
 ####################################################################################
 
+ifneq (,)
+This makefile requires GNU Make.
+endif
 
 CPPCOMP_PRG         := g++
 LINK_PRG             = $(CPPCOMP_PRG)
-CPPCOMP_INVOKE_OPTS := -g
+CPPCOMP_INVOKE_OPTS := -g -Wno-deprecated
 LINK_INVOKE_OPTS    := -g
 
 #### BEGIN-DEFINES
 #
 
-CPP_DEFINES         :=
-
-CPP_DEFINES         += -D LUA_USE_POSIX
-
-CPP_DEFINES         += -D STAT_HAS_ST_MTIM_TV_NSEC
-#CPP_DEFINES        += -D STAT_HAS_ST_MTIMENSE
+CPP_DEFINES         := -D HAVE_CONFIG_H
 
 CPP_DEFINES         += -D HASH_MAP_UNDER_GNU_CXX
 #CPP_DEFINES        += -D HASH_MAP_UNDER_STD
 
 #CPP_DEFINES        += -D DEBUG
 
-CPP_DEFINES         += -D X11_GUI
-#CPP_DEFINES        += -D WIN_GUI
-
-CPP_DEFINES         += -D USE_X11_XKB_EXTENSION
-CPP_DEFINES         += -D USE_X11_XPM_LIB
-
-#CPP_DEFINES        += -D HAS_STACKTRACE
-#CPP_DEFINES        += -D ADDR2LINE_SUPPORTS_INLINES
 
 #
 ##### END-DEFINES
@@ -57,20 +47,57 @@ CPPCOMP_SLOW_OPTS := -Os
 
 BUILD_DIR       := build
 
-LINK_X11_OPTS   := -L /usr/X11R6/lib/ -lX11 -lXpm -lXext
-LINK_PCRE_OPTS  := ../pcre/.libs/libpcre.a
+#LINK_X11_OPTS   := -L /usr/X11R6/lib/ -lX11 -lXpm -lXext
+LINK_X11_OPTS   := 
+LINK_PCRE_OPTS  := 
 LINK_EXTRA_OPTS := 
 LINK_OPTS       :=
 
+INCL_OPTS       := -I .
 INCL_LUA_OPTS   := -I ../lua/src
 INCL_PCRE_OPTS  := -I ../pcre/
 INCL_EXTRA_OPTS :=
-INCL_OPTS       :=
+
+# command parameters for configure script
+CONFIGURE_OPTS  :=
+
+MAKECMDGOALS   ?=
+NONBUILD_GOALS := clean configure config
+
+.PHONY: default
+default: luced
+
+WAS_SANDBOX_MK_INCLUDED := false
+WAS_MAKEFILE2_INCLUDED  := false
+WAS_HEADERS1_GENERATED  := false
+WAS_HEADERS2_GENERATED  := false
 
 # include sandbox-specific local settings from sandbox.mk,
 # the above variables may be modified in this file:
 #
 include sandbox.mk
+
+WAS_SANDBOX_MK_INCLUDED := $(shell ( test -f sandbox.mk && echo "true" ) || echo "false")
+
+###############################################################
+#                                                             #
+# Assure that autoconf was run before anything else is        #
+# built:                                                      #
+#                                                             #
+ifeq ($(WAS_SANDBOX_MK_INCLUDED),true)                        #
+ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)           #
+#                                                             #
+# Makefile2.mk contains variables that are set from the       #
+# autoconf's configure script                                 #
+#                                                             #
+include $(BUILD_DIR)/autoconf/Makefile2.mk
+#                                                             #
+endif                                                         #
+endif                                                         #
+###############################################################
+
+
+
 
 LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_EXTRA_OPTS)
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_PCRE_OPTS) $(INCL_EXTRA_OPTS)
@@ -129,20 +156,30 @@ LUA_MODULES  := lapi lcode ldebug ldo ldump lfunc lgc llex lmem \
 
 LPOSIX_MODULES :=  lposix
 
+PCRE_MODULES := pcre_compile   pcre_config      pcre_dfa_exec    \
+                pcre_exec      pcre_fullinfo    pcre_get         \
+                pcre_globals   pcre_info        pcre_maketables  \
+                pcre_newline   pcre_ord2utf8    pcre_refcount    \
+                pcre_study     pcre_tables      pcre_try_flipped \
+                pcre_ucd       pcre_valid_utf8  pcre_version     \
+                pcre_xclass    pcre_chartables
+
 GENERATED_MODULES  := $(GENERATED_SLOW_MODULES) $(GENERATED_FAST_MODULES)
 
 MODULES            :=           $(FAST_MODULES)           $(SLOW_MODULES) \
                       $(GENERATED_FAST_MODULES) $(GENERATED_SLOW_MODULES) \
-                      $(LUA_MODULES) $(LPOSIX_MODULES)
+                      $(LUA_MODULES) $(LPOSIX_MODULES) \
+                      $(PCRE_MODULES)
 
-LIB_MBRS      := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
-LIB_OBJS      := $(patsubst %, $(BUILD_DIR)/%.o,                $(MODULES))
-FAST_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(FAST_MODULES))
-SLOW_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                $(SLOW_MODULES))
- LUA_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(LUA_MODULES) \
+  LIB_MBRS    := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
+  LIB_OBJS    := $(patsubst %, $(BUILD_DIR)/%.o,                $(MODULES))
+  FAST_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(FAST_MODULES))
+  SLOW_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(SLOW_MODULES))
+   LUA_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                 $(LUA_MODULES) \
                                                                    lua)
+  PCRE_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(PCRE_MODULES))
 LPOSIX_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,              $(LPOSIX_MODULES))
- PRG_OBJS     := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
+   PRG_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
 
 GEN_HDRS      := $(patsubst %, $(BUILD_DIR)/%.hpp,         $(GENERATED_HEADERS))
 GEN_HDRS_DEPS := $(patsubst %, $(BUILD_DIR)/%.hpp.gen.dep, $(GENERATED_HEADERS))
@@ -156,39 +193,53 @@ GEN_SLOW_OBJS := $(patsubst %, $(BUILD_DIR)/%.o,      $(GENERATED_SLOW_MODULES))
 
 LUA_SCRIPT_FILES := $(patsubst %, %.lua, $(LUA_SCRIPTS))
 
-MAKECMDGOALS   ?=
-NONBUILD_GOALS := clean
-.PHONY:           clean default complink
 
-default: luced
-
+.PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)
 
 luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
-	$(LINK_RUN)
+	$(call LINK_RUN, $(LIBS))
 
 lua:  $(BUILD_DIR)/lua.o $(LUA_OBJS) $(LPOSIX_OBJS)
-	$(LINK_RUN)
-
-
-complink: luced.cpp $(patsubst %, %.cpp, $(MODULES))
-	$(call COMPILE_LINK_RUN,,luced,$^)
+	$(call LINK_RUN, $(LIBS_WITH_READLINE))
 
 
 ###############################################################
 #                                                             #
 # Assure that headers are generated before anything else is   #
-# build:                                                      #
+# built, but after the configure script has generated the     #
+# Makefile2.mk.                                               #
 #                                                             #
-ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)           #
+ifeq ($(WAS_MAKEFILE2_INCLUDED),true)
+ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)
+include $(BUILD_DIR)/headers1_generated.mk
+$(BUILD_DIR)/headers1_generated.mk: sandbox-config.h \
+                                     ../pcre/pcre.h
+	@mkdir -p $(@D); echo "WAS_HEADERS1_GENERATED := true" > $@
+endif
+endif                                                         #
+
+ifeq ($(WAS_HEADERS1_GENERATED),true)
+ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)
+include $(BUILD_DIR)/headers2_generated.mk
+$(BUILD_DIR)/headers2_generated.mk: $(GEN_HDRS) \
+                                    $(GEN_HDRS_DEPS)
+	@mkdir -p $(@D); echo "WAS_HEADERS2_GENERATED := true" > $@
+endif
+endif
 #                                                             #
--include $(BUILD_DIR)/headers_generated                       #
-$(BUILD_DIR)/headers_generated: $(GEN_HDRS) $(GEN_HDRS_DEPS)  #
-	@mkdir -p $(@D); touch $@                             #
 #                                                             #
+ifeq ($(WAS_HEADERS2_GENERATED),true)
+ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)
+  DEPS := $(wildcard $(BUILD_DIR)/deps/*.dep) $(GEN_HDRS_DEPS) $(GEN_SRC_DEPS)
+  ifneq ($(DEPS),)
+    -include $(DEPS)
+  endif
+endif
 endif                                                         #
 ###############################################################
+
 
 ##########################################################################
 #
@@ -217,6 +268,63 @@ $(BUILD_DIR)/%.cpp.gen.dep $(BUILD_DIR)/%.new.cpp: %.cpp.emlua $(LUA_SCRIPT_FILE
 	                                    $(patsubst %.cpp.emlua,$(BUILD_DIR)/%.cpp,$<) )
 	                                    
 
+##########################################################################
+#
+# Rule for generating special files
+#
+
+$(BUILD_DIR)/autoconf/Makefile2.mk: autoconf-configure.ac \
+                                    autoconf-dummy.mk.am  \
+                                    Makefile2.mk.in
+	@ echo "================================================================================"; \
+	  echo "Generating file $@...";                                                            \
+	  echo "================================================================================";
+	$(CONFIGURE_RUN)
+	@ echo "================================================================================"; \
+	  echo "Finished generating file $@";                                                      \
+	  echo "================================================================================";
+
+.PHONY: configure config
+configure:
+	$(CONFIGURE_RUN)
+config:
+	$(CONFIGURE_RUN)
+	
+define CONFIGURE_RUN
+	@ if ! type autoreconf 2>&1 >/dev/null; then echo "Error: command 'autoreconf' is missing. Is the package 'autoconf' installed?"; \
+	                                             exit 1; fi; \
+	mkdir -p $(BUILD_DIR)/autoconf && \
+	      cd $(BUILD_DIR)/autoconf && \
+	ln -sf ../../autoconf-configure.ac   configure.ac   && \
+	ln -sf ../../autoconf-dummy.mk.am    dummy.mk.am    && \
+	ln -sf ../../Makefile2.mk.in         Makefile2.mk.in && \
+	autoreconf -vi && \
+	./configure $(CONFIGURE_OPTS)
+endef	  
+
+sandbox-config.h:
+	@( echo "/*****************************************"; \
+	   echo " * The file $@ can be used"; \
+	   echo " * to manually override settings from"; \
+	   echo " * $(BUILD_DIR)/autoconf/config.h"; \
+	   echo " ******************************************/"; \
+	   echo "" \
+	 ) | tee $@
+sandbox.mk:
+	@( echo "############################################"; \
+	   echo "# The file $@ can be used"; \
+	   echo "# to manually override settings from"; \
+	   echo "# $(BUILD_DIR)/autoconf/Makefile2.mk"; \
+	   echo "############################################"; \
+	   echo "" \
+	 ) | tee $@
+
+
+../pcre/pcre_chartables.c: ../pcre/pcre_chartables.c.dist
+	ln -sf $<  $@
+
+../pcre/pcre.h: ../pcre/pcre.h.generic
+	ln -sf $<  $@
 
 ##########################################################################
 #
@@ -242,6 +350,8 @@ $(LUA_OBJS): $(BUILD_DIR)/%.o: ../lua/src/%.c
 $(LPOSIX_OBJS): $(BUILD_DIR)/%.o: ../lposix/%.c
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
 
+$(PCRE_OBJS): $(BUILD_DIR)/%.o: ../pcre/%.c
+	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS) -U DEBUG)
 
 $(PRG_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(call COMPILE_RUN,$(CPPCOMP_SLOW_OPTS))
@@ -275,13 +385,6 @@ $(BUILD_DIR)/libluced.a: $(LIB_OBJS)
 %.hpp: ;
 
 
-ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)
-  DEPS := $(wildcard $(BUILD_DIR)/deps/*.dep) $(GEN_HDRS_DEPS) $(GEN_SRC_DEPS)
-  ifneq ($(DEPS),)
-    -include $(DEPS)
-  endif
-endif
-
 
 ##########################################################################
 #
@@ -290,21 +393,16 @@ endif
 
 define COMPILE_RUN
 	@mkdir -p $(@D) && mkdir -p $(BUILD_DIR)/deps
-	$(CPPCOMP_PRG) $(CPPCOMP_INVOKE_OPTS) -I . -I $(BUILD_DIR) $1 $(CPP_DEFINES) $(INCL_OPTS) \
+	$(CPPCOMP_PRG) $(CPPCOMP_INVOKE_OPTS) -I . -I $(BUILD_DIR) $(CPP_DEFINES) $(INCL_OPTS) $1 \
 	-c $<  -o "$@" \
 	-MMD -MF $(BUILD_DIR)/deps/$(*F).dep 
 endef
 
 define LINK_RUN
 	@mkdir -p $(@D)
-	$(LINK_PRG) $(LINK_INVOKE_OPTS) $^ $(LINK_OPTS) -o $@
+	$(LINK_PRG) $(LINK_INVOKE_OPTS) $^ $1 $(LINK_OPTS) -o $@
 endef
 
-define COMPILE_LINK_RUN
-	$(CPPCOMP_PRG) $(CPPCOMP_INVOKE_OPTS) -I . -I $(BUILD_DIR) $1 $(CPP_DEFINES) $(INCL_OPTS) \
-	$(LINK_OPTS) \
-	$3 -o "$2"
-endef
 
 
 ###################

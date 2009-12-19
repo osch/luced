@@ -1,0 +1,4 @@
+# Dummy automake Makefile for using autotools
+
+AUTOMAKE_OPTIONS = foreign subdir-objects
+ACLOCAL_AMFLAGS  = -I config-m4

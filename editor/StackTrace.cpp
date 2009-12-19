@@ -26,9 +26,17 @@
 #include <string.h>
 #include <signal.h>
 
+#include "config.h"
+
+#if HAVE_EXECINFO_H && HAVE_SYS_WAIT_H && !defined(HAS_STACKTRACE)
+#  define HAS_STACKTRACE
+#endif
+
 #ifdef HAS_STACKTRACE
 #include <execinfo.h>
+#include <sys/wait.h>
 #endif
+
 
 #include <vector>
 
@@ -39,25 +47,51 @@
 
 using namespace LucED;
 
-static int childOutFd = -1;
-static int childInpFd = -1;
+static bool  isAddr2LineRunning = false;
+static bool  canStartAddr2Line  = true;
+static int   childOutFd = -1;
+static int   childInpFd = -1;
+static pid_t childPid  = -1;
+
+
+static bool isChildRunning()
+{
+    if (isAddr2LineRunning)
+    {
+        int stat_loc;
+        if (waitpid(childPid, &stat_loc, WNOHANG) == childPid) {
+            if (WIFEXITED(stat_loc)) {
+                isAddr2LineRunning = false;
+            }
+        }
+    }
+    return isAddr2LineRunning;
+}
 
 std::string StackTrace::getCurrent()
 {
 #ifdef HAS_STACKTRACE
 
+    if (!canStartAddr2Line) {
+        return "";    
+    }
+
+    int tryCounter = 1;
+    
+startAddr2Line:
+
     std::string message;
                 message.append("\n****** StackTrace:\n");
 
-    if (childOutFd == -1)
+    if (!isChildRunning())
     {
         std::vector<std::string> argStrings;
         {
             argStrings.push_back("addr2line");
 
-        #ifdef ADDR2LINE_SUPPORTS_INLINES    
-            argStrings.push_back("-i"); // <-- not supported under older addr2line
-        #endif
+        if (tryCounter == 1) {
+            argStrings.push_back("-x"); // <-- not supported under older addr2line
+        }
             argStrings.push_back("-f");
             argStrings.push_back("-s");
             argStrings.push_back("-C");
@@ -97,12 +131,14 @@ std::string StackTrace::getCurrent()
             
             ::dup2(inpPipe[0], 0);
             ::dup2(outPipe[1], 1);
-            ::dup2(outPipe[1], 2);
+//            ::dup2(outPipe[1], 2);
     
             ::close(outPipe[1]);
             ::close(inpPipe[0]);
-            
-            execvp("addr2line", &argPtrs[0]);
+            int rc = execvp("addr2line", &argPtrs[0]);
+            if (rc != 0) {
+                exit(errno);
+            }
         }
         else if (pid < 0)
         {
@@ -113,8 +149,10 @@ std::string StackTrace::getCurrent()
     
         ::close(outPipe[1]);
         ::close(inpPipe[0]);
-        childOutFd = outPipe[0];
-        childInpFd = inpPipe[1];
+        childOutFd         = outPipe[0];
+        childInpFd         = inpPipe[1];
+        isAddr2LineRunning = true;
+        childPid           = pid;
     }
     
     std::string data;
@@ -122,16 +160,34 @@ std::string StackTrace::getCurrent()
         void*  array[2000];
         int size = ::backtrace(array, 2000);
         
-        for (int i = 0; i < size; ++i)
+        for (int i = 0; i < size && isChildRunning(); ++i)
         {
             char buffer[10000];
 
             sprintf(buffer, "%p\n",array[i]);
             
-            write(childInpFd, buffer, strlen(buffer));
+            int writeResult = -1;
+            int bytesRead   = -1;
             
-            int bytesRead = read(childOutFd, buffer, sizeof(buffer));
-            data.append(buffer, bytesRead);
+            if (isChildRunning()) {
+                writeResult = write(childInpFd, buffer, strlen(buffer));
+            }            
+            if (isChildRunning()) {
+                bytesRead = read(childOutFd, buffer, sizeof(buffer));
+            }
+            if (isChildRunning() && writeResult > 0 && bytesRead > 0)
+            {
+                data.append(buffer, bytesRead);
+            }
+        }
+    }
+    if (!isChildRunning()) {
+        if (tryCounter == 1) {
+            tryCounter = 2;
+            goto startAddr2Line;
+        } else {
+            canStartAddr2Line = false;
+            return "";
         }
     }
     

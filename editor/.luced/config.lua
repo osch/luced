@@ -162,7 +162,7 @@ local languageModes =
     {
       name            = "makefile",
       syntaxName      = "default.makefile",
-      fileNameRegex   =  [[^.*/(Makefile|.*\.h?mk|.*\.dep)$]],
+      fileNameRegex   =  [[^.*/(Makefile|.*\.h?mk(.in)?|.*\.dep)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,

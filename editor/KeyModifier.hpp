@@ -55,9 +55,7 @@ public:
         : value(flag)
     {}
     
-#ifdef X11_GUI
     static KeyModifier createFromX11KeyState(int x11KeyState);
-#endif
     
     String toString() const;
 

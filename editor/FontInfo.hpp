@@ -138,9 +138,9 @@ private:
     short internalGetCharRBearing(Char2b c) const;
     
     String fontName;
-#ifdef X11_GUI
+
     XFontStruct* font;
-#endif
+
     FontHandle fontHandle;
 
     MemArray<short> charWidths;

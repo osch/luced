@@ -19,7 +19,12 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "config.h"
 #include "headers.hpp"
+
+#if HAVE_X11_XPM_H && HAVE_X11_XUTIL_H && !defined(USE_X11_XPM_LIB)
+#  define USE_X11_XPM_LIB
+#endif
 
 #ifdef USE_X11_XPM_LIB
 #include <X11/xpm.h>
