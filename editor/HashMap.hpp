@@ -23,7 +23,19 @@
 #define HASH_MAP_HPP
 
 #include <sys/types.h>
-#include <ext/hash_map>
+
+#include "config.h"
+
+#if    HAVE_UNORDERED_MAP
+#  include <unordered_map>
+#elif HAVE_TR1_UNORDERED_MAP
+#  include <tr1/unordered_map>
+#elif HAVE_EXT_HASH_MAP
+#  include <ext/hash_map>
+#else
+#  error No STL container hash_map or unordered_map found
+#endif
+
 
 #include "String.hpp"
 #include "Nullable.hpp"
@@ -31,12 +43,22 @@
 namespace LucED
 {
 
-#if defined(HASH_MAP_UNDER_STD)
-using std::hash_map;
-#elif defined(HASH_MAP_UNDER_GNU_CXX)
-using __gnu_cxx::hash_map;
+#if HAVE_UNORDERED_MAP || HAVE_TR1_UNORDERED_MAP
+  #if UNORDERED_MAP_UNDER_STD
+    #define STD_HASH_MAP_TYPE std::unordered_map
+  #elif UNORDERED_MAP_UNDER_STD_TR1
+    #define STD_HASH_MAP_TYPE std::tr1::unordered_map
+  #else
+    #error Needs unordered_map implementation namespace
+  #endif
 #else
-#error Needs hash_map implementation
+  #if HASH_MAP_UNDER_STD
+    #define STD_HASH_MAP_TYPE std::hash_map
+  #elif HASH_MAP_UNDER_GNU_CXX
+    #define STD_HASH_MAP_TYPE __gnu_cxx::hash_map
+  #else
+    #error Needs hash_map implementation namespace
+  #endif
 #endif
 
 
@@ -125,7 +147,7 @@ public:
         }
     private:
         friend class HashMap;
-        typedef typename hash_map<K,V,H>::const_iterator Iter;
+        typedef typename STD_HASH_MAP_TYPE<K,V,H>::const_iterator Iter;
         Iterator(Iter begin, Iter end) : iter(begin), end(end)
         {}
         Iter iter;
@@ -139,7 +161,7 @@ public:
         map[key] = value;
     }
     Value get(const K& key) const {
-        typename hash_map<K,V,H>::const_iterator foundPair = map.find(key);
+        typename STD_HASH_MAP_TYPE<K,V,H>::const_iterator foundPair = map.find(key);
         if (foundPair == map.end()) {
             return Value();
         } else {
@@ -151,7 +173,7 @@ public:
         return Iterator(map.begin(), map.end());
     }
     bool hasKey(const K& key) const {
-        typename hash_map<K,V,H>::const_iterator foundPair = map.find(key);
+        typename STD_HASH_MAP_TYPE<K,V,H>::const_iterator foundPair = map.find(key);
         return foundPair != map.end();
     }
     void remove(const K& key) {
@@ -173,7 +195,7 @@ protected:
     {}
     
 private:
-    hash_map<K,V,H> map;
+    STD_HASH_MAP_TYPE<K,V,H> map;
 };
 
 

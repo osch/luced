@@ -25,16 +25,13 @@ endif
 
 CPPCOMP_PRG         := g++
 LINK_PRG             = $(CPPCOMP_PRG)
-CPPCOMP_INVOKE_OPTS := -g -Wno-deprecated
+CPPCOMP_INVOKE_OPTS := -g
 LINK_INVOKE_OPTS    := -g
 
 #### BEGIN-DEFINES
 #
 
 CPP_DEFINES         := -D HAVE_CONFIG_H
-
-CPP_DEFINES         += -D HASH_MAP_UNDER_GNU_CXX
-#CPP_DEFINES        += -D HASH_MAP_UNDER_STD
 
 #CPP_DEFINES        += -D DEBUG
 

@@ -39,7 +39,19 @@ AC_CHECK_FUNCS(bcopy memmove strerror)
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(limits.h sys/types.h sys/stat.h dirent.h windows.h X11/xpm.h X11/Xutil.h X11/XKBlib.h execinfo.h sys/wait.h)
+AC_CHECK_HEADERS(windows.h              \
+                 limits.h               \
+                 dirent.h               \
+                 X11/xpm.h              \
+                 X11/Xutil.h            \
+                 X11/XKBlib.h           \
+                 execinfo.h             \
+                 sys/wait.h             \
+                 sys/types.h            \
+                 sys/stat.h             \
+                 ext/hash_map           \
+                 tr1/unordered_map      \
+                 unordered_map)
 
 AC_SEARCH_LIBS([cos],[m])
 
@@ -215,6 +227,62 @@ AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <iconv.h>]],
                     ]
                  )
 
+AC_MSG_CHECKING([if <ext/hash_map> defines hash_map in namespace std])
+AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <ext/hash_map>]],
+                                     [[
+                                       std::hash_map<int,int> m;
+                                     ]])],
+                    [
+                      AC_MSG_RESULT([yes])
+                      AC_DEFINE_UNQUOTED([HASH_MAP_UNDER_STD], 1, [Define to 1 if ext/hash_map defines hash_map in namespace std.])
+                    ],
+                    [
+                      AC_MSG_RESULT([no])
+                      AC_DEFINE_UNQUOTED([HASH_MAP_UNDER_STD], 0, [Define to 1 if ext/hash_map defines hash_map in namespace std.])
+                    ]
+                 )
+AC_MSG_CHECKING([if <ext/hash_map> defines hash_map in namespace __gnu_cxx])
+AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <ext/hash_map>]],
+                                     [[
+                                       __gnu_cxx::hash_map<int,int> m;
+                                     ]])],
+                    [
+                      AC_MSG_RESULT([yes])
+                      AC_DEFINE_UNQUOTED([HASH_MAP_UNDER_GNU_CXX], 1, [Define to 1 if ext/hash_map defines hash_map in namespace __gnu_cxx.])
+                    ],
+                    [
+                      AC_MSG_RESULT([no])
+                      AC_DEFINE_UNQUOTED([HASH_MAP_UNDER_GNU_CXX], 0, [Define to 1 if ext/hash_map defines hash_map in namespace __gnu_cxx.])
+                    ]
+                 )
+AC_MSG_CHECKING([if <tr1/unordered_map> defines unordered_map in namespace tr1])
+AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <tr1/unordered_map>]],
+                                     [[
+                                       std::tr1::unordered_map<int,int> m;
+                                     ]])],
+                    [
+                      AC_MSG_RESULT([yes])
+                      AC_DEFINE_UNQUOTED([UNORDERED_MAP_UNDER_STD_TR1], 1, [Define to 1 if tr1/unordered_map defines unordered_map in namespace tr1.])
+                    ],
+                    [
+                      AC_MSG_RESULT([no])
+                      AC_DEFINE_UNQUOTED([UNORDERED_MAP_UNDER_STD_TR1], 0, [Define to 1 if tr1/unordered_map defines unordered_map in namespace tr1.])
+                    ]
+                 )
+AC_MSG_CHECKING([if <unordered_map> defines unordered_map in namespace std])
+AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <unordered_map>]],
+                                     [[
+                                       std::unordered_map<int,int> m;
+                                     ]])],
+                    [
+                      AC_MSG_RESULT([yes])
+                      AC_DEFINE_UNQUOTED([UNORDERED_MAP_UNDER_STD], 1, [Define to 1 if unordered_map defines unordered_map in namespace std.])
+                    ],
+                    [
+                      AC_MSG_RESULT([no])
+                      AC_DEFINE_UNQUOTED([UNORDERED_MAP_UNDER_STD], 0, [Define to 1 if unordered_map defines unordered_map in namespace std.])
+                    ]
+                 )
 
 ####################################################
 # create config.h from config.h.in
