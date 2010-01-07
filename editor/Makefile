@@ -163,9 +163,11 @@ PCRE_MODULES := pcre_compile   pcre_config      pcre_dfa_exec    \
 
 GENERATED_MODULES  := $(GENERATED_SLOW_MODULES) $(GENERATED_FAST_MODULES)
 
-MODULES            :=           $(FAST_MODULES)           $(SLOW_MODULES) \
-                      $(GENERATED_FAST_MODULES) $(GENERATED_SLOW_MODULES) \
-                      $(LUA_MODULES) $(LPOSIX_MODULES) \
+EDITOR_MODULES     := $(GENERATED_MODULES) $(FAST_MODULES) $(SLOW_MODULES)
+
+MODULES            := $(EDITOR_MODULES) \
+                      $(LUA_MODULES)    \
+                      $(LPOSIX_MODULES) \
                       $(PCRE_MODULES)
 
   LIB_MBRS    := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
@@ -201,6 +203,96 @@ luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
 lua:  $(BUILD_DIR)/lua.o $(LUA_OBJS) $(LPOSIX_OBJS)
 	$(call LINK_RUN, $(LIBS_WITH_READLINE))
 
+###############################################################
+# dist
+
+dist_lua_headers    := $(patsubst %, lua/%,    $(shell cd ../lua/src; git ls-files *.h))
+dist_lposix_headers := $(patsubst %, lposix/%, $(shell cd ../lposix;  git ls-files *.h))
+dist_pcre_headers   := $(patsubst %, pcre/%,   $(shell cd ../pcre;    git ls-files *.h)\
+                                               pcre.h)
+
+dist_editor_headers := $(patsubst %, editor/%,   $(shell        git ls-files *.hpp) \
+                                                 $(patsubst %,%.hpp,$(GENERATED_HEADERS)))
+
+dist_headers        := $(dist_lua_headers)    \
+                       $(dist_lposix_headers) \
+                       $(dist_pcre_headers)   \
+                       $(dist_editor_headers)
+
+DIST_HEADERS        := $(patsubst %, $(BUILD_DIR)/dist/%, $(dist_headers))
+
+ 
+dist_lua_sources    := $(patsubst %, lua/%.cpp,    $(LUA_MODULES))
+dist_lposix_sources := $(patsubst %, lposix/%.cpp, $(LPOSIX_MODULES))
+dist_pcre_sources   := $(patsubst %, pcre/%.c,     $(PCRE_MODULES))
+dist_editor_sources := $(patsubst %, editor/%.cpp, $(EDITOR_MODULES))
+
+dist_sources        := $(dist_lua_sources)    \
+                       $(dist_lposix_sources) \
+                       $(dist_pcre_sources)   \
+                       $(dist_editor_sources)
+
+DIST_SOURCES        := $(patsubst %, $(BUILD_DIR)/dist/%, $(dist_sources))
+
+dist_extras         := lua/COPYRIGHT \
+                       lposix/modemuncher.c \
+                       pcre/LICENCE \
+                       editor/keysym2ucs.c \
+                       editor/luced.xpm
+                       
+DIST_EXTRAS         := $(patsubst %, $(BUILD_DIR)/dist/%, $(dist_extras))
+
+dist_luced_main     := editor/luced.cpp
+DIST_LUCED_MAIN     := $(BUILD_DIR)/dist/$(dist_luced_main)
+
+DIST_FILES := $(DIST_HEADERS)                   \
+              $(DIST_SOURCES)                   \
+              $(DIST_EXTRAS)                    \
+              $(DIST_LUCED_MAIN)                \
+              $(BUILD_DIR)/dist/Makefile.am     \
+              $(BUILD_DIR)/dist/configure.ac 
+              
+
+.PHONY: dist
+dist: $(DIST_FILES)
+	@mkdir -p $(BUILD_DIR)/dist/config-m4 \
+	          $(BUILD_DIR)/dist/config-aux
+	cd $(BUILD_DIR)/dist; autoreconf -vi
+	@echo "make dist: finished";
+
+$(BUILD_DIR)/dist/Makefile.am: Makefile.am.emlua
+	$(call EMLUA_RUN,$@, DIST_HEADERS   = [[$(dist_headers)]];\
+	                     DIST_SOURCES   = [[$(dist_sources)]]; \
+	                     DIST_EXTRAS    = [[$(dist_extras)]]; \
+	                     LUCED_MAIN     = [[$(dist_luced_main)]]; \
+	 )
+
+$(BUILD_DIR)/dist/configure.ac: autoconf-configure1.ac \
+                                autoconf-configure3.ac
+	@mkdir -p $(@D)
+	cat $^ > $@
+	
+$(BUILD_DIR)/dist/lua/%:           ../lua/%
+	$(COPY_RUN)
+$(BUILD_DIR)/dist/lua/%.cpp:       ../lua/src/%.c
+	$(COPY_RUN)
+$(BUILD_DIR)/dist/lua/%:           ../lua/src/%
+	$(COPY_RUN)
+$(BUILD_DIR)/dist/pcre/%:          ../pcre/%
+	$(COPY_RUN)
+$(BUILD_DIR)/dist/lposix/%.cpp:    ../lposix/%.c
+	$(COPY_RUN)
+$(BUILD_DIR)/dist/lposix/%:        ../lposix/%
+	$(COPY_RUN)
+$(BUILD_DIR)/dist/editor/%:        %
+	$(COPY_RUN)
+$(BUILD_DIR)/dist/editor/%:        $(BUILD_DIR)/%
+	$(COPY_RUN)
+
+define COPY_RUN
+	@mkdir -p $(@D)
+	cp $< $@
+endef
 
 ###############################################################
 #                                                             #
@@ -270,8 +362,9 @@ $(BUILD_DIR)/%.cpp.gen.dep $(BUILD_DIR)/%.new.cpp: %.cpp.emlua $(LUA_SCRIPT_FILE
 # Rule for generating special files
 #
 
-$(BUILD_DIR)/autoconf/Makefile2.mk: autoconf-configure.ac \
-                                    autoconf-dummy.mk.am  \
+$(BUILD_DIR)/autoconf/Makefile2.mk: autoconf-configure1.ac \
+                                    autoconf-configure2.ac \
+                                    autoconf-dummy.mk.am   \
                                     Makefile2.mk.in
 	@ echo "================================================================================"; \
 	  echo "Generating file $@...";                                                            \
@@ -292,7 +385,7 @@ define CONFIGURE_RUN
 	                                             exit 1; fi; \
 	mkdir -p $(BUILD_DIR)/autoconf && \
 	      cd $(BUILD_DIR)/autoconf && \
-	ln -sf ../../autoconf-configure.ac   configure.ac   && \
+	cat ../../autoconf-configure1.ac ../../autoconf-configure2.ac > configure.ac && \
 	ln -sf ../../autoconf-dummy.mk.am    dummy.mk.am    && \
 	ln -sf ../../Makefile2.mk.in         Makefile2.mk.in && \
 	autoreconf -vi && \

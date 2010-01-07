@@ -284,9 +284,4 @@ AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <unordered_map>]],
                     ]
                  )
 
-####################################################
-# create config.h from config.h.in
-#
-AC_CONFIG_FILES([dummy.mk Makefile2.mk])
-AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT
+# last part is concatenated from other files !!!
