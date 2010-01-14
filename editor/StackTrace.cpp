@@ -54,6 +54,7 @@ static int   childInpFd = -1;
 static pid_t childPid  = -1;
 
 
+#ifdef HAS_STACKTRACE
 static bool isChildRunning()
 {
     if (isAddr2LineRunning)
@@ -67,6 +68,7 @@ static bool isChildRunning()
     }
     return isAddr2LineRunning;
 }
+#endif
 
 std::string StackTrace::getCurrent()
 {
