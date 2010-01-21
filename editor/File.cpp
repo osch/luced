@@ -52,19 +52,25 @@ File::File(const String& path, const String& fileName)
 
 void File::loadInto(ByteBuffer& buffer) const
 {
-    struct stat statData;
     int fd = open(name.toCString(), O_RDONLY);
-    long len;
-    byte *ptr;
 
-    if (fd != -1) {
+    if (fd != -1)
+    {
+        struct stat statData;
+    
         if (fstat(fd, &statData) == -1) {
             throw FileException(errno, String() << "error accessing file '" << name << "': " << strerror(errno));
         }
-        len = statData.st_size;
-        ptr = buffer.appendAmount(len);
-        if (read(fd, ptr, len) == -1) {
+        long  len       = statData.st_size;
+        long  oldLen    = buffer.getLength();
+        byte* ptr       = buffer.appendAmount(len);
+        long  bytesRead = read(fd, ptr, len);
+
+        if (bytesRead < 0) {
             throw FileException(errno, String() << "error reading from file '" << name << "': " << strerror(errno));
+        }
+        if (bytesRead < len) {
+            buffer.removeTail(oldLen + bytesRead);
         }
         if (close(fd) == -1) {
             throw FileException(errno, String() << "error closing file '" << name << "' after reading: " << strerror(errno));
