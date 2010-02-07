@@ -17,8 +17,13 @@
 /*.la
 /pcre_chartables.c
 /pcre_scanner_unittest
+/pcre_scanner_unittest.exe
 /pcre_stringpiece_unittest
+/pcre_stringpiece_unittest.exe
 /pcrecpp_unittest
+/pcrecpp_unittest.exe
 /pcregrep
+/pcregrep.exe
 /pcretest
+/pcretest.exe
 /libpcreposix.pc
