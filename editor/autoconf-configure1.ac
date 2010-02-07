@@ -86,7 +86,37 @@ LIBS="$LIBS $X_PRE_LIBS $X_LIBS $X_EXTRA_LIBS"
 CFLAGS="$CFLAGS $X_CFLAGS"
 AC_SEARCH_LIBS([XOpenDisplay],[X11])
 AC_SEARCH_LIBS([XpmCreatePixmapFromData],[Xpm])
-AC_SEARCH_LIBS([iconv],[iconv])
+
+############################
+# explicit check instead of "AC_SEARCH_LIBS([iconv],[iconv])"
+# because under cygwin "iconv" is defined by C preprocessor 
+# macro to another symbol for the linker and AC_SEARCH_LIBS
+# searches only for the linker symbol
+AC_MSG_CHECKING([for linking to lib iconv])
+luced_LIBS_without_iconv="$LIBS"
+has_iconv=no
+for lib in "" "-liconv"; do
+  LIBS="$luced_LIBS_without_iconv $lib"
+  AC_TRY_LINK([#include <stdlib.h>
+               #include <iconv.h>],
+      [iconv_t cd = iconv_open("","");
+       iconv(cd,NULL,NULL,NULL,NULL);
+       iconv_close(cd);],
+      has_iconv=yes)
+  if test "$has_iconv" == yes; then
+    break
+  fi
+done
+if test "$has_iconv" == yes; then
+  AC_MSG_RESULT([yes])
+  AC_DEFINE_UNQUOTED([HAVE_ICONV], 1, [Define to 1 for iconv support.])
+else
+  AC_MSG_RESULT([no])
+  AC_DEFINE_UNQUOTED([HAVE_ICONV], 0, [Define to 1 for iconv support.])
+  AC_MSG_ERROR(cannot link to lib iconv)
+fi
+############################
+
 AC_CHECK_HEADERS(X11/xpm.h     \
                  X11/Xutil.h   \
                  X11/XKBlib.h)
