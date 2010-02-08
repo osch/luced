@@ -28,7 +28,7 @@
 
 #if    HAVE_UNORDERED_MAP
 #  include <unordered_map>
-#elif HAVE_TR1_UNORDERED_MAP
+#elif HAVE_TR1_UNORDERED_MAP && !UNORDERED_MAP_UNDER_STD_TR1_IS_BROKEN
 #  include <tr1/unordered_map>
 #elif HAVE_EXT_HASH_MAP
 #  include <ext/hash_map>
@@ -43,10 +43,10 @@
 namespace LucED
 {
 
-#if HAVE_UNORDERED_MAP || HAVE_TR1_UNORDERED_MAP
+#if HAVE_UNORDERED_MAP || (HAVE_TR1_UNORDERED_MAP && !UNORDERED_MAP_UNDER_STD_TR1_IS_BROKEN)
   #if UNORDERED_MAP_UNDER_STD
     #define STD_HASH_MAP_TYPE std::unordered_map
-  #elif UNORDERED_MAP_UNDER_STD_TR1
+  #elif UNORDERED_MAP_UNDER_STD_TR1 && !UNORDERED_MAP_UNDER_STD_TR1_IS_BROKEN
     #define STD_HASH_MAP_TYPE std::tr1::unordered_map
   #else
     #error Needs unordered_map implementation namespace
@@ -198,6 +198,7 @@ private:
     STD_HASH_MAP_TYPE<K,V,H> map;
 };
 
+#undef STD_HASH_MAP_TYPE
 
 } // namespace LucED
 

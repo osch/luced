@@ -305,6 +305,21 @@ AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <tr1/unordered_map>]],
                       AC_DEFINE_UNQUOTED([UNORDERED_MAP_UNDER_STD_TR1], 0, [Define to 1 if tr1/unordered_map defines unordered_map in namespace tr1.])
                     ]
                  )
+AC_MSG_CHECKING([if <tr1/unordered_map> is working])
+AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <tr1/unordered_map>]],
+                                     [[
+                                       const std::tr1::unordered_map<int,int> m;
+                                       std::tr1::unordered_map<int,int>::const_iterator i = m.find(0);
+                                     ]])],
+                    [
+                      AC_MSG_RESULT([yes])
+                      AC_DEFINE_UNQUOTED([UNORDERED_MAP_UNDER_STD_TR1_IS_BROKEN], 0, [Define to 1 if tr1/unordered_map is broken.])
+                    ],
+                    [
+                      AC_MSG_RESULT([no])
+                      AC_DEFINE_UNQUOTED([UNORDERED_MAP_UNDER_STD_TR1_IS_BROKEN], 1, [Define to 1 if tr1/unordered_map is broken.])
+                    ]
+                 )
 AC_MSG_CHECKING([if <unordered_map> defines unordered_map in namespace std])
 AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <unordered_map>]],
                                      [[
