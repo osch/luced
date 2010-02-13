@@ -126,6 +126,8 @@ public:
     
     
 private:
+    class LowLevelConverter;
+    
     class Adapter : public RawPointable
     {
     public:

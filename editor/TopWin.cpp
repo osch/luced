@@ -22,13 +22,17 @@
 #include "config.h"
 #include "headers.hpp"
 
-#if HAVE_X11_XPM_H && HAVE_X11_XUTIL_H && !defined(USE_X11_XPM_LIB)
-#  define USE_X11_XPM_LIB
+#if !defined(LUCED_USE_XPM)
+#  if HAVE_X11_XPM_H && HAVE_X11_XUTIL_H && !DISABLE_XPM
+#    define LUCED_USE_XPM 1
+#  else
+#    define LUCED_USE_XPM 0
+#  endif
 #endif
 
-#ifdef USE_X11_XPM_LIB
-#include <X11/xpm.h>
-#include <X11/Xutil.h>
+#if LUCED_USE_XPM
+#  include <X11/xpm.h>
+#  include <X11/Xutil.h>
 #endif
 
 #include <stdlib.h>
@@ -584,7 +588,7 @@ void TopWin::setTitle(const String& title)
 }
    
 
-#ifdef USE_X11_XPM_LIB
+#if LUCED_USE_XPM
     #include "luced.xpm"
 #endif
 
@@ -600,7 +604,7 @@ private:
     {
         pixMap = 0;
 
-#ifdef USE_X11_XPM_LIB
+#if LUCED_USE_XPM
         if (XpmCreatePixmapFromData(GuiRoot::getInstance()->getDisplay(),
                                     GuiRoot::getInstance()->getRootWid(), 
                                     const_cast<char**>(luced_xpm), 
@@ -807,3 +811,4 @@ void TopWin::hide()
     guiWidget->hide();
     isVisibleFlag = false;
 }
+

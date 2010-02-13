@@ -22,10 +22,15 @@
 #ifndef CHAR_UTIL_HPP
 #define CHAR_UTIL_HPP
 
+#include "config.h"
+
 extern "C"
 {
-    #include "config.h"
     #include "../pcre/pcre_internal.h"
+
+    // This table is defined in ../pcre/pcre_tables.c
+    
+    extern const unsigned char _pcre_utf8_table4[];
 }
 
 #include "types.hpp"
@@ -42,6 +47,12 @@ public:
     static bool isUft8FollowerChar(byte b) { 
         return (b & 0xC0) == 0x80;             // 0xC0 = 1100 0000
     }                                          // 0x80 = 1000 0000
+    
+    static int getNumberOfStrictUtf8FollowerChars(byte b)
+    {
+        return _pcre_utf8_table4[b & 0x3F]; // 0x3F = 0011 1111
+    }
+    
     static bool isNumber(int unicodeChar)
     {
         unsigned char chartype = GET_UCD(unicodeChar)->chartype;

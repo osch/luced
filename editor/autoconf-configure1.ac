@@ -32,6 +32,18 @@ AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
+
+AC_ARG_ENABLE(xpm,
+              AS_HELP_STRING([--disable-xpm],
+                             [disable usage of libXpm for displaying window icons]),
+              disable_xpm=yes)
+
+AC_ARG_ENABLE(iconv,
+              AS_HELP_STRING([--disable-iconv],
+                             [disable usage of iconv for transforming character encodings]),
+              disable_iconv=yes)
+
+
 # Use the C++ compiler for the compile tests
 AC_LANG(C++)
 
@@ -334,5 +346,19 @@ AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <unordered_map>]],
                       AC_DEFINE_UNQUOTED([UNORDERED_MAP_UNDER_STD], 0, [Define to 1 if unordered_map defines unordered_map in namespace std.])
                     ]
                  )
+
+if test "x$disable_xpm" = "xyes"
+then
+  AC_DEFINE_UNQUOTED([DISABLE_XPM], 1, [Define to 1 if libXpm should not be used.])
+else
+  AC_DEFINE_UNQUOTED([DISABLE_XPM], 0, [Define to 1 if libXpm should not be used.])
+fi
+
+if test "x$disable_iconv" = "xyes"
+then
+  AC_DEFINE_UNQUOTED([DISABLE_ICONV], 1, [Define to 1 if iconv should not be used.])
+else
+  AC_DEFINE_UNQUOTED([DISABLE_ICONV], 0, [Define to 1 if iconv should not be used.])
+fi
 
 # last part is concatenated from other files !!!

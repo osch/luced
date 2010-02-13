@@ -30,10 +30,9 @@
 
 extern "C"
 {
-    // These tables are defined in ../pcre/pcre_tables.c
+    // This table is defined in ../pcre/pcre_tables.c
     
-    extern const int           _pcre_utf8_table3[];
-    extern const unsigned char _pcre_utf8_table4[];
+    extern const int _pcre_utf8_table3[];
 }
 
 
@@ -72,8 +71,8 @@ public:
             *pos += 1;
         }
         else
-        {                                            // number of additional bytes
-            int count = _pcre_utf8_table4[b & 0x3F]; // 0x3F = 0011 1111
+        {                                            
+            int count = CharUtil::getNumberOfStrictUtf8FollowerChars(b); // number of additional bytes
             
             rslt = (b & _pcre_utf8_table3[count]);   // first byte mask:
                                                      // 0x1F = 0001 1111  <- count == 1
