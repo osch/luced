@@ -458,26 +458,44 @@ KeyPressEvent TopWin::createKeyPressEventObjectFromX11Event(const XEvent* event)
     String      input;
 
     char buffer[1000];
+
+    XEvent eventCopy = *event;
+
+    unsigned int keyState = eventCopy.xkey.state;
+
     KeySym keySym;
+    KeySym keySymWithoutModifier;
     int len;
+    
 
 #ifdef X_HAVE_UTF8_STRING
     if (x11InputContext != NULL)
     {
+        eventCopy.xkey.state = 0;
         len = Xutf8LookupString(x11InputContext, 
-                                &((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+                                &eventCopy.xkey, buffer, sizeof(buffer), &keySymWithoutModifier, NULL);
+        eventCopy.xkey.state = keyState;
+        len = Xutf8LookupString(x11InputContext, 
+                                &eventCopy.xkey, buffer, sizeof(buffer), &keySym, NULL);
     } else
 #endif
     {
 #ifndef X_HAVE_UTF8_STRING
         if (x11InputContext != NULL)
         {
+            eventCopy.xkey.state = 0;
             len = XmbLookupString(x11InputContext, 
-                                  &((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+                                  &eventCopy.xkey, buffer, sizeof(buffer), &keySymWithoutModifier, NULL);
+            eventCopy.xkey.state = keyState;
+            len = XmbLookupString(x11InputContext, 
+                                  &eventCopy.xkey, buffer, sizeof(buffer), &keySym, NULL);
         } else
 #endif
         {
-            len = XLookupString  (&((XEvent*)event)->xkey, buffer, sizeof(buffer), &keySym, NULL);
+            eventCopy.xkey.state = 0;
+            len = XLookupString  (&eventCopy.xkey, buffer, sizeof(buffer), &keySymWithoutModifier, NULL);
+            eventCopy.xkey.state = keyState;
+            len = XLookupString  (&eventCopy.xkey, buffer, sizeof(buffer), &keySym, NULL);
         }
         long c = keysym2ucs(keySym);
         
@@ -504,12 +522,22 @@ KeyPressEvent TopWin::createKeyPressEventObjectFromX11Event(const XEvent* event)
         }
     }
         
-    KeySym lowerKeySym;
-    KeySym upperKeySym;
+/*    keySym = XKeycodeToKeysym(guiWidget->getDisplay(),
+                              event->xkey.keycode, 0);*/
+ 
+// printf("--- State: %p: %s - %s\n", (void*)keyState, KeyId(keySymWithoutModifier).toString().toCString(),
+//                                                     KeyId(keySym).toString().toCString());
+ 
     
-    XConvertCase(keySym, &lowerKeySym, &upperKeySym);
+    if (!(XK_KP_Space <= keySymWithoutModifier && keySymWithoutModifier <= XK_KP_9))
+    {
+        KeySym lowerKeySym;
+        KeySym upperKeySym;
+
+        XConvertCase(keySymWithoutModifier, &lowerKeySym, &upperKeySym);
+        keySym = upperKeySym;
+    }
     
-    keySym = upperKeySym;
 
 #ifdef XK_ISO_Left_Tab
     // Shift + Tab becomes XK_ISO_Left_Tab through XLookupString,
@@ -525,7 +553,7 @@ KeyPressEvent TopWin::createKeyPressEventObjectFromX11Event(const XEvent* event)
     }
 #endif
     keyId       = KeyId(keySym);
-    keyModifier = KeyModifier::createFromX11KeyState(event->xkey.state);
+    keyModifier = KeyModifier::createFromX11KeyState(keyState);
     
     if (len > 0) {
         input = String(buffer, len);
