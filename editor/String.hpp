@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -124,6 +124,28 @@ public:
         s.append(rhs);
         return *this;
     }
+    String& appendWCharAsUtf8(int unicodeChar)
+    {
+        int c = unicodeChar;
+        ASSERT(c >= 0);
+        if (c < 0) {
+        } else if (c <= 0x7F) {
+            append((char)c);
+        } else if (c <= 0x7FF) {
+            append((char)(0xC0 | ((c >> 6) & 0x1F)));
+            append((char)(0x80 | (c & 0x3F)));
+        } else if (c <= 0xFFFF) {
+            append((char)(0xE0 | ((c >> 12) & 0x0F)));
+            append((char)(0x80 | ((c >> 6) & 0x3F)));
+            append((char)(0x80 | (c & 0x3F)));
+        } else {
+            append((char)(0xF0 | ((c >> 18) & 0x07)));
+            append((char)(0x80 | ((c >> 12) & 0x3f)));
+            append((char)(0x80 | ((c >> 6) & 0x3f)));
+            append((char)(0x80 | (c & 0x3f)));
+        }
+        return *this;
+    }
     String& append(const char* rhs, long length) {
         ASSERT(rhs != NULL);
         s.append(rhs, length);
@@ -198,6 +220,16 @@ public:
         }
         return rslt;
     }
+
+    /**
+     * Converts utf8 content to upper case.
+     */    
+    String toUpperUtf8() const;
+
+    /**
+     * Converts utf8 content to lower case.
+     */    
+    String toLowerUtf8() const;
     
     bool equals(const char* rhs, long len) const
     {

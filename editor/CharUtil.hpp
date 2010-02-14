@@ -69,6 +69,27 @@ public:
                || chartype == ucp_Lt
                || chartype == ucp_Lu;
     }
+    static int toUpper(int unicodeChar)
+    {
+        const ucd_record*  ucd = GET_UCD(unicodeChar);
+        if (ucd->chartype == ucp_Ll) {
+            return unicodeChar + ucd->other_case;
+        } else {
+            return unicodeChar;
+        }
+    }
+    static int toLower(int unicodeChar)
+    {
+        if (unicodeChar < 0) {
+            return unicodeChar;
+        }
+        const ucd_record*  ucd = GET_UCD(unicodeChar);
+        if (ucd->chartype == ucp_Lu) {
+            return unicodeChar + ucd->other_case;
+        } else {
+            return unicodeChar;
+        }
+    }
 };
 
 } // namespace LucED

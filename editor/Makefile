@@ -138,7 +138,7 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 BackliteBuffer          GuiLayoutRow           GuiLayoutColumn        HeapObject  \
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
                 ViewLuaInterface        LuaSerializer          ActionMethodContainer  FocusManager \
-                FontInfo                EncodingConverter
+                FontInfo                EncodingConverter      String
                 
 CONFIG_FILES := .luced/config.lua \
                 $(wildcard .luced/packages/default/*.lua)
