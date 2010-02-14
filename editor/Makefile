@@ -260,7 +260,7 @@ dist: $(DIST_FILES)
 	cd $(BUILD_DIR)/dist; autoreconf -vi
 	@echo "make dist: finished";
 
-$(BUILD_DIR)/dist/Makefile.am: Makefile.am.emlua
+$(BUILD_DIR)/dist/Makefile.am: Makefile.am.emlua Makefile
 	$(call EMLUA_RUN,$@, DIST_HEADERS   = [[$(dist_headers)]];\
 	                     DIST_SOURCES   = [[$(dist_sources)]]; \
 	                     DIST_EXTRAS    = [[$(dist_extras)]]; \
@@ -291,7 +291,7 @@ $(BUILD_DIR)/dist/editor/%:        $(BUILD_DIR)/%
 
 define COPY_RUN
 	@mkdir -p $(@D)
-	cp $< $@
+	cp -f $< $@
 endef
 
 ###############################################################
