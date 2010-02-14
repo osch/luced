@@ -312,20 +312,21 @@ void TextEditorWidget::notifyAboutBeginOfPastingData()
 void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long length)
 {
     if (length > 0) {
-        bool first =  (pastingTextMark.getPos() == beginPastingTextMark.getPos());
-        
+        long beginPos = textData->getBeginOfWChar(beginPastingTextMark.getPos());
+        long nextPos  = pastingTextMark.getPos() + length;
+
         textData->insertAtMark(pastingTextMark, data, length);
-        pastingTextMark.moveToPos(pastingTextMark.getPos() + length);
+
+        beginPastingTextMark.moveToPos(beginPos);
+        pastingTextMark     .moveToPos(nextPos);
         
-        //if (!first) {
-            if (!getBackliteBuffer()->hasActiveSelection()
-              || getBackliteBuffer()->getBeginSelectionPos() != beginPastingTextMark.getPos())
-            {
-                getBackliteBuffer()->activateSelection(beginPastingTextMark.getPos());
-            }
-            getBackliteBuffer()->makeSelectionToSecondarySelection();
-            getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
-        //}
+        if (!getBackliteBuffer()->hasActiveSelection()
+          || getBackliteBuffer()->getBeginSelectionPos() != beginPos)
+        {
+            getBackliteBuffer()->activateSelection(beginPos);
+        }
+        getBackliteBuffer()->makeSelectionToSecondarySelection();
+        getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
     }
 }
 
@@ -337,13 +338,16 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
 
     releaseSelectionButKeepPseudoSelection();
 
+    long beginPos = textData->getBeginOfWChar(beginPastingTextMark.getPos());
+    long endPos   = textData->getEndOfWChar(pastingTextMark.getPos());
+
     if (!getBackliteBuffer()->hasActiveSelection()
-      || getBackliteBuffer()->getBeginSelectionPos() != beginPastingTextMark.getPos())
+      || getBackliteBuffer()->getBeginSelectionPos() != beginPos)
     {
-        getBackliteBuffer()->activateSelection(beginPastingTextMark.getPos());
+        getBackliteBuffer()->activateSelection(beginPos);
     }
     getBackliteBuffer()->makeSelectionToSecondarySelection();
-    getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
+    getBackliteBuffer()->extendSelectionTo(endPos);
 
     if (pasteParameter == CURSOR_TO_END_OF_PASTED_DATA) {
         moveCursorToTextMark(pastingTextMark);
@@ -828,11 +832,10 @@ bool TextEditorWidget::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEv
                     getBackliteBuffer()->activateSelection(getCursorTextPosition());
                     getBackliteBuffer()->makeSelectionToSecondarySelection();
                 }
-                long insertedLength = insertAtCursor(keyPressEvent.getInputString());
                 {
-                    long newPos = getCursorTextPosition() + insertedLength;
-                    long length = textData->getLength();
-                    while (newPos < length && !textData->isBeginOfWChar(newPos)) { ++newPos; }
+                    long oldPos         = getCursorTextPosition();
+                    long insertedLength = insertAtCursor(keyPressEvent.getInputString());
+                    long newPos         = textData->getEndOfWChar(oldPos + insertedLength);
                     moveCursorToTextPosition(newPos);
                 }
                 getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());

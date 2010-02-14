@@ -269,6 +269,10 @@ public:
         while (!isBeginOfWChar(pos)) --pos;
         return pos;
     }
+    long getEndOfWChar(long pos) const {
+        while (!isBeginOfWChar(pos)) ++pos;
+        return pos;
+    }
     long getNextBeginOfWChar(long pos) const {
         const long len = getLength();
         if (pos < len) {
@@ -276,6 +280,9 @@ public:
             while (pos < len && !isBeginOfWChar(pos)) ++pos;
         }
         return pos;
+    }
+    long getPrevBeginOfWChar(long pos) const {
+        return getPrevWCharPos(getBeginOfWChar(pos));
     }
     long getPrevWCharPos(long pos) const {
         return utf8Parser.getPrevWCharPos(pos);
@@ -339,6 +346,7 @@ public:
 private:
     long internalInsertAtMark(MarkHandle m, const byte* buffer, long length);
     void internalRemoveAtMark(MarkHandle m, long amount);
+    void recalculateChangeMarker(long b2, long o2, long a2);
 
 public:
     long insertAtMark(MarkHandle m, const byte* buffer, long length);
@@ -375,7 +383,7 @@ private:
         long p = pos;
         long w = 0;
         while (!isBeginOfLine(p)) {
-            p = getPrevWCharPos(p);
+            p = getPrevBeginOfWChar(p);
             ++w;
         }
         *wcharColumn = w;

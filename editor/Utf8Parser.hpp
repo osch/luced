@@ -54,7 +54,8 @@ public:
     {}
     
     bool isBeginOfWChar(long pos) const {
-        return pos == 0 ||  CharUtil::isAsciiChar((*buffer)[pos - 1])
+        return pos == 0 || CharUtil::isAsciiChar((*buffer)[pos - 1])
+                        || isEndOfBuffer(pos)
                         || !CharUtil::isUft8FollowerChar((*buffer)[pos]);
     }
 

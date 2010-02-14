@@ -21,6 +21,7 @@
 
 #include <limits.h>
 
+#include "util.hpp"
 #include "TextData.hpp"
 #include "EventDispatcher.hpp"
 #include "File.hpp"
@@ -317,7 +318,7 @@ void TextData::updateMarks(
     for (long i = 0; i < marks.getLength(); ++i) {
         if (marks[i].inUseCounter > 0) {
             if (marks[i].pos <= beginChangedPos) {
-                continue;
+                goto next;
             }
             if (marks[i].pos >= oldEndChangedPos) {
                 if (marks[i].pos   - oldEndChangedPos > marks[i].byteColumn) {
@@ -333,7 +334,7 @@ void TextData::updateMarks(
                     marks[i].line       += changedLineNumberAmount;
                     marks[i].wcharColumn = -1;
                 }
-                continue;
+                goto next;
             }
             if (!beginColCalculated) {
                 long bol = getThisLineBegin(beginChangedPos);
@@ -345,6 +346,19 @@ void TextData::updateMarks(
             marks[i].byteColumn  = beginByteColumns;
             marks[i].wcharColumn = -1;
             ASSERT(marks[i].pos <= this->getLength());
+        next:
+            {
+                long p = marks[i].pos;
+                long wcharBegin = getBeginOfWChar(p);
+                if (p != wcharBegin)
+                {
+                    if (p >= beginChangedPos && wcharBegin <= newEndChangedPos)
+                    {
+                        marks[i].pos         = wcharBegin;
+                        marks[i].byteColumn -= (p - wcharBegin);
+                    }
+                }
+            }
         }
     }
 }
@@ -373,27 +387,39 @@ inline long TextData::internalInsertAtMark(MarkHandle m, const byte* insertBuffe
             long pos = mark.pos;
     
             buffer.insert(pos, insertBuffer, length);
-    
-            if (pos < this->beginChangedPos) {
-                this->beginChangedPos = pos;
-                this->changedAmount  += length;
-                if (pos > this->oldEndChangedPos) {
-                    this->oldEndChangedPos = pos;
-                }
-            } else if (pos < this->oldEndChangedPos + this->changedAmount) {
-                this->changedAmount  += length;
-            } else {
-                this->oldEndChangedPos += pos - (this->oldEndChangedPos + this->changedAmount);
-                this->changedAmount  += length;
-            }
+
             this->numberLines += lineCounter;
-            updateMarks(pos, pos, length, lineNumber, lineCounter);
+
+            // Affected positions for wchar handling
+            long b2    = getBeginOfWChar(pos);
+            long n2    = getEndOfWChar(pos + length); 
+            long o2    = n2 - length;
+            long a2    = n2 - o2;
+            
+            recalculateChangeMarker(b2, o2, a2);
+
+            updateMarks(b2, o2, a2, lineNumber, lineCounter);
         }
         return length;
     }
     else {
         return 0;
     }
+}
+
+inline void TextData::recalculateChangeMarker(long b2, long o2, long a2)
+{
+    long b1 = this->beginChangedPos;
+    long o1 = this->oldEndChangedPos;
+    long a1 = this->changedAmount;
+    
+    long b3 = util::minimum(b1, b2);
+    long o3 = util::maximum(o1, o2 - a1);
+    long a3 = a1 + a2;
+    
+    this->beginChangedPos  = b3;
+    this->oldEndChangedPos = o3;
+    this->changedAmount    = a3;
 }
 
 
@@ -609,21 +635,18 @@ inline void TextData::internalRemoveAtMark(MarkHandle m, long amount)
         }
     
         buffer.removeAmount(mark.pos, amount);
-        
-        long newEndChangedPos = this->oldEndChangedPos + this->changedAmount;
-        if (newEndChangedPos < pos + amount) {
-            newEndChangedPos = pos + amount;
-            this->oldEndChangedPos = newEndChangedPos - this->changedAmount;
-        }
-        this->changedAmount -= amount;
-        
-        if (pos < this->beginChangedPos) {
-            this->beginChangedPos = pos;
-        }
+
+        // Affected positions for wchar handling
+        long b2   = getBeginOfWChar(pos);
+        long n2   = getEndOfWChar(pos); 
+        long o2   = n2 + amount;
+        long a2   = n2 - o2;
+
         this->numberLines -= lineCounter;
-        updateMarks(pos, pos + amount, -amount, lineNumber, -lineCounter);
-    
-        setModifiedFlag(true);
+
+        recalculateChangeMarker(b2, o2, a2);
+
+        updateMarks(b2, o2, a2, lineNumber, -lineCounter);
     }
 }
 
