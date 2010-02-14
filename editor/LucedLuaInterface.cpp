@@ -86,6 +86,7 @@ LuaCFunctionResult LucedLuaInterface::getCurrentView(const LuaCFunctionArguments
     return LuaCFunctionResult(luaAccess) << currentView;
 }
 
+
 LuaCFunctionResult LucedLuaInterface::getLoadedPackageModules(const LuaCFunctionArguments& args)
 {
     LuaAccess luaAccess = args.getLuaAccess();
@@ -96,3 +97,26 @@ LuaCFunctionResult LucedLuaInterface::getLoadedPackageModules(const LuaCFunction
     return GlobalLuaInterpreter::getInstance()->getLoadedPackageModules();
 }
 
+
+LuaCFunctionResult LucedLuaInterface::toUpper(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (args.getLength() != 1 || !args[0].isString()) {
+        throw LuaArgException();
+    }
+
+    return LuaCFunctionResult(luaAccess) << args[0].toString().toUpperUtf8();
+}
+
+
+LuaCFunctionResult LucedLuaInterface::toLower(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (args.getLength() != 1 || !args[0].isString()) {
+        throw LuaArgException();
+    }
+
+    return LuaCFunctionResult(luaAccess) << args[0].toString().toLowerUtf8();
+}

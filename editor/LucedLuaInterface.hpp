@@ -44,6 +44,9 @@ public:
     LuaCFunctionResult resetModules(const LuaCFunctionArguments& args);
 
     LuaCFunctionResult getLoadedPackageModules(const LuaCFunctionArguments& args);
+
+    LuaCFunctionResult toUpper(const LuaCFunctionArguments& args);
+    LuaCFunctionResult toLower(const LuaCFunctionArguments& args);
     
     void setCurrentView(RawPtr<ViewLuaInterface> view) {
         currentView = view;

@@ -30,6 +30,14 @@ return -- default actionName key binding
         keys       = { "Return" },
     },
 --]]
+    {
+        actionName = "this.toUpper",
+        keys       = { "Ctrl+6" },
+    },
+    {
+        actionName = "this.toLower",
+        keys       = { "Ctrl+Shift+6" },
+    },
     -----------------------------------------
     -- default shell script actions
     --
