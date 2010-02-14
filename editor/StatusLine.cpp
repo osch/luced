@@ -235,7 +235,10 @@ void StatusLine::setFileLength(long fileLength)
 
 void StatusLine::setCursorPositionData(CursorPositionData d)
 {
-    if (this->line != d.line || this->column != d.column || this->selectionLength != d.selectionLength)
+    if (  this->line            != d.line 
+       || this->column          != d.column 
+       || this->pos             != d.pos 
+       || this->selectionLength != d.selectionLength)
     {
         this->line = d.line;
         this->column = d.column;
