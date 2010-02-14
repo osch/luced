@@ -590,7 +590,9 @@ void SingleLineEditActions::deleteKey()
             TextData::HistorySection::Ptr historySection = e->getTextData()->getHistorySectionHolder();
 
             e->setCurrentActionCategory(TextEditorWidget::ACTION_KEYBOARD_INPUT);
-            e->removeAtCursor(1);
+            long sPos = e->getCursorTextPosition();
+            long ePos = e->getTextData()->getNextBeginOfWChar(sPos);
+            e->removeAtCursor(ePos - sPos);
         }
     }
     e->assureCursorVisible();
