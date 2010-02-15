@@ -58,103 +58,29 @@ namespace // anonymous namespace
 
 } // anonymous namespace
 
-#if LUCED_USE_ICONV
-
-class EncodingConverter::LowLevelConverter : public NonCopyable
-{
-public:
-    LowLevelConverter(const String& fromCodeset, 
-                      const String& toCodeset) 
-
-        : handle(iconv_open(toCodeset.toCString(),
-                            fromCodeset.toCString())),
-          fromCodeset(fromCodeset),
-          toCodeset(toCodeset)
-    {}
-    ~LowLevelConverter() {
-        if (isValid()) {
-            iconv_close(handle);
-        }
-    }
-
-    LowLevelResult convert(const char**  inbuf, size_t*  inbytesleft,
-                                 char** outbuf, size_t* outbytesleft)
-    {
-        size_t rslt;
-
-    #if ICONV_USES_CONST_POINTER
-        rslt = iconv(handle, inbuf,  inbytesleft,
-                             outbuf, outbytesleft);
-    #else
-        rslt = iconv(handle, (char**)inbuf,  inbytesleft,
-                                     outbuf, outbytesleft);
-    #endif
-
-        if (rslt == (size_t)(-1)) {
-            if (errno == E2BIG) {
-                // The output buffer has no more room for the next converted character. 
-                // In this case it sets errno to E2BIG and returns (size_t)(-1).
-                return OUTPUT_BUFFER_TOO_SMALL;
-            }
-            else if (errno == EINVAL || errno == EILSEQ) {
-                // An incomplete multibyte sequence is encountered in the input, and the 
-                // input byte sequence terminates after it. In this case it sets errno 
-                // to EINVAL and returns (size_t)(-1). *inbuf is left pointing to the 
-                // beginning of the incomplete multibyte sequence.
-                //
-                // An invalid multibyte sequence is encountered in the input. In this 
-                // case it sets errno to EILSEQ and returns (size_t)(-1). *inbuf is 
-                // left pointing to the beginning of the invalid multibyte sequence.
-                return INVALID_SEQUENCE;
-            }
-            else {
-                // should not happen
-                return UNKNOWN_ERROR;
-            }
-        } else {
-            // The input byte sequence has been entirely converted, i.e. *inbytesleft has 
-            // gone down to 0. In this case iconv returns the number of non-reversible 
-            // conversions performed during this call.
-            if (rslt == 0) {
-                return CONVERSION_OK;
-            } else {
-                return NON_REVERSIBLE_CONVERSIONS_OCCURRED;
-            }
-        }
-    }
-    void reset() {
-        if (isValid()) {
-            iconv_close(handle);
-            handle = iconv_open(toCodeset.toCString(),
-                                fromCodeset.toCString());
-        }
-    }
-    bool isValid() const {
-        return handle != (iconv_t)(-1);
-    }
-private:
-    iconv_t handle;
-    String fromCodeset;
-    String toCodeset;
-};
-
-#else // LUCED_USE_ICONV
-
 class EncodingConverter::LowLevelConverter : public NonCopyable
 {
 private:
     enum ConvertDirection
     {
-        DO_NOTHING,
+        CANNOT_CONVERT,
+    #if LUCED_USE_ICONV
+        CONVERT_WITH_ICONV,
+    #endif
         UTF8_TO_LATIN1,
-        LATIN1_TO_UTF8
+        LATIN1_TO_UTF8,
+        DO_NOTHING,
     };
 public:
     LowLevelConverter(const String& fromCodeset, 
                       const String& toCodeset) 
 
-        : fromCodeset(fromCodeset.toSubstitutedString("-", "").toLower()),
-          toCodeset  (toCodeset  .toSubstitutedString("-", "").toLower())
+        : fromCodeset(fromCodeset),
+          toCodeset(toCodeset),
+    #if LUCED_USE_ICONV
+          iconvHandle((iconv_t)(-1)),
+    #endif
+          convertDirection(CANNOT_CONVERT)
     {
         init();
     }
@@ -164,131 +90,205 @@ public:
     {
         ASSERT(*inbytesleft >= 0 && *outbytesleft >= 0);
         
-        LowLevelResult rslt = CONVERSION_OK;
-
-        const char* inPtr   = *inbuf;
-        char*       outPtr  = *outbuf;
-        
-        const char* const  inEndPtr =  *inbuf +  *inbytesleft;
-        const char* const outEndPtr = *outbuf + *outbytesleft;
-
-        switch (convertDirection)
+    #if LUCED_USE_ICONV
+        if (convertDirection == CONVERT_WITH_ICONV)
         {
-            case UTF8_TO_LATIN1:
-            {
-                while (inPtr < inEndPtr)
-                {
-                    const char*       p    = inPtr;
-                    const char* const endP = util::minimum(inEndPtr, 
-                                                           inPtr + (outEndPtr - outPtr));
-                    
-                    while (p < endP && CharUtil::isAsciiChar(*p)) { ++p; }
-        
-                    size_t amount = p - inPtr;
-        
-                    memmove(outPtr, inPtr, amount);
-                    
-                    outPtr += amount;
-                    inPtr  += amount;
-                    
-                    while (inPtr < inEndPtr && !CharUtil::isAsciiChar(*inPtr))
-                    {
-                        // ignore this, because we always get the full input:
-                        //    
-                        // int number = CharUtil::getNumberOfStrictUtf8FollowerChars(*inPtr);
-                        // if (inPtr + number < inEndPtr) {
-                        //     rslt = INVALID_SEQUENCE;
-                        //     goto End;
-                        // }
-                        Adapter adapter((const byte*)inPtr, inEndPtr - inPtr);
-                        long    pos = 0;
-                        int c = Utf8Parser<Adapter>(&adapter).getWCharAndIncrementPos(&pos);
-                        
-                        if (0 <= c && c <= 0xff)
-                        {
-                            if (outPtr + 1 > outEndPtr) {
-                                if (rslt == CONVERSION_OK) { rslt = OUTPUT_BUFFER_TOO_SMALL; }
-                                goto End;
-                            }
-                            *(outPtr++) = (char)c;
-                        } 
-                        else {
-                            if (outPtr + pos > outEndPtr) {
-                                if (rslt == CONVERSION_OK) { rslt = OUTPUT_BUFFER_TOO_SMALL; }
-                                goto End;
-                            }
-                            memmove(outPtr, inPtr, pos);
-                            outPtr += pos;
-                            rslt = NON_REVERSIBLE_CONVERSIONS_OCCURRED;
-                        }
-
-                        inPtr += pos;
-                    }
+            size_t rslt;
+      
+        #if ICONV_USES_CONST_POINTER
+            rslt = iconv(iconvHandle, inbuf,  inbytesleft,
+                                     outbuf, outbytesleft);
+        #else
+            rslt = iconv(iconvHandle, (char**)inbuf,  inbytesleft,
+                                             outbuf, outbytesleft);
+        #endif
+      
+            if (rslt == (size_t)(-1)) {
+                if (errno == E2BIG) {
+                    // The output buffer has no more room for the next converted character. 
+                    // In this case it sets errno to E2BIG and returns (size_t)(-1).
+                    return OUTPUT_BUFFER_TOO_SMALL;
                 }
-                goto End;
-            }
-            case LATIN1_TO_UTF8:
-            {
-                while (inPtr < inEndPtr)
-                {
-                    const char*       p    = inPtr;
-                    const char* const endP = util::minimum(inEndPtr, 
-                                                           inPtr + (outEndPtr - outPtr));
-                    
-                    while (p < endP && CharUtil::isAsciiChar(*p)) { ++p; }
-        
-                    size_t amount = p - inPtr;
-        
-                    memmove(outPtr, inPtr, amount);
-                    
-                    outPtr += amount;
-                    inPtr  += amount;
-                    
-                    while (inPtr < inEndPtr && !CharUtil::isAsciiChar(*inPtr))
-                    {
-                        if (outPtr + 2 > outEndPtr)
-                        {
-                            if (rslt == CONVERSION_OK) {
-                                rslt = OUTPUT_BUFFER_TOO_SMALL;
-                            }
-                            goto End;
-                        }
-                        unsigned char c = *(inPtr++);                  // 0xC0 = 1100 0000
-                        outPtr[0] =  (char)(0xC0 | ((c >> 6) & 0x1F)); // 0x1F = 0001 1111
-                        outPtr[1] =  (char)(0x80 | (c & 0x3F));        // 0x80 = 1000 0000
-                                                                       // 0x3F = 0011 1111
-                        outPtr += 2;
-                    }
+                else if (errno == EINVAL || errno == EILSEQ) {
+                    // An incomplete multibyte sequence is encountered in the input, and the 
+                    // input byte sequence terminates after it. In this case it sets errno 
+                    // to EINVAL and returns (size_t)(-1). *inbuf is left pointing to the 
+                    // beginning of the incomplete multibyte sequence.
+                    //
+                    // An invalid multibyte sequence is encountered in the input. In this 
+                    // case it sets errno to EILSEQ and returns (size_t)(-1). *inbuf is 
+                    // left pointing to the beginning of the invalid multibyte sequence.
+                    return INVALID_SEQUENCE;
                 }
-                goto End;
-            }
-            default:
-            {
-                size_t copySize = util::minimum(inEndPtr - inPtr, outEndPtr - outPtr);
-
-                memmove(outPtr, inPtr, copySize);
-                
-                inPtr  += copySize;
-                outPtr += copySize;
-                
-                goto End;
+                else {
+                    // should not happen
+                    return UNKNOWN_ERROR;
+                }
+            } else {
+                // The input byte sequence has been entirely converted, i.e. *inbytesleft has 
+                // gone down to 0. In this case iconv returns the number of non-reversible 
+                // conversions performed during this call.
+                if (rslt == 0) {
+                    return CONVERSION_OK;
+                } else {
+                    return NON_REVERSIBLE_CONVERSIONS_OCCURRED;
+                }
             }
         }
-    End:
-        *inbuf        = inPtr;
-        *outbuf       = outPtr;
-        *inbytesleft  = inEndPtr - inPtr;
-        *outbytesleft = outEndPtr - outPtr;
-        
-        return rslt;
+        else
+    #endif
+        {
+            LowLevelResult rslt = CONVERSION_OK;
+    
+            const char* inPtr   = *inbuf;
+            char*       outPtr  = *outbuf;
+            
+            const char* const  inEndPtr =  *inbuf +  *inbytesleft;
+            const char* const outEndPtr = *outbuf + *outbytesleft;
+    
+            switch (convertDirection)
+            {
+                case UTF8_TO_LATIN1:
+                {
+                    while (inPtr < inEndPtr)
+                    {
+                        const char*       p    = inPtr;
+                        const char* const endP = util::minimum(inEndPtr, 
+                                                               inPtr + (outEndPtr - outPtr));
+                        
+                        while (p < endP && CharUtil::isAsciiChar(*p)) { ++p; }
+            
+                        size_t amount = p - inPtr;
+            
+                        memmove(outPtr, inPtr, amount);
+                        
+                        outPtr += amount;
+                        inPtr  += amount;
+                        
+                        while (inPtr < inEndPtr && !CharUtil::isAsciiChar(*inPtr))
+                        {
+                            // ignore this, because we always get the full input:
+                            //    
+                            // int number = CharUtil::getNumberOfStrictUtf8FollowerChars(*inPtr);
+                            // if (inPtr + number < inEndPtr) {
+                            //     rslt = INVALID_SEQUENCE;
+                            //     goto End;
+                            // }
+                            Adapter adapter((const byte*)inPtr, inEndPtr - inPtr);
+                            long    pos = 0;
+                            int c = Utf8Parser<Adapter>(&adapter).getWCharAndIncrementPos(&pos);
+                            
+                            if (0 <= c && c <= 0xff)
+                            {
+                                if (outPtr + 1 > outEndPtr) {
+                                    if (rslt == CONVERSION_OK) { rslt = OUTPUT_BUFFER_TOO_SMALL; }
+                                    goto End;
+                                }
+                                *(outPtr++) = (char)c;
+                            } 
+                            else {
+                                if (outPtr + pos > outEndPtr) {
+                                    if (rslt == CONVERSION_OK) { rslt = OUTPUT_BUFFER_TOO_SMALL; }
+                                    goto End;
+                                }
+                                memmove(outPtr, inPtr, pos);
+                                outPtr += pos;
+                                rslt = NON_REVERSIBLE_CONVERSIONS_OCCURRED;
+                            }
+    
+                            inPtr += pos;
+                        }
+                    }
+                    goto End;
+                }
+                case LATIN1_TO_UTF8:
+                {
+                    while (inPtr < inEndPtr)
+                    {
+                        const char*       p    = inPtr;
+                        const char* const endP = util::minimum(inEndPtr, 
+                                                               inPtr + (outEndPtr - outPtr));
+                        
+                        while (p < endP && CharUtil::isAsciiChar(*p)) { ++p; }
+            
+                        size_t amount = p - inPtr;
+            
+                        memmove(outPtr, inPtr, amount);
+                        
+                        outPtr += amount;
+                        inPtr  += amount;
+                        
+                        while (inPtr < inEndPtr && !CharUtil::isAsciiChar(*inPtr))
+                        {
+                            if (outPtr + 2 > outEndPtr)
+                            {
+                                if (rslt == CONVERSION_OK) {
+                                    rslt = OUTPUT_BUFFER_TOO_SMALL;
+                                }
+                                goto End;
+                            }
+                            unsigned char c = *(inPtr++);                  // 0xC0 = 1100 0000
+                            outPtr[0] =  (char)(0xC0 | ((c >> 6) & 0x1F)); // 0x1F = 0001 1111
+                            outPtr[1] =  (char)(0x80 | (c & 0x3F));        // 0x80 = 1000 0000
+                                                                           // 0x3F = 0011 1111
+                            outPtr += 2;
+                        }
+                    }
+                    goto End;
+                }
+                default:
+                {
+                    size_t copySize = util::minimum(inEndPtr - inPtr, outEndPtr - outPtr);
+    
+                    memmove(outPtr, inPtr, copySize);
+                    
+                    inPtr  += copySize;
+                    outPtr += copySize;
+                    
+                    goto End;
+                }
+            }
+         End:
+             *inbuf        = inPtr;
+             *outbuf       = outPtr;
+             *inbytesleft  = inEndPtr - inPtr;
+             *outbytesleft = outEndPtr - outPtr;
+             
+             return rslt;
+        }
     }
-    void reset() {
-    }
+    
     bool isValid() const {
-        return validFlag;
+        return (convertDirection != CANNOT_CONVERT);
     }
+
+    ~LowLevelConverter()
+    {
+    #if LUCED_USE_ICONV
+        if (convertDirection == CONVERT_WITH_ICONV)
+        {
+            iconv_close(iconvHandle);
+        }
+    #endif
+    }
+    
+    void reset()
+    {
+    #if LUCED_USE_ICONV
+        if (convertDirection == CONVERT_WITH_ICONV)
+        {
+            iconv_close(iconvHandle);
+        
+            iconvHandle = iconv_open(toCodeset.toCString(), fromCodeset.toCString());
+            
+            if (iconvHandle == (iconv_t)(-1)) { convertDirection = CANNOT_CONVERT; }
+            else                              { convertDirection = CONVERT_WITH_ICONV; }
+        }
+    #endif
+    }
+
 private:
-    static bool isKnownEncoding(const String& encoding)
+    static bool canBeConvertedInternal(const String& encoding)
     {
         return    encoding == "c"
                || encoding == "posix"
@@ -299,34 +299,50 @@ private:
     }
     void init()
     {
-        validFlag = isKnownEncoding(fromCodeset) && isKnownEncoding(toCodeset);
+        String from = fromCodeset.toSubstitutedString("-", "").toLower();
+        String to   =   toCodeset.toSubstitutedString("-", "").toLower();
 
-        if (fromCodeset == "utf8" && (   toCodeset == "c"
-                                      || toCodeset == "posix"
-                                      || toCodeset == "ascii"
-                                      || toCodeset == "iso88591"
-                                      || toCodeset == "latin1"))
+        if (canBeConvertedInternal(from) && canBeConvertedInternal(to))
         {
-            convertDirection = UTF8_TO_LATIN1;
+            if (from == "utf8" && (   to == "c"
+                                   || to == "posix"
+                                   || to == "ascii"
+                                   || to == "iso88591"
+                                   || to == "latin1"))
+            {
+                convertDirection = UTF8_TO_LATIN1;
+            }
+            else if (to == "utf8" && (   from == "c"
+                                      || from == "posix"
+                                      || from == "ascii"
+                                      || from == "iso88591"
+                                      || from == "latin1"))
+            {
+                convertDirection = LATIN1_TO_UTF8;
+            }
+            else {
+                convertDirection = DO_NOTHING;
+            }
         }
-        else if (toCodeset == "utf8" && (   fromCodeset == "c"
-                                         || fromCodeset == "posix"
-                                         || fromCodeset == "ascii"
-                                         || fromCodeset == "iso88591"
-                                         || fromCodeset == "latin1"))
+        else
         {
-            convertDirection = LATIN1_TO_UTF8;
-        }
-        else {
-            convertDirection = DO_NOTHING;
+        #if LUCED_USE_ICONV
+            iconvHandle = iconv_open(toCodeset.toCString(), fromCodeset.toCString());
+
+            if (iconvHandle == (iconv_t)(-1)) { convertDirection = CANNOT_CONVERT; }
+            else                              { convertDirection = CONVERT_WITH_ICONV; }
+        #else
+            convertDirection = CANNOT_CONVERT;
+        #endif    
         }
     }
     String           fromCodeset;
     String           toCodeset;
-    bool             validFlag;
+#if LUCED_USE_ICONV
+    iconv_t          iconvHandle;
+#endif
     ConvertDirection convertDirection;
 };
-#endif // !LUCED_USE_ICONV
     
 
 static String normalizeEncoding(String encoding)
