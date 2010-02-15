@@ -200,27 +200,29 @@ public:
                         //     rslt = INVALID_SEQUENCE;
                         //     goto End;
                         // }
-                        if (outPtr + 1 > outEndPtr)
-                        {
-                            if (rslt == CONVERSION_OK) {
-                                rslt = OUTPUT_BUFFER_TOO_SMALL;
-                            }
-                            goto End;
-                        }
-
                         Adapter adapter((const byte*)inPtr, inEndPtr - inPtr);
                         long    pos = 0;
                         int c = Utf8Parser<Adapter>(&adapter).getWCharAndIncrementPos(&pos);
                         
-                        inPtr += pos;
-                        
-                        if (0 <= c && c <= 0xff) {
+                        if (0 <= c && c <= 0xff)
+                        {
+                            if (outPtr + 1 > outEndPtr) {
+                                if (rslt == CONVERSION_OK) { rslt = OUTPUT_BUFFER_TOO_SMALL; }
+                                goto End;
+                            }
                             *(outPtr++) = (char)c;
                         } 
                         else {
-                            *(outPtr++) = '?';
+                            if (outPtr + pos > outEndPtr) {
+                                if (rslt == CONVERSION_OK) { rslt = OUTPUT_BUFFER_TOO_SMALL; }
+                                goto End;
+                            }
+                            memmove(outPtr, inPtr, pos);
+                            outPtr += pos;
                             rslt = NON_REVERSIBLE_CONVERSIONS_OCCURRED;
                         }
+
+                        inPtr += pos;
                     }
                 }
                 goto End;
