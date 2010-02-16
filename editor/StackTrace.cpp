@@ -92,7 +92,7 @@ startAddr2Line:
             argStrings.push_back("addr2line");
 
         if (tryCounter == 1) {
-            argStrings.push_back("-x"); // <-- not supported under older addr2line
+            argStrings.push_back("-i"); // <-- not supported under older addr2line
         }
             argStrings.push_back("-f");
             argStrings.push_back("-s");
