@@ -155,7 +155,10 @@ public:
                         const char*       p    = inPtr;
                         const char* const endP = util::minimum(inEndPtr, 
                                                                inPtr + (outEndPtr - outPtr));
-                        
+                        if (p == endP) {
+                            if (rslt == CONVERSION_OK) { rslt = OUTPUT_BUFFER_TOO_SMALL; }
+                            goto End;
+                        }
                         while (p < endP && CharUtil::isAsciiChar(*p)) { ++p; }
             
                         size_t amount = p - inPtr;
@@ -208,7 +211,10 @@ public:
                         const char*       p    = inPtr;
                         const char* const endP = util::minimum(inEndPtr, 
                                                                inPtr + (outEndPtr - outPtr));
-                        
+                        if (p == endP) {
+                            if (rslt == CONVERSION_OK) { rslt = OUTPUT_BUFFER_TOO_SMALL; }
+                            goto End;
+                        }
                         while (p < endP && CharUtil::isAsciiChar(*p)) { ++p; }
             
                         size_t amount = p - inPtr;
