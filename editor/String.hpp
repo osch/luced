@@ -46,6 +46,12 @@ public:
     String()
     {}
 
+    String(const String& rhs)
+        : s(rhs.s)
+    {
+        ASSERT(this != &rhs);
+    }
+
     String(const char* rhs)
 #ifdef DEBUG
     {
@@ -353,6 +359,9 @@ public:
     }
     bool operator!=(const String& rhs) const {
         return s != rhs.s;
+    }
+    bool operator<(const String& rhs) const {
+        return s < rhs.s;
     }
     void removeAmount(Pos pos, Len amount) {
         ASSERT(0 <= amount);

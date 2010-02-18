@@ -58,6 +58,7 @@ public:
         : ptr(src.ptr)
     {
     #ifdef DEBUG
+        ASSERT(this != &src);
         ptrGuard    = RawPtrGuardHolder::RawPtrGuardAccess::getRawPtrGuard(src);
         isValidFlag = src.isValidFlag;
         ASSERT(isValidFlag == ptrGuard.isValid());

@@ -50,6 +50,7 @@ public:
     }
     
     OwningPtr(const OwningPtr& src) {
+        ASSERT(this != &src);
         ptr = src.ptr;
         HeapObjectRefManipulator::incRefCounter(ptr);
     }
