@@ -98,6 +98,14 @@ public:
         return !(*this == rhs);
     }
     
+    bool operator<(const KeyCombination& rhs) const {
+        if (this->keyModifier == rhs.keyModifier) {
+            return this->keyIds < rhs.keyIds;
+        } else {
+            return this->keyModifier < rhs.keyModifier;
+        }
+    }
+
 private:
     friend class HashFunction<KeyCombination>;
 

@@ -139,6 +139,10 @@ public:
     {
         return atom == rhs.atom;
     }
+    bool operator<(const GuiRootProperty& rhs) const
+    {
+        return atom < rhs.atom;
+    }
     
 private:
     String getValue(bool remove) const

@@ -54,7 +54,11 @@ public:
         {}
         
         bool operator<(const Id& rhs) const {
-            return keyState < rhs.keyState || keyId < rhs.keyId;
+            if (keyState == rhs.keyState) {
+                return keyId < rhs.keyId;
+            } else {
+                return keyState < rhs.keyState;
+            }
         }
         bool operator==(const Id& rhs) const {
             return keyState == rhs.keyState && keyId == rhs.keyId;
