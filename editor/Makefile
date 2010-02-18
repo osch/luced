@@ -2,7 +2,7 @@
 #
 #   LucED - The Lucid Editor
 #
-#   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+#   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 #
 #   This program is free software; you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License Version 2 as published
@@ -482,10 +482,12 @@ $(BUILD_DIR)/libluced.a: $(LIB_OBJS)
 #
 
 define COMPILE_RUN
+	@rm -f $(BUILD_DIR)/deps/$(*F).dep
 	@mkdir -p $(@D) && mkdir -p $(BUILD_DIR)/deps
 	$(CPPCOMP_PRG) $(CPPCOMP_INVOKE_OPTS) -I . -I $(BUILD_DIR) $(CPP_DEFINES) $(INCL_OPTS) $1 \
-	-c $<  -o "$@" \
-	-MMD -MF $(BUILD_DIR)/deps/$(*F).dep 
+	-c $<  -o "$@" 	-MMD -MF $(BUILD_DIR)/deps/$(*F).dep.tmp
+	@cat $(BUILD_DIR)/deps/$(*F).dep.tmp | sed 's:^$(@F)\::$@\::' > $(BUILD_DIR)/deps/$(*F).dep
+	@rm -f $(BUILD_DIR)/deps/$(*F).dep.tmp
 endef
 
 define LINK_RUN
