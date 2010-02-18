@@ -57,22 +57,22 @@
 #if   LUCED_USE_STD_UNORDERED_MAP
     
     #include                                    <unordered_map>
-    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::unordered_map<k,v,h>
+    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::unordered_map< k,v,h >
 
 #elif LUCED_USE_TR1_UNORDERED_MAP
 
     #include                                    <tr1/unordered_map>
-    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::tr1::unordered_map<k,v,h>
+    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::tr1::unordered_map< k,v,h >
 
 #elif LUCED_USE_EXT_HASH_MAP_UNDER_STD
 
     #include                                    <ext/hash_map>
-    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::hash_map<(k,v,h>
+    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::hash_map< k,v,h >
 
 #elif LUCED_USE_EXT_HASH_MAP_UNDER_GNU_CXX
 
     #include                                    <ext/hash_map>
-    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      __gnu_cxx::hash_map<(k,v,h>
+    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      __gnu_cxx::hash_map< k,v,h >
 
 #elif LUCED_USE_STD_MAP
 
