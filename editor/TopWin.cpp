@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -237,7 +237,10 @@ void TopWin::requestFocus()
 void TopWin::repeatKeyPress(unsigned int keycode, const XEvent* event)
 {
     KeyPressRepeater::getInstance()->triggerNextRepeatEventFor(keycode, event, this);
+    
     processKeyboardEvent(event);
+    
+    XSync(GuiRoot::getInstance()->getDisplay(), False); // prevent too fast key press event for slow XServer
 }
 
 
@@ -325,6 +328,11 @@ printf("TakeFocus\n");
                                                                                &filteredEvent, this);
                 }
                 rslt = processKeyboardEvent(&filteredEvent);
+
+                if (KeyPressRepeater::getInstance()->isRepeating()) {
+                    XSync(GuiRoot::getInstance()->getDisplay(), False);  // prevent too fast key press event for slow XServer
+                }
+                
                 goto returnRslt;
             }
             else {
