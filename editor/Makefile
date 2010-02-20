@@ -43,6 +43,7 @@ CPPCOMP_FAST_OPTS := -O2
 CPPCOMP_SLOW_OPTS := -Os
 
 BUILD_DIR       := build
+RELEASE_DIR     := release
 
 #LINK_X11_OPTS   := -L /usr/X11R6/lib/ -lX11 -lXpm -lXext
 LINK_X11_OPTS   := 
@@ -204,89 +205,89 @@ lua:  $(BUILD_DIR)/lua.o $(LUA_OBJS) $(LPOSIX_OBJS)
 	$(call LINK_RUN, $(LIBS_WITH_READLINE))
 
 ###############################################################
-# dist
+# release
 
-dist_lua_headers    := $(patsubst %, lua/%,    $(shell cd ../lua/src; git ls-files *.h))
-dist_lposix_headers := $(patsubst %, lposix/%, $(shell cd ../lposix;  git ls-files *.h))
-dist_pcre_headers   := $(patsubst %, pcre/%,   $(shell cd ../pcre;    git ls-files *.h)\
-                                               pcre.h)
+release_lua_headers    := $(patsubst %, lua/%,    $(shell cd ../lua/src; git ls-files *.h))
+release_lposix_headers := $(patsubst %, lposix/%, $(shell cd ../lposix;  git ls-files *.h))
+release_pcre_headers   := $(patsubst %, pcre/%,   $(shell cd ../pcre;    git ls-files *.h) \
+                                                    pcre.h)
 
-dist_editor_headers := $(patsubst %, editor/%,   $(shell        git ls-files *.hpp) \
-                                                 $(patsubst %,%.hpp,$(GENERATED_HEADERS)))
+release_editor_headers := $(patsubst %, editor/%,   $(shell        git ls-files *.hpp) \
+                                                    $(patsubst %,%.hpp,$(GENERATED_HEADERS)))
 
-dist_headers        := $(dist_lua_headers)    \
-                       $(dist_lposix_headers) \
-                       $(dist_pcre_headers)   \
-                       $(dist_editor_headers)
+release_headers        := $(release_lua_headers)    \
+                          $(release_lposix_headers) \
+                          $(release_pcre_headers)   \
+                          $(release_editor_headers)
 
-DIST_HEADERS        := $(patsubst %, $(BUILD_DIR)/dist/%, $(dist_headers))
+RELEASE_HEADERS        := $(patsubst %, $(RELEASE_DIR)/%, $(release_headers))
 
  
-dist_lua_sources    := $(patsubst %, lua/%.cpp,    $(LUA_MODULES))
-dist_lposix_sources := $(patsubst %, lposix/%.cpp, $(LPOSIX_MODULES))
-dist_pcre_sources   := $(patsubst %, pcre/%.c,     $(PCRE_MODULES))
-dist_editor_sources := $(patsubst %, editor/%.cpp, $(EDITOR_MODULES))
+release_lua_sources    := $(patsubst %, lua/%.cpp,    $(LUA_MODULES))
+release_lposix_sources := $(patsubst %, lposix/%.cpp, $(LPOSIX_MODULES))
+release_pcre_sources   := $(patsubst %, pcre/%.c,     $(PCRE_MODULES))
+release_editor_sources := $(patsubst %, editor/%.cpp, $(EDITOR_MODULES))
 
-dist_sources        := $(dist_lua_sources)    \
-                       $(dist_lposix_sources) \
-                       $(dist_pcre_sources)   \
-                       $(dist_editor_sources)
+release_sources        := $(release_lua_sources)    \
+                          $(release_lposix_sources) \
+                          $(release_pcre_sources)   \
+                          $(release_editor_sources)
 
-DIST_SOURCES        := $(patsubst %, $(BUILD_DIR)/dist/%, $(dist_sources))
+RELEASE_SOURCES        := $(patsubst %, $(RELEASE_DIR)/%, $(release_sources))
 
-dist_extras         := lua/COPYRIGHT \
-                       lposix/modemuncher.c \
-                       pcre/LICENCE \
-                       editor/keysym2ucs.c \
-                       editor/luced.xpm
+release_extras         := lua/COPYRIGHT \
+                          lposix/modemuncher.c \
+                          pcre/LICENCE \
+                          editor/keysym2ucs.c \
+                          editor/luced.xpm
                        
-DIST_EXTRAS         := $(patsubst %, $(BUILD_DIR)/dist/%, $(dist_extras))
+RELEASE_EXTRAS         := $(patsubst %, $(RELEASE_DIR)/%, $(release_extras))
 
-dist_luced_main     := editor/luced.cpp
-DIST_LUCED_MAIN     := $(BUILD_DIR)/dist/$(dist_luced_main)
+release_luced_main     := editor/luced.cpp
+RELEASE_LUCED_MAIN     := $(RELEASE_DIR)/$(release_luced_main)
 
-DIST_FILES := $(DIST_HEADERS)                   \
-              $(DIST_SOURCES)                   \
-              $(DIST_EXTRAS)                    \
-              $(DIST_LUCED_MAIN)                \
-              $(BUILD_DIR)/dist/Makefile.am     \
-              $(BUILD_DIR)/dist/configure.ac 
+RELEASE_FILES := $(RELEASE_HEADERS)             \
+                 $(RELEASE_SOURCES)             \
+                 $(RELEASE_EXTRAS)              \
+                 $(RELEASE_LUCED_MAIN)          \
+                 $(RELEASE_DIR)/Makefile.am     \
+                 $(RELEASE_DIR)/configure.ac 
               
 
-.PHONY: dist
-dist: $(DIST_FILES)
-	@mkdir -p $(BUILD_DIR)/dist/config-m4 \
-	          $(BUILD_DIR)/dist/config-aux
-	cd $(BUILD_DIR)/dist; autoreconf -vi
-	@echo "make dist: finished";
+.PHONY: release
+release: $(RELEASE_FILES)
+	@mkdir -p $(RELEASE_DIR)/config-m4 \
+	          $(RELEASE_DIR)/config-aux
+	cd $(RELEASE_DIR); autoreconf -vi
+	@echo "make release: finished";
 
-$(BUILD_DIR)/dist/Makefile.am: Makefile.am.emlua Makefile
-	$(call EMLUA_RUN,$@, DIST_HEADERS   = [[$(dist_headers)]];\
-	                     DIST_SOURCES   = [[$(dist_sources)]]; \
-	                     DIST_EXTRAS    = [[$(dist_extras)]]; \
-	                     LUCED_MAIN     = [[$(dist_luced_main)]]; \
+$(RELEASE_DIR)/Makefile.am: Makefile.am.emlua Makefile
+	$(call EMLUA_RUN,$@, RELEASE_HEADERS   = [[$(release_headers)]];\
+	                     RELEASE_SOURCES   = [[$(release_sources)]]; \
+	                     RELEASE_EXTRAS    = [[$(release_extras)]]; \
+	                     LUCED_MAIN        = [[$(release_luced_main)]]; \
 	 )
 
-$(BUILD_DIR)/dist/configure.ac: autoconf-configure1.ac \
-                                autoconf-configure3.ac
+$(RELEASE_DIR)/configure.ac: autoconf-configure1.ac \
+                             autoconf-configure3.ac
 	@mkdir -p $(@D)
 	cat $^ > $@
 	
-$(BUILD_DIR)/dist/lua/%:           ../lua/%
+$(RELEASE_DIR)/lua/%:           ../lua/%
 	$(COPY_RUN)
-$(BUILD_DIR)/dist/lua/%.cpp:       ../lua/src/%.c
+$(RELEASE_DIR)/lua/%.cpp:       ../lua/src/%.c
 	$(COPY_RUN)
-$(BUILD_DIR)/dist/lua/%:           ../lua/src/%
+$(RELEASE_DIR)/lua/%:           ../lua/src/%
 	$(COPY_RUN)
-$(BUILD_DIR)/dist/pcre/%:          ../pcre/%
+$(RELEASE_DIR)/pcre/%:          ../pcre/%
 	$(COPY_RUN)
-$(BUILD_DIR)/dist/lposix/%.cpp:    ../lposix/%.c
+$(RELEASE_DIR)/lposix/%.cpp:    ../lposix/%.c
 	$(COPY_RUN)
-$(BUILD_DIR)/dist/lposix/%:        ../lposix/%
+$(RELEASE_DIR)/lposix/%:        ../lposix/%
 	$(COPY_RUN)
-$(BUILD_DIR)/dist/editor/%:        %
+$(RELEASE_DIR)/editor/%:        %
 	$(COPY_RUN)
-$(BUILD_DIR)/dist/editor/%:        $(BUILD_DIR)/%
+$(RELEASE_DIR)/editor/%:        $(BUILD_DIR)/%
 	$(COPY_RUN)
 
 define COPY_RUN

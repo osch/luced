@@ -58,17 +58,17 @@ AM_CPPFLAGS   = -Ilua -Ilposix -Ipcre
 bin_PROGRAMS      = luced
 
 luced_SOURCES     = @(LUCED_MAIN) \
-@ for f, isLast in list(DIST_SOURCES) do
+@ for f, isLast in list(RELEASE_SOURCES) do
                     @(f) @(isLast and "" or "\\")
 @ end
 
 noinst_HEADERS    = \
-@ for f, isLast in list(DIST_HEADERS) do
+@ for f, isLast in list(RELEASE_HEADERS) do
                     @(f) @(isLast and "" or "\\")
 @ end
 
 EXTRA_DIST        = \
-@ for f, isLast in list(DIST_EXTRAS) do
+@ for f, isLast in list(RELEASE_EXTRAS) do
                     @(f) @(isLast and "" or "\\")
 @ end
                     
