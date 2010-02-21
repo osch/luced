@@ -218,11 +218,19 @@ return
     },
     
     toUpper =   function(view)
-                    view:replaceSelection(toUpper(view:getSelection()))
+                    local old = view:getSelection()
+                    local new = toUpper(old)
+                    if new ~= old then
+                        view:replaceSelection(new)
+                    end
                 end,
 
     toLower =   function(view)
-                    view:replaceSelection(toLower(view:getSelection()))
+                    local old = view:getSelection()
+                    local new = toLower(old)
+                    if new ~= old then
+                        view:replaceSelection(new)
+                    end
                 end,
 
     test1 = function(view)
