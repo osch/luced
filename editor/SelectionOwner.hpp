@@ -107,6 +107,8 @@ private:
     const Atom x11AtomForUtf8String;
     
     static WeakPtr<SelectionOwner> primarySelectionOwner;
+    
+    Time lastX11Timestamp;
 };
 
 } // namespace LucED

@@ -40,7 +40,8 @@ SelectionOwner::SelectionOwner(RawPtr<GuiWidget> baseWidget, Type type, ContentH
         display              (GuiRoot::getInstance()->getDisplay()),
         x11AtomForTargets    (XInternAtom(display, "TARGETS", False)),
         x11AtomForIncr       (XInternAtom(display, "INCR", False)),
-        x11AtomForUtf8String (GuiRoot::getInstance()->getX11Utf8StringAtom())
+        x11AtomForUtf8String (GuiRoot::getInstance()->getX11Utf8StringAtom()),
+        lastX11Timestamp(0)
 {
     GuiWidget::EventProcessorAccess::addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
@@ -66,8 +67,11 @@ bool SelectionOwner::requestSelectionOwnership()
         XSelectInput(display, multiPartTargetWid, 0);
         EventDispatcher::getInstance()->removeEventReceiver(GuiWidget::EventProcessorAccess::createEventRegistration(baseWidget, multiPartTargetWid));
     }
-    if (!hasRequestedSelectionOwnership) {
-        XSetSelectionOwner(display, x11AtomForSelection, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), CurrentTime);
+    if (!hasRequestedSelectionOwnership)
+    {
+        lastX11Timestamp = EventDispatcher::getInstance()->getLastX11Timestamp();
+        XSetSelectionOwner(display, x11AtomForSelection, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), lastX11Timestamp);
+    
         hasRequestedSelectionOwnership = (XGetSelectionOwner(display, x11AtomForSelection) == GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget));
         if (x11AtomForSelection == XA_PRIMARY && hasRequestedSelectionOwnership) {
             if (primarySelectionOwner != NULL && primarySelectionOwner != this) {
@@ -91,11 +95,11 @@ void SelectionOwner::releaseSelectionOwnership()
         if (x11AtomForSelection == XA_PRIMARY && primarySelectionOwner == this) {
             primarySelectionOwner = NULL;
         }
-        if (hasRequestedSelectionOwnership) {
-            contentHandler->notifyAboutLostSelectionOwnership();
-        }
-        XSetSelectionOwner(display, x11AtomForSelection, None, CurrentTime);
         hasRequestedSelectionOwnership = false;
+        contentHandler->notifyAboutLostSelectionOwnership();
+
+        lastX11Timestamp = EventDispatcher::getInstance()->getLastX11Timestamp();
+        XSetSelectionOwner(display, x11AtomForSelection, None, lastX11Timestamp);
     }
 }
 
@@ -110,13 +114,18 @@ GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEv
     
         case SelectionClear:
         {
-            if (event->xselectionclear.selection ==  x11AtomForSelection) {
-                hasRequestedSelectionOwnership = false;
-                if (x11AtomForSelection == XA_PRIMARY && primarySelectionOwner == this) {
-                    primarySelectionOwner = NULL;
+            if (event->xselectionclear.time > lastX11Timestamp)
+            {
+                if (event->xselectionclear.selection ==  x11AtomForSelection) {
+                    if (x11AtomForSelection == XA_PRIMARY && primarySelectionOwner == this) {
+                        primarySelectionOwner = NULL;
+                    }
+                    if (hasRequestedSelectionOwnership) {
+                        hasRequestedSelectionOwnership = false;
+                        contentHandler->notifyAboutLostSelectionOwnership();
+                    }
+                    return GuiWidget::EVENT_PROCESSED;
                 }
-                contentHandler->notifyAboutLostSelectionOwnership();
-                return GuiWidget::EVENT_PROCESSED;
             }
             break;
         }
