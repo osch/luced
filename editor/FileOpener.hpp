@@ -40,21 +40,22 @@ public:
     typedef LucED::OwningPtr<FileOpener> OwningPtr;
     typedef LucED::WeakPtr  <FileOpener> WeakPtr;
 
-    struct NumberAndFileName
+    struct FileParameter
     {
-        NumberAndFileName(int numberOfWindows, String fileName)
-            : numberOfWindows(numberOfWindows), fileName(fileName)
+        FileParameter(int numberOfWindows, const String& fileName, const String& encoding = "")
+            : numberOfWindows(numberOfWindows), fileName(fileName), encoding(encoding)
         {}
         int    numberOfWindows;
         String fileName;
+        String encoding;
     };
 
-    typedef HeapObjectArray<NumberAndFileName> ParameterList;
+    typedef HeapObjectArray<FileParameter> ParameterList;
 
-    static WeakPtr start(ParameterList::Ptr              numberAndFileList,
+    static WeakPtr start(ParameterList::Ptr              fileParameterList,
                          ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::Ptr())
     {
-        OwningPtr ptr(new FileOpener(numberAndFileList, errorList));
+        OwningPtr ptr(new FileOpener(fileParameterList, errorList));
         EventDispatcher::getInstance()->registerRunningComponent(ptr);
         ptr->openFiles();
         return ptr;
@@ -63,18 +64,18 @@ public:
     static WeakPtr start(String fileName)
     {
         ParameterList::Ptr pars = ParameterList::create();
-        pars->append(NumberAndFileName(1, fileName));
+        pars->append(FileParameter(1, fileName));
         return start(pars);
     }
 
 private:
     friend class EditorServer;
 
-    FileOpener(ParameterList::Ptr              numberAndFileList,
+    FileOpener(ParameterList::Ptr              fileParameterList,
                ConfigException::ErrorList::Ptr errorList)
 
         : isWaitingForMessageBox(false),
-          numberAndFileList(numberAndFileList),
+          fileParameterList(fileParameterList),
           configErrorList(errorList),
           numberOfRaisedWindows(0)
     {}
@@ -86,7 +87,7 @@ private:
 
     bool isWaitingForMessageBox;
     
-    ParameterList::Ptr numberAndFileList;
+    ParameterList::Ptr fileParameterList;
     ConfigException::ErrorList::Ptr configErrorList;
     
     EditorTopWin::Ptr lastTopWin;

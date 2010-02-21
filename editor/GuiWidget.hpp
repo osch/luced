@@ -38,6 +38,7 @@
 #include "FocusManager.hpp"
 #include "HeapObject.hpp"
 #include "OwningPtr.hpp"
+#include "Char2bArray.hpp"
 
 namespace LucED
 {
@@ -180,13 +181,12 @@ public:
     void drawPressedBox(int x, int y, int w, int h, GuiColor color);
     void drawPressedBox(int x, int y, int w, int h);
     void drawArrow(int x, int y, int w, int h, const Direction::Type direct);
-    void drawGuiText(int x, int y, const char* ptr, long length);
-    void drawGuiText(int x, int y, const String& ptr) {
-        drawGuiText(x, y, ptr.toCString(), ptr.getLength());
-    }
-    void drawGuiText(int x, int y, const char* ptr) {
-        drawGuiText(x, y, ptr, strlen(ptr));
-    }
+
+
+    void drawGuiTextWChars    (int x, int y, const Char2bArray& wcharArray);
+    void drawGuiTextUtf8String(int x, int y, const String&      utf8String);
+    void drawGuiTextUtf8String(int x, int y, const char*        utf8String);
+
     void drawActiveSunkenFrame(int x, int y, int w, int h);
     void drawInactiveSunkenFrame(int x, int y, int w, int h);
     void drawFrame(int x, int y, int w, int h);

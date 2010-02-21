@@ -33,6 +33,8 @@
 #include "TimeVal.hpp"
 #include "File.hpp"
 #include "RawPtr.hpp"
+#include "Utf8Parser.hpp"
+
 
 namespace LucED
 {
@@ -93,8 +95,8 @@ public:
             textData = src.textData;
             return *this;
         }
-        void moveToLineAndColumn(long line, long column) {
-            textData->moveMarkToLineAndColumn(*this, line, column);
+        void moveToLineAndWCharColumn(long line, long column) {
+            textData->moveMarkToLineAndWCharColumn(*this, line, column);
         }
         void moveToPos(long pos) {
             textData->moveMarkToPos(*this, pos);
@@ -108,8 +110,14 @@ public:
         long getLine() {
             return textData->getLineNumberOfMark(*this);
         }
-        long getColumn() {
-            return textData->getColumnNumberOfMark(*this);
+        long getByteColumn() {
+            return textData->getByteColumnNumberOfMark(*this);
+        }
+        long getWCharColumn() {
+            return textData->getWCharColumn(*this);
+        }
+        void moveToBeginOfLine(long line) {
+            textData->moveMarkToBeginOfLine(*this, line);
         }
         void moveToBeginOfLine() {
             textData->moveMarkToBeginOfLine(*this);
@@ -120,8 +128,11 @@ public:
         void moveToNextLineBegin() {
             textData->moveMarkToNextLineBegin(*this);
         }
-        byte getChar() {
-            return textData->getChar(*this);
+        byte getByte() {
+            return textData->getByte(*this);
+        }
+        int getWChar() {
+            return textData->getWChar(*this);
         }
         void inc() {
             textData->incMark(*this);
@@ -154,17 +165,19 @@ public:
     private:
         friend class TextData;
         friend class TextMark;
+        
         int inUseCounter;
         long pos;
         long line;
-        long column;
+        long byteColumn;
+        long wcharColumn;
     };
     
     static Ptr create() {
         return Ptr(new TextData());
     }
 
-    void loadFile(const String& filename);
+    void loadFile(const String& filename, const String& encoding = "");
     void reloadFile();
     void setRealFileName(const String& filename);
     void setPseudoFileName(const String& filename);
@@ -224,11 +237,58 @@ public:
     const byte& operator[](long pos) const {
         return buffer[pos];
     }
-    byte getChar(long pos) const {
+    byte getByte(long pos) const {
         return buffer[pos];
     }
-    byte getChar(MarkHandle m) const {
+    byte getByte(MarkHandle m) const {
         return buffer[marks[m.index].pos];
+    }
+    
+    int getWCharAndIncrementPos(long* pos) const
+    {
+        return utf8Parser.getWCharAndIncrementPos(pos);
+    }
+    int getWChar(long pos) const {
+        return utf8Parser.getWChar(pos);
+    }
+    int getWChar(MarkHandle m) const {
+        long pos = marks[m.index].pos;
+        return getWChar(pos);
+    }
+    bool hasWCharAtPos(int wchar, long pos) const {
+        return utf8Parser.hasWCharAtPos(wchar, pos);
+    }
+    int getWCharBefore(long pos) const {
+        return utf8Parser.getWCharBefore(pos);
+    }
+    
+    bool isBeginOfWChar(long pos) const {
+        return utf8Parser.isBeginOfWChar(pos);
+    }
+    long getBeginOfWChar(long pos) const {
+        while (!isBeginOfWChar(pos)) --pos;
+        return pos;
+    }
+    long getEndOfWChar(long pos) const {
+        while (!isBeginOfWChar(pos)) ++pos;
+        return pos;
+    }
+    long getNextBeginOfWChar(long pos) const {
+        const long len = getLength();
+        if (pos < len) {
+            ++pos;
+            while (pos < len && !isBeginOfWChar(pos)) ++pos;
+        }
+        return pos;
+    }
+    long getPrevBeginOfWChar(long pos) const {
+        return getPrevWCharPos(getBeginOfWChar(pos));
+    }
+    long getPrevWCharPos(long pos) const {
+        return utf8Parser.getPrevWCharPos(pos);
+    }
+    long getNextWCharPos(long pos) const {
+        return utf8Parser.getNextWCharPos(pos);
     }
     
     bool isEndOfText(long pos) const {
@@ -286,6 +346,7 @@ public:
 private:
     long internalInsertAtMark(MarkHandle m, const byte* buffer, long length);
     void internalRemoveAtMark(MarkHandle m, long amount);
+    void recalculateChangeMarker(long b2, long o2, long a2);
 
 public:
     long insertAtMark(MarkHandle m, const byte* buffer, long length);
@@ -308,7 +369,8 @@ public:
     void clear();
     void reset();
     
-    void moveMarkToLineAndColumn(MarkHandle m, long line, long column);
+    void moveMarkToLineAndWCharColumn(MarkHandle m, long line, long column);
+    void moveMarkToBeginOfLine(MarkHandle m, long line);
     void moveMarkToBeginOfLine(MarkHandle m);
     void moveMarkToEndOfLine(MarkHandle m);
     void moveMarkToNextLineBegin(MarkHandle m);
@@ -316,6 +378,32 @@ public:
     void moveMarkToPos(MarkHandle m, long pos);
     void moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark);
 
+private:
+    void fillInColumns(long pos, long* byteColumn, long* wcharColumn) {
+        long p = pos;
+        long w = 0;
+        while (!isBeginOfLine(p)) {
+            p = getPrevBeginOfWChar(p);
+            ++w;
+        }
+        *wcharColumn = w;
+        *byteColumn  = pos - p;
+    }
+    void fillInColumns(TextMarkData& mark) {
+        fillInColumns(mark.pos, &mark.byteColumn, 
+                                &mark.wcharColumn);
+    }
+    long getWCharColumn(TextMarkData& mark) {
+        if (mark.wcharColumn == -1) {
+            fillInColumns(mark);
+        }
+        return mark.wcharColumn;
+    }
+public:
+    long getWCharColumn(MarkHandle m) {
+        return getWCharColumn(marks[m.index]);
+    }
+    
     void moveMarkForwardToPos(MarkHandle m, long pos) {
         TextMarkData& mark = marks[m.index];
         ASSERT(mark.pos <= pos);
@@ -329,9 +417,9 @@ public:
                 markPos += 1;
             }
         }
-        mark.pos    = markPos;
-        mark.line   = markLine;
-        mark.column = pos - getThisLineBegin(pos);
+        mark.pos        = markPos;
+        mark.line       = markLine;
+        mark.byteColumn = pos - getThisLineBegin(pos);
     }
     
     void incMark(MarkHandle m) {
@@ -362,8 +450,11 @@ public:
     long getTextPositionOfMark(MarkHandle mark) const {
         return marks[mark.index].pos;
     }
-    long getColumnNumberOfMark(MarkHandle mark) const {
-        return marks[mark.index].column;
+    long getByteColumnNumberOfMark(MarkHandle mark) const {
+        return marks[mark.index].byteColumn;
+    }
+    long getWCharColumnNumberOfMark(MarkHandle mark) const {
+        return marks[mark.index].byteColumn;
     }
     long getLineNumberOfMark(MarkHandle mark) const {
         return marks[mark.index].line;
@@ -503,7 +594,12 @@ private:
     friend class ViewCounterTextDataAccess;
 
     TextData();
-    MemBuffer<byte> buffer;
+    
+    void setToSavedState();
+    
+    ByteBuffer             buffer;
+    Utf8Parser<ByteBuffer> utf8Parser;
+    
     long numberLines;
     long beginChangedPos;
     long changedAmount;
@@ -523,6 +619,7 @@ private:
     Callback<const byte**, long*>::Ptr filterCallback;
     
     String fileName;
+    String utf8FileNameForDisplay;
     long oldLength;
     bool modifiedFlag;
     int viewCounter;
@@ -535,6 +632,8 @@ private:
     File::Info fileInfo;
     
     bool fileNamePseudoFlag;
+    
+    String fileContentEncoding;
 };
 
 

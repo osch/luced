@@ -22,7 +22,7 @@
 #ifndef PROGRAM_NAME_HPP
 #define PROGRAM_NAME_HPP
 
-#include "String.hpp"
+#include <string>
 
 namespace LucED
 {
@@ -30,13 +30,13 @@ namespace LucED
 class ProgramName
 {
 public:
-    static void set(const String& name);
+    static void set(const std::string& name);
     
-    static String get() {
-    	return name;
+    static std::string get() {
+        return name;
     }
 private:
-    static String name;
+    static std::string name;
 };
 
 } // namespace LucED

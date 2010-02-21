@@ -45,7 +45,7 @@ void KeyPressRepeater::processRepeatingEvent()
     {
         ++repeatCount;
         
-        TopWin::AccessForKeyPressRepeater::repeat(repeatingTopWin, &event);
+        TopWin::AccessForKeyPressRepeater::repeat(repeatingTopWin, triggeredKeyCode, &event);
         //EventDispatcher::getInstance()->processEvent(&event);
         
 //        TimeVal when;
@@ -54,10 +54,10 @@ void KeyPressRepeater::processRepeatingEvent()
     }
 }
 
-void KeyPressRepeater::triggerNextRepeatEventFor(const XEvent* event, TopWin* topWin)
+void KeyPressRepeater::triggerNextRepeatEventFor(unsigned int triggeredKeyCode, const XEvent* event, TopWin* topWin)
 {
     when.setToCurrentTime();
-    if (repeatCount == 0 || !isRepeatingEvent(event)) {
+    if (repeatCount == 0 || !isRepeatingEventForKeyCode(triggeredKeyCode)) {
         when.add(GlobalConfig::getInstance()->getKeyPressRepeatFirstMicroSecs());
     } else {
         when.add(GlobalConfig::getInstance()->getKeyPressRepeatNextMicroSecs());
@@ -66,6 +66,7 @@ void KeyPressRepeater::triggerNextRepeatEventFor(const XEvent* event, TopWin* to
     isRepeatingFlag = true;
     EventDispatcher::getInstance()->registerTimerCallback(when, eventRepeatingCallback);
     repeatingTopWin = topWin;
+    this->triggeredKeyCode = triggeredKeyCode;
 }
 
 
@@ -78,8 +79,8 @@ void KeyPressRepeater::reset()
 
 
 
-bool KeyPressRepeater::isRepeatingEvent(const XEvent* event) const {
-    return isRepeatingFlag && this->event.xkey.keycode == event->xkey.keycode;
+bool KeyPressRepeater::isRepeatingEventForKeyCode(unsigned int keycode) const {
+    return isRepeatingFlag && this->triggeredKeyCode == keycode;
 }
 
 bool KeyPressRepeater::addKeyModifier(const XEvent* event)

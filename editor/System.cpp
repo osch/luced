@@ -26,6 +26,8 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <pwd.h>
+#include <locale.h>
+#include <langinfo.h>
 
 #include "System.hpp"
 #include "SystemException.hpp"
@@ -77,6 +79,19 @@ System::System()
         hostName = hostNameVarPtr;
     } else {
         hostName = utsNameData.nodename;
+    }
+    
+    defaultEncoding = nl_langinfo(CODESET);
+    defaultLocale   = setlocale(LC_ALL, NULL); // only query, because second param is NULL
+    
+    // obtain encoding name for locale "C"
+    
+    setlocale(LC_CTYPE, "C");
+    cEncoding = nl_langinfo(CODESET);
+    setlocale(LC_CTYPE, defaultLocale.toCString());
+    
+    if (defaultEncoding == cEncoding) {
+        defaultEncoding = "ISO-8859-1";
     }
 }
 

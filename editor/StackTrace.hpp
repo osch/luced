@@ -23,18 +23,16 @@
 #define STACK_TRACE_HPP
 
 #include <stdio.h>
-
+#include <string>
 
 namespace LucED
 {
-
-class String;
 
 class StackTrace
 {
 public:
     static void print(FILE* fprintfOutput = stdout);
-    static String getCurrent();
+    static std::string getCurrent();
 private:
 };
 

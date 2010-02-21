@@ -524,12 +524,22 @@ RawPtr<TextStyle> GuiWidget::getGuiTextStyle()
     return GuiWidgetSingletonData::getInstance()->getGuiTextStyle();
 }
 
-void GuiWidget::drawGuiText(int x, int y, const char* ptr, long length)
+void GuiWidget::drawGuiTextWChars(int x, int y, const Char2bArray& wcharArray)
 {
-
     XSetForeground(getDisplay(), gcid, getGuiTextStyle()->getColor());
-    XDrawString(getDisplay(), getWid(), 
-                gcid, x, y + getGuiTextStyle()->getLineAscent(), ptr, length);
+    XDrawString16(getDisplay(), getWid(), 
+                  gcid, x, y + getGuiTextStyle()->getLineAscent(), 
+                  wcharArray.getPtr(0), wcharArray.getLength());
+}
+
+void GuiWidget::drawGuiTextUtf8String(int x, int y, const String& utf8String)
+{
+    drawGuiTextWChars(x, y, Char2bArray().setToUtf8String(utf8String));
+}
+
+void GuiWidget::drawGuiTextUtf8String(int x, int y, const char* utf8String)
+{
+    drawGuiTextWChars(x, y, Char2bArray().setToUtf8String(utf8String));
 }
 
 int GuiWidget::getGuiTextHeight()

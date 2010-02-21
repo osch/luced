@@ -321,7 +321,7 @@ void FindUtil::initialize()
                 }
                 try
                 {
-	            PreparsedCallout::Ptr preparsedCallout = PreparsedCallout::parse(findString, i);
+                    PreparsedCallout::Ptr preparsedCallout = PreparsedCallout::parse(findString, i);
                     i = preparsedCallout->getLastPosition();
                     preparsedCallouts.append(preparsedCallout);
                 }
@@ -414,15 +414,15 @@ void FindUtil::findNext()
         if (!wasInitialized()) {
             initialize();
         }
-	
+        
         if (textPosition < 0 || textPosition > textData->getLength()) {
             wasFoundFlag = false;
             return;
         }
 
-	long startingTextPosition = textPosition;
-	int doItCounter = 0;
-	
+        long startingTextPosition = textPosition;
+        int doItCounter = 0;
+        
     doItAgain:
 
         wasFoundFlag = false;
@@ -437,14 +437,20 @@ void FindUtil::findNext()
             } else {
                 epos = maximalEndOfMatchPosition;
             }
-            long blockStartPos = (textPosition - maxBackwardAssertionLength > 0)
-                               ? (textPosition - maxBackwardAssertionLength) 
-                               : 0;
-
-            long blockLength   = (epos + maxForwardAssertionLength < textData->getLength()) 
-                               ? (epos + maxForwardAssertionLength - blockStartPos) 
-                               : (textData->getLength() - blockStartPos);
-            
+            long blockStartPos = textData->getBeginOfWChar
+                                 (
+                                       (textPosition - maxBackwardAssertionLength > 0)
+                                     ? (textPosition - maxBackwardAssertionLength) 
+                                     : 0
+                                 );
+            long blockLength   = textData->getNextBeginOfWChar
+                                 (
+                                       (epos + maxForwardAssertionLength < textData->getLength()) 
+                                     ? (epos + maxForwardAssertionLength) 
+                                     : (textData->getLength())
+                                 ) 
+                                 - blockStartPos;
+                                 
             byte* blockStartPtr = textData->getAmount(blockStartPos, blockLength);
 
             if (regex.findMatch(this, &FindUtil::pcreCalloutFunction,
@@ -463,7 +469,7 @@ void FindUtil::findNext()
                     }
                     else if (doItCounter == 1 && textPosition < textData->getLength())
                     {
-                        ++textPosition;
+                        textPosition = getNextPos(textPosition);
                         goto doItAgain;
                     }
                 }
@@ -494,16 +500,16 @@ void FindUtil::findNext()
                         }
                         else if (doItCounter == 1 && 0 < textPosition)
                         {
-                            --textPosition;
+                            textPosition = getPrevPos(textPosition);
                             goto doItAgain;
                         }
                         else {
-                            --textPosition;
+                            textPosition = getPrevPos(textPosition);
                         }
                     }
                 }
                 else {
-                    --textPosition;
+                    textPosition = getPrevPos(textPosition);
                 }
             }
         }

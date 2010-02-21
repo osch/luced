@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -20,6 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -249,13 +250,105 @@ bool EventDispatcher::processEvent(XEvent* event)
         }
         else
         {
-            switch (event->type) {
+            switch (event->type)
+            {
                 case KeyPress:
-                case KeyRelease:       lastX11EventTime = event->xkey.time; 
-                                       break;
+                    {
+                        lastX11EventTime = event->xkey.time; 
+                        break;
+                    }
+                case KeyRelease:
+                    {
+                        lastX11EventTime = event->xkey.time; 
+                    
+                        // The following code tries to discard all further autorepeated 
+                        // key events for this key that are already in the xlib event
+                        // queue. This is to prevent lagged cursor movements etc.
+                    
+                        Display*     display = GuiRoot::getInstance()->getDisplay();
+                        unsigned int keycode = event->xkey.keycode;
+                        
+                        peekedEvents.clear();
+                        peekedEvents.append(*event);
+               
+                        XEvent nextEvent;
+               
+                        while (XEventsQueued(display, QueuedAlready) >= 1)
+                        {
+                            XNextEvent(display, &nextEvent);
+                
+                            if (   (   nextEvent.type == KeyRelease
+                                    || nextEvent.type == KeyPress)
+                                && (   nextEvent.xkey.keycode != keycode))
+                            {
+                                XPutBackEvent(display, &nextEvent);
+                                break;
+                            }
+                            else {
+                                peekedEvents.append(nextEvent);
+                            }
+                        }
+                        int foundIndex1 = 0;
+                        int foundIndex2 = 0;
+
+                        for (int i = 0, n = peekedEvents.getLength(); i < n; ++i)
+                        {
+                            XEvent* e1 = &peekedEvents[i];
+                            
+                            if (   e1->xkey.type    == KeyRelease
+                                || e1->xkey.type    == KeyPress)
+                            {
+                                foundIndex1 = i;
+                                foundIndex2 = i;
+                                
+                                if (i + 1 < n)
+                                {
+                                    XEvent* e2 = &peekedEvents[i + 1];
+
+                                    if (   e1->xkey.type    == KeyRelease
+                                        && e2->xkey.type    == KeyPress
+                                        && labs(e1->xkey.time -  e2->xkey.time) <= 2)  // autorepeated keys used to have same timestamp
+                                    {                                                  // but newer xservers messed it up
+                                        i += 1;
+                                        foundIndex2 = i; // found the corresponding autorepeated KeyRelease event
+                                        continue;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        for (int i = peekedEvents.getLength() - 1; i > foundIndex2; --i)
+                        {
+                            XPutBackEvent(display, &peekedEvents[i]);
+                        }
+
+                        for (int i = foundIndex1 - 1; i >= 0; --i)
+                        {
+                            XEvent* e = &peekedEvents[i];
+                            if (   e->xkey.type    != KeyRelease
+                                && e->xkey.type    != KeyPress)
+                            {
+                                XPutBackEvent(display, e);
+                            }
+                            else {
+                                // discard this key event because it is autorepeated
+                            }
+                        }
+                        
+                        *event = peekedEvents[foundIndex1];
+                        
+                        if (foundIndex2 != foundIndex1) {
+                            XPutBackEvent(display, &peekedEvents[foundIndex2]); // corresponding autorepeated KeyRelease 
+                        }                                                       // event is preserved
+                        
+                        peekedEvents.clear();
+                    }
+                    break;
+
                 case ButtonPress:      beforeMouseClickCallbackContainer.invokeAllCallbacks();
                 case ButtonRelease:    lastX11EventTime = event->xbutton.time; 
                                        break;
+
                 case MotionNotify:     lastX11EventTime = event->xmotion.time; 
                                        break;
                 case EnterNotify:
@@ -295,7 +388,7 @@ void EventDispatcher::doEventLoop()
     Display*           display = GuiRoot::getInstance()->getDisplay();
     
     bool hasSomethingDone = true;
-    
+
     while (!doQuit)
     {
         if (hasSomethingDone) {
@@ -309,9 +402,6 @@ void EventDispatcher::doEventLoop()
         } 
         else if (stoppingComponents.getLength() == 0)
         {
-            XFlush(display);
-            //XSync(display, False); <-- not this here!
-
             TimerRegistration nextTimer = getNextTimer();
             
             FD_ZERO(&readfds);

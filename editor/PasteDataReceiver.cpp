@@ -24,18 +24,21 @@
 #include "Clipboard.hpp"
 #include "SelectionOwner.hpp"
 #include "EventDispatcher.hpp"
-
+#include "EncodingConverter.hpp"
+                      
 using namespace LucED;
 
 PasteDataReceiver::PasteDataReceiver(RawPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler)
   : baseWidget(baseWidget),
     contentHandler(contentHandler),
+    isRequestingTargetTypes(false),
     isReceivingPasteDataFlag(false),
     isMultiPartPastingFlag(false),
-    display(GuiRoot::getInstance()->getDisplay())
+    display             (GuiRoot::getInstance()->getDisplay()),
+    x11AtomForTargets   (XInternAtom(display, "TARGETS", False)),
+    x11AtomForIncr      (XInternAtom(display, "INCR", False)),
+    x11AtomForUtf8String(GuiRoot::getInstance()->getX11Utf8StringAtom())
 {
-    x11AtomForTargets   = XInternAtom(display, "TARGETS", False);
-    x11AtomForIncr      = XInternAtom(display, "INCR", False);
     GuiWidget::EventProcessorAccess::addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 
@@ -57,12 +60,21 @@ void PasteDataReceiver::requestSelectionPasting()
         } else {
             SelectionOwner::ReceiverAccess::endSelectionDataRequest(selectionOwner);
         }
+        isRequestingTargetTypes  = false;
         isReceivingPasteDataFlag = false;
     } else {
-        XDeleteProperty(display, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), XA_PRIMARY);
-        XConvertSelection(display, XA_PRIMARY, XA_STRING, XA_PRIMARY, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), CurrentTime);
-        isMultiPartPastingFlag = false;
-        isReceivingPasteDataFlag = true;
+        XDeleteProperty(display, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
+                                 /*XA_PRIMARY*/x11AtomForTargets);
+
+        pasteTargetAtom = XA_PRIMARY;
+
+        XConvertSelection(display,              pasteTargetAtom, 
+                          x11AtomForTargets,    x11AtomForTargets, 
+                                                GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
+                                                EventDispatcher::getInstance()->getLastX11Timestamp());
+        isRequestingTargetTypes  = true;
+        isReceivingPasteDataFlag = false;
+        isMultiPartPastingFlag   = false;
         contentHandler->notifyAboutBeginOfPastingData();
         EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
                                                               newCallback(this, 
@@ -81,13 +93,21 @@ void PasteDataReceiver::requestClipboardPasting()
             contentHandler->notifyAboutReceivedPasteData(clipboardBuffer.getPtr(0), clipboardBuffer.getLength());
             contentHandler->notifyAboutEndOfPastingData();
         }
+        isRequestingTargetTypes  = false;
         isReceivingPasteDataFlag = false;
     } else {
-        XDeleteProperty(display, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), Clipboard::getInstance()->getX11AtomForClipboard());
-        XConvertSelection(display, Clipboard::getInstance()->getX11AtomForClipboard(),
-                             XA_STRING, Clipboard::getInstance()->getX11AtomForClipboard(), GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), CurrentTime);
-        isMultiPartPastingFlag = false;
-        isReceivingPasteDataFlag = true;
+        XDeleteProperty(display, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
+                                 Clipboard::getInstance()->getX11AtomForClipboard());
+
+        pasteTargetAtom = Clipboard::getInstance()->getX11AtomForClipboard();
+
+        XConvertSelection(display,              pasteTargetAtom,
+                          x11AtomForTargets,    x11AtomForTargets, 
+                                                GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
+                                                EventDispatcher::getInstance()->getLastX11Timestamp());
+        isRequestingTargetTypes  = true;
+        isReceivingPasteDataFlag = false;
+        isMultiPartPastingFlag   = false;
         contentHandler->notifyAboutBeginOfPastingData();
         EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
                                                               newCallback(this, 
@@ -101,13 +121,87 @@ bool PasteDataReceiver::isReceivingPasteData()
     return isReceivingPasteDataFlag;
 }
 
-GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(const XEvent *event)
+namespace // anonymous namespace
+{
+
+class XMemoryHolder
+{
+public:
+    XMemoryHolder(void* ptr)
+        : ptr(ptr)
+    {}
+    ~XMemoryHolder() {
+        XFree(ptr);
+    }
+private:
+    void* ptr;
+};
+
+} // anonymous namespace
+
+GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(const XEvent* event)
 {
     switch (event->type)
     {
         case SelectionNotify:
         {
-            if (isReceivingPasteDataFlag && event->xselection.property == None)
+            if (isRequestingTargetTypes && event->xselection.property == x11AtomForTargets)
+            {
+                lastPasteEventTime.setToCurrentTime();
+                unsigned long remainingLength = 0;
+                Atom actualType; int format; unsigned long numberItems;
+                unsigned char* itemData = NULL;
+
+                XGetWindowProperty(display,
+                        event->xselection.requestor,
+                        event->xselection.property,
+                        0,  XMaxRequestSize(display), True, AnyPropertyType,
+                        &actualType, &format, &numberItems, &remainingLength,
+                        &itemData);
+                XMemoryHolder memoryHolder(itemData);
+                
+                bool canUtf8   = false;
+                bool canLatin1 = false;
+                
+                if (actualType == XA_ATOM)
+                {
+                    Atom* atoms = (Atom*) itemData;
+
+                    for (int i = 0; i < numberItems; ++i) {
+                        if (atoms[i] == XA_STRING) {
+                            canLatin1 = true;
+                        } else if (atoms[i] == x11AtomForUtf8String) {
+                            canUtf8 = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (canUtf8 || canLatin1)
+                {
+                    if (canUtf8) {
+                        pasteDataTypeAtom = x11AtomForUtf8String;
+                    } else {
+                        pasteDataTypeAtom = XA_STRING;
+                    }
+                    XDeleteProperty(display, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
+                                             XA_PRIMARY);
+                    XConvertSelection(display,              pasteTargetAtom, 
+                                      pasteDataTypeAtom,    pasteTargetAtom, 
+                                                            GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
+                                                            EventDispatcher::getInstance()->getLastX11Timestamp());
+                    isRequestingTargetTypes  = false;
+                    isReceivingPasteDataFlag = true;
+                    isMultiPartPastingFlag   = false;
+                }
+                else
+                {
+                    isRequestingTargetTypes  = false;
+                    isReceivingPasteDataFlag = false;
+                    isMultiPartPastingFlag   = false;
+                }
+            } 
+            else if ((isRequestingTargetTypes || isReceivingPasteDataFlag) && event->xselection.property == None)
             {
                 lastPasteEventTime.setToCurrentTime();
                 isReceivingPasteDataFlag = false;
@@ -128,7 +222,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                         0, 0, False, AnyPropertyType,
                         &actualType, &format, &portionLength, &remainingLength,
                         &portion);
-                XFree(portion);
+                XMemoryHolder memoryHolder(portion);
 
                 if (isReceivingPasteDataFlag && actualType == x11AtomForIncr)
                 {
@@ -149,14 +243,22 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                             0, remainingLength, False, AnyPropertyType,
                             &actualType, &format, &portionLength, &remainingLength,
                             &portion);
+                    XMemoryHolder memoryHolder(portion);
+                    
                     if (portionLength > 0) {
-                        contentHandler->notifyAboutReceivedPasteData(portion, portionLength);
+                        if (actualType == XA_STRING) {
+                            String utf8Bytes = EncodingConverter::convertLatin1ToUtf8String(portion, portionLength);
+                            contentHandler->notifyAboutReceivedPasteData((const byte*)utf8Bytes.toCString(), 
+                                                                                      utf8Bytes.getLength());
+                        } else {
+                            contentHandler->notifyAboutReceivedPasteData(portion, portionLength);
+                        }
                     }
                     contentHandler->notifyAboutEndOfPastingData();
                     isMultiPartPastingFlag = false;
                     isReceivingPasteDataFlag = false;
                     XDeleteProperty(display, event->xselection.requestor, event->xselection.property);
-                    XFree(portion);
+
                     return GuiWidget::EVENT_PROCESSED;
                 }
             }
@@ -179,7 +281,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                         0, 0, False, AnyPropertyType,
                         &actualType, &format, &portionLength, &remainingLength,
                         &portion);
-                XFree(portion);
+                XMemoryHolder memoryHolder(portion);
 
                 if (isReceivingPasteDataFlag && actualType == x11AtomForIncr)
                 {
@@ -187,7 +289,8 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                     XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
                     return GuiWidget::EVENT_PROCESSED;
                 }
-                else if (format != 8 || actualType != XA_STRING)
+                else if (format != 8 || (   actualType != x11AtomForUtf8String
+                                         && actualType != XA_STRING))
                 {
                     return GuiWidget::EVENT_PROCESSED;
                 }
@@ -212,20 +315,33 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                             0, remainingLength, False, AnyPropertyType,
                             &actualType, &format, &portionLength, &remainingLength,
                             &portion);
+                    XMemoryHolder memoryHolder(portion);
+
                     if (isMultiPartPastingFlag) {
-                        pasteBuffer.append(portion, portionLength);
+                        if (actualType == XA_STRING) {
+                            String utf8Bytes = EncodingConverter::convertLatin1ToUtf8String(portion, portionLength);
+                            pasteBuffer.append((const byte*)utf8Bytes.toCString(), 
+                                                            utf8Bytes.getLength());
+                        } else {
+                            pasteBuffer.append(portion, portionLength);
+                        }
                     } else if (portionLength > 0) {
-                        contentHandler->notifyAboutReceivedPasteData(portion, portionLength);
+                        if (actualType == XA_STRING) {
+                            String utf8Bytes = EncodingConverter::convertLatin1ToUtf8String(portion, portionLength);
+                            contentHandler->notifyAboutReceivedPasteData((const byte*)utf8Bytes.toCString(), 
+                                                                                      utf8Bytes.getLength());
+                        } else {
+                            contentHandler->notifyAboutReceivedPasteData(portion, portionLength);
+                        }
                         contentHandler->notifyAboutEndOfPastingData();
                         isMultiPartPastingFlag = false;
                         isReceivingPasteDataFlag = false;
                     }
-                    XFree(portion);
                     XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
                     return GuiWidget::EVENT_PROCESSED;
                 }
-
             }
+
             break;
         }
     }

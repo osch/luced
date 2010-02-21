@@ -94,17 +94,21 @@ private:
     
     Atom x11AtomForSelection;
     bool sendingMultiPart;
+    Atom sendingTypeAtom;
     bool hasRequestedSelectionOwnership;
     long selectionDataLength;
     long alreadySentPos;
     WidgetId multiPartTargetWid;
     Atom   multiPartTargetProp;
     
-    Atom x11AtomForTargets;
-    Atom x11AtomForIncr;
     Display* const display;
+    const Atom x11AtomForTargets;
+    const Atom x11AtomForIncr;
+    const Atom x11AtomForUtf8String;
     
     static WeakPtr<SelectionOwner> primarySelectionOwner;
+    
+    Time lastX11Timestamp;
 };
 
 } // namespace LucED

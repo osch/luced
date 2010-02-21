@@ -121,7 +121,7 @@ String ReplaceUtil::getSubstitutedString()
             {
                 // lua callout
                 try {
-	            PreparsedCallout::Ptr preparsedCallout = PreparsedCallout::parse(replaceString, i);
+                    PreparsedCallout::Ptr preparsedCallout = PreparsedCallout::parse(replaceString, i);
                     CalloutObject::Ptr callout = FindUtil::buildCalloutObject(preparsedCallout);
 
                     LuaAccess luaAccess = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();

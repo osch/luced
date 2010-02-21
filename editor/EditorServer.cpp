@@ -108,21 +108,21 @@ namespace // anonymous namespace
     {
     public:
         Actor()
-            : numberAndFileList(HeapObjectArray<FileOpener::NumberAndFileName>::create())
+            : fileParameterList(HeapObjectArray<FileOpener::FileParameter>::create())
         {}
 
-        void openFile(int numberOfWindows, const String& fileName)
+        void openFile(int numberOfWindows, const String& fileName, const String& encoding)
         {
-            numberAndFileList->append(FileOpener::NumberAndFileName(numberOfWindows, fileName));
+            fileParameterList->append(FileOpener::FileParameter(numberOfWindows, fileName, encoding));
         }
         
 
-        HeapObjectArray<FileOpener::NumberAndFileName>::Ptr getNumberAndFileList() {
-            return numberAndFileList;
+        HeapObjectArray<FileOpener::FileParameter>::Ptr getFileParameterList() {
+            return fileParameterList;
         }
         
     private:
-        HeapObjectArray<FileOpener::NumberAndFileName>::Ptr numberAndFileList;
+        HeapObjectArray<FileOpener::FileParameter>::Ptr fileParameterList;
         
         HeapObjectArray<TopWin::Ptr>::Ptr openedWindows;
     };
@@ -168,11 +168,11 @@ void EditorServer::processCommandline(Commandline::Ptr commandline,
     {
         if (errorList.isValid() && errorList->getLength() > 0)
         {
-            ConfigErrorHandler::start(errorList, commandInterpreter.getActor().getNumberAndFileList());
+            ConfigErrorHandler::start(errorList, commandInterpreter.getActor().getFileParameterList());
         }
         else
         {
-            FileOpener::start(commandInterpreter.getActor().getNumberAndFileList());
+            FileOpener::start(commandInterpreter.getActor().getFileParameterList());
         }
     }
     else

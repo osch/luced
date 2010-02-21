@@ -73,7 +73,7 @@ void EditorTopWinActions::executeLuaScript()
             
             while (spos > 0)
             {
-                byte c = textData->getChar(spos - 1);
+                int c = textData->getWCharBefore(spos);
                 if (parenCounter > 0)
                 {
                     if (c == '(') {

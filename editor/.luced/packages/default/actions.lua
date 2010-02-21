@@ -19,7 +19,9 @@
 --
 -------------------------------------------------------------------------------------
 
-local append = table.insert
+local append  = table.insert
+local toUpper = luced.toUpper
+local toLower = luced.toLower
 
 local function smartNewline(view)
     local v = view
@@ -214,6 +216,22 @@ return
                          fi
                       ]],
     },
+    
+    toUpper =   function(view)
+                    local old = view:getSelection()
+                    local new = toUpper(old)
+                    if new ~= old then
+                        view:replaceSelection(new)
+                    end
+                end,
+
+    toLower =   function(view)
+                    local old = view:getSelection()
+                    local new = toLower(old)
+                    if new ~= old then
+                        view:replaceSelection(new)
+                    end
+                end,
 
     test1 = function(view)
                view:insertAtCursor("xx_2_yy")

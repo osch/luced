@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "config.h"
 #include "File.hpp"
 #include "ByteArray.hpp"
 #include "Regex.hpp"
@@ -51,25 +52,58 @@ File::File(const String& path, const String& fileName)
 
 void File::loadInto(ByteBuffer& buffer) const
 {
-    struct stat statData;
     int fd = open(name.toCString(), O_RDONLY);
-    long len;
-    byte *ptr;
 
-    if (fd != -1) {
+    if (fd != -1)
+    {
+        struct stat statData;
+    
         if (fstat(fd, &statData) == -1) {
             throw FileException(errno, String() << "error accessing file '" << name << "': " << strerror(errno));
         }
-        len = statData.st_size;
-        ptr = buffer.appendAmount(len);
-        if (read(fd, ptr, len) == -1) {
+        long  len       = statData.st_size;
+        long  oldLen    = buffer.getLength();
+        byte* ptr       = buffer.appendAmount(len);
+        long  bytesRead = read(fd, ptr, len);
+
+        if (bytesRead < 0) {
             throw FileException(errno, String() << "error reading from file '" << name << "': " << strerror(errno));
+        }
+        if (bytesRead < len) {
+            buffer.removeTail(oldLen + bytesRead);
         }
         if (close(fd) == -1) {
             throw FileException(errno, String() << "error closing file '" << name << "' after reading: " << strerror(errno));
         }
     } else {
         throw FileException(errno, String() << "error opening file '" << name << "' for reading: " << strerror(errno));
+    }
+}
+
+File::Writer::Ptr File::openForWriting() const
+{
+    int fd = open(name.toCString(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+
+    if (fd == -1) {
+        throw FileException(errno, String() << "error opening file '" << name << "' for writing: " << strerror(errno));
+    }
+    return Writer::create(fd, name);
+}
+
+File::Writer::~Writer()
+{
+    if (close(fd) == -1) {
+        throw FileException(errno, String() << "error closing file '" << name << "' after writing: " << strerror(errno));
+    }
+}
+
+void File::Writer::write(const char* data, long length) const
+{
+    if (length <= 0) {
+        return;
+    }
+    if (::write(fd, data, length) == -1) {
+        throw FileException(errno, String() << "error writing to file '" << name << "': " << strerror(errno));
     }
 }
 
@@ -208,12 +242,15 @@ File::Info File::getInfo() const
         Info rslt;
         rslt.isFileFlag                  = S_ISREG(statData.st_mode);
         rslt.isDirectoryFlag             = S_ISDIR(statData.st_mode);
-#if defined(STAT_HAS_ST_MTIM_TV_NSEC)
+#if HAVE_STAT_MTIME_TV_NSEC
         rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
                                                       MicroSeconds(statData.st_mtim.tv_nsec / 1000));
-#elif defined(STAT_HAS_ST_MTIMENSE)
+#elif HAVE_STAT_MTIME_MTIMENSEC
         rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
                                                       MicroSeconds(statData.st_mtimensec / 1000));
+#elif HAVE_STAT_MTIME_MTIMESPEC
+        rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
+                                                      MicroSeconds(statData.st_mtimespec.tv_nsec / 1000));
 #else
         rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
                                                       MicroSeconds(0));

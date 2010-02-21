@@ -60,6 +60,16 @@ public:
     }
     
     static void setCloseOnExecFlag(int fileDescriptor);
+    
+    String getDefaultEncoding() const {
+        return defaultEncoding;
+    }
+    String getCEncoding() const {
+        return cEncoding;
+    }
+    String getDefaultLocale() const {
+        return defaultLocale;
+    }
 
 private:
     friend class SingletonInstance<System>;
@@ -70,6 +80,9 @@ private:
     String homeDirectory;
     String userName;
     String hostName;
+    String defaultLocale;
+    String defaultEncoding;
+    String cEncoding;
 };
 
 

@@ -98,7 +98,7 @@ public:
     bool areCursorChangesDisabled()  { return cursorChangesDisabled; }
     void rememberCursorPixX()        { rememberedCursorPixX = getCursorPixX(); }
     int  getRememberedCursorPixX()   { return rememberedCursorPixX; }
-    bool isWordCharacter(unsigned char c);
+    bool isWordCharacter(int c);
     
     bool scrollUp();
     bool scrollDown();
@@ -188,8 +188,8 @@ public:
     void extendSelectionTo(long pos) {
         getBackliteBuffer()->extendSelectionTo(pos);
     }
-    long getSelectionLength() {
-        return getBackliteBuffer()->getSelectionLength();
+    long getSelectionByteLength() {
+        return getBackliteBuffer()->getSelectionByteLength();
     }
     
     void releaseSelection();

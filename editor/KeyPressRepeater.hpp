@@ -42,7 +42,7 @@ public:
     static bool isInstanceValid() {
         return instance.isValid();
     }
-    void triggerNextRepeatEventFor(const XEvent* event, TopWin* topWin);
+    void triggerNextRepeatEventFor(unsigned int triggeredKeyCode, const XEvent* event, TopWin* topWin);
     void reset();
     
     bool isRepeating() const {
@@ -54,7 +54,8 @@ public:
             && topWin != NULL 
             && topWin == this->repeatingTopWin;
     }
-    bool isRepeatingEvent (const XEvent* event) const;
+    bool isRepeatingEventForKeyCode(unsigned int keycode) const;
+    
     bool addKeyModifier   (const XEvent* event);
     bool removeKeyModifier(const XEvent* event);
     
@@ -74,6 +75,7 @@ private:
     TimeVal when;
     
     RawPtr<TopWin> repeatingTopWin;
+    unsigned int triggeredKeyCode;
 };
 
 } // namespace LucED

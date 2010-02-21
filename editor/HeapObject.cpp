@@ -20,10 +20,13 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "HeapObject.hpp"
+#include "String.hpp"
+#include "StackTrace.hpp"
 
 using namespace LucED;
 
 #undef TRACE_HEAP_OBJECT_STACK_TRACES
+//#define TRACE_HEAP_OBJECT_STACK_TRACES 1
 
 #ifdef DEBUG
 
@@ -48,9 +51,9 @@ printf("initCounter=%d, allocCounter=%d, destructCounter=%d\n",
 #endif
 }
 
-HeapObject* HeapObject::first = NULL;
+HeapObjectBase* HeapObjectBase::first = NULL;
 
-HeapObject::HeapObject()
+HeapObjectBase::HeapObjectBase()
 {
 #ifdef TRACE_HEAP_OBJECT_STACK_TRACES
     stackTrace = StackTrace::getCurrent();
@@ -63,10 +66,10 @@ HeapObject::HeapObject()
 #endif
 }
 
-HeapObject::~HeapObject()
+HeapObjectBase::~HeapObjectBase()
 {
 #ifdef TRACE_HEAP_OBJECT_STACK_TRACES
-    HeapObject** pprevnext;
+    HeapObjectBase** pprevnext;
     
     if (prev == NULL) {
         pprevnext = &first;
@@ -93,12 +96,12 @@ public:
     }
 };
 
-void HeapObject::printAllStackTraces()
+void HeapObjectBase::printAllStackTraces()
 {
 #ifdef TRACE_HEAP_OBJECT_STACK_TRACES
     printf("printAllStackTraces START\n");
 
-    HeapObject* p = first;
+    HeapObjectBase* p = first;
     int counter = 0;
 
     if (p != NULL)
@@ -111,7 +114,7 @@ void HeapObject::printAllStackTraces()
         {
             if (XXX::getHeapObjectCounters(p)->getWasNeverOwnedFlag()) {
                 counter += 1;
-                printf("HeapObjectConstructor: %p\n%s\n", p, p->stackTrace.toCString());
+                printf("HeapObjectConstructor: %p\n%s\n", p, p->stackTrace.c_str());
             }
             p = p->prev;
         }

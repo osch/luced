@@ -141,8 +141,11 @@ public:
     long getCursorLineNumber() const {
         return textData->getLineNumberOfMark(cursorMarkId);
     }
-    long getCursorColumn() const {
-        return textData->getColumnNumberOfMark(cursorMarkId);
+    long getCursorWCharColumn() const {
+        return textData->getWCharColumnNumberOfMark(cursorMarkId);
+    }
+    long getCursorByteColumn() const {
+        return textData->getByteColumnNumberOfMark(cursorMarkId);
     }
     long getOpticalCursorColumn() const;
 
@@ -169,7 +172,7 @@ public:
         return lineHeight;
     }
     int getSpaceCharWidth() const {
-        return defaultTextStyle->getSpaceWidth();
+        return defaultTextStyle->getFontInfo()->getSpaceWidth();
     }
     long getMaximalVisiblePixWidth() const {
         return totalPixWidth;

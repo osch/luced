@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,19 +19,17 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef TEXTSTYLE_HPP
-#define TEXTSTYLE_HPP
+#ifndef TEXT_STYLE_HPP
+#define TEXT_STYLE_HPP
 
 #include "String.hpp"
 
-#include "NonCopyable.hpp"
-#include "GuiRoot.hpp"
 #include "HeapObject.hpp"
-#include "ObjectArray.hpp"
-#include "RawPtr.hpp"
 #include "OwningPtr.hpp"
-#include "FontHandle.hpp"
-
+#include "FontInfo.hpp"
+#include "RawPtr.hpp"
+#include "Char2bArray.hpp"
+                          
 namespace LucED
 {
 
@@ -44,79 +42,71 @@ public:
     {
         friend class TextStyleCache;
         
-        static Ptr create(const String& fontname, const String& colorName) {
-            return Ptr(new TextStyle(fontname, colorName));
+        static TextStyle::Ptr create(FontInfo::Ptr fontInfo, const String& colorName) {
+            return Ptr(new TextStyle(fontInfo, colorName));
         }
     };
-    
-    ~TextStyle();
-
+    RawPtr<FontInfo> getFontInfo() const {
+        return fontInfo;
+    }
     GuiColor getColor() const {
         return color;
-    }    
-    short getCharWidth(byte c) const {
-        return charWidths[c];
-    }
-    short getCharLBearing(byte c) const {
-        return charLBearings[c];
-    }
-    short getCharRBearing(byte c) const {
-        return charRBearings[c];
-    }
-    short getSpaceWidth() const {
-        return spaceWidth;
-    }
-    int getLineHeight() const {
-        return lineHeight;
-    }
-    int getLineAscent() const {
-        return lineAscent;
-    }
-    int getLineDescent() const {
-        return lineDescent;
-    }
-    FontHandle getFontHandle() const {
-        return fontHandle;
-    }
-    int getTextWidth(const char* str, int length) const {
-        int rslt = 0;
-        for (int i = 0; i < length; ++i) {
-            rslt += getCharWidth(str[i]);
-        }
-        return rslt;
-    }
-    int getTextWidth(const String& str) const {
-        return getTextWidth(str.toCString(), str.getLength());
-    }
-    int getTextWidth(const char* str) const {
-        return getTextWidth(str, strlen(str));
-    }
-    String getFontName() const {
-        return fontName;
     }
     String getColorName() const {
         return colorName;
     }
+    short getCharWidth(Char2b c) const {
+        return fontInfo->getCharWidth(c);
+    }
+    short getCharLBearing(Char2b c) const {
+        return fontInfo->getCharLBearing(c);
+    }
+    short getCharRBearing(Char2b c) const {
+        return fontInfo->getCharRBearing(c);
+    }
+    short getSpaceWidth() const {
+        return fontInfo->getSpaceWidth();
+    }
+    int getLineHeight() const {
+        return fontInfo->getLineHeight();
+    }
+    int getLineAscent() const {
+        return fontInfo->getLineAscent();
+    }
+    int getLineDescent() const {
+        return fontInfo->getLineDescent();
+    }
+    FontHandle getFontHandle() const {
+        return fontInfo->getFontHandle();
+    }
+    int getTextWidth(const char* str, int length) const {
+        return fontInfo->getTextWidth(str, length);
+    }
+    int getTextWidth(const String& str) const {
+        return fontInfo->getTextWidth(str);
+    }
+    int getTextWidth(const Char2bArray& wcharArray) const {
+        return fontInfo->getTextWidth(wcharArray);
+    }
+    int getTextWidth(const Char2b* p, long len) const {
+        return fontInfo->getTextWidth(p, len);
+    }
+    int getTextWidth(const char* str) const {
+        return fontInfo->getTextWidth(str);
+    }
+    String getFontName() const {
+        return fontInfo->getFontName();
+    }
+    Char2b getDefaultChar() const {
+        return fontInfo->getDefaultChar();
+    }
 
 private:
-    TextStyle(const String& fontname, const String& colorName);
+    TextStyle(FontInfo::Ptr fontInfo, const String& colorName);
 
-    String fontName;
-    String colorName;
-#ifdef X11_GUI
-    XFontStruct* font;
-#endif
-    FontHandle fontHandle;
-    GuiColor color;
-
-    short charWidths[256];
-    short charLBearings[256];
-    short charRBearings[256];
-    short spaceWidth;
-
-    int lineHeight;
-    int lineAscent;
-    int lineDescent;
+    const FontInfo::Ptr fontInfo;
+    const String        colorName;
+    const GuiColor      color;
 };
 
 } // namespace LucED

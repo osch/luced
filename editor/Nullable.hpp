@@ -132,6 +132,12 @@ class Nullable< OwningPtr<T> >
 public:
     Nullable() {}
     Nullable(const OwningPtr<T>& v) : ptr(v) {}
+    
+    Nullable(const Nullable& rhs)
+        : ptr(rhs.ptr)
+    {
+        ASSERT(this != &rhs);
+    }
 
     bool         isValid()      const { return ptr.isValid(); }
     bool         isNull()       const { return !ptr.isValid(); }
@@ -151,6 +157,12 @@ public:
     Nullable() {}
     Nullable(const WeakPtr<T>& v) : ptr(v) {}
 
+    Nullable(const Nullable& rhs)
+        : ptr(rhs.ptr)
+    {
+        ASSERT(this != &rhs);
+    }
+
     bool       isValid()      const { return ptr.isValid(); }
     bool       isNull()       const { return !ptr.isValid(); }
     operator   WeakPtr<T>()   const { return ptr; }
@@ -168,6 +180,12 @@ class Nullable< RawPtr<T> >
 public:
     Nullable() {}
     Nullable(const RawPtr<T>& v) : ptr(v) {}
+
+    Nullable(const Nullable& rhs)
+        : ptr(rhs.ptr)
+    {
+        ASSERT(this != &rhs);
+    }
 
     bool      isValid()     const { return ptr.isValid(); }
     bool      isNull()      const { return !ptr.isValid(); }

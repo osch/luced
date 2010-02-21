@@ -56,10 +56,11 @@ public:
     LuaCFunctionResult getColumn               (const LuaCFunctionArguments& args);
     
     LuaCFunctionResult getCharAtCursor         (const LuaCFunctionArguments& args);
+    LuaCFunctionResult getByteAtCursor         (const LuaCFunctionArguments& args);
     
-    LuaCFunctionResult getCharsAtCursor        (const LuaCFunctionArguments& args);
+    LuaCFunctionResult getBytesAtCursor        (const LuaCFunctionArguments& args);
 
-    LuaCFunctionResult getChars                (const LuaCFunctionArguments& args);
+    LuaCFunctionResult getBytes                (const LuaCFunctionArguments& args);
     
     LuaCFunctionResult insertAtCursor          (const LuaCFunctionArguments& args);
     
@@ -73,6 +74,8 @@ public:
 
     LuaCFunctionResult hasPrimarySelection     (const LuaCFunctionArguments& args);
     LuaCFunctionResult hasPseudoSelection      (const LuaCFunctionArguments& args);
+    LuaCFunctionResult getSelection            (const LuaCFunctionArguments& args);
+    LuaCFunctionResult replaceSelection        (const LuaCFunctionArguments& args);
 
     LuaCFunctionResult releaseSelection        (const LuaCFunctionArguments& args);
     LuaCFunctionResult removeSelection         (const LuaCFunctionArguments& args);
@@ -83,6 +86,7 @@ public:
 private:
     ViewLuaInterface(RawPtr<TextEditorWidget> e)
         : e(e),
+          textData(e->getTextData()),
           findUtil(e->getTextData()),
           m(e->getTextData()->createNewMark())
     {}
@@ -90,6 +94,7 @@ private:
     void parseAndSetFindUtilOptions(const LuaCFunctionArguments& args);
 
     RawPtr<TextEditorWidget> e;
+    RawPtr<TextData>         textData;
     FindUtil                 findUtil;
     TextData::TextMark       m;
 };

@@ -73,6 +73,8 @@ int main(int argc, char** argv)
             
             if (pid == 0) // we are child process: the new server
             {
+                setlocale(LC_CTYPE, "");
+                
                 SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
                 Commandline::Ptr     commandline     = Commandline::create(argc, argv);
                 EditorServer::Ptr    editorServer    = EditorServer::getInstance();

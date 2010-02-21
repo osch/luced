@@ -104,12 +104,12 @@ void StatusLine::drawFileName()
             GuiWidget::getRaisedBoxBorderWidth(), GuiWidget::getRaisedBoxBorderWidth(), 
             getPosition().w - 2 * GuiWidget::getRaisedBoxBorderWidth(), getPosition().h - 2 * GuiWidget::getRaisedBoxBorderWidth());
     
-    getGuiWidget()->drawGuiText(  4, 2, displayText.toCString(), displayText.getLength());
+    getGuiWidget()->drawGuiTextUtf8String(4, 2, displayText);
 
     RawPtr<TextStyle> guiTextStyle = GuiWidget::getGuiTextStyle();
 
     lengthPos = guiTextStyle->getTextWidth(displayText.toCString(), displayText.getLength())
-            + 3 * guiTextStyle->getSpaceWidth();
+                + 3 * guiTextStyle->getSpaceWidth();
 }
 
 
@@ -127,7 +127,7 @@ void StatusLine::drawFileLength()
         RawPtr<TextStyle> guiTextStyle = GuiWidget::getGuiTextStyle();
     
         getGuiWidget()->drawRaisedSurface(lengthPos, 2, guiTextStyle->getTextWidth(buffer, strlen(buffer)), GuiWidget::getGuiTextHeight());
-        getGuiWidget()->drawGuiText(      lengthPos, 2, buffer, strlen(buffer));
+        getGuiWidget()->drawGuiTextUtf8String(lengthPos, 2, buffer);
     }
 }
 
@@ -166,20 +166,20 @@ void StatusLine::drawLineAndColumn()
     
     if (selectionLength != 0) {
         sprintf(buffer, "S: %ld", selectionLength);
-        getGuiWidget()->drawGuiText(p, 2, buffer);
+        getGuiWidget()->drawGuiTextUtf8String(p, 2, buffer);
         p += labelSWidth + util::maximum(smallWidth, calcWidth(selectionLength)) + spaceWidth;
     }
     {
         sprintf(buffer, "P: %ld", pos);
-        getGuiWidget()->drawGuiText(p, 2, buffer);
+        getGuiWidget()->drawGuiTextUtf8String(p, 2, buffer);
         p += labelPWidth + util::maximum(bigWidth,    calcWidth(pos))      + 2*spaceWidth;
 
         sprintf(buffer, "L: %ld", line + 1);
-        getGuiWidget()->drawGuiText(p, 2, buffer);
+        getGuiWidget()->drawGuiTextUtf8String(p, 2, buffer);
         p += labelLWidth + util::maximum(middleWidth, calcWidth(line + 1)) +  spaceWidth;
 
         sprintf(buffer, "C: %ld", column);
-        getGuiWidget()->drawGuiText(p, 2, buffer);
+        getGuiWidget()->drawGuiTextUtf8String(p, 2, buffer);
         p += labelCWidth + util::maximum(smallWidth,  calcWidth(column));
     }
     lineAndColumnWidth = width;
@@ -235,7 +235,10 @@ void StatusLine::setFileLength(long fileLength)
 
 void StatusLine::setCursorPositionData(CursorPositionData d)
 {
-    if (this->line != d.line || this->column != d.column || this->selectionLength != d.selectionLength)
+    if (  this->line            != d.line 
+       || this->column          != d.column 
+       || this->pos             != d.pos 
+       || this->selectionLength != d.selectionLength)
     {
         this->line = d.line;
         this->column = d.column;

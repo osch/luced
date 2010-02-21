@@ -27,14 +27,14 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <new>
 #include <typeinfo>
+#include <string>
 
 #include "debug.hpp"
 #include "NonCopyable.hpp"
-#include "String.hpp"
 #include "RawPointable.hpp"
-#include "StackTrace.hpp"
 
 #undef HEAP_OBJECT_USES_DYNAMIC_CAST
 //#define PRINT_MALLOCS
@@ -115,15 +115,26 @@ private:
 #ifdef DEBUG
     friend class RawPtrGuard;
 #endif
-    HeapObjectBase()
-    {}
-    
-public:
 
-    /**
-     * Virtual Destructor.
-     */
-    virtual ~HeapObjectBase() {}
+protected:
+    HeapObjectBase()
+#ifdef DEBUG
+    ;
+#else
+    {}
+#endif
+
+public:
+#ifdef DEBUG
+    static void printAllStackTraces();
+#endif
+    virtual ~HeapObjectBase()
+#ifdef DEBUG
+    ;
+#else
+    {}
+#endif
+    
 
 protected:
     
@@ -174,6 +185,12 @@ protected:
 private:
     friend class HeapObjectRefManipulator;
 
+#ifdef DEBUG
+    static HeapObjectBase* first;
+    HeapObjectBase* prev;
+    HeapObjectBase* next;
+    std::string stackTrace;
+#endif
 };
 
 class HeapObjectRefManipulator
@@ -311,30 +328,10 @@ protected:
 class HeapObject : public HeapObjectBase,
                    public RawPointable
 {
-public:
-#ifdef DEBUG
-    static void printAllStackTraces();
-#endif
-
 protected:
     HeapObject()
-#ifdef DEBUG
-    ;
-#else
     {}
-#endif
 
-#ifdef DEBUG
-    virtual ~HeapObject();
-#endif
-    
-private:
-#ifdef DEBUG
-    static HeapObject* first;
-    HeapObject* prev;
-    HeapObject* next;
-    String stackTrace;
-#endif
 };
 
 } // namespace LucED

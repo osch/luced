@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -35,14 +35,22 @@
 #include "Pos.hpp"
 #include "Len.hpp"
 
+#include "RawPointable.hpp"
+
 namespace LucED
 {
 
-class String
+class String : public RawPointable
 {
 public:
     String()
     {}
+
+    String(const String& rhs)
+        : s(rhs.s)
+    {
+        ASSERT(this != &rhs);
+    }
 
     String(const char* rhs)
 #ifdef DEBUG
@@ -56,7 +64,7 @@ public:
 #endif
     
 
-    String(const char* rhs, int length)
+    String(const char* rhs, long length)
 #ifdef DEBUG
     {
         ASSERT(length == 0 || rhs != NULL);
@@ -71,7 +79,7 @@ public:
         : s(rhs)
     {}
 
-    explicit String(int i) 
+    explicit String(long i) 
         : s(stringify(i))
     {}
 
@@ -87,11 +95,11 @@ public:
     std::string toStdString() {
         return s;
     }
-    char& operator[](int i) {
+    char& operator[](long i) {
         ASSERT(0 <= i && i < getLength());
         return s[i];
     }
-    const char& operator[](int i) const {
+    char operator[](long i) const {
         ASSERT(0 <= i && i < getLength());
         return s[i];
     }
@@ -122,7 +130,29 @@ public:
         s.append(rhs);
         return *this;
     }
-    String& append(const char* rhs, int length) {
+    String& appendWCharAsUtf8(int unicodeChar)
+    {
+        int c = unicodeChar;
+        ASSERT(c >= 0);
+        if (c < 0) {
+        } else if (c <= 0x7F) {
+            append((char)c);
+        } else if (c <= 0x7FF) {
+            append((char)(0xC0 | ((c >> 6) & 0x1F)));
+            append((char)(0x80 | (c & 0x3F)));
+        } else if (c <= 0xFFFF) {
+            append((char)(0xE0 | ((c >> 12) & 0x0F)));
+            append((char)(0x80 | ((c >> 6) & 0x3F)));
+            append((char)(0x80 | (c & 0x3F)));
+        } else {
+            append((char)(0xF0 | ((c >> 18) & 0x07)));
+            append((char)(0x80 | ((c >> 12) & 0x3f)));
+            append((char)(0x80 | ((c >> 6) & 0x3f)));
+            append((char)(0x80 | (c & 0x3f)));
+        }
+        return *this;
+    }
+    String& append(const char* rhs, long length) {
         ASSERT(rhs != NULL);
         s.append(rhs, length);
         return *this;
@@ -132,12 +162,16 @@ public:
         s.append(rhs.toCString() + pos, length);
         return *this;
     }
-    String& append(const byte* rhs, int length) {
+    String& append(const byte* rhs, long length) {
         ASSERT(rhs != NULL);
         s.append((const char*)rhs, length);
         return *this;
     }
     String& append(char c) {
+        s.push_back(c);
+        return *this;
+    }
+    String& append(byte c) {
         s.push_back(c);
         return *this;
     }
@@ -152,6 +186,9 @@ public:
     String& append(int rhs) {
         return append(String(rhs));
     }
+    String& append(long rhs) {
+        return append(String(rhs));
+    }
     String& append(double d) {
         char buffer[20];
         sprintf(buffer, "%.0f", d);
@@ -159,7 +196,7 @@ public:
     }
 
     bool consistsOfDigits() const {
-        for (int i = 0, n = s.length(); i < n; ++i) {
+        for (long i = 0, n = s.length(); i < n; ++i) {
             if (!isdigit(s[i])) {
                 return false;
             }
@@ -170,10 +207,13 @@ public:
     int toInt() const {
         return atoi(s.c_str());
     }
+    long toLong() const {
+        return atol(s.c_str());
+    }
     
     String toUpper() const {
         String rslt;
-        for (int i = 0, n = getLength(); i < n; ++i) {
+        for (long i = 0, n = getLength(); i < n; ++i) {
             rslt << (char) ::toupper((*this)[i]);
         }
         return rslt;
@@ -181,11 +221,21 @@ public:
     
     String toLower() const {
         String rslt;
-        for (int i = 0, n = getLength(); i < n; ++i) {
+        for (long i = 0, n = getLength(); i < n; ++i) {
             rslt << (char) ::tolower((*this)[i]);
         }
         return rslt;
     }
+
+    /**
+     * Converts utf8 content to upper case.
+     */    
+    String toUpperUtf8() const;
+
+    /**
+     * Converts utf8 content to lower case.
+     */    
+    String toLowerUtf8() const;
     
     bool equals(const char* rhs, long len) const
     {
@@ -212,11 +262,11 @@ public:
     }
     
     bool equalsIgnoreCase(const String& rhs) const {
-        int j = getLength(), k = rhs.getLength();
+        long j = getLength(), k = rhs.getLength();
         if (j != k) {
             return false;
         }
-        for (int i = 0; i < j; ++i) {
+        for (long i = 0; i < j; ++i) {
             if (::tolower(s[i]) != ::tolower(rhs[i])) {
                 return false;
             }
@@ -225,8 +275,8 @@ public:
     }
     
     bool isInt() const {
-        int i = 0;
-        int n = getLength();
+        long i = 0;
+        long n = getLength();
         if (n == 0) {
             return false;
         }
@@ -242,7 +292,7 @@ public:
     }
     
     bool isHex() const {
-        for (int i = 0, n = getLength(); i < n; ++i) {
+        for (long i = 0, n = getLength(); i < n; ++i) {
             if (!isxdigit(s[i])) {
                 return false;
             }
@@ -251,7 +301,7 @@ public:
     }
     
     bool contains(char c) const {
-        for (int i = 0, n = s.length(); i < n; ++i) {
+        for (long i = 0, n = s.length(); i < n; ++i) {
             if (s[i] == c) {
                 return true;
             }
@@ -295,7 +345,7 @@ public:
         if (rhs == NULL) {
             return false;
         }
-        int len = strlen(rhs);
+        long len = strlen(rhs);
         if (this->getLength() != len) {
             return false;
         }
@@ -310,6 +360,9 @@ public:
     bool operator!=(const String& rhs) const {
         return s != rhs.s;
     }
+    bool operator<(const String& rhs) const {
+        return s < rhs.s;
+    }
     void removeAmount(Pos pos, Len amount) {
         ASSERT(0 <= amount);
         ASSERT(0 <= pos && pos + amount <= getLength());
@@ -321,15 +374,15 @@ public:
     void removeTail(Pos pos) {
         removeAmount(pos, Pos(0) + getLength() - pos);
     }
-    String getHead(int len) const {
+    String getHead(long len) const {
         ASSERT(0 <= len && len <= getLength());
         return getSubstring(Pos(0), Len(len));
     }
-    String getTail(int pos) const {
+    String getTail(long pos) const {
         ASSERT(0 <= pos && pos <= getLength());
         return s.substr(pos);
     }
-    int findFirstOf(char c, Pos startPos = Pos(0)) const {
+    long findFirstOf(char c, Pos startPos = Pos(0)) const {
         ASSERT(0 <= startPos && startPos <= getLength());
         std::string::size_type rslt = s.find_first_of(c, startPos);
         if (rslt == std::string::npos) {
@@ -340,8 +393,8 @@ public:
     }
     
     String getTrimmedSubstring() const {
-        int len = getLength();
-        int i = 0, j = len;
+        long len = getLength();
+        long i = 0, j = len;
         while (i < len && ((*this)[i] == ' ' || (*this)[i] == '\t')) {
             ++i;
         }
@@ -361,7 +414,7 @@ public:
     
     String toSubstitutedString(char oldChar, char newChar) const {
         String rslt = *this;
-        for (int i = 0, n = getLength(); i < n; ++i) {
+        for (long i = 0, n = getLength(); i < n; ++i) {
             if (rslt[i] == oldChar) {
                 rslt[i] = newChar;
             }
@@ -370,13 +423,13 @@ public:
     }
     String toSubstitutedString(const char* oldPart, const char* newPart) const {
         String rslt;
-        int oldPartLength = strlen(oldPart);
+        long oldPartLength = strlen(oldPart);
         if (oldPartLength == 0) {
             return "";
         }
-        int newPartLength = strlen(newPart);
-        int thisLength = getLength();
-        int i = 0;
+        long newPartLength = strlen(newPart);
+        long thisLength = getLength();
+        long i = 0;
         while (i < thisLength) 
         {
             std::string::size_type n = s.find(oldPart, i);
@@ -392,7 +445,7 @@ public:
     }
 
 private:
-    static std::string stringify(int i) {
+    static std::string stringify(long i) {
         std::ostringstream o;
         o << i;
         return o.str();

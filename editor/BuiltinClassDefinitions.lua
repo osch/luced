@@ -36,6 +36,10 @@ return
                      },
                      { name = "getLoadedPackageModules"
                      },
+                     { name = "toUpper"
+                     },
+                     { name = "toLower"
+                     },
                    }
     },
     {
@@ -59,9 +63,11 @@ return
                      },
                      { name = "getCharAtCursor"
                      },
-                     { name = "getCharsAtCursor"
+                     { name = "getByteAtCursor"
                      },
-                     { name = "getChars"
+                     { name = "getBytesAtCursor"
+                     },
+                     { name = "getBytes"
                      },
                      { name = "insertAtCursor"
                      },
@@ -76,6 +82,10 @@ return
                      { name = "hasPrimarySelection"
                      },
                      { name = "hasPseudoSelection"
+                     },
+                     { name = "getSelection"
+                     },
+                     { name = "replaceSelection"
                      },
                      { name = "releaseSelection"
                      },

@@ -22,14 +22,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "GuiRoot.hpp"
 #include "GlobalConfig.hpp"
 #include "SystemException.hpp"
 #include "GuiRootProperty.hpp"
+#include "System.hpp"
+
+#if HAVE_X11_XKBLIB_H && !defined(USE_X11_XKB_EXTENSION)
+#  define USE_X11_XKB_EXTENSION
+#endif
 
 #ifdef USE_X11_XKB_EXTENSION
 #include <X11/XKBlib.h>
 #endif
+
+#undef ABORT_ON_X11_ERRORS
 
 using namespace LucED;
 
@@ -42,6 +50,9 @@ static int myX11ErrorHandler(Display* display, XErrorEvent* errorEvent)
     XGetErrorText(display, errorEvent->error_code, buffer, sizeof(buffer));
     buffer[sizeof(buffer) - 1] = '\0';
     fprintf(stderr, "LucED: xlib error: %s\n", buffer);
+#ifdef ABORT_ON_X11_ERRORS
+    abort();
+#endif
     return 0;
 }
 
@@ -102,7 +113,8 @@ static bool GuiRoot_queryOriginalKeyboardModeWasAutoRepeat()
 GuiRoot::GuiRoot()
     : xkbExtensionFlag(false),
       hadDetecableAutorepeatFlag(false),
-      detecableAutorepeatFlag(false)
+      detecableAutorepeatFlag(false),
+      x11InputMethod(NULL)
 {
     XSetErrorHandler(myX11ErrorHandler);
     XSetIOErrorHandler(myFatalX11ErrorHandler);
@@ -111,6 +123,17 @@ GuiRoot::GuiRoot()
     if (display == NULL) {
         throw SystemException(String() << "Cannot open display \"" << XDisplayName(NULL) << "\"");
     }
+#ifdef ABORT_ON_X11_ERRORS
+    XSynchronize(display, True);
+#endif
+    XSetLocaleModifiers("");
+    if (!XSupportsLocale()) {
+        throw SystemException(String() << "Xlib: locale \"" << System::getInstance()->getDefaultLocale() << "\" not supported.");
+    }
+
+    x11InputMethod = XOpenIM(display, NULL, NULL, NULL);
+    x11AtomForUtf8String = XInternAtom(display, "UTF8_STRING", False);
+
     screenId = XDefaultScreen(display);
     screen = XScreenOfDisplay(display, screenId);
     rootWid = WidgetId(XRootWindow(display, screenId));
@@ -139,6 +162,9 @@ GuiRoot::~GuiRoot()
             Atom atom = XInternAtom(display, KEYBOARD_WAS_AUTOREPEAT_PROPERTY_NAME, False);
             XDeleteProperty(display, rootWid, atom);
         }            
+    }
+    if (x11InputMethod != NULL) {
+        XCloseIM(x11InputMethod);
     }
     XSync(display, False);
     XCloseDisplay(display);

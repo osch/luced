@@ -31,6 +31,7 @@
 #include "ActionMethodBinding.hpp"
 #include "GuiWidget.hpp"
 #include "FocusableWidget.hpp"
+#include "Char2bArray.hpp"
                     
 namespace LucED
 {
@@ -129,6 +130,7 @@ private:
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
     String buttonText;
+    Char2bArray buttonTextWChars;
     bool isButtonPressed;
     bool isMouseButtonPressed;
     bool isMouseOverButton;

@@ -74,11 +74,36 @@ public:
         TimeVal      lastModifiedTimeValSinceEpoche;
     };
     
+    class Writer : public HeapObject
+    {
+    public:
+        typedef OwningPtr<Writer> Ptr;
+        
+        ~Writer();
+        
+        void write(const char* data, long length) const;
+        
+    private:
+        static Ptr create(int fd, const String& name) {
+            return Ptr(new Writer(fd, name));
+        }
+        explicit Writer(int fd, const String& name)
+            : fd(fd),
+              name(name)
+        {}
+        
+        friend class File;
+        int fd;
+        String name;
+    };
+    
     File(const String& path, const String& fileName);
     
     File(const String& fileName)
         : name(fileName)
     {}
+    
+    Writer::Ptr openForWriting() const;
     
     String getAbsoluteName() const;
     

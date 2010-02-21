@@ -70,12 +70,17 @@ private:
     RawPtr<GuiWidget>       baseWidget;
     OwningPtr<ContentHandler> contentHandler;
 
+    bool isRequestingTargetTypes;
     bool isReceivingPasteDataFlag;
     bool isMultiPartPastingFlag;
+    Atom pasteDataTypeAtom;
+    Atom pasteTargetAtom;
     ByteArray pasteBuffer;
-    Atom x11AtomForTargets;
-    Atom x11AtomForIncr;
+
     Display* const display;
+    const Atom x11AtomForTargets;
+    const Atom x11AtomForIncr;
+    const Atom x11AtomForUtf8String;
 };
 
 } // namespace LucED

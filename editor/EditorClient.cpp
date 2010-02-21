@@ -75,7 +75,7 @@ namespace // anonymous namespace
     class DoNothingActor
     {
     public:
-        void openFile(int numberOfWindows, const String& fileName)
+        void openFile(int numberOfWindows, const String& fileName, const String& encoding)
         {}
     };
 

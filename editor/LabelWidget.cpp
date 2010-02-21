@@ -28,13 +28,13 @@
 
 using namespace LucED;
 
-LabelWidget::LabelWidget(const String& leftText, const String& rightText)
-    : leftText(leftText),
-      rightText(rightText),
-      adjustment(VerticalAdjustment::TOP),
+LabelWidget::LabelWidget(const String& labelText)
+    : adjustment(VerticalAdjustment::TOP),
       layoutHeight(0),
       hasForcedMeasuresFlag(false)
-{}
+{
+    this->labelText.setToUtf8String(labelText);
+}
 
 void LabelWidget::setLayoutHeight(int height, VerticalAdjustment::Type adjust)
 {
@@ -62,7 +62,7 @@ GuiElement::Measures LabelWidget::getOwnDesiredMeasures()
 {
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
     int height = util::maximum(GuiWidget::getGuiTextHeight() + guiSpacing, layoutHeight);
-    int width  = GuiWidget::getGuiTextStyle()->getTextWidth(leftText.toCString(), leftText.getLength()) + guiSpacing;
+    int width  = GuiWidget::getGuiTextStyle()->getTextWidth(labelText) + guiSpacing;
     return GuiElement::Measures(width, height, width, height, width, height);
 }
 
@@ -111,11 +111,11 @@ void LabelWidget::draw()
     int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
     getGuiWidget()->drawRaisedSurface(0, 0, getPosition().w, getPosition().h);
     if (adjustment == VerticalAdjustment::TOP) {
-        getGuiWidget()->drawGuiText(guiSpacing, guiSpacing, leftText.toCString(), leftText.getLength());
+        getGuiWidget()->drawGuiTextWChars(guiSpacing, guiSpacing, labelText);
     } else if (adjustment == VerticalAdjustment::BOTTOM) {
-        getGuiWidget()->drawGuiText(guiSpacing, getPosition().h - GuiWidget::getGuiTextHeight(), leftText.toCString(), leftText.getLength());
+        getGuiWidget()->drawGuiTextWChars(guiSpacing, getPosition().h - GuiWidget::getGuiTextHeight(), labelText);
     } else {
-        getGuiWidget()->drawGuiText(guiSpacing, (getPosition().h - GuiWidget::getGuiTextHeight()) / 2, leftText.toCString(), leftText.getLength());
+        getGuiWidget()->drawGuiTextWChars(guiSpacing, (getPosition().h - GuiWidget::getGuiTextHeight()) / 2, labelText);
     }
 }
 

@@ -26,6 +26,7 @@
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
 #include "Clipboard.hpp"
+#include "CharUtil.hpp"
 
 using namespace LucED;
 
@@ -186,9 +187,11 @@ void TextEditorWidget::processGuiWidgetCreatedEvent()
 }
 
 
-bool TextEditorWidget::isWordCharacter(unsigned char c)
+bool TextEditorWidget::isWordCharacter(int c)
 {
-    return c == '_' || isalnum(c);
+    return    CharUtil::isLetter(c) 
+           || CharUtil::isNumber(c)
+           || c == '_';
 }
 
 bool TextEditorWidget::isCursorVisible()
@@ -309,20 +312,21 @@ void TextEditorWidget::notifyAboutBeginOfPastingData()
 void TextEditorWidget::notifyAboutReceivedPasteData(const byte* data, long length)
 {
     if (length > 0) {
-        bool first =  (pastingTextMark.getPos() == beginPastingTextMark.getPos());
-        
+        long beginPos = textData->getBeginOfWChar(beginPastingTextMark.getPos());
+        long nextPos  = pastingTextMark.getPos() + length;
+
         textData->insertAtMark(pastingTextMark, data, length);
-        pastingTextMark.moveToPos(pastingTextMark.getPos() + length);
+
+        beginPastingTextMark.moveToPos(beginPos);
+        pastingTextMark     .moveToPos(nextPos);
         
-        //if (!first) {
-            if (!getBackliteBuffer()->hasActiveSelection()
-              || getBackliteBuffer()->getBeginSelectionPos() != beginPastingTextMark.getPos())
-            {
-                getBackliteBuffer()->activateSelection(beginPastingTextMark.getPos());
-            }
-            getBackliteBuffer()->makeSelectionToSecondarySelection();
-            getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
-        //}
+        if (!getBackliteBuffer()->hasActiveSelection()
+          || getBackliteBuffer()->getBeginSelectionPos() != beginPos)
+        {
+            getBackliteBuffer()->activateSelection(beginPos);
+        }
+        getBackliteBuffer()->makeSelectionToSecondarySelection();
+        getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
     }
 }
 
@@ -334,13 +338,16 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
 
     releaseSelectionButKeepPseudoSelection();
 
+    long beginPos = textData->getBeginOfWChar(beginPastingTextMark.getPos());
+    long endPos   = textData->getEndOfWChar(pastingTextMark.getPos());
+
     if (!getBackliteBuffer()->hasActiveSelection()
-      || getBackliteBuffer()->getBeginSelectionPos() != beginPastingTextMark.getPos())
+      || getBackliteBuffer()->getBeginSelectionPos() != beginPos)
     {
-        getBackliteBuffer()->activateSelection(beginPastingTextMark.getPos());
+        getBackliteBuffer()->activateSelection(beginPos);
     }
     getBackliteBuffer()->makeSelectionToSecondarySelection();
-    getBackliteBuffer()->extendSelectionTo(pastingTextMark.getPos());
+    getBackliteBuffer()->extendSelectionTo(endPos);
 
     if (pasteParameter == CURSOR_TO_END_OF_PASTED_DATA) {
         moveCursorToTextMark(pastingTextMark);
@@ -428,19 +435,19 @@ GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent
                             long p2 = p1;
                             if (doubleClickPos < textData->getLength())
                             {
-                                if (isWordCharacter(textData->getChar(p1))) {
-                                    while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
-                                        --p1;
+                                if (isWordCharacter(textData->getWChar(p1))) {
+                                    while (p1 > 0 && isWordCharacter(textData->getWCharBefore(p1))) {
+                                        p1 = textData->getPrevWCharPos(p1);
                                     }
-                                    while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
-                                        ++p2;
+                                    while (p2 < textData->getLength() && isWordCharacter(textData->getWChar(p2))) {
+                                        p2 = textData->getNextWCharPos(p2);
                                     }
-                                } else if (ispunct(textData->getChar(p1))) {
-                                    while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
-                                        --p1;
+                                } else if (ispunct(textData->getWChar(p1))) {
+                                    while (p1 > 0 && ispunct(textData->getWChar(p1 - 1))) {
+                                        p1 = textData->getPrevWCharPos(p1);
                                     }
-                                    while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
-                                        ++p2;
+                                    while (p2 < textData->getLength() && ispunct(textData->getWChar(p2))) {
+                                        p2 = textData->getNextWCharPos(p2);
                                     }
                                 }
                                 if (extendingSelection) {
@@ -591,19 +598,19 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
 
             if (doubleClickPos < textData->getLength())
             {
-                if (isWordCharacter(textData->getChar(p1))) {
-                    while (p1 > 0 && isWordCharacter(textData->getChar(p1 - 1))) {
-                        --p1;
+                if (isWordCharacter(textData->getWChar(p1))) {
+                    while (p1 > 0 && isWordCharacter(textData->getWCharBefore(p1))) {
+                        p1 = textData->getPrevWCharPos(p1);
                     }
-                    while (p2 < textData->getLength() && isWordCharacter(textData->getChar(p2))) {
-                        ++p2;
+                    while (p2 < textData->getLength() && isWordCharacter(textData->getWChar(p2))) {
+                        p2 = textData->getNextWCharPos(p2);
                     }
-                } else if (ispunct(textData->getChar(p1))) {
-                    while (p1 > 0 && ispunct(textData->getChar(p1 - 1))) {
-                        --p1;
+                } else if (ispunct(textData->getWChar(p1))) {
+                    while (p1 > 0 && ispunct(textData->getWCharBefore(p1))) {
+                        p1 = textData->getPrevWCharPos(p1);
                     }
-                    while (p2 < textData->getLength() && ispunct(textData->getChar(p2))) {
-                        ++p2;
+                    while (p2 < textData->getLength() && ispunct(textData->getWChar(p2))) {
+                        p2 = textData->getNextWCharPos(p2);
                     }
                 }
                 if (p1 != getCursorTextPosition() || p2 != getCursorTextPosition())
@@ -615,13 +622,13 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                     if (p1 < getBackliteBuffer()->getSelectionAnchorPos()) {
                         if (getBackliteBuffer()->isAnchorAtBegin()) {
                             long p = getBackliteBuffer()->getSelectionAnchorPos();
-                            if (isWordCharacter(textData->getChar(p))) {
-                                while (p < textData->getLength() && isWordCharacter(textData->getChar(p))) {
-                                    ++p;
+                            if (isWordCharacter(textData->getWChar(p))) {
+                                while (p < textData->getLength() && isWordCharacter(textData->getWChar(p))) {
+                                    p = textData->getNextWCharPos(p);
                                 }
-                            } else if (ispunct(textData->getChar(p))) {
-                                while (p < textData->getLength() && ispunct(textData->getChar(p))) {
-                                    ++p;
+                            } else if (ispunct(textData->getWChar(p))) {
+                                while (p < textData->getLength() && ispunct(textData->getWChar(p))) {
+                                    p = textData->getNextWCharPos(p);
                                 }
                             }
                             getBackliteBuffer()->extendSelectionTo(p);
@@ -632,13 +639,13 @@ void TextEditorWidget::setNewMousePositionForMovingSelection(int x, int y)
                     } else {
                         if (!getBackliteBuffer()->isAnchorAtBegin()) {
                             long p = getBackliteBuffer()->getSelectionAnchorPos();
-                            if (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
-                                while (p > 0 && isWordCharacter(textData->getChar(p - 1))) {
-                                    --p;
+                            if (p > 0 && isWordCharacter(textData->getWCharBefore(p))) {
+                                while (p > 0 && isWordCharacter(textData->getWCharBefore(p))) {
+                                    p = textData->getPrevWCharPos(p);
                                 }
-                            } else if (p > 0 && ispunct(textData->getChar(p - 1))) {
-                                while (p > 0 && ispunct(textData->getChar(p - 1))) {
-                                   --p;
+                            } else if (p > 0 && ispunct(textData->getWCharBefore(p))) {
+                                while (p > 0 && ispunct(textData->getWCharBefore(p))) {
+                                   p = textData->getPrevWCharPos(p);
                                 }
                             }
                             getBackliteBuffer()->extendSelectionTo(p);
@@ -825,9 +832,12 @@ bool TextEditorWidget::handleLowPriorityKeyPress(const KeyPressEvent& keyPressEv
                     getBackliteBuffer()->activateSelection(getCursorTextPosition());
                     getBackliteBuffer()->makeSelectionToSecondarySelection();
                 }
-                long insertedLength = insertAtCursor(keyPressEvent.getInputString()[0]);
-                moveCursorToTextPosition(getCursorTextPosition() + insertedLength);
-
+                {
+                    long oldPos         = getCursorTextPosition();
+                    long insertedLength = insertAtCursor(keyPressEvent.getInputString());
+                    long newPos         = textData->getEndOfWChar(oldPos + insertedLength);
+                    moveCursorToTextPosition(newPos);
+                }
                 getBackliteBuffer()->extendSelectionTo(getCursorTextPosition());
 
                 if (getCursorLineNumber() < getTopLineNumber()) {

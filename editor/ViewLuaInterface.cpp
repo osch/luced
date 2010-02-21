@@ -32,7 +32,7 @@ LuaCFunctionResult ViewLuaInterface::getFileName(const LuaCFunctionArguments& ar
 {
     LuaAccess luaAccess = args.getLuaAccess();
     
-    return LuaCFunctionResult(luaAccess) << e->getTextData()->getFileName();
+    return LuaCFunctionResult(luaAccess) << textData->getFileName();
 }
 
 
@@ -53,10 +53,11 @@ LuaCFunctionResult ViewLuaInterface::setCursorPosition(const LuaCFunctionArgumen
     
     if (newPosition < 0) {
         newPosition = 0;
-    } else if (newPosition > e->getTextData()->getLength()) {
-        newPosition = e->getTextData()->getLength();
+    } else if (newPosition > textData->getLength()) {
+        newPosition = textData->getLength();
     }
-    
+    newPosition = textData->getBeginOfWChar(newPosition);
+
     e->moveCursorToTextPosition(newPosition);
     
     return LuaCFunctionResult(luaAccess);
@@ -98,11 +99,14 @@ LuaCFunctionResult ViewLuaInterface::insertAtCursor(const LuaCFunctionArguments&
     
     for (int i = 1; i < args.getLength(); ++i)
     {
-        if (args[i].isString()) {
-            long insertedLength = e->getTextData()->insertAtMark(m, (const byte*)
-                                                                    args[i].getStringPtr(),
-                                                                    args[i].getStringLength());
-            m.moveForwardToPos(m.getPos() + insertedLength);
+        if (args[i].isString()) 
+        {
+            long pos = m.getPos();
+            
+            long insertedLength = textData->insertAtMark(m, (const byte*)
+                                                            args[i].getStringPtr(),
+                                                            args[i].getStringLength());
+            m.moveToPos(textData->getEndOfWChar(pos + insertedLength));
             totalInsertedLength += insertedLength;
         }
         else if (args[i].isTable()) {
@@ -125,8 +129,8 @@ LuaCFunctionResult ViewLuaInterface::insert(const LuaCFunctionArguments& args)
 
     m.moveToPos(insertPos);
 
-    long insertedLength = e->getTextData()->insertAtMark(m, (const byte*) args[2].getStringPtr(),
-                                                                          args[2].getStringLength());
+    long insertedLength = textData->insertAtMark(m, (const byte*) args[2].getStringPtr(),
+                                                                  args[2].getStringLength());
     return LuaCFunctionResult(luaAccess) << insertedLength;
 }
 
@@ -136,26 +140,48 @@ LuaCFunctionResult ViewLuaInterface::getCharAtCursor(const LuaCFunctionArguments
     LuaAccess luaAccess = args.getLuaAccess();
     
     long pos = e->getCursorTextPosition();
+    
     LuaVar rslt(luaAccess);
     
-    if (pos < e->getTextData()->getLength())
+    if (0 <= pos && pos < textData->getLength())
     {
-        rslt.assign(luaAccess.toLua((const char*)(e->getTextData()->getAmount(pos, 1)),
-                                    1));
+        long spos = textData->getBeginOfWChar(pos);
+        long epos = textData->getNextBeginOfWChar(spos);
+        long len  = epos - spos;
+        
+        rslt = luaAccess.toLua((const char*)(textData->getAmount(spos, len)), len);
     }
     else {
-        rslt.assign("");
+        rslt = "";
+    }
+    return LuaCFunctionResult(luaAccess) << rslt;
+}
+
+LuaCFunctionResult ViewLuaInterface::getByteAtCursor(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    long pos = e->getCursorTextPosition();
+    
+    LuaVar rslt(luaAccess);
+    
+    if (0 <= pos && pos < textData->getLength())
+    {
+        rslt = luaAccess.toLua((const char*)(textData->getAmount(pos, 1)), 1);
+    }
+    else {
+        rslt = "";
     }
     return LuaCFunctionResult(luaAccess) << rslt;
 }
 
 
-LuaCFunctionResult ViewLuaInterface::getCharsAtCursor(const LuaCFunctionArguments& args)
+LuaCFunctionResult ViewLuaInterface::getBytesAtCursor(const LuaCFunctionArguments& args)
 {
     LuaAccess luaAccess = args.getLuaAccess();
     
     long pos    = e->getCursorTextPosition();
-    long length = e->getTextData()->getLength();
+    long length = textData->getLength();
     long amount = 1;
     
     if (args.getLength() >= 2 && args[1].isNumber()) {
@@ -169,17 +195,17 @@ LuaCFunctionResult ViewLuaInterface::getCharsAtCursor(const LuaCFunctionArgument
     
     if (amount > 0)
     {
-        rslt.assign(luaAccess.toLua((const char*)(e->getTextData()->getAmount(pos, amount)),
-                                    amount));
+        rslt = luaAccess.toLua((const char*)(textData->getAmount(pos, amount)),
+                               amount);
     }
     else {
-        rslt.assign("");
+        rslt = "";
     }
     return LuaCFunctionResult(luaAccess) << rslt;
 }
 
 
-LuaCFunctionResult ViewLuaInterface::getChars(const LuaCFunctionArguments& args)
+LuaCFunctionResult ViewLuaInterface::getBytes(const LuaCFunctionArguments& args)
 {
     LuaAccess luaAccess = args.getLuaAccess();
     
@@ -187,7 +213,7 @@ LuaCFunctionResult ViewLuaInterface::getChars(const LuaCFunctionArguments& args)
 
     long pos    = args[1].toLong();
     long end    = args[2].toLong();
-    long length = e->getTextData()->getLength();
+    long length = textData->getLength();
     
     long amount = end - pos;
     
@@ -199,11 +225,11 @@ LuaCFunctionResult ViewLuaInterface::getChars(const LuaCFunctionArguments& args)
     
     if (pos >= 0 && amount > 0)
     {
-        rslt.assign(luaAccess.toLua((const char*)(e->getTextData()->getAmount(pos, amount)),
-                                    amount));
+        rslt = luaAccess.toLua((const char*)(textData->getAmount(pos, amount)),
+                               amount);
     }
     else {
-        rslt.assign("");
+        rslt = "";
     }
     return LuaCFunctionResult(luaAccess) << rslt;
 }
@@ -251,7 +277,7 @@ void ViewLuaInterface::parseAndSetFindUtilOptions(const LuaCFunctionArguments& a
         }
     }
 
-    long   textLength    = e->getTextData()->getLength();
+    long   textLength    = textData->getLength();
 
     if (startPosition < 0)          { startPosition = 0; }
     if (startPosition > textLength) { startPosition = startPosition; }
@@ -334,7 +360,7 @@ LuaCFunctionResult ViewLuaInterface::findMatch(const LuaCFunctionArguments& args
                 if (beg != -1) {
                     start[i] = beg; 
                     end  [i] = beg + len;
-                    match[i] = e->getTextData()->getSubstring(Pos(beg), Len(len));
+                    match[i] = textData->getSubstring(Pos(beg), Len(len));
                 } else {
                     start[i] = false; 
                     end  [i] = false;
@@ -378,6 +404,54 @@ LuaCFunctionResult ViewLuaInterface::hasPseudoSelection(const LuaCFunctionArgume
     LuaAccess luaAccess = args.getLuaAccess();
     return LuaCFunctionResult(luaAccess) << e->hasPseudoSelection();
 }
+
+
+LuaCFunctionResult ViewLuaInterface::getSelection(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    String rslt;
+    
+    if (e->hasPrimarySelection() || e->hasPseudoSelection())
+    {
+        rslt = textData->getSubstring(Pos(e->getBeginSelectionPos()),
+                                      Pos(e->getEndSelectionPos()));
+
+    }
+    return LuaCFunctionResult(luaAccess) << rslt;
+}
+
+LuaCFunctionResult ViewLuaInterface::replaceSelection(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (args.getLength() != 2 || !args[1].isString()) {
+        throw LuaArgException();
+    }
+    
+    String arg = args[1].toString();
+
+    TextData::TextMark m = e->createNewMarkFromCursor();
+    
+    if (e->hasPrimarySelection() || e->hasPseudoSelection())
+    {
+        long spos = e->getBeginSelectionPos();
+        long epos = e->getEndSelectionPos();
+        
+        m.moveToPos(spos);
+
+        textData->insertAtMark(m, arg);
+        
+        m.moveToPos(spos + arg.getLength());
+        
+        textData->removeAtMark(m, epos - spos);
+    }
+    else {
+        textData->insertAtMark(m, arg);
+    }
+    return LuaCFunctionResult(luaAccess);
+}
+
 
 LuaCFunctionResult ViewLuaInterface::releaseSelection(const LuaCFunctionArguments& args)
 {

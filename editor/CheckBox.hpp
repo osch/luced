@@ -44,6 +44,7 @@ public:
         return Ptr(new CheckBox(buttonText));
     }
     
+    void setButtonText(String buttonText);
 
     void setButtonPressedCallback(Callback<CheckBox*>::Ptr callback) {
         pressedCallback = callback;
@@ -98,6 +99,8 @@ private:
     bool isMouseInsideButtonArea(int mouseX, int mouseY);
     
     String buttonText;
+    Char2bArray buttonTextWChars;
+
     bool isBoxChecked;
     bool isMouseButtonPressed;
     bool isMouseOverButton;
@@ -107,6 +110,7 @@ private:
     char hotKeyChar;
     int hotKeyPixX;
     int hotKeyPixW;
+    bool hasHotKeyFlag;
 };
 
 } // namespace LucED

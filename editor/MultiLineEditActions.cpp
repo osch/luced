@@ -237,7 +237,7 @@ void MultiLineEditActions::shiftBlockLeft()
         expandedTabMinusOne.appendAndFillAmountWith(tabWidth - 1, ' ');
 
         while (mark.getPos() < endPos) {
-            byte c = textData->getChar(mark);
+            int c = textData->getWChar(mark);
             if (c == '\t') {
                 textData->removeAtMark(mark, 1);
                 textData->insertAtMark(mark, expandedTabMinusOne);
@@ -301,7 +301,7 @@ void MultiLineEditActions::cursorPageDown()
             targetTopLine = e->getTextData()->getNumberOfLines() - e->getNumberOfVisibleLines();
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToLineAndColumn(targetLine, 0);
+        mark.moveToBeginOfLine(targetLine);
 
         long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
         mark.moveToPos(newPos);
@@ -328,7 +328,7 @@ void MultiLineEditActions::cursorPageUp()
             targetTopLine = 0;
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToLineAndColumn(targetLine, 0);
+        mark.moveToBeginOfLine(targetLine);
 
         long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
         mark.moveToPos(newPos);
@@ -355,7 +355,7 @@ void MultiLineEditActions::selectionCursorPageDown()
             targetTopLine = e->getTextData()->getNumberOfLines() - e->getNumberOfVisibleLines();
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToLineAndColumn(targetLine, 0);
+        mark.moveToBeginOfLine(targetLine);
 
         long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
         mark.moveToPos(newPos);
@@ -391,7 +391,7 @@ void MultiLineEditActions::selectionCursorPageUp()
             targetTopLine = 0;
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToLineAndColumn(targetLine, 0);
+        mark.moveToBeginOfLine(targetLine);
 
         long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
         mark.moveToPos(newPos);
@@ -491,7 +491,7 @@ void MultiLineEditActions::newLineAutoIndent(bool insert)
 
         mark.moveToBeginOfLine();
         while (!mark.isEndOfText() && mark.getPos() < e->getCursorTextPosition()) {
-            byte c = mark.getChar();
+            int c = mark.getWChar();
             if (c == ' ' || c == '\t') {
                 whiteSpace.append(c);
             } else {
@@ -537,7 +537,7 @@ void MultiLineEditActions::newLineFixedColumnIndent(bool forward)
 
         mark.moveToBeginOfLine();
         while (!mark.isEndOfText() && mark.getPos() < e->getCursorTextPosition()) {
-            byte c = mark.getChar();
+            int c = mark.getWChar();
             if (c == ' ' || c == '\t') {
                 whiteSpace.append(c);
                 if (c == '\t') {

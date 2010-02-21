@@ -1,0 +1,75 @@
+AUTOMAKE_OPTIONS = foreign subdir-objects
+ACLOCAL_AMFLAGS  = -I config-m4
+@
+@--------------------------------------------------------------------------------
+@ local gmatch = string.gmatch
+@ local match  = string.match
+@ local wrap   = coroutine.wrap
+@ local yield  = coroutine.yield
+@
+@ local function whiteSpaceListIteratator(whiteSpaceListString)
+@   return wrap(
+@       function()
+@           for element in gmatch(whiteSpaceListString, "%s*(%S+)%s*") do
+@               yield(element)
+@           end
+@       end
+@   )
+@ end
+@ local function indicatingIterator(iterator)
+@   return wrap(
+@       function()
+@           local element
+@           for nextElement in iterator do
+@               if element then
+@                   yield(element, false)
+@               end
+@               element = nextElement
+@           end
+@           if element then
+@               yield(element, true)
+@           end
+@       end
+@   )
+@ end
+@ local function filterIterator(iterator, filterExpr)
+@   return wrap(
+@       function()
+@           for element in iterator do
+@               if match(element, filterExpr) then
+@                   yield(element)
+@               end
+@           end
+@       end
+@   )
+@ end
+@
+@ local function list(whiteSpaceListString)
+@   return indicatingIterator(whiteSpaceListIteratator(whiteSpaceListString))
+@ end
+@ local function filteredList(whiteSpaceListString, filterExpr)
+@   return indicatingIterator(filterIterator(whiteSpaceListIteratator(whiteSpaceListString),
+@                                            filterExpr))
+@ end
+@--------------------------------------------------------------------------------
+
+AM_CPPFLAGS   = -Ilua -Ilposix -Ipcre
+
+bin_PROGRAMS      = luced
+
+luced_SOURCES     = @(LUCED_MAIN) \
+@ for f, isLast in list(RELEASE_SOURCES) do
+                    @(f) @(isLast and "" or "\\")
+@ end
+
+noinst_HEADERS    = \
+@ for f, isLast in list(RELEASE_HEADERS) do
+                    @(f) @(isLast and "" or "\\")
+@ end
+
+EXTRA_DIST        = \
+@ for f, isLast in list(RELEASE_EXTRAS) do
+                    @(f) @(isLast and "" or "\\")
+@ end
+                    
+#noinst_LIBRARIES = libluced.a

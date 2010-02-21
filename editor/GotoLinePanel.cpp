@@ -108,7 +108,7 @@ void GotoLinePanel::handleButtonPressed(Button* button, Button::ActivationVarian
                     wasNegative = true;
                 }
                 TextData::TextMark m = editorWidget->createNewMarkFromCursor();
-                m.moveToLineAndColumn(newLineNumber, m.getColumn());
+                m.moveToLineAndWCharColumn(newLineNumber, m.getWCharColumn());
                 editorWidget->moveCursorToTextMarkAndAdjustVisibility(m);
                 editorWidget->rememberCursorPixX();
                 if (!wasNegative) {

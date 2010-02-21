@@ -2,7 +2,7 @@
 #
 #   LucED - The Lucid Editor
 #
-#   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+#   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 #
 #   This program is free software; you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License Version 2 as published
@@ -20,21 +20,86 @@
 #
 ###################################################################################
 
- 
-Build instructions
-==================
 
-WARNING: This pre-release version of LucED is experimental and might not
-work as expected.
 
-Requirements: The external lib libpcre is needed, see
+Requirements for the development build process:
+===============================================
+
+The following software must be installed:
+
+  - http://git-scm.com/
+  - http://www.gnu.org/software/make/
+  - http://www.gnu.org/software/autoconf/
+  - http://www.gnu.org/software/libtool/
+  - http://www.gnu.org/software/automake/
+  - C++ compiler and X11 development headers
+
+The LucED git repository already contains modified versions of:
+
+  - http://www.pcre.org/
+  - http://www.lua.org/
+
+
+
+Check out the LucED source code:
+================================
+
+Use the following commands to check out a LucED development 
+repository:
+
+   git clone git://git.berlios.de/luced
+or
+   git clone git://github.com/osch/luced.git
    
-   * http://www.pcre.org/
-   
-Try the following commands for building LucED:
+
+
+Build LucED in a development repository:
+========================================
+
+Simply invoke GNU-Make:
 
    cd editor
-   touch sandbox.mk
    make
+
+This will invoke a configure script and build a LucED executable.
+
+For building a debug executable the file sandbox.mk should contain 
+the following line:
+
+   CPP_DEFINES += -D DEBUG 
+
+
+
+Invoke LucED:
+=============
+
+To open the file test.txt simply type:
+
+   cd editor
+   ./luced test.txt
    
-See the file "Makefile" for possible adjustments for the "sandbox.mk" file.
+LucED doesn't have a file selector, every file must be opened throw 
+the shell command line.
+
+If the current directory and the home directory  both have no 
+directory named '.luced', a default '.luced' configuration directory 
+is written on program invokation in the home directory.
+
+
+
+Build a distributable tar.gz ball:
+==================================
+
+   cd editor
+   make release
+   cd release
+   ./configure
+   make dist
+   
+This will build a standard source tar ball that can be installed 
+with the notorious command sequence:
+
+   ./configure
+   make
+   make install
+   

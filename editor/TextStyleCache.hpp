@@ -47,6 +47,8 @@ public:
                             definition.getColorName());
     }
 
+    FontInfo::Ptr getFontInfo(const String& fontname);
+
 private:
     friend class SingletonInstance<TextStyleCache>;
     
@@ -56,6 +58,7 @@ private:
     {}
     
     ObjectArray<TextStyle::Ptr> list;
+    ObjectArray<FontInfo::Ptr> fontInfos;
 };
 
 } // namespace LucED

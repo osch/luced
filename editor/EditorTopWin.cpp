@@ -33,6 +33,7 @@
 #include "WeakPtr.hpp"
 #include "File.hpp"
 #include "FileException.hpp"
+#include "EncodingException.hpp"
 #include "LuaInterpreter.hpp"
 #include "LuaException.hpp"
 #include "ConfigException.hpp"
@@ -50,6 +51,7 @@
 #include "LucedLuaInterface.hpp"
 #include "GlobalLuaInterpreter.hpp"
 #include "QualifiedName.hpp"
+#include "EncodingConverter.hpp"
 
 using namespace LucED;
 
@@ -152,6 +154,9 @@ public:
             }
         } catch (FileException& ex) {
             editorTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                                             .setMessage(ex.getMessage()));
+        } catch (EncodingException& ex) {
+            editorTopWin->setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
                                                              .setMessage(ex.getMessage()));
         } catch (LuaException& ex) {
             ConfigErrorHandler::startWithCatchedException();
@@ -751,7 +756,7 @@ void EditorTopWin::setWindowTitle()
         title << EditorServer::getInstance()->getInstanceName() << ": ";
     }
     
-    title << file.getBaseName();
+    title << EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(file.getBaseName());
 
     if (textData->getModifiedFlag() == true
      && textData->isReadOnly())
@@ -762,7 +767,9 @@ void EditorTopWin::setWindowTitle()
     } else if (textData->getModifiedFlag() == true) {
         title << " (modified)";
     }
-    title << " - " << file.getDirName() << "/ ["
+    title << " - " 
+          << EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(file.getDirName())
+          << "/ ["
           << System::getInstance()->getUserName() << "@" 
           << System::getInstance()->getHostName() << "]";
 
@@ -797,6 +804,9 @@ void EditorTopWin::saveAndClose()
         }
     } catch (FileException& ex) {
         setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                           .setMessage(ex.getMessage()));
+    } catch (EncodingException& ex) {
+        setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
                                            .setMessage(ex.getMessage()));
     } catch (LuaException& ex) {
         ConfigErrorHandler::startWithCatchedException();
@@ -914,6 +924,9 @@ bool EditorTopWin::UserDefinedActionMethods::invokeActionMethod(ActionId actionI
     catch (FileException& ex) {
         thisTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
                                                        .setMessage(ex.getMessage()));
+    } catch (EncodingException& ex) {
+        thisTopWin->setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
+                                                       .setMessage(ex.getMessage()));
     }
     catch (LuaException& ex) {
         ConfigErrorHandler::startWithCatchedException(actionId);
@@ -949,7 +962,7 @@ void EditorTopWin::gotoLineNumber(int lineNumber)
     if (lineNumber < 0) lineNumber = 0;
     
     TextData::TextMark m = textEditor->createNewMarkFromCursor();
-    m.moveToLineAndColumn(lineNumber, m.getColumn());
+    m.moveToLineAndWCharColumn(lineNumber, m.getWCharColumn());
     textEditor->moveCursorToTextMarkAndAdjustVisibility(m);
     textEditor->rememberCursorPixX();
     if (!wasNegative) {

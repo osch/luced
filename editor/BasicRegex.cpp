@@ -32,38 +32,40 @@ int BasicRegex::pcreCalloutCallback(pcre_callout_block* calloutBlock)
     CalloutData* d = static_cast<CalloutData*>(calloutBlock->callout_data);
     return d->calloutFunction(d->object, calloutBlock);
 }
-    
-    
-BasicRegex::BasicRegex(const String& expr, CreateOptions createOptions)
+
+
+void BasicRegex::initialize(const char* expr, CreateOptions createOptions)
 {
     pcre_callout = pcreCalloutCallback;
 
     if (pcreCharTable == NULL) {
         pcreCharTable = pcre_maketables();
     }
-    const char *errortext;
+    const char* errortext;
     int errorpos;
 
-    re = pcre_compile(expr.toCString(), createOptions.getOptions(), &errortext, &errorpos, BasicRegex::pcreCharTable);
+    re = pcre_compile(expr, 
+                      createOptions.getOptions()|PCRE_UTF8|PCRE_NO_UTF8_CHECK, 
+                      &errortext,
+                      &errorpos, 
+                      BasicRegex::pcreCharTable);
     if (re == NULL) {
         throw RegexException(errortext, errorpos);
     }
     pcre_refcount(re, +1);
 }
 
+    
+    
+BasicRegex::BasicRegex(const String& expr, CreateOptions createOptions)
+{
+    initialize(expr.toCString(), createOptions);
+}
+
 
 BasicRegex::BasicRegex(const ByteArray& expr, CreateOptions createOptions)
 {
-    pcre_callout = pcreCalloutCallback;
-
-    const char *errortext;
-    int errorpos;
-
-    re = pcre_compile(expr.toCStr(), createOptions.getOptions(), &errortext, &errorpos, BasicRegex::pcreCharTable);
-    if (re == NULL) {
-        throw RegexException(errortext, errorpos);
-    }
-    pcre_refcount(re, +1);
+    initialize(expr.toCString(), createOptions);
 }
 
 
@@ -76,7 +78,7 @@ BasicRegex::BasicRegex(const BasicRegex& src)
 
 BasicRegex& BasicRegex::operator=(const BasicRegex& src)
 {
-    pcre *oldRe = re;
+    pcre* oldRe = re;
     re = src.re;
     if (re != NULL) {
         pcre_refcount(re, +1);
@@ -116,7 +118,7 @@ int BasicRegex::getStringNumber(const String& substringName) const
 int BasicRegex::getStringNumber(const ByteArray& substringName) const
 {
     ASSERT(re != NULL);
-    int rslt = pcre_get_stringnumber(re, substringName.toCStr());
+    int rslt = pcre_get_stringnumber(re, substringName.toCString());
     if (rslt == PCRE_ERROR_NOSUBSTRING) {
         throw RegexException(String() << "named substring '" << substringName.toString() << "' not found");
     }

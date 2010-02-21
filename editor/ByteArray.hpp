@@ -19,15 +19,16 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef BYTEARRAY_H
-#define BYTEARRAY_H
+#ifndef BYTE_ARRAY_H
+#define BYTE_ARRAY_H
 
 #include "String.hpp"
 #include "String.hpp"
 
 #include "MemArray.hpp"
 
-namespace LucED {
+namespace LucED
+{
 
 class ByteArray : public MemArray<byte>
 {
@@ -36,11 +37,11 @@ public:
         append((const byte*) cstring, strlen(cstring));
         return *this;
     }
-    ByteArray& appendString(const String& String) {
-        append((const byte*) String.toCString(), String.getLength());
+    ByteArray& appendString(const String& s) {
+        append((const byte*) s.toCString(), s.getLength());
         return *this;
     }
-    const char* toCStr() const {
+    const char* toCString() const {
         if (getLength() <= 0 || (*this)[getLength() - 1] != 0) {
             mem.increaseTo(getLength() + 1);
             *mem.getPtr(getLength()) = 0;
@@ -64,4 +65,4 @@ public:
 
 } // namespace LucED
 
-#endif // BYTEARRAY_H
+#endif // BYTE_ARRAY_H

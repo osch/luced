@@ -31,8 +31,8 @@ using namespace LucED;
 
 void FileOpener::handleSkipFileButton()
 {
-    if (numberAndFileList.isValid() && numberAndFileList->getLength() > 0) {
-        numberAndFileList->remove(0);
+    if (fileParameterList.isValid() && fileParameterList->getLength() > 0) {
+        fileParameterList->remove(0);
     }
     if (lastTopWin.isValid()) {
         lastTopWin->requestCloseWindow(TopWin::CLOSED_SILENTLY);
@@ -60,7 +60,7 @@ void FileOpener::handleAbortButton()
         lastTopWin->requestCloseWindow(TopWin::CLOSED_SILENTLY);
         lastTopWin = NULL;
     }
-    numberAndFileList.invalidate();
+    fileParameterList.invalidate();
     isWaitingForMessageBox = false;
     openConfigFiles();
 }
@@ -79,10 +79,11 @@ void FileOpener::openFiles()
 
     ASSERT(!isWaitingForMessageBox)
 
-    while (numberAndFileList.isValid() && numberAndFileList->getLength() > 0)
+    while (fileParameterList.isValid() && fileParameterList->getLength() > 0)
     {
-        int    numberOfWindows  = numberAndFileList->get(0).numberOfWindows;
-        String fileName         = numberAndFileList->get(0).fileName;
+        int    numberOfWindows  = fileParameterList->get(0).numberOfWindows;
+        String fileName         = fileParameterList->get(0).fileName;
+        String encoding         = fileParameterList->get(0).encoding;
         String resolvedFileName = File(fileName).getAbsoluteNameWithResolvedLinks();
 
         if (numberOfWindows <= 0)
@@ -115,31 +116,44 @@ void FileOpener::openFiles()
 
                 try
                 {
-                    textData->loadFile(fileName);
+                    textData->loadFile(fileName, encoding);
                 }
-                catch (FileException& ex)
+                catch (BaseException& ex)
                 {
                     isWaitingForMessageBox = true;
                     
-                    if (ex.getErrno() == ENOENT)
+                    bool fileNotExisting = false;
+                    
+                    try
+                    {
+                        throw;
+                    }
+                    catch (FileException& ex)
+                    {
+                        fileNotExisting = (ex.getErrno() == ENOENT);
+                    }
+                    catch (BaseException& ex)
+                    {}
+                    
+                    if (fileNotExisting)
                     {
                         textData->setRealFileName(fileName);
                     }
                     else {
                         textData->setPseudoFileName(fileName);
                     }
-                    
+
                     lastTopWin = EditorTopWin::create(hilitedText);
 
                     MessageBoxParameter p;
                     
-                    if (numberAndFileList->getLength() > 1)
+                    if (fileParameterList->getLength() > 1)
                     {
                                         p.setTitle("Error opening files")
                                          .setMessage(ex.getMessage())
                                          .setAlternativeButton("A]bort all next files", newCallback(this, &FileOpener::handleAbortButton))
                                          .setCancelButton     ("S]kip to next file",    newCallback(this, &FileOpener::handleSkipFileButton));
-                        if (ex.getErrno() == ENOENT) {
+                        if (fileNotExisting) {
                                         p.setDefaultButton    ("C]reate this file",     newCallback(this, &FileOpener::handleCreateFileButton));
                         } else {
                                         p.setDefaultButton    ("R]etry",                newCallback(this, &FileOpener::openFiles));
@@ -149,7 +163,7 @@ void FileOpener::openFiles()
                                         p.setTitle("Error opening file")
                                          .setMessage(ex.getMessage())
                                          .setCancelButton     ("Ca]ncel",               newCallback(this, &FileOpener::handleAbortButton));
-                        if (ex.getErrno() == ENOENT && fileName.getLength() > 0) {
+                        if (fileNotExisting && fileName.getLength() > 0) {
                                         p.setDefaultButton    ("C]reate this file",     newCallback(this, &FileOpener::handleCreateFileButton));
                         } else {
                                         p.setDefaultButton    ("R]etry",                newCallback(this, &FileOpener::openFiles));
@@ -173,11 +187,11 @@ void FileOpener::openFiles()
             EditorTopWin::Ptr win = EditorTopWin::create(lastTopWin->getHilitedText());
             win->show();
         }
-        numberAndFileList->remove(0);
+        fileParameterList->remove(0);
         lastTopWin = NULL;
     }
-    if ((numberAndFileList.isInvalid() || numberAndFileList->getLength() == 0) && !isWaitingForMessageBox) {
-        numberAndFileList.invalidate();
+    if ((fileParameterList.isInvalid() || fileParameterList->getLength() == 0) && !isWaitingForMessageBox) {
+        fileParameterList.invalidate();
         openConfigFiles();
     }
 }

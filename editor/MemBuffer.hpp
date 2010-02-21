@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,10 +19,11 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef MEMBUFFER_H
-#define MEMBUFFER_H
+#ifndef MEM_BUFFER_HPP
+#define MEM_BUFFER_HPP
 
 #include "HeapMem.hpp"
+#include "RawPointable.hpp"
 #include "MemArray.hpp"
 
 namespace LucED {
@@ -31,7 +32,8 @@ namespace LucED {
  * Gap-buffer based array for objects that do not need constructors 
  * and destructors and can be copied by memmove.
  */
-template<typename T> class MemBuffer : private NonCopyable
+template<typename T> class MemBuffer : public RawPointable,
+                                       private NonCopyable
 {
 public:
 
@@ -84,7 +86,7 @@ public:
         long endPos = startPos + amount;
         ASSERT(0 <= startPos && startPos <= endPos
                 && endPos <= getLength());
-        if (gapPos < startPos || endPos <= gapPos) {
+        if (gapPos <= startPos || endPos <= gapPos) {
             return getPtr(startPos);
         } else {
             long newGap;
@@ -127,6 +129,10 @@ public:
     MemBuffer& append(const T& src) {
         *appendAmount(1) = src;
         return *this; 
+    }
+    MemBuffer& append(const T* source, long sourceLength) {
+        insert(getLength(), source, sourceLength);
+        return *this;
     }
     MemBuffer& removeAmount(long pos, long amount) {
         ASSERT(0 <= pos && pos <= getLength());
@@ -193,4 +199,4 @@ private:
 } // namespace LucED
 
 
-#endif // MEMBUFFER_H
+#endif // MEM_BUFFER_HPP

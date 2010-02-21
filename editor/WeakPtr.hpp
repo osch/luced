@@ -65,10 +65,14 @@ public:
         , heapObjectCounters(HeapObjectRefManipulator::getHeapObjectCounters(ptr))
 #endif
     {
+        ASSERT(this != &src);
         HeapObjectRefManipulator::incWeakCounter(getHeapObjectCounters());
     }
     
-    template<class S> WeakPtr(const WeakPtr<S>& src) {
+    template<class S
+            > 
+    WeakPtr(const WeakPtr<S>& src)
+    {
         if (src.isValid()) {
             ptr = src.getRawPtr();
 #ifdef WEAK_PTR_HAS_EXTRA_PTR_TO_COUNTERS    

@@ -21,15 +21,21 @@
 
 #include <limits.h>
 
+#include "util.hpp"
 #include "TextData.hpp"
 #include "EventDispatcher.hpp"
 #include "File.hpp"
+#include "EncodingConverter.hpp"
+#include "EncodingException.hpp"
+#include "System.hpp"
 
 using namespace std;
 using namespace LucED;
 
 TextData::TextData() 
-        : modifiedFlag(false),
+        : buffer(),
+          utf8Parser(&buffer),
+          modifiedFlag(false),
           viewCounter(0),
           hasHistoryFlag(false),
           isReadOnlyFlag(false),
@@ -45,11 +51,21 @@ TextData::TextData()
     EventDispatcher::getInstance()->registerUpdateSource(newCallback(this, &TextData::flushPendingUpdates));
 }
 
-void TextData::loadFile(const String& filename)
+void TextData::loadFile(const String& filename, const String& encoding)
 {
+    fileContentEncoding = encoding;
+
     File file(filename);
 
     file.loadInto(buffer);
+    
+    EncodingConverter c(fileContentEncoding, "UTF-8");
+    
+    if (c.isConvertingBetweenDifferentCodesets())
+    {
+        c.convertInPlace(&buffer);
+    }
+    
     long len = buffer.getLength();
     byte* ptr = buffer.getTotalAmount();
 
@@ -61,13 +77,12 @@ void TextData::loadFile(const String& filename)
     this->beginChangedPos = 0;
     this->changedAmount = len;
     this->oldEndChangedPos = 0;
-    this->fileName = file.getAbsoluteName();
-    fileNameListeners.invokeAllCallbacks(this->fileName);
+    this->fileName               = file.getAbsoluteName();
+    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(fileName);
+    fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);
 
-    if (modifiedFlag == true) {
-        modifiedFlag = false;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-    }
+    setModifiedFlag(false);
+
     this->fileInfo = file.getInfo();
     this->modifiedOnDiskFlag = false;
     this->ignoreModifiedOnDiskFlag = false;
@@ -84,13 +99,13 @@ namespace
     struct LineAndColumn
     {
         LineAndColumn()
-            : line(0), column(0)
+            : line(0), wcharColumn(0)
         {}
-        LineAndColumn(long line, long column)
-            : line(line), column(column)
+        LineAndColumn(long line, long wcharColumn)
+            : line(line), wcharColumn(wcharColumn)
         {}
         long line;
-        long column;
+        long wcharColumn;
     };
 }
 
@@ -106,7 +121,7 @@ void TextData::reloadFile()
     for (long i = 0; i < marks.getLength(); ++i) {
         if (marks[i].inUseCounter > 0) {
             oldMarkPositions.append(LineAndColumn(marks[i].line,
-                                                  marks[i].column));
+                                                  getWCharColumn(marks[i])));
         } else {
             oldMarkPositions.append(LineAndColumn(0, 0));
         }
@@ -114,6 +129,14 @@ void TextData::reloadFile()
     
     buffer.clear();
     file.loadInto(buffer);
+
+    EncodingConverter c(fileContentEncoding, "UTF-8");
+    
+    if (c.isConvertingBetweenDifferentCodesets())
+    {
+        c.convertInPlace(&buffer);
+    }
+
     long len = buffer.getLength();
     byte* ptr = buffer.getTotalAmount();
 
@@ -132,14 +155,12 @@ void TextData::reloadFile()
 
     for (long i = 0; i < marks.getLength(); ++i) {
         if (marks[i].inUseCounter > 0) {
-            moveMarkToLineAndColumn(MarkHandle(i), oldMarkPositions[i].line,
-                                                   oldMarkPositions[i].column);
+            moveMarkToLineAndWCharColumn(MarkHandle(i), oldMarkPositions[i].line,
+                                                        oldMarkPositions[i].wcharColumn);
         }
     }
-    if (modifiedFlag == true) {
-        modifiedFlag = false;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-    }
+    setModifiedFlag(false);
+
     this->fileInfo = file.getInfo();
     this->modifiedOnDiskFlag = false;
     this->ignoreModifiedOnDiskFlag = false;
@@ -186,36 +207,66 @@ void TextData::checkFileInfo()
 void TextData::setRealFileName(const String& filename)
 {
     this->fileNamePseudoFlag = false;
-    this->fileName = File(filename).getAbsoluteName();
-    fileNameListeners.invokeAllCallbacks(this->fileName);
+    this->fileName               = File(filename).getAbsoluteName();
+    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(fileName);
+    fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);
     checkFileInfo();
 }
 
 void TextData::setPseudoFileName(const String& filename)
 {
     this->fileNamePseudoFlag = true;
-    this->fileName = File(filename).getAbsoluteName();
-    fileNameListeners.invokeAllCallbacks(this->fileName);
+    this->fileName               = File(filename).getAbsoluteName();
+    this->utf8FileNameForDisplay = EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(fileName);
+    fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);
 }
 
-void TextData::save()
+
+void TextData::setToSavedState()
 {
-    ASSERT(!fileNamePseudoFlag);
-
-    File file(fileName);
-    
-    file.storeData(buffer);
-
     if (hasHistory()) {
         history->setPreviousActionToSavedState();
     }
-    if (modifiedFlag == true) {
-        modifiedFlag = false;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-    }
+    setModifiedFlag(false);
+
     this->modifiedOnDiskFlag = false;
     this->ignoreModifiedOnDiskFlag = false;
-    this->fileInfo = file.getInfo();
+    this->fileInfo = File(fileName).getInfo();
+}
+
+
+void TextData::save()
+{
+    try
+    {
+        ASSERT(!fileNamePseudoFlag);
+    
+        File file(fileName);
+        
+        EncodingConverter c("UTF-8", fileContentEncoding);
+        
+        if (c.isConvertingBetweenDifferentCodesets())
+        {
+            c.convertToFile(buffer, file);
+        }
+        else {
+            file.storeData(buffer);
+        }
+
+        setToSavedState();
+    }
+    catch (EncodingException& ex)
+    {
+        setToSavedState();
+
+        throw;
+    }
+    catch (BaseException& ex)
+    {
+        this->ignoreModifiedOnDiskFlag = true;
+        
+        throw;
+    }
 }
 
 TextData::TextMark TextData::createNewMark() {
@@ -230,8 +281,9 @@ TextData::TextMark TextData::createNewMark() {
     }
     marks[i].inUseCounter = 0;
     marks[i].pos          = 0;
-    marks[i].column       = 0;
     marks[i].line         = 0;
+    marks[i].byteColumn   = 0;
+    marks[i].wcharColumn  = 0;
     return TextMark(this, i);
 }
 
@@ -242,9 +294,10 @@ TextData::TextMark TextData::createNewMark(MarkHandle src)
 
     TextMark rslt = createNewMark();
     TextMarkData& rsltMark = marks[rslt.index];
-    rsltMark.pos    = srcMark.pos;
-    rsltMark.column = srcMark.column;
-    rsltMark.line   = srcMark.line;
+    rsltMark.pos         = srcMark.pos;
+    rsltMark.line        = srcMark.line;
+    rsltMark.byteColumn  = srcMark.byteColumn;
+    rsltMark.wcharColumn = srcMark.wcharColumn;
     return rslt;
 }
 
@@ -256,7 +309,8 @@ void TextData::updateMarks(
     long newEndChangedPos = oldEndChangedPos + changedAmount;
     bool endColCalculated = false;
     bool beginColCalculated = false;
-    long beginColumns = 0, endColumns = 0;
+    long beginByteColumns = 0;
+    long endByteColumns = 0;
     
     ASSERT(beginChangedPos <= oldEndChangedPos);
     ASSERT(beginChangedPos <= oldEndChangedPos + changedAmount);
@@ -264,32 +318,47 @@ void TextData::updateMarks(
     for (long i = 0; i < marks.getLength(); ++i) {
         if (marks[i].inUseCounter > 0) {
             if (marks[i].pos <= beginChangedPos) {
-                continue;
+                goto next;
             }
             if (marks[i].pos >= oldEndChangedPos) {
-                if (marks[i].pos   - oldEndChangedPos > marks[i].column) {
+                if (marks[i].pos   - oldEndChangedPos > marks[i].byteColumn) {
                     marks[i].pos  += changedAmount;
                     marks[i].line += changedLineNumberAmount;
                 } else {
                     if (!endColCalculated) {
                         endColCalculated = true;
-                        endColumns = newEndChangedPos - getThisLineBegin(newEndChangedPos);
+                        endByteColumns = newEndChangedPos - getThisLineBegin(newEndChangedPos);
                     }
-                    marks[i].column = marks[i].pos - oldEndChangedPos + endColumns;
-                    marks[i].pos   += changedAmount;
-                    marks[i].line  += changedLineNumberAmount;
+                    marks[i].byteColumn  = marks[i].pos - oldEndChangedPos + endByteColumns;
+                    marks[i].pos        += changedAmount;
+                    marks[i].line       += changedLineNumberAmount;
+                    marks[i].wcharColumn = -1;
                 }
-                continue;
+                goto next;
             }
             if (!beginColCalculated) {
                 long bol = getThisLineBegin(beginChangedPos);
                 beginColCalculated = true;
-                beginColumns = beginChangedPos - bol;
+                beginByteColumns = beginChangedPos - bol;
             }
-            marks[i].pos    = beginChangedPos;
-            marks[i].column = beginColumns;
-            marks[i].line   = beginLineNumber;
+            marks[i].pos         = beginChangedPos;
+            marks[i].line        = beginLineNumber;
+            marks[i].byteColumn  = beginByteColumns;
+            marks[i].wcharColumn = -1;
             ASSERT(marks[i].pos <= this->getLength());
+        next:
+            {
+                long p = marks[i].pos;
+                long wcharBegin = getBeginOfWChar(p);
+                if (p != wcharBegin)
+                {
+                    if (p >= beginChangedPos && wcharBegin <= newEndChangedPos)
+                    {
+                        marks[i].pos         = wcharBegin;
+                        marks[i].byteColumn -= (p - wcharBegin);
+                    }
+                }
+            }
         }
     }
 }
@@ -318,27 +387,39 @@ inline long TextData::internalInsertAtMark(MarkHandle m, const byte* insertBuffe
             long pos = mark.pos;
     
             buffer.insert(pos, insertBuffer, length);
-    
-            if (pos < this->beginChangedPos) {
-                this->beginChangedPos = pos;
-                this->changedAmount  += length;
-                if (pos > this->oldEndChangedPos) {
-                    this->oldEndChangedPos = pos;
-                }
-            } else if (pos < this->oldEndChangedPos + this->changedAmount) {
-                this->changedAmount  += length;
-            } else {
-                this->oldEndChangedPos += pos - (this->oldEndChangedPos + this->changedAmount);
-                this->changedAmount  += length;
-            }
+
             this->numberLines += lineCounter;
-            updateMarks(pos, pos, length, lineNumber, lineCounter);
+
+            // Affected positions for wchar handling
+            long b2    = getBeginOfWChar(pos);
+            long n2    = getEndOfWChar(pos + length); 
+            long o2    = n2 - length;
+            long a2    = n2 - o2;
+            
+            recalculateChangeMarker(b2, o2, a2);
+
+            updateMarks(b2, o2, a2, lineNumber, lineCounter);
         }
         return length;
     }
     else {
         return 0;
     }
+}
+
+inline void TextData::recalculateChangeMarker(long b2, long o2, long a2)
+{
+    long b1 = this->beginChangedPos;
+    long o1 = this->oldEndChangedPos;
+    long a1 = this->changedAmount;
+    
+    long b3 = util::minimum(b1, b2);
+    long o3 = util::maximum(o1, o2 - a1);
+    long a3 = a1 + a2;
+    
+    this->beginChangedPos  = b3;
+    this->oldEndChangedPos = o3;
+    this->changedAmount    = a3;
 }
 
 
@@ -412,10 +493,8 @@ long TextData::undo(MarkHandle m)
             } while (!history->isPreviousActionSectionSeperator());
     
             bool newModifiedFlag = !history->isPreviousActionSavedState();
-            if (newModifiedFlag != modifiedFlag) {
-                modifiedFlag = newModifiedFlag;
-                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-            }
+
+            setModifiedFlag(newModifiedFlag);
         }
         if (epos >= spos) {
             moveMarkToPos(m, spos);
@@ -498,10 +577,8 @@ long TextData::redo(MarkHandle m)
             } while (!history->isLastAction() && !history->isPreviousActionSectionSeperator());
     
             bool newModifiedFlag = !history->isPreviousActionSavedState();
-            if (newModifiedFlag != modifiedFlag) {
-                modifiedFlag = newModifiedFlag;
-                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-            }
+
+            setModifiedFlag(newModifiedFlag);
         }
         if (epos >= spos) {
             moveMarkToPos(m, spos);
@@ -530,10 +607,7 @@ long TextData::insertAtMark(MarkHandle m, const byte* insertBuffer, long length)
             }
             internalInsertAtMark(m, insertBuffer, length);
     
-            if (modifiedFlag == false) {
-                modifiedFlag = true;
-                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-            }
+            setModifiedFlag(true);
         }
         return length;
     }
@@ -561,24 +635,18 @@ inline void TextData::internalRemoveAtMark(MarkHandle m, long amount)
         }
     
         buffer.removeAmount(mark.pos, amount);
-        
-        long newEndChangedPos = this->oldEndChangedPos + this->changedAmount;
-        if (newEndChangedPos < pos + amount) {
-            newEndChangedPos = pos + amount;
-            this->oldEndChangedPos = newEndChangedPos - this->changedAmount;
-        }
-        this->changedAmount -= amount;
-        
-        if (pos < this->beginChangedPos) {
-            this->beginChangedPos = pos;
-        }
+
+        // Affected positions for wchar handling
+        long b2   = getBeginOfWChar(pos);
+        long n2   = getEndOfWChar(pos); 
+        long o2   = n2 + amount;
+        long a2   = n2 - o2;
+
         this->numberLines -= lineCounter;
-        updateMarks(pos, pos + amount, -amount, lineNumber, -lineCounter);
-    
-        if (modifiedFlag == false) {
-            modifiedFlag = true;
-            changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-        }
+
+        recalculateChangeMarker(b2, o2, a2);
+
+        updateMarks(b2, o2, a2, lineNumber, -lineCounter);
     }
 }
 
@@ -606,10 +674,7 @@ void TextData::removeAtMark(MarkHandle m, long amount)
             }
             internalRemoveAtMark(m, amount);
     
-            if (modifiedFlag == false) {
-                modifiedFlag = true;
-                changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-            }
+            setModifiedFlag(true);
         }
     }
 }
@@ -645,14 +710,11 @@ void TextData::reset()
         history->clear();
     }
 
-    if (modifiedFlag == false) {
-        modifiedFlag = true;
-        changedModifiedFlagListeners.invokeAllCallbacks(modifiedFlag);
-    }
+    setModifiedFlag(true);
 }
 
 
-void TextData::moveMarkToLineAndColumn(MarkHandle m, long newLine, long newColumn)
+void TextData::moveMarkToBeginOfLine(MarkHandle m, long newLine)
 {
     if (newLine >= numberLines) {
         newLine = numberLines - 1;
@@ -689,48 +751,73 @@ void TextData::moveMarkToLineAndColumn(MarkHandle m, long newLine, long newColum
     } else {
         mark.pos = getThisLineBegin(mark.pos);
     }
-    ASSERT(isBeginOfLine(mark.pos));
     mark.line   = newLine;
-    int c = 0;
-    for (int i = mark.pos; !isEndOfLine(i) && i < mark.pos + newColumn; ++i) {
-        ++c;
-    }
-    mark.pos   += c;
-    mark.column = c;
+
+    ASSERT(isBeginOfLine(mark.pos));
 }
+
+void TextData::moveMarkToLineAndWCharColumn(MarkHandle m, long newLine, long newWCharColumn)
+{
+    moveMarkToBeginOfLine(m, newLine);
+
+    TextMarkData& mark = marks[m.index];
+
+    long c = 0;
+    long i = mark.pos;
+    while (!isEndOfLine(i) && c < newWCharColumn) {
+        ++c;
+        i = getNextWCharPos(i);
+    }
+    mark.byteColumn  = i - mark.pos;
+    mark.pos         = i;
+    mark.wcharColumn = newWCharColumn;
+}
+
 
 void TextData::moveMarkToBeginOfLine(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos = getThisLineBegin(mark.pos);
-    mark.pos = pos;
-    mark.column = 0;
+    long pos           = getThisLineBegin(mark.pos);
+    mark.pos           = pos;
+    mark.byteColumn    = 0;
+    mark.wcharColumn   = 0;
 }
 
 void TextData::moveMarkToEndOfLine(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos = getThisLineEnding(mark.pos);
-    mark.column += pos - mark.pos;
-    mark.pos = pos;
+
+    long p1          = mark.pos;
+    long p           = p1;
+    long wcharColumn = getWCharColumn(m);
+
+    while (!isEndOfLine(p)) {
+        p = getNextWCharPos(p);
+        ++wcharColumn;
+    }
+    mark.byteColumn += p - p1;
+    mark.pos         = p;
+    mark.wcharColumn = wcharColumn;
 }
 
 void TextData::moveMarkToNextLineBegin(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos = getNextLineBegin(mark.pos);
-    mark.line += 1;
-    mark.pos = pos;
-    mark.column = 0;
+    long pos           = getNextLineBegin(mark.pos);
+    mark.line         += 1;
+    mark.pos           = pos;
+    mark.byteColumn    = 0;
+    mark.wcharColumn   = 0;
 }
 
 void TextData::moveMarkToPrevLineBegin(MarkHandle m)
 {
     TextMarkData& mark = marks[m.index];
-    long pos = getPrevLineBegin(mark.pos);
-    mark.line -= 1;
-    mark.pos = pos;
-    mark.column = 0;
+    long pos         = getPrevLineBegin(mark.pos);
+    mark.line       -= 1;
+    mark.pos         = pos;
+    mark.byteColumn  = 0;
+    mark.wcharColumn = 0;
 }
 
 void TextData::moveMarkToPos(MarkHandle m, long pos)
@@ -750,7 +837,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos += 1;
                 }
             }
-            mark.column = pos - getThisLineBegin(pos);
+            fillInColumns(mark);
         } else {
             do {
                 if (isBeginOfLine(mark.pos)) {
@@ -760,7 +847,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos -= 1;
                 }
             } while (pos < mark.pos);
-            mark.column = pos - getThisLineBegin(pos);
+            fillInColumns(mark);
         }
     } 
     else if (mark.pos < pos)
@@ -776,7 +863,7 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos -= 1;
                 }
             }
-            mark.column = pos - getThisLineBegin(pos);
+            fillInColumns(mark);
         } else {
             do {
                 if (isEndOfLine(mark.pos)) {
@@ -786,9 +873,9 @@ void TextData::moveMarkToPos(MarkHandle m, long pos)
                     mark.pos += 1;
                 }
             } while (mark.pos < pos);
-            mark.column = pos - getThisLineBegin(pos);
+            fillInColumns(mark);
         }
-    }    
+    }
 }
 
 void TextData::moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark)
@@ -799,9 +886,10 @@ void TextData::moveMarkToPosOfMark(MarkHandle m, MarkHandle toMark)
         ASSERT(marks[toMark.index].inUseCounter > 0);
         TextMarkData& mark = marks[     m.index];
         TextMarkData& to   = marks[toMark.index];
-        mark.pos = to.pos;
-        mark.line = to.line;
-        mark.column = to.column;
+        mark.pos           = to.pos;
+        mark.line          = to.line;
+        mark.byteColumn    = to.byteColumn;
+        mark.wcharColumn   = to.wcharColumn;
     }
 }
 
@@ -834,7 +922,7 @@ void TextData::registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback)
 void TextData::registerFileNameListener(Callback<const String&>::Ptr fileNameCallback)
 {
     fileNameListeners.registerCallback(fileNameCallback);
-    fileNameCallback->call(fileName);
+    fileNameCallback->call(utf8FileNameForDisplay);
 }
 
 void TextData::registerReadOnlyListener(Callback<bool>::Ptr readOnlyCallback)

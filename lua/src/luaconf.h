@@ -1,3 +1,37 @@
+/* =================================================================== */
+/* consider definitions from configure script */
+
+#include "config.h"
+
+#if HAVE_DECL_ISATTY
+  #define LUA_USE_ISATTY
+#endif
+
+#if HAVE_DECL_MKSTEMP
+  #define LUA_USE_MKSTEMP
+#endif
+  
+#if HAVE_DECL__LONGJMP
+  #define LUA_USE_ULONGJMP
+#endif
+
+#if HAVE_DECL_POPEN
+  #define LUA_USE_POPEN
+#endif
+
+#if HAVE_DECL_DLOPEN
+  #define LUA_USE_DLOPEN
+#endif
+
+#if HAVE_DECL_NSLINKMODULE
+  #define LUA_DL_DYLD
+#endif
+
+#if HAVE_DECL_READLINE
+  #define LUA_USE_READLINE
+#endif
+
+/* =================================================================== */
 /*
 ** -Id: luaconf.h,v 1.82.1.7 2008/02/11 16:25:08 roberto Exp -
 ** Configuration file for Lua

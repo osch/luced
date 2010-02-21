@@ -39,9 +39,9 @@ public:
 
     typedef OwningPtr<LabelWidget> Ptr;
 
-    static Ptr create(const String& leftText, const String& rightText = "")
+    static Ptr create(const String& labelText)
     {
-        return Ptr(new LabelWidget(leftText, rightText));
+        return Ptr(new LabelWidget(labelText));
     }
 
     void setDesiredMeasures(GuiElement::Measures m);
@@ -63,12 +63,11 @@ private: // GuiWidget::EventListener interface implementation
     virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
 
 private:
-   LabelWidget(const String& leftText, const String& rightText);
+    explicit LabelWidget(const String& labelText);
 
     void draw();
     
-    String leftText;
-    String rightText;
+    Char2bArray labelText;
     VerticalAdjustment::Type adjustment;
     int layoutHeight;
     bool hasForcedMeasuresFlag;

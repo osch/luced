@@ -22,21 +22,10 @@
 #ifndef HEADERS_HPP
 #define HEADERS_HPP
 
-#if defined(WIN32_GUI)
-
-    #include <windows.h>
-
-#elif defined(X11_GUI)
-
-    #include <X11/Xlib.h>
-    #include <X11/X.h>
-    #include <X11/Xutil.h>
-    #include <X11/Xatom.h>
-    #include <X11/keysym.h>
-
-#else
-    #error Either WIN32_GUI or X11_GUI must be defined.
-#endif
-
+#include <X11/Xlib.h>
+#include <X11/X.h>
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+#include <X11/keysym.h>
 
 #endif // HEADERS_HPP

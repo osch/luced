@@ -23,21 +23,72 @@
 #define HASH_MAP_HPP
 
 #include <sys/types.h>
-#include <ext/hash_map>
+
+#include "config.h"
+
+#if !defined(LUCED_USE_STD_UNORDERED_MAP)              \
+ && !defined(LUCED_USE_TR1_UNORDERED_MAP)              \
+ && !defined(LUCED_USE_EXT_HASH_MAP_UNDER_STD)         \
+ && !defined(LUCED_USE_EXT_HASH_MAP_UNDER_GNU_CXX)     \
+ && !defined(LUCED_USE_STD_MAP)
+
+    #if HAVE_UNORDERED_MAP 
+        #define                                   LUCED_USE_STD_UNORDERED_MAP           1
+
+    #elif    HAVE_TR1_UNORDERED_MAP \
+          && !UNORDERED_MAP_UNDER_TR1_IS_BROKEN
+        #define                                   LUCED_USE_TR1_UNORDERED_MAP           1
+    
+    #elif HAVE_EXT_HASH_MAP \
+       && HASH_MAP_UNDER_STD
+        #define                                   LUCED_USE_EXT_HASH_MAP_UNDER_STD      1
+    
+    #elif    HAVE_EXT_HASH_MAP \
+          && HASH_MAP_UNDER_GNU_CXX
+        #define                                   LUCED_USE_EXT_HASH_MAP_UNDER_GNU_CXX  1
+    
+    #else
+        #define                                   LUCED_USE_STD_MAP                     1
+    #endif
+
+#endif
+
+
+#if   LUCED_USE_STD_UNORDERED_MAP
+    
+    #include                                    <unordered_map>
+    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::unordered_map< k,v,h >
+
+#elif LUCED_USE_TR1_UNORDERED_MAP
+
+    #include                                    <tr1/unordered_map>
+    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::tr1::unordered_map< k,v,h >
+
+#elif LUCED_USE_EXT_HASH_MAP_UNDER_STD
+
+    #include                                    <ext/hash_map>
+    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::hash_map< k,v,h >
+
+#elif LUCED_USE_EXT_HASH_MAP_UNDER_GNU_CXX
+
+    #include                                    <ext/hash_map>
+    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      __gnu_cxx::hash_map< k,v,h >
+
+#elif LUCED_USE_STD_MAP
+
+    #include                                    <map>
+    #define LUCED_STD_HASH_MAP_TYPE(k,v,h)      std::map< k,v >
+
+#else
+    #error cannot determine standard map container
+#endif
+
 
 #include "String.hpp"
 #include "Nullable.hpp"
 
 namespace LucED
 {
-
-#if defined(HASH_MAP_UNDER_STD)
-using std::hash_map;
-#elif defined(HASH_MAP_UNDER_GNU_CXX)
-using __gnu_cxx::hash_map;
-#else
-#error Needs hash_map implementation
-#endif
 
 
 template<class T> class HashFunction;
@@ -103,6 +154,8 @@ template
 >
 class HashMap
 {
+private:
+    typedef LUCED_STD_HASH_MAP_TYPE(K,V,H) StdMapImpl;
 public:
     typedef Nullable<V> Value;
  
@@ -125,7 +178,7 @@ public:
         }
     private:
         friend class HashMap;
-        typedef typename hash_map<K,V,H>::const_iterator Iter;
+        typedef typename StdMapImpl::const_iterator Iter;
         Iterator(Iter begin, Iter end) : iter(begin), end(end)
         {}
         Iter iter;
@@ -139,7 +192,7 @@ public:
         map[key] = value;
     }
     Value get(const K& key) const {
-        typename hash_map<K,V,H>::const_iterator foundPair = map.find(key);
+        typename StdMapImpl::const_iterator foundPair = map.find(key);
         if (foundPair == map.end()) {
             return Value();
         } else {
@@ -151,7 +204,7 @@ public:
         return Iterator(map.begin(), map.end());
     }
     bool hasKey(const K& key) const {
-        typename hash_map<K,V,H>::const_iterator foundPair = map.find(key);
+        typename StdMapImpl::const_iterator foundPair = map.find(key);
         return foundPair != map.end();
     }
     void remove(const K& key) {
@@ -173,9 +226,10 @@ protected:
     {}
     
 private:
-    hash_map<K,V,H> map;
+    StdMapImpl map;
 };
 
+#undef LUCED_STD_HASH_MAP_TYPE
 
 } // namespace LucED
 
