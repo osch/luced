@@ -224,15 +224,7 @@ public:
         insertAtMark(createNewMark(), newContent);
     }
 
-    void setToData(const char* buffer, int length) {
-        clear();
-        insertAtMark(createNewMark(), (const byte*) buffer, length);
-    }
-
-    void setToData(const byte* buffer, int length) {
-        clear();
-        insertAtMark(createNewMark(), buffer, length);
-    }
+    void setToData(const char* buffer, int length, const String& encoding = "");
 
     const byte& operator[](long pos) const {
         return buffer[pos];

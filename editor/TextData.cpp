@@ -93,6 +93,20 @@ void TextData::loadFile(const String& filename, const String& encoding)
     }
 }
 
+void TextData::setToData(const char* buffer, int length, const String& encoding)
+{
+    clear();
+    insertAtMark(createNewMark(), (const byte*) buffer, length);
+
+    fileContentEncoding = encoding;
+    EncodingConverter c(fileContentEncoding, "UTF-8");
+
+    if (c.isConvertingBetweenDifferentCodesets())
+    {
+        c.convertInPlace(&this->buffer);
+    }
+    
+}
 
 namespace
 {
