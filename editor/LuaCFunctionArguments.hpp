@@ -52,21 +52,22 @@ public:
 
     LuaVarRef operator[](int i) const
     {
-        ASSERT(0 <= i && i < numberArgs);
+        ASSERT(0 <= i + offset && i + offset < numberArgs);
     #ifdef DEBUG
-        return LuaVarRef(luaAccess, i + 1, stackGeneration);
+        return LuaVarRef(luaAccess, i + 1 + offset, stackGeneration);
     #else
-        return LuaVarRef(luaAccess, i + 1);
+        return LuaVarRef(luaAccess, i + 1 + offset);
     #endif
     }
     
     bool has(int i) const {
+        i -= offset;
         return 0 <= i && i < numberArgs;
     }
     
     int getLength() const {
         ASSERT(isCorrect());
-        return numberArgs;
+        return numberArgs - offset;
     }
     
     LuaAccess getLuaAccess() const {
@@ -107,9 +108,10 @@ private:
     friend class LuaSingletonCMethod;
     
 
-    LuaCFunctionArguments(const LuaAccess& luaAccess)
+    explicit LuaCFunctionArguments(const LuaAccess& luaAccess, int offset = 0)
         : luaAccess(luaAccess),
-          numberArgs(lua_gettop(luaAccess.L))
+          numberArgs(lua_gettop(luaAccess.L)),
+          offset(offset)
     {
     #ifdef DEBUG
         if (numberArgs > 1) {
@@ -133,17 +135,9 @@ private:
     #endif
     }
     
-    void remove(int i) {
-        ASSERT(0 <= i && i < numberArgs);
-        lua_remove(luaAccess.L, i + 1);
-    #ifdef DEBUG
-        luaAccess.getLuaStackChecker()->truncateGenerationAtStackIndex(stackGeneration, numberArgs);
-    #endif
-        numberArgs -= 1;
-    }
-
     LuaAccess luaAccess;
     int       numberArgs;
+    const int offset;
     
 #ifdef DEBUG
     int stackGeneration;

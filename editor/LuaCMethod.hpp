@@ -103,7 +103,7 @@ private:
         int numberOfResults = 0;
         bool wasError = false;
         {
-            LuaCFunctionArguments args(luaAccess);
+            LuaCFunctionArguments args(luaAccess, 1);
 
             LuaVar errorHandler(luaAccess, LuaCClosure::create<&LuaInterpreter::errorHandlerFunction>());
             LuaInterpreter::LuaCFunctionAccess::setErrorHandlerStackIndex(luaInterpreter, errorHandler.getStackIndex());
@@ -112,11 +112,11 @@ private:
             {
                 const char* className = LuaClassRegistry::ClassAttributes<C>::getLuaClassName();
                 
-                if (args.getLength() < 1)
+                if (args.getLength() < 0)
                 {
                     LuaCMethodBase::throwInvalidNumberArgsError(className);
                 }
-                C* objectPtr = LuaCMethodBase::castDynamicToValidPtr<C>(args[0], 
+                C* objectPtr = LuaCMethodBase::castDynamicToValidPtr<C>(args[-1], 
                                                                         className);
                 
                 numberOfResults = (objectPtr->*M)(args).numberOfResults;

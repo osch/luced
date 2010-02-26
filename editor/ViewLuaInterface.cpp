@@ -49,7 +49,7 @@ LuaCFunctionResult ViewLuaInterface::setCursorPosition(const LuaCFunctionArgumen
     
     LuaCMethodArgChecker<long>::check(args);
     
-    long newPosition = args[1].toLong();
+    long newPosition = args[0].toLong();
     
     if (newPosition < 0) {
         newPosition = 0;
@@ -85,7 +85,7 @@ LuaCFunctionResult ViewLuaInterface::getColumn(const LuaCFunctionArguments& args
     
     LuaCMethodArgChecker<long>::check(args);
     
-    return LuaCFunctionResult(luaAccess) << e->getOpticalColumn(args[1].toLong());
+    return LuaCFunctionResult(luaAccess) << e->getOpticalColumn(args[0].toLong());
 }
 
 
@@ -97,7 +97,7 @@ LuaCFunctionResult ViewLuaInterface::insertAtCursor(const LuaCFunctionArguments&
     
     long totalInsertedLength = 0;
     
-    for (int i = 1; i < args.getLength(); ++i)
+    for (int i = 0; i < args.getLength(); ++i)
     {
         if (args[i].isString()) 
         {
@@ -125,12 +125,12 @@ LuaCFunctionResult ViewLuaInterface::insert(const LuaCFunctionArguments& args)
     
     LuaCMethodArgChecker<long, String>::check(args);
     
-    long  insertPos = args[1].toLong();
+    long  insertPos = args[0].toLong();
 
     m.moveToPos(insertPos);
 
-    long insertedLength = textData->insertAtMark(m, (const byte*) args[2].getStringPtr(),
-                                                                  args[2].getStringLength());
+    long insertedLength = textData->insertAtMark(m, (const byte*) args[1].getStringPtr(),
+                                                                  args[1].getStringLength());
     return LuaCFunctionResult(luaAccess) << insertedLength;
 }
 
@@ -184,8 +184,8 @@ LuaCFunctionResult ViewLuaInterface::getBytesAtCursor(const LuaCFunctionArgument
     long length = textData->getLength();
     long amount = 1;
     
-    if (args.getLength() >= 2 && args[1].isNumber()) {
-        amount = args[1].toLong();
+    if (args.getLength() >= 1 && args[0].isNumber()) {
+        amount = args[0].toLong();
     }
     if (pos + amount > length) {
         amount = length - pos;
@@ -211,8 +211,8 @@ LuaCFunctionResult ViewLuaInterface::getBytes(const LuaCFunctionArguments& args)
     
     LuaCMethodArgChecker<long,long>::check(args);
 
-    long pos    = args[1].toLong();
-    long end    = args[2].toLong();
+    long pos    = args[0].toLong();
+    long end    = args[1].toLong();
     long length = textData->getLength();
     
     long amount = end - pos;
@@ -243,12 +243,12 @@ void ViewLuaInterface::parseAndSetFindUtilOptions(const LuaCFunctionArguments& a
     {
         throw LuaArgException();
     }
-    String searchString  = args[1].toString();
-    long   startPosition = args[2].toLong();
+    String searchString  = args[0].toString();
+    long   startPosition = args[1].toLong();
     long   endPosition   = -1;
     String optionsString = "";
 
-    int index = 3;
+    int index = 2;
 
     if (index < args.getLength() && args[index].isNumber()) {
         endPosition = args[index].toLong();
@@ -384,7 +384,7 @@ LuaCFunctionResult ViewLuaInterface::executeAction(const LuaCFunctionArguments& 
 
     LuaCMethodArgChecker<String>::check(args);
 
-    String   actionName = args[1].toString();
+    String   actionName = args[0].toString();
     ActionId actionId   = ActionIdRegistry::getInstance()->getActionId(actionName);
 
     bool rslt = e->getKeyActionHandler()->invokeActionMethod(actionId);
@@ -425,11 +425,11 @@ LuaCFunctionResult ViewLuaInterface::replaceSelection(const LuaCFunctionArgument
 {
     LuaAccess luaAccess = args.getLuaAccess();
     
-    if (args.getLength() != 2 || !args[1].isString()) {
+    if (args.getLength() != 1 || !args[0].isString()) {
         throw LuaArgException();
     }
     
-    String arg = args[1].toString();
+    String arg = args[0].toString();
 
     TextData::TextMark m = e->createNewMarkFromCursor();
     
@@ -488,7 +488,7 @@ LuaCFunctionResult ViewLuaInterface::setCurrentActionCategory(const LuaCFunction
 
     LuaCMethodArgChecker<String>::check(args);
 
-    String category = args[1].toString();
+    String category = args[0].toString();
 
     if      (category == "NEWLINE") {
         e->setCurrentActionCategory(TextEditorWidget::ACTION_NEWLINE);

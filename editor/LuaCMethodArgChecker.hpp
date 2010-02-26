@@ -55,9 +55,9 @@ public:
 
     static bool isValid(const LuaCFunctionArguments& args)
     {
-        return    args.getLength() >= 1 + 2
-               && args[1].is<Type1>()
-               && args[2].is<Type2>();
+        return    args.getLength() >= 2
+               && args[0].is<Type1>()
+               && args[1].is<Type2>();
 
     }
 
@@ -83,9 +83,9 @@ class LuaCMethodArgChecker< Type1,Type2,OptionalArgs<Optional1,Optional2,Optiona
 {
 public:
 
-    static bool isValid(const LuaCFunctionArguments& args, int index = 1)
+    static bool isValid(const LuaCFunctionArguments& args, int index = 0)
     {
-        return    args.getLength() >= index + 2
+        return    args.getLength() > index + 1
                && args[index + 0].is<Type1>()
                && args[index + 1].is<Type2>();
 
@@ -93,7 +93,7 @@ public:
 
     static void check(const LuaCFunctionArguments& args)
     {
-        if (!isValid(args) || !OptionalArgs<Optional1,Optional2,Optional3>::isValid(args, 3))
+        if (!isValid(args) || !OptionalArgs<Optional1,Optional2,Optional3>::isValid(args, 2))
         {
             throw LuaArgException();
         }
@@ -113,9 +113,9 @@ public:
 
     static bool isValid(const LuaCFunctionArguments& args)
     {
-        return    args.getLength() == 1 + 2
-               && args[1].is<Type1>()
-               && args[2].is<Type2>();
+        return    args.getLength() == 2
+               && args[0].is<Type1>()
+               && args[1].is<Type2>();
 
     }
 
@@ -140,8 +140,8 @@ public:
 
     static bool isValid(const LuaCFunctionArguments& args)
     {
-        return    args.getLength() == 1 + 1
-               && args[1].is<Type1>();
+        return    args.getLength() == 1
+               && args[0].is<Type1>();
 
     }
 
