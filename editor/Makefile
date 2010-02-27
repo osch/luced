@@ -102,7 +102,8 @@ INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_PCRE_OPTS) $(INCL_EXTRA_OPTS)
 
 LUA_SCRIPTS            := functions             BuiltinActionDefinitions  BuiltinClassDefinitions
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
-                          LuaClassRegistry      LuaCClosure
+                          LuaClassRegistry      LuaCClosure               \
+                          LucedLuaInterface     ViewLuaInterface \
                           
 GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultConfig
                           

@@ -19,46 +19,55 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef LUCED_LUA_INTERFACE_HPP
-#define LUCED_LUA_INTERFACE_HPP
+#ifndef VIEW_LUA_INTERFACE_HPP
+#define VIEW_LUA_INTERFACE_HPP
 
 #include "HeapObject.hpp"
-#include "SingletonInstance.hpp"
+#include "OwningPtr.hpp"
+#include "RawPtr.hpp"
+#include "TextEditorWidget.hpp"
 #include "LuaCFunctionResult.hpp"
 #include "LuaCFunctionArguments.hpp"
-#include "ViewLuaInterface.hpp"
-#include "LuaArgException.hpp"
+#include "FindUtil.hpp"
+#include "LuaException.hpp"
 
 namespace LucED
 {
 
-class LucedLuaInterface : public HeapObject
+class ViewLuaInterface : public HeapObject
 {
 public:
-    static LucedLuaInterface* getInstance();
-
-    LuaCFunctionResult getModulePrefix(const LuaCFunctionArguments& args);
-
-    LuaCFunctionResult getCurrentView(const LuaCFunctionArguments& args);
-
-    LuaCFunctionResult resetModules(const LuaCFunctionArguments& args);
-
-    LuaCFunctionResult getLoadedPackageModules(const LuaCFunctionArguments& args);
-
-    LuaCFunctionResult toUpper(const LuaCFunctionArguments& args);
-    LuaCFunctionResult toLower(const LuaCFunctionArguments& args);
+    typedef OwningPtr<ViewLuaInterface> Ptr;
     
-    void setCurrentView(RawPtr<ViewLuaInterface> view) {
-        currentView = view;
+    static Ptr create(RawPtr<TextEditorWidget> e) {
+        return Ptr(new ViewLuaInterface(e));
     }
 
+@ local defs = require("BuiltinClassDefinitions")
+@ for _, def in ipairs(defs) do
+@   if def.name == "View" then
+@       for _, m in ipairs(def.methods) do
+    LuaCFunctionResult @(m.name)(const LuaCFunctionArguments& args);
+@       end
+@   end
+@ end
+
 private:
-    friend class SingletonInstance<LucedLuaInterface>;
-    static       SingletonInstance<LucedLuaInterface> instance;
+    ViewLuaInterface(RawPtr<TextEditorWidget> e)
+        : e(e),
+          textData(e->getTextData()),
+          findUtil(e->getTextData()),
+          m(e->getTextData()->createNewMark())
+    {}
     
-    WeakPtr<ViewLuaInterface> currentView;
+    void parseAndSetFindUtilOptions(const LuaCFunctionArguments& args);
+
+    RawPtr<TextEditorWidget> e;
+    RawPtr<TextData>         textData;
+    FindUtil                 findUtil;
+    TextData::TextMark       m;
 };
 
 } // namespace LucED
 
-#endif // LUCED_LUA_INTERFACE_HPP
+#endif // VIEW_LUA_INTERFACE_HPP
