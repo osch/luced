@@ -24,6 +24,8 @@
 #include "ClientServerUtil.hpp"
 #include "CommandlineInterpreter.hpp"
 #include "EventDispatcher.hpp"
+#include "DefaultConfig.hpp"
+#include "ProgramName.hpp"
 
 using namespace LucED;
 
@@ -94,6 +96,13 @@ void EditorClient::startWithCommandline(Commandline::Ptr commandline)
         
         String instanceName;
         
+        if (commandInterpreter.hasCloneDefaultConfig())
+        {
+            File dirName = DefaultConfig::writeCopyOfDefaultConfigFiles();
+            printf("[%s]: Cloned default config package to %s\n",
+                   ProgramName::get().c_str(),
+                   dirName.getAbsoluteName().toCString());
+        }
         if (commandInterpreter.hasInstanceName()) {
             instanceName = commandInterpreter.getInstanceName();
         } else {

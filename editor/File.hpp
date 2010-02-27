@@ -112,6 +112,10 @@ public:
     String getBaseName() const;
     
     String getDirName() const;
+    
+    File getDir() const {
+        return File(getDirName());
+    }
 
     void loadInto(ByteBuffer& buffer) const;
     

@@ -46,20 +46,20 @@ LuaVar ConfigPackageLoader::loadPackageModule(LuaAccess     luaAccess,
     
     if (mode == MODE_NORMAL)
     {
-        File packagesDir(configDir, "packages");
-        
-        rslt = luaAccess.loadFile(String() << packagesDir << "/" << moduleFileNamePart << ".lua");
+        rslt = luaAccess.loadFile(String() << configDir << "/" << moduleFileNamePart << ".lua");
         
         if (rslt.isNil()) {
-            rslt = luaAccess.loadFile(String() << packagesDir << "/" << moduleFileNamePart << "/init.lua");
+            rslt = luaAccess.loadFile(String() << configDir << "/" << moduleFileNamePart << "/init.lua");
         }
-    } else {
-        String pseudoFileName = String() << "packages/" << moduleFileNamePart << ".lua";
+    }
+    if (rslt.isNil())
+    {
+        String pseudoFileName = String() << moduleFileNamePart << ".lua";
 
         const char* script = DefaultConfig::getDefaultModule(pseudoFileName);
         
         if (script == NULL) {
-            pseudoFileName = String() << "packages/" << moduleFileNamePart << "/init.lua";
+            pseudoFileName = String() << moduleFileNamePart << "/init.lua";
             script = DefaultConfig::getDefaultModule(pseudoFileName);
         }
         if (script != NULL) {

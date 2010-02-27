@@ -23,6 +23,7 @@
 #define DEFAULT_CONFIG_HPP
 
 #include "String.hpp"
+#include "File.hpp"
 
 namespace LucED
 {
@@ -33,6 +34,9 @@ public:
     static void createMissingConfigFiles();
     
     static const char* getDefaultModule(const String& pseudoFileName);
+    
+    static File getCreatedConfigDirectory();
+    static File writeCopyOfDefaultConfigFiles();
 };
 
 } // namespace LucED

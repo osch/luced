@@ -39,7 +39,8 @@ public:
     typedef HeapObjectArray<String> Commandline;
 
     CommandlineInterpreter()
-        : hasInstanceNameFlag(false)
+        : hasInstanceNameFlag(false),
+          hasCloneDefaultConfigFlag(false)
     {}
 
     void doCommandline(Commandline::Ptr commandline)
@@ -52,7 +53,7 @@ public:
             int     numberOfWindowsForThisFile = -1;
             String  encodingForThisFile;
             
-            while (i < argc && commandline->get(i).startsWith("-") && !commandline->get(i).startsWith("--"))
+            while (i < argc && commandline->get(i).startsWith("-"))
             {
                 // Parameter is a command option
             
@@ -90,6 +91,20 @@ public:
                     
                     encodingForThisFile = commandline->get(i);
                 }
+                else if (commandline->get(i) == "-f")
+                {
+                    i += 1;
+
+                    if (i >= argc) {
+                        throw CommandlineException("Command option -f needs additional argument.");
+                    }
+
+                    break; // next argument is filename
+                }
+                else if (commandline->get(i) == "--clone-default-config")
+                {
+                    hasCloneDefaultConfigFlag = true;
+                }
                 else
                 {
                     throw CommandlineException(String() << "Unknown command option '" << commandline->get(i) << "'.");
@@ -101,11 +116,8 @@ public:
             {
                 // Parameter is a filename
                 
-                if (commandline->get(i)[0] == '-') {
-                    fileName = commandline->get(i).getTail(1);  // "--fname" means filename == "-fname"
-                } else {
-                    fileName = commandline->get(i);
-                }
+                fileName = commandline->get(i);
+
                 fileName = File(fileName).getAbsoluteName();
                 commandline->set(i, fileName); // replace with absolute filename in command array
                 actor.openFile(numberOfWindowsForThisFile, fileName, encodingForThisFile);
@@ -128,11 +140,15 @@ public:
     bool hasInstanceName() const {
         return hasInstanceNameFlag;
     }
+    bool hasCloneDefaultConfig() const {
+        return hasCloneDefaultConfigFlag;
+    }
 
 private:
     Actor actor;
     String instanceName;
     bool hasInstanceNameFlag;
+    bool hasCloneDefaultConfigFlag;
 };
 
 } // namespace LucED

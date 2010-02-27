@@ -20,7 +20,6 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "DefaultConfig.hpp"
-#include "File.hpp"
 #include "System.hpp"
 
 @ local stringLiteral = require("functions").stringLiteral
@@ -30,7 +29,8 @@ using namespace LucED;
 namespace // anonymous
 {
 
-static const int NUMBER_CONFIG_FILES = @(#CONFIG_FILES);
+static const int NUMBER_ROOT_CONFIG_FILES            = @(#ROOT_CONFIG_FILES);
+static const int NUMBER_DEFAULT_PACKAGE_CONFIG_FILES = @(#DEFAULT_PACKAGE_CONFIG_FILES);
 
 struct DefaultConfigEntry
 {
@@ -38,25 +38,34 @@ struct DefaultConfigEntry
     const char* fileContent;
 };
 
-static DefaultConfigEntry defaultConfigEntries[NUMBER_CONFIG_FILES] =
-{
-@ for i = 1, #CONFIG_FILES do
-@   local fileName = CONFIG_FILES[i]
+@ local function buildConfigEntries(fileNames)
+@   for i = 1, #fileNames do
+@     local fileName = fileNames[i]
     {
         @(stringLiteral(fileName)),
-@
-@   for line in io.lines(".luced/"..fileName) do
+@  
+@     for line in io.lines(".luced/"..fileName) do
         @(stringLiteral(line.."\n"))
-@   end
+@     end
     }
-    @(i < #CONFIG_FILES and "," or "")
+    @(i < #fileNames and "," or "")
+@   end
 @ end
+
+static DefaultConfigEntry rootConfigEntries[NUMBER_ROOT_CONFIG_FILES] =
+{
+    @(buildConfigEntries(ROOT_CONFIG_FILES))
+};
+
+static DefaultConfigEntry defaultPackageConfigEntries[NUMBER_DEFAULT_PACKAGE_CONFIG_FILES] =
+{
+    @(buildConfigEntries(DEFAULT_PACKAGE_CONFIG_FILES))
 };
 
 } // anonymous namespace
 
 
-void DefaultConfig::createMissingConfigFiles()
+File DefaultConfig::getCreatedConfigDirectory()
 {
     File configDirectory(".luced");
     
@@ -67,26 +76,60 @@ void DefaultConfig::createMissingConfigFiles()
     if (!configDirectory.exists())
     {
         configDirectory.createDirectory();
+    }
+    return configDirectory;
+}
+
+void DefaultConfig::createMissingConfigFiles()
+{
+    File configDirectory = getCreatedConfigDirectory();
+
+    for (int i = 0; i < NUMBER_ROOT_CONFIG_FILES; ++i)
+    {
+        File thisFile(configDirectory, rootConfigEntries[i].fileName);
         
-        for (int i = 0; i < NUMBER_CONFIG_FILES; ++i)
-        {
-            File thisFile(configDirectory, defaultConfigEntries[i].fileName);
-            File thisDir = thisFile.getDirName();
-            thisDir.createDirectory();
-            thisFile.storeData(defaultConfigEntries[i].fileContent);
+        if (!thisFile.exists()) {
+            thisFile.getDir().createDirectory();
+            thisFile.storeData(rootConfigEntries[i].fileContent);
         }
     }
 }
+
+
+File DefaultConfig::writeCopyOfDefaultConfigFiles()
+{
+    File configDirectory = getCreatedConfigDirectory();
+
+    for (int counter = 1; true; ++counter)
+    {
+        File cloneDir(configDirectory, String() << "default-" << counter);
+
+        if (!cloneDir.exists())
+        {
+            for (int i = 0; i < NUMBER_DEFAULT_PACKAGE_CONFIG_FILES; ++i)
+            {
+                String pseudoName = defaultPackageConfigEntries[i].fileName;
+                ASSERT(pseudoName.startsWith("default/"));
+                int p = pseudoName.findFirstOf('/');
+                File thisFile(cloneDir, pseudoName.getTail(p + 1));
+                thisFile.getDir().createDirectory();
+                thisFile.storeData(defaultPackageConfigEntries[i].fileContent);
+            }
+            return cloneDir;
+        }
+    }
+}
+
 
 const char* DefaultConfig::getDefaultModule(const String& pseudoFileName)
 {
     const char* rslt = NULL;
     
-    for (int i = 0; i < NUMBER_CONFIG_FILES; ++i)
+    for (int i = 0; i < NUMBER_DEFAULT_PACKAGE_CONFIG_FILES; ++i)
     {
-        if (defaultConfigEntries[i].fileName == pseudoFileName)
+        if (defaultPackageConfigEntries[i].fileName == pseudoFileName)
         {
-            rslt = defaultConfigEntries[i].fileContent;
+            rslt = defaultPackageConfigEntries[i].fileContent;
             break;
         }
     }

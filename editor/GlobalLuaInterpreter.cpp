@@ -154,7 +154,11 @@ LuaVar GlobalLuaInterpreter::requireConfigPackage(const String& packageName)
 {
     LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
 
-    if (packageName.startsWith(THIS_PREFIX) || packageName == "this" || packageName == "builtin") {
+    if (   packageName.startsWith(THIS_PREFIX) 
+        || packageName == "this" 
+        || packageName == "builtin" 
+        || packageName == "modules")
+    {
         throw LuaException(String() << "Package name '" << packageName << "' not allowed");
     }
     

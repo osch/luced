@@ -142,8 +142,11 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 ViewLuaInterface        LuaSerializer          ActionMethodContainer  FocusManager \
                 FontInfo                EncodingConverter      String
                 
-CONFIG_FILES := .luced/config.lua \
-                $(wildcard .luced/packages/default/*.lua)
+ROOT_CONFIG_FILES            := .luced/config.lua 
+
+DEFAULT_PACKAGE_CONFIG_FILES := $(wildcard .luced/default/*.lua)
+
+CONFIG_FILES := $(ROOT_CONFIG_FILES) $(DEFAULT_PACKAGE_CONFIG_FILES)
 
 PRG_MODULES  := luced
 
@@ -342,7 +345,9 @@ endif                                                         #
 #  is used).
 #
 
-EMLUA_STARTUP := CONFIG_FILES={ $(patsubst .luced/%,"%";, $(CONFIG_FILES)) }
+EMLUA_STARTUP := CONFIG_FILES                 = { $(patsubst .luced/%,"%";, $(CONFIG_FILES)) }; \
+                 ROOT_CONFIG_FILES            = { $(patsubst .luced/%,"%";, $(ROOT_CONFIG_FILES)) }; \
+                 DEFAULT_PACKAGE_CONFIG_FILES = { $(patsubst .luced/%,"%";, $(DEFAULT_PACKAGE_CONFIG_FILES)) };
 
 $(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_SCRIPT_FILES) $(CONFIG_FILES) lua
 	$(call EMLUA_RUN,                   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<),$(EMLUA_STARTUP))
