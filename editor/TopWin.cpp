@@ -417,6 +417,10 @@ printf("TakeFocus\n");
 
         case FocusIn:
         {
+            if (event->xfocus.detail == NotifyPointer) {
+                return GuiWidget::EVENT_PROCESSED;
+            }
+                   
             if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
             {
                 KeyPressRepeater::getInstance()->reset();
