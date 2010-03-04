@@ -356,7 +356,7 @@ static String normalizeEncoding(String encoding)
     if (encoding == "") {
         encoding = System::getInstance()->getDefaultEncoding();
     }
-
+    
     String e = encoding.toSubstitutedString("-", "").toLower();
     if (   e == "c" 
         || e == "posix"
@@ -364,7 +364,7 @@ static String normalizeEncoding(String encoding)
         || e == "iso88591"
         || e == System::getInstance()->getCEncoding().toSubstitutedString("-", "").toLower())
     {
-        encoding = "ISO-8859-1";
+        encoding = "ISO-8859-1"; // treat them all as iso-8859-1 for maximal backwards compatibility
     }
     return encoding;
 }

@@ -90,6 +90,10 @@ System::System()
     cEncoding = nl_langinfo(CODESET);
     setlocale(LC_CTYPE, defaultLocale.toCString());
     
+    if (cEncoding.toSubstitutedString("-", "").toLower() == "utf8") {
+        cEncoding = "c"; // workaround for cygwin, where the C-locale has utf8-encoding.
+    }
+
     if (defaultEncoding == cEncoding) {
         defaultEncoding = "ISO-8859-1";
     }
