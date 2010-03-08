@@ -388,8 +388,9 @@ config:
 	$(CONFIGURE_RUN)
 	
 define CONFIGURE_RUN
-	@ if ! type autoreconf 2>&1 >/dev/null; then echo "Error: command 'autoreconf' is missing. Is the package 'autoconf' installed?"; \
-	                                             exit 1; fi; \
+	@ if type autoreconf 2>&1 >/dev/null; then true; \
+	                                      else echo "Error: command 'autoreconf' is missing. Is the package 'autoconf' installed?"; \
+	                                           exit 1; fi; \
 	mkdir -p $(BUILD_DIR)/autoconf && \
 	      cd $(BUILD_DIR)/autoconf && \
 	cat ../../autoconf-configure1.ac ../../autoconf-configure2.ac > configure.ac && \
@@ -530,9 +531,10 @@ endef
 define CONDITIONAL_DEPENDECY_RUN
 	@( printf "%s\n"    '$3: $2'; \
 	   printf "\t@%s\n"        'echo      "Comparing $(strip $2) ---> $(strip $3)"; \
-	                            if [ ! -f $3 ] || ! diff $2 $3 >/dev/null 2>&1; \
-	                            then echo "Copying   $(strip $2) ---> $(strip $3)"; \
-	                                 rm -f $3; cp $2 $3; chmod a-w $3; \
+                                    if [ -f $3 ] && diff $2 $3 >/dev/null 2>&1; then true; \
+                                    else \
+                                      echo "Copying   $(strip $2) ---> $(strip $3)"; \
+	                              rm -f $3; cp $2 $3; chmod a-w $3; \
 	                            fi; \
 	                            echo " " > $1; \
 	                           '; \
