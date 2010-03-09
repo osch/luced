@@ -101,13 +101,17 @@ CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
 AC_CHECK_HEADERS(X11/X.h       \
                  X11/Xlib.h    \
-                 X11/Xutil.h   \
                  X11/Xatom.h   \
                  X11/keysym.h, \
-                [], [AC_MSG_FAILURE("Cannot find libX11 development headers.")])
+                [], [AC_MSG_FAILURE("Cannot find working libX11 development headers.")])
 
-AC_CHECK_HEADERS(X11/Xutil.h   \
-                 X11/XKBlib.h)
+AC_CHECK_HEADERS(X11/Xutil.h,   \
+                [], [AC_MSG_FAILURE("Cannot find working libX11 development headers.")], \
+                [#include <X11/Xlib.h>])
+
+AC_CHECK_HEADERS(X11/XKBlib.h,   \
+                [], [AC_MSG_FAILURE("Cannot find working libX11 development headers.")], \
+                [#include <X11/Xlib.h>])
 
 
 AC_SEARCH_LIBS([XOpenDisplay],[X11], [], [AC_MSG_FAILURE("Cannot find libX11 library.")])
