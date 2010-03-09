@@ -110,7 +110,7 @@ AC_CHECK_HEADERS(X11/Xutil.h,   \
                 [#include <X11/Xlib.h>])
 
 AC_CHECK_HEADERS(X11/XKBlib.h,   \
-                [], [AC_MSG_FAILURE("Cannot find working libX11 development headers.")], \
+                [], [], \
                 [#include <X11/Xlib.h>])
 
 

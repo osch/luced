@@ -29,12 +29,16 @@
 #include "GuiRootProperty.hpp"
 #include "System.hpp"
 
-#if HAVE_X11_XKBLIB_H && !defined(USE_X11_XKB_EXTENSION)
-#  define USE_X11_XKB_EXTENSION
+#if !defined(LUCED_USE_XKBLIB)
+#  if HAVE_X11_XKBLIB_H
+#    define LUCED_USE_XKBLIB 1
+#  else
+#    define LUCED_USE_XKBLIB 0
+#  endif
 #endif
 
-#ifdef USE_X11_XKB_EXTENSION
-#include <X11/XKBlib.h>
+#if LUCED_USE_XKBLIB
+#  include <X11/XKBlib.h>
 #endif
 
 #undef ABORT_ON_X11_ERRORS
@@ -204,7 +208,7 @@ void GuiRoot::evaluateConfig()
     guiColor05 = GuiColor(xcolor1_st.pixel);
 
     xkbExtensionFlag = false;
-#ifdef USE_X11_XKB_EXTENSION
+#if LUCED_USE_XKBLIB
     if (!GlobalConfig::getInstance()->getDoNotUseX11XkbExtension())
     {
         int xkbMajorVersion = XkbMajorVersion;
@@ -244,7 +248,7 @@ bool GuiRoot::setDetectableAutorepeat(bool flag)
 
     hadDetecableAutorepeatFlag = flag;
 
-#ifdef USE_X11_XKB_EXTENSION
+#if LUCED_USE_XKBLIB
     int supportedFlag;
     detecableAutorepeatFlag = XkbSetDetectableAutoRepeat(display, flag, &supportedFlag);
     detecableAutorepeatFlag = detecableAutorepeatFlag && supportedFlag;
