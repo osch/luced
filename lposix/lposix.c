@@ -37,7 +37,7 @@
 #define MYVERSION	MYNAME " library for " LUA_VERSION " / Jan 2008"
 
 #ifndef ENABLE_SYSLOG
-#define ENABLE_SYSLOG 	1
+#define ENABLE_SYSLOG 	0
 #endif
 
 #include "lua.h"
