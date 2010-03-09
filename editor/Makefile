@@ -23,10 +23,10 @@ ifneq (,)
 This makefile requires GNU Make.
 endif
 
-CPPCOMP_PRG         := g++
+CPPCOMP_PRG          = $(CXX)
 LINK_PRG             = $(CPPCOMP_PRG)
-CPPCOMP_INVOKE_OPTS := -g
-LINK_INVOKE_OPTS    := -g
+CPPCOMP_INVOKE_OPTS  = $(CXXFLAGS)
+LINK_INVOKE_OPTS     = $(CXXFLAGS) $(LDFLAGS)
 
 #### BEGIN-DEFINES
 #
