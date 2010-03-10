@@ -121,13 +121,22 @@ public:
     }
 };
 
-template<> class HashFunction<pid_t>
+template<> class HashFunction<int>
 {
 public:
-    size_t operator()(pid_t key) const {
+    size_t operator()(int key) const {
         return (size_t) key;
     }
 };
+
+template<> class HashFunction<unsigned int>
+{
+public:
+    size_t operator()(unsigned int key) const {
+        return (size_t) key;
+    }
+};
+
 
 template<> class HashFunction<void*>
 {
