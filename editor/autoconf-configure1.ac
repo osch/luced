@@ -95,7 +95,7 @@ AC_CHECK_DECLS([readline],[],[], AC_INCLUDES_DEFAULT [
                                  #include <readline/history.h>])
 
 luced_LIBS_without_readline="$LIBS"
-AC_SEARCH_LIBS([readline],[readline])
+AC_SEARCH_LIBS([readline],[readline],[],[],[-lcurses])
 luced_LIBS_with_readline="$LIBS"
 LIBS="$luced_LIBS_without_readline"
 AC_SUBST([LIBS_WITH_READLINE],[$luced_LIBS_with_readline])
