@@ -33,6 +33,20 @@ function emluaErrorHandler(msg)
     return msg
 end
 
+local indentLevel = 0
+local indentString = ""
+
+function emluaSetIndent(newIndentLevel)
+    indentLevel = newIndentLevel
+    indentString = string.rep(" ", indentLevel)
+end
+function emluaAddIndent(plusAmount)
+    emluaSetIndent(indentLevel + plusAmount)
+end
+function emluaGetIndentString()
+    return indentString
+end
+
 local function preprocess(filename)
 
   local file = io.open(filename)
@@ -44,6 +58,7 @@ local function preprocess(filename)
     if string.find(line, "^@[^(]") or string.find(line, "^@$") then
       append(chunk, string.sub(line, 2) .. "\n")
     else
+      append(chunk, format('write(emluaGetIndentString()); '))
       local last = 1
       for text, expr, index in string.gfind(line, "(.-)@(%b())()") do
         last = index
