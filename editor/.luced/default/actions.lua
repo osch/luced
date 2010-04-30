@@ -2,7 +2,7 @@
 --
 --   LucED - The Lucid Editor
 --
---   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+--   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 --
 --   This program is free software; you can redistribute it and/or modify it
 --   under the terms of the GNU General Public License Version 2 as published
@@ -118,9 +118,14 @@ return
                          file=`readlink -f $FILE 2>/dev/null|| echo $FILE`
                          cd "`dirname $file`" 
                          fn="`basename $file`" 
-                         rev="`cat CVS/Entries | grep /$fn/ | cut -d/ -f3`" 
-                         (echo "yes"|cvs unedit "$fn" 1>/dev/null 2>&1) 
-                         touch "$fn" ]],
+                         if [ -e .svn ]
+                         then
+                            svn revert "$fn"
+                         else
+                           rev="`cat CVS/Entries | grep /$fn/ | cut -d/ -f3`" 
+                           (echo "yes"|cvs unedit "$fn" 1>/dev/null 2>&1) 
+                           touch "$fn"
+                         fi ]],
     },
     cvsCommit =
     {
@@ -137,6 +142,9 @@ return
                          if [ -e CVS ]
                          then
                            $term -e cvs commit `basename $file`
+                         elif [ -e .svn ]
+                         then
+                           $term -e svn commit `basename $file`
                          else
                            homedir=`cd "$HOME"; pwd`
                            gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
@@ -159,7 +167,7 @@ return
                          file=`readlink -f $FILE 2>/dev/null|| echo $FILE`
                          cd `dirname $file` 
                          fn=`basename $file`
-                         if [ -e CVS ]
+                         if [ -e CVS -o -e .svn ]
                          then 
                            tkdiff $fn
                          else
