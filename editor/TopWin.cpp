@@ -139,7 +139,7 @@ TopWin::~TopWin()
     }
     if (this == expectedFocusTopWin) {
         expectedFocusTopWin = NULL;
-        if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+        if (GlobalConfig::getConfigData()->getGeneralConfig()->getUseOwnKeyPressRepeater())
         {
             if (KeyPressRepeater::isInstanceValid()) {
                 KeyPressRepeater::getInstance()->reset();
@@ -296,7 +296,7 @@ printf("TakeFocus\n");
             XEvent filteredEvent = *event;
             bool ignoreEvent = XFilterEvent(&filteredEvent, None); // ignore for input of composed characters 
             
-            if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+            if (GlobalConfig::getConfigData()->getGeneralConfig()->getUseOwnKeyPressRepeater())
             {
                 if (KeyPressRepeater::getInstance()->isRepeating())
                 {
@@ -352,7 +352,7 @@ printf("TakeFocus\n");
         }
         
         case KeyRelease: {
-            if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+            if (GlobalConfig::getConfigData()->getGeneralConfig()->getUseOwnKeyPressRepeater())
             {
                 bool isTrueRelease = true;
                 
@@ -385,7 +385,7 @@ printf("TakeFocus\n");
 
         case FocusOut:
         {
-            if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+            if (GlobalConfig::getConfigData()->getGeneralConfig()->getUseOwnKeyPressRepeater())
             {
                 KeyPressRepeater::getInstance()->reset();
                 GuiRoot::getInstance()->setKeyboardAutoRepeatOriginal();
@@ -421,7 +421,7 @@ printf("TakeFocus\n");
                 return GuiWidget::EVENT_PROCESSED;
             }
                    
-            if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+            if (GlobalConfig::getConfigData()->getGeneralConfig()->getUseOwnKeyPressRepeater())
             {
                 KeyPressRepeater::getInstance()->reset();
 #if 0
@@ -592,7 +592,7 @@ void TopWin::handleConfigChanged()
 {
     if (focusFlag)
     {
-        if (GlobalConfig::getInstance()->getUseOwnKeyPressRepeater())
+        if (GlobalConfig::getConfigData()->getGeneralConfig()->getUseOwnKeyPressRepeater())
         {
 #if 0
             if (!GuiRoot::getInstance()->hasDetectableAutorepeat()) {

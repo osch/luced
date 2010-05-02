@@ -1,0 +1,203 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef CONFIG_DATA_HPP
+#define CONFIG_DATA_HPP
+
+#include "HeapObject.hpp"
+#include "OwningPtr.hpp"
+#include "RawPtr.hpp"
+#include "LuaVar.hpp"
+#include "String.hpp"
+#include "ObjectArray.hpp"
+
+namespace LucED
+{
+@ local functions  = require("functions")
+@ local cap        = functions.capitalize
+@
+@ local configDef  = require("ConfigDefinition")
+
+class ConfigData : public HeapObject
+{
+public:
+    typedef OwningPtr<ConfigData> Ptr;
+
+    static Ptr create() {
+        return Ptr(new ConfigData());
+    }
+    
+    void readConfig(LuaVar luaData);
+@
+@ local elementCode
+@
+@ local function classConstructor(class, c)
+@   if c.type == "map" then        
+@       local hasMemberConstructor = false
+@       for i, e in ipairs(c.entries) do
+@           if    e.type == "bool" 
+@              or e.type == "int" 
+@              or e.type == "map" 
+@              or e.type == "list" 
+@              or e.type == "alternative" 
+@              or e.default 
+@           then
+@               hasMemberConstructor = true
+@               break
+@           end
+@       end
+@       if hasMemberConstructor then
+        @(class)()
+            :
+@         for i, e in ipairs(c.entries) do
+@           local comma = (i == #c.entries) and "" or ","
+@           if e.default then
+@               if e.type == "String" then
+                    @(e.name)("@(string.gsub(e.default, '"', '\\"'))")@(comma)
+@               else
+                    @(e.name)(@(e.default))@(comma)
+@               end
+@           elseif e.type == "map" or e.type == "list" or e.type == "alternative" then
+@                   local eClass = cap(e.name)
+                    @(e.name)(OwningPtr<@(eClass)>(new @(eClass)()))@(comma)
+@           else
+@               if e.type == "bool" then
+                    @(e.name)(false)@(comma)
+@               elseif e.type == "int" then
+                    @(e.name)(0)@(comma)
+@               end
+@           end
+@         end
+        {}
+@       end
+@   end
+@ end
+@
+@ local function innerClass(c)
+@   local class = cap(c.name)
+@----------------------------------------------------------------------- 
+public:
+    class @(class) : public HeapObject
+    {
+@       emluaAddIndent(4)
+@       elementCode(c)
+@       emluaAddIndent(-4)
+    private:
+        friend class ConfigData;
+@       classConstructor(class, c)
+    };
+@----------------------------------------------------------------------- 
+@ end
+@
+@
+@ elementCode = function(c)
+@   if c.type == "map" then
+@       assert(c.entries and #c.entries > 0, "no entries in map '"..(c.name or "???").."'")
+@       for _, e in ipairs(c.entries) do
+@           if e.type == "map" or e.type == "list" then
+@               local class = cap(e.name)
+@               innerClass(e)
+@----------------------------------------------------------------------- 
+private:
+    OwningPtr<@(class)> @(e.name);
+public:
+    RawPtr<@(class)> get@(cap(e.name))() const {
+        return @(e.name);
+    }
+@----------------------------------------------------------------------- 
+@           else
+@----------------------------------------------------------------------- 
+private:
+    @(e.type) @(e.name);
+public:
+    @(e.type) get@(cap(e.name))() const {
+        return @(e.name);
+    }
+    void set@(cap(e.name))(const @(e.type)& value) {
+        this->@(e.name) = value;
+    }
+@----------------------------------------------------------------------- 
+@           end
+@       end
+@   elseif c.type == "list" then
+@       local e = c.member
+@       if e.type == "map" or e.type == "list" or e.type == "alternative" then
+@           local class = cap(c.member.name)
+@           innerClass(c.member)
+@----------------------------------------------------------------------- 
+private:
+    ObjectArray< OwningPtr<@(class)> > @(c.name);
+public:
+    int getLength() const {
+        return @(c.name).getLength();
+    }
+    RawPtr<@(class)> get(int i) const {
+        return @(c.name)[i];
+    }
+@----------------------------------------------------------------------- 
+@       else
+@----------------------------------------------------------------------- 
+private:
+    ObjectArray< @(e.type) > @(c.name);
+public:
+    int getLength() const {
+        return @(c.name).getLength();
+    }
+    @(e.type) get(int i) const {
+        return @(c.name)[i];
+    }
+@----------------------------------------------------------------------- 
+@       end
+@   elseif c.type == "alternative" then
+@       for _, a in ipairs(c.alternatives) do
+@           local class = cap(a.name)
+@           innerClass(a)
+private:
+    OwningPtr<@(class)> @(a.name);
+public:
+    bool is@(class)() const {
+        return @(a.name).isValid();
+    }
+    RawPtr<@(class)> get@(class)() const {
+        return @(a.name);
+    }
+    void set@(class)(OwningPtr<@(class)> newValue) {
+@       for _, a2 in ipairs(c.alternatives) do
+@           if a2 == a then
+        @(a.name) = newValue;
+@           else
+        @(a2.name).invalidate();
+@           end
+@       end    
+    }
+@       end
+@   end
+@ end
+@
+@ elementCode(configDef)
+    
+private:
+@   classConstructor("ConfigData", configDef)
+};
+
+} // namespace LucED
+
+#endif // CONFIG_DATA_HPP

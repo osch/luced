@@ -209,7 +209,7 @@ void GuiRoot::evaluateConfig()
 
     xkbExtensionFlag = false;
 #if LUCED_USE_XKBLIB
-    if (!GlobalConfig::getInstance()->getDoNotUseX11XkbExtension())
+    if (!GlobalConfig::getConfigData()->getGeneralConfig()->getDoNotUseX11XkbExtension())
     {
         int xkbMajorVersion = XkbMajorVersion;
         int xbkMinorVersion = XkbMinorVersion;

@@ -38,6 +38,7 @@
 #include "LuaVar.hpp"
 #include "TextStyleDefinition.hpp"
 #include "TextStyleDefinitions.hpp"
+#include "ConfigData.hpp"
 
 namespace LucED
 {
@@ -51,13 +52,12 @@ public:
     
     void readConfig();
     
+    static ConfigData::Ptr getConfigData();
+    
     ActionKeyConfig::Ptr getActionKeyConfig() const {
         return actionKeyConfig;
     }
     
-    bool getUseOwnKeyPressRepeater() const {
-        return useOwnKeyPressRepeater;
-    }
     bool getDoNotUseX11XkbExtension() const {
         return doNotUseX11XkbExtension;
     }
@@ -164,7 +164,6 @@ private:
                               LuaVarRef            actionKeyBinding,
                               String               thisPackageName);
                               
-    bool         useOwnKeyPressRepeater;
     bool         doNotUseX11XkbExtension;
     MicroSeconds keyPressRepeatFirstMicroSecs;
     MicroSeconds keyPressRepeatNextMicroSecs;
@@ -208,6 +207,8 @@ private:
     
     TextStyleDefinitions::Ptr textStyleDefinitions;
     TextStyle::Ptr defaultTextStyle;
+    
+    ConfigData::Ptr configData;
 };
 
 } // namespace LucED

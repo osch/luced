@@ -44,9 +44,16 @@ GlobalConfig* GlobalConfig::getInstance()
     return instance.getPtr();
 }
 
+ConfigData::Ptr GlobalConfig::getConfigData()
+{
+    if (!getInstance()->configData.isValid()) {
+        getInstance()->configData = ConfigData::create();
+    }
+    return getInstance()->configData;
+}
+
 GlobalConfig::GlobalConfig()
-        : useOwnKeyPressRepeater(false),
-          doNotUseX11XkbExtension(false),
+        : doNotUseX11XkbExtension(false),
           keyPressRepeatFirstMicroSecs(300 * 1000),
           keyPressRepeatNextMicroSecs(  15 * 1000),
           scrollBarWidth(12+2+1),
@@ -210,11 +217,15 @@ void GlobalConfig::readConfig()
             CurrentDirectoryKeeper currentDirectoryKeeper(configDirectory);
             
             LuaVar configTable = luaInterpreter->getGeneralConfigModule("config");
-            
+
             if (!configTable.isTable()) {
                 throw ConfigException("config file does not return table");
             }
             
+            configData = ConfigData::create();
+            
+            configData->readConfig(configTable);
+
             // generalConfig
     
             LuaVar generalConfig = configTable["generalConfig"];
@@ -225,15 +236,7 @@ void GlobalConfig::readConfig()
                     throw ConfigException("invalid generalConfig");
                 }
     
-                LuaVar o = generalConfig["useOwnKeyPressRepeater"];
-                if (o.isValid()) {
-                    if (!o.isBoolean()) {
-                        throw ConfigException("invalid useOwnKeyPressRepeater");
-                    }
-                    this->useOwnKeyPressRepeater = o.toBoolean();
-                }
-    
-                o = generalConfig["doNotUseX11XkbExtension"];
+                LuaVar o = generalConfig["doNotUseX11XkbExtension"];
                 if (o.isValid()) {
                     if (!o.isBoolean()) {
                         throw ConfigException("invalid doNotUseX11XkbExtension");
@@ -491,7 +494,7 @@ void GlobalConfig::readConfig()
         catch (BaseException& ex)
         {
             if (tryItAgain) {
-                printf("%s\n", ex.toString().toCString());
+                printf("Internal config error: %s\n", ex.toString().toCString());
             }
             ASSERT(!tryItAgain); // MODE_FALLBACK should not throw exception
 

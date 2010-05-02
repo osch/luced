@@ -100,12 +100,15 @@ endif                                                         #
 LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_EXTRA_OPTS)
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_PCRE_OPTS) $(INCL_EXTRA_OPTS)
 
-LUA_SCRIPTS            := functions             BuiltinActionDefinitions  BuiltinClassDefinitions
+LUA_SCRIPTS            := functions             BuiltinActionDefinitions  BuiltinClassDefinitions \
+                          ConfigDefinition
+                          
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
-                          LuaClassRegistry      LuaCClosure               \
+                          LuaClassRegistry      LuaCClosure               ConfigData \
                           LucedLuaInterface     ViewLuaInterface \
                           
-GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultConfig
+GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultConfig \
+                          ConfigData
                           
 GENERATED_FAST_MODULES := LuaClassRegistry
 
@@ -328,7 +331,7 @@ ifeq ($(WAS_HEADERS2_GENERATED),true)
 ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)
   DEPS := $(wildcard $(BUILD_DIR)/deps/*.dep) $(GEN_HDRS_DEPS) $(GEN_SRC_DEPS)
   ifneq ($(DEPS),)
-    -include $(DEPS)
+    include $(DEPS)
   endif
 endif
 endif                                                         #
