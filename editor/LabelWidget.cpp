@@ -60,7 +60,7 @@ GuiElement::Measures LabelWidget::internalGetDesiredMeasures()
 
 GuiElement::Measures LabelWidget::getOwnDesiredMeasures()
 {
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+    int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
     int height = util::maximum(GuiWidget::getGuiTextHeight() + guiSpacing, layoutHeight);
     int width  = GuiWidget::getGuiTextStyle()->getTextWidth(labelText) + guiSpacing;
     return GuiElement::Measures(width, height, width, height, width, height);
@@ -108,7 +108,7 @@ void LabelWidget::processGuiWidgetCreatedEvent()
 
 void LabelWidget::draw()
 {
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+    int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
     getGuiWidget()->drawRaisedSurface(0, 0, getPosition().w, getPosition().h);
     if (adjustment == VerticalAdjustment::TOP) {
         getGuiWidget()->drawGuiTextWChars(guiSpacing, guiSpacing, labelText);

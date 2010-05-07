@@ -35,7 +35,7 @@ public:
         : milliSeconds(0)
     {}
     
-    explicit MilliSeconds(long milliSeconds)
+    explicit MilliSeconds(double milliSeconds)
         : milliSeconds(milliSeconds)
     {}
 
@@ -46,7 +46,7 @@ public:
         return MicroSeconds(milliSeconds * 1000);
     }
 private:
-    long milliSeconds;
+    double milliSeconds;
 };
 
 } // namespace LucED

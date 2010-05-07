@@ -45,8 +45,8 @@ private:
     
     GuiWidgetSingletonData()
         : guiTextStyle(TextStyleCache::getInstance()
-                                     ->getTextStyle(GlobalConfig::getInstance()->getGuiFont(), 
-                                                    GlobalConfig::getInstance()->getGuiFontColor()))
+                                     ->getTextStyle(GlobalConfig::getConfigData()->getGeneralConfig()->getGuiFont(), 
+                                                    GlobalConfig::getConfigData()->getGeneralConfig()->getGuiFontColor()))
     {
         Display* display = GuiRoot::getInstance()->getDisplay();
         GuiRoot* guiRoot = GuiRoot::getInstance();

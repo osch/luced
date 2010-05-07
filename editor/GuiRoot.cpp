@@ -187,23 +187,23 @@ void GuiRoot::evaluateConfig()
             &xcolor1_st, &xcolor2_st);
     greyColor  = GuiColor(xcolor1_st.pixel);
     
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor01().toCString(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getConfigData()->getGeneralConfig()->getGuiColor01().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor01 = GuiColor(xcolor1_st.pixel);
     
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor02().toCString(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getConfigData()->getGeneralConfig()->getGuiColor02().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor02 = GuiColor(xcolor1_st.pixel);
     
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor03().toCString(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getConfigData()->getGeneralConfig()->getGuiColor03().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor03 = GuiColor(xcolor1_st.pixel);
     
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor04().toCString(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getConfigData()->getGeneralConfig()->getGuiColor04().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor04 = GuiColor(xcolor1_st.pixel);
 
-    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getInstance()->getGuiColor05().toCString(),
+    XAllocNamedColor(display, rootWinAttr.colormap, GlobalConfig::getConfigData()->getGeneralConfig()->getGuiColor05().toCString(),
             &xcolor1_st, &xcolor2_st);
     guiColor05 = GuiColor(xcolor1_st.pixel);
 

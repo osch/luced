@@ -91,7 +91,7 @@ void SingleLineEditField::draw()
 {
     if (getGuiWidget().isValid())
     {
-        int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+        int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
         int ud = heightOffset;
         int ld = (adjustment == VerticalAdjustment::CENTER) ? heightOffset : 0;
         
@@ -110,7 +110,7 @@ void SingleLineEditField::draw()
 
 GuiElement::Measures SingleLineEditField::internalGetDesiredMeasures()
 {
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+    int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
 
     Measures rslt = editorWidget->getDesiredMeasures();
 
@@ -135,7 +135,7 @@ void SingleLineEditField::processGuiWidgetNewPositionEvent(const Position& newPo
 {
     Position p = newPosition;
     
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+    int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
 
     Measures m = editorWidget->getDesiredMeasures();
 

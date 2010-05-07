@@ -148,8 +148,8 @@ TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
       lastEmptyLineStrategy(DO_NOT_IGNORE_EMPTY_LAST_LINE),
       isMousePointerHidden(false),
       
-      primarySelectionColor(  getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPrimarySelectionColor())),
-      secondarySelectionColor(getGuiRoot()->getGuiColor(GlobalConfig::getInstance()->getPseudoSelectionColor())),
+      primarySelectionColor(  getGuiRoot()->getGuiColor(GlobalConfig::getConfigData()->getGeneralConfig()->getPrimarySelectionColor())),
+      secondarySelectionColor(getGuiRoot()->getGuiColor(GlobalConfig::getConfigData()->getGeneralConfig()->getPseudoSelectionColor())),
       backgroundColor(        getGuiRoot()->getWhiteColor()),
       textWidget_gcid(TextWidgetSingletonData::getInstance()->getGcId()),
       

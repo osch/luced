@@ -54,7 +54,7 @@ public:
     virtual void endSelectionDataRequest() {
     }
     virtual void notifyAboutObtainedSelectionOwnership() {
-        if (GlobalConfig::getInstance()->shouldKeepRunningIfOwningClipboard() ) {
+        if (GlobalConfig::getConfigData()->getGeneralConfig()->getKeepRunningIfOwningClipboard() ) {
             clipboard->programRunningKeeper.keepProgramRunning();
         }
     }

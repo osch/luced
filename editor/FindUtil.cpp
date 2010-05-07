@@ -36,8 +36,8 @@ FindUtil::FindUtil(RawPtr<TextData> textData)
       wasError(false),
       luaException(""),
       wasInitializedFlag(false),
-      maxForwardAssertionLength(GlobalConfig::getInstance()->getMaxRegexAssertionLength()),
-      maxBackwardAssertionLength(GlobalConfig::getInstance()->getMaxRegexAssertionLength()),
+      maxForwardAssertionLength(GlobalConfig::getConfigData()->getGeneralConfig()->getMaxRegexAssertionLength()),
+      maxBackwardAssertionLength(GlobalConfig::getConfigData()->getGeneralConfig()->getMaxRegexAssertionLength()),
       noMatchBeforePosition(-1)
 {}
 
@@ -273,8 +273,8 @@ FindUtil::CalloutObject::Ptr FindUtil::buildCalloutObject(FindUtil::PreparsedCal
 
 void FindUtil::initialize()
 {
-    this->maxForwardAssertionLength  = GlobalConfig::getInstance()->getMaxRegexAssertionLength();
-    this->maxBackwardAssertionLength = GlobalConfig::getInstance()->getMaxRegexAssertionLength();
+    this->maxForwardAssertionLength  = GlobalConfig::getConfigData()->getGeneralConfig()->getMaxRegexAssertionLength();
+    this->maxBackwardAssertionLength = GlobalConfig::getConfigData()->getGeneralConfig()->getMaxRegexAssertionLength();
 
     ObjectArray<PreparsedCallout::Ptr> preparsedCallouts;
     

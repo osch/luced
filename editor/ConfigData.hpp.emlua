@@ -55,6 +55,7 @@ public:
 @       for i, e in ipairs(c.entries) do
 @           if    e.type == "bool" 
 @              or e.type == "int" 
+@              or e.type == "long" 
 @              or e.type == "map" 
 @              or e.type == "list" 
 @              or e.type == "alternative" 
@@ -81,7 +82,7 @@ public:
 @           else
 @               if e.type == "bool" then
                     @(e.name)(false)@(comma)
-@               elseif e.type == "int" then
+@               elseif e.type == "int" or e.type == "long" then
                     @(e.name)(0)@(comma)
 @               end
 @           end

@@ -78,7 +78,7 @@ ScrollableTextGuiCompound::ScrollableTextGuiCompound(TextEditorWidget::Ptr textW
     layoutColumn2 = GuiLayoutColumn::create();
     rootRow->addElement(layoutColumn2);
 
-    int w = GlobalConfig::getInstance()->getScrollBarWidth();
+    int w = GlobalConfig::getConfigData()->getGeneralConfig()->getScrollBarWidth();
 
     scrollBarSpacer = GuiLayoutWidget::create(w, w, w, w, w, w,
                                               GuiRoot::getInstance()->getGuiColor02());

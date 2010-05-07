@@ -105,7 +105,7 @@ void DialogPanel::processGuiWidgetNewPositionEvent(const Position& newPosition)
 {
     if (getRootElement().isValid())
     {
-        int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+        int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
 
         int border = guiSpacing;
         int dx = border;
@@ -123,7 +123,7 @@ GuiElement::Measures DialogPanel::internalGetDesiredMeasures()
 {
     if (getRootElement().isValid())
     {
-        int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+        int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
         
         Measures m = getRootElement()->getDesiredMeasures();
         int border = guiSpacing;

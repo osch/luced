@@ -157,7 +157,8 @@ GuiWidget::ProcessingResult ScrollBar::processGuiWidgetEvent(const XEvent* event
                 }
                 if (isButtonPressedForScrollStep) {
                     EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
-                            GlobalConfig::getInstance()->getScrollBarRepeatFirstMicroSecs(),
+                            MilliSeconds(GlobalConfig::getConfigData()->getGeneralConfig()
+                                                                      ->getScrollBarRepeatFirstMilliSecs()),
                             newCallback(this, &ScrollBar::handleScrollStepRepeating));
                 }
                 return GuiWidget::EVENT_PROCESSED;
@@ -358,7 +359,7 @@ void ScrollBar::processGuiWidgetNewPositionEvent(const Position& newPosition)
 
 GuiElement::Measures ScrollBar::internalGetDesiredMeasures()
 {
-    int scrollBarWidth = GlobalConfig::getInstance()->getScrollBarWidth();
+    int scrollBarWidth = GlobalConfig::getConfigData()->getGeneralConfig()->getScrollBarWidth();
 
     if (this->isV) {
         return Measures(scrollBarWidth, 2*scrollBarWidth + MIN_SCROLLER_HEIGHT, scrollBarWidth, 
@@ -693,7 +694,8 @@ void ScrollBar::handleScrollStepRepeating()
     {
         scrollStepCallback->call(scrollStep);
         EventDispatcher::getInstance()->registerTimerCallback(Seconds(0), 
-                GlobalConfig::getInstance()->getScrollBarRepeatNextMicroSecs(), 
+                MilliSeconds(GlobalConfig::getConfigData()->getGeneralConfig()
+                                                          ->getScrollBarRepeatNextMilliSecs()), 
                 newCallback(this, &ScrollBar::handleScrollStepRepeating));
     }
 }

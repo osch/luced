@@ -58,9 +58,9 @@ void KeyPressRepeater::triggerNextRepeatEventFor(unsigned int triggeredKeyCode, 
 {
     when.setToCurrentTime();
     if (repeatCount == 0 || !isRepeatingEventForKeyCode(triggeredKeyCode)) {
-        when.add(GlobalConfig::getInstance()->getKeyPressRepeatFirstMicroSecs());
+        when.add(MilliSeconds(GlobalConfig::getConfigData()->getGeneralConfig()->getKeyPressRepeatFirstMilliSecs()));
     } else {
-        when.add(GlobalConfig::getInstance()->getKeyPressRepeatNextMicroSecs());
+        when.add(MilliSeconds(GlobalConfig::getConfigData()->getGeneralConfig()->getKeyPressRepeatNextMilliSecs()));
     }
     this->event = *event;
     isRepeatingFlag = true;

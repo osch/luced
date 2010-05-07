@@ -35,7 +35,9 @@ using namespace LucED;
 @ {
 @   ["bool"]   = "toBoolean",
 @   ["String"] = "toString",
-@   ["int"]    = "toInt"
+@   ["int"]    = "toInt",
+@   ["long"]   = "toLong",
+@   ["double"] = "toNumber",
 @ }
 @
 @ local function getDefaultValue(e)

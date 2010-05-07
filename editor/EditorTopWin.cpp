@@ -300,8 +300,8 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
     textEditor->registerCursorPositionDataListener(newCallback(statusLine, &StatusLine::setCursorPositionData));
     
     textEditor->setDesiredMeasuresInChars(
-            GlobalConfig::getInstance()->getInitialWindowWidth(),
-            GlobalConfig::getInstance()->getInitialWindowHeight()
+            GlobalConfig::getConfigData()->getGeneralConfig()->getInitialWindowWidth(),
+            GlobalConfig::getConfigData()->getGeneralConfig()->getInitialWindowHeight()
     );
 
 
@@ -708,7 +708,7 @@ void EditorTopWin::invokePanel(DialogPanel::Ptr panel)
             requestCloseFor(invokedPanel);
         }
         ASSERT(invokedPanel.isInvalid());
-        if (GlobalConfig::getInstance()->isEditorPanelOnTop()) {
+        if (GlobalConfig::getConfigData()->getGeneralConfig()->getEditorPanelOnTop()) {
             textEditor->setVerticalAdjustmentStrategy(TextWidget::BOTTOM_LINE_ANCHOR);
             this->invokedPanelIndex = upperPanelIndex;
         } else {

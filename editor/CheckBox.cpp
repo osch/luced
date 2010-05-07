@@ -46,9 +46,9 @@ CheckBox::CheckBox(String buttonText)
 
 GuiElement::Measures CheckBox::internalGetDesiredMeasures()
 {
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+    int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
 
-    int buttonInnerSpacing = GlobalConfig::getInstance()->getButtonInnerSpacing();
+    int buttonInnerSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getButtonInnerSpacing();
     int minWidth  = GuiWidget::getGuiTextStyle()->getLineHeight() * 2;
     int minHeight = GuiWidget::getGuiTextHeight() + 2 * GuiWidget::getRaisedBoxBorderWidth()  + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
 
@@ -65,7 +65,7 @@ void CheckBox::draw()
 {
     if (getGuiWidget().isValid())
     {
-        int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+        int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
     
         int textOffset = 0;
         int w = GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars);

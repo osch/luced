@@ -154,7 +154,7 @@ GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEv
                 if (hasRequestedSelectionOwnership && e.selection == x11AtomForSelection)
                 {
                     selectionDataLength = contentHandler->initSelectionDataRequest();
-                    if (selectionDataLength < GlobalConfig::getInstance()->getX11SelectionChunkLength())
+                    if (selectionDataLength < GlobalConfig::getConfigData()->getGeneralConfig()->getX11SelectionChunkLength())
                     {
                         // send all at once
                     
@@ -228,7 +228,7 @@ GuiWidget::ProcessingResult SelectionOwner::processSelectionOwnerEvent(const XEv
                 {
                     // send next part
                 
-                    long sendLength = util::minimum(GlobalConfig::getInstance()->getX11SelectionChunkLength(),
+                    long sendLength = util::minimum(GlobalConfig::getConfigData()->getGeneralConfig()->getX11SelectionChunkLength(),
                                                     selectionDataLength - alreadySentPos);
                     
                     

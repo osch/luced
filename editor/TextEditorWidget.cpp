@@ -367,7 +367,8 @@ void TextEditorWidget::notifyAboutEndOfPastingData()
 
 static inline MicroSeconds calculateScrollTime(int diffPix, int lineHeight)
 {
-    long microSecs = GlobalConfig::getInstance()->getScrollBarRepeatNextMicroSecs();
+    long microSecs = 1000 * GlobalConfig::getConfigData()->getGeneralConfig()
+                                                         ->getScrollBarRepeatNextMilliSecs();
     long rslt = microSecs - (microSecs * diffPix)/(10*lineHeight);
     if (rslt < microSecs/10) 
         rslt = microSecs/10;
@@ -396,7 +397,7 @@ GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent
                     if (!cursorChangesDisabled)
                     {
                         if (buttonPressedCounter == 1 && event->xbutton.time - lastButtonPressedTime
-                                < GlobalConfig::getInstance()->getDoubleClickMilliSecs()) {
+                                < GlobalConfig::getConfigData()->getGeneralConfig()->getDoubleClickMilliSecs()) {
                             wasDoubleClick = true;
                         } else {
                             buttonPressedCounter = 0;

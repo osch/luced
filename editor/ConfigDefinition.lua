@@ -18,11 +18,11 @@ return
                     default = "true"
                 },
                 {   name    = "keyPressRepeatFirstMilliSecs",
-                    type    = "int",
+                    type    = "double",
                     default = "200"
                 },
                 {   name    = "keyPressRepeatNextMilliSecs",
-                    type    = "int",
+                    type    = "double",
                     default = "18"
                 },
                 {   name    = "scrollBarWidth",
@@ -30,11 +30,11 @@ return
                     default = "12+2"
                 },
                 {   name    = "scrollBarRepeatFirstMilliSecs",
-                    type    = "int",
+                    type    = "double",
                     default = "300"
                 },
                 {   name    = "scrollBarRepeatNextMilliSecs",
-                    type    = "int",
+                    type    = "double",
                     default = "10"
                 },
                 {   name    = "doubleClickMilliSecs",
@@ -86,7 +86,7 @@ return
                     default = "45"
                 },
                 {   name    = "x11SelectionChunkLength",
-                    type    = "int",
+                    type    = "long",
                     default = "200000"
                 },
                 {   name    = "buttonInnerSpacing",

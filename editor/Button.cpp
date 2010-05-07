@@ -83,8 +83,8 @@ void Button::setButtonText(String buttonText)
 
 int Button::getStandardHeight()
 {
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
-    int buttonInnerSpacing = GlobalConfig::getInstance()->getButtonInnerSpacing();
+    int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
+    int buttonInnerSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getButtonInnerSpacing();
 
     return GuiWidget::getGuiTextHeight() + 2 * GuiWidget::getRaisedBoxBorderWidth()  + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
 }
@@ -106,9 +106,9 @@ GuiElement::Measures Button::internalGetDesiredMeasures()
 
 GuiElement::Measures Button::getOwnDesiredMeasures()
 {
-    int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+    int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
 
-    int buttonInnerSpacing = GlobalConfig::getInstance()->getButtonInnerSpacing();
+    int buttonInnerSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getButtonInnerSpacing();
     int minWidth  = GuiWidget::getGuiTextStyle()->getTextWidth(buttonTextWChars) + 2 * GuiWidget::getRaisedBoxBorderWidth() + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
     int minHeight = GuiWidget::getGuiTextHeight() + 2 * GuiWidget::getRaisedBoxBorderWidth()  + 2*buttonInnerSpacing + 2*BUTTON_OUTER_BORDER + guiSpacing;
 
@@ -123,7 +123,7 @@ void Button::drawButton()
 {
     if (getGuiWidget().isValid())
     {
-        int guiSpacing = GlobalConfig::getInstance()->getGuiSpacing();
+        int guiSpacing = GlobalConfig::getConfigData()->getGeneralConfig()->getGuiSpacing();
     
         int textOffset = 0;
         GuiColor color;

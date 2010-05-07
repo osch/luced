@@ -58,80 +58,6 @@ public:
         return actionKeyConfig;
     }
     
-    bool getDoNotUseX11XkbExtension() const {
-        return doNotUseX11XkbExtension;
-    }
-    MicroSeconds getKeyPressRepeatFirstMicroSecs() const {
-        return keyPressRepeatFirstMicroSecs;
-    }
-    MicroSeconds getKeyPressRepeatNextMicroSecs() const {
-        return keyPressRepeatNextMicroSecs;
-    }
-    int getScrollBarWidth() const {
-        return scrollBarWidth;
-    }
-    MicroSeconds getScrollBarRepeatFirstMicroSecs() const {
-        return scrollBarRepeatFirstMicroSecs;
-    }
-    MicroSeconds getScrollBarRepeatNextMicroSecs() const {
-        return scrollBarRepeatNextMicroSecs;
-    }
-    long getDoubleClickMilliSecs() const {
-        return doubleClickMilliSecs;
-    }
-    String getGuiColor01() const {
-        return guiColor01;
-    }
-    String getGuiColor02() const {
-        return guiColor02;
-    }
-    String getGuiColor03() const {
-        return guiColor03;
-    }
-    String getGuiColor04() const {
-        return guiColor04;
-    }
-    String getGuiColor05() const {
-        return guiColor05;
-    }
-    String getGuiFont() const {
-        return guiFont;
-    }
-    String getGuiFontColor() const {
-        return guiFontColor;
-    }
-    String getPrimarySelectionColor() const {
-        return primarySelectionColor;
-    }
-    String getPseudoSelectionColor() const {
-        return pseudoSelectionColor;
-    }
-    int getInitialWindowWidth() const {
-        return initialWindowWidth;
-    }
-    int getInitialWindowHeight() const {
-        return initialWindowHeight;
-    }
-    long getX11SelectionChunkLength() const {
-        return x11SelectionChunkLength;
-    }
-    int getButtonInnerSpacing() const {
-        return buttonInnerSpacing;
-    }
-    int getGuiSpacing() const {
-        return guiSpacing;
-    }
-    bool isEditorPanelOnTop() const {
-        return editorPanelOnTop;
-    }
-    bool shouldKeepRunningIfOwningClipboard() const {
-        return keepRunningIfOwningClipboard;
-    }
-
-    long getMaxRegexAssertionLength() const {
-        return maxRegexAssertionLength;
-    }
-    
     SyntaxPatterns::Ptr getSyntaxPatternsForLanguageMode(LanguageMode::Ptr languageMode, 
                                                          Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const;
 
@@ -164,40 +90,11 @@ private:
                               LuaVarRef            actionKeyBinding,
                               String               thisPackageName);
                               
-    bool         doNotUseX11XkbExtension;
-    MicroSeconds keyPressRepeatFirstMicroSecs;
-    MicroSeconds keyPressRepeatNextMicroSecs;
-    
-    int          scrollBarWidth;
-    MicroSeconds scrollBarRepeatFirstMicroSecs;
-    MicroSeconds scrollBarRepeatNextMicroSecs;
-    long         doubleClickMilliSecs;
-    
-    String guiColor01;
-    String guiColor02;
-    String guiColor03;
-    String guiColor04;
-    String guiColor05;
-    String guiFont;
-    String guiFontColor;
-    String primarySelectionColor;
-    String pseudoSelectionColor;
-    
-    int initialWindowWidth;
-    int initialWindowHeight;
-
     LanguageModes::Ptr languageModes;
     
     SyntaxPatternsConfig::Ptr syntaxPatternsConfig;
     
     CallbackContainer<> configChangedCallbackContainer;
-    
-    long x11SelectionChunkLength;
-    int buttonInnerSpacing;
-    int guiSpacing;
-    bool editorPanelOnTop;
-    bool keepRunningIfOwningClipboard;
-    long maxRegexAssertionLength;
     
     ActionKeyConfig::Ptr        actionKeyConfig;
     
