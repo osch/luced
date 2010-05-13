@@ -1,6 +1,6 @@
 return
 {
-    name    = "config",
+    name    = "configData",
     type    = "map",
     entries =
     {

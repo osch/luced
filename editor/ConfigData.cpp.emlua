@@ -154,4 +154,73 @@ void ConfigData::readConfig(LuaVar luaData0)
         RawPtr<ConfigData> ptr0 = this;
 @ elementCode(configDef, "", "", 1)
 }
+@
+@
+@
+@
+@ local function classConstructors(c, classPath, luaConfigPath)
+@   local constructorMembers = {} 
+@   local elements = {}
+@   local class
+@   if c.type == "map" then
+@       class = cap(c.name)
+@       elements = c.entries
+@
+@       for i, e in ipairs(c.entries) do
+@           if    e.type == "bool" 
+@              or e.type == "int" 
+@              or e.type == "long" 
+@              or e.type == "map" 
+@              or e.type == "list" 
+@              or e.type == "alternative" 
+@              or e.default 
+@           then
+@               constructorMembers[#constructorMembers + 1] = e
+@           end
+@       end
+@
+@   elseif c.type == "list" then
+@       class = cap(c.name)
+@       elements = { c.member }
+@   elseif c.type == "alternative" then
+@       class = cap(c.name)
+@       elements = c.alternatives
+@   end
+@   if class then
 
+
+/**
+ * Constructor for @(luaConfigPath)
+ */
+@(classPath)@(cap(c.name))()
+@       if #constructorMembers > 0 then
+    :
+@           for i, m in ipairs(constructorMembers) do
+@               local comma = (i == #constructorMembers) and "" or ","
+@               if m.default then
+@                   if m.type == "String" then
+                    @(m.name)("@(string.gsub(m.default, '"', '\\"'))")@(comma)
+@                   else
+                    @(m.name)(@(m.default))@(comma)
+@                   end
+@               elseif m.type == "map" or m.type == "list" or m.type == "alternative" then
+@                       local eClass = cap(m.name)
+                    @(m.name)(OwningPtr<@(eClass)>(new @(eClass)()))@(comma)
+@               else
+@                   if m.type == "bool" then
+                    @(m.name)(false)@(comma)
+@                   elseif m.type == "int" or m.type == "long" then
+                    @(m.name)(0)@(comma)
+@                   end
+@               end
+@           end
+@       end
+{}
+@       for _, e in ipairs(elements) do
+@           classConstructors(e, classPath..cap(e.name).."::", path(luaConfigPath, e.name))
+@       end
+@   end
+@ end
+@
+@
+@ classConstructors(configDef, "ConfigData::", "")
