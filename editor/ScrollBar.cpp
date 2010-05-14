@@ -21,7 +21,6 @@
 
 #include "ScrollBar.hpp"
 #include "GuiRoot.hpp"
-#include "util.hpp"
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
 
@@ -632,12 +631,16 @@ void ScrollBar::setValueRange(long totalValue, long heightValue, long value)
 
 #define SCROLLY_TOP_OFFSET 0
 
+static inline long roundToLong(double x)
+{
+    return (x >= 0) ? (long)(x + 0.5)
+                    : (long)(x - 0.5);
+}
+
 inline long ScrollBar::calcScrollHeight()
 {
     if (totalValue != 0 && totalValue > heightValue) {
-        long rslt;
-        rslt = ROUNDED_DIV(heightValue * (scrollAreaLength - SCROLLY_TOP_OFFSET), 
-                totalValue);
+        long rslt = roundToLong((double)heightValue * ((double)(scrollAreaLength - SCROLLY_TOP_OFFSET) / totalValue));
         if (rslt < MIN_SCROLLER_HEIGHT)
             rslt = MIN_SCROLLER_HEIGHT;
         return rslt;
@@ -653,9 +656,12 @@ inline long ScrollBar::calcHighestScrollY()
 
 inline long ScrollBar::calcScrollY()
 {
-    if (totalValue != 0 && totalValue > heightValue) {
-        return SCROLLY_TOP_OFFSET + ROUNDED_DIV(value * (calcHighestScrollY() - SCROLLY_TOP_OFFSET),
-                totalValue - heightValue);
+    if (totalValue != 0 && totalValue > heightValue)
+    {
+        return   SCROLLY_TOP_OFFSET 
+               + roundToLong(  (double)value 
+                             * (double)(calcHighestScrollY() - SCROLLY_TOP_OFFSET) 
+                             / (double)(totalValue - heightValue));
     } else {
         return 0;
     }
@@ -663,9 +669,11 @@ inline long ScrollBar::calcScrollY()
 
 inline long ScrollBar::calcValue()
 {
-    if (totalValue != 0 && totalValue > heightValue) {
-        return ROUNDED_DIV((scrollY - SCROLLY_TOP_OFFSET) * (totalValue - heightValue),
-                (calcHighestScrollY() - SCROLLY_TOP_OFFSET));
+    if (totalValue != 0 && totalValue > heightValue) 
+    {
+        return roundToLong(  (double)(scrollY - SCROLLY_TOP_OFFSET) 
+                           * (double)(totalValue - heightValue) 
+                           / (double)(calcHighestScrollY() - SCROLLY_TOP_OFFSET));
     } else {
         return 1;
     }
