@@ -28,7 +28,8 @@ using namespace LucED;
 @ local functions  = require("functions")
 @ local cap        = functions.capitalize
 @
-@ local configDef  = require("ConfigDefinition")
+@ local configDef     = require("ConfigDefinition")
+@ local defaultConfig = dofile(".luced/config.lua")
 @ 
 @
 @ local converterMethods =
@@ -40,19 +41,11 @@ using namespace LucED;
 @   ["double"] = "toNumber",
 @ }
 @
-@ local function getDefaultValue(e)
-@   assert(e.default, "default entry for "..e.name)
-@   if e.type == "String" then
-@       return '"'..string.gsub(e.default, '["\\]', [[\%0]])..'"'
-@   else
-@       return e.default
-@   end
-@ end
-@
 @ local function path(p1, p2)
 @   return (#p1 > 0 and #p2 > 0 and p2:sub(1,1) ~= "[" and p1.."/"..p2) or (p1..p2)
 @ end
 
+/*
 void ConfigData::readConfig(LuaVar luaData0)
 {
         LuaAccess luaAccess = luaData0.getLuaAccess();
@@ -154,11 +147,12 @@ void ConfigData::readConfig(LuaVar luaData0)
         RawPtr<ConfigData> ptr0 = this;
 @ elementCode(configDef, "", "", 1)
 }
+*/
 @
 @
 @
 @
-@ local function classConstructors(c, classPath, luaConfigPath)
+@ local function classMethods(c, classPath, defaultValues, defaultIndex, luaConfigPath)
 @   local constructorMembers = {} 
 @   local elements = {}
 @   local class
@@ -170,6 +164,8 @@ void ConfigData::readConfig(LuaVar luaData0)
 @           if    e.type == "bool" 
 @              or e.type == "int" 
 @              or e.type == "long" 
+@              or e.type == "double" 
+@              or e.type == "String" 
 @              or e.type == "map" 
 @              or e.type == "list" 
 @              or e.type == "alternative" 
@@ -197,16 +193,25 @@ void ConfigData::readConfig(LuaVar luaData0)
     :
 @           for i, m in ipairs(constructorMembers) do
 @               local comma = (i == #constructorMembers) and "" or ","
-@               if m.default then
-@                   if m.type == "String" then
-                    @(m.name)("@(string.gsub(m.default, '"', '\\"'))")@(comma)
-@                   else
-                    @(m.name)(@(m.default))@(comma)
-@                   end
-@               elseif m.type == "map" or m.type == "list" or m.type == "alternative" then
+@               local defaultValue = defaultValues and defaultValues[m.name]
+@               if defaultValue ~= nil and m.default ~= nil then
+@                   error("doubled default values: in config.lua and in ConfigDefinition.lua for "..luaConfigPath.."/"..m.name)
+@               end
+@               if m.default == nil and defaultValue ~= nil then m.default = defaultValue end
+@               if defaultValue == nil then defaultValue = m.default end
+@               if m.type == "map" or m.type == "list" or m.type == "alternative" then
 @                       local eClass = cap(m.name)
                     @(m.name)(OwningPtr<@(eClass)>(new @(eClass)()))@(comma)
+@               elseif defaultValue ~= nil then
+@                   if m.type == "String" then
+                    @(m.name)("@(string.gsub(defaultValue, '"', '\\"'))")@(comma)
+@                   else
+                    @(m.name)(@(tostring(defaultValue)))@(comma)
+@                   end
+@               elseif m.type == "String" then
+                    @(m.name)()@(comma)
 @               else
+@                   error("No default value for "..luaConfigPath.."/"..m.name)
 @                   if m.type == "bool" then
                     @(m.name)(false)@(comma)
 @                   elseif m.type == "int" or m.type == "long" then
@@ -216,11 +221,114 @@ void ConfigData::readConfig(LuaVar luaData0)
 @           end
 @       end
 {}
-@       for _, e in ipairs(elements) do
-@           classConstructors(e, classPath..cap(e.name).."::", path(luaConfigPath, e.name))
+
+/**
+ *
+ */
+void @(classPath)readConfig(LuaVar luaData)
+{
+    if (luaData.isValid())
+    {
+        if (!luaData.isTable()) {
+            throw ConfigException(String() << "Error: @(luaConfigPath) must be table, but is "
+                                           << luaData.getTypeName());
+        }
+@   local luaVarDecl = "LuaVar "
+@   if c.type == "map" then
+@       assert(c.entries and #c.entries > 0, "no entries in map '"..(c.name or "???").."'")
+@       for _, e in ipairs(c.entries) do
+@           if e.type == "map" or e.type == "list" or e.type == "alternative" then
+        this->@(e.name)->readConfig(luaData["@(e.name)"]);
+@           else
+        @(luaVarDecl)luaVar = luaData["@(e.name)"];
+@               if #luaVarDecl > 0 then
+@                   luaVarDecl = ""
+@               end
+        if (luaVar.isValid()) {
+            this->@(e.name) = luaVar.@(converterMethods[e.type])();
+@               if not e.default then            
+        } else {
+            throw ConfigException(String() << "Error: @(luaConfigPath) missing value for @(e.name)");
+@               end
+        }
+@           end
+@       end
+@   elseif c.type == "list" then
+@       local e = c.member
+        this->@(c.name).clear();
+        LuaAccess luaAccess = luaData.getLuaAccess();
+        LuaVar luaVar(luaAccess);
+        for (int i = 0; luaVar = luaData[i + 1], luaVar.isValid(); ++i)
+        {
+@           if e.type == "map" or e.type == "list" or e.type == "alternative" then
+            OwningPtr<@(cap(e.name))> ptr(new @(cap(e.name))());
+            ptr->readConfig(luaVar);
+            this->@(c.name).append(ptr);
+@           else
+            if (luaVar.isValid()) {
+                this->@(c.name).append(luaVar.@(converterMethods[e.type])());
+@               if not e.default then            
+            } else {
+                throw ConfigException(String() << "Error: @(luaConfigPath) missing value for @(e.name)");
+@               end
+            }
+@           end
+        }
+@   elseif c.type == "alternative" then
+@       assert(c.alternatives and #c.alternatives > 0, "no entries in alternatives '"..(c.name or "???").."'")
+@       for _, a in ipairs(c.alternatives) do
+        this->@(a.name).invalidate();
+@       end
+        do
+        {
+@       for i, a in ipairs(c.alternatives) do
+@           assert(a.type == "map", "alternative "..a.name.." must be of type 'map'")
+@           local firstEntry = assert(a.entries[1], "alternative "..a.name.." must have entries")
+            if (luaData["@(firstEntry.name)"].isValid())
+            {
+                this->@(a.name) = OwningPtr<@(cap(a.name))>(new @(cap(a.name))());
+                this->@(a.name)->readConfig(luaData);
+                break;
+            }
+@       end
+        } while (false);
+@   end
+    }
+    else
+    {
+    
+    }
+}
+@
+@       if c.type == "map" then
+@           for _, e in ipairs(c.entries) do
+@               classMethods(e, classPath..cap(e.name).."::", 
+@                            defaultValues and defaultValues[e.name], defaultIndex, path(luaConfigPath, e.name))
+@           end
+@       elseif c.type == "list" then
+@           local nextIndex
+@           if c.index then
+@               nextIndex = {}
+@               local idField = c.index
+@               assert(defaultValues, "default config values are needed for "..luaConfigPath)
+@               for i, v in ipairs(defaultValues) do
+@                   local id = v[idField]
+@                   if id and not nextIndex[id] then
+@                       nextIndex[id] = v
+@                   end
+@               end
+@           end
+@           local m = c.member
+@           classMethods(m, classPath..cap(m.name).."::", 
+@                        nil, nextIndex, luaConfigPath)
+@       elseif c.type == "alternative" then
+@           for _, a in ipairs(c.alternatives) do
+@               classMethods(a, classPath..cap(a.name).."::", 
+@                            defaultValues, defaultIndex, luaConfigPath)
+@           end
 @       end
 @   end
 @ end
 @
 @
-@ classConstructors(configDef, "ConfigData::", "")
+@ classMethods(configDef, "ConfigData::", defaultConfig, nil, "")

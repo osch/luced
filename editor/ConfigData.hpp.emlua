@@ -106,6 +106,9 @@ public:
 @       emluaAddIndent(4)
 @       elementCode(c)
 @       emluaAddIndent(-4)
+
+        void readConfig(LuaVar luaData);
+
     private:
         friend class ConfigData;
 @       classConstructor(class, c)

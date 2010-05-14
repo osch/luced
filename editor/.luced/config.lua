@@ -57,10 +57,17 @@ local generalConfig =
           maxRegexAssertionLength = 3000,
 }
 
-
 local normal_font = "-*-courier-medium-r-*-*-*-120-75-75-*-*-iso10646-1"
 local italic_font = "-*-courier-medium-o-*-*-*-120-75-75-*-*-iso10646-1"
 local bold_font   = "-*-courier-bold-r-*-*-*-120-75-75-*-*-iso10646-1"
+
+local fonts =
+{
+    { name = "normal", x11FontId = normal_font },
+    { name = "italic", x11FontId = italic_font },
+    { name = "bold",   x11FontId = bold_font   }
+}
+
 
 
 local textStyles =
@@ -206,6 +213,7 @@ local actionKeyBinding =
 local config =
 {
     generalConfig    = generalConfig,
+    fonts            = fonts,
     textStyles       = textStyles,
     languageModes    = languageModes,
     actionKeyBinding = actionKeyBinding,

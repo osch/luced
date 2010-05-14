@@ -11,109 +11,85 @@ return
             {
                 {   name    = "useOwnKeyPressRepeater",
                     type    = "bool",
-                    default = "true"
                 },
                 {   name    = "doNotUseX11XkbExtension",
                     type    = "bool",
-                    default = "true"
                 },
                 {   name    = "keyPressRepeatFirstMilliSecs",
                     type    = "double",
-                    default = "200"
                 },
                 {   name    = "keyPressRepeatNextMilliSecs",
                     type    = "double",
-                    default = "18"
                 },
                 {   name    = "scrollBarWidth",
                     type    = "int",
-                    default = "12+2"
                 },
                 {   name    = "scrollBarRepeatFirstMilliSecs",
                     type    = "double",
-                    default = "300"
                 },
                 {   name    = "scrollBarRepeatNextMilliSecs",
                     type    = "double",
-                    default = "10"
                 },
                 {   name    = "doubleClickMilliSecs",
                     type    = "int",
-                    default = "400"
                 },
                 {   name    = "guiColor01",
                     type    = "String",
-                    default = "grey30"
                 },
                 {   name    = "guiColor02",
                     type    = "String",
-                    default = "grey70"
                 },
                 {   name    = "guiColor03",
                     type    = "String",
-                    default = "grey80"
                 },
                 {   name    = "guiColor04",
                     type    = "String",
-                    default = "grey85"
                 },
                 {   name    = "guiColor05",
                     type    = "String",
-                    default = "grey90"
                 },
                 {   name    = "guiFont",
                     type    = "String",
-                    default = "-*-helvetica-medium-r-*-*-*-120-75-75-*-*-iso10646-1"
                 },
                 {   name    = "guiFontColor",
                     type    = "String",
-                    default = "black"
                 },
                 {   name    = "primarySelectionColor",
                     type    = "String",
-                    default = "grey"
                 },
                 {   name    = "pseudoSelectionColor",
                     type    = "String",
-                    default = "rgb:f1/f1/f1"
                 },
                 {   name    = "initialWindowWidth",
                     type    = "int",
-                    default = "100"
                 },
                 {   name    = "initialWindowHeight",
                     type    = "int",
-                    default = "45"
                 },
                 {   name    = "x11SelectionChunkLength",
                     type    = "long",
-                    default = "200000"
                 },
                 {   name    = "buttonInnerSpacing",
                     type    = "int",
-                    default = "2"
                 },
                 {   name    = "guiSpacing",
                     type    = "int",
-                    default = "2"
                 },
                 {   name    = "editorPanelOnTop",
                     type    = "bool",
-                    default = "false"
                 },
                 {   name    = "keepRunningIfOwningClipboard",
                     type    = "bool",
-                    default = "false"
                 },
                 {   name    = "maxRegexAssertionLength",
                     type    = "int",
-                    default = "3000"
                 },
             }
         },
         ------------------------------------------------------------------------
         {   name    = "fonts",
             type    = "list",
+            index   = "name",
             member  =
             {
                 name    = "font",
