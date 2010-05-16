@@ -113,29 +113,29 @@ GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       Defaul
 GENERATED_FAST_MODULES := LuaClassRegistry
 
 
-SLOW_MODULES := EditorTopWin             GuiRoot                GuiWidget                  SystemException \
-                TextEditorWidget         TextStyle              KeyPressRepeater           ScrollBar \
-                System                   LuaException           TopWin                     ProgramName \
-                LuaVar                   LuaInterpreter         ConfigException            GlobalConfig \
-                LanguageModes            RegexException         StatusLine                 GlobalLuaInterpreter \
-                Button                   GuiLayoutWidget        LuaStoredObjectReference   LuaArgException \
-                GotoLinePanel            SingletonKeeper        TopWinList                 OwnedTopWins \
-                DialogWin                GuiLayoutSpacer        MultiLineEditorWidget      SubstitutionException \
-                SingleLineEditorWidget   LuaStackChecker        Commandline                BaseException \
-                SingleLineEditField      LabelWidget            DialogPanel                PanelDialogWin \
-                FindPanel                CheckBox               MessageBox                 SearchHistory \
-                FileException            EditorServer           ClientServerUtil           EditorClient  \
-                CommandlineException     ReplacePanel           LuaFunctionArguments       GuiElement \
-                SelectionOwner           PasteDataReceiver      Clipboard                  FileOpener \
-                ConfigErrorHandler       WindowCloser           SaveAsPanel                KeyModifier \
-		CurrentDirectoryKeeper   ProgramExecutor        TextDisplayGuiCompound     CommandOutputBox \
-		FramedGuiCompound        EditorTopWinActions    UnknownActionNameException ScrollableTextGuiCompound \
-		SearchInteraction        ActionKeyConfig        SingleLineEditActions      MultiLineEditActions \
-		ActionKeySequenceHandler StackTrace             ActionIdRegistry           MultiLineDisplayActions \
-		SingleLineDisplayActions LuaStateAccess         LuaCMethod                 LuaAccess \
-		LucedLuaInterface        EncodingException      QualifiedName              SyntaxPatternsConfig \
-		TextStyleCache           ConfigPackageLoader    FocusableWidget            FocusableElement \
-		NonFocusableWidget       FocusableContainerWidget 
+SLOW_MODULES := EditorTopWin             GuiRoot                  GuiWidget                  SystemException \
+                TextEditorWidget         TextStyle                KeyPressRepeater           ScrollBar \
+                System                   LuaException             TopWin                     ProgramName \
+                LuaVar                   LuaInterpreter           ConfigException            GlobalConfig \
+                LanguageModes            RegexException           StatusLine                 GlobalLuaInterpreter \
+                Button                   GuiLayoutWidget          LuaStoredObjectReference   LuaArgException \
+                GotoLinePanel            SingletonKeeper          TopWinList                 OwnedTopWins \
+                DialogWin                GuiLayoutSpacer          MultiLineEditorWidget      SubstitutionException \
+                SingleLineEditorWidget   LuaStackChecker          Commandline                BaseException \
+                SingleLineEditField      LabelWidget              DialogPanel                PanelDialogWin \
+                FindPanel                CheckBox                 MessageBox                 SearchHistory \
+                FileException            EditorServer             ClientServerUtil           EditorClient  \
+                CommandlineException     ReplacePanel             LuaFunctionArguments       GuiElement \
+                SelectionOwner           PasteDataReceiver        Clipboard                  FileOpener \
+                ConfigErrorHandler       WindowCloser             SaveAsPanel                KeyModifier \
+		CurrentDirectoryKeeper   ProgramExecutor          TextDisplayGuiCompound     CommandOutputBox \
+		FramedGuiCompound        EditorTopWinActions      UnknownActionNameException ScrollableTextGuiCompound \
+		SearchInteraction        ActionKeyConfig          SingleLineEditActions      MultiLineEditActions \
+		ActionKeySequenceHandler StackTrace               ActionIdRegistry           MultiLineDisplayActions \
+		SingleLineDisplayActions LuaStateAccess           LuaCMethod                 LuaAccess \
+		LucedLuaInterface        EncodingException        QualifiedName              SyntaxPatternsConfig \
+		TextStyleCache           ConfigPackageLoader      FocusableWidget            FocusableElement \
+		NonFocusableWidget       FocusableContainerWidget TextStyleDefinitions  
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \
@@ -143,7 +143,7 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 BackliteBuffer          GuiLayoutRow           GuiLayoutColumn        HeapObject  \
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
                 ViewLuaInterface        LuaSerializer          ActionMethodContainer  FocusManager \
-                FontInfo                EncodingConverter      String
+                FontInfo                EncodingConverter      String                 
                 
 ROOT_CONFIG_FILES            := .luced/config.lua 
 

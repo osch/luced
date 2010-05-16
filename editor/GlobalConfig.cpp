@@ -204,42 +204,12 @@ void GlobalConfig::readConfig()
 
             // textStyles
     
-            LuaVar ts = configTable["textStyles"];
-            if (!ts.isTable()) {
-                throw ConfigException("invalid textstyles");
-            }
-    
-            LuaVar o(luaAccess);
-            
-            TextStyleDefinitions::Ptr newTextStyleDefinitions = TextStyleDefinitions::create();
-                    
-            for (int i = 0; o = ts[i + 1], o.isValid(); ++i) {
-                LuaVar n = o["name"];
-                if (!n.isString()) {
-                    throw ConfigException("textstyle has invalid name");
-                }
-                String name = n.toString();
-                if (i == 0 && name != "default") {
-                    throw ConfigException("first textstyle must be named 'default'");
-                }
-    
-                LuaVar f = o["font"];
-                if (!f.isString()) {
-                    throw ConfigException(String() << "invalid font in textstyle '" << name << "'");
-                }
-                String fontname = f.toString();
-                LuaVar c = o["color"];
-                if (!c.isString()) {
-                    throw ConfigException(String() << "invalid color in textstyle '" << name << "'");
-                }
-                String colorname = c.toString();
-    
-                newTextStyleDefinitions->append(TextStyleDefinition(name, fontname, colorname));
-            }
-            this->textStyleDefinitions = newTextStyleDefinitions;
-    
+            this->textStyleDefinitions = TextStyleDefinitions::create(configData->getFonts(),
+                                                                      configData->getTextStyles());
+
             // LanguageModes
     
+            LuaVar o(luaAccess);
             LuaVar lm = configTable["languageModes"];
             if (lm.isValid())
             {

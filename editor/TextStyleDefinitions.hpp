@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -27,7 +27,9 @@
 #include "OwningPtr.hpp"
 #include "TextStyleDefinition.hpp"
 #include "Nullable.hpp"
-          
+#include "Null.hpp"
+#include "ConfigData.hpp"
+
 namespace LucED
 {
 
@@ -37,8 +39,15 @@ public:
     typedef OwningPtr<      TextStyleDefinitions> Ptr;
     typedef OwningPtr<const TextStyleDefinitions> ConstPtr;
     
-    static Ptr create() {
-        return Ptr(new TextStyleDefinitions());
+    static Ptr create(RawPtr<ConfigData::Fonts> fonts, 
+                      RawPtr<ConfigData::TextStyles> textStyles)
+    {
+        return Ptr(new TextStyleDefinitions(fonts, textStyles));
+    }
+    
+    static Ptr create()
+    {
+        return Ptr(new TextStyleDefinitions(Null, Null));
     }
     
     void append(const TextStyleDefinition& newDefinition) {
@@ -65,6 +74,9 @@ public:
      
     
 private:
+    TextStyleDefinitions(RawPtr<ConfigData::Fonts>      fonts, 
+                         RawPtr<ConfigData::TextStyles> textStyles);
+                         
     ObjectArray<TextStyleDefinition> definitions;
 };
 
