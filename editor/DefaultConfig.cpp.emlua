@@ -123,16 +123,20 @@ File DefaultConfig::writeCopyOfDefaultConfigFiles()
 
 const char* DefaultConfig::getDefaultModule(const String& pseudoFileName)
 {
-    const char* rslt = NULL;
-    
     for (int i = 0; i < NUMBER_DEFAULT_PACKAGE_CONFIG_FILES; ++i)
     {
         if (defaultPackageConfigEntries[i].fileName == pseudoFileName)
         {
-            rslt = defaultPackageConfigEntries[i].fileContent;
-            break;
+            return defaultPackageConfigEntries[i].fileContent;
         }
     }
-    return rslt;
+    for (int i = 0; i < NUMBER_ROOT_CONFIG_FILES; ++i)
+    {
+        if (rootConfigEntries[i].fileName == pseudoFileName)
+        {
+            return rootConfigEntries[i].fileContent;
+        }
+    }
+    return NULL;
 }
 
