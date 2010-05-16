@@ -27,6 +27,8 @@ using namespace LucED;
 
 @ local functions  = require("functions")
 @ local cap        = functions.capitalize
+@ local ser        = functions.serialize
+@ local gsub       = string.gsub
 @
 @ local configDef     = require("ConfigDefinition")
 @ local defaultConfig = dofile(".luced/config.lua")
@@ -204,7 +206,7 @@ void ConfigData::readConfig(LuaVar luaData0)
                     @(m.name)(OwningPtr<@(eClass)>(new @(eClass)()))@(comma)
 @               elseif defaultValue ~= nil then
 @                   if m.type == "String" then
-                    @(m.name)("@(string.gsub(defaultValue, '"', '\\"'))")@(comma)
+                    @(m.name)("@(gsub(defaultValue, '"', '\\"'))")@(comma)
 @                   else
                     @(m.name)(@(tostring(defaultValue)))@(comma)
 @                   end
@@ -227,15 +229,50 @@ void ConfigData::readConfig(LuaVar luaData0)
  */
 void @(classPath)readConfig(LuaVar luaData)
 {
+@ if c.type == "list" and defaultValues then
+    if (!luaData.isValid())
+    {
+        LuaAccess luaAccess = luaData.getLuaAccess();
+        static const char* defaultValueScript = "return @(gsub(ser(defaultValues), '"', '\\"'))";
+        LuaAccess::Result rslt = luaAccess.executeScript(defaultValueScript, strlen(defaultValueScript));
+        if (rslt.objects.getLength() > 0) {
+            luaData = rslt.objects[0];
+        }
+    }
+@ end
     if (luaData.isValid())
     {
         if (!luaData.isTable()) {
             throw ConfigException(String() << "Error: @(luaConfigPath) must be table, but is "
                                            << luaData.getTypeName());
         }
-@   local luaVarDecl = "LuaVar "
 @   if c.type == "map" then
 @       assert(c.entries and #c.entries > 0, "no entries in map '"..(c.name or "???").."'")
+@       if defaultIndex then
+        {
+@           local indexField = defaultIndex.indexField
+@           local indexMap   = defaultIndex.indexMap
+            // TODO
+            LuaAccess luaAccess = luaData.getLuaAccess();
+            static const char* defaultValueScript = "return @(gsub(ser(indexMap), '"', '\\"'))";
+            LuaAccess::Result rslt = luaAccess.executeScript(defaultValueScript, strlen(defaultValueScript));
+            if (rslt.objects.getLength() > 0) {
+                LuaVar indexMap      = rslt.objects[0];
+                LuaVar index         = luaData["@(indexField)"];
+                LuaVar defaultValues = indexMap[index];
+                if (defaultValues.isValid())
+                {
+                    for (LuaIterator i(luaAccess, 0); i.in(defaultValues); ++i)
+                    {
+                        if (!luaData[i.key()].isValid()) {
+                            luaData[i.key()] = i.value();
+                        }
+                    }
+                }
+            }
+        }
+@       end
+@       local luaVarDecl = "LuaVar "
 @       for _, e in ipairs(c.entries) do
 @           if e.type == "map" or e.type == "list" or e.type == "alternative" then
         this->@(e.name)->readConfig(luaData["@(e.name)"]);
@@ -246,7 +283,7 @@ void @(classPath)readConfig(LuaVar luaData)
 @               end
         if (luaVar.isValid()) {
             this->@(e.name) = luaVar.@(converterMethods[e.type])();
-@               if not e.default then            
+@               if e.default == nil then            
         } else {
             throw ConfigException(String() << "Error: @(luaConfigPath) missing value for @(e.name)");
 @               end
@@ -294,27 +331,24 @@ void @(classPath)readConfig(LuaVar luaData)
         } while (false);
 @   end
     }
-    else
-    {
-    
-    }
 }
 @
 @       if c.type == "map" then
 @           for _, e in ipairs(c.entries) do
 @               classMethods(e, classPath..cap(e.name).."::", 
-@                            defaultValues and defaultValues[e.name], defaultIndex, path(luaConfigPath, e.name))
+@                            defaultValues and defaultValues[e.name], nil, path(luaConfigPath, e.name))
 @           end
 @       elseif c.type == "list" then
 @           local nextIndex
 @           if c.index then
-@               nextIndex = {}
+@               nextIndex = { indexField = c.index, indexMap = {} }
+@               local indexMap = nextIndex.indexMap
 @               local idField = c.index
 @               assert(defaultValues, "default config values are needed for "..luaConfigPath)
 @               for i, v in ipairs(defaultValues) do
 @                   local id = v[idField]
-@                   if id and not nextIndex[id] then
-@                       nextIndex[id] = v
+@                   if id and not indexMap[id] then
+@                       indexMap[id] = v
 @                   end
 @               end
 @           end
@@ -323,8 +357,18 @@ void @(classPath)readConfig(LuaVar luaData)
 @                        nil, nextIndex, luaConfigPath)
 @       elseif c.type == "alternative" then
 @           for _, a in ipairs(c.alternatives) do
+@               local nextIndex
+@               if defaultIndex then
+@                   local f = defaultIndex.indexField
+@                   for _,e in pairs(a.entries or {}) do
+@                       if e.name == f then
+@                           nextIndex = defaultIndex
+@                           break
+@                       end
+@                   end
+@               end
 @               classMethods(a, classPath..cap(a.name).."::", 
-@                            defaultValues, defaultIndex, luaConfigPath)
+@                            defaultValues, nextIndex, luaConfigPath)
 @           end
 @       end
 @   end

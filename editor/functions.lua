@@ -26,6 +26,8 @@
 
 local append = table.insert
 local concat = table.concat
+local gsub   = string.gsub
+local sort   = table.sort
 
 local function buildList(itemCount, buildItemFunc)
     local t = {}
@@ -104,11 +106,63 @@ local function upperize(s)
 end
 
 local function stringLiteral(s)
-    s = string.gsub(s, [[\]], [[\\]])
-    s = string.gsub(s, [["]], [[\"]])
-    s = string.gsub(s, "\n",  [[\n]])
-    s = string.gsub(s, "\r",  [[\r]])
+    s = gsub(s, [[\]], [[\\]])
+    s = gsub(s, [["]], [[\"]])
+    s = gsub(s, "\n",  [[\n]])
+    s = gsub(s, "\r",  [[\r]])
     return '"'..s..'"'
+end
+
+local function serializeValueTo(c, rslt)
+    local t = type(c)
+    if t == "number" or t == "boolean" then
+        rslt[#rslt + 1] = tostring(c)
+    elseif t == "string" then
+        rslt[#rslt + 1] = '"'
+        rslt[#rslt + 1] = gsub(gsub(c, "[\"\\]", "\\%0"),
+                                       "\n",     "\\n")
+        rslt[#rslt + 1] = '"'
+    else
+        error("Serialization not possible for type "..t)
+    end
+end
+
+local serializingTable = {}
+
+local function serialize(c)
+    local rslt = {}
+    if type(c) == "table" then
+        if serializingTable[c] then
+            error("object serialization impossible")
+        end
+        serializingTable[c] = true
+        local n = #c
+        local keyList = {}
+        for k, _ in pairs(c) do
+            if type(k) ~= "number" or k < 1 or n < k then
+                keyList[#keyList + 1] = k
+            end
+        end
+        sort(keyList)
+        rslt[#rslt + 1] = '{'
+        for i = 1, n do
+            local v = c[i]
+            rslt[#rslt + 1] = serialize(v)
+            rslt[#rslt + 1] = ','
+        end
+        for _, k in ipairs(keyList) do
+            local v = c[k]
+            rslt[#rslt + 1] = '['   serializeValueTo(k, rslt)
+            rslt[#rslt + 1] = ']='
+            rslt[#rslt + 1] = serialize(v)
+            rslt[#rslt + 1] = ','
+        end
+        rslt[#rslt + 1] = '}'
+        serializingTable[c] = nil
+    else
+        serializeValueTo(c, rslt)
+    end
+    return concat(rslt)
 end
 
 return  {
@@ -119,4 +173,5 @@ return  {
             capitalize     = capitalize,
             upperize       = upperize,
             stringLiteral  = stringLiteral,
+            serialize      = serialize,
         }

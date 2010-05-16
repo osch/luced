@@ -108,6 +108,7 @@ return
         ------------------------------------------------------------------------
         {   name    = "textStyles",
             type    = "list",
+            index   = "name",
             member  =
             {
                 name         = "element",
@@ -144,6 +145,7 @@ return
         ------------------------------------------------------------------------
         {   name    = "languageModes",
             type    = "list",
+            index   = "name",
             member  =
             {
                 name         = "element",
