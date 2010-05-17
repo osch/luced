@@ -475,9 +475,6 @@ void MultiLineEditActions::newLineAutoIndent(bool insert)
             if (insert) {
                 e->removeAtCursor(selLength);
             }
-            e->releaseSelection();
-        } else if (e->hasPseudoSelection()) {
-            e->releaseSelection();
         }
         TextData::TextMark mark = e->createNewMarkFromCursor();
         ByteArray whiteSpace;
@@ -502,6 +499,11 @@ void MultiLineEditActions::newLineAutoIndent(bool insert)
 
         e->insertAtCursor(whiteSpace);
         e->moveCursorToTextPosition(e->getCursorTextPosition() + whiteSpace.getLength());
+        
+        if (e->hasPrimarySelection() || e->hasPseudoSelection())
+        {
+            e->releaseSelection();
+        }
     }
     e->assureCursorVisible();
     e->rememberCursorPixX();
