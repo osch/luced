@@ -400,7 +400,12 @@ define CONFIGURE_RUN
 	ln -sf ../../autoconf-dummy.mk.am    dummy.mk.am    && \
 	ln -sf ../../Makefile2.mk.in         Makefile2.mk.in && \
 	autoreconf -vi && \
-	./configure $(CONFIGURE_OPTS)
+	./configure $(CONFIGURE_OPTS); \
+	rc=$$?; \
+	if [ 0 -ne $$rc ]; then echo "*** configure error ***"; \
+	                        echo "you may set configure options in 'sandbox.mk' by setting the variable CONFIGURE_OPTS"; \
+	fi; \
+	exit $$rc
 endef	  
 
 sandbox-config.h:

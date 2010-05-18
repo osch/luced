@@ -128,7 +128,9 @@ AC_CHECK_HEADERS(X11/xpm.h, [have_xpm_h=yes])
 
 if test "x$disable_xpm" != xyes; then
   if test "x$have_xpm_h" = xyes; then
-    AC_SEARCH_LIBS([XpmCreatePixmapFromData],[Xpm], [], [AC_MSG_FAILURE("Cannot find libXpm library.")])
+    AC_SEARCH_LIBS([XpmCreatePixmapFromData],[Xpm], [], [AC_MSG_FAILURE("Cannot find libXpm library. You may disable xpm window icon support with the configure option --disable-xpm")])
+  else
+    AC_MSG_FAILURE("Cannot find libXpm development headers. You may disable xpm window icon support with the configure option --disable-xpm")
   fi
 fi
 
@@ -160,6 +162,13 @@ else
   AC_DEFINE_UNQUOTED([HAVE_ICONV], 0, [Define to 1 for iconv support.])
 fi
 ############################
+
+
+if test "x$disable_iconv" != xyes; then
+  if test "x$have_iconv" != xyes; then
+    AC_MSG_FAILURE("Cannot get iconv to work. You may disable iconv support for encoding conversion with the configure option --disable-iconv")
+  fi
+fi
 
 pcre_have_strotolonglong=0
 AC_CHECK_FUNCS(strtoq strtoll _strtoi64, [pcre_have_strotolonglong="1"; break])
