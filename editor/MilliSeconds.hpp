@@ -40,10 +40,10 @@ public:
     {}
 
     operator long() const {
-        return milliSeconds;
+        return (long)milliSeconds;
     }
     operator MicroSeconds() const {
-        return MicroSeconds(milliSeconds * 1000);
+        return MicroSeconds((long)(milliSeconds * 1000));
     }
 private:
     double milliSeconds;

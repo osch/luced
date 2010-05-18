@@ -103,6 +103,11 @@ public:
 public:
     class @(class) : public HeapObject
     {
+    public:
+        typedef OwningPtr<@(class)> Ptr;
+        static Ptr create() {
+            return Ptr(new @(class)());
+        }
 @       emluaAddIndent(4)
 @       elementCode(c)
 @       emluaAddIndent(-4)
@@ -110,7 +115,6 @@ public:
         void readConfig(LuaVar luaData);
 
     private:
-        friend class ConfigData;
 @       classConstructor(class, c)
     };
 @----------------------------------------------------------------------- 

@@ -99,7 +99,7 @@ using namespace LucED;
 @               if defaultValue == nil then defaultValue = m.default end
 @               if m.type == "map" or m.type == "list" or m.type == "alternative" then
 @                       local eClass = cap(m.name)
-                    @(m.name)(OwningPtr<@(eClass)>(new @(eClass)()))@(comma)
+                    @(m.name)(@(eClass)::create())@(comma)
 @               elseif defaultValue ~= nil then
 @                   if m.type == "String" then
                     @(m.name)("@(gsub(defaultValue, '"', '\\"'))")@(comma)
@@ -194,7 +194,7 @@ void @(classPath)readConfig(LuaVar luaData)
         for (int i = 0; luaVar = luaData[i + 1], luaVar.isValid(); ++i)
         {
 @           if e.type == "map" or e.type == "list" or e.type == "alternative" then
-            OwningPtr<@(cap(e.name))> ptr(new @(cap(e.name))());
+            @(cap(e.name))::Ptr ptr = @(cap(e.name))::create();
             ptr->readConfig(luaVar);
             this->@(c.name).append(ptr);
 @           else
@@ -219,7 +219,7 @@ void @(classPath)readConfig(LuaVar luaData)
 @           local firstEntry = assert(a.entries[1], "alternative "..a.name.." must have entries")
             if (luaData["@(firstEntry.name)"].isValid())
             {
-                this->@(a.name) = OwningPtr<@(cap(a.name))>(new @(cap(a.name))());
+                this->@(a.name) = @(cap(a.name))::create();
                 this->@(a.name)->readConfig(luaData);
                 break;
             }
