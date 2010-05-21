@@ -40,6 +40,8 @@ return
                      },
                      { name = "toLower"
                      },
+                     { name = "openFile"
+                     },
                    }
     },
     {

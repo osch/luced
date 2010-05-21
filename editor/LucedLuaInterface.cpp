@@ -26,6 +26,7 @@
 #include "GlobalLuaInterpreter.hpp"
 #include "GlobalConfig.hpp"
 #include "LuaIterator.hpp"
+#include "FileOpener.hpp"
 
 using namespace LucED;
 
@@ -119,4 +120,17 @@ LuaCFunctionResult LucedLuaInterface::toLower(const LuaCFunctionArguments& args)
     }
 
     return LuaCFunctionResult(luaAccess) << args[0].toString().toLowerUtf8();
+}
+
+LuaCFunctionResult LucedLuaInterface::openFile(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (args.getLength() != 1 || !args[0].isString()) {
+        throw LuaArgException();
+    }
+    
+    FileOpener::start(args[0].toString());
+
+    return LuaCFunctionResult(luaAccess);
 }
