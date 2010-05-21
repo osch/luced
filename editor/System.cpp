@@ -81,7 +81,14 @@ System::System()
         hostName = utsNameData.nodename;
     }
     
-    defaultEncoding = nl_langinfo(CODESET);
+    const char* defaultEncodingFromEnv = getenv("LUCED_DEFAULT_ENCODING");
+    if (defaultEncodingFromEnv != NULL && defaultEncodingFromEnv[0] != '\0')
+    {
+        defaultEncoding = defaultEncodingFromEnv;
+    }
+    else {
+        defaultEncoding = nl_langinfo(CODESET);
+    }
     defaultLocale   = setlocale(LC_ALL, NULL); // only query, because second param is NULL
     
     // obtain encoding name for locale "C"
