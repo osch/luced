@@ -99,7 +99,7 @@ public:
     
     File(const String& path, const String& fileName);
     
-    File(const String& fileName)
+    File(const String& fileName = "")
         : name(fileName)
     {}
     

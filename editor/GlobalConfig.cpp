@@ -32,6 +32,7 @@
 #include "CurrentDirectoryKeeper.hpp"
 #include "ActionIdRegistry.hpp"
 #include "QualifiedName.hpp"
+#include "DefaultConfig.hpp"
                             
 using namespace LucED;
 
@@ -167,16 +168,12 @@ void GlobalConfig::readConfig()
 {
     packagesMap.clear();
     
+    configDirectory = DefaultConfig::getCreatedConfigDirectory();
+
     ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::create();
                                     errorList->setFallbackFileName(String() << configDirectory 
                                                                             << "/config.lua");
-    
-    configDirectory = File(".luced").getAbsoluteName();
-    
-    if (!File(configDirectory).exists()) {
-        String homeDirectory = System::getInstance()->getHomeDirectory();
-        configDirectory = File(homeDirectory, ".luced").getAbsoluteName();
-    }
+
     RawPtr<GlobalLuaInterpreter> luaInterpreter = GlobalLuaInterpreter::getInstance();
     LuaAccess luaAccess = luaInterpreter->getCurrentLuaAccess();
 
@@ -186,10 +183,13 @@ void GlobalConfig::readConfig()
     luaInterpreter->setMode(ConfigPackageLoader::MODE_NORMAL);
 
     bool tryItAgain = false;
+    int  tryCounter = 0;
     do
     {
         try
         {
+            ++tryCounter;
+            
             CurrentDirectoryKeeper currentDirectoryKeeper(configDirectory);
             
             LuaVar configTable = luaInterpreter->getGeneralConfigModule("config");
@@ -239,12 +239,12 @@ void GlobalConfig::readConfig()
         }
         catch (BaseException& ex)
         {
-            if (tryItAgain) {
+            if (tryCounter == 2) {
                 printf("Internal config error: %s\n", ex.toString().toCString());
             }
-            ASSERT(!tryItAgain); // MODE_FALLBACK should not throw exception
+            ASSERT(tryCounter == 1); // MODE_FALLBACK should not throw exception
 
-            if (!tryItAgain)
+            if (tryCounter == 1)
             {
                 errorList->appendCatchedException();
             }
@@ -257,12 +257,12 @@ void GlobalConfig::readConfig()
                 }
             }
         }
-        if (!actionKeyConfig.isValid())
+        if (tryCounter == 1 && !actionKeyConfig.isValid())
         {
             tryItAgain = true;
             luaInterpreter->setMode(ConfigPackageLoader::MODE_FALLBACK);
         }
-        else if (tryItAgain) {
+        else {
             tryItAgain = false;
         }
     }

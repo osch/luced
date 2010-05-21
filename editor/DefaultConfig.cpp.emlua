@@ -67,12 +67,30 @@ static DefaultConfigEntry defaultPackageConfigEntries[NUMBER_DEFAULT_PACKAGE_CON
 
 File DefaultConfig::getCreatedConfigDirectory()
 {
-    File configDirectory(".luced");
+    File configDirectory;
+    bool hasConfigDir = false;
     
-    if (!configDirectory.exists()) {
-        String homeDirectory = System::getInstance()->getHomeDirectory();
-        configDirectory = File(homeDirectory, ".luced");
+    if (!hasConfigDir)
+    {
+        const char* configDirFromEnv = getenv("LUCED_CONFIG_DIR");
+        if (configDirFromEnv != NULL && configDirFromEnv[0] != '\0') {
+            configDirectory = File(configDirFromEnv);
+            hasConfigDir = true;
+        }
     }
+    if (!hasConfigDir)
+    {
+        configDirectory = File(".luced").getAbsoluteName();
+        if (File(configDirectory).exists()) {
+            hasConfigDir = true;
+        }
+    }
+    if (!hasConfigDir)
+    {
+        String homeDirectory = System::getInstance()->getHomeDirectory();
+        configDirectory = File(homeDirectory, ".luced").getAbsoluteName();
+    }
+
     if (!configDirectory.exists())
     {
         configDirectory.createDirectory();
