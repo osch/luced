@@ -58,6 +58,7 @@ EditorServer::~EditorServer()
 void EditorServer::startWithCommandlineAndErrorList(Commandline::Ptr                commandline,
                                                     ConfigException::ErrorList::Ptr errorList)
 {
+    GlobalConfig::getInstance()->readConfig();
     isStarted = true;
     processCommandline(commandline, true, errorList);
 }
@@ -123,8 +124,6 @@ namespace // anonymous namespace
         
     private:
         HeapObjectArray<FileOpener::FileParameter>::Ptr fileParameterList;
-        
-        HeapObjectArray<TopWin::Ptr>::Ptr openedWindows;
     };
 
 } // anonymous namespace
@@ -137,19 +136,22 @@ void EditorServer::processCommandline(Commandline::Ptr commandline,
 {
     ASSERT(isStarted);
 
-    CommandlineInterpreter<Actor> commandInterpreter;
+    CommandlineInterpreter commandInterpreter;
     commandInterpreter.doCommandline(commandline);
 
     if (isStarting)
     {
+        String instanceName;
         if (commandInterpreter.hasInstanceName()) {
-            this->instanceName = commandInterpreter.getInstanceName();
+            instanceName = commandInterpreter.getInstanceName();
         } else {
-            const char* ptr = ::getenv("LUCED_INSTANCE");
-            if (ptr != NULL) {
-                this->instanceName = ptr;
+            const char* fromEnv = ::getenv("LUCED_INSTANCE");
+            if (fromEnv != NULL) {
+                instanceName = fromEnv;
             }
         }
+        GuiRoot::getInstance()->setInstanceName(instanceName);
+
         
         serverProperty = ClientServerUtil::getServerRunningProperty(instanceName);
         serverProperty.setValue("running");
@@ -168,11 +170,11 @@ void EditorServer::processCommandline(Commandline::Ptr commandline,
     {
         if (errorList.isValid() && errorList->getLength() > 0)
         {
-            ConfigErrorHandler::start(errorList, commandInterpreter.getActor().getFileParameterList());
+            ConfigErrorHandler::start(errorList, commandInterpreter.getFileParameterList());
         }
         else
         {
-            FileOpener::start(commandInterpreter.getActor().getFileParameterList());
+            FileOpener::start(commandInterpreter.getFileParameterList());
         }
     }
     else

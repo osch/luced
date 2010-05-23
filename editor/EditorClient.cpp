@@ -26,6 +26,8 @@
 #include "EventDispatcher.hpp"
 #include "DefaultConfig.hpp"
 #include "ProgramName.hpp"
+#include "FileOpener.hpp"
+#include "GlobalConfig.hpp"
 
 using namespace LucED;
 
@@ -88,13 +90,12 @@ void EditorClient::startWithCommandline(Commandline::Ptr commandline)
 {
     isStarted = true;
     wasCommandSet = false;
+    bool wasFileOpenerStarted = false;
     
     if (commandline->getLength() > 0)
     {
-        CommandlineInterpreter<DoNothingActor> commandInterpreter;
+        CommandlineInterpreter commandInterpreter;
         commandInterpreter.doCommandline(commandline); // check and transform parameters
-        
-        String instanceName;
         
         if (commandInterpreter.hasCloneDefaultConfig())
         {
@@ -103,43 +104,57 @@ void EditorClient::startWithCommandline(Commandline::Ptr commandline)
                    ProgramName::get().c_str(),
                    dirName.getAbsoluteName().toCString());
         }
+
+        String instanceName;
+
         if (commandInterpreter.hasInstanceName()) {
             instanceName = commandInterpreter.getInstanceName();
         } else {
-            const char* ptr = ::getenv("LUCED_INSTANCE");
-            if (ptr != NULL) {
-                instanceName = ptr;
+            const char* fromEnv = ::getenv("LUCED_INSTANCE");
+            if (fromEnv != NULL) {
+                instanceName = fromEnv;
             }
         }
 
-        serverProperty  = ClientServerUtil::getServerRunningProperty(instanceName);
-        commandProperty = ClientServerUtil::getServerCommandProperty(instanceName);
-
-        if (serverProperty.exists())
+        if (commandInterpreter.hasNoServerFlag()) 
         {
-            commandProperty.setValue(commandline->toQuotedString());
-            wasCommandSet = true;
-
-            EventDispatcher::getInstance()
-                     ->registerEventReceiverForRootProperty(commandProperty, 
-                                                            newCallback(this, &EditorClient::processEventForCommandProperty));
-
-            EventDispatcher::getInstance()->registerTimerCallback(
-                    Seconds(3), MicroSeconds(0),
-                    newCallback(this, &EditorClient::waitingForServerFailed));
-
+            GuiRoot::getInstance()->setInstanceName(instanceName);
+            GlobalConfig::getInstance()->readConfig();
+            FileOpener::start(commandInterpreter.getFileParameterList());
             isServerStartupNeededFlag = false;
+            wasFileOpenerStarted = true;
         }
         else
         {
-            isServerStartupNeededFlag = true;
+            serverProperty  = ClientServerUtil::getServerRunningProperty(instanceName);
+            commandProperty = ClientServerUtil::getServerCommandProperty(instanceName);
+    
+            if (serverProperty.exists())
+            {
+                commandProperty.setValue(commandline->toQuotedString());
+                wasCommandSet = true;
+    
+                EventDispatcher::getInstance()
+                         ->registerEventReceiverForRootProperty(commandProperty, 
+                                                                newCallback(this, &EditorClient::processEventForCommandProperty));
+    
+                EventDispatcher::getInstance()->registerTimerCallback(
+                        Seconds(3), MicroSeconds(0),
+                        newCallback(this, &EditorClient::waitingForServerFailed));
+    
+                isServerStartupNeededFlag = false;
+            }
+            else
+            {
+                isServerStartupNeededFlag = true;
+            }
         }
     }
     else {
         isServerStartupNeededFlag = false;
     }
     
-    if (!wasCommandSet)
+    if (!wasCommandSet && !wasFileOpenerStarted)
     {
         EventDispatcher::getInstance()->requestProgramTermination();
     }

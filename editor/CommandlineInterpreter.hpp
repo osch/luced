@@ -26,13 +26,12 @@
 #include "File.hpp"
 #include "HeapObjectArray.hpp"
 #include "CommandlineException.hpp"
+#include "FileOpener.hpp"
 
 namespace LucED
 {
 
-
-
-template<class Actor> class CommandlineInterpreter
+class CommandlineInterpreter
 {
 public:
 
@@ -40,7 +39,9 @@ public:
 
     CommandlineInterpreter()
         : hasInstanceNameFlag(false),
-          hasCloneDefaultConfigFlag(false)
+          hasCloneDefaultConfigFlag(false),
+          noServerFlag(false),
+          fileParameterList(HeapObjectArray<FileOpener::FileParameter>::create())
     {}
 
     void doCommandline(Commandline::Ptr commandline)
@@ -57,7 +58,7 @@ public:
             {
                 // Parameter is a command option
             
-                if (commandline->get(i) == "-i" || commandline->get(i) == "-name")
+                if (commandline->get(i) == "-i" || commandline->get(i) == "--instance")
                 {
                     i += 1;
                     if (i >= argc) {
@@ -81,7 +82,7 @@ public:
                         throw CommandlineException("Command option -w needs additional argument number >= 1.");
                     }
                 }
-                else if (commandline->get(i) == "-e")
+                else if (commandline->get(i) == "-e" || commandline->get(i) == "--encoding")
                 {
                     i += 1;
 
@@ -91,7 +92,7 @@ public:
                     
                     encodingForThisFile = commandline->get(i);
                 }
-                else if (commandline->get(i) == "-f")
+                else if (commandline->get(i) == "-f" || commandline->get(i) == "--file")
                 {
                     i += 1;
 
@@ -101,9 +102,13 @@ public:
 
                     break; // next argument is filename
                 }
-                else if (commandline->get(i) == "--clone-default-config")
+                else if (commandline->get(i) == "-cdc" || commandline->get(i) == "--clone-default-config")
                 {
                     hasCloneDefaultConfigFlag = true;
+                }
+                else if (commandline->get(i) == "-ns" || commandline->get(i) == "--no-server")
+                {
+                    noServerFlag = true;
                 }
                 else
                 {
@@ -120,7 +125,7 @@ public:
 
                 fileName = File(fileName).getAbsoluteName();
                 commandline->set(i, fileName); // replace with absolute filename in command array
-                actor.openFile(numberOfWindowsForThisFile, fileName, encodingForThisFile);
+                fileParameterList->append(FileOpener::FileParameter(numberOfWindowsForThisFile, fileName, encodingForThisFile));
                 numberOfWindowsForThisFile = -1;
             }
             else if (numberOfWindowsForThisFile > 0)
@@ -130,10 +135,6 @@ public:
         }
     }
     
-    Actor& getActor() {
-        return actor;
-    }
-
     String getInstanceName() const {
         return instanceName;
     }
@@ -143,12 +144,20 @@ public:
     bool hasCloneDefaultConfig() const {
         return hasCloneDefaultConfigFlag;
     }
+    
+    bool hasNoServerFlag() const {
+        return noServerFlag;
+    }
 
+    HeapObjectArray<FileOpener::FileParameter>::Ptr getFileParameterList() {
+        return fileParameterList;
+    }
 private:
-    Actor actor;
     String instanceName;
     bool hasInstanceNameFlag;
     bool hasCloneDefaultConfigFlag;
+    bool noServerFlag;
+    HeapObjectArray<FileOpener::FileParameter>::Ptr fileParameterList;
 };
 
 } // namespace LucED

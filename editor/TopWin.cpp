@@ -41,7 +41,6 @@
 #include "KeyPressRepeater.hpp"
 #include "GlobalConfig.hpp"
 #include "SingletonInstance.hpp"
-#include "EditorServer.hpp"
 #include "File.hpp"
 #include "ProgramName.hpp"
 #include "EncodingConverter.hpp"
@@ -698,7 +697,7 @@ void TopWin::setWindowManagerHints()
     {
         String resName;
 
-        String instanceName = EditorServer::getInstance()->getInstanceName();
+        String instanceName = GuiRoot::getInstance()->getInstanceName();
         if (instanceName.getLength() > 0) {
             resName = instanceName;
         } else {

@@ -56,10 +56,6 @@ public:
         startWithCommandlineAndErrorList(commandLine, ConfigException::ErrorList::Ptr());
     }
     
-    String getInstanceName() const {
-        return instanceName;
-    }
-    
 private:
     friend class SingletonInstance<EditorServer>;
     static SingletonInstance<EditorServer> instance;
@@ -75,7 +71,6 @@ private:
     bool isStarted;
     GuiRootProperty serverProperty;
     GuiRootProperty commandProperty;
-    String instanceName;
 };
 
 } // namespace LucED

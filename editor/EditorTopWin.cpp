@@ -42,7 +42,6 @@
 #include "ConfigErrorHandler.hpp"
 #include "ProgramExecutor.hpp"
 #include "CommandOutputBox.hpp"
-#include "EditorServer.hpp"
 #include "PanelInvoker.hpp"
 #include "SaveAsPanel.hpp"
 #include "EditorTopWinActions.hpp"
@@ -751,9 +750,9 @@ void EditorTopWin::setWindowTitle()
     File file(textData->getFileName());
     
     String title;
-    
-    if (EditorServer::getInstance()->getInstanceName().getLength() > 0) {
-        title << EditorServer::getInstance()->getInstanceName() << ": ";
+    String instanceName = GuiRoot::getInstance()->getInstanceName();
+    if (instanceName.getLength() > 0) {
+        title << instanceName << ": ";
     }
     
     title << EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(file.getBaseName());

@@ -171,7 +171,9 @@ EventDispatcher::EventDispatcher()
             sigfillset(&enabledSignalBlockMask);
             sigfillset(&disabledSignalBlockMask);
             
-            sigdelset(&enabledSignalBlockMask, SIGCHLD);
+            sigdelset(&enabledSignalBlockMask, SIGCHLD); // Child process terminated
+            sigdelset(&enabledSignalBlockMask, SIGTSTP); // Terminal stop signal.
+            sigdelset(&enabledSignalBlockMask, SIGCONT); // Continue executing, if stopped.
             
         }
         hasSignalHandlers = true;

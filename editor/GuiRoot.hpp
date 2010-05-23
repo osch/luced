@@ -104,6 +104,15 @@ public:
     Atom getX11Utf8StringAtom() const {
         return x11AtomForUtf8String;
     }
+    void setInstanceName(const String& instanceName) {
+        ASSERT(!hasInstanceName);
+        this->instanceName = instanceName;
+        hasInstanceName = true;
+    }
+    String getInstanceName() const {
+        ASSERT(hasInstanceName);
+        return instanceName;
+    }
     
 private:
     friend class SingletonInstance<GuiRoot>;
@@ -138,6 +147,9 @@ private:
     
     XIM x11InputMethod;
     Atom x11AtomForUtf8String;
+    
+    bool   hasInstanceName;
+    String instanceName;
 };
 
 } // namespace LucED

@@ -118,7 +118,8 @@ GuiRoot::GuiRoot()
     : xkbExtensionFlag(false),
       hadDetecableAutorepeatFlag(false),
       detecableAutorepeatFlag(false),
-      x11InputMethod(NULL)
+      x11InputMethod(NULL),
+      hasInstanceName(false)
 {
     XSetErrorHandler(myX11ErrorHandler);
     XSetIOErrorHandler(myFatalX11ErrorHandler);

@@ -33,7 +33,6 @@
 #include "EditorServer.hpp"
 #include "Commandline.hpp"
 #include "CommandlineException.hpp"
-#include "GlobalConfig.hpp"
 #include "ProgramName.hpp"
 #include "DefaultConfig.hpp"
              
@@ -81,8 +80,6 @@ int main(int argc, char** argv)
 
                 try
                 {
-                    GlobalConfig::getInstance()->readConfig();
-
                     editorServer->startWithCommandline(commandline);
                 }
                 catch (ConfigException& ex)
