@@ -77,14 +77,9 @@ public:
         String fallbackFileName;
     };
     
-    ConfigException(const String& message)
-        : BaseException(message)
-    {}
+    ConfigException(const String& message);
 
-    ConfigException(ErrorList::Ptr errorList)
-        : BaseException("Error within config files."),
-          errorList(errorList)
-    {}
+    ConfigException(ErrorList::Ptr errorList);
 
     virtual ~ConfigException() throw()
     {}

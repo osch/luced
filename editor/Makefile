@@ -101,7 +101,7 @@ LINK_OPTS       += $(LINK_X11_OPTS) $(LINK_PCRE_OPTS) $(LINK_EXTRA_OPTS)
 INCL_OPTS       += $(INCL_LUA_OPTS) $(INCL_PCRE_OPTS) $(INCL_EXTRA_OPTS)
 
 LUA_SCRIPTS            := functions             BuiltinActionDefinitions  BuiltinClassDefinitions \
-                          ConfigDefinition
+                          ConfigDefinition      ConfigTypes
                           
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
                           LuaClassRegistry      LuaCClosure               ConfigData \

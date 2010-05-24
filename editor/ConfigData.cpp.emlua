@@ -22,6 +22,7 @@
 #include "ConfigData.hpp"
 #include "LuaIterator.hpp"
 #include "ConfigException.hpp"
+#include "RegexException.hpp"
 
 using namespace LucED;
 
@@ -30,19 +31,11 @@ using namespace LucED;
 @ local ser        = functions.serialize
 @ local gsub       = string.gsub
 @
+@ local typeInfos  = require("ConfigTypes").typeInfos
+@
 @ local configDef     = require("ConfigDefinition")
 @ local defaultConfig = dofile(".luced/config.lua")
 @ 
-@
-@ local converterMethods =
-@ {
-@   ["bool"]   = "toBoolean",
-@   ["String"] = "toString",
-@   ["int"]    = "toInt",
-@   ["long"]   = "toLong",
-@   ["double"] = "toNumber",
-@ }
-@
 @ local function path(p1, p2)
 @   return (#p1 > 0 and #p2 > 0 and p2:sub(1,1) ~= "[" and p1.."/"..p2) or (p1..p2)
 @ end
@@ -57,22 +50,7 @@ using namespace LucED;
 @   if c.type == "map" then
 @       class = cap(c.name)
 @       elements = c.entries
-@
-@       for i, e in ipairs(c.entries) do
-@           if    e.type == "bool" 
-@              or e.type == "int" 
-@              or e.type == "long" 
-@              or e.type == "double" 
-@              or e.type == "String" 
-@              or e.type == "map" 
-@              or e.type == "list" 
-@              or e.type == "alternative" 
-@              or e.default 
-@           then
-@               constructorMembers[#constructorMembers + 1] = e
-@           end
-@       end
-@
+@       constructorMembers = c.entries
 @   elseif c.type == "list" then
 @       class = cap(c.name)
 @       elements = { c.member }
@@ -90,6 +68,7 @@ using namespace LucED;
 @       if #constructorMembers > 0 then
     :
 @           for i, m in ipairs(constructorMembers) do
+@               local typeInfo = typeInfos[m.type]
 @               local comma = (i == #constructorMembers) and "" or ","
 @               local defaultValue = defaultValues and defaultValues[m.name]
 @               if defaultValue ~= nil and m.default ~= nil then
@@ -101,20 +80,11 @@ using namespace LucED;
 @                       local eClass = cap(m.name)
                     @(m.name)(@(eClass)::create())@(comma)
 @               elseif defaultValue ~= nil then
-@                   if m.type == "String" then
-                    @(m.name)("@(gsub(defaultValue, '"', '\\"'))")@(comma)
-@                   else
-                    @(m.name)(@(tostring(defaultValue)))@(comma)
-@                   end
-@               elseif m.type == "String" then
-                    @(m.name)()@(comma)
+                    @(m.name)(@(typeInfo.literal(defaultValue)))@(comma)
+@               elseif typeInfo.defaultValue then
+                    @(m.name)(@(typeInfo.defaultValue))@(comma)
 @               else
 @                   error("No default value for "..luaConfigPath.."/"..m.name)
-@                   if m.type == "bool" then
-                    @(m.name)(false)@(comma)
-@                   elseif m.type == "int" or m.type == "long" then
-                    @(m.name)(0)@(comma)
-@                   end
 @               end
 @           end
 @       end
@@ -178,7 +148,17 @@ void @(classPath)readConfig(LuaVar luaData)
 @                   luaVarDecl = ""
 @               end
         if (luaVar.isValid()) {
-            this->@(e.name) = luaVar.@(converterMethods[e.type])();
+@               local typeInfo = typeInfos[e.type]
+@               if typeInfo.convertException then
+            try {
+@               end
+            this->@(e.name) = @(typeInfo.convert("luaVar"));
+@               if typeInfo.convertException then
+            } catch (@(typeInfo.convertException)& ex) {
+                throw ConfigException(String() << "Error: @(luaConfigPath) invalid value for @(e.name): "
+                                               << ex.getMessage());
+            }
+@               end
 @               if e.default == nil then            
         } else {
             throw ConfigException(String() << "Error: @(luaConfigPath) missing value for @(e.name)");
@@ -199,7 +179,17 @@ void @(classPath)readConfig(LuaVar luaData)
             this->@(c.name).append(ptr);
 @           else
             if (luaVar.isValid()) {
-                this->@(c.name).append(luaVar.@(converterMethods[e.type])());
+@               local typeInfo = typeInfos[e.type]
+@               if typeInfo.convertException then
+                try {
+@               end
+                this->@(c.name).append(@(typeInfo.convert("luaVar")));
+@               if typeInfo.convertException then
+                } catch (@(typeInfo.convertException)& ex) {
+                    throw ConfigException(String() << "Error: @(luaConfigPath) invalid value for @(e.name): "
+                                                   << ex.getMessage());
+                }
+@               end
 @               if not e.default then            
             } else {
                 throw ConfigException(String() << "Error: @(luaConfigPath) missing value for @(e.name)");

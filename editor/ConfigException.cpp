@@ -24,6 +24,16 @@
 
 using namespace LucED;
 
+ConfigException::ConfigException(const String& message)
+    : BaseException(message)
+{}
+
+ConfigException::ConfigException(ErrorList::Ptr errorList)
+    : BaseException("Error within config files."),
+      errorList(errorList)
+{}
+
+
 const char* ConfigException::what() const throw()
 {
     static const char* whatString = "ConfigException";

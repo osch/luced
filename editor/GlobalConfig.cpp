@@ -29,7 +29,6 @@
 #include "LuaVar.hpp"
 #include "System.hpp"
 #include "File.hpp"
-#include "CurrentDirectoryKeeper.hpp"
 #include "ActionIdRegistry.hpp"
 #include "QualifiedName.hpp"
 #include "DefaultConfig.hpp"
@@ -190,8 +189,6 @@ void GlobalConfig::readConfig()
         {
             ++tryCounter;
             
-            CurrentDirectoryKeeper currentDirectoryKeeper(configDirectory);
-            
             LuaVar configTable = luaInterpreter->getGeneralConfigModule("config");
 
             if (!configTable.isTable()) {
@@ -209,22 +206,48 @@ void GlobalConfig::readConfig()
 
             // LanguageModes
     
-            LuaVar o(luaAccess);
-            LuaVar lm = configTable["languageModes"];
-            if (lm.isValid())
             {
-                if (!lm.isTable()) {
-                    throw ConfigException("invalid languageModes");
-                }
-                for (int i = 0; o = lm[i+1], o.isValid(); ++i)
+                ConfigData::LanguageModes::Ptr languageModes = configData->getLanguageModes();
+                for (int i = 0; i < languageModes->getLength(); ++i)
                 {
-                    LuaVar n = o["name"];
-                    if (!n.isString()) {
-                        throw ConfigException("invalid or missing element 'name' in languageMode");
+                    ConfigData::LanguageModes::Element::Ptr e = languageModes->get(i);
+                    if (e->isLanguageMode()) 
+                    {   
+                        newLanguageModes->append(e->getLanguageMode());
                     }
-                    newLanguageModes->append(o);
+                    else if (e->isReferer())
+                    {
+                        String packageName = e->getReferer()->getReferToPackage();
+
+                        packagesMap.set(packageName, true);
+                        LuaVar package = GlobalLuaInterpreter::getInstance()->requireConfigPackage(packageName);
+                        if (package.isTable()) {
+                            LuaVar getLanguageModes = package["getLanguageModes"];
+                            if (getLanguageModes.isValid())
+                            {
+                                if (!getLanguageModes.isFunction()) {
+                                    throw ConfigException(String() << "'"<< packageName 
+                                                                   << ".getLanguageModes' must be function");
+                                }
+                                LuaVar languageModes = getLanguageModes.call();
+                                if (!languageModes.isTable()) {
+                                    throw ConfigException(String() << "'"<< packageName 
+                                                                   << ".getLanguageModes()' must return table");
+                                }
+                                
+                                LuaVar v(luaAccess);
+                                for (int i = 0; v = languageModes[i+1], v.isValid(); ++i)
+                                {
+                                    LanguageMode::Ptr newMode = LanguageMode::create();
+                                    newMode->readConfig(v);
+                                    newLanguageModes->append(newMode);
+                                }
+                            }
+                        }
+                    }
                 }
             }
+
             ActionKeyConfig::Ptr newActionKeyConfig = ActionKeyConfig::create();
             LuaVar actionKeyBinding = configTable["actionKeyBinding"];
             if (actionKeyBinding.isValid())

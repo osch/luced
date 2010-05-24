@@ -163,14 +163,14 @@ return
                                 type    = "String"
                             },
                             {   name    = "fileNameRegex",
-                                type    = "String"
+                                type    = "BasicRegex"
                             },
                             {   name    = "approximateUnknownHiliting",
                                 type    = "bool",
                                 default = "true",
                             },
                             {   name    = "approximateUnknownHilitingReparseRange",
-                                type    = "int",
+                                type    = "long",
                                 default = "2000"
                             },
                             {   name    = "hilitingBreakPointDistance",

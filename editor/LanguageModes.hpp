@@ -31,63 +31,12 @@
 #include "HashMap.hpp"
 #include "SyntaxPatterns.hpp"
 #include "OwningPtr.hpp"
+#include "ConfigData.hpp"
 
-namespace LucED {
-
-
-
-class LuaVar;
-
-class LanguageMode : public HeapObject
+namespace LucED
 {
-public:
-    typedef OwningPtr<LanguageMode> Ptr;
 
-    static Ptr create(const String& name, BasicRegex regex = BasicRegex()) {
-        return Ptr(new LanguageMode(name, regex));
-    }
-    static Ptr create(LuaVar config);
-        
-    String getName() const {
-        return name;
-    }
-    String getSyntaxName() const {
-        return syntaxName;
-    }
-    BasicRegex getRegex() const {
-        return regex;
-    }
-    bool hasApproximateUnknownHilitingFlag() const {
-        return approximateUnknownHilitingFlag;
-    }
-    long getApproximateUnknownHilitingReparseRange() const {
-        return approximateUnknownHilitingReparseRange;
-    }
-    int getHilitingBreakPointDistance() {
-        return hilitingBreakPointDistance;
-    }
-    int getHardTabWidth() const {
-        return hardTabWidth;
-    }
-    int getSoftTabWidth() const {
-        return softTabWidth;
-    }
-    
-private:
-    friend class LanguageModes;
-
-    LanguageMode(const String& name, BasicRegex regex = BasicRegex());
-    LanguageMode(LuaVar config);
-    
-    String name;
-    String syntaxName;
-    BasicRegex regex;
-    bool approximateUnknownHilitingFlag;
-    long approximateUnknownHilitingReparseRange;
-    int hilitingBreakPointDistance;
-    int hardTabWidth;
-    int softTabWidth;
-};
+typedef ConfigData::LanguageModes::Element::LanguageMode LanguageMode;
 
 class LanguageModes : public HeapObject
 {
@@ -98,7 +47,7 @@ public:
     }
     
     void append(const String& name);
-    void append(LuaVar config);
+    void append(LanguageMode::Ptr languageMode);
     
     LanguageMode::Ptr getLanguageModeForFile(const String& fileName);
     LanguageMode::Ptr getDefaultLanguageMode();

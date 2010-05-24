@@ -24,15 +24,17 @@
 
 #include "HeapObject.hpp"
 #include "OwningPtr.hpp"
-#include "RawPtr.hpp"
 #include "LuaVar.hpp"
 #include "String.hpp"
 #include "ObjectArray.hpp"
+#include "BasicRegex.hpp"
 
 namespace LucED
 {
 @ local functions  = require("functions")
 @ local cap        = functions.capitalize
+@
+@ local typeInfos  = require("ConfigTypes").typeInfos
 @
 @ local configDef  = require("ConfigDefinition")
 
@@ -50,49 +52,7 @@ public:
 @ local elementCode
 @
 @ local function classConstructor(class, c)
-@   if c.type == "map" then        
-@       local hasMemberConstructor = false
-@       for i, e in ipairs(c.entries) do
-@           if    e.type == "bool" 
-@              or e.type == "int" 
-@              or e.type == "long" 
-@              or e.type == "map" 
-@              or e.type == "list" 
-@              or e.type == "alternative" 
-@              or e.default 
-@           then
-@               hasMemberConstructor = true
-@               break
-@           end
-@       end
-@       if hasMemberConstructor then
-/*
-        @(class)()
-            :
-@         for i, e in ipairs(c.entries) do
-@           local comma = (i == #c.entries) and "" or ","
-@           if e.default then
-@               if e.type == "String" then
-                    @(e.name)("@(string.gsub(e.default, '"', '\\"'))")@(comma)
-@               else
-                    @(e.name)(@(e.default))@(comma)
-@               end
-@           elseif e.type == "map" or e.type == "list" or e.type == "alternative" then
-@                   local eClass = cap(e.name)
-                    @(e.name)(OwningPtr<@(eClass)>(new @(eClass)()))@(comma)
-@           else
-@               if e.type == "bool" then
-                    @(e.name)(false)@(comma)
-@               elseif e.type == "int" or e.type == "long" then
-                    @(e.name)(0)@(comma)
-@               end
-@           end
-@         end
-        {}
-*/
-@       end
-@   end
-@   if c.type == "map" or c.type == "list" or c.type == "alternative" then
+@   if typeInfos[c.type].isStructure then
         @(class)();
 @   end
 @ end
@@ -132,7 +92,7 @@ public:
 private:
     OwningPtr<@(class)> @(e.name);
 public:
-    RawPtr<@(class)> get@(cap(e.name))() const {
+    @(class)::Ptr get@(cap(e.name))() const {
         return @(e.name);
     }
 @----------------------------------------------------------------------- 
@@ -162,7 +122,7 @@ public:
     int getLength() const {
         return @(c.name).getLength();
     }
-    RawPtr<@(class)> get(int i) const {
+    @(class)::Ptr get(int i) const {
         return @(c.name)[i];
     }
 @----------------------------------------------------------------------- 
@@ -189,7 +149,7 @@ public:
     bool is@(class)() const {
         return @(a.name).isValid();
     }
-    RawPtr<@(class)> get@(class)() const {
+    @(class)::Ptr get@(class)() const {
         return @(a.name);
     }
     void set@(class)(OwningPtr<@(class)> newValue) {

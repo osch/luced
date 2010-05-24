@@ -192,7 +192,7 @@ byte* HilitingBuffer::getNonBufferedTextStyles(long pos, long numberStyles)
         //       größer als 2 * getHilitingBreakPointDistance() sein könnte.
         if (pos - searchStartPos >= maxDistance) {
             // HilitedText would be too expensive -> return default style or approximate
-            if (languageMode->hasApproximateUnknownHilitingFlag()) {
+            if (languageMode->getApproximateUnknownHiliting()) {
                 sp = syntaxPatterns->get(0);
                 patternStack.clear();
                 patternStack.append(0);
