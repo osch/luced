@@ -20,7 +20,7 @@
 -------------------------------------------------------------------------------------
 
 local cachedActions           = nil
-local cachedActionKeyBinding  = nil
+local cachedActionKeyBindings = nil
 
 local cachedSyntaxDefinitions = {}
 
@@ -33,11 +33,11 @@ return
                                 return cachedActions[actionName]
                             end,
                         
-    getActionKeyBinding  =  function()
-                                if not cachedActionKeyBinding then
-                                    cachedActionKeyBinding = require("this.actionKeyBinding")
+    getActionKeyBindings =  function()
+                                if not cachedActionKeyBindings then
+                                    cachedActionKeyBindings = require("this.actionKeyBindings")
                                 end
-                                return cachedActionKeyBinding
+                                return cachedActionKeyBindings
                             end,
 
     getSyntaxDefinition  =  function(syntaxName)

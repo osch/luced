@@ -187,7 +187,7 @@ local languageModes =
 }
 
 
-local actionKeyBinding = 
+local actionKeyBindings =
 {
     {
         actionName = "default.test2",
@@ -209,16 +209,12 @@ local actionKeyBinding =
 
 local config =
 {
-    generalConfig    = generalConfig,
-    fonts            = fonts,
-    textStyles       = textStyles,
-    languageModes    = languageModes,
-    actionKeyBinding = actionKeyBinding,
+    generalConfig     = generalConfig,
+    fonts             = fonts,
+    textStyles        = textStyles,
+    languageModes     = languageModes,
+    actionKeyBindings = actionKeyBindings,
 }
 
-local getOverrideFunction = loadfile("overrideConfig.lua")
-if getOverrideFunction then
-    config = getOverrideFunction()(config)
-end
 
 return config
