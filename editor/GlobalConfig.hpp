@@ -86,10 +86,12 @@ private:
     
     GlobalConfig();
 
-    void readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, 
-                              LuaVarRef            actionKeyBinding,
-                              String               thisPackageName);
-                              
+    typedef ConfigData::ActionKeyBindings::Element::ActionKeyBinding ConfigDataActionKeyBinding;
+    
+    void appendActionKeyBindingTo(ActionKeyConfig::Ptr            actionKeyConfig, 
+                                  ConfigDataActionKeyBinding::Ptr configData,
+                                  String                          thisPackageName);
+
     LanguageModes::Ptr languageModes;
     
     SyntaxPatternsConfig::Ptr syntaxPatternsConfig;

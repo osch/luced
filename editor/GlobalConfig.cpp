@@ -85,83 +85,35 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode() const
 
 static const char* THIS_PREFIX = "this.";
 
-void GlobalConfig::readActionKeyBinding(ActionKeyConfig::Ptr actionKeyConfig, 
-                                        LuaVarRef actionKeyBinding,
-                                        String    thisPackageName)
+typedef ConfigData::ActionKeyBindings::Element::ActionKeyBinding ConfigDataActionKeyBinding;
+
+void GlobalConfig::appendActionKeyBindingTo(ActionKeyConfig::Ptr            actionKeyConfig, 
+                                            ConfigDataActionKeyBinding::Ptr configData,
+                                            String                          thisPackageName)
 {
-    LuaAccess luaAccess = actionKeyBinding.getLuaAccess();
-    LuaVar o(luaAccess);
+    String actionName = configData->getActionName();
     
-    for (int i = 0; o = actionKeyBinding[i + 1], o.isValid(); ++i)
+    if (actionName.startsWith(THIS_PREFIX) && thisPackageName != "") {
+        actionName = String() << thisPackageName << "." 
+                              << actionName.getTail(strlen(THIS_PREFIX));
+    }
+    QualifiedName qualifiedActionName(actionName);
+    if (   qualifiedActionName.getQualifier() == ""
+        || qualifiedActionName.getQualifier() == "this"
+        || qualifiedActionName.getName() == "")
     {
-        if (!o.isTable()) {
-            throw ConfigException("actionKeyBinding entry must be table");
-        }
-        LuaVar n = o["actionName"];
-        if (n.isString())
-        {
-            String actionName = n.toString();
-            if (actionName.startsWith(THIS_PREFIX) && thisPackageName != "") {
-                actionName = String() << thisPackageName << "." 
-                                      << actionName.getTail(strlen(THIS_PREFIX));
-            }
-            QualifiedName qualifiedActionName(actionName);
-            if (   qualifiedActionName.getQualifier() == ""
-                || qualifiedActionName.getQualifier() == "this"
-                || qualifiedActionName.getName() == "")
-            {
-                throw ConfigException(String() << "Invalid actionName '" << n.toString() << "'");
-            }
-            ActionId actionId = ActionIdRegistry::getInstance()->getActionId(actionName);
-            LuaVar keys = o["keys"];
-            if (!keys.isValid() || (!keys.isString() && !keys.isTable())) {
-                throw ConfigException(String() << "Invalid element 'keys' for action = '" << actionName << "'");
-            }
-            if (keys.isString())
-            {
-                actionKeyConfig->append(KeyCombination(keys.toString()), 
-                                        actionId);
-            }
-            else
-            {
-                LuaVar k(luaAccess);
-                
-                for (int i = 0; k = keys[i + 1], k.isValid(); ++i)
-                {
-                    if (!k.isString()) {
-                        throw ConfigException(String() << "Invalid element 'keys' for action = '" << actionName << "'");
-                    }
-                    actionKeyConfig->append(KeyCombination(k.toString()), 
-                                            actionId);
-                }
-            }
-            
-        }
-        else
-        {
-            n = o["referToPackage"];
-            if (!n.isString()) {
-                throw ConfigException("actionKeyBinding entry must have 'actionName' or 'referToPackage' field");
-            }
-            String packageName = n.toString();
-            packagesMap.set(packageName, true);
-            LuaVar package = GlobalLuaInterpreter::getInstance()->requireConfigPackage(packageName);
-            if (package.isTable()) {
-                LuaVar getActionKeyBinding = package["getActionKeyBinding"];
-                if (!getActionKeyBinding.isFunction()) {
-                    throw ConfigException(String() << "'"<< packageName 
-                                                   << ".getActionKeyBinding' must be function");
-                }
-                LuaVar packageBinding = getActionKeyBinding.call();
-                if (!packageBinding.isTable()) {
-                    throw ConfigException(String() << "'"<< packageName 
-                                                   << ".getActionKeyBinding()' must return table");
-                }
-                readActionKeyBinding(actionKeyConfig, packageBinding, packageName);
-            }
-        }
+        throw ConfigException(String() << "Invalid actionName '" << actionName << "'");
+    }
+    ActionId actionId = ActionIdRegistry::getInstance()->getActionId(actionName);
+    ConfigDataActionKeyBinding::Keys::Ptr keys = configData->getKeys();
+    
+    for (int i = 0; i < keys->getLength(); ++i)
+    {
+        actionKeyConfig->append(KeyCombination(keys->get(i)), 
+                                actionId);
     }
 }
+
 
 void GlobalConfig::readConfig()
 {
@@ -176,7 +128,6 @@ void GlobalConfig::readConfig()
     RawPtr<GlobalLuaInterpreter> luaInterpreter = GlobalLuaInterpreter::getInstance();
     LuaAccess luaAccess = luaInterpreter->getCurrentLuaAccess();
 
-    LanguageModes::Ptr newLanguageModes = LanguageModes::create();
     
     luaInterpreter->setConfigDir(configDirectory);
     luaInterpreter->setMode(ConfigPackageLoader::MODE_NORMAL);
@@ -206,6 +157,7 @@ void GlobalConfig::readConfig()
 
             // LanguageModes
     
+            LanguageModes::Ptr newLanguageModes = LanguageModes::create();
             {
                 ConfigData::LanguageModes::Ptr languageModes = configData->getLanguageModes();
                 for (int i = 0; i < languageModes->getLength(); ++i)
@@ -248,14 +200,53 @@ void GlobalConfig::readConfig()
                 }
             }
 
+            // ActionKeyBinding
+    
             ActionKeyConfig::Ptr newActionKeyConfig = ActionKeyConfig::create();
-            LuaVar actionKeyBinding = configTable["actionKeyBinding"];
-            if (actionKeyBinding.isValid())
             {
-                if (!actionKeyBinding.isTable()) {
-                    throw ConfigException("invalid actionKeyBinding");
+                ConfigData::ActionKeyBindings::Ptr actionKeyBindings = configData->getActionKeyBindings();
+                for (int i = 0; i < actionKeyBindings->getLength(); ++i)
+                {
+                    ConfigData::ActionKeyBindings::Element::Ptr e = actionKeyBindings->get(i);
+                    if (e->isActionKeyBinding()) 
+                    {   
+                        appendActionKeyBindingTo(newActionKeyConfig,
+                                                 e->getActionKeyBinding(),
+                                                 "");
+                    }
+                    else if (e->isReferer())
+                    {
+                        String packageName = e->getReferer()->getReferToPackage();
+
+                        packagesMap.set(packageName, true);
+                        LuaVar package = GlobalLuaInterpreter::getInstance()->requireConfigPackage(packageName);
+                        if (package.isTable()) {
+                            LuaVar getActionKeyBindings = package["getActionKeyBindings"];
+                            if (getActionKeyBindings.isValid())
+                            {
+                                if (!getActionKeyBindings.isFunction()) {
+                                    throw ConfigException(String() << "'"<< packageName 
+                                                                   << ".getActionKeyBindings' must be function");
+                                }
+                                LuaVar languageModes = getActionKeyBindings.call();
+                                if (!languageModes.isTable()) {
+                                    throw ConfigException(String() << "'"<< packageName 
+                                                                   << ".getActionKeyBindings()' must return table");
+                                }
+                                
+                                LuaVar v(luaAccess);
+                                for (int i = 0; v = languageModes[i+1], v.isValid(); ++i)
+                                {
+                                    ConfigDataActionKeyBinding::Ptr newBinding = ConfigDataActionKeyBinding::create();
+                                    newBinding->readConfig(v);
+                                    appendActionKeyBindingTo(newActionKeyConfig,
+                                                             newBinding,
+                                                             packageName);
+                                }
+                            }
+                        }
+                    }
                 }
-                readActionKeyBinding(newActionKeyConfig, actionKeyBinding, "");
             }
             languageModes = newLanguageModes;
             actionKeyConfig = newActionKeyConfig;
