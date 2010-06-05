@@ -39,8 +39,14 @@ public:
     typedef OwningPtr<      TextStyleDefinitions> Ptr;
     typedef OwningPtr<const TextStyleDefinitions> ConstPtr;
     
-    static Ptr create(RawPtr<ConfigData::Fonts> fonts, 
-                      RawPtr<ConfigData::TextStyles> textStyles)
+    typedef ConfigData::Fonts     ::Element::Font      ConfigDataFont;
+    typedef ConfigData::TextStyles::Element::TextStyle ConfigDataTextStyle;
+    
+    typedef HeapObjectArray<ConfigDataFont::Ptr>       FontList;
+    typedef HeapObjectArray<ConfigDataTextStyle::Ptr>  TestStyleList;
+    
+    static Ptr create(FontList::Ptr        fonts, 
+                      TestStyleList::Ptr   textStyles)
     {
         return Ptr(new TextStyleDefinitions(fonts, textStyles));
     }
@@ -74,8 +80,8 @@ public:
      
     
 private:
-    TextStyleDefinitions(RawPtr<ConfigData::Fonts>      fonts, 
-                         RawPtr<ConfigData::TextStyles> textStyles);
+    TextStyleDefinitions(FontList::Ptr       fonts, 
+                         TestStyleList::Ptr  textStyles);
                          
     ObjectArray<TextStyleDefinition> definitions;
 };

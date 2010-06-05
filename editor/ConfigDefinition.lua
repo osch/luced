@@ -92,15 +92,31 @@ return
             index   = "name",
             member  =
             {
-                name    = "font",
-                type    = "map",
-                entries =
+                name         = "element",
+                type         = "alternative",
+                alternatives =
                 {
-                    {   name = "name",
-                        type = "String"
+                    {
+                        name    = "font",
+                        type    = "map",
+                        entries =
+                        {
+                            {   name = "name",
+                                type = "String"
+                            },
+                            {   name = "x11FontId",
+                                type = "String"
+                            }
+                        }
                     },
-                    {   name = "x11FontId",
-                        type = "String"
+                    {   name    = "referer",
+                        type    = "map",
+                        entries =
+                        {
+                            {   name    = "referToPackage",
+                                type    = "String"
+                            }
+                        }
                     }
                 }
             }

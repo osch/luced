@@ -86,11 +86,38 @@ private:
     
     GlobalConfig();
 
+    typedef ConfigData::Fonts            ::Element::Font             ConfigDataFont;
+    typedef ConfigData::TextStyles       ::Element::TextStyle        ConfigDataTextStyle;
     typedef ConfigData::ActionKeyBindings::Element::ActionKeyBinding ConfigDataActionKeyBinding;
-    
-    void appendActionKeyBindingTo(ActionKeyConfig::Ptr            actionKeyConfig, 
-                                  ConfigDataActionKeyBinding::Ptr configData,
-                                  String                          thisPackageName);
+
+    typedef HeapObjectArray<ConfigDataFont::Ptr>      ConfigDataFontList;
+    typedef HeapObjectArray<ConfigDataTextStyle::Ptr> ConfigDataTextStyleList;
+
+    static void appendFontTo(ConfigDataFont::Ptr      font,
+                             ConfigDataFontList::Ptr  fonts, 
+                             const String&            thisPackageName);
+                              
+    static void appendTextStyleTo(ConfigDataTextStyle::Ptr     textStyle,
+                                  ConfigDataTextStyleList::Ptr textStyles, 
+                                  const String&                thisPackageName);
+                              
+    static void appendLanguageModeTo(LanguageMode::Ptr   languageMode,
+                                     LanguageModes::Ptr  languageModes, 
+                                     const String&       thisPackageName);
+                              
+    static void appendActionKeyBindingTo(ConfigDataActionKeyBinding::Ptr configData,
+                                         ActionKeyConfig::Ptr            actionKeyConfig, 
+                                         const String&                   thisPackageName);
+
+    template<class ConfigType,
+             class ListType,
+             void (*append)(typename ConfigType::Ptr,
+                            typename ListType::Ptr, 
+                            const String&)
+            >
+    void appendConfigFromPackageTo(const String&           packageName, 
+                                   const String&           getterFunctionName,
+                                   typename ListType::Ptr  list);
 
     LanguageModes::Ptr languageModes;
     

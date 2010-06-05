@@ -85,11 +85,41 @@ LanguageMode::Ptr GlobalConfig::getDefaultLanguageMode() const
 
 static const char* THIS_PREFIX = "this.";
 
+typedef ConfigData::Fonts            ::Element::Font             ConfigDataFont;
+typedef ConfigData::TextStyles       ::Element::TextStyle        ConfigDataTextStyle;
 typedef ConfigData::ActionKeyBindings::Element::ActionKeyBinding ConfigDataActionKeyBinding;
 
-void GlobalConfig::appendActionKeyBindingTo(ActionKeyConfig::Ptr            actionKeyConfig, 
-                                            ConfigDataActionKeyBinding::Ptr configData,
-                                            String                          thisPackageName)
+typedef HeapObjectArray<ConfigDataFont::Ptr>      ConfigDataFontList;
+typedef HeapObjectArray<ConfigDataTextStyle::Ptr> ConfigDataTextStyleList;
+
+
+void GlobalConfig::appendFontTo(ConfigDataFont::Ptr      font,
+                                ConfigDataFontList::Ptr  fonts, 
+                                const String&            thisPackageName)
+{
+    fonts->append(font);
+}
+
+
+void GlobalConfig::appendTextStyleTo(ConfigDataTextStyle::Ptr     textStyle,
+                                     ConfigDataTextStyleList::Ptr textStyles, 
+                                     const String&                thisPackageName)
+{
+    textStyles->append(textStyle);
+}
+
+
+void GlobalConfig::appendLanguageModeTo(LanguageMode::Ptr   languageMode,
+                                        LanguageModes::Ptr  languageModes, 
+                                        const String&       thisPackageName)
+{
+    languageModes->append(languageMode);
+}
+
+
+void GlobalConfig::appendActionKeyBindingTo(ConfigDataActionKeyBinding::Ptr configData,
+                                            ActionKeyConfig::Ptr            actionKeyConfig, 
+                                            const String&                   thisPackageName)
 {
     String actionName = configData->getActionName();
     
@@ -114,6 +144,48 @@ void GlobalConfig::appendActionKeyBindingTo(ActionKeyConfig::Ptr            acti
     }
 }
 
+
+
+template<class ConfigType,
+         class ListType,
+         void appendConfigTo(typename ConfigType::Ptr,
+                             typename ListType::Ptr, 
+                             const String&)
+        >
+void GlobalConfig::appendConfigFromPackageTo(const String&           packageName, 
+                                             const String&           getterFunctionName,
+                                             typename ListType::Ptr  list)
+{
+    packagesMap.set(packageName, true);
+
+    RawPtr<GlobalLuaInterpreter> luaInterpreter = GlobalLuaInterpreter::getInstance();
+    LuaAccess luaAccess = luaInterpreter->getCurrentLuaAccess();
+
+    LuaVar package = luaInterpreter->requireConfigPackage(packageName);
+    if (package.isTable()) {
+        LuaVar getterFunction = package[getterFunctionName];
+        if (getterFunction.isValid())
+        {
+            if (!getterFunction.isFunction()) {
+                throw ConfigException(String() << "'"<< packageName 
+                                               << "." << getterFunctionName << "' must be function");
+            }
+            LuaVar configInLua = getterFunction.call();
+            if (!configInLua.isTable()) {
+                throw ConfigException(String() << "'"<< packageName 
+                                               << "." << getterFunctionName << "()' must return table");
+            }
+            
+            LuaVar v(luaAccess);
+            for (int i = 0; v = configInLua[i+1], v.isValid(); ++i)
+            {
+                typename ConfigType::Ptr newConfigData = ConfigType::create();
+                newConfigData->readConfig(v);
+                appendConfigTo(newConfigData, list, packageName);
+            }
+        }
+    }
+}
 
 void GlobalConfig::readConfig()
 {
@@ -149,11 +221,63 @@ void GlobalConfig::readConfig()
             configData = ConfigData::create();
             
             configData->readConfig(configTable);
+            
+            // fonts
+            
+            ConfigData::Fonts::Ptr   fontsConfig = configData->getFonts();
+            ConfigDataFontList::Ptr  fontList    = ConfigDataFontList::create();
+            
+            for (int i = 0; i < fontsConfig->getLength(); ++i)
+            {
+                ConfigData::Fonts::Element::Ptr e = fontsConfig->get(i);
+                
+                if (e->isFont())
+                {
+                    fontList->append(e->getFont());
+                }
+                else
+                {
+                    ASSERT(e->isReferer());
+                    
+                    appendConfigFromPackageTo<ConfigDataFont,
+                                              ConfigDataFontList,
+                                              appendFontTo>(e->getReferer()->getReferToPackage(),
+                                                            "getFonts",
+                                                            fontList);
+                }
+            }
+            
 
             // textStyles
+            
+            typedef HeapObjectArray<ConfigDataTextStyle::Ptr>   TextStyleList;
+            
+            ConfigData::TextStyles::Ptr  textStylesConfig = configData->getTextStyles();
+            ConfigDataTextStyleList::Ptr textStyleList    = ConfigDataTextStyleList::create();
+
+            for (int i = 0; i < textStylesConfig->getLength(); ++i)
+            {
+                ConfigData::TextStyles::Element::Ptr e = textStylesConfig->get(i);
+                
+                if (e->isTextStyle())
+                {
+                    textStyleList->append(e->getTextStyle());
+                }
+                else
+                {
+                    ASSERT(e->isReferer());
+                    
+                    appendConfigFromPackageTo<ConfigDataTextStyle,
+                                              ConfigDataTextStyleList,
+                                              appendTextStyleTo>(e->getReferer()->getReferToPackage(),
+                                                                 "getTextStyles",
+                                                                 textStyleList);
+                }
+            }
+            
     
-            this->textStyleDefinitions = TextStyleDefinitions::create(configData->getFonts(),
-                                                                      configData->getTextStyles());
+            this->textStyleDefinitions = TextStyleDefinitions::create(fontList,
+                                                                      textStyleList);
 
             // LanguageModes
     
@@ -167,35 +291,15 @@ void GlobalConfig::readConfig()
                     {   
                         newLanguageModes->append(e->getLanguageMode());
                     }
-                    else if (e->isReferer())
+                    else
                     {
-                        String packageName = e->getReferer()->getReferToPackage();
-
-                        packagesMap.set(packageName, true);
-                        LuaVar package = GlobalLuaInterpreter::getInstance()->requireConfigPackage(packageName);
-                        if (package.isTable()) {
-                            LuaVar getLanguageModes = package["getLanguageModes"];
-                            if (getLanguageModes.isValid())
-                            {
-                                if (!getLanguageModes.isFunction()) {
-                                    throw ConfigException(String() << "'"<< packageName 
-                                                                   << ".getLanguageModes' must be function");
-                                }
-                                LuaVar languageModes = getLanguageModes.call();
-                                if (!languageModes.isTable()) {
-                                    throw ConfigException(String() << "'"<< packageName 
-                                                                   << ".getLanguageModes()' must return table");
-                                }
-                                
-                                LuaVar v(luaAccess);
-                                for (int i = 0; v = languageModes[i+1], v.isValid(); ++i)
-                                {
-                                    LanguageMode::Ptr newMode = LanguageMode::create();
-                                    newMode->readConfig(v);
-                                    newLanguageModes->append(newMode);
-                                }
-                            }
-                        }
+                        ASSERT(e->isReferer());
+                        
+                        appendConfigFromPackageTo<LanguageMode,
+                                                  LanguageModes,
+                                                  appendLanguageModeTo>(e->getReferer()->getReferToPackage(),
+                                                                        "getLanguageModes",
+                                                                        newLanguageModes);
                     }
                 }
             }
@@ -210,41 +314,17 @@ void GlobalConfig::readConfig()
                     ConfigData::ActionKeyBindings::Element::Ptr e = actionKeyBindings->get(i);
                     if (e->isActionKeyBinding()) 
                     {   
-                        appendActionKeyBindingTo(newActionKeyConfig,
-                                                 e->getActionKeyBinding(),
+                        appendActionKeyBindingTo(e->getActionKeyBinding(),
+                                                 newActionKeyConfig,
                                                  "");
                     }
                     else if (e->isReferer())
                     {
-                        String packageName = e->getReferer()->getReferToPackage();
-
-                        packagesMap.set(packageName, true);
-                        LuaVar package = GlobalLuaInterpreter::getInstance()->requireConfigPackage(packageName);
-                        if (package.isTable()) {
-                            LuaVar getActionKeyBindings = package["getActionKeyBindings"];
-                            if (getActionKeyBindings.isValid())
-                            {
-                                if (!getActionKeyBindings.isFunction()) {
-                                    throw ConfigException(String() << "'"<< packageName 
-                                                                   << ".getActionKeyBindings' must be function");
-                                }
-                                LuaVar languageModes = getActionKeyBindings.call();
-                                if (!languageModes.isTable()) {
-                                    throw ConfigException(String() << "'"<< packageName 
-                                                                   << ".getActionKeyBindings()' must return table");
-                                }
-                                
-                                LuaVar v(luaAccess);
-                                for (int i = 0; v = languageModes[i+1], v.isValid(); ++i)
-                                {
-                                    ConfigDataActionKeyBinding::Ptr newBinding = ConfigDataActionKeyBinding::create();
-                                    newBinding->readConfig(v);
-                                    appendActionKeyBindingTo(newActionKeyConfig,
-                                                             newBinding,
-                                                             packageName);
-                                }
-                            }
-                        }
+                        appendConfigFromPackageTo<ConfigDataActionKeyBinding,
+                                                  ActionKeyConfig,
+                                                  appendActionKeyBindingTo>(e->getReferer()->getReferToPackage(),
+                                                                            "getActionKeyBindings",
+                                                                            newActionKeyConfig);
                     }
                 }
             }

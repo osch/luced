@@ -24,8 +24,8 @@
 
 using namespace LucED;
 
-TextStyleDefinitions::TextStyleDefinitions(RawPtr<ConfigData::Fonts>      fonts, 
-                                           RawPtr<ConfigData::TextStyles> textStyles)
+TextStyleDefinitions::TextStyleDefinitions(TextStyleDefinitions::FontList::Ptr      fonts, 
+                                           TextStyleDefinitions::TestStyleList::Ptr textStyles)
 {
     if (textStyles.isValid())
     {
@@ -33,33 +33,30 @@ TextStyleDefinitions::TextStyleDefinitions(RawPtr<ConfigData::Fonts>      fonts,
         
         for (int i = 0; i < textStyles->getLength(); ++i)
         {
-            RawPtr<ConfigData::TextStyles::Element> e = textStyles->get(i);
-            if (e->isTextStyle()) 
-            {
-                RawPtr<ConfigData::TextStyles::Element::TextStyle> s = e->getTextStyle();
-                String styleName = s->getName();
-                String fontName  = s->getFont();
-                String x11FontId = fontName;
-                
-                if (isFirst) {
-                    if (styleName != "default") {
-                        throw ConfigException("first textstyle must be named 'default'");
-                    }
-                    isFirst = false;
+            ConfigDataTextStyle::Ptr s = textStyles->get(i);
+            
+            String styleName = s->getName();
+            String fontName  = s->getFont();
+            String x11FontId = fontName;
+            
+            if (isFirst) {
+                if (styleName != "default") {
+                    throw ConfigException("first textstyle must be named 'default'");
                 }
-                
-                if (fonts.isValid()) {
-                    for (int j = 0; j < fonts->getLength(); ++j) {
-                        if (fonts->get(j)->getName() == fontName) {
-                            x11FontId = fonts->get(j)->getX11FontId();
-                            break;
-                        }
-                    }
-                }
-                this->append(TextStyleDefinition(styleName, 
-                                                 x11FontId, 
-                                                 s->getColor()));
+                isFirst = false;
             }
+            
+            if (fonts.isValid()) {
+                for (int j = 0; j < fonts->getLength(); ++j) {
+                    if (fonts->get(j)->getName() == fontName) {
+                        x11FontId = fonts->get(j)->getX11FontId();
+                        break;
+                    }
+                }
+            }
+            this->append(TextStyleDefinition(styleName, 
+                                             x11FontId, 
+                                             s->getColor()));
         }
     }
 }
