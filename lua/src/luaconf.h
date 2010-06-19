@@ -872,16 +872,20 @@ void LucED::LuaStateAccess_incRefForLuaInterpreter(void* luaInterpreter)
 {}
 
 struct lua_State;
-extern int luaopen_posix (struct lua_State* L);
-
-#ifndef DISABLE_LPOSIX
-#  undef  LUACONF_INITLIBS
-#  define LUACONF_INITLIBS(L) luaopen_posix((L))
-#endif
+extern int luaopen_posix(struct lua_State* L);
+extern int luaopen_lpeg (struct lua_State* L);
 
 #endif // if defined(lua_c)
 
 #endif // if defined(__cplusplus)
 
+#ifdef DISABLE_LPOSIX
+#  undef  LUACONF_INITLIBS
+#  define LUACONF_INITLIBS(L) luaopen_lpeg((L));
+#else
+#  undef  LUACONF_INITLIBS
+#  define LUACONF_INITLIBS(L) luaopen_posix((L)); \
+                              luaopen_lpeg((L));
+#endif
 
 #endif // ifndef lconfig_h

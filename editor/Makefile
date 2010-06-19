@@ -161,6 +161,7 @@ LUA_MODULES  := lapi lcode ldebug ldo ldump lfunc lgc llex lmem \
                 lstrlib loadlib linit
 
 LPOSIX_MODULES :=  lposix
+LPEG_MODULES   :=  lpeg
 
 PCRE_MODULES := pcre_compile   pcre_config      pcre_dfa_exec    \
                 pcre_exec      pcre_fullinfo    pcre_get         \
@@ -177,6 +178,7 @@ EDITOR_MODULES     := $(GENERATED_MODULES) $(FAST_MODULES) $(SLOW_MODULES)
 MODULES            := $(EDITOR_MODULES) \
                       $(LUA_MODULES)    \
                       $(LPOSIX_MODULES) \
+                      $(LPEG_MODULES) \
                       $(PCRE_MODULES)
 
    LIB_MBRS    := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
@@ -186,10 +188,12 @@ MODULES            := $(EDITOR_MODULES) \
     LUA_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                 $(LUA_MODULES) \
                                                                        lua)
 LUA_MIN_OBJS   := $(patsubst %, $(BUILD_DIR)/lua-min/%.o,         $(LUA_MODULES) \
-                                                                       lua)
-   PCRE_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(PCRE_MODULES))
- LPOSIX_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,              $(LPOSIX_MODULES))
-    PRG_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
+                                                                        lua)
+    PCRE_OBJS  := $(patsubst %, $(BUILD_DIR)/%.o,                $(PCRE_MODULES))
+  LPOSIX_OBJS  := $(patsubst %, $(BUILD_DIR)/%.o,              $(LPOSIX_MODULES))
+    LPEG_OBJS  := $(patsubst %, $(BUILD_DIR)/%.o,                $(LPEG_MODULES))
+LPEG_MIN_OBJS  := $(patsubst %, $(BUILD_DIR)/lua-min/%.o,        $(LPEG_MODULES))
+     PRG_OBJS  := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
 
 GEN_HDRS      := $(patsubst %, $(BUILD_DIR)/%.hpp,         $(GENERATED_HEADERS))
 GEN_HDRS_DEPS := $(patsubst %, $(BUILD_DIR)/%.hpp.gen.dep, $(GENERATED_HEADERS))
@@ -211,7 +215,7 @@ clean:
 luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
 	$(call LINK_RUN, $(LIBS))
 
-lua:  $(BUILD_DIR)/lua.o $(LUA_OBJS) $(LPOSIX_OBJS)
+lua:  $(BUILD_DIR)/lua.o $(LUA_OBJS) $(LPOSIX_OBJS) $(LPEG_OBJS)
 	$(call LINK_RUN, $(LIBS_WITH_READLINE))
 
 HAVE_DIETLIBC := $(shell if type diet 2>/dev/null 1>&2; then echo -n yes; fi )
@@ -220,7 +224,7 @@ ifeq ($(HAVE_DIETLIBC),yes)
 # minimal lua interpreter with minimal dependencies to the 
 # runtime system (for running on web server)
 lua-min: LINK_PRG = diet $(CCOMP_PRG)
-lua-min: $(BUILD_DIR)/lua-min/lua.o $(LUA_MIN_OBJS)
+lua-min: $(BUILD_DIR)/lua-min/lua.o $(LUA_MIN_OBJS) $(LPEG_MIN_OBJS)
 	$(call LINK_RUN, -lm)
 	strip lua-min
 else
@@ -252,13 +256,15 @@ release_headers        := $(release_lua_headers)    \
 RELEASE_HEADERS        := $(patsubst %, $(RELEASE_DIR)/%, $(release_headers))
 
  
-release_lua_sources    := $(patsubst %, lua/%.cpp,    $(LUA_MODULES))
+release_lua_sources    := $(patsubst %, lua/%.cpp,       $(LUA_MODULES))
 release_lposix_sources := $(patsubst %, lposix/%.cpp, $(LPOSIX_MODULES))
-release_pcre_sources   := $(patsubst %, pcre/%.c,     $(PCRE_MODULES))
+release_lpeg_sources   := $(patsubst %, lpeg/%.cpp,     $(LPEG_MODULES))
+release_pcre_sources   := $(patsubst %, pcre/%.c,       $(PCRE_MODULES))
 release_editor_sources := $(patsubst %, editor/%.cpp, $(EDITOR_MODULES))
 
 release_sources        := $(release_lua_sources)    \
                           $(release_lposix_sources) \
+                          $(release_lpeg_sources)   \
                           $(release_pcre_sources)   \
                           $(release_editor_sources)
 
@@ -266,6 +272,7 @@ RELEASE_SOURCES        := $(patsubst %, $(RELEASE_DIR)/%, $(release_sources))
 
 release_extras         := lua/COPYRIGHT \
                           lposix/modemuncher.c \
+                          lpeg/LICENCE \
                           pcre/LICENCE \
                           editor/keysym2ucs.c \
                           editor/luced.xpm
@@ -312,7 +319,11 @@ $(RELEASE_DIR)/pcre/%:          ../pcre/%
 	$(COPY_RUN)
 $(RELEASE_DIR)/lposix/%.cpp:    ../lposix/%.c
 	$(COPY_RUN)
+$(RELEASE_DIR)/lpeg/%.cpp:      ../lpeg/%.c
+	$(COPY_RUN)
 $(RELEASE_DIR)/lposix/%:        ../lposix/%
+	$(COPY_RUN)
+$(RELEASE_DIR)/lpeg/%:          ../lpeg/%
 	$(COPY_RUN)
 $(RELEASE_DIR)/editor/%:        %
 	$(COPY_RUN)
@@ -482,12 +493,17 @@ $(LUA_OBJS): $(BUILD_DIR)/%.o: ../lua/src/%.c
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
 $(LPOSIX_OBJS): $(BUILD_DIR)/%.o: ../lposix/%.c
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
+$(LPEG_OBJS): $(BUILD_DIR)/%.o: ../lpeg/%.c
+	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS) -U DEBUG -D NDEBUG)
 
 # compile with diet to get minimal lua interpreter
 # (for running on web server)
 $(LUA_MIN_OBJS): CPPCOMP_PRG = diet $(CCOMP_PRG)
 $(LUA_MIN_OBJS): $(BUILD_DIR)/lua-min/%.o: ../lua/src/%.c
-	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS) -U HAVE_CONFIG_H)
+	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS) -U HAVE_CONFIG_H -D DISABLE_LPOSIX -U DEBUG -D NDEBUG)
+$(LPEG_MIN_OBJS): CPPCOMP_PRG = diet $(CCOMP_PRG)
+$(LPEG_MIN_OBJS): $(BUILD_DIR)/lua-min/%.o: ../lpeg/%.c
+	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS) -U HAVE_CONFIG_H -D DISABLE_LPOSIX -U DEBUG -D NDEBUG)
 
 $(PCRE_OBJS): $(BUILD_DIR)/%.o: ../pcre/%.c
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS) -U DEBUG)

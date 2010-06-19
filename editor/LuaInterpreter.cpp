@@ -175,15 +175,21 @@ retry:
 
 
 extern int luaopen_posix (lua_State* L);
+extern int luaopen_lpeg  (lua_State* L);
 
 
 inline lua_State* LuaInterpreter::initState(LuaInterpreter* luaInterpreter, lua_State* L)
 {
     luaL_openlibs(L);
     luaopen_posix(L);
+    
+    lua_pushcfunction(L, &luaopen_lpeg);
+    lua_call(L, 0, 0);
+    
     LuaStateAccess::setLuaInterpreter(L, luaInterpreter);
     return L;
 }
+
 
 LuaInterpreter::LuaInterpreter()
     : rootAccess(initState(this, luaL_newstate())),
