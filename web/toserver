@@ -1,5 +1,38 @@
 #!/bin/sh
 
+
+cd `dirname $0`
+
+
+if [ x"$1" = x"-f" ]
+then
+    rm -rf .transport-timestamps
+    shift
+fi
+
+if [ $# -eq 0 ]
+then
+    rm -rf .transport-timestamps-tmp
+    if [ -e .transport-timestamps ]
+    then
+        cp -a .transport-timestamps .transport-timestamps-tmp
+    else
+    	mkdir -p .transport-timestamps-tmp
+    fi
+    rm  -rf  .transport-sftp-script
+    touch    .transport-sftp-script
+    make -f transport.mk
+    if [ -s .transport-sftp-script ]
+    then
+        sftp -C luced.de@luced.de < .transport-sftp-script && \
+        rm -rf .transport-timestamps && \
+        mv .transport-timestamps-tmp .transport-timestamps
+    else
+    	rm -rf .transport-timestamps-tmp
+    fi
+fi
+exit 0
+
 if [ $# -eq 0 ]
 then
 cat <<EOF | sftp -C luced.de@luced.de:htdocs
