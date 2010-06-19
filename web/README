@@ -1,0 +1,24 @@
+Configuration for lighttp:
+==========================
+
+in /etc/lighttpd/conf-enabled
+
+    10-cgi.conf -> ../conf-available/10-cgi.conf
+    10-ssi.conf -> ../conf-available/10-ssi.conf
+    10-userdir.conf -> ../conf-available/10-userdir.conf
+
+
+in 10-cgi.conf:
+
+    cgi.assign      = (
+    	".sh"  => "",
+    )
+
+
+
+add "index.sh" in /etc/lighttpd/lighttpd.conf:
+
+index-file.names           = ( "index.sh", "index.php", "index.html",
+                               "index.htm", "default.htm",
+                               "index.lighttpd.html" )
+

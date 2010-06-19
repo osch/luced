@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+       "http://www.w3.org/TR/html4/loose.dtd">
+       
+
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="description" content="The aim of LucED is to be a fast and responsive X11 text editor.">
+    <meta name="keywords" content="text editor, texteditor, X11, NEdit, Lua, PCRE, syntax, hiliting, highlighting, Oliver, Schmidt">
+    
+    <link rel="shortcut icon" href="favicon.ico">
+    
+    <title>LucED - The Lucid Editor</title>
+
+    <style type="text/css">
+        a {
+	        color:#09c;
+	        text-decoration:none;
+        }
+        a:link {color:#09c;}
+        a:visited {color:#07a;}
+        a:hover {background-color:#c7d4e0;}
+        a.menuentry {
+	        padding-left:4px;
+                padding-right:4px;
+                margin-top:7px;
+	        border-left-width:2.2ex; 
+                border-left-style:solid; 
+                border-color:#c7d4e0; 
+                display:block;
+        }
+        p {
+                margin-right:60px;
+        }
+        h1 {
+                font-size:1.8em;  font-weight:bold; padding-top:20px; color:#00407a;
+                margin-top:0px; margin-bottom:0px;
+        }
+        li {
+                margin-top:0.5ex; 
+                padding-right:90px;
+        }
+        img {
+                padding-right:0px;
+        }
+        input.textfield {
+            font-family:courier,fixed;
+            border-width:0px;
+            border-color:black;
+        }
+        input.button {
+            font-weight:bold; 
+            padding-top:1px; padding-bottom:1px;
+            padding-left:5px; padding-right:5px;
+        }
+        td {
+            margin:0px; padding:0px;
+        }
+        tr {
+            margin:0px; padding:0px;
+        }
+        td.formular {
+            margin: 0px;
+            padding:10px;
+        }
+        tr.formular {
+            margin:0px;
+            padding:10px;
+        }
+    </style>
+</head>
+
+<body scrolling="yes" style="font-size:10pt; margin:0px; padding:0px; font-family:sans-serif;">
+
+    <table cellspacing="0" cellpadding="0" width="100%" style="margin:0px; padding:0px;">
+    <tr>
+      <td>
+      <table  cellspacing="0" cellpadding="0" width="100%" style="margin:0px; padding:0px;">
+        <tr>
+         <td style="vertical-align:top;"> 
+               <div style=" position:relative; width:30px;height:80px;border-bottom-width:3px; border-color:#00407a; border-bottom-style:solid;
+                   ">
+               </div>
+         </td>
+         <td style="vertical-align:top;">
+           <div style="position:relative;  height:70px; width:160px; ">
+                <a href="."><img style="position:absolute;" border="0" alt="LucED" src="luced.png" /></a>
+           </div>
+         </td>
+         <td style="vertical-align:top; width:100%; "> 
+               <div style="height:80px;border-bottom-width:3px; border-color:#00407a; border-bottom-style:solid;
+                           vertical-align:bottom; padding-right:10px;  font-size:10px;
+                           position:relative;  ">
+                   <div style="position:absolute; vertical-align:bottom; padding-bottom:5px; 
+                           right:50px;bottom:0px;text-align:right;">LucED - The Lucid Editor</div>
+               </div>
+               <div style="position:relative;">
+               <div style="position:absolute; right:50px; padding-top:5px;">
+@
+@              local activePageStyle = [[style="color:#07a;text-decoration:underline;"]]--font-style:italic;"]]--text-decoration:underline;"]]  style="color:#07a
+@              PAGENAME = QUERY_PARAM["page"]
+@              if not PAGENAME then
+@                  PAGENAME = "index"
+@              end
+@              if PAGENAME == "index" then
+                       <span @(activePageStyle)>Home</span>&nbsp;|&nbsp;
+@              else
+                       <a href=".">Home</a>&nbsp;|&nbsp;
+@              end
+@              if PAGENAME == "screenshots" then
+                       <span @(activePageStyle)>Screenshots</span>&nbsp;|&nbsp;
+@              else
+                       <a href="?page=screenshots">Screenshots</a>&nbsp;|&nbsp;
+@              end
+@              if PAGENAME == "license" then
+                       <span @(activePageStyle)>License</span>&nbsp;|&nbsp;
+@              else
+                       <a href="?page=license">License</a>&nbsp;|&nbsp;
+@              end
+@              if PAGENAME == "documentation" then
+                       <span @(activePageStyle)>Documentation</span>&nbsp;|&nbsp;
+@              else
+                       <a href="?page=documentation">Documentation</a>&nbsp;|&nbsp;
+@              end
+@              if PAGENAME == "contact" then
+                       <span @(activePageStyle)>Contact</span>
+@              else
+                       <a href="?page=contact">Contact</a>
+@              end
+               </div>
+               </div>
+         </td>
+        </tr>
+       </table>
+       </td>
+    </tr>
+    <tr>
+        <td>
+            <div style="padding-left:120px; padding-top:50px; ">
+            
+              <div style="position:relative;">
+    
+@              FILENAME = PAGENAME .. ".lhtml"
+@              preprocessOk, preprocessedPage = pcall(preprocessFile, FILENAME)
+@              if not preprocessOk then
+    	         <h1>Server Error</h1>
+                     <pre>@(quoteHtmlCharacters(preprocessedPage))</pre>              
+@              elseif preprocessedPage == "" then
+                     <h1>The page '@(PAGENAME)' does not exist</h1>
+@              else
+@(preprocessedPage)
+@              end
+    
+              </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+      <td>
+      <table cellspacing="0" cellpadding="0" width="100%" style="margin:0px; padding:0px;">
+        <tr>
+        <td style="vertical-align:top; width:100%; ">
+            <div style="height:80px;border-bottom-width:3px; border-color:#00407a; border-bottom-style:solid;
+                        vertical-align:bottom; padding-right:10px; font-size:10px;
+                        position:relative;">
+            </div>
+                <div style="vertical-align:top; padding-bottom:0px; font-size:10px;
+                        margin-left:40px; text-align:left; padding-top:5px;">unless otherwise stated all material is &copy; 2006-@(os.date("%Y"))
+                        by <a href="?page=contact">Oliver Schmidt</a>
+                </div>
+        </td>
+         <td style="vertical-align:top;">
+           <div style="position:relative;  height:70px; width:160px;">
+                <a href="."><img style="position:absolute;" border="0" alt="LucED" src="luced.png" /></a>
+           </div>
+         </td>
+         <td style="vertical-align:top;"> 
+               <div style="position:relative; width:30px;height:80px;border-bottom-width:3px; border-color:#00407a; border-bottom-style:solid;">
+               </div>
+         </td>
+        </tr>
+      </table>
+      </td>
+    </tr>
+    </table>
+    
+</body>
+
+</html>

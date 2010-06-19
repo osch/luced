@@ -1,0 +1,24 @@
+  <h1>Contact</h1>
+  
+  <p>The author can be reached by email under the following address
+
+  <pre>
+    oliver at luced de
+  </pre>
+
+  <p>See also the github profile at <a href="http://github.com/osch">http://github.com/osch</a>.
+
+  <h1>Links</h1>
+
+  <p>Some interesting links
+
+  <ul>
+    <li><a href="http://people.mandriva.com/~prigaux//language-study/syntax-across-languages.html">compare syntax</a>
+           accross programming languages
+    </li>
+    <li><a href="http://www.parashift.com/c++-faq-lite/">C++ FAQ LITE</a> by Marshall Cline
+    </li>
+    <li><a href="http://tronche.com/gui/x/">Xlib Programming Manual</a>
+    </li>
+  </ul>
+

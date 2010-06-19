@@ -1,0 +1,45 @@
+<h1>Welcome</h1>
+
+<p>This is the home of LucED, the Lucid Editor. LucED is an <a
+href="?page=license">open source</a> text editor with a graphical <a
+href="http://en.wikipedia.org/wiki/X11">X11</a> user interface. Although
+the program is in its early development stage, you are welcome to test the
+<a href="?page=documentation">current development snapshot</a>.
+
+<p>The principal aim of the LucED project is to develop a text editor with the following features:
+
+<ul>
+
+  <li>A simple and minimalistic, but
+powerful user interface that is similar to the  <a href="http://www.nedit.org/">NEdit</a> text editor, 
+but does not depend on <a href="http://en.wikipedia.org/wiki/Motif_%28widget_toolkit%29">Motif</a></li>
+
+  <li>Embedded <a href="http://lua.org">Lua</a> programming language for scripting and configuration</li>
+
+  <li>Powerful regular expressions using the <a href="http://www.pcre.org">PCRE</a> library</li>
+
+  <li>Syntax highlighting configurable via
+regular expressions, similar to the <a href="http://www.nedit.org/">NEdit</a> syntax highlighting but with the
+enhancement to use arbitrarily nested patterns</li>
+
+  <li>Fast and responsive user interface: e.g. syntax highlighting is done in
+the background and does not freeze the user interface, special handling to achieve fast keyboard repeat rates</li>
+
+  <li>No dependencies on high-level <a
+href="http://en.wikipedia.org/wiki/Widget_toolkit">widget toolkits</a> in order to
+minimise the requirements for the operating system</li>
+
+</ul>
+
+
+<p>LucED is written in the <a
+href="http://en.wikipedia.org/wiki/C%2B%2B">C++</a> programming language.
+
+<p>To get a first impression, you may
+<ul>
+  <li>see the <a href="?page=screenshots">screenshots</a></li>
+  <li>browse the <a href="http://git.berlios.de/cgi-bin/gitweb.cgi?p=luced;a=shortlog"
+      >Git Repository</a> at the <a href="http://developer.berlios.de/projects/luced/">LucED BerliOS project page</a> 
+  </li>
+  <li>browse the <a href="http://github.com/osch/luced">mirrored Git Repository</a> at <a href="http://github.com/">github</a>.
+  </li>

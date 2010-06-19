@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]
+then
+cat <<EOF | sftp -C luced.de@luced.de:htdocs
+     put *.lhtml
+     put *.ico
+     put *.png
+     put server-index.shtml index.shtml
+EOF
+cat <<EOF | sftp -C luced.de@luced.de:cgi-bin
+     put *.lua
+     put server-page_processor.sh page_processor.sh
+EOF
+else
+    cat <<EOF  | sftp -C luced.de@luced.de:htdocs
+     put $@
+EOF
+fi
