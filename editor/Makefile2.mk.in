@@ -30,6 +30,7 @@
 LIBS               := @LIBS@
 LIBS_WITH_READLINE := @LIBS_WITH_READLINE@
 CXX                := @CXX@
+CC                 := @CC@
 CXXFLAGS           := @CXXFLAGS@
 CPPFLAGS           := @CPPFLAGS@
 LDFLAGS            := @LDFLAGS@

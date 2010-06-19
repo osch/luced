@@ -24,6 +24,7 @@ This makefile requires GNU Make.
 endif
 
 CPPCOMP_PRG          = $(CXX)
+CCOMP_PRG            = $(CC)
 LINK_PRG             = $(CPPCOMP_PRG)
 CPPCOMP_INVOKE_OPTS  = $(CPPFLAGS) $(CXXFLAGS)
 LINK_INVOKE_OPTS     = $(CXXFLAGS) $(LDFLAGS)
@@ -178,15 +179,17 @@ MODULES            := $(EDITOR_MODULES) \
                       $(LPOSIX_MODULES) \
                       $(PCRE_MODULES)
 
-  LIB_MBRS    := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
-  LIB_OBJS    := $(patsubst %, $(BUILD_DIR)/%.o,                $(MODULES))
-  FAST_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(FAST_MODULES))
-  SLOW_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(SLOW_MODULES))
-   LUA_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                 $(LUA_MODULES) \
-                                                                   lua)
-  PCRE_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(PCRE_MODULES))
-LPOSIX_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,              $(LPOSIX_MODULES))
-   PRG_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
+   LIB_MBRS    := $(patsubst %, $(BUILD_DIR)/libluced.a(%.o),    $(MODULES))
+   LIB_OBJS    := $(patsubst %, $(BUILD_DIR)/%.o,                $(MODULES))
+   FAST_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(FAST_MODULES))
+   SLOW_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(SLOW_MODULES))
+    LUA_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                 $(LUA_MODULES) \
+                                                                       lua)
+LUA_MIN_OBJS   := $(patsubst %, $(BUILD_DIR)/lua-min/%.o,         $(LUA_MODULES) \
+                                                                       lua)
+   PCRE_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                $(PCRE_MODULES))
+ LPOSIX_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,              $(LPOSIX_MODULES))
+    PRG_OBJS   := $(patsubst %, $(BUILD_DIR)/%.o,                 $(PRG_MODULES))
 
 GEN_HDRS      := $(patsubst %, $(BUILD_DIR)/%.hpp,         $(GENERATED_HEADERS))
 GEN_HDRS_DEPS := $(patsubst %, $(BUILD_DIR)/%.hpp.gen.dep, $(GENERATED_HEADERS))
@@ -210,6 +213,25 @@ luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
 
 lua:  $(BUILD_DIR)/lua.o $(LUA_OBJS) $(LPOSIX_OBJS)
 	$(call LINK_RUN, $(LIBS_WITH_READLINE))
+
+HAVE_DIETLIBC := $(shell if type diet 2>/dev/null 1>&2; then echo -n yes; fi )
+
+ifeq ($(HAVE_DIETLIBC),yes)
+# minimal lua interpreter with minimal dependencies to the 
+# runtime system (for running on web server)
+lua-min: LINK_PRG = diet $(CCOMP_PRG)
+lua-min: $(BUILD_DIR)/lua-min/lua.o $(LUA_MIN_OBJS)
+	$(call LINK_RUN, -lm)
+	strip lua-min
+else
+.PHONY: lua-min-error
+lua-min: lua-min-error
+lua-min-error:
+	@echo "Error: for building lua-min the program \"diet\" is required"; \
+	 echo "       which belongs to package \"dietlibc\". "; \
+	 echo "       see: http://www.fefe.de/dietlibc/"; \
+	 exit 1
+endif
 
 ###############################################################
 # release
@@ -458,9 +480,14 @@ $(GEN_SLOW_OBJS): $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.cpp
 
 $(LUA_OBJS): $(BUILD_DIR)/%.o: ../lua/src/%.c
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
-
 $(LPOSIX_OBJS): $(BUILD_DIR)/%.o: ../lposix/%.c
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS))
+
+# compile with diet to get minimal lua interpreter
+# (for running on web server)
+$(LUA_MIN_OBJS): CPPCOMP_PRG = diet $(CCOMP_PRG)
+$(LUA_MIN_OBJS): $(BUILD_DIR)/lua-min/%.o: ../lua/src/%.c
+	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS) -U HAVE_CONFIG_H)
 
 $(PCRE_OBJS): $(BUILD_DIR)/%.o: ../pcre/%.c
 	$(call COMPILE_RUN,$(CPPCOMP_FAST_OPTS) -U DEBUG)
@@ -516,6 +543,7 @@ define LINK_RUN
 	@mkdir -p $(@D)
 	$(LINK_PRG) $(LINK_INVOKE_OPTS) $^ $1 $(LINK_OPTS) -o $@
 endef
+
 
 
 

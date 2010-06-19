@@ -1,7 +1,9 @@
 /* =================================================================== */
 /* consider definitions from configure script */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #if HAVE_DECL_ISATTY
   #define LUA_USE_ISATTY
@@ -791,6 +793,7 @@ union luai_Cast { double l_d; long l_l; };
 ** without modifying the main part of the file.
 */
 
+#if defined(__cplusplus)
 
 #if defined(DEBUG)
 #include <assert.h>
@@ -871,11 +874,14 @@ void LucED::LuaStateAccess_incRefForLuaInterpreter(void* luaInterpreter)
 struct lua_State;
 extern int luaopen_posix (struct lua_State* L);
 
-#undef  LUACONF_INITLIBS
-#define LUACONF_INITLIBS(L) luaopen_posix((L))
-
+#ifndef DISABLE_LPOSIX
+#  undef  LUACONF_INITLIBS
+#  define LUACONF_INITLIBS(L) luaopen_posix((L))
 #endif
 
+#endif // if defined(lua_c)
 
-#endif
+#endif // if defined(__cplusplus)
 
+
+#endif // ifndef lconfig_h

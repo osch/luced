@@ -4,6 +4,7 @@ build*
 luced
 luced.exe
 lua
+lua-min
 lua.exe
 lc
 *gprof*
