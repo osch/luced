@@ -1,11 +1,39 @@
+This directory contains the luced web pages.
+
+
+Configuration
+=============
+
+The idea is to use this sandbox locally with the lighttp server.
+
+The file index.sh is used as main entry point as CGI script for 
+all pages. To configure the development sandbox the file
+sandbox-config.sh must be present and must define the following
+environment variables:
+
+    BASE_DIR = the base directory for the web server, e.g.
+               "/home/oliver/public_html/luced"
+               
+    BASE_URI = the base uri part of the web page, e.g.
+               "~oliver/luced"
+
+After configuring the lighttp web server as described below you then
+simply may softlink the luced/web directory to ~/public_html/luced,
+e.g.
+        cd ~/public_html
+        ln -s /home/oliver/luced/web luced
+
+
+
 Configuration for lighttp:
 ==========================
 
-in /etc/lighttpd/conf-enabled
+create softlinks in /etc/lighttpd/conf-enabled:
 
-    10-cgi.conf -> ../conf-available/10-cgi.conf
-    10-ssi.conf -> ../conf-available/10-ssi.conf
-    10-userdir.conf -> ../conf-available/10-userdir.conf
+        cd /etc/lighttpd/conf-enabled
+        ln -s ../conf-available/10-cgi.conf .
+        ln -s ../conf-available/10-ssi.conf .
+        ln -s ../conf-available/10-userdir.conf .
 
 
 in 10-cgi.conf:
@@ -21,4 +49,9 @@ add "index.sh" in /etc/lighttpd/lighttpd.conf:
 index-file.names           = ( "index.sh", "index.php", "index.html",
                                "index.htm", "default.htm",
                                "index.lighttpd.html" )
+
+
+restart lighttp:
+
+    /etc/init.d/lighttpd restart
 
