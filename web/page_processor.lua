@@ -22,7 +22,6 @@
 print("Content-type: text/html\n\n")
 
 local getenv = os.getenv
-local append = table.insert
 local concat = table.concat
 local substr = string.sub
 
@@ -31,6 +30,10 @@ local BASE_URI      = getenv("BASE_URI")
 
 local REQUEST_URI   = getenv("REQUEST_URI")
 local QUERY_STRING  = os.getenv("QUERY_STRING")
+
+local function append(list, element)
+    list[#list + 1] = element
+end
 
 --[[
 print("BASE_DIR:",    BASE_DIR,   "<br>",
@@ -119,7 +122,7 @@ function preprocessFile(relativeFilename)
     local filenameForMessages  = getAbsoluteFileNameForMessages(relativeFilename)
     local fullFilename = getAbsoluteFileName(relativeFilename)
     local chunks = {n=0}
-    table.insert(chunks, "local rsltChunks = {}; ")
+    append(chunks, "local rsltChunks = {}; ")
     local file = io.open(fullFilename)
     if not file then
         return ""
@@ -128,49 +131,49 @@ function preprocessFile(relativeFilename)
 
     for line in file:lines() do
       if string.find(line, "^@[^(]") or string.find(line, "^@$") then
-        table.insert(chunks, string.sub(line, 2) .. "\n")
+        append(chunks, string.sub(line, 2) .. "\n")
       else
         local last = 1
         for text, expr, index in string.gfind(line, "(.-)@(%b())()") do
           last = index
           if text ~= "" then
-            table.insert(chunks, string.format('table.insert(rsltChunks, %s); ', quoteString(text)))
+            append(chunks, string.format('rsltChunks[#rsltChunks+1] = %s; ', quoteString(text)))
           end
-  --        table.insert(chunks, string.format('io.write%s ', expr))
+  --        append(chunks, string.format('io.write%s ', expr))
           -- probehalber loadstring, um Syntaxfehler in expr zu testen
           local func, msg = loadstring("return "..expr)
           if not func then
               error(string.format("\nFile %s, line %d: Error in expression @%s: %s\n", filenameForMessages, lineNumber, quoteExpression(expr), msg))
           end
           local expr2 = string.sub(expr, 2, -2) -- alles innerhalb (...)
-          table.insert(chunks, string.format('do '))
-          table.insert(chunks, string.format('  local function exprFunc()'))
-          table.insert(chunks, string.format('      return %s;', expr))
-          table.insert(chunks, string.format('  end '))
-          table.insert(chunks, string.format('  local callok, rslt;'))
-          table.insert(chunks, string.format('  callok, rslt = pcall(exprFunc);'))
+          append(chunks, string.format('do '))
+          append(chunks, string.format('  local function exprFunc()'))
+          append(chunks, string.format('      return %s;', expr))
+          append(chunks, string.format('  end '))
+          append(chunks, string.format('  local callok, rslt;'))
+          append(chunks, string.format('  callok, rslt = pcall(exprFunc);'))
 
-          table.insert(chunks, string.format('  if not callok then '))
-          table.insert(chunks, string.format('      error(string.format("\\nFile %s, line %d: Error in expression @%s: %%s\\n", rslt));', 
+          append(chunks, string.format('  if not callok then '))
+          append(chunks, string.format('      error(string.format("\\nFile %s, line %d: Error in expression @%s: %%s\\n", rslt));', 
                                             filenameForMessages, lineNumber, quoteExpression(expr)))
-          table.insert(chunks, string.format('  elseif not rslt then '))
+          append(chunks, string.format('  elseif not rslt then '))
           if templateModeFlag and not string.match(expr2,'[^%w_]') then
-              table.insert(chunks, string.format('   table.insert(rsltChunks, "<<"..%s..">>");', quoteString(expr2)))
+              append(chunks, string.format('   rsltChunks[#rsltChunks+1] = "<<"..%s..">>";', quoteString(expr2)))
           else
-              table.insert(chunks, string.format('   error("\\nFile %s, line %d: Expression @%s is undefined.\\n");', filenameForMessages, lineNumber, quoteExpression(expr)))
+              append(chunks, string.format('   error("\\nFile %s, line %d: Expression @%s is undefined.\\n");', filenameForMessages, lineNumber, quoteExpression(expr)))
           end
-          table.insert(chunks, string.format('  else '))
-          table.insert(chunks, string.format('      table.insert(rsltChunks, rslt);'))
-          table.insert(chunks, string.format('  end '))
-          table.insert(chunks, string.format('end '))
+          append(chunks, string.format('  else '))
+          append(chunks, string.format('      rsltChunks[#rsltChunks+1] = rslt;'))
+          append(chunks, string.format('  end '))
+          append(chunks, string.format('end '))
         end
-        table.insert(chunks, string.format('table.insert(rsltChunks, %s)\n',
-                                           quoteString(string.sub(line, last).."\n")))
+        append(chunks, string.format('rsltChunks[#rsltChunks+1] = %s\n',
+                                     quoteString(string.sub(line, last).."\n")))
       end
       lineNumber = lineNumber + 1
     end
 
-    table.insert(chunks, "return table.concat(rsltChunks)")
+    append(chunks, "return table.concat(rsltChunks)")
 
     local commandString = table.concat(chunks)
 --local debugFile = io.open("/home/luced.de/htdocs/debug.out","w")
