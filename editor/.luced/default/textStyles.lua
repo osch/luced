@@ -1,0 +1,25 @@
+return
+{
+    {name="default",     font="normal", color="black"},
+    {name="comment",     font="italic", color="grey20"},
+    {name="preproc",     font="normal", color="RoyalBlue4"},
+    {name="keyword",     font="bold",   color="black"},
+    {name="type",        font="bold",   color="brown"},
+    {name="string",      font="normal", color="darkGreen"},
+    {name="string1",     font="normal", color="SeaGreen"},
+    {name="boldstring",  font="bold",   color="darkGreen"},
+    {name="regex",       font="bold",   color="#009944"},
+    {name="textKey",     font="bold",   color="VioletRed4"},
+    {name="textKey1",    font="normal", color="VioletRed4"},
+    {name="command",     font="normal", color="darkgoldenrod4"},
+    {name="boldblue",    font="bold",   color="RoyalBlue4"},
+    {name="boldcommand", font="bold",   color="darkgoldenrod4"},
+    {name="orange",      font="normal", color="DarkOrange"},
+    {name="boldorange",  font="bold",   color="DarkOrange"},
+    {name="textcomment", font="italic", color="SteelBlue4"},
+    {name="error",       font="bold",   color="red"},
+    {name="numericconst",font="normal", color="darkGreen"},
+    {name="subroutine",  font="normal", color="brown"},
+    {name="identifier1", font="normal", color="RoyalBlue4"},
+    
+}

@@ -19,27 +19,44 @@
 --
 -------------------------------------------------------------------------------------
 
-local cachedActions           = nil
-local cachedActionKeyBindings = nil
 
 local cachedSyntaxDefinitions = {}
 
+local cache = {}
+
+local function getPackage(name)
+    local rslt = cache[name]
+    if not rslt then
+        rslt = require(name)
+        cache[name] = rslt
+    end
+    return rslt
+end
+
 return 
 {
-    getAction            =  function(actionName)
-                                if not cachedActions then
-                                    cachedActions = require("this.actions")
-                                end
-                                return cachedActions[actionName]
-                            end,
-                        
-    getActionKeyBindings =  function()
-                                if not cachedActionKeyBindings then
-                                    cachedActionKeyBindings = require("this.actionKeyBindings")
-                                end
-                                return cachedActionKeyBindings
+    -------------------------------------------------------------------------------
+    getFonts             =  function()
+                                return getPackage("this.fonts")
                             end,
 
+    getTextStyles        =  function()
+                                return getPackage("this.textStyles")
+                            end,
+                            
+    getLanguageModes     =  function()
+                                return getPackage("this.languageModes")
+                            end,
+                            
+    getActionKeyBindings =  function()
+                                return getPackage("this.actionKeyBindings")
+                            end,
+    -------------------------------------------------------------------------------
+    
+    getAction            =  function(actionName)
+                                return getPackage("this.actions")[actionName]
+                            end,
+                        
     getSyntaxDefinition  =  function(syntaxName)
                                 local rslt = cachedSyntaxDefinitions[syntaxName]
                                 if rslt then
@@ -55,4 +72,5 @@ return
                                     end
                                 end
                             end
+    -------------------------------------------------------------------------------
 }

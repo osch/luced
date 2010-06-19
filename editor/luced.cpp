@@ -35,6 +35,7 @@
 #include "CommandlineException.hpp"
 #include "ProgramName.hpp"
 #include "DefaultConfig.hpp"
+#include "ConfigException.hpp"
              
 using namespace LucED;
 
@@ -103,6 +104,17 @@ int main(int argc, char** argv)
     {
         fprintf(stderr, "[%s]: Commandline Error: %s\n", argv[0], ex.getMessage().toCString());
         rc = 1;
+    }
+    catch (ConfigException& ex)
+    {
+        fprintf(stderr, "[%s]: %s: %s\n", argv[0], ex.what(), ex.getMessage().toCString());
+        rc = 16;
+        for (int i = 0; i < ex.getErrorList()->getLength(); ++i) {
+            ConfigException::Error e = ex.getErrorList()->get(i);
+            fprintf(stderr, "[%s]: %s:%d:%s\n", argv[0], e.getConfigFileName().toCString(),
+                                                         e.getLineNumber(),
+                                                         e.getMessage().toCString());
+        }
     }
     catch (BaseException& ex)
     {

@@ -145,7 +145,7 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 ViewLuaInterface        LuaSerializer          ActionMethodContainer  FocusManager \
                 FontInfo                EncodingConverter      String                 
                 
-ROOT_CONFIG_FILES            := .luced/config.lua 
+ROOT_CONFIG_FILES            := $(BUILD_DIR)/config.lua 
 
 DEFAULT_PACKAGE_CONFIG_FILES := $(wildcard .luced/default/*.lua)
 
@@ -320,7 +320,8 @@ endif                                                         #
 ifeq ($(WAS_HEADERS1_GENERATED),true)
 ifeq ($(filter $(NONBUILD_GOALS),$(MAKECMDGOALS)),)
 include $(BUILD_DIR)/headers2_generated.mk
-$(BUILD_DIR)/headers2_generated.mk: $(GEN_HDRS) \
+$(BUILD_DIR)/headers2_generated.mk: $(BUILD_DIR)/config.lua \
+                                    $(GEN_HDRS) \
                                     $(GEN_HDRS_DEPS)
 	@mkdir -p $(@D); echo "WAS_HEADERS2_GENERATED := true" > $@
 endif
@@ -348,9 +349,11 @@ endif                                                         #
 #  is used).
 #
 
-EMLUA_STARTUP := CONFIG_FILES                 = { $(patsubst .luced/%,"%";, $(CONFIG_FILES)) }; \
-                 ROOT_CONFIG_FILES            = { $(patsubst .luced/%,"%";, $(ROOT_CONFIG_FILES)) }; \
-                 DEFAULT_PACKAGE_CONFIG_FILES = { $(patsubst .luced/%,"%";, $(DEFAULT_PACKAGE_CONFIG_FILES)) };
+EMLUA_STARTUP := CONFIG_LUA_FILE = "$(BUILD_DIR)/config.lua"; \
+                 FILE_PREFIXES                = { "$(BUILD_DIR)/", ".luced/" }; \
+                 CONFIG_FILES                 = { $(patsubst %,"%";, $(CONFIG_FILES)) }; \
+                 ROOT_CONFIG_FILES            = { $(patsubst %,"%";, $(ROOT_CONFIG_FILES)) }; \
+                 DEFAULT_PACKAGE_CONFIG_FILES = { $(patsubst %,"%";, $(DEFAULT_PACKAGE_CONFIG_FILES)) };
 
 $(BUILD_DIR)/%.hpp.gen.dep $(BUILD_DIR)/%.new.hpp: %.hpp.emlua $(LUA_SCRIPT_FILES) $(CONFIG_FILES) lua
 	$(call EMLUA_RUN,                   $(patsubst %.hpp.emlua,$(BUILD_DIR)/%.new.hpp,$<),$(EMLUA_STARTUP))
@@ -432,6 +435,9 @@ sandbox.mk:
 ../pcre/pcre.h: ../pcre/pcre.h.generic
 	ln -sf $<  $@
 
+$(BUILD_DIR)/%.lua: %.lua.emlua $(LUA_SCRIPT_FILES)
+	$(call EMLUA_RUN, $@,)
+	
 ##########################################################################
 #
 # Generic Rules

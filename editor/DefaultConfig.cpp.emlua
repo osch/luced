@@ -23,6 +23,7 @@
 #include "System.hpp"
 
 @ local stringLiteral = require("functions").stringLiteral
+@ local substr        = string.sub
 
 using namespace LucED;
 
@@ -37,14 +38,25 @@ struct DefaultConfigEntry
     const char* fileName;
     const char* fileContent;
 };
-
+@ local function startsWith(str, pref)
+@   return substr(str, 1, #pref) == pref
+@ end
+@ local function removePrefix(fileName)
+@   for _, p in ipairs(FILE_PREFIXES) do
+@       if startsWith(fileName, p) then
+@           return substr(fileName, #p + 1)
+@       end
+@   end
+@   error("No prefix matched for "..tostring(fileName))
+@ end
+@
 @ local function buildConfigEntries(fileNames)
 @   for i = 1, #fileNames do
 @     local fileName = fileNames[i]
     {
-        @(stringLiteral(fileName)),
+        @(stringLiteral(removePrefix(fileName))),
 @  
-@     for line in io.lines(".luced/"..fileName) do
+@     for line in io.lines(fileName) do
         @(stringLiteral(line.."\n"))
 @     end
     }

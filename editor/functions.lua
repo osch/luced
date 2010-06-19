@@ -148,14 +148,18 @@ local function serialize(c)
         for i = 1, n do
             local v = c[i]
             rslt[#rslt + 1] = serialize(v)
-            rslt[#rslt + 1] = ','
+            if #keyList > 0 or i < n then
+                rslt[#rslt + 1] = ','
+            end
         end
-        for _, k in ipairs(keyList) do
+        for i , k in ipairs(keyList) do
             local v = c[k]
             rslt[#rslt + 1] = '['   serializeValueTo(k, rslt)
             rslt[#rslt + 1] = ']='
             rslt[#rslt + 1] = serialize(v)
-            rslt[#rslt + 1] = ','
+            if i < #keyList then
+                rslt[#rslt + 1] = ','
+            end
         end
         rslt[#rslt + 1] = '}'
         serializingTable[c] = nil

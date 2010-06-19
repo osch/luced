@@ -34,7 +34,7 @@ using namespace LucED;
 @ local typeInfos  = require("ConfigTypes").typeInfos
 @
 @ local configDef     = require("ConfigDefinition")
-@ local defaultConfig = dofile(".luced/config.lua")
+@ local defaultConfig = dofile(CONFIG_LUA_FILE) -- ".luced/config.lua")
 @ 
 @ local function path(p1, p2)
 @   return (#p1 > 0 and #p2 > 0 and p2:sub(1,1) ~= "[" and p1.."/"..p2) or (p1..p2)
@@ -71,8 +71,10 @@ using namespace LucED;
 @               local typeInfo = typeInfos[m.type]
 @               local comma = (i == #constructorMembers) and "" or ","
 @               local defaultValue = defaultValues and defaultValues[m.name]
-@               if defaultValue ~= nil and m.default ~= nil then
-@                   error("doubled default values: in config.lua and in ConfigDefinition.lua for "..luaConfigPath.."/"..m.name)
+@               if defaultValue ~= nil and m.default ~= nil 
+@                  and tostring(defaultValue) ~= tostring(m.default)
+@               then
+@                   error("different default values: in config.lua and in ConfigDefinition.lua for "..luaConfigPath.."/"..m.name)
 @               end
 @               if m.default == nil and defaultValue ~= nil then m.default = defaultValue end
 @               if defaultValue == nil then defaultValue = m.default end

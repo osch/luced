@@ -1,0 +1,124 @@
+@local year = os.date("%Y")
+-------------------------------------------------------------------------------------
+--
+--   LucED - The Lucid Editor
+--
+--   Copyright (C) 2005-@(year) Oliver Schmidt, oliver at luced dot de
+--
+--   This program is free software; you can redistribute it and/or modify it
+--   under the terms of the GNU General Public License Version 2 as published
+--   by the Free Software Foundation in June 1991.
+--
+--   This program is distributed in the hope that it will be useful, but WITHOUT
+--   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+--   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+--   more details.
+--
+--   You should have received a copy of the GNU General Public License along with 
+--   this program; if not, write to the Free Software Foundation, Inc., 
+--   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+--
+-------------------------------------------------------------------------------------
+
+@ local functions   = require("functions")
+@ local configDef   = require("ConfigDefinition")
+@ 
+@ local serialize = functions.serialize
+@ local substr    = string.sub
+@ local rep       = string.rep
+@
+@ local function startsWith(str, pref)
+@   return substr(str, 1, #pref) == pref
+@ end
+@
+@ local firstLevelConfig = {}
+@ for i, e in ipairs(configDef.entries) do
+@   assert(not firstLevelConfig[e.name], tostring(e.name).." should be unique")
+@   firstLevelConfig[e.name] = e
+@ end
+@
+@ local packageRelatedNames = { syntaxName = true,
+@                               actionName = true }
+@
+@ local function maxFieldLength(entries, fieldName)
+@   fieldName = fieldName or "name"
+@   local m = 0
+@   for _, d in ipairs(entries) do
+@       local m2 = #d.name
+@       if m2 > m then m = m2 end
+@   end
+@   return m
+@ end
+@
+@ local function serializeEntry(e, def)
+@   local keys = {}
+@   if def.type == "map" then
+        {
+@       local m = maxFieldLength(def.entries)
+@       for i, d in ipairs(def.entries) do
+@           local k = d.name
+@           local v = e[k]
+@           if packageRelatedNames[k] then
+@               if startsWith(v, "this.") then
+@                   v = "default"..substr(v, 5)
+@               end
+@           end
+            @(k)@(rep(" ", m - #k)) = @(serialize(v, d))@(i == #def.entries and "" or ",")
+@       end
+        },
+@   else
+@       error("not implemented - TODO!")
+@   end
+@   
+@ end
+@
+return
+{
+    generalConfig =
+    {
+@ local m = maxFieldLength(firstLevelConfig.generalConfig.entries)
+@ for i, e in ipairs(firstLevelConfig.generalConfig.entries) do
+        @(e.name)@(rep(" ", m - #e.name)) = @(serialize(e.default)),
+@ end
+    },
+    
+    fonts = 
+    {
+@ local fontConfig = dofile(".luced/default/fonts.lua")
+@ for i, e in ipairs(fontConfig) do
+@   serializeEntry(e, firstLevelConfig.fonts.member.alternatives[1])
+@ end
+    
+        { referToPackage = "default" }
+    },
+    
+    textStyles = 
+    {
+@ local textStylesConfig = dofile(".luced/default/textStyles.lua")
+@ for i, e in ipairs(textStylesConfig) do
+@   serializeEntry(e, firstLevelConfig.textStyles.member.alternatives[1])
+@ end
+    
+        { referToPackage = "default" }
+    },
+    
+    languageModes = 
+    {
+@ local languageModesConfig = dofile(".luced/default/languageModes.lua")
+@ for i, e in ipairs(languageModesConfig) do
+@   serializeEntry(e, firstLevelConfig.languageModes.member.alternatives[1])
+@ end
+    
+        { referToPackage = "default" }
+    },
+    
+    actionKeyBindings = 
+    {
+@ local actionKeyBindingsConfig = dofile(".luced/default/actionKeyBindings.lua")
+@ for i, e in ipairs(actionKeyBindingsConfig) do
+@   serializeEntry(e, firstLevelConfig.actionKeyBindings.member.alternatives[1])
+@ end
+    
+        { referToPackage = "default" }
+    },
+}
