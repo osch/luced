@@ -2,7 +2,8 @@
 
 <h1>Requirements</h1>
 
-<p>The following software must be installed:
+<p>The following software must be installed, if you want to build LucED within
+a checked out Git repository:
 
 <ul>   
   <li><a href="http://git-scm.com/">http://git-scm.com/</a></li>
@@ -13,7 +14,8 @@
   <li>C++ compiler and X11 development headers</li>
 </ul>
 
-<h1>Download</h1>
+
+<h1>Check out Git repository</h1>
 
 
 <p>You can get the latest source code from <a
@@ -42,7 +44,9 @@ Alternatively you may obtain the source code from the mirrored
 <p>See the file <code>Makefile</code> for possible adjustments for the
 <code>sandbox.mk</code> file.
 
-<p>Compilation has been tested with <a href="http://gcc.gnu.org">gcc</a> versions 3.4, 4.1, 4.2 and 4.3.
+<p>There may be some problems with some C++ compilers, that do not fully support C++ templates.
+<br>Compilation has been tested with <a href="http://gcc.gnu.org">gcc</a> versions 3.4, 4.1, 4.2 and 4.3.
+
 
 
 
@@ -78,4 +82,6 @@ with the notorious command sequence:
    make
    make install
 </pre>
-   
+<p>This tar ball should not be used for development purposes, because it contains
+generated C++ code.
+<br>For development purposes a checked out git repository should be used.
