@@ -15,6 +15,9 @@
 #include "lua.h"
 #include "lauxlib.h"
 
+#ifdef VERSION
+#undef VERSION
+#endif
 
 #define VERSION		"0.9"
 #define PATTERN_T	"pattern"
