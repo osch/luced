@@ -319,7 +319,11 @@ local function parser(writerfn, opts)
     Symbol = c(specialchar) / writer.str
     }
 
-  return function(inp) return to_string(lpeg.match(p(modify_syntax(syntax)), inp)) end
+  return    function(inp) 
+                writer:resetHeadings()
+                return to_string(lpeg.match(p(modify_syntax(syntax)), inp)),
+                       writer.headings
+            end
 end
 
 
@@ -346,6 +350,8 @@ local function htmlWriter(parser, options)
   local listitem = function(c) return {"<li>", map(parser(htmlWriter, options), spliton1(c)), "</li>\n"} end
   local list = { tight = function(items) return map(listitem, items) end,
                  loose = function(items) return map(function(c) return listitem(c .. "\n\n") end, items) end }
+
+  local headings = {}
   return {
   rawhtml = function(c) return c end,
   linebreak = function() return "<br />\n" end,
@@ -355,7 +361,19 @@ local function htmlWriter(parser, options)
   emph = function(c) return {"<em>", c, "</em>"} end,
   code = function(c) return {"<code>", escape(c), "</code>"} end,
   strong = function(c) return {"<strong>", c, "</strong>"} end,
-  heading = function(lev,c) return {"<h" .. lev .. ">", c, "</h" .. lev .. ">\n"} end,
+  resetHeadings = function(writer) headings = {}
+                                   writer.headings = headings 
+                  end,
+  headings = headings,
+  heading =     function(lev,c) 
+                    if lev == 1 or lev == 2 then
+                        headings[#headings+1] = { level = lev, 
+                                                  title = to_string(c) }
+                        return {"<h" .. lev .. "><a name=\"sec"..#headings.."\"></a>", c, "</h" .. lev .. ">\n"}
+                    else
+                        return {"<h" .. lev .. ">", c, "</h" .. lev .. ">\n"}
+                    end
+                end,
   bulletlist = { tight = function(c) return {"<ul>\n", list.tight(c), "</ul>\n"} end,
                  loose = function(c) return {"<ul>\n", list.loose(c), "</ul>\n"} end },
   orderedlist = { tight = function(c) return {"<ol>\n", list.tight(c), "</ol>\n"} end,
