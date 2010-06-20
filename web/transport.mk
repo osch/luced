@@ -16,6 +16,7 @@ HAVE_LUA_INTERPRETER = $(shell if [ -f $(BASE_DIR)/../editor/lua-min ]; \
 HTDOCS_FILES := $(patsubst $(BASE_DIR)/%,%, $(wildcard $(BASE_DIR)/*.lhtml \
                                                        $(BASE_DIR)/*.ico   \
                                                        $(BASE_DIR)/*.png   \
+                                                       $(BASE_DIR)/*.txt   \
                  )) \
                  index.shtml
                                              
@@ -68,13 +69,13 @@ endif
 # scripts
 #
 define QUEUE_HTDOCS_RUN
-	@echo "queueing for htdocs:  $^"; \
+	@echo "queueing for htdocs:  $(patsubst $(BASE_DIR)/%,%,$^)"; \
 	 echo "put -P $^ htdocs/$(patsubst $(TIMESTAMP_DIR)/%.htdocs.timestamp,%,$@)" \
 	      >> $(SFTP_SCRIPT); \
 	 touch $@
 endef
 define QUEUE_CGIBIN_RUN
-	@echo "queueing for cgibin:  $^"; \
+	@echo "queueing for cgibin:  $(patsubst $(BASE_DIR)/%,%,$^)"; \
 	 echo "put -P $^ cgi-bin/$(patsubst $(TIMESTAMP_DIR)/%.cgibin.timestamp,%,$@)" \
 	      >> $(SFTP_SCRIPT); \
 	 touch $@

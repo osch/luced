@@ -1,0 +1,113 @@
+<!--   LucED - The Lucid Editor
+  --
+  --   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
+  --
+  --   This program is free software; you can redistribute it and/or modify it
+  --   under the terms of the GNU General Public License Version 2 as published
+  --   by the Free Software Foundation in June 1991.
+  --
+  --   This program is distributed in the hope that it will be useful, but WITHOUT
+  --   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  --   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+  --   more details.
+  --
+  --   You should have received a copy of the GNU General Public License in the
+  --   file LICENSE along with this program; if not, write to the Free Software
+  --   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+  --   USA.
+  -->
+
+You are welcome to play around with the current LucED source code.
+
+Requirements
+============
+
+The following software must be installed, if you want to build LucED within
+a checked out Git repository:
+
+  * <http://git-scm.com/>
+  * <http://www.gnu.org/software/make/>
+  * <http://www.gnu.org/software/autoconf/>
+  * <http://www.gnu.org/software/libtool/>
+  * <http://www.gnu.org/software/automake/>
+  * C++ compiler and X11 development headers
+
+
+Check out Git repository
+========================
+
+You can get the latest source code from 
+[BerliOS] by using [Git] with the following 
+commands:
+
+       git clone git://git.berlios.de/luced
+       cd luced 
+
+Alternatively you may obtain the source code from the mirrored 
+[github repository].
+
+       git clone git://github.com/osch/luced.git
+       cd luced 
+
+
+Build instructions
+==================
+   
+Try the following commands for building LucED:
+
+       cd editor
+       make
+
+   
+See the file `Makefile` for possible adjustments for the
+`sandbox.mk` file.
+
+There may be some problems with some C++ compilers, that do not fully support C++ templates.  
+Compilation has been tested with [gcc] versions 3.4, 4.1, 4.2 and 4.3.
+
+
+
+Program invocation
+==================
+
+To open the file `test.txt` simply type:
+
+       ./luced test.txt
+
+   
+LucED doesn't have a file selector, every file must be opened through
+the shell command line.
+
+If the current directory and the home directory  both have no 
+directory named `.luced`, a default `.luced` configuration directory 
+is written on program invocation in the home directory.
+
+
+Build a distributable tar.gz ball
+=================================
+
+Build a distributable tar.gz ball with the following commands:
+
+       make release
+       cd release
+       ./configure
+       make dist
+   
+This will build a standard source tar ball that can be installed 
+with the notorious command sequence:
+
+       ./configure
+       make
+       make install
+
+This tar ball should not be used for development purposes, because it contains
+generated C++ code.  
+For development purposes a checked out git repository should be used.
+
+
+<!-- Links: -->
+
+[BerliOS]:           http://developer.berlios.de/projects/luced/
+[Git]:               http://git.or.cz/
+[github repository]: http://github.com/osch/luced
+[gcc]:               http://gcc.gnu.org
