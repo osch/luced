@@ -17,24 +17,118 @@
   --   USA.
   -->
 
-You are welcome to play around with the current LucED source code.
+Introduction
+============
+
+LucED is an [open source] text editor with a graphical [X11] user interface. 
+Although the project has not published any official releases so far, you are welcome to 
+play around with the current source code.
+
+The principal aim of the LucED project is to develop a text editor with the following features:
+
+  * A simple and minimalistic, but powerful user interface that is similar to the
+    [NEdit] text editor, but does not depend on [Motif]
+  * Fast and responsive user interface: e.g. syntax highlighting is done in
+    the background and does not freeze the user interface, special handling to achieve 
+    fast keyboard repeat rates
+  * No dependencies on high-level [widget toolkits] in order to minimise the requirements 
+    for the runtime system and to support slow network connections
+
+The following features are already imlemented:
+  
+  * Embedded [Lua] programming language for scripting and configuration
+  * Syntax highlighting configurable via [PCRE] regular expressions, similar to the 
+    NEdit syntax highlighting but with the enhancement to use arbitrarily nested patterns
+  * Full unicode support (works with UTF-8 internally)
+
+Up to now, LucED doesn't have a menu bar or a file selector... so the intended audience
+are users, who are working on the commandline ;-)
+
+
+
+Building an official release
+============================
+
+Official LucED releases will be distributed as tar.gz archives, based on the 
+widely used [GNU autotools] build system.
+
+The tar.gz archive should not be used for development purposes, because it contains
+generated C++ code.  
+For development purposes a checked out git repository should be used (see below).
 
 Requirements
-============
+------------
+
+The following software must be installed:
+
+  * *tar* program, e.g. [GNU Tar]
+  * *gunzip* program, e.g. [GNU Gzip]
+  * *sh* standard shell, e.g. [GNU Bash]
+  * Any *make* program that is supported by the [GNU autotools], e.g.
+    [GNU Make]
+  * C++ compiler , e.g. [gcc] version 3.4 or higher
+  * *libX11* with development headers
+  * *libxpm* with development headers (optional)
+  * *libiconv* with development headers (optional), e.g. [GNU libiconv]
+
+
+Build instructions
+------------------
+
+If for example the tar.gz file has name *luced-0.01.tar.gz*, you can build and 
+install LucED with the command sequence:
+
+       gunzip luced-0.01.tar.gz
+       tar xf luced-0.01.tar
+       cd luced-0.01
+       ./configure
+       make
+       make install
+       
+Configure options
+-----------------
+
+When invoking the *configure* script, consider the following commandline options:
+
+  * *--disable-xpm*   disables the usage of libxpm for displaying icons. This
+                      can improve performance on slow connections.
+
+  * *--disable-iconv* disables the usage of libiconv for transforming
+                      character encodings. If libiconv is disabled,
+                      LucED only knows UTF-8 and ISO-8859-1 encoding.
+
+
+
+Building in a development sandbox
+=================================
+
+For development purposes, LucED should be build within a checked out [Git] 
+repository. 
+
+In this case the [GNU autotools] are only used for finding
+the system configuration with autoconf (and for building the release tar.gz archive),
+the build process itself is based on hand-written Makefiles.
+
+Requirements
+------------
 
 The following software must be installed, if you want to build LucED within
 a checked out Git repository:
 
-  * <http://git-scm.com/>
-  * <http://www.gnu.org/software/make/>
-  * <http://www.gnu.org/software/autoconf/>
-  * <http://www.gnu.org/software/libtool/>
-  * <http://www.gnu.org/software/automake/>
-  * C++ compiler and X11 development headers
+  * [Git]
+  * *sh* standard shell, e.g. [GNU Bash]
+  * [GNU Make]
+  * [GNU autoconf]
+  * [GNU libtool]
+  * [GNU automake]
+  * C++ compiler
+  * *libX11* with development headers
+  * *libxpm* with development headers (optional)
+  * *libiconv* with development headers (optional), e.g. [GNU libiconv]
 
 
 Check out Git repository
-========================
+------------------------
 
 You can get the latest source code from 
 [BerliOS] by using [Git] with the following 
@@ -51,40 +145,28 @@ Alternatively you may obtain the source code from the mirrored
 
 
 Build instructions
-==================
+------------------
    
 Try the following commands for building LucED:
 
        cd editor
        make
 
-   
-See the file `Makefile` for possible adjustments for the
-`sandbox.mk` file.
+Local build adjustments can be done in the file *sandbox.mk*, to override settings 
+of the *Makefile*.
 
-There may be some problems with some C++ compilers, that do not fully support C++ templates.  
-Compilation has been tested with [gcc] versions 3.4, 4.1, 4.2 and 4.3.
+For building a debug executable, the file *sandbox.mk* should contain 
+the following line:
 
+       CPP_DEFINES += -D DEBUG 
 
+*Configure* options can also be placed in the file *sandbox.mk*, e.g.:
 
-Program invocation
-==================
-
-To open the file `test.txt` simply type:
-
-       ./luced test.txt
-
-   
-LucED doesn't have a file selector, every file must be opened through
-the shell command line.
-
-If the current directory and the home directory  both have no 
-directory named `.luced`, a default `.luced` configuration directory 
-is written on program invocation in the home directory.
+       CONFIGURE_OPTS := --disable-xpm
 
 
-Build a distributable tar.gz ball
-=================================
+Build a distributable tar.gz archive
+------------------------------------
 
 Build a distributable tar.gz ball with the following commands:
 
@@ -93,7 +175,7 @@ Build a distributable tar.gz ball with the following commands:
        ./configure
        make dist
    
-This will build a standard source tar ball that can be installed 
+This will build a standard source tar.gz ball that can be installed 
 with the notorious command sequence:
 
        ./configure
@@ -105,9 +187,53 @@ generated C++ code.
 For development purposes a checked out git repository should be used.
 
 
+Build problems
+==============
+
+Compilation has been tested with [gcc] versions 3.4, 4.1, 4.2 and 4.3.
+
+There may be problems with some C++ compilers, that do not fully support C++ templates.
+
+If you have any problems, please contact the author via email: 
+*oliver at luced dot de*.
+
+
+Program invocation
+==================
+
+To open the file *test.txt* simply type:
+
+       ./luced test.txt
+
+   
+LucED doesn't have a file selector, every file must be opened through
+the shell command line.
+
+If the current directory and the home directory  both have no 
+directory named *.luced*, a default *.luced* configuration directory 
+is written on program invocation in the home directory.
+
+
+
 <!-- Links: -->
 
+[open source]:       ?page=license
+[X11]:               http://en.wikipedia.org/wiki/X11
+[NEdit]:             http://www.nedit.org/
+[Motif]:             http://en.wikipedia.org/wiki/Motif_%28widget_toolkit%29
+[Lua]:               http://lua.org
+[PCRE]:              http://www.pcre.org
+[widget toolkits]:   http://en.wikipedia.org/wiki/Widget_toolkit
+[GNU autotools]:     http://en.wikipedia.org/wiki/GNU_build_system
+[GNU Tar]:           http://www.gnu.org/software/tar/
+[GNU Gzip]:          http://www.gnu.org/software/gzip/
+[GNU Bash]:          http://www.gnu.org/software/bash/
+[GNU Make]:          http://www.gnu.org/software/make/
+[GNU autoconf]:      http://www.gnu.org/software/autoconf/
+[GNU libtool]:       http://www.gnu.org/software/libtool/
+[GNU automake]:      http://www.gnu.org/software/automake/
+[GNU libiconv]:      http://www.gnu.org/software/libiconv/
 [BerliOS]:           http://developer.berlios.de/projects/luced/
-[Git]:               http://git.or.cz/
+[Git]:               http://git-scm.com/
 [github repository]: http://github.com/osch/luced
 [gcc]:               http://gcc.gnu.org

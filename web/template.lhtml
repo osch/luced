@@ -37,6 +37,10 @@
                 font-size:1.8em;  font-weight:bold; padding-top:20px; color:#00407a;
                 margin-top:0px; margin-bottom:0px;
         }
+        h2 {
+                font-size:1.2em;  font-weight:bold; padding-top:5px; color:#00407a;
+                margin-top:0px; margin-bottom:0px;
+        }
         li {
                 margin-top:0.5ex; 
                 padding-right:90px;

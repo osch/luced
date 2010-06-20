@@ -1,6 +1,25 @@
 @ local markdown = require("lunamark").markdown
 @ local infile   = io.open(getAbsoluteFileName("documentation.txt"))
-@ local htmlText = markdown(infile:read("*a"))
+@ local htmlText, headings = markdown(infile:read("*a"))
+@
+<h1>Table of Contents</h1>
+@ local level = 0
+@ for i, h in ipairs(headings) do
+@     while h.level > level do
+          <ul>
+@         level = level + 1
+@     end
+@     while h.level < level do
+          </ul>
+@         level = level - 1
+@     end
+  <li><a href="#sec@(i)">@(h.title)</a></li>
+@ end
+@
+@ while level >= 0 do
+      </ul>
+@     level = level - 1
+@ end
 @
 @(htmlText)
 
