@@ -42,7 +42,7 @@ The following features are already imlemented:
   * Full unicode support (works with UTF-8 internally)
 
 Up to now, LucED doesn't have a menu bar or a file selector... so the intended audience
-are users, who are working on the commandline ;-)
+are users working with the commandline ;-)
 
 
 
@@ -54,7 +54,8 @@ widely used [GNU autotools] build system.
 
 The tar.gz archive should not be used for development purposes, because it contains
 generated C++ code.  
-For development purposes a checked out git repository should be used (see below).
+For development purposes a checked out git repository should be used 
+(see section *[Building in a development sandbox]*).
 
 Requirements
 ------------
@@ -160,7 +161,7 @@ the following line:
 
        CPP_DEFINES += -D DEBUG 
 
-*Configure* options can also be placed in the file *sandbox.mk*, e.g.:
+[Configure options] can also be placed in the file *sandbox.mk*, e.g.:
 
        CONFIGURE_OPTS := --disable-xpm
 

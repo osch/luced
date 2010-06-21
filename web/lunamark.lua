@@ -132,12 +132,22 @@ local interblockspace = lpeg.Cmt(blankline^0, function(s,i) if i == 1 then retur
 -- copied from package "lunamark.parser.markdown"
 
 local references = {}
+local doubledReferences = {}
 
 local function parser(writerfn, opts)
   local options = opts or {}
   local writer = writerfn(parser, options)
   local modify_syntax = options.modify_syntax or function(a) return a end
+  local sectionCounter = 0
 
+  local function evaluateHeadingForRef(level, c) 
+    sectionCounter = sectionCounter + 1
+    return { key    = normalize_label(to_string(c)), 
+             label  = c, 
+             source = "#sec"..sectionCounter, 
+             title =  "" } 
+  end
+  
   local syntax = {
     "Doc"; -- initial
 
@@ -145,7 +155,13 @@ local function parser(writerfn, opts)
            lpeg.Ct((interblockspace *  _"Block")^0) * blankline^0 * eof,
 
 
-    References = (_"Reference" / function(ref) references[ref.key] = ref end + (nonemptyline^1 * blankline^1) + line)^0 * blankline^0 * eof,
+    References = (  _"Reference"     / function(ref) references[ref.key] = ref end 
+                  + _"HeadingForRef" / function(ref) if not references[ref.key] 
+                                                     then references[ref.key] = ref 
+                                                     else doubledReferences[ref.key] = true  end 
+                                       end
+                --+ (nonemptyline^1 * blankline^1) 
+                  + line)^0 * blankline^0 * eof,
 
     Block =
     ( _"Blockquote"
@@ -160,21 +176,27 @@ local function parser(writerfn, opts)
     + _"Plain"
     ),
 
-    Heading = _"AtxHeading" + _"SetextHeading", 
+    Heading       = _"AtxHeading"       + _"SetextHeading", 
+    HeadingForRef = _"AtxHeadingForRef" + _"SetextHeadingForRef", 
 
     AtxStart = c(p"#" * p"#"^-5) / string.len,
-
     AtxInline = _"Inline" - _"AtxEnd",
-
     AtxEnd = sp * p"#"^0 * sp * newline * blankline^0,
 
-    AtxHeading = _"AtxStart" * sp * lpeg.Ct(_"AtxInline"^1) * _"AtxEnd" / writer.heading,
+    AtxHeading       = _"AtxStart" * sp * lpeg.Ct(_"AtxInline"^1) * _"AtxEnd" / writer.heading,
+    AtxHeadingForRef = _"AtxStart" * sp * lpeg.Ct(_"AtxInline"^1) * _"AtxEnd" / evaluateHeadingForRef,
 
-    SetextHeading = _"SetextHeading1" + _"SetextHeading2",
 
-    SetextHeading1 = lpeg.Ct((_"Inline" - _"Endline")^1) * newline * p("=")^3 * newline * blankline^0 / function(c) return writer.heading(1,c) end,
+    SetextHeading       = _"SetextHeading1"       + _"SetextHeading2",
+    SetextHeadingForRef = _"SetextHeading1ForRef" + _"SetextHeading2ForRef",
 
-    SetextHeading2 = lpeg.Ct((_"Inline" - _"Endline")^1) * newline * p("-")^3 * newline * blankline^0 / function(c) return writer.heading(2,c) end,
+    SetextHeading1       = lpeg.Ct((_"Inline" - _"Endline")^1) * newline * p("=")^3 * newline * blankline^0 / function(c) return writer.heading(1,c) end,
+    SetextHeading1ForRef = lpeg.Ct((_"Inline" - _"Endline")^1) * newline * p("=")^3 * newline * blankline^0 / function (c) return evaluateHeadingForRef(1,c) end,
+
+    SetextHeading2       = lpeg.Ct((_"Inline" - _"Endline")^1) * newline * p("-")^3 * newline * blankline^0 / function(c) return writer.heading(2,c) end,
+    SetextHeading2ForRef = lpeg.Ct((_"Inline" - _"Endline")^1) * newline * p("-")^3 * newline * blankline^0 / function (c) return evaluateHeadingForRef(2,c) end,
+
+
 
     BulletList = _"BulletListTight" + _"BulletListLoose",
     
@@ -320,6 +342,7 @@ local function parser(writerfn, opts)
     }
 
   return    function(inp) 
+                sectionCounter = 0
                 writer:resetHeadings()
                 return to_string(lpeg.match(p(modify_syntax(syntax)), inp)),
                        writer.headings
@@ -366,13 +389,9 @@ local function htmlWriter(parser, options)
                   end,
   headings = headings,
   heading =     function(lev,c) 
-                    if lev == 1 or lev == 2 then
-                        headings[#headings+1] = { level = lev, 
-                                                  title = to_string(c) }
-                        return {"<h" .. lev .. "><a name=\"sec"..#headings.."\"></a>", c, "</h" .. lev .. ">\n"}
-                    else
-                        return {"<h" .. lev .. ">", c, "</h" .. lev .. ">\n"}
-                    end
+                    headings[#headings+1] = { level = lev, 
+                                              title = to_string(c) }
+                    return {"<h" .. lev .. "><a name=\"sec"..#headings.."\"></a>", c, "</h" .. lev .. ">\n"}
                 end,
   bulletlist = { tight = function(c) return {"<ul>\n", list.tight(c), "</ul>\n"} end,
                  loose = function(c) return {"<ul>\n", list.loose(c), "</ul>\n"} end },
