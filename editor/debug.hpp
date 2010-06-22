@@ -22,6 +22,17 @@
 #ifndef DEBUG_INCLUDED
 #define DEBUG_INCLUDED
 
+#include "config.h"
+
+#if ENABLE_DEBUG && !defined(DEBUG)
+#   define DEBUG
+#endif
+
+#if !defined(DEBUG)
+#   define NDEBUG
+#endif
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -49,10 +60,6 @@
        free (strings);
      }
 */
-
-#ifndef DEBUG
-#   define NDEBUG
-#endif
 
 #ifdef NDEBUG
 #   define ASSERT(a)

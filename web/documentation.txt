@@ -98,6 +98,11 @@ When invoking the *configure* script, consider the following commandline options
                       character encodings. If libiconv is disabled,
                       LucED only knows UTF-8 and ISO-8859-1 encoding.
 
+  * *--enable-debug*  enables various runtime checks for debugging purposes. This
+                      can slow down performance but makes it easier to track errors, 
+                      since a detected error will abort the program immediately.
+                      
+
 
 
 Building in a development sandbox
