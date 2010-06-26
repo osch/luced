@@ -20,7 +20,7 @@
 Introduction
 ============
 
-LucED is an [open source] text editor with a graphical [X11] user interface. 
+LucED is an [open source][License] text editor with a graphical [X11] user interface. 
 Although the project has not published any official releases so far, you are welcome to 
 play around with the current source code.
 
@@ -62,7 +62,7 @@ LucED contains modified software from the following projects:
            *University of Cambridge* and is licensed under the
            terms of the [BSD Licence] (see the file `pcre/LICENCE`).
 
-  * [LPeg] - Parsing Expression Grammars For Lua, - is copyrighted by 
+  * [LPeg] - Parsing Expression Grammars For Lua - is copyrighted by 
            *Lua.org, PUC-Rio* and is licensed under the terms of 
            the [MIT License] (see the file `lpeg/LICENCE`).
 
@@ -101,7 +101,7 @@ The following software must be installed:
 Build instructions
 ------------------
 
-If for example the tar.gz file has name *luced-0.01.tar.gz*, you can build and 
+If for example the tar.gz file has name `luced-0.01.tar.gz`, you can build and 
 install LucED with the command sequence:
 
        gunzip luced-0.01.tar.gz
@@ -109,7 +109,7 @@ install LucED with the command sequence:
        cd luced-0.01
        ./configure
        make
-       make install
+       sudo make install-strip
        
 Configure options
 -----------------
@@ -129,14 +129,20 @@ passing some of the following commandline options to the configure script:
                       can slow down performance but makes it easier to track errors, 
                       since a detected programming error will abort the program 
                       immediately.
+                      
+  * `--prefix=PREFIX` is a generic configure option to determine, where the
+                      files are to be installed (default for PREFIX is: `/usr/local`).
+                      The LucED program is then installed under `PREFIX/bin/luced`.
 
 The configure script has a lot of more generic commandline options. 
 As usual, you may invoke
 
        ./configure --help
 
-to get a list of all generic commandline options that can be passed to the 
+to get a list of all commandline options that can be passed to the 
 configure script.
+
+
 
 
 Building in a development sandbox
@@ -243,9 +249,13 @@ Program invocation
 
 To open the file `test.txt` simply type:
 
-       ./luced test.txt
+       luced test.txt
 
-   
+For less typing, the author recommends to create a shell alias or a symbolic 
+link to type `lc` instead of `luced`, e.g.
+
+       alias lc=luced
+                                         
 LucED doesn't have a file selector, every file must be opened through
 the shell command line. To create a new file, simply invoke LucED with
 the desired name of the new file.
@@ -255,10 +265,68 @@ directory named `.luced`, a default `.luced` configuration directory
 is written on program invocation in the home directory.
 
 
+Environment variables
+---------------------
+
+LucED evaluates the following environment variables:
+
+  * `HOME`                   to find out, where the default config directory 
+                             `.luced` is to be found.
+
+  * `LUCED_CONFIG_DIR`       to override the default config directory 
+                             `$HOME/.luced`.
+
+  * `LUCED_DEFAULT_ENCODING` to override the system's default character encoding.
+
+  * `LUCED_INSTANCE`         to invoke LucED with a specific instance name if
+                             no instance name is given as the commandline argument.
+
+Commandline options
+-------------------
+
+The following options can ba passed (both short and long forms are possible):
+
+   * `-i`, `--instance` to determine the LucED instance name. The following 
+                        argument parameter must be the desired instance 
+                        name.
+
+   * `-ns`, `--no-server` to start LucED as foreground process without 
+                          considering or launching a background server process.
+
+   * `-e`, `--encoding` to determine the encoding for the next file name on
+                        the commandline. The following commandline argument
+                        must be the name of the desired encoding.
+
+   * `-cdc`, `--clone-default-config` to clone the built-in config package
+                                      *default* in the LucED config directory.
+
+Example:
+
+       luced -i TEST test1.txt -e latin1 test2.txt test3.txt
+
+invokes LucED with instance name TEST, files `test1.txt` and `test3.txt` 
+with default encoding and file `test2.txt` with Latin-1 character encoding. 
+If no instance with name TEST exists, a background LucED server process with 
+this instance name is started. If the named LucED server instance exists, the 
+commandline arguments are passed to this instance. If a desired file is 
+already loaded, the corresponding window is raised (the option `-e` is ignored
+in this case).
+
+Example:
+
+       luced --clone-default-config
+
+clones the default config package and gives e.g. the following output message:
+
+       [luced]: Cloned default config package to /home/oliver/.luced/default-1
+
+this can be useful to edit or to examine the built-in config files
+of the *default* package.
+
+
 
 <!-- Links: -->
 
-[open source]:       ?page=license
 [X11]:               http://en.wikipedia.org/wiki/X11
 [NEdit]:             http://www.nedit.org/
 [Motif]:             http://en.wikipedia.org/wiki/Motif_%28widget_toolkit%29
