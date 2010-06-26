@@ -6,51 +6,53 @@
   --   under the terms of the GNU General Public License Version 2 as published
   --   by the Free Software Foundation in June 1991.
   --
-  --   This program is distributed in the hope that it will be useful, but WITHOUT
-  --   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  --   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-  --   more details.
+  --   This program is distributed in the hope that it will be useful, but 
+  --   WITHOUT ANY WARRANTY; without even the implied warranty of 
+  --   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+  --   General Public License for more details.
   --
   --   You should have received a copy of the GNU General Public License in the
   --   file LICENSE along with this program; if not, write to the Free Software
-  --   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
-  --   USA.
+  --   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+  --   MA  02110-1301, USA.
   -->
 
 Introduction
 ============
 
-LucED is an [open source][License] text editor with a graphical [X11] user interface. 
-Although the project has not published any official releases so far, you are welcome to 
-play around with the current source code.
+LucED is an [open source][License] text editor with a graphical [X11] user 
+interface. Although the project has not published any official releases so far, 
+you are welcome to play around with the current source code.
 
-The principal aim of the LucED project is to develop a text editor with the following features:
+The principal aim of the LucED project is to develop a text editor with the 
+following features:
 
-  * A simple and minimalistic, but powerful user interface that is similar to the
-    [NEdit] text editor, but does not depend on [Motif]
+  * A simple and minimalistic, but powerful user interface that is similar to 
+    the [NEdit] text editor, but does not depend on [Motif]
   * Fast and responsive user interface: e.g. syntax highlighting is done in
-    the background and does not freeze the user interface, special handling to achieve 
-    fast keyboard repeat rates
-  * No dependencies on high-level [widget toolkits] in order to minimise the requirements 
-    for the runtime system and to support slow network connections
+    the background and does not freeze the user interface, special handling to 
+    achieve fast keyboard repeat rates
+  * No dependencies on high-level [widget toolkits] in order to minimise the 
+    requirements for the runtime system and to support slow network connections
 
 The following features are already imlemented:
   
   * Embedded [Lua] programming language for scripting and configuration
-  * Syntax highlighting configurable via [PCRE] regular expressions, similar to the 
-    NEdit syntax highlighting but with the enhancement to use arbitrarily nested patterns
+  * Syntax highlighting configurable via [PCRE] regular expressions, similar to 
+    the NEdit syntax highlighting but with the enhancement to use arbitrarily 
+    nested patterns
   * Full unicode support (works with UTF-8 internally)
 
-Up to now, LucED doesn't have a menu bar or a file selector... so the intended audience
-are users working with the commandline ;-)
+Up to now, LucED doesn't have a menu bar or a file selector... so the intended 
+audience are users working with the commandline ;-)
 
 
 License
 =======
 
-LucED - The Lucid Editor - is copyrighted by *Oliver Schmidt* and is licensed under the 
-terms of the [GNU General Public License Version 2] (see the files `editor/COPYRIGHT` 
-and `editor/LICENSE`).
+LucED - The Lucid Editor - is copyrighted by *Oliver Schmidt* and is licensed 
+under the terms of the [GNU General Public License Version 2][GPL2] (see the 
+files `editor/COPYRIGHT` and `editor/LICENSE`).
 
 LucED contains modified software from the following projects:
 
@@ -66,8 +68,8 @@ LucED contains modified software from the following projects:
            *Lua.org, PUC-Rio* and is licensed under the terms of 
            the [MIT License] (see the file `lpeg/LICENCE`).
 
-  * [lposix] - a POSIX library for Lua - has been placed in the [public domain] by 
-             its author (see the file `lposix/LICENCE`).
+  * [lposix] - a POSIX library for Lua - has been placed in the [public domain] 
+               by its author (see the file `lposix/LICENCE`).
 
 
 
@@ -77,8 +79,8 @@ Installing an official release
 Official LucED releases will be distributed as tar.gz archives, based on the 
 widely used [GNU autotools] build system.
 
-The tar.gz archive should not be used for development purposes, because it contains
-generated C++ code.  
+The tar.gz archive should not be used for development purposes, because it 
+contains generated C++ code.  
 For development purposes a checked out git repository should be used 
 (see section *[Building in a development sandbox]*).
 
@@ -114,9 +116,10 @@ install LucED with the command sequence:
 Configure options
 -----------------
 
-When invoking the command `./configure`, the *configure script* tries to figure out
-build options for the underlying operating system. This process can be influenced by
-passing some of the following commandline options to the configure script:
+When invoking the command `./configure`, the *configure script* tries to figure 
+out build options for the underlying operating system. This process can be 
+influenced by passing some of the following commandline options to the 
+configure script:
 
   * `--disable-xpm`   disables the usage of libxpm for displaying icons. This
                       can improve performance on slow connections.
@@ -125,14 +128,16 @@ passing some of the following commandline options to the configure script:
                       character encodings. If libiconv is disabled,
                       LucED only knows UTF-8 and ISO-8859-1 encoding.
 
-  * `--enable-debug`  enables various runtime checks for debugging purposes. This
-                      can slow down performance but makes it easier to track errors, 
-                      since a detected programming error will abort the program 
-                      immediately.
+  * `--enable-debug`  enables various runtime checks for debugging purposes. 
+                      This can slow down performance but makes it easier to 
+                      track errors, since a detected programming error will 
+                      abort the program immediately.
                       
   * `--prefix=PREFIX` is a generic configure option to determine, where the
-                      files are to be installed (default for PREFIX is: `/usr/local`).
-                      The LucED program is then installed under `PREFIX/bin/luced`.
+                      files are to be installed (default for PREFIX is: 
+                      `/usr/local`).
+                      The LucED program is then installed under 
+                      `PREFIX/bin/luced`.
 
 The configure script has a lot of more generic commandline options. 
 As usual, you may invoke
@@ -152,8 +157,8 @@ For development purposes, LucED should be build within a checked out [Git]
 repository. 
 
 In this case the [GNU autotools] are only used for finding
-the system configuration with autoconf (and for building the release tar.gz archive),
-the build process itself is based on hand-written Makefiles.
+the system configuration with autoconf (and for building the release tar.gz 
+archive), the build process itself is based on hand-written Makefiles.
 
 Requirements
 ------------
@@ -198,8 +203,8 @@ Try the following commands for building LucED:
        cd editor
        make
 
-Local build adjustments can be done in the file *sandbox.mk*, to override settings 
-of the *Makefile*.
+Local build adjustments can be done in the file *sandbox.mk*, to override 
+settings of the *Makefile*.
 
 For building a debug executable, the file *sandbox.mk* should contain 
 the following line:
@@ -238,7 +243,8 @@ Build problems
 
 Compilation has been tested with [gcc] versions 3.4, 4.1, 4.2 and 4.3.
 
-There may be problems with some C++ compilers, that do not fully support C++ templates.
+There may be problems with some C++ compilers, that do not fully support C++ 
+templates.
 
 If you have any problems, please contact the author via email: 
 *oliver at luced dot de*.
@@ -276,10 +282,12 @@ LucED evaluates the following environment variables:
   * `LUCED_CONFIG_DIR`       to override the default config directory 
                              `$HOME/.luced`.
 
-  * `LUCED_DEFAULT_ENCODING` to override the system's default character encoding.
+  * `LUCED_DEFAULT_ENCODING` to override the system's default character 
+                             encoding.
 
   * `LUCED_INSTANCE`         to invoke LucED with a specific instance name if
-                             no instance name is given as the commandline argument.
+                             no instance name is given as the commandline 
+                             argument.
 
 Commandline options
 -------------------
@@ -349,8 +357,8 @@ of the *default* package.
 [github repository]: http://github.com/osch/luced
 [gcc]:               http://gcc.gnu.org
 
-[GNU General Public License Version 2]: http://www.gnu.org/licenses/gpl-2.0.txt
-[MIT License]:                          http://www.opensource.org/licenses/mit-license.php
-[BSD Licence]:                          http://www.opensource.org/licenses/bsd-license.php
-[public domain]:                        http://en.wikipedia.org/wiki/Public_domain
+[GPL2]:              http://www.gnu.org/licenses/gpl-2.0.txt
+[MIT License]:       http://www.opensource.org/licenses/mit-license.php
+[BSD Licence]:       http://www.opensource.org/licenses/bsd-license.php
+[public domain]:     http://en.wikipedia.org/wiki/Public_domain
 

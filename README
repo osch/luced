@@ -1,4 +1,4 @@
-###################################################################################
+################################################################################
 #
 #   LucED - The Lucid Editor
 #
@@ -18,25 +18,27 @@
 #   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 #   USA.
 #
-###################################################################################
+################################################################################
 
 LucED is a text editor with a graphical X11 user interface. 
 
-The principal aim of the LucED project is to develop a text editor with the following features:
+The principal aim of the LucED project is to develop a text editor with the 
+following features:
 
-  * A simple and minimalistic, but powerful user interface that is similar to the
-    NEdit text editor, but does not depend on Motif
+  * A simple and minimalistic, but powerful user interface that is similar to 
+    the NEdit text editor, but does not depend on Motif
   * Fast and responsive user interface: e.g. syntax highlighting is done in
-    the background and does not freeze the user interface, special handling to achieve 
-    fast keyboard repeat rates
-  * No dependencies on high-level widget toolkits in order to minimise the requirements 
-    for the runtime system and to support slow network connections
+    the background and does not freeze the user interface, special handling to 
+    achieve fast keyboard repeat rates
+  * No dependencies on high-level widget toolkits in order to minimise the 
+    requirements for the runtime system and to support slow network connections
 
 The following features are already imlemented:
   
   * Embedded Lua programming language for scripting and configuration
-  * Syntax highlighting configurable via PCRE regular expressions, similar to the 
-    NEdit syntax highlighting but with the enhancement to use arbitrarily nested patterns
+  * Syntax highlighting configurable via PCRE regular expressions, similar to 
+    the NEdit syntax highlighting but with the enhancement to use arbitrarily 
+    nested patterns
   * Full unicode support (works with UTF-8 internally)
 
 
