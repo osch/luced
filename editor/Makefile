@@ -223,8 +223,13 @@ HAVE_DIETLIBC := $(shell if type diet 2>/dev/null 1>&2; then echo -n yes; fi )
 ifeq ($(HAVE_DIETLIBC),yes)
 # minimal lua interpreter with minimal dependencies to the 
 # runtime system (for running on web server)
-lua-min: LINK_PRG = diet $(CCOMP_PRG)
-lua-min: $(BUILD_DIR)/lua-min/lua.o $(LUA_MIN_OBJS) $(LPEG_MIN_OBJS)
+.PHONY: lua-min
+lua-min: ../web/lua 
+../web/lua: ../editor/lua-min
+	cp $^ $@
+	chmod a+rx $@
+../editor/lua-min: LINK_PRG = diet $(CCOMP_PRG)
+../editor/lua-min: $(BUILD_DIR)/lua-min/lua.o $(LUA_MIN_OBJS) $(LPEG_MIN_OBJS)
 	$(call LINK_RUN, -lm)
 	strip lua-min
 else
