@@ -275,10 +275,14 @@ release_sources        := $(release_lua_sources)    \
 
 RELEASE_SOURCES        := $(patsubst %, $(RELEASE_DIR)/%, $(release_sources))
 
-release_extras         := lua/COPYRIGHT \
-                          lposix/modemuncher.c \
-                          lpeg/LICENCE \
+release_extras         := README \
+                          editor/LICENSE \
+                          editor/COPYRIGHT \
+                          lua/COPYRIGHT \
                           pcre/LICENCE \
+                          lpeg/LICENCE \
+                          lposix/LICENCE \
+                          lposix/modemuncher.c \
                           editor/keysym2ucs.c \
                           editor/luced.xpm
                        
@@ -314,6 +318,8 @@ $(RELEASE_DIR)/configure.ac: autoconf-configure1.ac \
 	@mkdir -p $(@D)
 	cat $^ > $@
 	
+$(RELEASE_DIR)/README:           ../web/documentation.txt
+	$(COPY_RUN)
 $(RELEASE_DIR)/lua/%:           ../lua/%
 	$(COPY_RUN)
 $(RELEASE_DIR)/lua/%.cpp:       ../lua/src/%.c

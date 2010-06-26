@@ -20,86 +20,32 @@
 #
 ###################################################################################
 
+LucED is a text editor with a graphical X11 user interface. 
 
+The principal aim of the LucED project is to develop a text editor with the following features:
 
-Requirements for the development build process:
-===============================================
+  * A simple and minimalistic, but powerful user interface that is similar to the
+    NEdit text editor, but does not depend on Motif
+  * Fast and responsive user interface: e.g. syntax highlighting is done in
+    the background and does not freeze the user interface, special handling to achieve 
+    fast keyboard repeat rates
+  * No dependencies on high-level widget toolkits in order to minimise the requirements 
+    for the runtime system and to support slow network connections
 
-The following software must be installed:
-
-  - http://git-scm.com/
-  - http://www.gnu.org/software/make/
-  - http://www.gnu.org/software/autoconf/
-  - http://www.gnu.org/software/libtool/
-  - http://www.gnu.org/software/automake/
-  - C++ compiler and X11 development headers
-
-The LucED git repository already contains modified versions of:
-
-  - http://www.pcre.org/
-  - http://www.lua.org/
-
-
-
-Check out the LucED source code:
-================================
-
-Use the following commands to check out a LucED development 
-repository:
-
-   git clone git://git.berlios.de/luced
-or
-   git clone git://github.com/osch/luced.git
-   
-
-
-Build LucED in a development repository:
-========================================
-
-Simply invoke GNU-Make:
-
-   cd editor
-   make
-
-This will invoke a configure script and build a LucED executable.
-
-For building a debug executable the file sandbox.mk should contain 
-the following line:
-
-   CPP_DEFINES += -D DEBUG 
+The following features are already imlemented:
+  
+  * Embedded Lua programming language for scripting and configuration
+  * Syntax highlighting configurable via PCRE regular expressions, similar to the 
+    NEdit syntax highlighting but with the enhancement to use arbitrarily nested patterns
+  * Full unicode support (works with UTF-8 internally)
 
 
 
-Invoke LucED:
-=============
+This README file belongs to a LucED development sandbox directory tree. 
 
-To open the file test.txt simply type:
+For further information see the file 
 
-   cd editor
-   ./luced test.txt
-   
-LucED doesn't have a file selector, every file must be opened throw 
-the shell command line.
+   ./web/documentation.txt
 
-If the current directory and the home directory  both have no 
-directory named '.luced', a default '.luced' configuration directory 
-is written on program invokation in the home directory.
-
-
-
-Build a distributable tar.gz ball:
-==================================
-
-   cd editor
-   make release
-   cd release
-   ./configure
-   make dist
-   
-This will build a standard source tar ball that can be installed 
-with the notorious command sequence:
-
-   ./configure
-   make
-   make install
-   
+There is also a section [Building in a development sandbox] in this 
+file, that explains how to build LucED with the development sandbox. 

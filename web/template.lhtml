@@ -72,6 +72,9 @@
             margin:0px;
             padding:10px;
         }
+        code {
+            color:#666666;
+        }
     </style>
 </head>
 

@@ -45,9 +45,34 @@ Up to now, LucED doesn't have a menu bar or a file selector... so the intended a
 are users working with the commandline ;-)
 
 
+License
+=======
 
-Building an official release
-============================
+LucED - The Lucid Editor - is copyrighted by *Oliver Schmidt* and is licensed under the 
+terms of the [GNU General Public License Version 2] (see the files `editor/COPYRIGHT` 
+and `editor/LICENSE`).
+
+LucED contains modified software from the following projects:
+
+  * [Lua]  - a powerful, fast, lightweight, embeddable scripting language - is 
+           copyrighted by *Lua.org, PUC-Rio* and is licensed under the terms of 
+           the [MIT License] (see the file `lua/COPYRIGHT`).
+
+  * [PCRE] - Perl Compatible Regular Expressions - is copyrighted by the 
+           *University of Cambridge* and is licensed under the
+           terms of the [BSD Licence] (see the file `pcre/LICENCE`).
+
+  * [LPeg] - Parsing Expression Grammars For Lua, - is copyrighted by 
+           *Lua.org, PUC-Rio* and is licensed under the terms of 
+           the [MIT License] (see the file `lpeg/LICENCE`).
+
+  * [lposix] - a POSIX library for Lua - has been placed in the [public domain] by 
+             its author (see the file `lposix/LICENCE`).
+
+
+
+Installing an official release
+==============================
 
 Official LucED releases will be distributed as tar.gz archives, based on the 
 widely used [GNU autotools] build system.
@@ -89,20 +114,29 @@ install LucED with the command sequence:
 Configure options
 -----------------
 
-When invoking the *configure* script, consider the following commandline options:
+When invoking the command `./configure`, the *configure script* tries to figure out
+build options for the underlying operating system. This process can be influenced by
+passing some of the following commandline options to the configure script:
 
-  * *--disable-xpm*   disables the usage of libxpm for displaying icons. This
+  * `--disable-xpm`   disables the usage of libxpm for displaying icons. This
                       can improve performance on slow connections.
 
-  * *--disable-iconv* disables the usage of libiconv for transforming
+  * `--disable-iconv` disables the usage of libiconv for transforming
                       character encodings. If libiconv is disabled,
                       LucED only knows UTF-8 and ISO-8859-1 encoding.
 
-  * *--enable-debug*  enables various runtime checks for debugging purposes. This
+  * `--enable-debug`  enables various runtime checks for debugging purposes. This
                       can slow down performance but makes it easier to track errors, 
-                      since a detected error will abort the program immediately.
-                      
+                      since a detected programming error will abort the program 
+                      immediately.
 
+The configure script has a lot of more generic commandline options. 
+As usual, you may invoke
+
+       ./configure --help
+
+to get a list of all generic commandline options that can be passed to the 
+configure script.
 
 
 Building in a development sandbox
@@ -207,16 +241,17 @@ If you have any problems, please contact the author via email:
 Program invocation
 ==================
 
-To open the file *test.txt* simply type:
+To open the file `test.txt` simply type:
 
        ./luced test.txt
 
    
 LucED doesn't have a file selector, every file must be opened through
-the shell command line.
+the shell command line. To create a new file, simply invoke LucED with
+the desired name of the new file.
 
 If the current directory and the home directory  both have no 
-directory named *.luced*, a default *.luced* configuration directory 
+directory named `.luced`, a default `.luced` configuration directory 
 is written on program invocation in the home directory.
 
 
@@ -228,7 +263,9 @@ is written on program invocation in the home directory.
 [NEdit]:             http://www.nedit.org/
 [Motif]:             http://en.wikipedia.org/wiki/Motif_%28widget_toolkit%29
 [Lua]:               http://lua.org
+[LPeg]:              http://www.inf.puc-rio.br/~roberto/lpeg/lpeg.html
 [PCRE]:              http://www.pcre.org
+[lposix]:            http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/
 [widget toolkits]:   http://en.wikipedia.org/wiki/Widget_toolkit
 [GNU autotools]:     http://en.wikipedia.org/wiki/GNU_build_system
 [GNU Tar]:           http://www.gnu.org/software/tar/
@@ -243,3 +280,9 @@ is written on program invocation in the home directory.
 [Git]:               http://git-scm.com/
 [github repository]: http://github.com/osch/luced
 [gcc]:               http://gcc.gnu.org
+
+[GNU General Public License Version 2]: http://www.gnu.org/licenses/gpl-2.0.txt
+[MIT License]:                          http://www.opensource.org/licenses/mit-license.php
+[BSD Licence]:                          http://www.opensource.org/licenses/bsd-license.php
+[public domain]:                        http://en.wikipedia.org/wiki/Public_domain
+
