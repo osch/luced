@@ -131,7 +131,7 @@ TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
       lineInfos(),
       topMarkId(textData->createNewMark()),
       cursorMarkId(textData->createNewMark()),
-      opticalCursorColumn(0),
+      cursorColumnsBehindEndOfLine(0),
       lastLineOfLineAndColumnListeners(0),
       lastColumnOfLineAndColumnListeners(0),
       lastPosOfLineAndColumnListeners(0),
@@ -186,13 +186,11 @@ TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
     
     EventDispatcher::getInstance()->registerUpdateSource(newCallback(this, &TextWidget::flushPendingUpdates));
 
-    hilitingBuffer->registerTextStylesChangedListeners(newCallback(this, &TextWidget::treatTextStylesChanged));
-    hilitingBuffer->registerUpdateListener            (newCallback(this, &TextWidget::treatHilitingUpdate));
-    backliteBuffer->registerUpdateListener            (newCallback(this, &TextWidget::treatHilitingUpdate));
+    hilitingBuffer->registerTextStylesChangedListeners (newCallback(this, &TextWidget::treatTextStylesChanged));
+    hilitingBuffer->registerUpdateListener             (newCallback(this, &TextWidget::treatHilitingUpdate));
+    backliteBuffer->registerUpdateListener             (newCallback(this, &TextWidget::treatHilitingUpdate));
     
     redrawRegion = XCreateRegion();
-    
-    GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TextWidget::treatConfigUpdate));
 }
 
 void TextWidget::processGuiWidgetCreatedEvent()
@@ -212,8 +210,6 @@ TextWidget::~TextWidget()
     XDestroyRegion(redrawRegion);
 }
 
-void TextWidget::treatConfigUpdate()
-{}
 
 void TextWidget::treatTextStylesChanged(const ObjectArray<TextStyle::Ptr>& newTextStyles)
 {
@@ -314,7 +310,8 @@ public:
     }
     int getCharLBearing() const { return style->getCharLBearing(c); }
     int getStyleIndex()  const { return styleIndex; }
-
+    RawPtr<TextStyle> getStyle() const { return style; }
+    
     void increment()
     {
         ASSERT(isEndOfLineFlag == false);
@@ -324,8 +321,8 @@ public:
         } else {
             pixelPos += charWidth;
         }
-        textPos       = textData->getNextWCharPos(textPos); 
-        numberWChars += 1;
+        textPos         = textData->getNextWCharPos(textPos); 
+        numberWChars   += 1;
         
         if (!textData->isEndOfLine(textPos)) {
             c          = textData->getWChar(textPos);
@@ -335,8 +332,8 @@ public:
         } else {
             isEndOfLineFlag = true;
             c          = 0;
-            styleIndex = 0;
-            style      = defaultTextStyle;
+            styleIndex = hilitingBuffer->getTextStyle(textPos);
+            style      = (*textStyles)[styleIndex];
             charWidth  = 0;
         }
         if (doBackgroundFlag == true) {
@@ -455,6 +452,7 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
             li->leftPixOffset = this->leftPix;
         }
         li->backgroundToEnd = i.getBackground();
+        li->spaceWidthAtEnd = i.getStyle()->getSpaceWidth();
     }
     else
     {
@@ -544,6 +542,7 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
         }
 
         li->backgroundToEnd = i.getBackground();
+        li->spaceWidthAtEnd = i.getStyle()->getSpaceWidth();
     }
 
     li->valid = true;
@@ -570,29 +569,60 @@ inline void TextWidget::applyTextStyle(int styleIndex)
     XSetFont(      getDisplay(), textWidget_gcid, style->getFontHandle());
 }
 
-inline int TextWidget::calcVisiblePixX(RawPtr<LineInfo> li, long pos)
+inline int TextWidget::calcVisiblePixXForPosInLine(RawPtr<LineInfo> li, FreePos freePos)
 {
-    int x = -li->leftPixOffset;
+    long pos          = freePos.pos;
+    long extraColumns = freePos.extraColumns;
     
+    ASSERT(extraColumns == 0 || textData->isEndOfLine(pos));
     ASSERT(li->valid);
-    ASSERT(li->startPos <= pos && pos <= li->endPos);
-    
-    long p = li->startPos;
-    for (int i = 0; p < pos; ++i) {
-        int c = textData->getWChar(p);
-        int style = li->styles[i];
-        if (c == TAB_CHARACTER) {
-            int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
-            long totalX = leftPix + x;
-            totalX = (totalX / tabWidth + 1) * tabWidth;
-            x = totalX - leftPix;
-        } else {
-            x += textStyles[style]->getCharWidth(c);
+    ASSERT(li->isPosInLine(pos));
+
+    int x;
+
+    if (li->isPosInLineCache(pos))
+    {
+        x = -li->leftPixOffset;
+        long p = li->startPos;
+        for (int i = 0; p < pos; ++i) {
+            int c = textData->getWChar(p);
+            int style = li->styles[i];
+            if (c == TAB_CHARACTER) {
+                int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
+                long totalX = leftPix + x;
+                totalX = (totalX / tabWidth + 1) * tabWidth;
+                x = totalX - leftPix;
+            } else {
+                x += textStyles[style]->getCharWidth(c);
+            }
+            p = textData->getNextWCharPos(p);
         }
-        p = textData->getNextWCharPos(p);
+    }
+    else if (pos == li->endOfLinePos)
+    {
+        x = li->totalPixWidth - leftPix;
+    }
+    else
+    {
+        x = -leftPix;
+        for (long p = li->beginOfLinePos; p < pos; ) {
+            int c = textData->getWChar(p);
+            if (c == TAB_CHARACTER) {
+                int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
+                x = (x / tabWidth + 1) * tabWidth;
+            } else {
+                int style = hilitingBuffer->getTextStyle(p);
+                x += textStyles[style]->getCharWidth(c);
+            }
+            p = textData->getNextWCharPos(p);
+        }
+    }
+    if (extraColumns > 0) {
+        x += extraColumns * li->spaceWidthAtEnd;
     }
     return x;
 }
+
 
 inline GuiColor TextWidget::getColorForBackground(byte background)
 {
@@ -783,11 +813,11 @@ inline void TextWidget::printPartialLine(RawPtr<LineInfo> li, int y, int x1, int
     
     clearPartialLine(li, y, x1, x2);
     
-    if (cursorVisible && (li->startPos <= cursorPos  && cursorPos <= li->endPos)) {
-        
+    if (cursorVisible && (li->isPosInLine(cursorPos)))
+    {
         // cursor visible in this line
     
-        int cursorX = calcVisiblePixX(li, cursorPos);
+        int cursorX = calcVisiblePixXForPosInLine(li, FreePos(cursorPos, cursorColumnsBehindEndOfLine));
         
         if (cursorX < x2 && x1 <= cursorX + CURSOR_WIDTH - 1) {
         
@@ -815,10 +845,10 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
     bool considerCursor = false;
     int  cursorX;
     
-    if (cursorVisible && (li->startPos <= cursorPos  && cursorPos <= li->endPos)) {
+    if (cursorVisible && (li->isPosInLine(cursorPos))) {
         // cursor visible in this line
         considerCursor = true;
-        cursorX = calcVisiblePixX(li, cursorPos);
+        cursorX = calcVisiblePixXForPosInLine(li, FreePos(cursorPos, cursorColumnsBehindEndOfLine));
     }
 
     MemArray<Char2b>&                 buf       = li->outBuf;
@@ -1261,12 +1291,12 @@ void TextWidget::drawCursor(long cursorPos)
         do {
             li = getValidLineInfo(line);
 
-            if (cursorPos < li->startPos) {
+            if (cursorPos < li->beginOfLinePos) {
                 break;
             }
-            if (cursorPos <= li->endPos) {
+            if (cursorPos <= li->endOfLinePos) {
                 // cursor is visible
-                int cursorX = calcVisiblePixX(li, cursorPos);
+                int cursorX = calcVisiblePixXForPosInLine(li, FreePos(cursorPos, cursorColumnsBehindEndOfLine));
                 clip(cursorX - 1, y, CURSOR_WIDTH + 2, lineHeight);
                 printPartialLine(li, y, cursorX - 1, cursorX + CURSOR_WIDTH + 1);
                 unclip();
@@ -1287,32 +1317,35 @@ long TextWidget::getCursorPixX()
     int line = getCursorLineNumber() - getTopLineNumber();
     long lineBegin;
     
-    if (0 <= line && line < visibleLines) {
-
+    if (0 <= line && line < visibleLines)
+    {
         RawPtr<LineInfo> li = getValidLineInfo(line);
     
-        if (li->startPos <= cursorPos && cursorPos <= li->endPos) {
-            // cursor visible
-            return leftPix + calcVisiblePixX(li, cursorPos);
-        }
-        lineBegin = li->beginOfLinePos;
-    } else {
-        lineBegin = textData->getThisLineBegin(cursorPos);
+        return leftPix + calcVisiblePixXForPosInLine(li, FreePos(cursorPos, cursorColumnsBehindEndOfLine));
     }
-    // Fallback if not visible
-    long x = 0;
-    for (long p = lineBegin; p < cursorPos; ) {
-        int c = textData->getWChar(p);
-        if (c == TAB_CHARACTER) {
-            int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
-            x = (x / tabWidth + 1) * tabWidth;
-        } else {
-            int style = hilitingBuffer->getTextStyle(p);
-            x += textStyles[style]->getCharWidth(c);
+    else 
+    {
+        long lineBegin = textData->getThisLineBegin(cursorPos);
+        // Fallback if not visible
+        long x = 0;
+        for (long p = lineBegin; p < cursorPos; ) {
+            int c = textData->getWChar(p);
+            if (c == TAB_CHARACTER) {
+                int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
+                x = (x / tabWidth + 1) * tabWidth;
+            } else {
+                int style = hilitingBuffer->getTextStyle(p);
+                x += textStyles[style]->getCharWidth(c);
+            }
+            p = textData->getNextWCharPos(p);
         }
-        p = textData->getNextWCharPos(p);
+        if (cursorColumnsBehindEndOfLine > 0) {
+            ASSERT(cursorMarkId.isAtEndOfLine());
+            int styleAtEndOfLine = hilitingBuffer->getTextStyle(cursorPos);
+            x += textStyles[styleAtEndOfLine]->getSpaceWidth() * cursorColumnsBehindEndOfLine;
+        }
+        return x;
     }
-    return x;
 }
 
 long TextWidget::calcLongestVisiblePixWidth()
@@ -1324,13 +1357,18 @@ long TextWidget::calcLongestVisiblePixWidth()
     long oldpos;
     
     if (lineInfos.getLength() > 0) {
+        long cursorPos = getCursorTextPosition();
         do {
             RawPtr<LineInfo> li = lineInfos.getPtr(line);
             if (!li->valid) {
                 fillLineInfo(pos, li);
             }
-            if (li->totalPixWidth > rslt)
-                rslt = li->totalPixWidth;
+            long thisWidth = li->totalPixWidth;
+            if (li->isPosInLine(cursorPos)) {
+                thisWidth += li->spaceWidthAtEnd * cursorColumnsBehindEndOfLine;
+            }
+            if (thisWidth > rslt)
+                rslt = thisWidth;
             pos = li->endOfLinePos;
             y    += lineHeight;
             line += 1;
@@ -1427,9 +1465,11 @@ void TextWidget::setTopLineNumber(long n)
 }
 
 
-long TextWidget::getTextPosForPixX(long pixX, long beginOfLinePos)
+TextWidget::FreePos TextWidget::getFreePosForPixX(long pixX, long beginOfLinePos)
 {
-    long p = beginOfLinePos;
+    long p            = beginOfLinePos;
+    long extraColumns = 0;
+    
     long x = 0, ox = 0;
     ASSERT(textData->isBeginOfLine(p));
     while (x < pixX && !textData->isEndOfLine(p)) {
@@ -1443,15 +1483,27 @@ long TextWidget::getTextPosForPixX(long pixX, long beginOfLinePos)
         }
         p = textData->getNextWCharPos(p);
     }
-    if (p >= 1) {
-        if (x - pixX > pixX - ox) {
-            p = textData->getPrevWCharPos(p);
+    if (x >= pixX) {
+        if (p >= 1) {
+            if (x - pixX > pixX - ox) {
+                p = textData->getPrevWCharPos(p);
+            }
+        }
+    } else {
+        ASSERT(textData->isEndOfLine(p));
+        long spaceWidth = textStyles[hilitingBuffer->getTextStyle(p)]->getSpaceWidth();
+        do {
+            x += spaceWidth;
+            ++extraColumns;
+        } while (x < pixX);
+        if (x - pixX > pixX - (x - spaceWidth)) {
+            --extraColumns;
         }
     }
-    return p;
+    return FreePos(p, extraColumns);
 }
 
-long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCursor)
+TextWidget::FreePos TextWidget::getFreePosFromPixXY(int pixX, int pixY, bool optimizeForThinCursor)
 {
     textData->flushPendingUpdates();
 
@@ -1491,7 +1543,7 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
     } while (line < screenLine);
     
     if (li->startPos == -1) {
-        return li->endOfLinePos;
+        return getFreePosForPixX(pixX, li->beginOfLinePos); // FreePos(li->endOfLinePos, 0);
     } else {
         pixX += li->leftPixOffset;
         int i = 0;
@@ -1511,20 +1563,41 @@ long TextWidget::getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCur
             }
             p = textData->getNextWCharPos(p);
         }
-        long rslt = p;
         
-        if (optimizeForThinCursor) {
-            if (i == 0 || nextX - pixX < pixX -x) {
-                return rslt;
+        if (nextX > pixX)
+        {
+            long rslt;
+            if (optimizeForThinCursor) {
+                if (i == 0 || nextX - pixX < pixX -x) {
+                    rslt = p;
+                } else {
+                    rslt = textData->getPrevWCharPos(p);
+                }
             } else {
-                return textData->getPrevWCharPos(rslt);
+                if (i == 0) {
+                    rslt = p;
+                } else {
+                    rslt = textData->getPrevWCharPos(p);
+                }
             }
-        } else {
-            if (i == 0) {
-                return rslt;
+            return FreePos(rslt, 0);
+        }
+        else {
+            int spaceWidth = li->spaceWidthAtEnd;
+            long extraColumns = 0;
+            while (nextX < pixX) {
+                x = nextX;
+                nextX += spaceWidth;
+                ++extraColumns;
+            }
+            if (optimizeForThinCursor) {
+                if (nextX - pixX > pixX - x) {
+                    --extraColumns;
+                }
             } else {
-                return textData->getPrevWCharPos(rslt);
+                --extraColumns;
             }
+            return FreePos(p, extraColumns);
         }
     }
 }
@@ -1539,10 +1612,11 @@ void TextWidget::internSetLeftPix(long newLeftPix)
     }
     textData->flushPendingUpdates();
     calcTotalPixWidth();
-
+#if 1
     if (newLeftPix > totalPixWidth - getWidth()) {
         newLeftPix = totalPixWidth - getWidth();
     }
+#endif
     if (newLeftPix == leftPix) {
         return;
     }
@@ -1936,13 +2010,20 @@ void TextWidget::startCursorBlinking()
     }
 }
 
-void TextWidget::moveCursorToTextPosition(long pos)
+
+void TextWidget::moveCursorToFreePos(FreePos freePos)
 {
     textData->flushPendingUpdates();
-    
+
+    long pos          = freePos.pos;
+    long extraColumns = freePos.extraColumns;
+
+    ASSERT(extraColumns == 0 || textData->isEndOfLine(pos));
     ASSERT(0 <= pos && pos <= textData->getLength());
 
-    if (textData->getTextPositionOfMark(cursorMarkId) != pos) {
+    if (   extraColumns != cursorColumnsBehindEndOfLine
+        || pos          != textData->getTextPositionOfMark(cursorMarkId))
+    {
         bool cursorWasVisible = cursorVisible;
         if (cursorWasVisible) {
             cursorVisible = false;
@@ -1953,7 +2034,81 @@ void TextWidget::moveCursorToTextPosition(long pos)
         if (abs(pos - topLinePos) < abs(pos - oldCursorPos)) {
             textData->moveMarkToPosOfMark(cursorMarkId, topMarkId);
         }
-        textData->moveMarkToPos(cursorMarkId, pos);
+        {
+            cursorColumnsBehindEndOfLine = extraColumns;
+            textData->moveMarkToPos(cursorMarkId, pos);
+        }
+        if (cursorIsBlinking) {
+            startCursorBlinking();
+        } else if (cursorWasVisible && !neverShowCursorFlag) {
+            cursorVisible = true;
+            drawCursor(getCursorTextPosition());
+        }
+    }
+}
+
+void TextWidget::moveCursorToWCharColumn(long newColumn)
+{
+    ASSERT(0 <= newColumn);
+
+    long oldColumn = getCursorWCharColumn();
+    
+    moveCursorRelativeWCharColumns(newColumn - oldColumn);
+}
+
+void TextWidget::moveCursorRelativeWCharColumns(long columns)
+{
+    textData->flushPendingUpdates();
+
+    if (columns != 0)
+    {
+        bool cursorWasVisible = cursorVisible;
+        if (cursorWasVisible) {
+            cursorVisible = false;
+            drawCursor(getCursorTextPosition());
+        }
+        {
+            long p = getCursorTextPosition();
+
+            if (columns > 0)
+            {
+                if (cursorColumnsBehindEndOfLine > 0)
+                {
+                    cursorColumnsBehindEndOfLine += columns;
+                }
+                else
+                {
+                    long c = 0;
+                    while (c < columns && !textData->isEndOfLine(p)) {
+                        p = textData->getNextBeginOfWChar(p);
+                        ++c;
+                    }
+                    if (c < columns) {
+                        cursorColumnsBehindEndOfLine = columns - c;
+                    } else {
+                        cursorColumnsBehindEndOfLine = 0;
+                    }
+                }
+            }
+            else {
+                columns = -columns;
+                if (cursorColumnsBehindEndOfLine >= columns) {
+                    cursorColumnsBehindEndOfLine -= columns;
+                }
+                else
+                {
+                    columns -= cursorColumnsBehindEndOfLine;
+                    cursorColumnsBehindEndOfLine = 0;
+                    long c = 0; 
+                    while (c < columns && !textData->isBeginOfLine(p)) {
+                        p = textData->getPrevBeginOfWChar(p);
+                        ++c;
+                    }
+                }
+            }
+            
+            textData->moveMarkToPos(cursorMarkId, p);
+        }
         if (cursorIsBlinking) {
             startCursorBlinking();
         } else if (cursorWasVisible && !neverShowCursorFlag) {
@@ -1969,13 +2124,17 @@ void TextWidget::moveCursorToTextMark(TextData::MarkHandle m)
     
     ASSERT(0 <= textData->getTextPositionOfMark(m) && textData->getTextPositionOfMark(m) <= textData->getLength());
 
-    if (textData->getTextPositionOfMark(cursorMarkId) != textData->getTextPositionOfMark(m)) {
+    if (cursorColumnsBehindEndOfLine != 0 || textData->getTextPositionOfMark(cursorMarkId) != textData->getTextPositionOfMark(m))
+    {
         bool cursorWasVisible = cursorVisible;
         if (cursorWasVisible) {
             cursorVisible = false;
             drawCursor(getCursorTextPosition());
         }
-        textData->moveMarkToPosOfMark(cursorMarkId, m);
+        {
+            cursorColumnsBehindEndOfLine = 0;
+            textData->moveMarkToPosOfMark(cursorMarkId, m);
+        }
         if (cursorIsBlinking) {
             startCursorBlinking();
         } else if (cursorWasVisible && !neverShowCursorFlag) {
@@ -1985,6 +2144,23 @@ void TextWidget::moveCursorToTextMark(TextData::MarkHandle m)
     }
 }
 
+inline long TextWidget::fillCursorColumnsBehindEndOfLine()
+{
+    long rslt = 0;
+    if (cursorColumnsBehindEndOfLine != 0)
+    {
+        ASSERT(cursorMarkId.isAtEndOfLine());
+        ByteArray whiteSpaces;
+        whiteSpaces.appendAndFillAmountWith(cursorColumnsBehindEndOfLine, ' ');
+        textData->insertAtMark(cursorMarkId, whiteSpaces);
+        textData->moveMarkToPos(cursorMarkId, cursorMarkId.getPos() + cursorColumnsBehindEndOfLine);
+       
+        rslt = cursorColumnsBehindEndOfLine;
+               cursorColumnsBehindEndOfLine = 0;
+    }
+    return rslt;
+}
+
 TextData::TextMark TextWidget::createNewMarkFromCursor()
 {
     return textData->createNewMark(cursorMarkId);
@@ -1992,21 +2168,22 @@ TextData::TextMark TextWidget::createNewMarkFromCursor()
 
 long TextWidget::insertAtCursor(char c)
 {
-    return textData->insertAtMark(cursorMarkId, c);
+    return fillCursorColumnsBehindEndOfLine() + textData->insertAtMark(cursorMarkId, c);
 }
 
 long TextWidget::insertAtCursor(const ByteArray& buffer)
 {
-    return textData->insertAtMark(cursorMarkId, buffer);
+    return fillCursorColumnsBehindEndOfLine() + textData->insertAtMark(cursorMarkId, buffer);
 }
 
 long TextWidget::insertAtCursor(const byte* buffer, long length)
 {
-    return textData->insertAtMark(cursorMarkId, buffer, length);
+    return fillCursorColumnsBehindEndOfLine() + textData->insertAtMark(cursorMarkId, buffer, length);
 }
 
 void TextWidget::removeAtCursor(long amount)
 {
+    fillCursorColumnsBehindEndOfLine();
     amount = util::minimum(amount, textData->getLength() - getCursorTextPosition());
     if (amount > 0) {
         textData->removeAtMark(cursorMarkId, amount);
@@ -2200,7 +2377,8 @@ long TextWidget::getOpticalCursorColumn() const
     const long cursorPos    = getCursorTextPosition();
     const long hardTabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth();
     long       opticalCursorColumn = 0;
-    for (long p = cursorPos - getCursorByteColumn(); p < cursorPos;) {
+    long realByteColumn = textData->getByteColumnNumberOfMark(cursorMarkId);
+    for (long p = cursorPos - realByteColumn; p < cursorPos;) {
         if (textData->hasWCharAtPos(TAB_CHARACTER, p)) {
             opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
         } else {
@@ -2208,7 +2386,7 @@ long TextWidget::getOpticalCursorColumn() const
         }
         p = textData->getNextWCharPos(p);
     }
-    return opticalCursorColumn;
+    return opticalCursorColumn + cursorColumnsBehindEndOfLine;
 }
 
 

@@ -115,7 +115,7 @@ end
 
 local function serializeValueTo(c, rslt)
     local t = type(c)
-    if t == "number" or t == "boolean" then
+    if t == "number" or t == "boolean" or t == "nil" then
         rslt[#rslt + 1] = tostring(c)
     elseif t == "string" then
         rslt[#rslt + 1] = '"'

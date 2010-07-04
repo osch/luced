@@ -51,9 +51,13 @@ public:
         if (textPos >= startPos && textPos - startPos < styleBuffer.getLength()) {
             return styleBuffer[textPos - startPos];
         } else {
+            long textLength = textData->getLength();
+            if (textLength > 0 && textPos >= textLength) {
+                return getTextStyle(textData->getPrevWCharPos(textLength));
+            }
             long numberStyles = 150;
-            if (textPos + numberStyles > textData->getLength()) {
-                numberStyles = textData->getLength() - textPos;
+            if (textPos + numberStyles > textLength) {
+                numberStyles = textLength - textPos;
             }
             byte* rslt = getNonBufferedTextStyles(textPos, numberStyles);
             return rslt == NULL ? 0 : *rslt;
@@ -71,6 +75,9 @@ public:
     
     void registerTextStylesChangedListeners(Callback<const ObjectArray<TextStyle::Ptr>&>::Ptr callback);
     void registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback);
+    void registerLanguageModeChangedCallback(Callback<LanguageMode::Ptr>::Ptr callback) {
+        languageModeChangedCallbacks.registerCallback(callback);
+    }
     
     LanguageMode::Ptr getLanguageMode() const {
         return languageMode;
@@ -95,6 +102,7 @@ private:
 
     void treatTextStylesChanged();
     void treatChangedHiliting(HilitedText* changedHiliting);
+    void treatLanguageModeChange(LanguageMode::Ptr newLanguageMode);
 
     HilitedText::Ptr hilitedText;
     HilitedText::Iterator iterator;
@@ -113,6 +121,8 @@ private:
     int maxDistance;
 
     String pushedSubstr;
+
+    CallbackContainer<LanguageMode::Ptr> languageModeChangedCallbacks;
 };
 
 } // namespace LucED

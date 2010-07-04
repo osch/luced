@@ -85,6 +85,17 @@ protected:
     
     
 public:
+    struct FreePos
+    {
+        FreePos(long pos, long extraColumns)
+            : pos(pos),
+              extraColumns(extraColumns)
+        {}
+        
+        long pos;
+        long extraColumns;
+    };
+
     virtual void setPosition(const Position& p);
                                                                  
     enum VerticalAdjustmentStrategy {
@@ -138,14 +149,17 @@ public:
     long getCursorTextPosition() const {
         return textData->getTextPositionOfMark(cursorMarkId);
     }
+    FreePos getCursorFreePos() const {
+        return FreePos(getCursorTextPosition(), cursorColumnsBehindEndOfLine);
+    }
     long getCursorLineNumber() const {
         return textData->getLineNumberOfMark(cursorMarkId);
     }
     long getCursorWCharColumn() const {
-        return textData->getWCharColumnNumberOfMark(cursorMarkId);
+        return textData->getWCharColumnNumberOfMark(cursorMarkId) + cursorColumnsBehindEndOfLine;
     }
     long getCursorByteColumn() const {
-        return textData->getByteColumnNumberOfMark(cursorMarkId);
+        return textData->getByteColumnNumberOfMark(cursorMarkId) + cursorColumnsBehindEndOfLine;
     }
     long getOpticalCursorColumn() const;
 
@@ -180,8 +194,13 @@ public:
     
     TextData::TextMark createNewMarkFromCursor();
 
-    void moveCursorToTextPosition(long pos);
+    void moveCursorToTextPosition(long pos) {
+        moveCursorToFreePos(FreePos(pos, 0));
+    }
+    void moveCursorToFreePos(FreePos freePos);
     void moveCursorToTextMark(TextData::MarkHandle m);
+    void moveCursorToWCharColumn(long newColumn);
+    void moveCursorRelativeWCharColumns(long columns);
     
     long getTopLineNumber() const {
         return textData->getLineNumberOfMark(topMarkId);
@@ -198,8 +217,17 @@ public:
 
     void setTopLineNumber(long n);
     void setLeftPix(long leftPix);
-    long getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCursor = true);
-    long getTextPosForPixX(long pixX, long beginOfLinePos);
+
+    FreePos getFreePosFromPixXY(int pixX, int pixY, bool optimizeForThinCursor = true);
+    long getTextPosFromPixXY(int pixX, int pixY, bool optimizeForThinCursor = true) {
+        return getFreePosFromPixXY(pixX, pixY, optimizeForThinCursor).pos;
+    }
+
+    FreePos getFreePosForPixX(long pixX, long beginOfLinePos);
+    long getTextPosForPixX(long pixX, long beginOfLinePos) {
+        return getFreePosForPixX(pixX, beginOfLinePos).pos;
+    }
+
     long insertAtCursor(char c);
     long insertAtCursor(const byte* buffer, long length);
     long insertAtCursor(const String& s) {
@@ -251,7 +279,7 @@ private:
     void redraw();
     void drawPartialArea(int minY, int maxY, int x1, int x2);
     void drawArea(int minY, int maxY);
-    int  calcVisiblePixX(RawPtr<LineInfo> li, long pos);
+    int  calcVisiblePixXForPosInLine(RawPtr<LineInfo> li, FreePos freePos);
     void printPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2);
     void printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y, int x1, int x2);
     void printLine(RawPtr<LineInfo> li, int y);
@@ -275,7 +303,7 @@ private:
     
     void processAllExposureEvents();
     
-    void treatConfigUpdate();
+    long fillCursorColumnsBehindEndOfLine();
     
     TimeVal cursorNextBlinkTime;
     
@@ -292,7 +320,7 @@ private:
 
     TextData::TextMark topMarkId; // first column of the first displayed textline
     TextData::TextMark cursorMarkId;
-    long opticalCursorColumn;
+    long cursorColumnsBehindEndOfLine;
 
     long visibleLines;
     int lineHeight;

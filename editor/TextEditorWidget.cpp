@@ -163,12 +163,48 @@ TextEditorWidget::TextEditorWidget(HilitedText::Ptr hilitedText,
         pasteParameter(CURSOR_TO_END_OF_PASTED_DATA),
         isSelectionPersistent(false),
         textData(getTextData()),
-        readOnlyFlag(options.isSet(READ_ONLY))
+        readOnlyFlag(options.isSet(READ_ONLY)),
+        boundCursorFlag(true)
+
 {
     setKeyActionHandler(MyKeyActionHandler::create(this));
     
     textData->activateHistory();
+
+    GlobalConfig::getInstance()->registerConfigChangedCallback(newCallback(this, &TextEditorWidget::treatConfigUpdate));
+    getHilitedText()->registerLanguageModeChangedCallback     (newCallback(this, &TextEditorWidget::treatLanguageModeChange));
+    {
+        Nullable<bool> flag = getHilitedText()->getLanguageMode()->getBoundCursor();
+        if (flag.isValid()) {
+            boundCursorFlag = flag;
+        } else {
+            boundCursorFlag = GlobalConfig::getConfigData()->getGeneralConfig()->getBoundCursor();
+        }
+    }
 }
+
+void TextEditorWidget::treatConfigUpdate()
+{
+    treatLanguageModeChange(getHilitedText()->getLanguageMode());
+}
+
+void TextEditorWidget::treatLanguageModeChange(LanguageMode::Ptr newLanguageMode)
+{
+    Nullable<bool> flag = newLanguageMode->getBoundCursor();
+    if (flag.isValid()) {
+        boundCursorFlag = flag;
+    } else {
+        boundCursorFlag = GlobalConfig::getConfigData()->getGeneralConfig()->getBoundCursor();
+    }
+    if (!boundCursorFlag) {
+        FreePos freePos = getCursorFreePos();
+        if (freePos.extraColumns != 0) {
+            freePos.extraColumns = 0;
+            moveCursorToFreePos(freePos);
+        }
+    }
+}
+
 
 void TextEditorWidget::processGuiWidgetCreatedEvent()
 {
@@ -407,8 +443,10 @@ GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent
                         
                         int x = event->xbutton.x;
                         int y = event->xbutton.y;
-
-                        long newCursorPos = getTextPosFromPixXY(x, y);
+                        
+                        TextWidget::FreePos freePos = getFreePosFromPixXY(x, y);
+                        
+                        long newCursorPos = freePos.pos;
 
                         bool extendingSelection = (event->xbutton.state & ShiftMask != 0);
                         if (extendingSelection && !selectionOwner->hasSelectionOwnership()) {
@@ -475,7 +513,7 @@ GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent
                                 // not here, activate Selection if mouse cursor move
                                 // getBackliteBuffer()->activateSelection(newCursorPos);
                             }
-                            moveCursorToTextPosition(newCursorPos);
+                            moveCursorToFreePos(freePos);
                         }
                         assureCursorVisible();
                         rememberedCursorPixX = getCursorPixX();

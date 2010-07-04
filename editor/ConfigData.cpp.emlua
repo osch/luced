@@ -149,8 +149,10 @@ void @(classPath)readConfig(LuaVar luaData)
 @               if #luaVarDecl > 0 then
 @                   luaVarDecl = ""
 @               end
-        if (luaVar.isValid()) {
 @               local typeInfo = typeInfos[e.type]
+@               if not typeInfo.isNullable then
+        if (luaVar.isValid()) {
+@               end
 @               if typeInfo.convertException then
             try {
 @               end
@@ -161,11 +163,13 @@ void @(classPath)readConfig(LuaVar luaData)
                                                << ex.getMessage());
             }
 @               end
-@               if e.default == nil then            
+@               if not typeInfo.isNullable and e.default == nil then            
         } else {
             throw ConfigException(String() << "Error: @(luaConfigPath) missing value for @(e.name)");
 @               end
+@               if not typeInfo.isNullable then
         }
+@               end
 @           end
 @       end
 @   elseif c.type == "list" then

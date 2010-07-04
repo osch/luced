@@ -109,6 +109,10 @@ return
                     type    = "int",
                     default = 3000,
                 },
+                {   name    = "boundCursor",
+                    type    = "bool",
+                    default = true,
+                },
             }
         },
         ------------------------------------------------------------------------
@@ -225,7 +229,11 @@ return
                             {   name    = "softTabWidth",
                                 type    = "int",
                                 default = 0,
-                            }
+                            },
+                            {   name    = "boundCursor",
+                                type    = "Nullable<bool>",
+                                default = nil,
+                            },
                         }
                     },
                     {   name    = "referer",

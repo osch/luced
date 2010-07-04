@@ -50,10 +50,18 @@ HilitingBuffer::HilitingBuffer(HilitedText::Ptr hilitedText)
     if (syntaxPatterns->hasPatterns()) {
         ovector.increaseTo(syntaxPatterns->getMaxOvecSize());
     }
-    hilitedText->registerUpdateListener(newCallback(this, &HilitingBuffer::treatHilitingUpdate));
+    hilitedText->registerUpdateListener             (newCallback(this, &HilitingBuffer::treatHilitingUpdate));
+    hilitedText->registerLanguageModeChangedCallback(newCallback(this, &HilitingBuffer::treatLanguageModeChange));
+
     textData->registerUpdateListener(newCallback(this, &HilitingBuffer::treatTextDataUpdate));
 
     syntaxPatterns->registerTextStylesChangedCallback(newCallback(this, &HilitingBuffer::treatTextStylesChanged));
+}
+
+void HilitingBuffer::treatLanguageModeChange(LanguageMode::Ptr newLanguageMode)
+{
+    this->languageMode = newLanguageMode;
+    languageModeChangedCallbacks.invokeAllCallbacks(languageMode);
 }
 
 void HilitingBuffer::treatTextStylesChanged()

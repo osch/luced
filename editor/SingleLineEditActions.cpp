@@ -41,10 +41,16 @@ void SingleLineEditActions::cursorLeft()
     if (!e->areCursorChangesDisabled())
     {
         e->releaseSelection();
-        long cursorPos = e->getCursorTextPosition();
-        if (cursorPos > 0) {
-            long newPos = e->getTextData()->getPrevWCharPos(cursorPos);
-            e->moveCursorToTextPosition(newPos);
+        
+        if (e->isCursorBound()) {   
+            long cursorPos = e->getCursorTextPosition();
+            if (cursorPos > 0) {
+                long newPos = e->getTextData()->getPrevWCharPos(cursorPos);
+                e->moveCursorToTextPosition(newPos);
+            }
+        }
+        else {
+            e->moveCursorRelativeWCharColumns(-1);
         }
     }
     e->assureCursorVisible();
@@ -57,10 +63,15 @@ void SingleLineEditActions::cursorRight()
     if (!e->areCursorChangesDisabled())
     {
         e->releaseSelection();
-        long cursorPos = e->getCursorTextPosition();
-        if (cursorPos < e->getTextData()->getLength()) {
-            long newPos = e->getTextData()->getNextWCharPos(cursorPos);
-            e->moveCursorToTextPosition(newPos);
+
+        if (e->isCursorBound()) {   
+            long cursorPos = e->getCursorTextPosition();
+            if (cursorPos < e->getTextData()->getLength()) {
+                long newPos = e->getTextData()->getNextWCharPos(cursorPos);
+                e->moveCursorToTextPosition(newPos);
+            }
+        } else {
+            e->moveCursorRelativeWCharColumns(+1);
         }
     }
     e->assureCursorVisible();

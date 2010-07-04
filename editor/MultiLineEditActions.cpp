@@ -40,9 +40,13 @@ void MultiLineEditActions::cursorDown()
         e->releaseSelection();
         long pos = e->getCursorTextPosition();
         pos = e->getTextData()->getNextLineBegin(pos);
+        
         if (e->getTextData()->isBeginOfLine(pos)) {
-            pos = e->getTextPosForPixX(e->getRememberedCursorPixX(), pos);
-            e->moveCursorToTextPosition(pos);
+            TextWidget::FreePos freePos = e->getFreePosForPixX(e->getRememberedCursorPixX(), pos);
+            if (e->isCursorBound()) {
+                freePos.extraColumns = 0;
+            }
+            e->moveCursorToFreePos(freePos);
         } else {
             // Cursor is in last line
         }
@@ -58,8 +62,11 @@ void MultiLineEditActions::cursorUp()
         e->releaseSelection();
         long pos = e->getCursorTextPosition();
         pos = e->getTextData()->getPrevLineBegin(pos);
-        pos = e->getTextPosForPixX(e->getRememberedCursorPixX(), pos);
-        e->moveCursorToTextPosition(pos);
+        TextWidget::FreePos freePos = e->getFreePosForPixX(e->getRememberedCursorPixX(), pos);
+        if (e->isCursorBound()) {
+            freePos.extraColumns = 0;
+        }
+        e->moveCursorToFreePos(freePos);
     }
     e->assureCursorVisible();
 }
@@ -300,14 +307,17 @@ void MultiLineEditActions::cursorPageDown()
         if (targetTopLine > e->getTextData()->getNumberOfLines() - e->getNumberOfVisibleLines()) {
             targetTopLine = e->getTextData()->getNumberOfLines() - e->getNumberOfVisibleLines();
         }
-        TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToBeginOfLine(targetLine);
-
-        long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
-        mark.moveToPos(newPos);
-
+        TextData::TextMark targetBeginOfLine = e->createNewMarkFromCursor();
+                           targetBeginOfLine.moveToBeginOfLine(targetLine);
+        
+        TextWidget::FreePos freePos = e->getFreePosForPixX(e->getRememberedCursorPixX(), 
+                                                           targetBeginOfLine.getPos());
+        if (e->isCursorBound()) {
+            freePos.extraColumns = 0;
+        }
+        e->moveCursorToFreePos(freePos);
+        
         e->setTopLineNumber(targetTopLine);
-        e->moveCursorToTextMark(mark);
     }
     e->assureCursorVisible();
 }
@@ -327,14 +337,17 @@ void MultiLineEditActions::cursorPageUp()
         if (targetTopLine < 0) {
             targetTopLine = 0;
         }
-        TextData::TextMark mark = e->createNewMarkFromCursor();
-        mark.moveToBeginOfLine(targetLine);
+        TextData::TextMark targetBeginOfLine = e->createNewMarkFromCursor();
+                           targetBeginOfLine.moveToBeginOfLine(targetLine);
 
-        long newPos = e->getTextPosForPixX(e->getRememberedCursorPixX(), mark.getPos());
-        mark.moveToPos(newPos);
+        TextWidget::FreePos freePos = e->getFreePosForPixX(e->getRememberedCursorPixX(), 
+                                                           targetBeginOfLine.getPos());
+        if (e->isCursorBound()) {
+            freePos.extraColumns = 0;
+        }
+        e->moveCursorToFreePos(freePos);
 
         e->setTopLineNumber(targetTopLine);
-        e->moveCursorToTextMark(mark);
     }
     e->assureCursorVisible();
 }

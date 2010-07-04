@@ -58,6 +58,14 @@ private:
     int    pixWidth;
     int    leftPixOffset;
     int    backgroundToEnd;
+    int    spaceWidthAtEnd;
+    
+    bool isPosInLine(long pos) const {
+        return beginOfLinePos <= pos && pos <= endOfLinePos;
+    }
+    bool isPosInLineCache(long pos) const {
+        return startPos <= pos && pos <= endPos;
+    }
     
     class FragmentInfo
     {

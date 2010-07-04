@@ -77,7 +77,10 @@ public:
 
     ActionCategory getLastActionCategory() const;
     void setCurrentActionCategory(ActionCategory action);
-    
+
+    bool isCursorBound() const {
+        return boundCursorFlag;
+    }    
     bool isCursorVisible();
     void assureCursorVisible();
     void assureSelectionVisible();
@@ -240,6 +243,9 @@ protected:
 
 private:
     class MyKeyActionHandler; 
+
+    void treatConfigUpdate();
+    void treatLanguageModeChange(LanguageMode::Ptr newLanguageMode);
     
     bool handleLowPriorityKeyPress(const KeyPressEvent& keyPressEvent);
     
@@ -277,6 +283,8 @@ private:
     PasteDataReceiver::Ptr pasteDataReceiver;
     
     bool readOnlyFlag;
+
+    bool boundCursorFlag;
 };
 
 } // namespace LucED

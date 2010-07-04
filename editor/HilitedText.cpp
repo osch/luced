@@ -80,9 +80,9 @@ void HilitedText::setLanguageMode(LanguageMode::Ptr languageMode)
         }
         this->syntaxPatternUpdateCallback->disable();
         this->syntaxPatternUpdateCallback = newCallback(this, &HilitedText::treatSyntaxPatternsUpdate);
-
         treatSyntaxPatternsUpdate(GlobalConfig::getInstance()->getSyntaxPatternsForLanguageMode(this->languageMode,
                                                                                                 this->syntaxPatternUpdateCallback));
+        languageModeChangedCallbacks.invokeAllCallbacks(languageMode);
     }
 }
 

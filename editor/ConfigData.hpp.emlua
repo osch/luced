@@ -28,6 +28,7 @@
 #include "String.hpp"
 #include "ObjectArray.hpp"
 #include "BasicRegex.hpp"
+#include "Nullable.hpp"
 
 namespace LucED
 {

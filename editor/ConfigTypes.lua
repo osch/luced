@@ -14,6 +14,13 @@ local function converterMethod(methodName)
     end
 end
 
+local function nullableConverterMethod(typeName, methodName)
+    return function(luaVarName)
+        return "("..luaVarName..".isNil() ? Nullable<"..typeName..">()"
+                                      .." : Nullable<"..typeName..">("..luaVarName.."."..methodName.."()))"
+    end
+end
+
 local function basicRegexConverter(luaVarName)
     return "BasicRegex("..luaVarName..".toString())"
 end
@@ -28,6 +35,10 @@ local typeInfos =
 
   ["BasicRegex"]  = { convert = basicRegexConverter,
                       convertException = "RegexException",    literal = stringLiteral, defaultValue = "" },
+
+  ["Nullable<bool>"] 
+                  = { convert = nullableConverterMethod("bool", "toBoolean"), literal = noopLiteral, defaultValue = "Null",
+                                                                      isNullable = true },
 
   ["map"]         = { isStructure = true },
   ["list"]        = { isStructure = true },

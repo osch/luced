@@ -70,6 +70,9 @@ public:
     void registerSyntaxPatternsChangedCallback(Callback<SyntaxPatterns::Ptr>::Ptr callback) {
         syntaxPatternsChangedCallbacks.registerCallback(callback);
     }
+    void registerLanguageModeChangedCallback(Callback<LanguageMode::Ptr>::Ptr callback) {
+        languageModeChangedCallbacks.registerCallback(callback);
+    }
 
     LanguageMode::Ptr getLanguageMode() {
         return languageMode;
@@ -135,6 +138,8 @@ private:
     String pushedSubstr;
     
     CallbackContainer<SyntaxPatterns::Ptr> syntaxPatternsChangedCallbacks;
+    
+    CallbackContainer<LanguageMode::Ptr> languageModeChangedCallbacks;
 };
 
 } // namespace LucED
