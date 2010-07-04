@@ -113,6 +113,14 @@ void GlobalConfig::appendLanguageModeTo(LanguageMode::Ptr   languageMode,
                                         LanguageModes::Ptr  languageModes, 
                                         const String&       thisPackageName)
 {
+    String syntaxName = languageMode->getSyntaxName();
+    
+    if (syntaxName.startsWith(THIS_PREFIX) && thisPackageName != "") {
+        syntaxName = String() << thisPackageName << "." 
+                              << syntaxName.getTail(strlen(THIS_PREFIX));
+    
+        languageMode->setSyntaxName(syntaxName);
+    }
     languageModes->append(languageMode);
 }
 
