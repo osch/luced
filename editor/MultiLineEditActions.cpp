@@ -509,7 +509,11 @@ void MultiLineEditActions::newLineAutoIndent(bool insert)
             }
             mark.inc();
         }
-
+        TextWidget::FreePos freePos = e->getCursorFreePos();
+        if (freePos.extraColumns != 0) {
+            freePos.extraColumns = 0;
+            e->moveCursorToFreePos(freePos);
+        }
         e->insertAtCursor(whiteSpace);
         e->moveCursorToTextPosition(e->getCursorTextPosition() + whiteSpace.getLength());
         
@@ -571,6 +575,14 @@ void MultiLineEditActions::newLineFixedColumnIndent(bool forward)
         }
 
         e->hideCursor();
+
+        if (forward) {
+            TextWidget::FreePos freePos = e->getCursorFreePos();
+            if (freePos.extraColumns != 0) {
+                freePos.extraColumns = 0;
+                e->moveCursorToFreePos(freePos);
+            }
+        }
         e->insertAtCursor(whiteSpace);
 
         if (forward) {
