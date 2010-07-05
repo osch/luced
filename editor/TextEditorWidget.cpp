@@ -513,6 +513,9 @@ GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent
                                 // not here, activate Selection if mouse cursor move
                                 // getBackliteBuffer()->activateSelection(newCursorPos);
                             }
+                            if (isCursorBound()) {
+                                freePos.extraColumns = 0;
+                            }
                             moveCursorToFreePos(freePos);
                         }
                         assureCursorVisible();
