@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -51,6 +51,8 @@ FontInfo::FontInfo(const String& fontName)
     const int numberOfCharInfos = getNumberOfCharInfos();
     
     charWidths   .appendAmount(numberOfCharInfos);
+    charAscents  .appendAmount(numberOfCharInfos);
+    charDescents .appendAmount(numberOfCharInfos);
     charLBearings.appendAmount(numberOfCharInfos);
     charRBearings.appendAmount(numberOfCharInfos);
 
@@ -99,6 +101,8 @@ FontInfo::FontInfo(const String& fontName)
         {
             const XCharStruct* def = &font->per_char[getCharInfoIndex(defaultChar)];
             unknownWidth    = def->width;
+            unknownAscent   = def->ascent;
+            unknownDescent  = def->descent;
             unknownLBearing = def->lbearing;
             unknownRBearing = def->rbearing;
             if (unknownLBearing > 0)
@@ -107,6 +111,8 @@ FontInfo::FontInfo(const String& fontName)
                 unknownRBearing = unknownWidth;
         } else {
             unknownWidth    = 0;
+            unknownAscent   = 0;
+            unknownDescent  = 0;
             unknownLBearing = 0;
             unknownRBearing = 0;
         }
@@ -140,6 +146,8 @@ FontInfo::FontInfo(const String& fontName)
                     if (rbearing < width) 
                         rbearing = width;
                     this->charWidths[i]    = width; 
+                    this->charAscents[i]   = xcharstr.ascent; 
+                    this->charDescents[i]  = xcharstr.descent; 
                     this->charLBearings[i] = lbearing;
                     this->charRBearings[i] = rbearing;
                 }
@@ -148,12 +156,16 @@ FontInfo::FontInfo(const String& fontName)
     }
     {
         charWidths8   .appendAmount(0x100);
+        charAscents8  .appendAmount(0x100);
+        charDescents8 .appendAmount(0x100);
         charLBearings8.appendAmount(0x100);
         charRBearings8.appendAmount(0x100);
         
         for (int i = 0; i < 0x100; ++i)
         {
             charWidths8[i]    = internalGetCharWidth(i); 
+            charAscents8[i]   = internalGetCharAscent(i); 
+            charDescents8[i]  = internalGetCharDescent(i); 
             charLBearings8[i] = internalGetCharLBearing(i);
             charRBearings8[i] = internalGetCharRBearing(i);
         }
@@ -187,6 +199,20 @@ short FontInfo::internalGetCharWidth(Char2b c) const {
         return charWidths[getCharInfoIndex(c)];
     } else {
         return unknownWidth;
+    }
+}
+short FontInfo::internalGetCharAscent(Char2b c) const {
+    if (hasCharInfoFor(c)) {
+        return charAscents[getCharInfoIndex(c)];
+    } else {
+        return unknownAscent;
+    }
+}
+short FontInfo::internalGetCharDescent(Char2b c) const {
+    if (hasCharInfoFor(c)) {
+        return charDescents[getCharInfoIndex(c)];
+    } else {
+        return unknownDescent;
     }
 }
 short FontInfo::internalGetCharLBearing(Char2b c) const {

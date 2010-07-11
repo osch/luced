@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -58,6 +58,20 @@ public:
             return charWidths8[c.byte2];
         } else {
             return internalGetCharWidth(c);
+        }
+    }
+    short getCharAscent(Char2b c) const {
+        if (c.byte1 == 0) {
+            return charAscents8[c.byte2];
+        } else {
+            return internalGetCharAscent(c);
+        }
+    }
+    short getCharDescent(Char2b c) const {
+        if (c.byte1 == 0) {
+            return charDescents8[c.byte2];
+        } else {
+            return internalGetCharDescent(c);
         }
     }
     short getCharLBearing(Char2b c) const {
@@ -134,6 +148,8 @@ private:
     }
 
     short internalGetCharWidth(Char2b c) const;
+    short internalGetCharAscent(Char2b c) const;
+    short internalGetCharDescent(Char2b c) const;
     short internalGetCharLBearing(Char2b c) const;
     short internalGetCharRBearing(Char2b c) const;
     
@@ -144,10 +160,14 @@ private:
     FontHandle fontHandle;
 
     MemArray<short> charWidths;
+    MemArray<short> charAscents;
+    MemArray<short> charDescents;
     MemArray<short> charLBearings;
     MemArray<short> charRBearings;
 
     MemArray<short> charWidths8;
+    MemArray<short> charAscents8;
+    MemArray<short> charDescents8;
     MemArray<short> charLBearings8;
     MemArray<short> charRBearings8;
 
@@ -165,6 +185,8 @@ private:
     int numberBytes1;
     
     short unknownWidth;
+    short unknownAscent;
+    short unknownDescent;
     short unknownLBearing;
     short unknownRBearing;
     

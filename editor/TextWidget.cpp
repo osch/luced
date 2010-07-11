@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2008 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -159,10 +159,11 @@ TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
 {
     lineHeight  = defaultTextStyle->getLineHeight();
     lineAscent  = defaultTextStyle->getLineAscent();
+    lineDescent = defaultTextStyle->getLineDescent();
 
     visibleLines = getHeight() / lineHeight; // not rounded;
 
-    lineInfos.setLength(ROUNDED_UP_DIV(getHeight(), lineHeight));
+    lineInfos.setLength(ROUNDED_UP_DIV(getHeight()  - 2*border, lineHeight));
 
 
 #if 0
@@ -221,6 +222,7 @@ void TextWidget::treatTextStylesChanged(const ObjectArray<TextStyle::Ptr>& newTe
 
     lineHeight  = defaultTextStyle->getLineHeight();
     lineAscent  = defaultTextStyle->getLineAscent();
+    lineDescent = defaultTextStyle->getLineDescent();
     
     redrawChanged(getTopLeftTextPosition(), textData->getLength());
 }
@@ -279,7 +281,9 @@ public:
           charWidth(isEndOfLineFlag ? 0 : style->getCharWidth(c)),
           doBackgroundFlag(true),
           background(backliteBuffer->getBackground(textPos)),
-          numberWChars(0)
+          numberWChars(0),
+          maxCharAscent (isEndOfLineFlag ? 0 : style->getCharAscent(c)),
+          maxCharDescent(isEndOfLineFlag ? 0 : style->getCharDescent(c))
     {}
     bool isAtEndOfLine() const { return isEndOfLineFlag; }
     long getTextPos()    const { return textPos; }
@@ -308,7 +312,10 @@ public:
             return (((pixelPos / tabWidth) + 1) * tabWidth) - pixelPos;
         }
     }
-    int getCharLBearing() const { return style->getCharLBearing(c); }
+    int getCharLBearing()    const { return style->getCharLBearing(c); }
+    int getMaxCharAscent()   const { return maxCharAscent;  }
+    int getMaxCharDescent()  const { return maxCharDescent; }
+    
     int getStyleIndex()  const { return styleIndex; }
     RawPtr<TextStyle> getStyle() const { return style; }
     
@@ -329,7 +336,11 @@ public:
             styleIndex = hilitingBuffer->getTextStyle(textPos);
             style      = (*textStyles)[styleIndex];
             charWidth  = style->getCharWidth(c);
-        } else {
+
+            util::maximize(&maxCharAscent,  style->getCharAscent(c));
+            util::maximize(&maxCharDescent, style->getCharDescent(c));
+        } 
+        else {
             isEndOfLineFlag = true;
             c          = 0;
             styleIndex = hilitingBuffer->getTextStyle(textPos);
@@ -359,6 +370,8 @@ private:
     bool doBackgroundFlag;
     int background;
     long numberWChars;
+    int maxCharAscent;
+    int maxCharDescent;
 };
 
 class TextWidgetFragmentFiller
@@ -550,6 +563,8 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
     li->totalPixWidth = i.getPixelPos();
     li->pixWidth = i.getPixelPos() - (this->leftPix - li->leftPixOffset);
     li->isEndOfText = (i.getTextPos() == textData->getLength());
+    li->maxCharAscent  = util::maximum(lineAscent,  i.getMaxCharAscent());
+    li->maxCharDescent = util::maximum(lineDescent, i.getMaxCharDescent());
     
     ASSERT((print == 0 && (   (li->startPos == -1 && li->endPos == -1)
                            || (li->startPos >=  0 && li->endPos >= li->startPos)
@@ -806,13 +821,10 @@ inline void TextWidget::printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y
     }
 }
 
-
-inline void TextWidget::printPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2)
+inline void TextWidget::drawCursorInPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2)
 {
     long cursorPos = getCursorTextPosition();
-    
-    clearPartialLine(li, y, x1, x2);
-    
+
     if (cursorVisible && (li->isPosInLine(cursorPos)))
     {
         // cursor visible in this line
@@ -835,6 +847,14 @@ inline void TextWidget::printPartialLine(RawPtr<LineInfo> li, int y, int x1, int
         }
         
     }
+}
+
+inline void TextWidget::printPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2)
+{
+    long cursorPos = getCursorTextPosition();
+    
+    clearPartialLine             (li, y, x1, x2);
+    drawCursorInPartialLine      (li, y, x1, x2);
     printPartialLineWithoutCursor(li, y, x1, x2);
 }
 
@@ -957,7 +977,23 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
     }
 }
 
-void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<LineInfo> oldLi)
+inline void TextWidget::printLine(RawPtr<LineInfo> li, int y, RawPtr<LineInfo> prevLi)
+{
+    printLine(li, y);
+    if (prevLi.isValid())
+    {
+        if (li->maxCharAscent > lineAscent || prevLi->maxCharDescent > lineDescent)
+        {
+            int deltaY1 = util::maximum(0, li->maxCharAscent  - lineAscent);
+            int w       = getWidth();
+            
+            clip(0, y - deltaY1, w, lineHeight + deltaY1);
+            printPartialLineWithoutCursor(prevLi, y - lineHeight, 0, w);
+            unclip();
+        }
+    }
+}
+void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<LineInfo> oldLi, RawPtr<LineInfo> prevLi, RawPtr<LineInfo> nextLi)
 {
     MemArray<Char2b>& newBuf = newLi->outBuf;
     MemArray<Char2b>& oldBuf = oldLi->outBuf;
@@ -968,140 +1004,220 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
     MemArray<LineInfo::FragmentInfo>& newFragments = newLi->fragments;
     MemArray<LineInfo::FragmentInfo>& oldFragments = oldLi->fragments;
 
-    if (oldBufLength == 0 || newBufLength == 0) {
-        printLine(newLi, y);
-        return;
-    }
+    int startX = -1;    
+    int endX = -1;
     
-    bool newEnd = false;
-    bool oldEnd = false;
-
-    int newFragmentIndex = 0;
-    int newFragmentCount = newFragments.getLength();
-    
-    int oldFragmentIndex = 0;
-    int oldFragmentCount = oldFragments.getLength();
-    
-
-    int newLeftPixOffset = newLi->leftPixOffset;
-    int oldLeftPixOffset = oldLi->leftPixOffset;
-    
-    long newX = -newLeftPixOffset;
-    long oldX = -oldLeftPixOffset;
-
-    long xMin = -1;
-    long xMax = -1;
-    
-    long newBufIndex = 0;
-    long oldBufIndex = 0;
-    
-    /////
-    
-    int newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberWChars;
-    int oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberWChars;
-
-    int newStyleIndex = newFragments[newFragmentIndex].styleIndex;
-    int oldStyleIndex = oldFragments[oldFragmentIndex].styleIndex;
-
-    int newBackground   = newFragments[newFragmentIndex].background;
-    int oldBackground   = oldFragments[oldFragmentIndex].background;
-
-    RawPtr<TextStyle> newStyle = textStyles[newStyleIndex];
-    RawPtr<TextStyle> oldStyle = textStyles[oldStyleIndex];
-
-    int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
-    
-    do
+    if (oldBufLength > 0 && newBufLength > 0)
     {
-        Char2b newChar = newBuf[newBufIndex];
-        Char2b oldChar = oldBuf[oldBufIndex];
-        
-        int  newCharLBearing = newStyle->getCharLBearing(newChar);
-        int  newCharWidth;
-        int  newCharRBearing;
-        if (newChar == TAB_CHARACTER) {
-            newCharWidth    = (((newX + leftPix) / tabWidth) + 1) * tabWidth - (newX + leftPix);
-            newCharRBearing = newCharWidth;
-        } else {
-            newCharWidth    = newStyle->getCharWidth(newChar);
-            newCharRBearing = newStyle->getCharRBearing(newChar);
-        }
-        
-        int  oldCharLBearing = oldStyle->getCharLBearing(oldChar);
-        int  oldCharWidth;
-        int  oldCharRBearing;
-        if (oldChar == TAB_CHARACTER) {
-            oldCharWidth    = (((oldX + leftPix) / tabWidth) + 1) * tabWidth - (oldX + leftPix);
-            oldCharRBearing = oldCharWidth;
-        } else {
-            oldCharWidth    = oldStyle->getCharWidth(oldChar);
-            oldCharRBearing = oldStyle->getCharRBearing(oldChar);
-        }
-        
-        
-        if (   newX != oldX
-            || newChar != oldChar
-            || newStyleIndex != oldStyleIndex
-            || newBackground != oldBackground)
+        if (   util::maximum(newLi->maxCharAscent,
+                             oldLi->maxCharAscent) <= lineAscent 
+            && prevLi.isValid() 
+            && prevLi->maxCharDescent <= lineDescent) 
         {
-            if (xMin == -1) {
-                xMin = util::minimum(newX + newCharLBearing, oldX + oldCharLBearing);
-                if (xMin < 0) xMin = 0;
-            }
-            xMax = util::maximum(newX + newCharRBearing, oldX + oldCharRBearing);
+            prevLi = Null;
         }
-
-        
-        newBufIndex += 1;
-        oldBufIndex += 1;
-        
-        if (newBufIndex >= newFragmentMaxBufIndex) {
-            newFragmentIndex += 1;
-            if (newFragmentIndex < newFragmentCount)
-            {
-                newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberWChars;
-                newStyleIndex          = newFragments[newFragmentIndex].styleIndex;
-                newBackground          = newFragments[newFragmentIndex].background;
-                newStyle               = textStyles[newStyleIndex];
-            } else {
-                newEnd = true;
-            }
-        }        
-        if (oldBufIndex >= oldFragmentMaxBufIndex) {
-            oldFragmentIndex += 1;
-            if (oldFragmentIndex < oldFragmentCount)
-            {
-                oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberWChars;
-                oldStyleIndex          = oldFragments[oldFragmentIndex].styleIndex;
-                oldBackground          = oldFragments[oldFragmentIndex].background;
-                oldStyle               = textStyles[oldStyleIndex];
-            } else {
-                oldEnd = true;
-            }
+        if (   util::maximum(newLi->maxCharDescent,
+                             oldLi->maxCharDescent) <= lineDescent 
+            && nextLi.isValid() 
+            && nextLi->maxCharAscent <= lineAscent)
+        {
+            nextLi = Null;
         }
-        if (newEnd || oldEnd) {
-            if (xMin == -1) {
-                xMin = util::minimum(newX + newCharLBearing, oldX + oldCharLBearing);
-                if (xMin < 0) xMin = 0;
-                xMax = getWidth();
-            }
-        } else {
-            newX += newCharWidth;
-            oldX += oldCharWidth;
-        }
-    }
-    while (!newEnd && !oldEnd);
     
-    if (newEnd && oldEnd && newLi->backgroundToEnd == oldLi->backgroundToEnd) {
-        clip(xMin, y, xMax - xMin, lineHeight);
-        printPartialLine(newLi, y, xMin, xMax);
-        unclip();
-    } else {
-        clip(xMin, y, getWidth() - xMin, lineHeight);
-        printPartialLine(newLi, y, xMin, getWidth());
-        unclip();
+        bool newEnd = false;
+        bool oldEnd = false;
+    
+        int newFragmentIndex = 0;
+        int newFragmentCount = newFragments.getLength();
+        
+        int oldFragmentIndex = 0;
+        int oldFragmentCount = oldFragments.getLength();
+        
+    
+        int newLeftPixOffset = newLi->leftPixOffset;
+        int oldLeftPixOffset = oldLi->leftPixOffset;
+        
+        long newX = -newLeftPixOffset;
+        long oldX = -oldLeftPixOffset;
+    
+        long xMin = -1;
+        long xMax = -1;
+        
+        long newBufIndex = 0;
+        long oldBufIndex = 0;
+        
+        /////
+        
+        int newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberWChars;
+        int oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberWChars;
+    
+        int newStyleIndex = newFragments[newFragmentIndex].styleIndex;
+        int oldStyleIndex = oldFragments[oldFragmentIndex].styleIndex;
+    
+        int newBackground   = newFragments[newFragmentIndex].background;
+        int oldBackground   = oldFragments[oldFragmentIndex].background;
+    
+        RawPtr<TextStyle> newStyle = textStyles[newStyleIndex];
+        RawPtr<TextStyle> oldStyle = textStyles[oldStyleIndex];
+    
+        int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
+        
+        do
+        {
+            Char2b newChar = newBuf[newBufIndex];
+            Char2b oldChar = oldBuf[oldBufIndex];
+            
+            int  newCharLBearing = newStyle->getCharLBearing(newChar);
+            int  newCharWidth;
+            int  newCharRBearing;
+            if (newChar == TAB_CHARACTER) {
+                newCharWidth    = (((newX + leftPix) / tabWidth) + 1) * tabWidth - (newX + leftPix);
+                newCharRBearing = newCharWidth;
+            } else {
+                newCharWidth    = newStyle->getCharWidth(newChar);
+                newCharRBearing = newStyle->getCharRBearing(newChar);
+            }
+            
+            int  oldCharLBearing = oldStyle->getCharLBearing(oldChar);
+            int  oldCharWidth;
+            int  oldCharRBearing;
+            if (oldChar == TAB_CHARACTER) {
+                oldCharWidth    = (((oldX + leftPix) / tabWidth) + 1) * tabWidth - (oldX + leftPix);
+                oldCharRBearing = oldCharWidth;
+            } else {
+                oldCharWidth    = oldStyle->getCharWidth(oldChar);
+                oldCharRBearing = oldStyle->getCharRBearing(oldChar);
+            }
+            
+            
+            if (   newX != oldX
+                || newChar != oldChar
+                || newStyleIndex != oldStyleIndex
+                || newBackground != oldBackground)
+            {
+                if (xMin == -1) {
+                    xMin = util::minimum(newX + newCharLBearing, oldX + oldCharLBearing);
+                    if (xMin < 0) xMin = 0;
+                }
+                xMax = util::maximum(newX + newCharRBearing, oldX + oldCharRBearing);
+            }
+    
+            
+            newBufIndex += 1;
+            oldBufIndex += 1;
+            
+            if (newBufIndex >= newFragmentMaxBufIndex) {
+                newFragmentIndex += 1;
+                if (newFragmentIndex < newFragmentCount)
+                {
+                    newFragmentMaxBufIndex = newBufIndex + newFragments[newFragmentIndex].numberWChars;
+                    newStyleIndex          = newFragments[newFragmentIndex].styleIndex;
+                    newBackground          = newFragments[newFragmentIndex].background;
+                    newStyle               = textStyles[newStyleIndex];
+                } else {
+                    newEnd = true;
+                }
+            }        
+            if (oldBufIndex >= oldFragmentMaxBufIndex) {
+                oldFragmentIndex += 1;
+                if (oldFragmentIndex < oldFragmentCount)
+                {
+                    oldFragmentMaxBufIndex = oldBufIndex + oldFragments[oldFragmentIndex].numberWChars;
+                    oldStyleIndex          = oldFragments[oldFragmentIndex].styleIndex;
+                    oldBackground          = oldFragments[oldFragmentIndex].background;
+                    oldStyle               = textStyles[oldStyleIndex];
+                } else {
+                    oldEnd = true;
+                }
+            }
+            if (newEnd || oldEnd) {
+                if (xMin == -1) {
+                    xMin = util::minimum(newX + newCharLBearing, oldX + oldCharLBearing);
+                    if (xMin < 0) xMin = 0;
+                    xMax = getWidth();
+                }
+            } else {
+                newX += newCharWidth;
+                oldX += oldCharWidth;
+            }
+        }
+        while (!newEnd && !oldEnd);
+    
+        startX = xMin;
+
+        if (newEnd && oldEnd && newLi->backgroundToEnd == oldLi->backgroundToEnd) {
+            endX = xMax;
+        } else {
+            if (newLi->backgroundToEnd == oldLi->backgroundToEnd) 
+            {
+                int newEndX = newLi->pixWidth - newLi->leftPixOffset;
+                int oldEndX = oldLi->pixWidth - oldLi->leftPixOffset;
+
+                endX = util::maximum(newEndX, oldEndX);
+            } else {
+                endX = getWidth();
+            }
+        }
     }
+    else {
+        startX = 0;
+        endX   = getWidth();
+    }
+    
+    ASSERT(startX >= 0); ASSERT(endX >= 0);
+    
+    int deltaY1 = util::maximum(0, util::maximum(newLi->maxCharAscent  - lineAscent,
+                                                 oldLi->maxCharAscent  - lineAscent));
+    int deltaY2 = util::maximum(0, util::maximum(newLi->maxCharDescent - lineDescent, 
+                                                 oldLi->maxCharDescent - lineDescent));
+    
+    clip(startX, y - deltaY1, endX - startX, lineHeight + deltaY1 + deltaY2);
+    
+    if (prevLi.isValid()) clearPartialLine             (prevLi, y - lineHeight, startX, endX);
+                          clearPartialLine             ( newLi, y,              startX, endX);
+    if (nextLi.isValid()) clearPartialLine             (nextLi, y + lineHeight, startX, endX);
+
+    if (prevLi.isValid()) drawCursorInPartialLine      (prevLi, y - lineHeight, startX, endX);
+                          drawCursorInPartialLine      ( newLi, y,              startX, endX);
+    if (nextLi.isValid()) drawCursorInPartialLine      (nextLi, y + lineHeight, startX, endX);
+
+    if (prevLi.isValid()) printPartialLineWithoutCursor(prevLi, y - lineHeight, startX, endX);
+                          printPartialLineWithoutCursor( newLi, y,              startX, endX);
+    if (nextLi.isValid()) printPartialLineWithoutCursor(nextLi, y + lineHeight, startX, endX);
+
+    unclip();
 }
+
+
+inline void TextWidget::printPartialLine(RawPtr<LineInfo> li, int y, int startX, int endX, RawPtr<LineInfo> prevLi, RawPtr<LineInfo> nextLi)
+{
+    if (li->maxCharAscent <= lineAscent && prevLi.isValid() && prevLi->maxCharDescent <= lineDescent) {
+        prevLi = Null;
+    }
+    if (li->maxCharDescent <= lineDescent && nextLi.isValid() && nextLi->maxCharAscent <= lineAscent) {
+        nextLi = Null;
+    }
+
+    int deltaY1 = util::maximum(0, li->maxCharAscent  - lineAscent);
+    int deltaY2 = util::maximum(0, li->maxCharDescent - lineDescent);
+    
+    clip(startX, y - deltaY1, endX - startX, lineHeight + deltaY1 + deltaY2);
+    
+    if (prevLi.isValid()) clearPartialLine             (prevLi, y - lineHeight, startX, endX);
+                          clearPartialLine             (    li, y,              startX, endX);
+    if (nextLi.isValid()) clearPartialLine             (nextLi, y + lineHeight, startX, endX);
+
+    if (prevLi.isValid()) drawCursorInPartialLine      (prevLi, y - lineHeight, startX, endX);
+                          drawCursorInPartialLine      (    li, y,              startX, endX);
+    if (nextLi.isValid()) drawCursorInPartialLine      (nextLi, y + lineHeight, startX, endX);
+
+    if (prevLi.isValid()) printPartialLineWithoutCursor(prevLi, y - lineHeight, startX, endX);
+                          printPartialLineWithoutCursor(    li, y,              startX, endX);
+    if (nextLi.isValid()) printPartialLineWithoutCursor(nextLi, y + lineHeight, startX, endX);
+
+    unclip();
+}
+
 
 void TextWidget::drawPartialArea(int minY, int maxY, int x1, int x2)
 {
@@ -1109,6 +1225,7 @@ void TextWidget::drawPartialArea(int minY, int maxY, int x1, int x2)
     int line = 0;
     long pos = getTopLeftTextPosition();
     long oldpos;
+    RawPtr<LineInfo> prevLi;
     
     do {
         RawPtr<LineInfo> li = lineInfos.getPtr(line);
@@ -1116,8 +1233,8 @@ void TextWidget::drawPartialArea(int minY, int maxY, int x1, int x2)
         if (!li->valid) {
             fillLineInfo(pos, li);
         }
-        if (y + lineHeight > minY && y < maxY) {
-            printPartialLine(li, y, x1, x2);
+        if (y + lineAscent + li->maxCharDescent > minY && y + lineAscent - li->maxCharAscent < maxY) {
+            printPartialLine(li, y, x1, x2, prevLi, Null);
         }
         y    += lineHeight;
         line += 1;
@@ -1126,7 +1243,9 @@ void TextWidget::drawPartialArea(int minY, int maxY, int x1, int x2)
         oldpos = pos;
         pos  += textData->getLengthOfLineEnding(pos);
     
-    } while (oldpos != pos && y < getHeight());
+        prevLi = li;
+    }
+    while (oldpos != pos && y < getHeight());
     
     if (y < getHeight()) {
 
@@ -1149,7 +1268,9 @@ void TextWidget::drawArea(int minY, int maxY)
     int line = 0;
     long pos = getTopLeftTextPosition();
     long oldpos;
-
+    
+    RawPtr<LineInfo> prevLi;
+    
     if (lineInfos.getLength() > 0) {
         do {
             RawPtr<LineInfo> li = lineInfos.getPtr(line);
@@ -1157,8 +1278,8 @@ void TextWidget::drawArea(int minY, int maxY)
             if (!li->valid) {
                 fillLineInfo(pos, li);
             }
-            if (y + lineHeight > minY && y < maxY) {
-                printLine(li, y);
+            if (y + lineAscent + li->maxCharDescent > minY && y + lineAscent - li->maxCharAscent < maxY) {
+                printLine(li, y, prevLi);
             }
             y    += lineHeight;
             line += 1;
@@ -1167,7 +1288,9 @@ void TextWidget::drawArea(int minY, int maxY)
             oldpos = pos;
             pos  += textData->getLengthOfLineEnding(pos);
 
-        } while (oldpos != pos && y < getHeight());
+            prevLi = li;
+        } 
+        while (oldpos != pos && y < getHeight());
     }
     
     if (y < getHeight()) {
@@ -1195,30 +1318,51 @@ void TextWidget::redrawChanged(long spos, long epos)
     long oldpos;
 
     unclip();
-
-    if (lineInfos.getLength() > 0) {
+    
+    if (lineInfos.getLength() > 0)
+    {
+        RawPtr<LineInfo> prevLi;
+        RawPtr<LineInfo> nextLi;
         do {
-            RawPtr<LineInfo> li = lineInfos.getPtr(line);
+            RawPtr<LineInfo>     li = lineInfos.getPtr(line);
+            
+            nextLi = line + 1 < lineInfos.getLength() ? lineInfos.getPtr(line + 1)
+                                                      : Null;
 
-            if (li->valid && li->beginOfLinePos == pos) {
-                
-                if (li->beginOfLinePos <= epos && li->endOfLinePos >= spos) // ">=" because line info for zero length lines should also be checked because of selection backliting
+            if (li->valid)
+            {
+                if (li->beginOfLinePos != pos || (li->beginOfLinePos <= epos && li->endOfLinePos >= spos)) // ">=" because line info for zero length lines should also be checked because of selection backliting
                 {
                     tempLineInfo = *li;
                     fillLineInfo(pos, li);
 
                     if (tempLineInfo.isDifferentOnScreenThan(*li)) {
-                        if (y + lineHeight > minY && y < maxY) {
+                        if (y + lineAscent + li->maxCharDescent > minY && y + lineAscent - li->maxCharAscent < maxY) {
+                            if (nextLi.isValid() && !nextLi->valid) {
+                                long npos = li->endOfLinePos;
+                                     npos += textData->getLengthOfLineEnding(npos);
+                                nextLi = &tempLineInfo2;
+                                fillLineInfo(npos, nextLi);
+                            }
                             //printLine(li, y);
-                            printChangedPartOfLine(li, y, &tempLineInfo);
+                            printChangedPartOfLine(li, y, &tempLineInfo, prevLi, nextLi);
                         }
                     }
+                    ASSERT(li->beginOfLinePos == pos);
                 }
             } else {
                 fillLineInfo(pos, li);
 
-                if (y + lineHeight > minY && y < maxY) {
-                    printLine(li, y);
+                if (y + lineAscent + li->maxCharDescent > minY && y + lineAscent - li->maxCharAscent < maxY) 
+                {
+                    if (nextLi.isValid() && !nextLi->valid) {
+                        long npos = li->endOfLinePos;
+                             npos += textData->getLengthOfLineEnding(npos);
+                        nextLi = &tempLineInfo2;
+                        fillLineInfo(npos, nextLi);
+                    }
+    
+                    printPartialLine(li, y, 0, getWidth(), prevLi, nextLi);
                 }
             }
             pos = li->endOfLinePos;
@@ -1227,8 +1371,11 @@ void TextWidget::redrawChanged(long spos, long epos)
 
             oldpos = pos;
             pos  += textData->getLengthOfLineEnding(pos);
-
-        } while (oldpos != pos && y < maxY);
+            
+            prevLi = li;
+        } 
+        while (oldpos != pos && y < maxY && nextLi.isValid());
+        
         while (line < lineInfos.getLength()) {
             lineInfos.getPtr(line)->valid = false;
             ++line;
@@ -1275,7 +1422,7 @@ RawPtr<LineInfo> TextWidget::getValidLineInfo(long line)
             pos   = li->endOfLinePos;
             pos  += textData->getLengthOfLineEnding(pos);
 
-        } while (l < line);
+        } while (l <= line);
     }
     ASSERT(li->valid);
     return li;
@@ -1286,6 +1433,7 @@ void TextWidget::drawCursor(long cursorPos)
     int y = 0;
     int line = 0;
     RawPtr<LineInfo> li;
+    RawPtr<LineInfo> prevLi;
 
     if (lineInfos.getLength() > 0) {
         do {
@@ -1297,15 +1445,19 @@ void TextWidget::drawCursor(long cursorPos)
             if (cursorPos <= li->endOfLinePos) {
                 // cursor is visible
                 int cursorX = calcVisiblePixXForPosInLine(li, FreePos(cursorPos, cursorColumnsBehindEndOfLine));
-                clip(cursorX - 1, y, CURSOR_WIDTH + 2, lineHeight);
-                printPartialLine(li, y, cursorX - 1, cursorX + CURSOR_WIDTH + 1);
-                unclip();
+                //clip(cursorX - 1, y, CURSOR_WIDTH + 2, lineHeight);
+                RawPtr<LineInfo> nextLi = line + 1 < lineInfos.getLength() ? getValidLineInfo(line + 1)
+                                                                           : Null;
+                printPartialLine(li, y, cursorX - 1, cursorX + CURSOR_WIDTH + 1, prevLi, nextLi);
+                //unclip();
                 break;
             }
             y    += lineHeight;
             line += 1;
 
-        } while (!li->isEndOfText && y < getHeight());
+            prevLi = li;
+        }
+        while (!li->isEndOfText && y < getHeight());
     }
 }
 
@@ -1414,6 +1566,26 @@ void TextWidget::setTopLineNumber(long n)
         
     if (n != oldTopLineNumber)
     {
+        bool redrawTopLinePart    = false;
+        int  redrawTopLineDeltaY = 0;
+        
+        if (n - 1 >= oldTopLineNumber && n - 1 < oldTopLineNumber + lineInfos.getLength()) {
+            RawPtr<LineInfo> prevLi = lineInfos.getPtr((n - 1) - oldTopLineNumber);
+            if (prevLi->maxCharDescent > lineDescent) {
+                redrawTopLinePart = true;
+                redrawTopLineDeltaY = prevLi->maxCharDescent - lineDescent;
+            }
+        }
+        bool redrawBottomLinePart    = false;
+        int  redrawBottomLineDeltaY = 0;
+        
+        if (n + visibleLines >= oldTopLineNumber && n + visibleLines < oldTopLineNumber + lineInfos.getLength()) {
+            RawPtr<LineInfo> nextLi = lineInfos.getPtr((n + visibleLines) - oldTopLineNumber);
+            if (nextLi->maxCharAscent > lineAscent) {
+                redrawBottomLinePart = true;
+                redrawBottomLineDeltaY = nextLi->maxCharAscent - lineAscent;
+            }
+        }
         
         lineInfos.moveFirst(n - oldTopLineNumber);
         textData->moveMarkToLineAndWCharColumn(topMarkId, n, 0);
@@ -1434,6 +1606,10 @@ void TextWidget::setTopLineNumber(long n)
                 }
                 exposureNeedsSync = true;
                 drawArea(0, diff * lineHeight);
+                
+                if (redrawBottomLinePart) {
+                    drawArea(getHeight() - redrawBottomLineDeltaY, getHeight());
+                }
             }
         } else {
             if (n - oldTopLineNumber >= visibleLines) {
@@ -1450,6 +1626,10 @@ void TextWidget::setTopLineNumber(long n)
                 }
                 exposureNeedsSync = true;
                 drawArea(getHeight() - (diff * lineHeight), getHeight());
+
+                if (redrawTopLinePart) {
+                    drawArea(0, redrawTopLineDeltaY);
+                }
             }
 
         }
@@ -1780,7 +1960,8 @@ void TextWidget::processGuiWidgetNewPositionEvent(const Position& p)
         
         visibleLines = newVisibleLines; // not rounded
         
-        lineInfos.setLength(ROUNDED_UP_DIV(newPosition.h, lineHeight));
+        lineInfos.setLength(ROUNDED_UP_DIV(newPosition.h - 2*border, lineHeight));
+
         lineInfos.setAllInvalid();
 
         int  newLeftPix = oldLeftPix;
@@ -2357,7 +2538,8 @@ void TextWidget::treatTextDataUpdate(TextData::UpdateInfo u)
                     adjustLineInfoPosition(&li->endPos,   u.beginChangedPos, u.oldEndChangedPos, u.changedAmount);
                 }
             } else {
-                li->valid = false;
+                redraw = true;
+                //li->valid = false;
             }
         }
     }

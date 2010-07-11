@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -57,6 +57,12 @@ public:
     }
     short getCharWidth(Char2b c) const {
         return fontInfo->getCharWidth(c);
+    }
+    short getCharAscent(Char2b c) const {
+        return fontInfo->getCharAscent(c);
+    }
+    short getCharDescent(Char2b c) const {
+        return fontInfo->getCharDescent(c);
     }
     short getCharLBearing(Char2b c) const {
         return fontInfo->getCharLBearing(c);

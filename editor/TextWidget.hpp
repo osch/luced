@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2009 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2010 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -281,9 +281,12 @@ private:
     void drawArea(int minY, int maxY);
     int  calcVisiblePixXForPosInLine(RawPtr<LineInfo> li, FreePos freePos);
     void printPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2);
+    void printPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2, RawPtr<LineInfo> prevLi, RawPtr<LineInfo> nextLi);
     void printPartialLineWithoutCursor(RawPtr<LineInfo> li, int y, int x1, int x2);
+    void drawCursorInPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2);
     void printLine(RawPtr<LineInfo> li, int y);
-    void printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<LineInfo> oldLi);
+    void printLine(RawPtr<LineInfo> li, int y, RawPtr<LineInfo> prevLi);
+    void printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<LineInfo> oldLi, RawPtr<LineInfo> prevLi, RawPtr<LineInfo> nextLi);
     void clearLine(RawPtr<LineInfo> li, int y);
     void clearPartialLine(RawPtr<LineInfo> li, int y, int x1, int x2);
     void applyTextStyle(int styleIndex);
@@ -325,6 +328,7 @@ private:
     long visibleLines;
     int lineHeight;
     int lineAscent;
+    int lineDescent;
     LineInfos lineInfos;
     Callback<long,long,long>::Ptr scrollBarVerticalValueRangeChangedCallback;
     Callback<long,long,long>::Ptr scrollBarHorizontalValueRangeChangedCallback;
@@ -335,6 +339,7 @@ private:
     bool cursorIsActive;
     
     LineInfo tempLineInfo;
+    LineInfo tempLineInfo2;
 
     bool updateVerticalScrollBar;
     bool updateHorizontalScrollBar;
