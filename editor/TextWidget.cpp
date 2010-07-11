@@ -2509,6 +2509,20 @@ static inline bool adjustLineInfoPosition(long* pos, long beginChangedPos, long 
 
 void TextWidget::treatTextDataUpdate(TextData::UpdateInfo u)
 {
+    if (cursorColumnsBehindEndOfLine > 0 && !cursorMarkId.isAtEndOfLine())
+    {
+        long p = cursorMarkId.getPos();
+        long i = cursorColumnsBehindEndOfLine;
+        do {
+            p = textData->getNextWCharPos(p);
+            --i;
+        }
+        while (i > 0 && !textData->isEndOfLine(p));
+        cursorColumnsBehindEndOfLine = i;
+        cursorMarkId.moveToPos(p);
+    }
+    
+    
     bool redraw = false;
     long newEndChangedPos = u.oldEndChangedPos + u.changedAmount;
 
