@@ -132,6 +132,7 @@ TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
       topMarkId(textData->createNewMark()),
       cursorMarkId(textData->createNewMark()),
       cursorColumnsBehindEndOfLine(0),
+      lastDrawnCursorPixX(0),
       lastLineOfLineAndColumnListeners(0),
       lastColumnOfLineAndColumnListeners(0),
       lastPosOfLineAndColumnListeners(0),
@@ -466,6 +467,7 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
         }
         li->backgroundToEnd = i.getBackground();
         li->spaceWidthAtEnd = i.getStyle()->getSpaceWidth();
+        li->charRBearingAtEnd = 0;
     }
     else
     {
@@ -554,8 +556,9 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
             i.setDoBackground(true);
         }
 
-        li->backgroundToEnd = i.getBackground();
-        li->spaceWidthAtEnd = i.getStyle()->getSpaceWidth();
+        li->backgroundToEnd   = i.getBackground();
+        li->spaceWidthAtEnd   = i.getStyle()->getSpaceWidth();
+        li->charRBearingAtEnd = i.getCharRBearing();
     }
 
     li->valid = true;
@@ -843,6 +846,7 @@ inline void TextWidget::drawCursorInPartialLine(RawPtr<LineInfo> li, int y, int 
             if (getGuiWidget().isValid()) {
                 XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
                         cursorX, y, CURSOR_WIDTH, lineHeight);
+                lastDrawnCursorPixX = cursorX;
             }
         }
         
@@ -938,6 +942,7 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
                 if (getGuiWidget().isValid()) {
                     XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid,     // DrawCursor
                             cx1, y, cx2 - cx1, lineHeight);
+                    lastDrawnCursorPixX = cursorX;
                 }
             }
 
@@ -972,6 +977,7 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
             if (getGuiWidget().isValid()) {
                 XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid,     // DrawCursor
                         cx1, y, cx2 - cx1, lineHeight);
+                lastDrawnCursorPixX = cursorX;
             }
         }
     }
@@ -1009,6 +1015,17 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
     
     if (oldBufLength > 0 && newBufLength > 0)
     {
+        long cursorPos             = getCursorTextPosition();
+        bool considerCursorInNewLi = cursorVisible && newLi->isPosInLine(cursorPos);
+        long cursorBufIndexInNewLi = 0;
+        
+        if (considerCursorInNewLi) {
+            long p = newLi->startPos;
+            while (cursorBufIndexInNewLi + 1 < newBufLength && p < cursorPos) {
+                ++cursorBufIndexInNewLi;
+                p = textData->getNextWCharPos(p);
+            }
+        }
         if (   util::maximum(newLi->maxCharAscent,
                              oldLi->maxCharAscent) <= lineAscent 
             && prevLi.isValid() 
@@ -1088,18 +1105,24 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
                 oldCharWidth    = oldStyle->getCharWidth(oldChar);
                 oldCharRBearing = oldStyle->getCharRBearing(oldChar);
             }
-            
+
+            bool isAtCursorInNewLiPos = (considerCursorInNewLi && cursorBufIndexInNewLi == newBufIndex);
             
             if (   newX != oldX
                 || newChar != oldChar
                 || newStyleIndex != oldStyleIndex
-                || newBackground != oldBackground)
+                || newBackground != oldBackground
+                || isAtCursorInNewLiPos)
             {
                 if (xMin == -1) {
                     xMin = util::minimum(newX + newCharLBearing, oldX + oldCharLBearing);
                     if (xMin < 0) xMin = 0;
                 }
                 xMax = util::maximum(newX + newCharRBearing, oldX + oldCharRBearing);
+                
+                if (isAtCursorInNewLiPos && cursorColumnsBehindEndOfLine > 0) {
+                    util::maximize(&xMax, newX + newLi->spaceWidthAtEnd * cursorColumnsBehindEndOfLine + CURSOR_WIDTH);
+                }
             }
     
             
@@ -1150,13 +1173,22 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
         } else {
             if (newLi->backgroundToEnd == oldLi->backgroundToEnd) 
             {
-                int newEndX = newLi->pixWidth - newLi->leftPixOffset;
-                int oldEndX = oldLi->pixWidth - oldLi->leftPixOffset;
+                int newEndX = newLi->pixWidth - newLi->leftPixOffset + newLi->charRBearingAtEnd;
+                int oldEndX = oldLi->pixWidth - oldLi->leftPixOffset + oldLi->charRBearingAtEnd;
 
+                if (considerCursorInNewLi && cursorColumnsBehindEndOfLine > 0) {
+                    newEndX += newLi->spaceWidthAtEnd * cursorColumnsBehindEndOfLine + CURSOR_WIDTH;
+                }
                 endX = util::maximum(newEndX, oldEndX);
             } else {
                 endX = getWidth();
             }
+        }
+
+        if (considerCursorInNewLi || cursorVisible && oldLi->isPosInLine(cursorPos))
+        {
+            util::maximize(&endX,   lastDrawnCursorPixX + CURSOR_WIDTH);
+            util::minimize(&startX, lastDrawnCursorPixX);
         }
     }
     else {

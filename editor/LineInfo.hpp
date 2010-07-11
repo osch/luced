@@ -59,6 +59,7 @@ private:
     int    leftPixOffset;
     int    backgroundToEnd;
     int    spaceWidthAtEnd;
+    int    charRBearingAtEnd;
     int    maxCharAscent;
     int    maxCharDescent;
     

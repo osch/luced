@@ -324,6 +324,7 @@ private:
     TextData::TextMark topMarkId; // first column of the first displayed textline
     TextData::TextMark cursorMarkId;
     long cursorColumnsBehindEndOfLine;
+    long lastDrawnCursorPixX;
 
     long visibleLines;
     int lineHeight;
