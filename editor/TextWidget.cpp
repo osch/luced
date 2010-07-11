@@ -163,7 +163,7 @@ TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
 
     visibleLines = getHeight() / lineHeight; // not rounded;
 
-    lineInfos.setLength(ROUNDED_UP_DIV(getHeight()  - 2*border, lineHeight));
+    lineInfos.setLength(util::maximum(1, ROUNDED_UP_DIV(getHeight()  - 2*border, lineHeight)));
 
 
 #if 0
@@ -1960,7 +1960,7 @@ void TextWidget::processGuiWidgetNewPositionEvent(const Position& p)
         
         visibleLines = newVisibleLines; // not rounded
         
-        lineInfos.setLength(ROUNDED_UP_DIV(newPosition.h - 2*border, lineHeight));
+        lineInfos.setLength(util::maximum(1, ROUNDED_UP_DIV(newPosition.h - 2*border, lineHeight)));
 
         lineInfos.setAllInvalid();
 
