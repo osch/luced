@@ -1017,12 +1017,21 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
     {
         long cursorPos             = getCursorTextPosition();
         bool considerCursorInNewLi = cursorVisible && newLi->isPosInLine(cursorPos);
+        bool considerCursorInOldLi = cursorVisible && oldLi->isPosInLine(cursorPos);
         long cursorBufIndexInNewLi = 0;
+        long cursorBufIndexInOldLi = 0;
         
         if (considerCursorInNewLi) {
             long p = newLi->startPos;
             while (cursorBufIndexInNewLi + 1 < newBufLength && p < cursorPos) {
                 ++cursorBufIndexInNewLi;
+                p = textData->getNextWCharPos(p);
+            }
+        }
+        if (considerCursorInOldLi) {
+            long p = oldLi->startPos;
+            while (cursorBufIndexInOldLi + 1 < oldBufLength && p < cursorPos) {
+                ++cursorBufIndexInOldLi;
                 p = textData->getNextWCharPos(p);
             }
         }
@@ -1107,12 +1116,14 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
             }
 
             bool isAtCursorInNewLiPos = (considerCursorInNewLi && cursorBufIndexInNewLi == newBufIndex);
+            bool isAtCursorInOldLiPos = (considerCursorInOldLi && cursorBufIndexInOldLi == oldBufIndex);
             
             if (   newX != oldX
                 || newChar != oldChar
                 || newStyleIndex != oldStyleIndex
                 || newBackground != oldBackground
-                || isAtCursorInNewLiPos)
+                || isAtCursorInNewLiPos
+                || isAtCursorInOldLiPos)
             {
                 if (xMin == -1) {
                     xMin = util::minimum(newX + newCharLBearing, oldX + oldCharLBearing);
@@ -1122,6 +1133,9 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
                 
                 if (isAtCursorInNewLiPos && cursorColumnsBehindEndOfLine > 0) {
                     util::maximize(&xMax, newX + newLi->spaceWidthAtEnd * cursorColumnsBehindEndOfLine + CURSOR_WIDTH);
+                }
+                if (isAtCursorInOldLiPos && cursorColumnsBehindEndOfLine > 0) {
+                    util::maximize(&xMax, oldX + oldLi->spaceWidthAtEnd * cursorColumnsBehindEndOfLine + CURSOR_WIDTH);
                 }
             }
     
@@ -1166,6 +1180,7 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
         }
         while (!newEnd && !oldEnd);
     
+        if (xMin < 0) xMin = 0;
         startX = xMin;
 
         if (newEnd && oldEnd && newLi->backgroundToEnd == oldLi->backgroundToEnd) {
@@ -1178,6 +1193,9 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
 
                 if (considerCursorInNewLi && cursorColumnsBehindEndOfLine > 0) {
                     newEndX += newLi->spaceWidthAtEnd * cursorColumnsBehindEndOfLine + CURSOR_WIDTH;
+                }
+                if (considerCursorInOldLi && cursorColumnsBehindEndOfLine > 0) {
+                    oldEndX += oldLi->spaceWidthAtEnd * cursorColumnsBehindEndOfLine + CURSOR_WIDTH;
                 }
                 endX = util::maximum(newEndX, oldEndX);
             } else {
