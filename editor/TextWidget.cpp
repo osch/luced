@@ -1581,6 +1581,8 @@ long TextWidget::calcLongestVisiblePixWidth()
         } while (oldpos != pos && y < getHeight());
     }
     rslt += CURSOR_WIDTH;
+    
+    this->endPos = pos;
 
     return rslt;
 }
