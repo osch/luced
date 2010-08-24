@@ -41,8 +41,12 @@ private:
     friend class LineInfos;
 
     bool isDifferentOnScreenThan(const LineInfo& rhs) const {
-        if (leftPixOffset  != rhs.leftPixOffset
-                || isEndOfText != rhs.isEndOfText || backgroundToEnd != rhs.backgroundToEnd) {
+        if (   leftPixOffset   != rhs.leftPixOffset
+            || isEndOfText     != rhs.isEndOfText 
+            || backgroundToEnd != rhs.backgroundToEnd
+            || hasCursor       != rhs.hasCursor 
+            || (hasCursor && lastDrawnCursorPixX != rhs.lastDrawnCursorPixX))
+        {
             return true;
         }
         return (fragments != rhs.fragments) || (outBuf != rhs.outBuf);
@@ -62,6 +66,8 @@ private:
     int    charRBearingAtEnd;
     int    maxCharAscent;
     int    maxCharDescent;
+    bool   hasCursor;
+    int    lastDrawnCursorPixX;
     
     bool isPosInLine(long pos) const {
         return beginOfLinePos <= pos && pos <= endOfLinePos;

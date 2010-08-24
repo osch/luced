@@ -132,7 +132,6 @@ TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
       topMarkId(textData->createNewMark()),
       cursorMarkId(textData->createNewMark()),
       cursorColumnsBehindEndOfLine(0),
-      lastDrawnCursorPixX(0),
       lastLineOfLineAndColumnListeners(0),
       lastColumnOfLineAndColumnListeners(0),
       lastPosOfLineAndColumnListeners(0),
@@ -456,6 +455,9 @@ void TextWidget::fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li)
     li->fragments.clear();
     li->outBuf.clear();
     li->styles.clear();
+    
+    li->hasCursor = false;
+    li->lastDrawnCursorPixX = 0;
     
 
     if (i.isAtEndOfLine())
@@ -846,10 +848,13 @@ inline void TextWidget::drawCursorInPartialLine(RawPtr<LineInfo> li, int y, int 
             if (getGuiWidget().isValid()) {
                 XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid, 
                         cursorX, y, CURSOR_WIDTH, lineHeight);
-                lastDrawnCursorPixX = cursorX;
             }
+            li->hasCursor = true;
+            li->lastDrawnCursorPixX = cursorX;
         }
-        
+        else {
+            li->hasCursor = false;
+        }
     }
 }
 
@@ -942,8 +947,11 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
                 if (getGuiWidget().isValid()) {
                     XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid,     // DrawCursor
                             cx1, y, cx2 - cx1, lineHeight);
-                    lastDrawnCursorPixX = cursorX;
                 }
+                li->hasCursor = true;
+                li->lastDrawnCursorPixX = cursorX;
+            } else {
+                li->hasCursor = false;
             }
 
             if (len > 0 && *ptr != TAB_CHARACTER) {
@@ -977,8 +985,11 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
             if (getGuiWidget().isValid()) {
                 XFillRectangle(getDisplay(), getGuiWidget()->getWid(), textWidget_gcid,     // DrawCursor
                         cx1, y, cx2 - cx1, lineHeight);
-                lastDrawnCursorPixX = cursorX;
             }
+            li->hasCursor = true;
+            li->lastDrawnCursorPixX = cursorX;
+        } else {
+            li->hasCursor = false;
         }
     }
 }
@@ -1016,19 +1027,17 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
     if (oldBufLength > 0 && newBufLength > 0)
     {
         long cursorPos             = getCursorTextPosition();
-        bool considerCursorInNewLi = cursorVisible && newLi->isPosInLine(cursorPos);
-        bool considerCursorInOldLi = cursorVisible && oldLi->isPosInLine(cursorPos);
         long cursorBufIndexInNewLi = 0;
         long cursorBufIndexInOldLi = 0;
         
-        if (considerCursorInNewLi) {
+        if (newLi->hasCursor) {
             long p = newLi->startPos;
             while (cursorBufIndexInNewLi + 1 < newBufLength && p < cursorPos) {
                 ++cursorBufIndexInNewLi;
                 p = textData->getNextWCharPos(p);
             }
         }
-        if (considerCursorInOldLi) {
+        if (oldLi->hasCursor) {
             long p = oldLi->startPos;
             while (cursorBufIndexInOldLi + 1 < oldBufLength && p < cursorPos) {
                 ++cursorBufIndexInOldLi;
@@ -1115,8 +1124,8 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
                 oldCharRBearing = oldStyle->getCharRBearing(oldChar);
             }
 
-            bool isAtCursorInNewLiPos = (considerCursorInNewLi && cursorBufIndexInNewLi == newBufIndex);
-            bool isAtCursorInOldLiPos = (considerCursorInOldLi && cursorBufIndexInOldLi == oldBufIndex);
+            bool isAtCursorInNewLiPos = (newLi->hasCursor && cursorBufIndexInNewLi == newBufIndex);
+            bool isAtCursorInOldLiPos = (oldLi->hasCursor && cursorBufIndexInOldLi == oldBufIndex);
             
             if (   newX != oldX
                 || newChar != oldChar
@@ -1191,10 +1200,10 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
                 int newEndX = newLi->pixWidth - newLi->leftPixOffset + newLi->charRBearingAtEnd;
                 int oldEndX = oldLi->pixWidth - oldLi->leftPixOffset + oldLi->charRBearingAtEnd;
 
-                if (considerCursorInNewLi && cursorColumnsBehindEndOfLine > 0) {
+                if (newLi->hasCursor && cursorColumnsBehindEndOfLine > 0) {
                     newEndX += newLi->spaceWidthAtEnd * cursorColumnsBehindEndOfLine + CURSOR_WIDTH;
                 }
-                if (considerCursorInOldLi && cursorColumnsBehindEndOfLine > 0) {
+                if (oldLi->hasCursor && cursorColumnsBehindEndOfLine > 0) {
                     oldEndX += oldLi->spaceWidthAtEnd * cursorColumnsBehindEndOfLine + CURSOR_WIDTH;
                 }
                 endX = util::maximum(newEndX, oldEndX);
@@ -1202,11 +1211,13 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
                 endX = getWidth();
             }
         }
-
-        if (considerCursorInNewLi || cursorVisible && oldLi->isPosInLine(cursorPos))
-        {
-            util::maximize(&endX,   lastDrawnCursorPixX + CURSOR_WIDTH);
-            util::minimize(&startX, lastDrawnCursorPixX);
+        if (newLi->hasCursor) {
+            util::maximize(&endX,   newLi->lastDrawnCursorPixX + CURSOR_WIDTH);
+            util::minimize(&startX, newLi->lastDrawnCursorPixX);
+        }
+        if (oldLi->hasCursor) {
+            util::maximize(&endX,   oldLi->lastDrawnCursorPixX + CURSOR_WIDTH);
+            util::minimize(&startX, oldLi->lastDrawnCursorPixX);
         }
     }
     else {
