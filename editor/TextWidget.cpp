@@ -2495,8 +2495,9 @@ GuiWidget::ProcessingResult TextWidget::processGuiWidgetEvent(const XEvent* even
                 XDestroyRegion(redrawRegion);
                 redrawRegion = newRegion;
             }
-/*            XEvent newEvent;
-            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask, &newEvent) == True)
+
+            XEvent newEvent;
+            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), -1, &newEvent) == True)
             {
                 if (newEvent.type == GraphicsExpose) {
                     r.x      = newEvent.xgraphicsexpose.x;
@@ -2504,19 +2505,22 @@ GuiWidget::ProcessingResult TextWidget::processGuiWidgetEvent(const XEvent* even
                     r.width  = newEvent.xgraphicsexpose.width;
                     r.height = newEvent.xgraphicsexpose.height;
                     count    = newEvent.xgraphicsexpose.count; // Anzahl der noch folgenden Events
-                } else {
+                } else if (newEvent.type == Expose) {
                     r.x      = newEvent.xexpose.x;
                     r.y      = newEvent.xexpose.y;
                     r.width  = newEvent.xexpose.width;
                     r.height = newEvent.xexpose.height;
                     count    = newEvent.xexpose.count; // Anzahl der noch folgenden Events
+                } else {
+                    XPutBackEvent(getDisplay(), &newEvent);
+                    break;
                 }
                 Region newRegion = XCreateRegion();
                 XUnionRectWithRegion(&r, redrawRegion, newRegion);
                 XDestroyRegion(redrawRegion);
                 redrawRegion = newRegion;
             }
-*/            if (count == 0)
+            if (count == 0)
             {
                 XSetRegion(getDisplay(), textWidget_gcid, redrawRegion);
                 redraw();
