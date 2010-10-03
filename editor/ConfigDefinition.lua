@@ -113,6 +113,10 @@ return
                     type    = "bool",
                     default = true,
                 },
+                {   name    = "extendedLineHeight",
+                    type    = "bool",
+                    default = false,
+                },
             }
         },
         ------------------------------------------------------------------------
@@ -231,6 +235,10 @@ return
                                 default = 0,
                             },
                             {   name    = "boundCursor",
+                                type    = "Nullable<bool>",
+                                default = nil,
+                            },
+                            {   name    = "extendedLineHeight",
                                 type    = "Nullable<bool>",
                                 default = nil,
                             },

@@ -22,24 +22,21 @@
 #include "FontInfo.hpp"
 #include "GuiRoot.hpp"
 #include "ConfigException.hpp"
-
+#include "util.hpp"
 
 using namespace LucED;
 
 FontInfo::FontInfo(const String& fontName)
     : fontName(fontName)
 {
-    XCharStruct* min_bounds;
-    XCharStruct* max_bounds;
-    
     this->font = XLoadQueryFont(GuiRoot::getInstance()->getDisplay(), fontName.toCString());
     if (font == NULL) {
         throw ConfigException(String() << "invalid font name: " << fontName);
     }
     this->fontHandle = FontHandle(font->fid);
 
-    min_bounds = &(this->font->min_bounds);
-    max_bounds = &(this->font->max_bounds);
+    XCharStruct* min_bounds = &(this->font->min_bounds);
+    XCharStruct* max_bounds = &(this->font->max_bounds);
     
     minByte1     = font->min_byte1;
     maxByte1     = font->max_byte1;
@@ -132,12 +129,13 @@ FontInfo::FontInfo(const String& fontName)
                     short rbearing;
     
                     XTextExtents16(this->font, &c, 1, &direction, &ascent, &descent, &xcharstr);
-                    if (ascent > myMaxAscent) {
-                        myMaxAscent = ascent;
-                    }
-                    if (descent > myMaxDescent) {
-                        myMaxDescent = descent;
-                    }
+
+                    util::maximize(&myMaxAscent,  ascent);
+                    util::maximize(&myMaxDescent, descent);
+
+                    util::maximize(&myMaxAscent,  xcharstr.ascent);
+                    util::maximize(&myMaxDescent, xcharstr.descent);
+
                     width    = xcharstr.width;
                     lbearing = xcharstr.lbearing;
                     rbearing = xcharstr.rbearing;
@@ -170,15 +168,17 @@ FontInfo::FontInfo(const String& fontName)
             charRBearings8[i] = internalGetCharRBearing(i);
         }
     }
-    this->lineAscent  = max_bounds->ascent; // -1 ?!?!?
-    this->lineDescent = max_bounds->descent;
-    if (myMaxDescent > 0 && myMaxDescent < this->lineDescent) {
-        this->lineDescent = myMaxDescent;
-    }
-    if (myMaxAscent > 0 && myMaxAscent < this->lineAscent) {
-        this->lineAscent = myMaxAscent;
-    }
+    this->lineAscent  = this->font->ascent;
+    this->lineDescent = this->font->descent;
+
+    this->maxAscent   = max_bounds->ascent;
+    this->maxDescent  = max_bounds->descent;
+    
+    util::maximize(&this->maxAscent,  myMaxAscent);
+    util::maximize(&this->maxDescent, myMaxDescent);
+    
     this->lineHeight  = this->lineAscent + this->lineDescent;
+    this->maxHeight   = this->maxAscent + this->maxDescent;
 
 //printf("######## ascent  %d %d %d    (%s)\n", font->ascent,  max_bounds->ascent, myMaxAscent, fontName.toCString());
 //printf("######## descent %d %d\n", font->descent, max_bounds->descent);

@@ -157,9 +157,19 @@ TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
       neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR)),
       exposureNeedsSync(false)
 {
-    lineHeight  = defaultTextStyle->getLineHeight();
-    lineAscent  = defaultTextStyle->getLineAscent();
-    lineDescent = defaultTextStyle->getLineDescent();
+    Nullable<bool> extendedLineHeight = hilitedText->getLanguageMode()->getExtendedLineHeight();
+    if (extendedLineHeight.isNull()) {
+        extendedLineHeight = GlobalConfig::getConfigData()->getGeneralConfig()->getExtendedLineHeight();
+    }
+    if (!extendedLineHeight.isNull() && extendedLineHeight.get() == true) {
+        lineHeight  = defaultTextStyle->getFontInfo()->getMaxHeight();
+        lineAscent  = defaultTextStyle->getFontInfo()->getMaxAscent();
+        lineDescent = defaultTextStyle->getFontInfo()->getMaxDescent();
+    } else {
+        lineHeight  = defaultTextStyle->getLineHeight();
+        lineAscent  = defaultTextStyle->getLineAscent();
+        lineDescent = defaultTextStyle->getLineDescent();
+    }
 
     visibleLines = getHeight() / lineHeight; // not rounded;
 
@@ -220,10 +230,24 @@ void TextWidget::treatTextStylesChanged(const ObjectArray<TextStyle::Ptr>& newTe
     textStyles       = newTextStyles;
     rawTextStylePtrs = newTextStyles;
 
-    lineHeight  = defaultTextStyle->getLineHeight();
-    lineAscent  = defaultTextStyle->getLineAscent();
-    lineDescent = defaultTextStyle->getLineDescent();
-    
+    Nullable<bool> extendedLineHeight = hilitedText->getLanguageMode()->getExtendedLineHeight();
+    if (extendedLineHeight.isNull()) {
+        extendedLineHeight = GlobalConfig::getConfigData()->getGeneralConfig()->getExtendedLineHeight();
+    }
+    if (!extendedLineHeight.isNull() && extendedLineHeight.get() == true) {
+        lineHeight  = defaultTextStyle->getFontInfo()->getMaxHeight();
+        lineAscent  = defaultTextStyle->getFontInfo()->getMaxAscent();
+        lineDescent = defaultTextStyle->getFontInfo()->getMaxDescent();
+    } else {
+        lineHeight  = defaultTextStyle->getLineHeight();
+        lineAscent  = defaultTextStyle->getLineAscent();
+        lineDescent = defaultTextStyle->getLineDescent();
+    }
+
+    visibleLines = getHeight() / lineHeight; // not rounded;
+
+    lineInfos.setLength(util::maximum(1, ROUNDED_UP_DIV(getHeight()  - 2*border, lineHeight)));
+
     redrawChanged(getTopLeftTextPosition(), textData->getLength());
 }
 
@@ -1218,6 +1242,9 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
         if (oldLi->hasCursor) {
             util::maximize(&endX,   oldLi->lastDrawnCursorPixX + CURSOR_WIDTH);
             util::minimize(&startX, oldLi->lastDrawnCursorPixX);
+        }
+        if (startX < 0) {
+            startX = 0;
         }
     }
     else {

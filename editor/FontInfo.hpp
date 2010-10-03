@@ -100,6 +100,15 @@ public:
     int getLineDescent() const {
         return lineDescent;
     }
+    int getMaxHeight() const {
+        return maxHeight;
+    }
+    int getMaxAscent() const {
+        return maxAscent;
+    }
+    int getMaxDescent() const {
+        return maxDescent;
+    }
     FontHandle getFontHandle() const {
         return fontHandle;
     }
@@ -176,6 +185,10 @@ private:
     int lineHeight;
     int lineAscent;
     int lineDescent;
+
+    int maxHeight;
+    int maxAscent;
+    int maxDescent;
     
     int minByte1;
     int maxByte1;
