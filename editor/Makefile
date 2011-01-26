@@ -306,7 +306,7 @@ release: $(RELEASE_FILES)
 	cd $(RELEASE_DIR); autoreconf -vi
 	@echo "make release: finished";
 
-$(RELEASE_DIR)/Makefile.am: Makefile.am.emlua Makefile
+$(RELEASE_DIR)/Makefile.am: Makefile.am.emlua Makefile lua
 	$(call EMLUA_RUN,$@, RELEASE_HEADERS   = [[$(release_headers)]];\
 	                     RELEASE_SOURCES   = [[$(release_sources)]]; \
 	                     RELEASE_EXTRAS    = [[$(release_extras)]]; \
@@ -479,7 +479,7 @@ sandbox.mk:
 ../pcre/pcre.h: ../pcre/pcre.h.generic
 	ln -sf $<  $@
 
-$(BUILD_DIR)/%.lua: %.lua.emlua $(LUA_SCRIPT_FILES)
+$(BUILD_DIR)/%.lua: %.lua.emlua $(LUA_SCRIPT_FILES) lua
 	$(call EMLUA_RUN, $@,)
 	
 ##########################################################################
