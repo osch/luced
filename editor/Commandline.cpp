@@ -26,26 +26,54 @@ using namespace LucED;
 Commandline::Ptr Commandline::createFromQuotedString(const String& commandline)
 {
     Commandline::Ptr rslt(new Commandline());
-    String s;
     
-    for (int i = 0; i < commandline.getLength(); ++i)
+    const int len = commandline.getLength();
+    
+    int i = 0;
+    
+    while (i < len)
     {
-        if (commandline[i] == ' ' && s.getLength() > 0) {
+        while (i < len && commandline[i] == ' ') {
+            ++i;
+        }
+        if (i < len && commandline[i] == '"') {
+            ++i;
+
+            String s;
+            
+            while (i < len && commandline[i] != '"')
+            {
+                if (commandline[i] == '\\' && i + 1 < len) {
+                    s << commandline[i + 1];
+                    ++i;
+                } else {
+                    s << commandline[i];
+                }
+                ++i;
+            }
+            if (i < len && commandline[i] == '"') {
+                ++i;
+            }
             rslt->append(s);
-            s = "";
         }
         else {
-            if (commandline[i] == '\\' && i + 1 < commandline.getLength()) {
-                s << commandline[i + 1];
-                i += 1;
-            } else {
-                s << commandline[i];
+            String s;
+            
+            while (i < len && commandline[i] != ' ')
+            {
+                if (commandline[i] == '\\' && i + 1 < len) {
+                    s << commandline[i + 1];
+                    ++i;
+                } else {
+                    s << commandline[i];
+                }
+                ++i;
             }
+            if (i < len && commandline[i] == ' ') {
+                ++i;
+            }
+            rslt->append(s);
         }
-    }
-    if (s.getLength() > 0)
-    {
-        rslt->append(s);
     }
     return rslt;
 }
@@ -61,18 +89,20 @@ String Commandline::toQuotedString() const
     {
         const String argument = this->get(i);
         
+        if (i > firstIndex) {
+            rslt << ' ';
+        }
+        rslt << '"';
+
         for (int j = 0; j < argument.getLength(); ++j)
         {
-            if (j == 0 && i > firstIndex) {
-                rslt << ' ';
-            }
             switch (argument[j]) {
-                case ' ': {
-                    rslt << "\\ ";
+                case '"': {
+                    rslt << "\\\"";  //    "   ->   \"
                     break;
                 }
                 case '\\': {
-                    rslt << "\\\\";
+                    rslt << "\\\\";  //    \   ->   \\
                     break;
                 }
                 default: {
@@ -81,6 +111,7 @@ String Commandline::toQuotedString() const
                 }
             }
         }
+        rslt << '"';
     }
     return rslt;
 }
