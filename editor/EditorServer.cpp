@@ -150,7 +150,9 @@ void EditorServer::processCommandline(Commandline::Ptr commandline,
                 instanceName = fromEnv;
             }
         }
-        GuiRoot::getInstance()->setInstanceName(instanceName);
+        if (!GuiRoot::getInstance()->hasInstanceName()) {
+            GuiRoot::getInstance()->setInstanceName(instanceName);
+        }
 
         
         serverProperty = ClientServerUtil::getServerRunningProperty(instanceName);

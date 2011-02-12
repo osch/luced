@@ -119,7 +119,7 @@ GuiRoot::GuiRoot()
       hadDetecableAutorepeatFlag(false),
       detecableAutorepeatFlag(false),
       x11InputMethod(NULL),
-      hasInstanceName(false)
+      hasInstanceNameFlag(false)
 {
     XSetErrorHandler(myX11ErrorHandler);
     XSetIOErrorHandler(myFatalX11ErrorHandler);

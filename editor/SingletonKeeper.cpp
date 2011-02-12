@@ -36,10 +36,4 @@ SingletonKeeper::Ptr SingletonKeeper::create()
     return rslt;
 }
 
-SingletonKeeper* SingletonKeeper::getInstance()
-{
-    ASSERT(instance.isValid());
-    return instance.getRawPtr();
-}
-
 

@@ -32,10 +32,14 @@ namespace LucED {
 class SingletonKeeper : public HeapObject
 {
 public:
-    typedef OwningPtr<SingletonKeeper>     Ptr;
+    typedef OwningPtr<SingletonKeeper> Ptr;
     
-    static Ptr              create();
-    static SingletonKeeper* getInstance();
+    static Ptr create();
+
+    static SingletonKeeper* getInstance() {
+        ASSERT(instance.isValid());
+        return instance.getRawPtr();
+    }
     
     template<class T> WeakPtr<T> add(OwningPtr<T> singletonPtr) {
         singletons.append(singletonPtr);

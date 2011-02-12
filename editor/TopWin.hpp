@@ -186,6 +186,7 @@ private:
     RawPtr<OwnedTopWins> myOwner;
     bool mapped;
     bool requestFocusAfterMapped;
+    bool raiseAfterMapped;
     
     bool focusFlag;
     

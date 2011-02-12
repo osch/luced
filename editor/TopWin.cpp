@@ -56,6 +56,7 @@ TopWin::TopWin()
     : ownedTopWins(OwnedTopWins::create()),
       mapped(false),
       requestFocusAfterMapped(false),
+      raiseAfterMapped(false),
       focusFlag(false),
       shouldRaiseAfterFocusIn(false),
       isClosingFlag(false),
@@ -253,6 +254,10 @@ GuiWidget::ProcessingResult TopWin::processGuiWidgetEvent(const XEvent* event)
                 if (requestFocusAfterMapped) {
                     XSetInputFocus(guiWidget->getDisplay(), guiWidget->getWid(), RevertToNone, EventDispatcher::getInstance()->getLastX11Timestamp());
                     requestFocusAfterMapped = false;
+                }
+                if (raiseAfterMapped) {
+                    raiseAfterMapped = false;
+                    raise();
                 }
                 notifyAboutBeingMapped();
                 mappingNotifyCallbacks.invokeAllCallbacks(true);
@@ -731,13 +736,18 @@ void TopWin::raise()
 {
     if (!isClosingFlag)
     {
-        if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
-            && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100)
+        if (isMapped())
         {
-            // vendor <Hummingbird Communications Ltd.> <6100>
-            this->shouldRaiseAfterFocusIn = true; // delayed raise is Workaround for Exceed X11-Server
+            if (   GuiRoot::getInstance()->getX11ServerVendorString().startsWith("Hummingbird")
+                && GuiRoot::getInstance()->getX11ServerVendorRelease() == 6100)
+            {
+                // vendor <Hummingbird Communications Ltd.> <6100>
+                this->shouldRaiseAfterFocusIn = true; // delayed raise is Workaround for Exceed X11-Server
+            }
+            internalRaise();
+        } else {
+            raiseAfterMapped = true;
         }
-        internalRaise();
     }
 }
 

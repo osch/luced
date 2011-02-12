@@ -104,13 +104,16 @@ public:
     Atom getX11Utf8StringAtom() const {
         return x11AtomForUtf8String;
     }
+    bool hasInstanceName() const {
+        return hasInstanceNameFlag;
+    }
     void setInstanceName(const String& instanceName) {
-        ASSERT(!hasInstanceName);
+        ASSERT(!hasInstanceNameFlag);
         this->instanceName = instanceName;
-        hasInstanceName = true;
+        hasInstanceNameFlag = true;
     }
     String getInstanceName() const {
-        ASSERT(hasInstanceName);
+        ASSERT(hasInstanceNameFlag);
         return instanceName;
     }
     
@@ -148,7 +151,7 @@ private:
     XIM x11InputMethod;
     Atom x11AtomForUtf8String;
     
-    bool   hasInstanceName;
+    bool   hasInstanceNameFlag;
     String instanceName;
 };
 
