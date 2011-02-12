@@ -23,6 +23,17 @@ return
     },
     
     {
+      name            = "xml",
+      syntaxName      = "this.xml",
+      fileNameRegex   =  [[^.*\.(xml|xsd)$]],
+      approximateUnknownHiliting = true,
+      approximateUnknownHilitingReparseRange = 2000,
+      hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 4,
+    },
+    
+    {
       name            = "lua",
       syntaxName      = "this.lua",
       fileNameRegex   =  [[^.*\.lua$|^.*\.lua\.emlua$]],
