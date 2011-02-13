@@ -51,14 +51,26 @@ TextData::TextData()
     EventDispatcher::getInstance()->registerUpdateSource(newCallback(this, &TextData::flushPendingUpdates));
 }
 
+
 void TextData::loadFile(const String& filename, const String& encoding)
+{
+    ByteBuffer buffer;
+    File(filename).loadInto(&buffer);
+
+    this->takeOverFileBuffer(filename, encoding, &buffer);
+}    
+
+
+void TextData::takeOverFileBuffer(const String& filename, 
+                                  const String& encoding,
+                                  RawPtr<ByteBuffer> bufferPtr)
 {
     fileContentEncoding = encoding;
 
     File file(filename);
-
-    file.loadInto(buffer);
     
+    this->buffer.takeOver(bufferPtr);
+
     EncodingConverter c(fileContentEncoding, "UTF-8");
     
     if (c.isConvertingBetweenDifferentCodesets())
@@ -142,7 +154,7 @@ void TextData::reloadFile()
     }
     
     buffer.clear();
-    file.loadInto(buffer);
+    file.loadInto(&buffer);
 
     EncodingConverter c(fileContentEncoding, "UTF-8");
     
@@ -264,7 +276,7 @@ void TextData::save()
             c.convertToFile(buffer, file);
         }
         else {
-            file.storeData(buffer);
+            file.storeData(&buffer);
         }
 
         setToSavedState();

@@ -116,7 +116,10 @@ void FileOpener::openFiles()
 
                 try
                 {
-                    textData->loadFile(fileName, encoding);
+                    ByteBuffer buffer; 
+                    File(fileName).loadInto(&buffer);
+                    
+                    textData->takeOverFileBuffer(fileName, encoding, &buffer);
                 }
                 catch (BaseException& ex)
                 {
