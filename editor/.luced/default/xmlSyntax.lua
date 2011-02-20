@@ -65,7 +65,7 @@ return
         string1 = {
         	style = contentStyle,
                 beginPattern     = [["]],
-                endPattern       = [["|\n]],
+                endPattern       = [["]],
                 maxBeginExtend   = 2,
                 maxEndExtend     = 2,
                 childPatterns    = { "entity" },
@@ -73,7 +73,7 @@ return
         string2 = {
         	style = contentStyle,
                 beginPattern     = [[']],
-                endPattern       = [['|\n]],
+                endPattern       = [[']],
                 maxBeginExtend   = 2,
                 maxEndExtend     = 2,
                 childPatterns    = { "entity" },
