@@ -50,7 +50,7 @@ File::File(const String& path, const String& fileName)
 
 
 
-void File::loadInto(ByteBuffer& buffer) const
+void File::loadInto(RawPtr<ByteBuffer> buffer) const
 {
     int fd = open(name.toCString(), O_RDONLY);
 
@@ -62,15 +62,15 @@ void File::loadInto(ByteBuffer& buffer) const
             throw FileException(errno, String() << "error accessing file '" << name << "': " << strerror(errno));
         }
         long  len       = statData.st_size;
-        long  oldLen    = buffer.getLength();
-        byte* ptr       = buffer.appendAmount(len);
+        long  oldLen    = buffer->getLength();
+        byte* ptr       = buffer->appendAmount(len);
         long  bytesRead = read(fd, ptr, len);
 
         if (bytesRead < 0) {
             throw FileException(errno, String() << "error reading from file '" << name << "': " << strerror(errno));
         }
         if (bytesRead < len) {
-            buffer.removeTail(oldLen + bytesRead);
+            buffer->removeTail(oldLen + bytesRead);
         }
         if (close(fd) == -1) {
             throw FileException(errno, String() << "error closing file '" << name << "' after reading: " << strerror(errno));
@@ -128,10 +128,10 @@ void File::storeData(const char* data) const
     storeData(data, strlen(data));
 }
 
-void File::storeData(ByteBuffer& data) const
+void File::storeData(RawPtr<ByteBuffer> data) const
 {
-    int length = data.getLength();
-    storeData((char*)data.getAmount(0, length), length);
+    int length = data->getLength();
+    storeData((char*)data->getAmount(0, length), length);
 }
 
 String File::getAbsoluteName() const

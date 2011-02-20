@@ -28,17 +28,18 @@
 #include "types.hpp"
 #include "NonCopyable.hpp"
 #include "String.hpp"
+#include "RawPointable.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED {
 
-class HeapMem
+class HeapMem : public RawPointable
 {
 public:
-    
-    HeapMem() {
-        capacity = 0;
-        buffer = NULL;
-    }
+    HeapMem()
+        : capacity(0),
+          buffer(NULL)
+    {}
     
     HeapMem(const HeapMem& src) {
         capacity = 0;
@@ -57,6 +58,25 @@ public:
         increaseTo(src.capacity);
         memcpy(buffer, src.buffer, src.capacity);
         return *this;
+    }
+    
+    void clear() {
+        if (buffer != NULL) {
+            free(buffer);
+            capacity = 0;
+            buffer = NULL;
+        }
+    }
+    
+    void takeOver(RawPtr<HeapMem> src) {
+        if (buffer != NULL) {
+            free(buffer);
+        }
+        this->capacity = src->capacity;
+        this->buffer   = src->buffer;
+
+        src->capacity = 0;
+        src->buffer   = 0;
     }
     
     long getCapacity() const {
@@ -97,9 +117,8 @@ public:
     }
     
 private:
-    long capacity;
-    byte *buffer;
-
+    long  capacity;
+    byte* buffer;
 };
 
 } // namespace LucED

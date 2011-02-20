@@ -178,6 +178,10 @@ public:
     }
 
     void loadFile(const String& filename, const String& encoding = "");
+
+    void takeOverFileBuffer(const String& filename, 
+                            const String& encoding,
+                            RawPtr<ByteBuffer> buffer);
     void reloadFile();
     void setRealFileName(const String& filename);
     void setPseudoFileName(const String& filename);

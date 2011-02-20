@@ -100,7 +100,7 @@ LuaAccess::Result LuaAccess::executeExpression(const char* scriptBegin, long scr
 LuaAccess::Result LuaAccess::executeFile(String name) const
 {
     ByteBuffer buffer;
-    File(name).loadInto(buffer);
+    File(name).loadInto(&buffer);
     return executeScript((const char*) buffer.getTotalAmount(), buffer.getLength(), name);
 }
 

@@ -117,13 +117,13 @@ public:
         return File(getDirName());
     }
 
-    void loadInto(ByteBuffer& buffer) const;
+    void loadInto(RawPtr<ByteBuffer> buffer) const;
     
     void storeData(const char* data, int length) const;
 
     void storeData(const char* data) const;
     
-    void storeData(ByteBuffer& data) const;
+    void storeData(RawPtr<ByteBuffer> data) const;
     
     bool exists() const;
     

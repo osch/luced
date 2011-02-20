@@ -24,6 +24,7 @@
 
 #include "HeapMem.hpp"
 #include "RawPointable.hpp"
+#include "RawPtr.hpp"
 #include "MemArray.hpp"
 
 namespace LucED {
@@ -37,11 +38,24 @@ template<typename T> class MemBuffer : public RawPointable,
 {
 public:
 
-    MemBuffer(long size = 0) {
-        this->gapPos = 0;
-        this->gapSize = 0;
+    MemBuffer(long size = 0) 
+        : gapPos(0),
+          gapSize(0)
+    {
         insertAmount(0, size);
     }
+    
+    void takeOver(RawPtr< MemBuffer<T> > rhs)
+    {
+        this->gapPos  = rhs->gapPos;
+        this->gapSize = rhs->gapSize;
+
+        this->mem.takeOver(&rhs->mem);
+        
+        rhs->gapPos  = 0;
+        rhs->gapSize = 0;
+    }
+    
     long getLength() const {
         return (mem.getCapacity() - gapSize) / sizeof(T);
     }
