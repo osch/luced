@@ -41,6 +41,7 @@ public:
         : hasInstanceNameFlag(false),
           hasCloneDefaultConfigFlag(false),
           noServerFlag(false),
+          hasQuitServerFlag(false),
           fileParameterList(HeapObjectArray<FileOpener::FileParameter>::create())
     {}
 
@@ -106,6 +107,10 @@ public:
                 {
                     hasCloneDefaultConfigFlag = true;
                 }
+                else if (commandline->get(i) == "-qs" || commandline->get(i) == "--quit-server")
+                {
+                    hasQuitServerFlag = true;
+                }
                 else if (commandline->get(i) == "-ns" || commandline->get(i) == "--no-server")
                 {
                     noServerFlag = true;
@@ -144,6 +149,9 @@ public:
     bool hasCloneDefaultConfig() const {
         return hasCloneDefaultConfigFlag;
     }
+    bool hasQuitServer() const {
+        return hasQuitServerFlag;
+    }
     
     bool hasNoServerFlag() const {
         return noServerFlag;
@@ -157,6 +165,7 @@ private:
     bool hasInstanceNameFlag;
     bool hasCloneDefaultConfigFlag;
     bool noServerFlag;
+    bool hasQuitServerFlag;
     HeapObjectArray<FileOpener::FileParameter>::Ptr fileParameterList;
 };
 

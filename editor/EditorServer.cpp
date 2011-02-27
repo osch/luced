@@ -34,6 +34,7 @@
 #include "FileException.hpp"
 #include "FileOpener.hpp"
 #include "ConfigErrorHandler.hpp"
+#include "WindowCloser.hpp"
 
 using namespace LucED;
 
@@ -177,6 +178,9 @@ void EditorServer::processCommandline(Commandline::Ptr commandline,
         else
         {
             FileOpener::start(commandInterpreter.getFileParameterList());
+        }
+        if (commandInterpreter.hasQuitServer()) {
+            WindowCloser::start();
         }
     }
     else

@@ -305,6 +305,8 @@ The following options can ba passed (both short and long forms are possible):
                         the commandline. The following commandline argument
                         must be the name of the desired encoding.
 
+   * `-qs`, `--quit-server` to shut down a running server instance from the commandline.
+
    * `-cdc`, `--clone-default-config` to clone the built-in config package
                                       *default* in the LucED config directory.
 
