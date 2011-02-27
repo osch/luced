@@ -182,6 +182,10 @@ public:
     void takeOverFileBuffer(const String& filename, 
                             const String& encoding,
                             RawPtr<ByteBuffer> buffer);
+
+    RawPtr<const ByteBuffer> getByteBuffer() const {
+        return &buffer;
+    }                            
     void reloadFile();
     void setRealFileName(const String& filename);
     void setPseudoFileName(const String& filename);

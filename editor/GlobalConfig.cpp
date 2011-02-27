@@ -74,7 +74,12 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode:
 
 LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const String& fileName) const
 {
-    return languageModes->getLanguageMode(languageModeSelectors->getLanguageModeNameForFile(fileName));
+    return languageModes->getLanguageMode(languageModeSelectors->getLanguageModeNameForFileName(fileName));
+}
+
+LanguageMode::Ptr GlobalConfig::getLanguageModeForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent) const
+{
+    return languageModes->getLanguageMode(languageModeSelectors->getLanguageModeNameForFileNameAndContent(fileName, fileContent));
 }
 
 

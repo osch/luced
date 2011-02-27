@@ -31,6 +31,8 @@
 #include "SyntaxPatterns.hpp"
 #include "OwningPtr.hpp"
 #include "ConfigData.hpp"
+#include "RawPtr.hpp"
+#include "ByteBuffer.hpp"
 
 
 namespace LucED
@@ -57,7 +59,8 @@ public:
         return selectors[i];
     }
     
-    String getLanguageModeNameForFile(const String& fileName);
+    String getLanguageModeNameForFileName(const String& fileName);
+    String getLanguageModeNameForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent);
 
 private:
     LanguageModeSelectors()

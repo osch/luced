@@ -148,8 +148,7 @@ public:
                 editorTopWin->invokeSaveAsPanel(newCallback(this, &ActionInterface::handleSaveKey));
             }
             else {
-                textData->save();
-                GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
+                editorTopWin->save();
             }
         } catch (FileException& ex) {
             editorTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
@@ -790,6 +789,19 @@ void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
     setWindowTitle();
 }
 
+void EditorTopWin::save()
+{
+    textData->save();
+    GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
+
+    LanguageMode::Ptr newLanguageMode = GlobalConfig::getInstance()->getLanguageModeForFileNameAndContent(textData->getFileName(), 
+                                                                                                          textData->getByteBuffer());
+    if (newLanguageMode != textEditor->getHilitedText()->getLanguageMode()) {
+        textEditor->getHilitedText()->setLanguageMode(newLanguageMode);
+    }
+}
+
+
 void EditorTopWin::saveAndClose()
 {
     try {
@@ -797,8 +809,7 @@ void EditorTopWin::saveAndClose()
             invokeSaveAsPanel(newCallback(this, &EditorTopWin::saveAndClose));
         }
         else {
-            textData->save();
-            GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
+            this->save();
             requestCloseWindow(TopWin::CLOSED_SILENTLY);
         }
     } catch (FileException& ex) {
@@ -894,7 +905,7 @@ bool EditorTopWin::UserDefinedActionMethods::invokeActionMethod(ActionId actionI
                 {
                     if (thisTopWin->textData->getModifiedFlag() == true) {
                         if (!thisTopWin->textData->isFileNamePseudo()) {
-                            thisTopWin->textData->save();
+                            thisTopWin->save();
                         }
                     }
                     HeapHashMap<String,String>::Ptr env = HeapHashMap<String,String>::create();

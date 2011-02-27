@@ -116,6 +116,9 @@ public:
     T* getTotalAmount() {
         return getAmount(0, getLength());
     }
+    const T* getTotalAmount() const {
+        return getAmount(0, getLength());
+    }
     T* insertAmount(long startPos, long amount) {
         T* rslt;
         moveGap(startPos);

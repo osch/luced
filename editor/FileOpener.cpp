@@ -110,19 +110,28 @@ void FileOpener::openFiles()
 
             if (lastTopWin.isInvalid() && numberOfRaisedWindows < numberOfWindows)
             {
-                LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
                 TextData::Ptr     textData     = TextData::create();
-                HilitedText::Ptr  hilitedText  = HilitedText::create(textData, languageMode);
+                LanguageMode::Ptr languageMode;
+                HilitedText::Ptr  hilitedText;
 
                 try
                 {
                     ByteBuffer buffer; 
                     File(fileName).loadInto(&buffer);
                     
+                    languageMode = GlobalConfig::getInstance()->getLanguageModeForFileNameAndContent(fileName, &buffer);
+                    hilitedText  = HilitedText::create(textData, languageMode);
+
                     textData->takeOverFileBuffer(fileName, encoding, &buffer);
                 }
                 catch (BaseException& ex)
                 {
+                    if (!languageMode.isValid()) {
+                        languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
+                    }
+                    if (!hilitedText.isValid()) {
+                        hilitedText  = HilitedText::create(textData, languageMode);
+                    }
                     isWaitingForMessageBox = true;
                     
                     bool fileNotExisting = false;

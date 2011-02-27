@@ -40,7 +40,7 @@ void LanguageModeSelectors::append(LanguageModeSelector::Ptr selector)
     }
 }
 
-String LanguageModeSelectors::getLanguageModeNameForFile(const String& fileName)
+String LanguageModeSelectors::getLanguageModeNameForFileName(const String& fileName)
 {
     for (int i = 0; i < selectors.getLength(); ++i)
     {
@@ -50,6 +50,39 @@ String LanguageModeSelectors::getLanguageModeNameForFile(const String& fileName)
             if (matched && ovector[0] == 0 && ovector[1] == fileName.getLength()) {
                 return selectors[i]->getLanguageMode();
             }
+        }
+    }
+    return "default";
+}
+
+String LanguageModeSelectors::getLanguageModeNameForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent)
+{
+    for (int i = 0; i < selectors.getLength(); ++i)
+    {
+        LanguageModeSelector::Ptr selector = selectors[i];
+        
+        bool fileNameMatched = false;
+        bool contentMatched  = false;
+                
+        Nullable<BasicRegex> fileNameRegex = selector->getFileNameRegex();
+        Nullable<BasicRegex> contentRegex  = selector->getContentRegex();
+        
+        if (fileNameRegex.isValid()) {
+            bool matched = fileNameRegex.get().findMatch(fileName.toCString(), fileName.getLength(), 0, BasicRegex::MatchOptions(), ovector);
+            if (matched && ovector[0] == 0 && ovector[1] == fileName.getLength()) {
+                fileNameMatched = true;
+            }
+        }
+        if (contentRegex.isValid()) {
+            bool matched = contentRegex.get().findMatch((const char*)fileContent->getTotalAmount(), fileContent->getLength(), 0, BasicRegex::MatchOptions(), ovector);
+            if (matched) {
+                contentMatched = true;
+            }
+        }
+        if (   (!fileNameRegex.isValid() || fileNameRegex.isValid() && fileNameMatched)
+            && ( !contentRegex.isValid() ||  contentRegex.isValid() && contentMatched))
+        {
+            return selector->getLanguageMode();
         }
     }
     return "default";

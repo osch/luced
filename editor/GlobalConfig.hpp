@@ -63,6 +63,7 @@ public:
                                                          Callback<SyntaxPatterns::Ptr>::Ptr changeCallback) const;
 
     LanguageMode::Ptr   getLanguageModeForFileName(const String& fileName) const;
+    LanguageMode::Ptr   getLanguageModeForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent) const;
     LanguageMode::Ptr   getDefaultLanguageMode() const;
 
     void notifyAboutNewFileContent(String absoluteFileName);

@@ -97,6 +97,7 @@ public:
     }
 
     void requestCloseWindowAndDiscardChanges();
+    void save();
     void saveAndClose();
     
     bool checkForFileModifications();

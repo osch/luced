@@ -83,14 +83,6 @@ void SaveAsPanel::continueSave()
     String newFileName  = EncodingConverter::convertUtf8ToLocaleStringIgnoreErrors(utf8FileName);
 
     RawPtr<TextData> textData = editorWidget->getTextData();
-
-    if (textData->getFileName() != newFileName)
-    {
-        LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(newFileName);
-        if (languageMode != editorWidget->getHilitedText()->getLanguageMode()) {
-            editorWidget->getHilitedText()->setLanguageMode(languageMode);
-        }
-    }
     textData->setRealFileName(newFileName);
     requestClose();
     saveCallback->call();
