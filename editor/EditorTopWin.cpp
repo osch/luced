@@ -362,7 +362,8 @@ void EditorTopWin::treatConfigUpdate()
         newLanguageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
     }
     else {
-        newLanguageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(textData->getFileName());
+        newLanguageMode = GlobalConfig::getInstance()->getLanguageModeForFileNameAndContent(textData->getFileName(), 
+                                                                                            textData->getByteBuffer());
     }
     textEditor->getHilitedText()->setLanguageMode(newLanguageMode);
 }
