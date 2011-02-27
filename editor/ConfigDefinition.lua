@@ -210,7 +210,7 @@ return
                             {   name    = "fileNameRegex",
                                 type    = "Nullable<BasicRegex>"
                             },
-                            {   name    = "contentRegex",
+                            {   name    = "fileContentRegex",
                                 type    = "Nullable<BasicRegex>"
                             }
                         }

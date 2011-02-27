@@ -32,8 +32,8 @@ void LanguageModeSelectors::append(LanguageModeSelector::Ptr selector)
             ovector.increaseTo(regex.getOvecSize());
         }
     }
-    if (selector->getContentRegex() != Null) {
-        BasicRegex regex = selector->getContentRegex();
+    if (selector->getFileContentRegex() != Null) {
+        BasicRegex regex = selector->getFileContentRegex();
         if (regex.isValid()) {
             ovector.increaseTo(regex.getOvecSize());
         }
@@ -65,7 +65,7 @@ String LanguageModeSelectors::getLanguageModeNameForFileNameAndContent(const Str
         bool contentMatched  = false;
                 
         Nullable<BasicRegex> fileNameRegex = selector->getFileNameRegex();
-        Nullable<BasicRegex> contentRegex  = selector->getContentRegex();
+        Nullable<BasicRegex> contentRegex  = selector->getFileContentRegex();
         
         if (fileNameRegex.isValid()) {
             bool matched = fileNameRegex.get().findMatch(fileName.toCString(), fileName.getLength(), 0, BasicRegex::MatchOptions(), ovector);
