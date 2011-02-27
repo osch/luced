@@ -77,9 +77,13 @@ LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const String& fileNam
     return languageModes->getLanguageMode(languageModeSelectors->getLanguageModeNameForFileName(fileName));
 }
 
-LanguageMode::Ptr GlobalConfig::getLanguageModeForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent) const
+GlobalConfig::LanguageModeAndEncoding GlobalConfig::getLanguageModeAndEncodingForFileNameAndContent(const String& fileName, 
+                                                                                                    RawPtr<const ByteBuffer> fileContent) const
 {
-    return languageModes->getLanguageMode(languageModeSelectors->getLanguageModeNameForFileNameAndContent(fileName, fileContent));
+    LanguageModeSelectors::Result result = languageModeSelectors->getResultForFileNameAndContent(fileName, fileContent);
+
+    return LanguageModeAndEncoding(languageModes->getLanguageMode(result.languageModeName),
+                                   result.encodingName);
 }
 
 

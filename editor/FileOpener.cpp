@@ -119,8 +119,18 @@ void FileOpener::openFiles()
                     ByteBuffer buffer; 
                     File(fileName).loadInto(&buffer);
                     
-                    languageMode = GlobalConfig::getInstance()->getLanguageModeForFileNameAndContent(fileName, &buffer);
+                    GlobalConfig::LanguageModeAndEncoding result= GlobalConfig::getInstance()
+                                                                  ->getLanguageModeAndEncodingForFileNameAndContent
+                                                                  (
+                                                                    fileName, 
+                                                                    &buffer
+                                                                  );
+                    languageMode = result.languageMode;
                     hilitedText  = HilitedText::create(textData, languageMode);
+                    
+                    if (encoding.getLength() == 0 && result.encoding.getLength() > 0) {
+                        encoding = result.encoding;
+                    }
 
                     textData->takeOverFileBuffer(fileName, encoding, &buffer);
                 }

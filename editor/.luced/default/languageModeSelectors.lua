@@ -34,11 +34,11 @@ return
     },
     {
         languageMode              = "xml",
-        fileNameRegex             = "^.*\\.(?:xml)$",
+        fileContentRegex           = [[^\<\?xml[^\n]*(encoding="(?P<ENCODING>[^"]*)")\?\>]],
     },
     {
         languageMode              = "xml",
-        fileContentRegex           = [[^\<\?xml[^\n]*\?\>]],
+        fileNameRegex             = "^.*\\.(?:xml)$",
     },
     {
         languageMode              = "shell",

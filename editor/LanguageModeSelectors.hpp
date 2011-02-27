@@ -49,6 +49,18 @@ public:
         return Ptr(new LanguageModeSelectors());
     }
     
+    class Result
+    {
+    public:
+        Result(const String& languageModeName,
+               const String& encodingName)
+            : languageModeName(languageModeName),
+              encodingName(encodingName)
+        {}
+        String languageModeName;
+        String encodingName;
+    };
+    
     void append(LanguageModeSelector::Ptr languageModeSelector);
 
     int getLength() const {
@@ -60,7 +72,7 @@ public:
     }
     
     String getLanguageModeNameForFileName(const String& fileName);
-    String getLanguageModeNameForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent);
+    Result getResultForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent);
 
 private:
     LanguageModeSelectors()

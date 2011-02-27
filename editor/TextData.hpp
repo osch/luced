@@ -178,6 +178,10 @@ public:
     }
 
     void loadFile(const String& filename, const String& encoding = "");
+    
+    void setEncoding(const String& encodingName) {
+        this->fileContentEncoding = encodingName;
+    }
 
     void takeOverFileBuffer(const String& filename, 
                             const String& encoding,

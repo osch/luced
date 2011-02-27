@@ -362,8 +362,16 @@ void EditorTopWin::treatConfigUpdate()
         newLanguageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
     }
     else {
-        newLanguageMode = GlobalConfig::getInstance()->getLanguageModeForFileNameAndContent(textData->getFileName(), 
-                                                                                            textData->getByteBuffer());
+        GlobalConfig::LanguageModeAndEncoding result = GlobalConfig::getInstance()
+                                                       ->getLanguageModeAndEncodingForFileNameAndContent
+                                                         (
+                                                             textData->getFileName(), 
+                                                             textData->getByteBuffer()
+                                                         );
+        if (result.encoding.getLength() > 0) {
+            textData->setEncoding(result.encoding);
+        }
+        newLanguageMode = result.languageMode;
     }
     textEditor->getHilitedText()->setLanguageMode(newLanguageMode);
 }
@@ -792,13 +800,20 @@ void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
 
 void EditorTopWin::save()
 {
+    GlobalConfig::LanguageModeAndEncoding result = GlobalConfig::getInstance()
+                                                   ->getLanguageModeAndEncodingForFileNameAndContent
+                                                     (
+                                                         textData->getFileName(), 
+                                                         textData->getByteBuffer()
+                                                     );
+    if (result.encoding.getLength() > 0 && EncodingConverter::canConvertFromTo("UTF-8", result.encoding)) {
+        textData->setEncoding(result.encoding);
+    }
     textData->save();
     GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
 
-    LanguageMode::Ptr newLanguageMode = GlobalConfig::getInstance()->getLanguageModeForFileNameAndContent(textData->getFileName(), 
-                                                                                                          textData->getByteBuffer());
-    if (newLanguageMode != textEditor->getHilitedText()->getLanguageMode()) {
-        textEditor->getHilitedText()->setLanguageMode(newLanguageMode);
+    if (result.languageMode != textEditor->getHilitedText()->getLanguageMode()) {
+        textEditor->getHilitedText()->setLanguageMode(result.languageMode);
     }
 }
 

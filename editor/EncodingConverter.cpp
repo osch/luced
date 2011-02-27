@@ -349,8 +349,7 @@ private:
 #endif
     ConvertDirection convertDirection;
 };
-    
-
+ 
 static String normalizeEncoding(String encoding)
 {
     if (encoding == "") {
@@ -367,6 +366,13 @@ static String normalizeEncoding(String encoding)
         encoding = "ISO-8859-1"; // treat them all as iso-8859-1 for maximal backwards compatibility
     }
     return encoding;
+}
+
+bool EncodingConverter::canConvertFromTo(const String& fromCodeset, 
+                                         const String& toCodeset)
+{
+    LowLevelConverter lowLevelConverter(fromCodeset, toCodeset);
+    return lowLevelConverter.isValid();
 }
 
 EncodingConverter::EncodingConverter(const String& fromCodeset, 

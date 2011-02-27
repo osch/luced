@@ -110,6 +110,8 @@ public:
         }
         return rslt;
     }
+    
+    static bool canConvertFromTo(const String& fromCodeset, const String& toCodeset);
 
     //
     // Object Methods

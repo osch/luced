@@ -20,6 +20,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "LanguageModeSelectors.hpp"
+#include "RegexException.hpp"
 
 using namespace LucED;
 
@@ -55,14 +56,15 @@ String LanguageModeSelectors::getLanguageModeNameForFileName(const String& fileN
     return "default";
 }
 
-String LanguageModeSelectors::getLanguageModeNameForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent)
+LanguageModeSelectors::Result LanguageModeSelectors::getResultForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent)
 {
     for (int i = 0; i < selectors.getLength(); ++i)
     {
         LanguageModeSelector::Ptr selector = selectors[i];
         
-        bool fileNameMatched = false;
-        bool contentMatched  = false;
+        bool   fileNameMatched = false;
+        bool   contentMatched  = false;
+        String encoding;
                 
         Nullable<BasicRegex> fileNameRegex = selector->getFileNameRegex();
         Nullable<BasicRegex> contentRegex  = selector->getFileContentRegex();
@@ -77,13 +79,26 @@ String LanguageModeSelectors::getLanguageModeNameForFileNameAndContent(const Str
             bool matched = contentRegex.get().findMatch((const char*)fileContent->getTotalAmount(), fileContent->getLength(), 0, BasicRegex::MatchOptions(), ovector);
             if (matched) {
                 contentMatched = true;
+                try
+                {
+                    int i = contentRegex.get().getStringNumber("ENCODING");
+                    if (i > 0) {
+                        int p1 = ovector[2*i];
+                        int p2 = ovector[2*i + 1];
+                        if (p1 >= 0 && p2 > p1) {
+                            encoding = String((const char*)fileContent->getAmount(p1, p2 - p1), p2 - p1);
+                        }
+                    }
+                }
+                catch (RegexException& ex)
+                {}
             }
         }
         if (   (!fileNameRegex.isValid() || fileNameRegex.isValid() && fileNameMatched)
             && ( !contentRegex.isValid() ||  contentRegex.isValid() && contentMatched))
         {
-            return selector->getLanguageMode();
+            return Result(selector->getLanguageMode(), encoding);
         }
     }
-    return "default";
+    return Result("default", "");
 }
