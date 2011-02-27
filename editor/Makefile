@@ -218,7 +218,17 @@ luced: $(BUILD_DIR)/luced.o $(BUILD_DIR)/libluced.a
 lua:  $(BUILD_DIR)/lua.o $(LUA_OBJS) $(LPOSIX_OBJS) $(LPEG_OBJS)
 	$(call LINK_RUN, $(LIBS_WITH_READLINE))
 
-HAVE_DIETLIBC := $(shell if type diet 2>/dev/null 1>&2; then echo -n yes; fi )
+HAVE_DIETLIBC     := $(shell if type diet 2>/dev/null 1>&2; then echo -n yes; fi )
+HAVE_GIT          := $(shell if type git  2>/dev/null 1>&2; then echo -n yes; fi )
+
+IS_GIT_REPOSITORY := $(shell if test -d ../.git; then echo -n yes; fi )
+
+ifeq ($(HAVE_GIT) $(IS_GIT_REPOSITORY),yes yes)
+  LS_FILES := git ls-files
+else
+  LS_FILES := ls 2>/dev/null
+endif
+
 
 ifeq ($(HAVE_DIETLIBC),yes)
 # minimal lua interpreter with minimal dependencies to the 
@@ -245,12 +255,13 @@ endif
 ###############################################################
 # release
 
-release_lua_headers    := $(patsubst %, lua/%,    $(shell cd ../lua/src; git ls-files *.h))
-release_lposix_headers := $(patsubst %, lposix/%, $(shell cd ../lposix;  git ls-files *.h))
-release_pcre_headers   := $(patsubst %, pcre/%,   $(shell cd ../pcre;    git ls-files *.h) \
+
+release_lua_headers    := $(patsubst %, lua/%,    $(shell cd ../lua/src; $(LS_FILES) *.h))
+release_lposix_headers := $(patsubst %, lposix/%, $(shell cd ../lposix;  $(LS_FILES) *.h))
+release_pcre_headers   := $(patsubst %, pcre/%,   $(shell cd ../pcre;    $(LS_FILES) *.h) \
                                                     pcre.h)
 
-release_editor_headers := $(patsubst %, editor/%,   $(shell        git ls-files *.hpp) \
+release_editor_headers := $(patsubst %, editor/%,   $(shell        $(LS_FILES) *.hpp) \
                                                     $(patsubst %,%.hpp,$(GENERATED_HEADERS)))
 
 release_headers        := $(release_lua_headers)    \
