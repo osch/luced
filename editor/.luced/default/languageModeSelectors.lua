@@ -28,4 +28,12 @@ return
         languageMode              = "java",
         fileNameRegex             = "^.*\\.(?:java)$",
     },
+    {
+        languageMode              = "shell",
+        fileNameRegex             = "^.*\\.(?:sh)$",
+    },
+    {
+        languageMode              = "shell",
+        fileContentRegex           = [[^\#\!/(?:usr/)?(?:local/)?bin/(?:ba)?sh]],
+    },
 }

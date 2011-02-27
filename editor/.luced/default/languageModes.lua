@@ -41,6 +41,16 @@ return
     },
     
     {
+      name            = "shell",
+      syntaxName      = "this.shell",
+      approximateUnknownHiliting = true,
+      approximateUnknownHilitingReparseRange = 2000,
+      hilitingBreakPointDistance = 50,
+      hardTabWidth = 8,
+      softTabWidth = 4,
+    },
+    
+    {
       name            = "rexx",
       syntaxName      = "this.rexx",
       approximateUnknownHiliting = true,
