@@ -33,6 +33,14 @@ return
         fileNameRegex             = "^.*\\.(?:sh)$",
     },
     {
+        languageMode              = "xml",
+        fileNameRegex             = "^.*\\.(?:xml)$",
+    },
+    {
+        languageMode              = "xml",
+        fileContentRegex           = [[^\<\?xml[^\n]*\?\>]],
+    },
+    {
         languageMode              = "shell",
         fileContentRegex           = [[^\#\!/(?:usr/)?(?:local/)?bin/(?:ba)?sh]],
     },
