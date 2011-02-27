@@ -37,6 +37,8 @@ template
 class Nullable
 {
 public:
+    typedef V ValueType;
+    
     Nullable()           : valid(false) {}
     Nullable(const V& v) : valid(true)  { new(&value) V(v); }
     
@@ -110,7 +112,16 @@ public:
     bool     isValid() const { return valid; }
     bool     isNull()  const { return !valid; }
     operator V()       const { ASSERT(valid); return *(const V*)(&value); }
-    V        get()     const { ASSERT(valid); return *(const V*)(&value); }
+    const V& get()     const { ASSERT(valid); return *(const V*)(&value); }
+
+    bool operator!=(NullType null) const { return !isNull(); }
+    bool operator==(NullType null) const { return  isNull(); }
+
+    bool operator!=(const ValueType& rhs) const { return !isValid() || get() != rhs; }
+    bool operator==(const ValueType& rhs) const { return  isValid() && get() == rhs; }
+
+    bool operator!=(const Nullable<ValueType>& rhs) const { return !(isNull() && rhs.isNull()) && !(isValid() && rhs.isValid() && get() == rhs.get()); }
+    bool operator==(const Nullable<ValueType>& rhs) const { return  (isNull() && rhs.isNull()) ||  (isValid() && rhs.isValid() && get() == rhs.get()); }
 
 private:
     struct { char data[sizeof(V)]; } value;
@@ -130,6 +141,8 @@ template
 class Nullable< OwningPtr<T> >
 {
 public:
+    typedef OwningPtr<T> ValueType;
+
     Nullable() {}
     Nullable(const OwningPtr<T>& v) : ptr(v) {}
     
@@ -143,6 +156,16 @@ public:
     bool         isNull()       const { return !ptr.isValid(); }
     operator     OwningPtr<T>() const { return ptr; }
     OwningPtr<T> get()          const { return ptr; }
+
+    bool operator!=(NullType null) const { return !isNull(); }
+    bool operator==(NullType null) const { return  isNull(); }
+
+    bool operator!=(const ValueType& rhs) const { return !isValid() || get() != rhs; }
+    bool operator==(const ValueType& rhs) const { return  isValid() && get() == rhs; }
+
+    bool operator!=(const Nullable<ValueType>& rhs) const { return !(isNull() && rhs.isNull()) && !(isValid() && rhs.isValid() && get() == rhs.get()); }
+    bool operator==(const Nullable<ValueType>& rhs) const { return  (isNull() && rhs.isNull()) ||  (isValid() && rhs.isValid() && get() == rhs.get()); }
+
 private:
     OwningPtr<T> ptr;
 };
@@ -154,6 +177,8 @@ template
 class Nullable< WeakPtr<T> >
 {
 public:
+    typedef WeakPtr<T> ValueType;
+
     Nullable() {}
     Nullable(const WeakPtr<T>& v) : ptr(v) {}
 
@@ -167,9 +192,20 @@ public:
     bool       isNull()       const { return !ptr.isValid(); }
     operator   WeakPtr<T>()   const { return ptr; }
     WeakPtr<T> get()          const { return ptr; }
+    
+    bool operator!=(NullType null) const { return !isNull(); }
+    bool operator==(NullType null) const { return  isNull(); }
+
+    bool operator!=(const ValueType& rhs) const { return !isValid() || get() != rhs; }
+    bool operator==(const ValueType& rhs) const { return  isValid() && get() == rhs; }
+
+    bool operator!=(const Nullable<ValueType>& rhs) const { return !(isNull() && rhs.isNull()) && !(isValid() && rhs.isValid() && get() == rhs.get()); }
+    bool operator==(const Nullable<ValueType>& rhs) const { return  (isNull() && rhs.isNull()) ||  (isValid() && rhs.isValid() && get() == rhs.get()); }
+
 private:
     WeakPtr<T> ptr;
 };
+
 
 template
 <
@@ -178,6 +214,8 @@ template
 class Nullable< RawPtr<T> >
 {
 public:
+    typedef RawPtr<T> ValueType;
+
     Nullable() {}
     Nullable(const RawPtr<T>& v) : ptr(v) {}
 
@@ -191,6 +229,16 @@ public:
     bool      isNull()      const { return !ptr.isValid(); }
     operator  RawPtr<T>()   const { return ptr; }
     RawPtr<T> get()         const { return ptr; }
+
+    bool operator!=(NullType null) const { return !isNull(); }
+    bool operator==(NullType null) const { return  isNull(); }
+
+    bool operator!=(const ValueType& rhs) const { return !isValid() || get() != rhs; }
+    bool operator==(const ValueType& rhs) const { return  isValid() && get() == rhs; }
+
+    bool operator!=(const Nullable<ValueType>& rhs) const { return !(isNull() && rhs.isNull()) && !(isValid() && rhs.isValid() && get() == rhs.get()); }
+    bool operator==(const Nullable<ValueType>& rhs) const { return  (isNull() && rhs.isNull()) ||  (isValid() && rhs.isValid() && get() == rhs.get()); }
+
 private:
     RawPtr<T> ptr;
 };

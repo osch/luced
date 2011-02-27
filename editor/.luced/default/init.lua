@@ -44,6 +44,10 @@ return
                                 return getPackage("this.textStyles")
                             end,
                             
+    getLanguageModeSelectors =  function()
+                                return getPackage("this.languageModeSelectors")
+                            end,
+                            
     getLanguageModes     =  function()
                                 return getPackage("this.languageModes")
                             end,

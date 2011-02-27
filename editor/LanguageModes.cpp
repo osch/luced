@@ -44,25 +44,6 @@ void LanguageModes::append(LanguageMode::Ptr languageMode)
 {
     modes.append(languageMode);
     nameToIndexMap.set(languageMode->getName(), modes.getLength() - 1);
-    BasicRegex regex = languageMode->getFileNameRegex();
-    if (regex.isValid()) {
-        ovector.increaseTo(regex.getOvecSize());
-    }
-}
-
-LanguageMode::Ptr LanguageModes::getLanguageModeForFile(const String& fileName)
-{
-    for (int i = 0; i < modes.getLength(); ++i)
-    {
-        BasicRegex re = modes[i]->getFileNameRegex();
-        if (re.isValid()) {
-            bool matched = re.findMatch(fileName.toCString(), fileName.getLength(), 0, BasicRegex::MatchOptions(), ovector);
-            if (matched && ovector[0] == 0 && ovector[1] == fileName.getLength()) {
-                return modes[i];
-            }
-        }
-    }
-    return defaultLanguageMode;
 }
 
 LanguageMode::Ptr LanguageModes::getDefaultLanguageMode()

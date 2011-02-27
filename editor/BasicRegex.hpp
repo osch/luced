@@ -60,7 +60,7 @@ public:
     }
     
     bool findMatch( const char* subject, int length, int startoffset,
-            MatchOptions matchOptions, MemArray<int>& ovector )
+            MatchOptions matchOptions, MemArray<int>& ovector ) const
     {
         ASSERT(pcre_callout == pcreCalloutCallback);
 
@@ -72,7 +72,7 @@ public:
     
     bool findMatch(void* object, CalloutFunction* calloutFunctionX,
                    const char* subject, int length, int startoffset,
-                   MatchOptions matchOptions, MemArray<int>& ovector)
+                   MatchOptions matchOptions, MemArray<int>& ovector) const
     {
         ASSERT(pcre_callout == pcreCalloutCallback);
         

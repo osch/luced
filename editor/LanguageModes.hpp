@@ -49,7 +49,6 @@ public:
     void append(const String& name);
     void append(LanguageMode::Ptr languageMode);
     
-    LanguageMode::Ptr getLanguageModeForFile(const String& fileName);
     LanguageMode::Ptr getDefaultLanguageMode();
 
     LanguageMode::Ptr getLanguageMode(const String& name) {
@@ -57,7 +56,11 @@ public:
         if (foundValue.isValid()) {
             return modes[foundValue.get()];
         } else {
-            return LanguageMode::Ptr();
+            if (name == "default") {
+                return defaultLanguageMode;
+            } else {
+                return LanguageMode::Ptr();
+            }
         }
     }
     

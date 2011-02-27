@@ -136,7 +136,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                  GuiWidget     
 		SingleLineDisplayActions LuaStateAccess           LuaCMethod                 LuaAccess \
 		LucedLuaInterface        EncodingException        QualifiedName              SyntaxPatternsConfig \
 		TextStyleCache           ConfigPackageLoader      FocusableWidget            FocusableElement \
-		NonFocusableWidget       FocusableContainerWidget TextStyleDefinitions  
+		NonFocusableWidget       FocusableContainerWidget TextStyleDefinitions       LanguageModeSelectors
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

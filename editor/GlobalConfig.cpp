@@ -74,7 +74,7 @@ SyntaxPatterns::Ptr GlobalConfig::getSyntaxPatternsForLanguageMode(LanguageMode:
 
 LanguageMode::Ptr GlobalConfig::getLanguageModeForFileName(const String& fileName) const
 {
-    return languageModes->getLanguageModeForFile(fileName);
+    return languageModes->getLanguageMode(languageModeSelectors->getLanguageModeNameForFile(fileName));
 }
 
 
@@ -122,6 +122,13 @@ void GlobalConfig::appendLanguageModeTo(LanguageMode::Ptr   languageMode,
         languageMode->setSyntaxName(syntaxName);
     }
     languageModes->append(languageMode);
+}
+
+void GlobalConfig::appendLanguageModeSelectorTo(LanguageModeSelector::Ptr   languageModeSelector,
+                                                LanguageModeSelectors::Ptr  languageModeSelectors, 
+                                                const String&               thisPackageName)
+{
+    languageModeSelectors->append(languageModeSelector);
 }
 
 
@@ -287,6 +294,31 @@ void GlobalConfig::readConfig()
             this->textStyleDefinitions = TextStyleDefinitions::create(fontList,
                                                                       textStyleList);
 
+            // LanguageModeSelectors
+    
+            LanguageModeSelectors::Ptr newLanguageModeSelectors = LanguageModeSelectors::create();
+            {
+                ConfigData::LanguageModeSelectors::Ptr languageModeSelectors = configData->getLanguageModeSelectors();
+                for (int i = 0; i < languageModeSelectors->getLength(); ++i)
+                {
+                    ConfigData::LanguageModeSelectors::Element::Ptr e = languageModeSelectors->get(i);
+                    if (e->isLanguageModeSelector()) 
+                    {   
+                        newLanguageModeSelectors->append(e->getLanguageModeSelector());
+                    }
+                    else
+                    {
+                        ASSERT(e->isReferer());
+                        
+                        appendConfigFromPackageTo<LanguageModeSelector,
+                                                  LanguageModeSelectors,
+                                                  appendLanguageModeSelectorTo>(e->getReferer()->getReferToPackage(),
+                                                                                "getLanguageModeSelectors",
+                                                                                newLanguageModeSelectors);
+                    }
+                }
+            }
+
             // LanguageModes
     
             LanguageModes::Ptr newLanguageModes = LanguageModes::create();
@@ -336,6 +368,8 @@ void GlobalConfig::readConfig()
                     }
                 }
             }
+            
+            languageModeSelectors = newLanguageModeSelectors;
             languageModes = newLanguageModes;
             actionKeyConfig = newActionKeyConfig;
         }

@@ -24,6 +24,10 @@ end
 local function basicRegexConverter(luaVarName)
     return "BasicRegex("..luaVarName..".toString())"
 end
+local function nullableRegexConverter(luaVarName)
+    return "("..luaVarName..".isNil() ? Nullable<BasicRegex>()"
+                                  .." : Nullable<BasicRegex>("..luaVarName..".toString()))"
+end
 
 local typeInfos =
 {
@@ -33,12 +37,19 @@ local typeInfos =
   ["double"]      = { convert = converterMethod("toNumber"),  literal = noopLiteral   },
   ["String"]      = { convert = converterMethod("toString"),  literal = stringLiteral, defaultValue = "" },
 
+  ["Nullable<String>"]      = { convert = nullableConverterMethod("String", "toString"),  literal = stringLiteral, defaultValue = "Null",
+                                                                                          isNullable = true },
+
   ["BasicRegex"]  = { convert = basicRegexConverter,
                       convertException = "RegexException",    literal = stringLiteral, defaultValue = "" },
 
+  ["Nullable<BasicRegex>"]  = { convert = nullableRegexConverter,
+                      convertException = "RegexException",    literal = stringLiteral, defaultValue = "",
+                                                              isNullable = true },
+
   ["Nullable<bool>"] 
                   = { convert = nullableConverterMethod("bool", "toBoolean"), literal = noopLiteral, defaultValue = "Null",
-                                                                      isNullable = true },
+                                                                              isNullable = true },
 
   ["map"]         = { isStructure = true },
   ["list"]        = { isStructure = true },

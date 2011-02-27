@@ -37,9 +37,6 @@
 @   firstLevelConfig[e.name] = e
 @ end
 @
-@ local packageRelatedNames = { syntaxName = true,
-@                               actionName = true }
-@
 @ local function maxFieldLength(entries, fieldName)
 @   fieldName = fieldName or "name"
 @   local m = 0
@@ -58,7 +55,7 @@
 @       for i, d in ipairs(def.entries) do
 @           local k = d.name
 @           local v = e[k]
-@           if packageRelatedNames[k] then
+@           if d.packageRelated then
 @               if startsWith(v, "this.") then
 @                   v = "default"..substr(v, 5)
 @               end
@@ -97,6 +94,16 @@ return
 @ local textStylesConfig = dofile(".luced/default/textStyles.lua")
 @ for i, e in ipairs(textStylesConfig) do
 @   serializeEntry(e, firstLevelConfig.textStyles.member.alternatives[1])
+@ end
+    
+        { referToPackage = "default" }
+    },
+    
+    languageModeSelectors = 
+    {
+@ local languageModeSelectorsConfig = dofile(".luced/default/languageModeSelectors.lua")
+@ for i, e in ipairs(languageModeSelectorsConfig) do
+@   serializeEntry(e, firstLevelConfig.languageModeSelectors.member.alternatives[1])
 @ end
     
         { referToPackage = "default" }

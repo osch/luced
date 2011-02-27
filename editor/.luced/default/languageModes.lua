@@ -3,7 +3,6 @@ return
     { 
       name            = "cplusplus",
       syntaxName      = "this.cplusplus",
-      fileNameRegex   = [[^.*\.(?:CPP|HPP|H|cpp|hpp|cxx|hxx|c|h|cc|hh)(?:\.emlua)?$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
@@ -14,7 +13,6 @@ return
     {
       name            = "jsp",
       syntaxName      = "this.jsp",
-      fileNameRegex   =  [[^.*\.(jspf?|html?)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
@@ -25,7 +23,6 @@ return
     {
       name            = "xml",
       syntaxName      = "this.xml",
-      fileNameRegex   =  [[^.*\.(xml|xsd)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
@@ -36,7 +33,6 @@ return
     {
       name            = "lua",
       syntaxName      = "this.lua",
-      fileNameRegex   =  [[^.*\.lua$|^.*\.lua\.emlua$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
@@ -47,7 +43,6 @@ return
     {
       name            = "rexx",
       syntaxName      = "this.rexx",
-      fileNameRegex   =  [[.*\.rexx?|.*\.r]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
@@ -58,7 +53,6 @@ return
     {
       name            = "emlua",
       syntaxName      = "this.emlua",
-      fileNameRegex   =  [[^(.*\.emlua|.*\.(jcl))$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
@@ -69,7 +63,6 @@ return
     {
       name            = "makefile",
       syntaxName      = "this.makefile",
-      fileNameRegex   =  [[^.*/(Makefile|.*\.h?mk(.in)?|.*\.dep)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,
@@ -80,7 +73,6 @@ return
     {
       name            = "java",
       syntaxName      = "this.java",
-      fileNameRegex   = [[^.*\.(?:java)$]],
       approximateUnknownHiliting = true,
       approximateUnknownHilitingReparseRange = 2000,
       hilitingBreakPointDistance = 50,

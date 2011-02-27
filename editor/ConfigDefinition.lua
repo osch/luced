@@ -192,6 +192,42 @@ return
             }
         },
         ------------------------------------------------------------------------
+        {   name    = "languageModeSelectors",
+            type    = "list",
+            member  =
+            {
+                name         = "element",
+                type         = "alternative",
+                alternatives =
+                {   
+                    {   name    = "languageModeSelector",
+                        type    = "map",
+                        entries =
+                        {
+                            {   name    = "languageMode",
+                                type    = "String"
+                            },
+                            {   name    = "fileNameRegex",
+                                type    = "Nullable<BasicRegex>"
+                            },
+                            {   name    = "contentRegex",
+                                type    = "Nullable<BasicRegex>"
+                            }
+                        }
+                    },
+                    {   name    = "referer",
+                        type    = "map",
+                        entries =
+                        {
+                            {   name    = "referToPackage",
+                                type    = "String"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        ------------------------------------------------------------------------
         {   name    = "languageModes",
             type    = "list",
             index   = "name",
@@ -209,10 +245,8 @@ return
                                 type    = "String"
                             },
                             {   name    = "syntaxName",
-                                type    = "String"
-                            },
-                            {   name    = "fileNameRegex",
-                                type    = "BasicRegex"
+                                type    = "String",
+                                packageRelated = true
                             },
                             {   name    = "approximateUnknownHiliting",
                                 type    = "bool",
@@ -270,7 +304,8 @@ return
                         entries =
                         {
                             {   name    = "actionName",
-                                type    = "String"
+                                type    = "String",
+                                packageRelated = true
                             },
                             {   name    = "keys",
                                 type    = "list",

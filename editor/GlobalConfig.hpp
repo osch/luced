@@ -29,6 +29,7 @@
 #include "HeapHashMap.hpp"
 #include "SyntaxPatterns.hpp"
 #include "LanguageModes.hpp"
+#include "LanguageModeSelectors.hpp"
 #include "SingletonInstance.hpp"
 #include "Callback.hpp"
 #include "CallbackContainer.hpp"
@@ -105,6 +106,10 @@ private:
                                      LanguageModes::Ptr  languageModes, 
                                      const String&       thisPackageName);
                               
+    static void appendLanguageModeSelectorTo(LanguageModeSelector::Ptr   languageModeSelector,
+                                             LanguageModeSelectors::Ptr  languageModeSelectors, 
+                                             const String&               thisPackageName);
+                              
     static void appendActionKeyBindingTo(ConfigDataActionKeyBinding::Ptr configData,
                                          ActionKeyConfig::Ptr            actionKeyConfig, 
                                          const String&                   thisPackageName);
@@ -119,9 +124,10 @@ private:
                                    const String&           getterFunctionName,
                                    typename ListType::Ptr  list);
 
-    LanguageModes::Ptr languageModes;
-    
-    SyntaxPatternsConfig::Ptr syntaxPatternsConfig;
+
+    LanguageModeSelectors::Ptr languageModeSelectors;
+    LanguageModes::Ptr         languageModes;
+    SyntaxPatternsConfig::Ptr  syntaxPatternsConfig;
     
     CallbackContainer<> configChangedCallbackContainer;
     

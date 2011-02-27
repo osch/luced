@@ -72,7 +72,9 @@ BasicRegex::BasicRegex(const ByteArray& expr, CreateOptions createOptions)
 BasicRegex::BasicRegex(const BasicRegex& src)
 {
     re = src.re;
-    pcre_refcount(re, +1);
+    if (re != NULL) {
+        pcre_refcount(re, +1);
+    }
 }
 
 
