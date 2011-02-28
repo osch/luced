@@ -30,11 +30,11 @@ return
     },
     {
         languageMode              = "shell",
-        fileNameRegex             = "^.*\\.(?:sh)$",
+        fileNameRegex             = "^.*\\.(?:sh|bashrc)$",
     },
     {
         languageMode              = "xml",
-        fileContentRegex           = [[^\<\?xml[^\n]*(encoding="(?P<ENCODING>[^"]*)")\?\>]],
+        fileContentRegex           = [[^\<\?xml[^\n]*(encoding="(?P<ENCODING>[^"]*)").*?\?\>]],
     },
     {
         languageMode              = "xml",

@@ -101,7 +101,7 @@ void @(classPath)readConfig(LuaVar luaData)
     if (!luaData.isValid())
     {
         LuaAccess luaAccess = luaData.getLuaAccess();
-        static const char* defaultValueScript = "return @(gsub(ser(defaultValues), '"', '\\"'))";
+        static const char* defaultValueScript = "return @(gsub(ser(defaultValues), '(["\\])', '\\%1'))";
         LuaAccess::Result rslt = luaAccess.executeScript(defaultValueScript, strlen(defaultValueScript));
         if (rslt.objects.getLength() > 0) {
             luaData = rslt.objects[0];
