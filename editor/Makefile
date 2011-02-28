@@ -490,7 +490,7 @@ sandbox.mk:
 ../pcre/pcre.h: ../pcre/pcre.h.generic
 	ln -sf $<  $@
 
-$(BUILD_DIR)/%.lua: %.lua.emlua $(LUA_SCRIPT_FILES) lua
+$(BUILD_DIR)/%.lua: %.lua.emlua $(LUA_SCRIPT_FILES) $(DEFAULT_PACKAGE_CONFIG_FILES) lua
 	$(call EMLUA_RUN, $@,)
 	
 ##########################################################################
