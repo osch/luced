@@ -34,6 +34,10 @@ public:
 
     typedef OwningPtr<Commandline> Ptr;
     
+    static Ptr create() {
+        return Ptr(new Commandline());
+    }
+    
     static Ptr create(int argc, char** argv) {
         return Ptr(new Commandline(argc, argv));
     }
@@ -41,6 +45,8 @@ public:
     static Ptr createFromQuotedString(const String& commandline);
     
     String toQuotedString() const;
+    
+    const char* const* getArgvPtr();
     
 private:
     Commandline()
@@ -53,6 +59,7 @@ private:
             this->append(String(argv[i]));
         }
     }
+    MemArray<const char*> argvArray;
 };
 
 } // namespace LucED

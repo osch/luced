@@ -25,6 +25,7 @@
 #include "FindPanel.hpp"
 #include "ReplacePanel.hpp"
 #include "GotoLinePanel.hpp"
+#include "ExecutePanel.hpp"
 #include "WindowCloser.hpp"
 #include "ActionMethodBinding.hpp"
 #include "TopWinActionsParameter.hpp"
@@ -49,6 +50,15 @@ public:
                                                   newCallback(this, &EditorTopWinActions::closeGotoLinePanel));
         }
         panelInvoker->invokePanel(gotoLinePanel);
+    }
+    
+    void invokeExecutePanel()
+    {
+        if (executePanel.isInvalid()) {
+            executePanel = ExecutePanel::create(editorWidget,
+                                                newCallback(this, &EditorTopWinActions::closeExecutePanel));
+        }
+        panelInvoker->invokePanel(executePanel);
     }
     
     void invokeFindPanelForward()
@@ -193,10 +203,14 @@ private:
     void closeGotoLinePanel() {
         panelInvoker->getCloseCallback()->call(gotoLinePanel);
     }
+    void closeExecutePanel() {
+        panelInvoker->getCloseCallback()->call(executePanel);
+    }
 
     FindPanel::Ptr                           findPanel;
     ReplacePanel::Ptr                        replacePanel;
     GotoLinePanel::Ptr                       gotoLinePanel;
+    ExecutePanel::Ptr                        executePanel;
 };
 
 

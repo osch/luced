@@ -303,6 +303,10 @@ return
                                                   classes     = { "EditorTopWinActions", },
     },                                                                       ------- Test
     
+    { name = "invokeExecutePanel",                description = "", 
+                                                  classes     = { "EditorTopWinActions", },
+    },                                                                       ------- Test
+    
     { name = "invokeFindPanelForward",            description = "", 
                                                   classes     = { "EditorTopWinActions", },
     },

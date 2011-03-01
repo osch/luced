@@ -178,6 +178,7 @@ void GuiWidget::setPosition(const Position& p)
     
     XMoveResizeWindow(getDisplay(), wid, p.x, p.y, w, h);
     // this->position is set via ConfigureNotify event
+    lastRequestedPosition = p;
 }
 
 Position GuiWidget::getAbsolutePosition() const

@@ -67,11 +67,6 @@ void ProgramExecutor::startExecuting()
         ::close(inpPipe[0]);
         ::close(outPipe[1]);
 
-        MemArray<char> filenameBuffer;
-        filenameBuffer.append(programName.toCString(), programName.getLength() + 1);
-
-        char* const argv[] = { filenameBuffer.getPtr(), NULL };
-        
         if (additionalEnvironment.isValid())
         {
             HashMap<String,String>::Iterator iterator = additionalEnvironment->getIterator();
@@ -83,7 +78,8 @@ void ProgramExecutor::startExecuting()
             }
         }
         
-        ::execv(programName.toCString(), argv);
+        ::execv(commandline->get(0).toCString(), 
+                (char*const*)commandline->getArgvPtr());
         
         throw SystemException(String() << "Could not execute process: " << strerror(errno));
     }

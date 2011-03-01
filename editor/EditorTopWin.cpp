@@ -926,7 +926,11 @@ bool EditorTopWin::UserDefinedActionMethods::invokeActionMethod(ActionId actionI
                     }
                     HeapHashMap<String,String>::Ptr env = HeapHashMap<String,String>::create();
                                                     env->set("FILE", thisTopWin->getFileName());
-                    ProgramExecutor::start("/bin/sh",
+
+                    Commandline::Ptr commandline = Commandline::create();
+                                     commandline->append("/bin/sh");
+                                     
+                    ProgramExecutor::start(commandline,
                                            script,
                                            env,
                                            newCallback(thisTopWin, &EditorTopWin::finishedShellscript));

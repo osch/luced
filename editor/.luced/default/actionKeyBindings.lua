@@ -338,6 +338,10 @@ return -- default actionName key binding
         keys       = { "Ctrl+L", "Alt+X,Y,L" },
     },
     {
+        actionName = "builtin.invokeExecutePanel",
+        keys       = { "Alt+S,S" },
+    },
+    {
         actionName = "builtin.invokeFindPanelForward",
         keys       = { "Ctrl+F" },
     },

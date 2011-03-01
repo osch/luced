@@ -32,7 +32,6 @@
 #include "GuiLayoutColumn.hpp"
 #include "OwningPtr.hpp"
 #include "TopWinList.hpp"
-#include "GotoLinePanel.hpp"
 #include "MessageBox.hpp"
 #include "SaveAsPanel.hpp"
 #include "ProgramExecutor.hpp"
@@ -150,7 +149,6 @@ private:
     RawPtr<TextData>         textData;
     StatusLine::Ptr statusLine;
     GuiLayoutColumn::Ptr rootElement;
-    GotoLinePanel::Ptr gotoLinePanel;
 
     int upperPanelIndex;
     int lowerPanelIndex;

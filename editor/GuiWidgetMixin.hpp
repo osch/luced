@@ -63,11 +63,14 @@ public:
 
     virtual void setPosition(const Position& p)
     {
-        if (p != BaseClass::getPosition()) {
-            if (guiWidget.isValid()) {
+    
+        if (guiWidget.isValid()) {
+            if (p != guiWidget->getLastRequestedPosition()) {
                 guiWidget->setPosition(p);
             }
-            else {
+        }
+        else {
+            if (p != BaseClass::getPosition()) {
                 BaseClass::setPosition(p);
                 this->width  = p.w - 2 * borderWidth;
                 this->height = p.h - 2 * borderWidth;

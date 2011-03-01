@@ -85,6 +85,10 @@ public:
     
     virtual ProcessingResult processEvent(const XEvent* event);
     virtual void setPosition(const Position& newPosition);
+
+    Position getLastRequestedPosition() const {
+        return lastRequestedPosition;
+    }
     Position getAbsolutePosition() const;
     
     virtual void show();
@@ -199,6 +203,7 @@ private:
     bool isTopWindow;
     WidgetId wid;
     long eventMask;
+    Position lastRequestedPosition;
     Position position;
     GC gcid;
 

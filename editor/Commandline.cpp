@@ -116,3 +116,12 @@ String Commandline::toQuotedString() const
     return rslt;
 }
 
+const char* const* Commandline::getArgvPtr()
+{
+    argvArray.clear();
+    for (int i = 0; i < this->getLength(); ++i) {
+        argvArray.append(this->get(i).toCString());
+    }
+    argvArray.append(NULL);
+    return argvArray.getPtr(0);
+}
