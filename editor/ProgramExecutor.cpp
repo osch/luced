@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #include "ProgramExecutor.hpp"
 #include "SystemException.hpp"
@@ -92,6 +93,9 @@ void ProgramExecutor::startExecuting()
     
     ::close(inpPipe[0]);
     ::close(outPipe[1]);
+
+    fcntl(inpPipe[1], F_SETFL, fcntl(inpPipe[1],F_GETFL) | O_NONBLOCK);
+    fcntl(outPipe[0], F_SETFL, fcntl(outPipe[0],F_GETFL) | O_NONBLOCK);
     
     EventDispatcher::getInstance()
         ->registerForTerminatingChildProcess(pid, 
