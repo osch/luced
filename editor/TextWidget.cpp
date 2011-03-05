@@ -912,6 +912,8 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
     long lastBackgroundX = 0;
     int leftPixOffset = li->leftPixOffset;
     
+    li->hasCursor = false; // will be set to true, if cursor is within line
+
     if (buf.getLength() > 0)
     {
         ptr = buf.getPtr(0);
@@ -974,8 +976,6 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
                 }
                 li->hasCursor = true;
                 li->lastDrawnCursorPixX = cursorX;
-            } else {
-                li->hasCursor = false;
             }
 
             if (len > 0 && *ptr != TAB_CHARACTER) {
@@ -1012,8 +1012,6 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y)
             }
             li->hasCursor = true;
             li->lastDrawnCursorPixX = cursorX;
-        } else {
-            li->hasCursor = false;
         }
     }
 }
@@ -1424,7 +1422,8 @@ void TextWidget::redrawChanged(long spos, long epos)
                     tempLineInfo = *li;
                     fillLineInfo(pos, li);
 
-                    if (tempLineInfo.isDifferentOnScreenThan(*li)) {
+                    if (tempLineInfo.isDifferentOnScreenThan(*li))
+                    {
                         if (y + lineAscent + li->maxCharDescent > minY && y + lineAscent - li->maxCharAscent < maxY) {
                             if (nextLi.isValid() && !nextLi->valid) {
                                 long npos = li->endOfLinePos;
