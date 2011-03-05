@@ -973,11 +973,12 @@ void EditorTopWin::finishedShellscript(ProgramExecutor::Result rslt)
     if (textData->wasFileModifiedOnDisk()) {
         reloadFile();
     }
-    if (rslt.outputLength > 0)
+    if (rslt.outputBuffer->getLength() > 0)
     {
         TextData::Ptr textData = TextData::create();
-        textData->setToData(rslt.outputBuffer,
-                            rslt.outputLength);
+
+        textData->takeOverBuffer(System::getInstance()->getDefaultEncoding(), 
+                                 rslt.outputBuffer);
     
         CommandOutputBox::Ptr commandOutputBox = CommandOutputBox::create(this, textData);
         commandOutputBox->show();

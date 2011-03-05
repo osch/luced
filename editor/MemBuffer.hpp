@@ -143,6 +143,12 @@ public:
     T* appendAmount(long amount) {
         return insertAmount(getLength(), amount);
     }
+    void increaseTo(long newSize) {
+        long len = getLength();
+        if (newSize > len) {
+            appendAmount(newSize - len);
+        }
+    }
     MemBuffer& append(const T& src) {
         *appendAmount(1) = src;
         return *this; 

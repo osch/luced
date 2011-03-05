@@ -187,6 +187,11 @@ public:
                             const String& encoding,
                             RawPtr<ByteBuffer> buffer);
 
+    void takeOverBuffer(const String& encoding,
+                        RawPtr<ByteBuffer> bufferPtr);
+
+    void takeOverUtf8Buffer(RawPtr<ByteBuffer> bufferPtr);
+                        
     RawPtr<const ByteBuffer> getByteBuffer() const {
         return &buffer;
     }                            
@@ -364,6 +369,10 @@ public:
     }
     long insertAtMark(MarkHandle m, const ByteArray& insertBuffer) {
         return insertAtMark(m, insertBuffer.getPtr(0), insertBuffer.getLength());
+    }
+
+    long insertAtMark(MarkHandle m, RawPtr<const ByteBuffer> insertBuffer) {
+        return insertAtMark(m, insertBuffer->getTotalAmount(), insertBuffer->getLength());
     }
 
     long undo(MarkHandle m);
@@ -598,7 +607,8 @@ private:
     friend class ViewCounterTextDataAccess;
 
     TextData();
-    
+
+    void internalTakeOverBuffer(RawPtr<ByteBuffer> bufferPtr);
     void setToSavedState();
     
     ByteBuffer             buffer;

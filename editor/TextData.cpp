@@ -61,23 +61,10 @@ void TextData::loadFile(const String& filename, const String& encoding)
 }    
 
 
-void TextData::takeOverFileBuffer(const String& filename, 
-                                  const String& encoding,
-                                  RawPtr<ByteBuffer> bufferPtr)
+void TextData::internalTakeOverBuffer(RawPtr<ByteBuffer> bufferPtr)
 {
-    fileContentEncoding = encoding;
-
-    File file(filename);
-    
     this->buffer.takeOver(bufferPtr);
 
-    EncodingConverter c(fileContentEncoding, "UTF-8");
-    
-    if (c.isConvertingBetweenDifferentCodesets())
-    {
-        c.convertInPlace(&buffer);
-    }
-    
     long len = buffer.getLength();
     byte* ptr = buffer.getTotalAmount();
 
@@ -89,6 +76,56 @@ void TextData::takeOverFileBuffer(const String& filename,
     this->beginChangedPos = 0;
     this->changedAmount = len;
     this->oldEndChangedPos = 0;
+}
+
+
+void TextData::takeOverUtf8Buffer(RawPtr<ByteBuffer> newBufferPtr)
+{
+    long oldLen = buffer.getLength();
+    
+    if (hasHistory() && oldLen > 0) {
+        history->rememberDeleteAction(0, oldLen, buffer.getTotalAmount());
+    }
+
+    internalTakeOverBuffer(newBufferPtr);
+    
+    long newLen = buffer.getLength();
+    
+    if (hasHistory()) {
+        history->rememberInsertAction(0, newLen);
+    }
+    setModifiedFlag(true);
+}
+
+
+
+void TextData::takeOverBuffer(const String& encoding,
+                              RawPtr<ByteBuffer> newBufferPtr)
+{
+    fileContentEncoding = encoding;
+    EncodingConverter c(fileContentEncoding, "UTF-8");
+    if (c.isConvertingBetweenDifferentCodesets())
+    {
+        c.convertInPlace(newBufferPtr);
+    }
+    takeOverUtf8Buffer(newBufferPtr);
+}
+
+
+void TextData::takeOverFileBuffer(const String& filename, 
+                                  const String& encoding,
+                                  RawPtr<ByteBuffer> bufferPtr)
+{
+    fileContentEncoding = encoding;
+    EncodingConverter c(fileContentEncoding, "UTF-8");
+    if (c.isConvertingBetweenDifferentCodesets())
+    {
+        c.convertInPlace(bufferPtr);
+    }
+    internalTakeOverBuffer(bufferPtr);
+
+    File file(filename);
+    
     this->fileName               = file.getAbsoluteName();
     this->utf8FileNameForDisplay = EncodingConverter::convertLocaleToUtf8StringIgnoreErrors(fileName);
     fileNameListeners.invokeAllCallbacks(this->utf8FileNameForDisplay);

@@ -144,9 +144,10 @@ void ProgramExecutor::readFromChild(int fileDescriptor)
     if (output.getLength() - outputPosition < 30000) {
         output.increaseTo(output.getLength() + 30000);
     }
+    int possibleLength = output.getLength() - outputPosition;
 
-    int readCounter = ::read(fileDescriptor, output.getPtr()    + outputPosition,
-                                             output.getLength() - outputPosition);
+    int readCounter = ::read(fileDescriptor, output.getAmount(outputPosition, possibleLength),
+                                             possibleLength);
     //printf("read %d\n", readCounter);
 
     if (readCounter > 0) {
@@ -173,9 +174,10 @@ void ProgramExecutor::catchTerminatedChild(int returnCode)
 
     ASSERT(outputPosition <= output.getLength());
 
+    output.removeTail(outputPosition);
+    
     finishedCallback->call(Result(returnCode, 
-                                  output.getPtr(), 
-                                  outputPosition));
+                                  &output));
     input.clear();
     inputPosition = 0;    
 

@@ -26,6 +26,9 @@
 #include "GuiLayoutSpacer.hpp"
 #include "LabelWidget.hpp"
 #include "EditorTopWin.hpp"
+#include "System.hpp"
+#include "EncodingConverter.hpp"
+#include "EncodingException.hpp"
 
 using namespace LucED;
 
@@ -140,6 +143,7 @@ void ExecutePanel::handleButtonPressed(Button* button, Button::ActivationVariant
                                        input,
                                        Null,
                                        newCallback(this, &ExecutePanel::handleExecutionResult));
+                editorWidget->disableCursorChanges();
             }
         }
         requestClose();
@@ -174,6 +178,8 @@ void ExecutePanel::show()
 
 void ExecutePanel::handleExecutionResult(ProgramExecutor::Result result)
 {
+    editorWidget->enableCursorChanges();
+    
     long spos;
     long epos;
     
@@ -195,6 +201,16 @@ void ExecutePanel::handleExecutionResult(ProgramExecutor::Result result)
         spos = editorWidget->getCursorTextPosition();
         epos = spos;
     }
+    Nullable<EncodingException> encodingException;
+
+    try {
+        EncodingConverter converter(System::getInstance()->getDefaultEncoding(), "UTF-8");
+        converter.convertInPlace(result.outputBuffer);
+    }
+    catch (EncodingException& ex) {
+        encodingException = ex;
+    }
+
     if (newWindowOutputCheckBox->isChecked())
     {
         LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
@@ -202,7 +218,8 @@ void ExecutePanel::handleExecutionResult(ProgramExecutor::Result result)
         String untitledFileName = File(textData->getFileName()).getDirName() << "/Untitled";
         TextData::Ptr     newTextData     = TextData::create();
                           newTextData->setPseudoFileName(untitledFileName);
-                          newTextData->setToData(result.outputBuffer, result.outputLength);
+                          newTextData->activateHistory();
+                          newTextData->takeOverUtf8Buffer(result.outputBuffer);
      
         HilitedText::Ptr  hilitedText  = HilitedText::create(newTextData, languageMode);
      
@@ -212,15 +229,21 @@ void ExecutePanel::handleExecutionResult(ProgramExecutor::Result result)
     else
     {
         TextData::TextMark m = editorWidget->createNewMarkFromCursor();
-        
-        m.moveToPos(spos);
-        textData->insertAtMark(m, (const byte*)result.outputBuffer, result.outputLength);
-        
+
         if (replaceOutputCheckBox->isChecked()) {
-            m.moveToPos(spos + result.outputLength);
+            m.moveToPos(spos);
             textData->removeAtMark(m, epos - spos);
         }
-        editorWidget->moveCursorToTextPositionAndAdjustVisibility(spos + result.outputLength);
+
+        m.moveToPos(spos);
+        long insertLength = result.outputBuffer->getLength();
+        textData->insertAtMark(m, result.outputBuffer);
+
+        editorWidget->setPseudoSelection(spos, spos + insertLength);
+        editorWidget->adjustCursorVisibility();
+    }
+    if (encodingException.isValid()) {
+        throw encodingException;
     }
 }
 

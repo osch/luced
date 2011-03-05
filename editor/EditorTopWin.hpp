@@ -68,6 +68,10 @@ public:
         return viewLuaInterface;
     }
     
+    TextEditorWidget::Ptr getTextEditorWidget() {
+        return textEditor;
+    }
+    
     virtual GuiWidget::ProcessingResult processKeyboardEvent(const KeyPressEvent& keyPressEvent);
 
     virtual void treatFocusIn();

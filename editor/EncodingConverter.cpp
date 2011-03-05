@@ -390,6 +390,10 @@ bool EncodingConverter::isConvertingBetweenDifferentCodesets()
 
 void EncodingConverter::convertInPlace(RawPtr<ByteBuffer> buffer)
 {
+    if (!isConvertingBetweenDifferentCodesets()) {
+        return;
+    }
+    
     bool hasErrors       = false;
     bool hasInvalidBytes = false;
     

@@ -26,6 +26,8 @@
 #include "FileDescriptorListener.hpp"
 #include "OwningPtr.hpp"
 #include "WeakPtr.hpp"
+#include "RawPtr.hpp"
+#include "ByteBuffer.hpp"
 #include "EventDispatcher.hpp"
 #include "HeapHashMap.hpp"
 #include "Commandline.hpp"
@@ -41,15 +43,13 @@ public:
 
     struct Result
     {
-        Result(int returnCode, const char* outputBuffer, int outputLength)
+        Result(int returnCode, RawPtr<ByteBuffer> outputBuffer)
             : returnCode(returnCode),
-              outputBuffer(outputBuffer),
-              outputLength(outputLength)
+              outputBuffer(outputBuffer)
         {}
         
-        int         returnCode;
-        const char* outputBuffer;
-        int         outputLength;
+        int                returnCode;
+        RawPtr<ByteBuffer> outputBuffer;
     };
 
     static WeakPtr start(Commandline::Ptr                commandline,
@@ -85,7 +85,7 @@ private:
     Commandline::Ptr commandline;
     String           input;
     int              inputPosition;
-    MemArray<char>   output;
+    ByteBuffer       output;
     int              outputPosition;
     
     FileDescriptorListener::Ptr childInputListener;
