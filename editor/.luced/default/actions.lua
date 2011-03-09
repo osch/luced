@@ -23,6 +23,90 @@ local append  = table.insert
 local toUpper = luced.toUpper
 local toLower = luced.toLower
 
+local wrapLineLength = 80
+local marginChars = '[*-/|+ \\t]*'
+local marginRegex = '['..marginChars..']*'
+
+local emptyLineRegex = '^['..marginChars..']*(?:\\<[/\\w]+\\>)?['..marginChars..']*$'
+
+local function formatParagraph(view)
+    local v         = view
+    local cursorPos = v:getCursorPosition()
+    local m
+    
+    m = v:findMatch([[^]], cursorPos, "b")
+    
+    local cursorLineStart = m and m.beginPos[0] or 0
+    
+    m = v:findMatch(emptyLineRegex, cursorLineStart, "b")
+    
+    local firstParLineStart = m and (m.endPos[0] + 1) or 0
+    
+    m = v:match(''..marginRegex..'', firstParLineStart)
+
+    local firstMargin = v:getMatchedBytes(m) or ""
+    
+
+    m = v:findMatch('$', firstParLineStart, "f")
+
+    local secondParLineStart = m and (m.endPos[0] + 1) or 0
+
+    m = v:match(''..marginRegex..'', secondParLineStart)
+
+    local secondMargin = v:getMatchedBytes(m) or ""
+    
+    m = v:findMatch('[ \\t]*$', firstParLineStart, "f")
+    
+    if m then
+        v:remove(m.beginPos[0], m.endPos[0])
+        local p = m.beginPos[0]
+        
+        while true do
+            m = v:match('(\\n'..emptyLineRegex..')|(?:(\\n'..marginRegex..')([^\\n]*)([ \\t]*)$)', p)
+            if m and m.beginPos[3] ~= m.endPos[3] and m.beginPos[1] == m.endPos[1] then
+                v:remove(m.beginPos[2], m.endPos[2])
+                v:insert(m.beginPos[2], " ")
+                local d1 = m.endPos[2] - m.beginPos[2] - 1
+                v:remove(m.beginPos[4] - d1, m.endPos[4] - d1)
+                local d2 = m.endPos[4] - m.beginPos[4]
+                p = m.endPos[0] - d1 - d2
+                --io.stderr:write(tostring(p).."\n")
+            else
+                break
+            end
+        end
+    end
+    local p = firstParLineStart
+
+    local wrapColumn = 80
+    while true do
+        m = v:match('[^\\n]{'..tostring(wrapColumn)..'}', p)
+        if m then
+            p = m.endPos[0]
+            m = v:findMatch('[ \\t\\n]', p, "b")
+            if m then
+                if v:getMatchedBytes(m) == '\n' then
+                    m = v:findMatch('[ \\t\\n]', p + 1, "f")
+                    if not m then 
+                        break
+                    end
+                end
+                if v:getMatchedBytes(m) ~= '\n' then
+                    v:remove(m.beginPos[0], m.endPos[0])
+                    v:insert(m.beginPos[0], "\n"..secondMargin)
+                end
+                p = m.beginPos[0] + 1
+            else
+                break
+            end
+        else
+            break
+        end
+    end
+
+    --v:insertAtCursor(secondMargin)
+end
+
 local function smartNewline(view)
     local v = view
     if v:hasPrimarySelection() then
@@ -258,5 +342,6 @@ return
                          echo -n "testeerituertiouertoiuretioreutoireutret ABC" ]],
     },
     smartNewline = smartNewline,
+    formatParagraph = formatParagraph,
 }
 

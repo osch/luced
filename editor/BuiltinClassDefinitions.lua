@@ -79,6 +79,10 @@ return
                      },
                      { name = "findMatch"
                      },
+                     { name = "match"
+                     },
+                     { name = "getMatchedBytes"
+                     },
                      { name = "executeAction"
                      },
                      { name = "hasPrimarySelection"
@@ -92,6 +96,8 @@ return
                      { name = "releaseSelection"
                      },
                      { name = "removeSelection"
+                     },
+                     { name = "remove"
                      },
                      { name = "assureCursorVisible"
                      },

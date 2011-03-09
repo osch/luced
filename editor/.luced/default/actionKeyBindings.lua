@@ -31,6 +31,10 @@ return -- default actionName key binding
     },
 --]]
     {
+        actionName = "this.formatParagraph",
+        keys       = { "Ctrl+J" },
+    },
+    {
         actionName = "this.toUpper",
         keys       = { "Ctrl+6" },
     },

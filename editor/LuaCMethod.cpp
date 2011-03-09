@@ -68,20 +68,32 @@ void LuaCMethodBase::handleException(lua_State* L, const char* className,
     }
     catch (LuaArgException& ex)
     {
-        lua_pushstring(L, (String() << "Invalid invocation arguments for LucED builtin function '" 
-                                    << className << "." << methodName << "'").toCString());
+        if (ex.getMessage().getLength() > 0)
+        {
+            lua_pushstring(L, (String() << "Invalid invocation arguments for LucED builtin function '" 
+                                        << className << "." << methodName << "': "
+                                        << ex.getMessage()).toCString());
+        } else {
+            lua_pushstring(L, (String() << "Invalid invocation arguments for LucED builtin function '" 
+                                        << className << "." << methodName << "'").toCString());
+        }
     }
     catch (BaseException& ex)
     {
-        lua_pushstring(L, ex.getMessage().toCString());
+        lua_pushstring(L, (String() << "Error in LucED builtin function '"
+                                    << className << "." << methodName << "': " 
+                                    << ex.getMessage()).toCString());
     }
     catch (std::exception& ex)
     {
-        lua_pushstring(L, ex.what());
+        lua_pushstring(L, (String() << "Error in LucED builtin function '"
+                                    << className << "." << methodName << "': " 
+                                    << ex.what()).toCString());
     }
     catch (...)
     {
-        lua_pushstring(L, "unknown error");
+        lua_pushstring(L, (String() << "Unknown error in LucED builtin function '"
+                                    << className << "." << methodName << "'").toCString());
     }
 }
 
