@@ -76,8 +76,9 @@ local function formatParagraph(view)
             end
         end
     end
-    local p = firstParLineStart
-
+    local p  = firstParLineStart
+    local p1 = firstParLineStart + #firstMargin
+    
     local wrapColumn = 80
     while true do
         m = v:match('[^\\n]{'..tostring(wrapColumn)..'}', p)
@@ -85,17 +86,19 @@ local function formatParagraph(view)
             p = m.endPos[0]
             m = v:findMatch('[ \\t\\n]', p, "b")
             if m then
-                if v:getMatchedBytes(m) == '\n' then
+                if v:getMatchedBytes(m) == '\n' or m.beginPos[0] <= p1 then
                     m = v:findMatch('[ \\t\\n]', p + 1, "f")
                     if not m then 
                         break
                     end
                 end
-                if v:getMatchedBytes(m) ~= '\n' then
-                    v:remove(m.beginPos[0], m.endPos[0])
-                    v:insert(m.beginPos[0], "\n"..secondMargin)
+                if v:getMatchedBytes(m) == '\n' then
+                    break
                 end
-                p = m.beginPos[0] + 1
+                v:remove(m.beginPos[0], m.endPos[0])
+                v:insert(m.beginPos[0], "\n"..secondMargin)
+                p  = m.beginPos[0] + 1
+                p1 = m.beginPos[0] + 1 + #secondMargin
             else
                 break
             end
