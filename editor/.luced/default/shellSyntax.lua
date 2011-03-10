@@ -23,7 +23,7 @@ return
 {
 	root = {
         	style = "default",
-        	childPatterns = { "comment", "keyword", "string1", "string2", 
+        	childPatterns = { "comment", "controls", "builtin", "string1", "string2", 
         	                  "subst", "cmdsubst", "varassign" }
         },
         
@@ -34,13 +34,24 @@ return
         },
         
         
-        keyword = {
+        controls = {
         	style = "keyword",
                 pattern     = [[
                                 \+|\-|\*|\%|\^|\#|\=\=|\~\=|\<\=|\>\=|\<|\>|\=|\(|\)|\{|\}|
                                 \[|\]|\;|\&\&|\|\||\|
 
-                                |\b(?: if      |then  |else   |elif   |fi
+                                |\b(?: if      |then  |else   |elif   |fi     |function
+                                      |exit    |case  |esac   |for    |in     |do
+                                      |done    |while
+                                 )\b
+                              ]],
+                maxExtend   = 10,
+        },
+        
+        builtin = {
+        	style = "textKey1",
+                pattern     = [[
+                                \b(?: export   |alias |cd     |local  
                                  )\b
                               ]],
                 maxExtend   = 10,

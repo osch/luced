@@ -20,6 +20,7 @@ return
     {name="error",       font="bold",   color="red"},
     {name="numericconst",font="normal", color="darkGreen"},
     {name="subroutine",  font="normal", color="brown"},
+    {name="subroutine1", font="normal", color="chocolate"},
     {name="identifier1", font="normal", color="RoyalBlue4"},
     
 }
