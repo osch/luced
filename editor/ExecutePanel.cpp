@@ -118,6 +118,8 @@ void ExecutePanel::handleCheckBoxPressed(CheckBox* checkBox)
 
 void ExecutePanel::handleButtonPressed(Button* button, Button::ActivationVariant variant)
 {
+    Nullable<EncodingException> encodingException;
+    
     if (button == executeButton)
     {
         if (editorWidget.isValid() && !editorWidget->areCursorChangesDisabled())
@@ -134,6 +136,16 @@ void ExecutePanel::handleButtonPressed(Button* button, Button::ActivationVariant
                 } else if (wholeFileInputCheckBox->isChecked()) {
                     input = editorWidget->getTextData()->getAsString();
                 }
+                try {
+                    EncodingConverter converter("UTF-8", System::getInstance()->getDefaultEncoding());
+
+                    if (converter.isConvertingBetweenDifferentCodesets()) {
+                        input = converter.convertStringToString(input);
+                    }
+                }
+                catch (EncodingException& ex) {
+                    encodingException = ex;
+                }
                 Commandline::Ptr cmd = Commandline::create();
                 cmd->append("/bin/sh");
                 cmd->append("-c");
@@ -144,6 +156,7 @@ void ExecutePanel::handleButtonPressed(Button* button, Button::ActivationVariant
                                        Null,
                                        newCallback(this, &ExecutePanel::handleExecutionResult));
                 editorWidget->disableCursorChanges();
+                
             }
         }
         requestClose();
@@ -152,6 +165,9 @@ void ExecutePanel::handleButtonPressed(Button* button, Button::ActivationVariant
     else if (button == cancelButton) {
         requestClose();
         editField->getTextData()->clear();
+    }
+    if (encodingException.isValid()) {
+        throw encodingException;
     }
 }
 
