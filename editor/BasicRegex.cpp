@@ -107,7 +107,7 @@ BasicRegex::~BasicRegex()
 }
 
 
-int BasicRegex::getStringNumber(const String& substringName) const
+int BasicRegex::getCaptureNumberByName(const String& substringName) const
 {
     ASSERT(re != NULL);
     int rslt = pcre_get_stringnumber(re, substringName.toCString());
@@ -117,7 +117,7 @@ int BasicRegex::getStringNumber(const String& substringName) const
     return rslt;
 }
 
-int BasicRegex::getStringNumber(const ByteArray& substringName) const
+int BasicRegex::getCaptureNumberByName(const ByteArray& substringName) const
 {
     ASSERT(re != NULL);
     int rslt = pcre_get_stringnumber(re, substringName.toCString());

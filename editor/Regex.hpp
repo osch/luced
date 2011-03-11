@@ -50,7 +50,7 @@ public:
     }
 
     int getCaptureNumberByName(const String& substringName) const {
-        return regex.getStringNumber(substringName);
+        return regex.getCaptureNumberByName(substringName);
     }
 
     int getNumberOfCaptures() const {

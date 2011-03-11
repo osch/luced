@@ -49,8 +49,8 @@ public:
         return re != NULL;
     }
 
-    int getStringNumber(const String& substringName) const;
-    int getStringNumber(const ByteArray& substringName) const;
+    int getCaptureNumberByName(const String& substringName) const;
+    int getCaptureNumberByName(const ByteArray& substringName) const;
 
     int getOvecSize() const {
         return 3 * (pcre_info(re, NULL, NULL) + 1);

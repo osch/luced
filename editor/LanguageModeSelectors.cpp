@@ -81,7 +81,7 @@ LanguageModeSelectors::Result LanguageModeSelectors::getResultForFileNameAndCont
                 contentMatched = true;
                 try
                 {
-                    int i = contentRegex.get().getStringNumber("ENCODING");
+                    int i = contentRegex.get().getCaptureNumberByName("ENCODING");
                     if (i > 0) {
                         int p1 = ovector[2*i];
                         int p2 = ovector[2*i + 1];

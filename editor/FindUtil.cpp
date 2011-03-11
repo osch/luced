@@ -259,7 +259,7 @@ FindUtil::CalloutObject::Ptr FindUtil::buildCalloutObject(FindUtil::PreparsedCal
             }
         } else {
             try {
-                parenNumber = regex.getStringNumber(argument);
+                parenNumber = regex.getCaptureNumberByName(argument);
             } catch (RegexException& ex) {
                 throw RegexException(ex.getMessage(),
                                      preparsed->getArgumentPosition(j));

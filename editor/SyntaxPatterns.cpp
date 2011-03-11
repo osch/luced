@@ -468,11 +468,11 @@ void SyntaxPatterns::compile(int i)
             ChildPatternDescriptor* cdescr = sp->childList.getPtr(ci);
             SyntaxPattern* cpat = get(cdescr->id);
 
-            cdescr->substrNo = sp->re.getStringNumber(cpat->name);
+            cdescr->substrNo = sp->re.getCaptureNumberByName(cpat->name);
             
             if (cpat->pushedSubPatternName.getLength() > 0)
             {
-                cdescr->pushedSubstrNo = sp->re.getStringNumber(cpat->pushedSubPatternName);
+                cdescr->pushedSubstrNo = sp->re.getCaptureNumberByName(cpat->pushedSubPatternName);
                 cdescr->hasPushedSubstr = true;
                 cpat->hasPushedSubstr = true;
             }
@@ -484,17 +484,17 @@ void SyntaxPatterns::compile(int i)
             }
 
             for (int i = 0; i < cpat->beginSubStyles.getLength(); ++i) {
-                int substrNo = sp->re.getStringNumber(cpat->beginSubStyles[i].subPatternName);
+                int substrNo = sp->re.getCaptureNumberByName(cpat->beginSubStyles[i].subPatternName);
                 sp->combinedSubs.appendNew(substrNo, cpat->beginSubStyles[i].style);
             }
         }
         for (int i = 0; i < sp->endSubStyles.getLength(); ++i) {
-            int substrNo = sp->re.getStringNumber(sp->endSubStyles[i].subPatternName);
+            int substrNo = sp->re.getCaptureNumberByName(sp->endSubStyles[i].subPatternName);
             sp->combinedSubs.appendNew(substrNo, sp->endSubStyles[i].style);
         }
         
         if (sp->hasEndPattern) {
-            sp->endSubstrNo = sp->re.getStringNumber(String() << sp->name << "_END");
+            sp->endSubstrNo = sp->re.getCaptureNumberByName(String() << sp->name << "_END");
         }
     } else {
         sp->re = BasicRegex();

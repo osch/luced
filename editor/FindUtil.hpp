@@ -183,6 +183,13 @@ public:
         }
     }
     
+    RawPtr< const MemArray<int> > getOvector() const {
+        return &ovector;
+    }
+    BasicRegex getBasicRegex() const {
+        return regex;
+    }
+    
 protected:
     RawPtr<TextData> getTextData() {
         return textData;

@@ -45,6 +45,21 @@ return
                    }
     },
     {
+        name     = "Match",
+        class    = "MatchLuaInterface",
+
+        ptrType  = "OwningPtr",
+        
+        methods  = {
+                     { name = "getBeginPos"
+                     },
+                     { name = "getEndPos"
+                     },
+                     { name = "getMatchedBytes"
+                     },
+                   }
+    },
+    {
         name     = "View",
         class    = "ViewLuaInterface",
 
@@ -80,8 +95,6 @@ return
                      { name = "findMatch"
                      },
                      { name = "match"
-                     },
-                     { name = "getMatchedBytes"
                      },
                      { name = "executeAction"
                      },

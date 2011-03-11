@@ -24,6 +24,7 @@
 #include "LuaCMethodArgChecker.hpp"
 #include "LuaArgException.hpp"
 #include "RegexException.hpp"
+#include "MatchLuaInterface.hpp"
 
 using namespace LucED;
 
@@ -234,72 +235,6 @@ LuaCFunctionResult ViewLuaInterface::getBytes(const LuaCFunctionArguments& args)
     return LuaCFunctionResult(luaAccess) << rslt;
 }
 
-LuaCFunctionResult ViewLuaInterface::getMatchedBytes(const LuaCFunctionArguments& args)
-{
-    LuaAccess luaAccess = args.getLuaAccess();
-
-    if (args.getLength() < 1) {
-        throw LuaArgException("at least one argument expected");
-    }
-
-    LuaVar match       = args[0];
-    int    matchNumber = 0;
-    
-    if (match.isNil()) {
-        return LuaCFunctionResult(luaAccess);
-    }
-    
-    if (!match.isTable()) {
-        throw LuaArgException("first argument must be match result table");
-    }
-    if (args.getLength() > 1) {
-        if (!args[1].isNumber()) {
-            throw LuaArgException("second argument must be number of match");
-        }
-        matchNumber = args[1].toInt();
-    }
-
-    long beginPos;
-    long endPos;
-    {
-        LuaVar beginVar    = match["beginPos"];
-        LuaVar endVar      = match["endPos"];
-        
-        if (!beginVar.isTable() || !endVar.isTable()) {
-            return LuaCFunctionResult(luaAccess);
-        }
-        
-        LuaVar begin = beginVar[matchNumber];
-        LuaVar end   = endVar  [matchNumber];
-    
-        if (!begin.isNumber() || !end.isNumber()) {
-            return LuaCFunctionResult(luaAccess);
-        }
-        beginPos = begin.toLong();
-        endPos   = end.toLong();
-    }
-
-    long length = textData->getLength();
-    
-    long amount = endPos - beginPos;
-    
-    if (beginPos + amount > length) {
-        amount = length - beginPos;
-    }
-    
-    LuaVar rslt(luaAccess);
-    
-    if (beginPos >= 0 && amount > 0)
-    {
-        rslt = luaAccess.toLua((const char*)(textData->getAmount(beginPos, amount)),
-                               amount);
-    }
-    else {
-        rslt = "";
-    }
-    return LuaCFunctionResult(luaAccess) << rslt;
-}
-
 void ViewLuaInterface::parseAndSetFindUtilOptions(const LuaCFunctionArguments& args)
 {
     LuaAccess luaAccess = args.getLuaAccess();
@@ -409,30 +344,9 @@ LuaCFunctionResult ViewLuaInterface::findMatch(const LuaCFunctionArguments& args
     
         if (findUtil.wasFound())
         {
-            LuaVar rslt  = luaAccess.newTable();
-            LuaVar start = luaAccess.newTable();
-            LuaVar end   = luaAccess.newTable();
-            LuaVar match = luaAccess.newTable();
-            
-            rslt["beginPos"] = start;
-            rslt["endPos"]   = end;
-            rslt["match"]    = match;
-            
-            for (int i = 0, n = findUtil.getNumberOfCapturingSubpatterns(); i <= n; ++i)
-            {
-                int beg = findUtil.getCapturedSubpatternBeginPos(i);
-                int len = findUtil.getCapturedSubpatternLength(i);
-                if (beg != -1) {
-                    start[i] = beg; 
-                    end  [i] = beg + len;
-                    match[i] = textData->getSubstring(Pos(beg), Len(len));
-                } else {
-                    start[i] = false; 
-                    end  [i] = false;
-                    match[i] = false;
-                }
-            }
-            return LuaCFunctionResult(luaAccess) << rslt;
+            return LuaCFunctionResult(luaAccess) << MatchLuaInterface::create(e,
+                                                                              findUtil.getBasicRegex(),
+                                                                              findUtil.getOvector());
         }
         else {
             return LuaCFunctionResult(luaAccess) ;
@@ -455,30 +369,9 @@ LuaCFunctionResult ViewLuaInterface::match(const LuaCFunctionArguments& args)
         
         if (findUtil.doesMatch())
         {
-            LuaVar rslt  = luaAccess.newTable();
-            LuaVar start = luaAccess.newTable();
-            LuaVar end   = luaAccess.newTable();
-            LuaVar match = luaAccess.newTable();
-            
-            rslt["beginPos"] = start;
-            rslt["endPos"]   = end;
-            rslt["match"]    = match;
-            
-            for (int i = 0, n = findUtil.getNumberOfCapturingSubpatterns(); i <= n; ++i)
-            {
-                int beg = findUtil.getCapturedSubpatternBeginPos(i);
-                int len = findUtil.getCapturedSubpatternLength(i);
-                if (beg != -1) {
-                    start[i] = beg; 
-                    end  [i] = beg + len;
-                    match[i] = textData->getSubstring(Pos(beg), Len(len));
-                } else {
-                    start[i] = false; 
-                    end  [i] = false;
-                    match[i] = false;
-                }
-            }
-            return LuaCFunctionResult(luaAccess) << rslt;
+            return LuaCFunctionResult(luaAccess) << MatchLuaInterface::create(e,
+                                                                              findUtil.getBasicRegex(),
+                                                                              findUtil.getOvector());
         }
         else {
             return LuaCFunctionResult(luaAccess);

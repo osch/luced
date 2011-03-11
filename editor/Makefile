@@ -106,7 +106,7 @@ LUA_SCRIPTS            := functions             BuiltinActionDefinitions  Builti
                           
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
                           LuaClassRegistry      LuaCClosure               ConfigData \
-                          LucedLuaInterface     ViewLuaInterface \
+                          LucedLuaInterface     ViewLuaInterface          MatchLuaInterface \
                           
 GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultConfig \
                           ConfigData
@@ -145,7 +145,7 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 BackliteBuffer          GuiLayoutRow           GuiLayoutColumn        HeapObject  \
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
                 ViewLuaInterface        LuaSerializer          ActionMethodContainer  FocusManager \
-                FontInfo                EncodingConverter      String                 
+                FontInfo                EncodingConverter      String                 MatchLuaInterface
                 
 ROOT_CONFIG_FILES            := $(BUILD_DIR)/config.lua 
 
