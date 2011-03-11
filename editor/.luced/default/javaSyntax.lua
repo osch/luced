@@ -279,7 +279,7 @@ return
 
         declaration = {
                 style = "type",
-                pattern          = [[\b[a-zA-Z_]\w*(?:\.\w+)*\b(?P<declarationBrackets>(:?\s*\[\s*\]\s*)*)(?=\s*\n?\s*(?!instanceof)[a-zA-Z_]\w*)]],
+                pattern          = [[\b[a-zA-Z_]\w*(?:\.\w+)*(?:(?:\<[^\>]*\>)|\b)(?P<declarationBrackets>(:?\s*\[\s*\]\s*)*)(?=\s*\n?\s*(?!instanceof)[a-zA-Z_]\w*)]],
                 maxExtend        = 100,
                 substyles        = { declarationBrackets = "keyword" },
         },
