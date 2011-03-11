@@ -61,16 +61,20 @@ private:
                       RawPtr< const MemArray<int> >  ovector)
         : e(e),
           textData(e->getTextData()),
-          regex(regex)
+          regex(regex),
+          captureCount(regex.getNumberOfCapturingSubpatterns() + 1)
     {
         this->ovector.append(*ovector);
     }
+    
+    LuaCFunctionResult internGetPos(const LuaCFunctionArguments& args, int offs);
     
     WeakPtr<TextEditorWidget> e;
     WeakPtr<TextData>         textData;
 
     BasicRegex                regex;
     MemArray<int>             ovector;
+    int                       captureCount;
 };
 
 } // namespace LucED

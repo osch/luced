@@ -28,41 +28,60 @@
 using namespace LucED;
 
 
-LuaCFunctionResult MatchLuaInterface::getBeginPos(const LuaCFunctionArguments& args)
+LuaCFunctionResult MatchLuaInterface::internGetPos(const LuaCFunctionArguments& args, int offs)
 {
     LuaAccess luaAccess = args.getLuaAccess();
     
-    if (args.getLength() == 0 && ovector.getLength() >= 2) {
+    if (args.getLength() == 0 && captureCount >= 1) {
         return LuaCFunctionResult(luaAccess) << ovector[0];
     }
-    LuaVar arg = args[0];
-    if (arg.isNumber()) {
-        int i = arg.toInt();
-        if (0 <= i && 2*i < ovector.getLength()) {
-            return LuaCFunctionResult(luaAccess) << ovector[2*i];
+
+    int captureNumber = 0;
+
+    if (args.getLength() > 0)
+    {
+        LuaVar arg = args[0];
+    
+        if (arg.isNumber()) {
+            captureNumber = arg.toInt();
+        }
+        else if (arg.isString()) {
+            String captureName = arg.toString();
+            try {
+                captureNumber = regex.getCaptureNumberByName(captureName);
+            } catch (RegexException& ex) {
+                throw LuaArgException(String() << "unknown capture name: " << captureName);
+            }
+        }
+        else {
+            throw LuaArgException("argument must be number or name of capture");
         }
     }
     
-    return LuaCFunctionResult(luaAccess);
+    if (captureNumber >= captureCount) {
+        throw LuaArgException(String() << "invalid capture number: " << captureNumber);
+    }
+
+    int rslt = ovector[captureNumber * 2 + offs];
+
+    if (rslt < 0) {
+        return LuaCFunctionResult(luaAccess);
+    } else {
+        return LuaCFunctionResult(luaAccess) << rslt;
+    }
+}
+
+LuaCFunctionResult MatchLuaInterface::getBeginPos(const LuaCFunctionArguments& args)
+{
+    return internGetPos(args, 0);
 }
 
 
 LuaCFunctionResult MatchLuaInterface::getEndPos(const LuaCFunctionArguments& args)
 {
-    LuaAccess luaAccess = args.getLuaAccess();
-    
-    if (args.getLength() == 0 && ovector.getLength() >= 2) {
-        return LuaCFunctionResult(luaAccess) << ovector[1];
-    }
-    LuaVar arg = args[0];
-    if (arg.isNumber()) {
-        int i = arg.toInt();
-        if (0 <= i && 2*i + 1 < ovector.getLength()) {
-            return LuaCFunctionResult(luaAccess) << ovector[2*i + 1];
-        }
-    }
-    return LuaCFunctionResult(luaAccess);
+    return internGetPos(args, 1);
 }
+
 
 LuaCFunctionResult MatchLuaInterface::getMatchedBytes(const LuaCFunctionArguments& args)
 {
@@ -90,12 +109,16 @@ LuaCFunctionResult MatchLuaInterface::getMatchedBytes(const LuaCFunctionArgument
             throw LuaArgException("first argument must be number or name of capture");
         }
     }
-    if (captureNumber * 2 + 1 >= ovector.getLength()) {
+    if (captureNumber >= captureCount) {
         throw LuaArgException(String() << "invalid capture number: " << captureNumber);
     }
     
     long beginPos = ovector[captureNumber * 2];
     long endPos   = ovector[captureNumber * 2 + 1];
+    
+    if (beginPos < 0 || endPos < 0) {
+        return LuaCFunctionResult(luaAccess);
+    }
 
     const long length = textData->getLength();
 
