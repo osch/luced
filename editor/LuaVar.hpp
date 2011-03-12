@@ -142,7 +142,7 @@ public:
         ASSERT(isCorrect());
         push(key);
         lua_gettable(L, tableStackIndex);
-        bool rslt = lua_topointer(L, -1);
+        void* rslt = lua_topointer(L, -1);
         lua_pop(L, 1);
         return rslt;
     }

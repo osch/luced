@@ -90,6 +90,7 @@ public:
     RawPtr& operator=(const NullType& nullValue)
     {
         this->invalidate();
+        return *this;
     }
 
     RawPtr& operator=(const RawPtr& src)

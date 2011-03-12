@@ -326,6 +326,9 @@ void ScrollBar::hiliteScrollBarPartAtMousePosition(int mouseX, int mouseY)
                 drawDownButton();
                 break;
             }
+            case NONE: {
+                break;
+            }
         }
 
         switch (hilitedPart) {
@@ -339,6 +342,9 @@ void ScrollBar::hiliteScrollBarPartAtMousePosition(int mouseX, int mouseY)
             }
             case BOTTOM_ARROW: {
                 drawDownButton();
+                break;
+            }
+            case NONE: {
                 break;
             }
         }

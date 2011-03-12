@@ -131,9 +131,9 @@ private:
 
     template<class ConfigType,
              class ListType,
-             void (*append)(typename ConfigType::Ptr,
-                            typename ListType::Ptr, 
-                            const String&)
+             void append(typename ConfigType::Ptr,
+                         typename ListType::Ptr, 
+                          const String&)
             >
     void appendConfigFromPackageTo(const String&           packageName, 
                                    const String&           getterFunctionName,

@@ -448,7 +448,7 @@ GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent
                         
                         long newCursorPos = freePos.pos;
 
-                        bool extendingSelection = (event->xbutton.state & ShiftMask != 0);
+                        bool extendingSelection = ((event->xbutton.state & ShiftMask) != 0);
                         if (extendingSelection && !selectionOwner->hasSelectionOwnership()) {
                             selectionOwner->requestSelectionOwnership();
                             getBackliteBuffer()->activateSelection(getCursorTextPosition());
