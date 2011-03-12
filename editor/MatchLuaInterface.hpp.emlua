@@ -68,6 +68,7 @@ private:
     }
     
     LuaCFunctionResult internGetPos(const LuaCFunctionArguments& args, int offs);
+    int getCaptureNumber(const LuaVar& luaVar);
     
     WeakPtr<TextEditorWidget> e;
     WeakPtr<TextData>         textData;

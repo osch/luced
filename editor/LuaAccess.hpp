@@ -32,6 +32,7 @@
 #include "SingletonInstance.hpp"
 #include "String.hpp"
 #include "RawPtr.hpp"
+#include "Null.hpp"
 #include "StaticAssertion.hpp"
 
 namespace LucED
@@ -175,6 +176,10 @@ protected:
     void push(bool arg) const {
         ASSERT(isCorrect());
         lua_pushboolean(L, arg);
+    }
+    void push(NullType n) const {
+        ASSERT(isCorrect());
+        lua_pushnil(L);
     }
     void push(const LuaVarRef& arg) const;
 

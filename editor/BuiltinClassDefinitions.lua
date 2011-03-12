@@ -55,7 +55,13 @@ return
                      },
                      { name = "getEndPos"
                      },
+                     { name = "getPositions"
+                     },
                      { name = "getMatchedBytes"
+                     },
+                     { name = "remove"
+                     },
+                     { name = "replace"
                      },
                    }
     },

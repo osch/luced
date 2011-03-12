@@ -36,11 +36,11 @@ local function formatParagraph(view)
     
     m = v:findMatch([[^]], cursorPos, "b")
     
-    local cursorLineStart = m and m:getBeginPos(0) or 0
+    local cursorLineStart = m and m:getBeginPos() or 0
     
     m = v:findMatch(emptyLineRegex, cursorLineStart, "b")
     
-    local firstParLineStart = m and (m:getEndPos(0) + 1) or 0
+    local firstParLineStart = m and (m:getEndPos() + 1) or 0
     
     m = v:match(''..marginRegex..'', firstParLineStart)
 
@@ -49,7 +49,7 @@ local function formatParagraph(view)
 
     m = v:findMatch('$', firstParLineStart, "f")
 
-    local secondParLineStart = m and (m:getEndPos(0) + 1) or 0
+    local secondParLineStart = m and (m:getEndPos() + 1) or 0
 
     m = v:match(''..marginRegex..'', secondParLineStart)
 
@@ -58,18 +58,15 @@ local function formatParagraph(view)
     m = v:findMatch('[ \\t]*$', firstParLineStart, "f")
     
     if m then
-        v:remove(m:getBeginPos(0), m:getEndPos(0))
-        local p = m:getBeginPos(0)
+        m:remove()
+        local p = m:getBeginPos()
         
         while true do
             m = v:match('(\\n'..emptyLineRegex..')|(?:(\\n'..marginRegex..')([^\\n]*)([ \\t]*)$)', p)
-            if m and m:getBeginPos(3) ~= m:getEndPos(3) and m:getBeginPos(1) == m:getEndPos(1) then
-                v:remove(m:getBeginPos(2), m:getEndPos(2))
-                v:insert(m:getBeginPos(2), " ")
-                local d1 = m:getEndPos(2) - m:getBeginPos(2) - 1
-                v:remove(m:getBeginPos(4) - d1, m:getEndPos(4) - d1)
-                local d2 = m:getEndPos(4) - m:getBeginPos(4)
-                p = m:getEndPos(0) - d1 - d2
+            if m and not m:getBeginPos(1) and m:getBeginPos(3) ~= m:getEndPos(3) then
+                m:replace(2, " ")
+                m:remove(4)
+                p = m:getEndPos()
                 --io.stderr:write(tostring(p).."\n")
             else
                 break
@@ -83,10 +80,10 @@ local function formatParagraph(view)
     while true do
         m = v:match('[^\\n]{'..tostring(wrapColumn)..'}', p)
         if m then
-            p = m:getEndPos(0)
+            p = m:getEndPos()
             m = v:findMatch('[ \\t\\n]', p, "b")
             if m then
-                if m:getMatchedBytes() == '\n' or m:getBeginPos(0) <= p1 then
+                if m:getMatchedBytes() == '\n' or m:getBeginPos() <= p1 then
                     m = v:findMatch('[ \\t\\n]', p + 1, "f")
                     if not m then 
                         break
@@ -95,10 +92,9 @@ local function formatParagraph(view)
                 if m:getMatchedBytes() == '\n' then
                     break
                 end
-                v:remove(m:getBeginPos(0), m:getEndPos(0))
-                v:insert(m:getBeginPos(0), "\n"..secondMargin)
-                p  = m:getBeginPos(0) + 1
-                p1 = m:getBeginPos(0) + 1 + #secondMargin
+                m:replace("\n"..secondMargin)
+                p  = m:getBeginPos() + 1
+                p1 = m:getEndPos()
             else
                 break
             end
@@ -119,7 +115,7 @@ local function smartNewline(view)
 
     local cursorPos   = v:getCursorPosition()
     local m           = v:findMatch([[^]], cursorPos, "b")
-    local startOfLine = m and m:getBeginPos(0) or 0
+    local startOfLine = m and m:getBeginPos() or 0
 
     m = v:findMatch([[(\,|\;|\<|\>)|(\&\&|\|\||\.|\<\<|\+)|([(){}])]], cursorPos, startOfLine, "b")
 
@@ -144,18 +140,18 @@ local function smartNewline(view)
 
     m = v:findMatch([[^([ \t]*)]], startOfLine)
 
-    if not m or m:getEndPos(0) >= cursorPos then
+    if not m or m:getEndPos() >= cursorPos then
         indentSpace = v:getChars(startOfLine, cursorPos)
     else
         indentSpace = m.match[0]
-        local firstColumn = v:getColumn(m:getEndPos(0))
+        local firstColumn = v:getColumn(m:getEndPos())
         local positions = {}
         local p = startOfLine
         if separatorChar then
             repeat
                 m = v:findMatch([[([({])[ \t]*|([})])|(]]..separatorChar..[[[ \t]*)]], p, cursorPos)
                 if m then
-                    p = m:getEndPos(0)
+                    p = m:getEndPos()
                     if m.match[1] == "(" or m.match[1] == "{" then 
                         append(positions, {p})
                     elseif m.match[2] == ")" or m.match[2] == "}" then

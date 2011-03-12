@@ -130,8 +130,8 @@ LuaCFunctionResult ViewLuaInterface::insert(const LuaCFunctionArguments& args)
 
     m.moveToPos(insertPos);
 
-    long insertedLength = textData->insertAtMark(m, (const byte*) args[1].getStringPtr(),
-                                                                  args[1].getStringLength());
+    long insertedLength = textData->insertAtMark(m, args[1].toString());
+    
     return LuaCFunctionResult(luaAccess) << insertedLength;
 }
 
