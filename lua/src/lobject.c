@@ -146,6 +146,44 @@ const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {
         pushstr(L, buff);
         break;
       }
+      case 'q': {
+        pushstr(L, "\"");
+        n += 1;
+        const char *arg = va_arg(argp, char *);
+        for (;;) {
+          const char *a = arg + strcspn(arg, "\\\"\n\r"); /* search next \ or " or lf or cr */
+          if (*a == '\0') break;
+          setsvalue2s(L, L->top, luaS_newlstr(L, arg, a-arg));
+          incr_top(L);
+          switch (*a) {
+            case '\\': {
+              pushstr(L, "\\\\"); /* replace \ -> \\            */
+              break;
+            }
+            case '"': {
+              pushstr(L, "\\\""); /* replace " -> \"            */
+              break;
+            }
+            case '\n': {
+              pushstr(L, "\\n");  /* replace lf -> \n           */
+              break;
+            }
+            case '\r': {
+              pushstr(L, "\\r");  /* replace cr -> \r           */
+              break;
+            }
+            default: {
+              break;
+            }
+          }
+          n += 2;
+          arg = a + 1;
+        }
+        pushstr(L, arg);
+        n += 1;
+        pushstr(L, "\"");
+        break;
+      }
       case '%': {
         pushstr(L, "%");
         break;
@@ -178,6 +216,30 @@ const char *luaO_pushfstring (lua_State *L, const char *fmt, ...) {
   return msg;
 }
 
+const char *luaO_pusherrmsg(lua_State *L, const char *source, 
+                                          int line, 
+                                          const char *msg) {
+  if (*source == '=') {
+    return luaO_pushfstring(L, "[%q]:%d: %s", source+1, line, msg);
+  }
+  else {
+    if (*source == '@') {
+      return luaO_pushfstring(L, "[file %q]:%d: %s", source+1, line, msg);
+    }
+    else {
+      const char* p = source;
+      while (*p != '\0' && p-source+1 < LUA_IDSIZE-1) ++p;
+      if (*p == '\0') {
+        return luaO_pushfstring(L, "[string %q]:%d: %s", source, line, msg);
+      } else {
+        char buffer[LUA_IDSIZE];
+        memcpy(buffer, source, p-source);
+        buffer[p-source+1] = '\0';
+        return luaO_pushfstring(L, "[string %q...]:%d: %s", buffer, line, msg);
+      }
+    }
+  }
+}
 
 void luaO_chunkid (char *out, const char *source, size_t bufflen) {
   if (*source == '=') {

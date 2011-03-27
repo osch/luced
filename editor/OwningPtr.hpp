@@ -137,9 +137,23 @@ public:
         }
     }
     
+    template<class T2
+            >
+    static OwningPtr<T> dynamicCast(OwningPtr<T2> rhs) {
+        if (rhs.isValid()) {
+            OwningPtr<T> rslt;
+            rslt.ptr = dynamic_cast<T*>(rhs.getRawPtr());
+            if (rslt.ptr != NULL) {
+                HeapObjectRefManipulator::incRefCounter(rslt.ptr);
+            }
+            return rslt;
+        } else {
+            return Null;
+        }
+    }
+    
 private:
     T* ptr;
-    
 };
 
 } // namespace LucED

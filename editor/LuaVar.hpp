@@ -37,7 +37,6 @@
 #include "RawPtr.hpp"
 #include "HeapObjectArray.hpp"
 #include "LuaStackChecker.hpp"
-#include "LuaException.hpp"
 #include "NonCopyable.hpp"
 #include "LuaStateAccess.hpp"
 #include "WeakPtr.hpp"
@@ -451,12 +450,16 @@ public:
             return Null;
         }
     }
-    OwningPtr<HeapObject> toOwningPtr() const {
+    
+    template<class T
+            >
+    OwningPtr<T> toOwningPtr() const {
         ASSERT(isCorrect());
         LuaAccess::UserData* userDataPtr = static_cast<UserData*>(lua_touserdata(L, stackIndex));
         if (userDataPtr != NULL && userDataPtr->magic == LuaAccess::MAGIC) {
             if (userDataPtr->isOwningPtr) {
-                return *static_cast<OwningPtr<HeapObject>*>(static_cast<void*>(userDataPtr + 1));
+                OwningPtr<HeapObject> ptr = *static_cast<OwningPtr<HeapObject>*>(static_cast<void*>(userDataPtr + 1));
+                return OwningPtr<T>::dynamicCast(ptr);
             } else {
                 return Null;
             }
@@ -924,6 +927,7 @@ inline bool operator!=(const String& lhs, const LuaVarRef& rhs)
 #include "LuaCFunctionResult.hpp"
 #include "LuaStoredObjectReference.hpp"
 #include "LuaInterpreter.hpp"
+#include "LuaException.hpp"
 
 namespace LucED
 {
@@ -942,7 +946,8 @@ inline LuaVar LuaVarRef::call(LuaFunctionArguments& args)
     if (error != 0)
     {
         LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, 1); // 1 rslt is errorObject
-        throw LuaException(LuaVar(getLuaAccess(), lua_gettop(L)));
+        LuaVar errorObject(getLuaAccess(), lua_gettop(L));
+        throw LuaException(errorObject);
     }
     else {
         LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, numberOfResults);
@@ -987,7 +992,8 @@ inline LuaVar LuaVarRef::call()
 
     if (error != 0)
     {
-        throw LuaException(LuaVar(getLuaAccess(), lua_gettop(L)));
+        LuaVar errorObject(getLuaAccess(), lua_gettop(L));
+        throw LuaException(errorObject);
     } else {    
         return LuaVar(getLuaAccess(), lua_gettop(L));
     }

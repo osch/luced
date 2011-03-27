@@ -86,8 +86,9 @@ private:
             }
             catch (...)
             {
-                LuaCMethodBase::handleException(L, LuaClassRegistry::ClassAttributes<C>::getLuaClassName(),
-                                                   LuaClassRegistry::getMethodName<C,M>());
+                LuaCMethodBase::handleException(luaAccess,
+                                                LuaClassRegistry::ClassAttributes<C>::getLuaClassName(),
+                                                LuaClassRegistry::getMethodName<C,M>());
                 wasError = true;
             }
         }

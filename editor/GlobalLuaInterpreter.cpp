@@ -105,19 +105,23 @@ LuaCFunctionResult GlobalLuaInterpreter::packageLocalRequireFunction(const LuaCF
     WeakPtr<GlobalLuaInterpreter> luaInterpreter = luaInterpreterVar.toWeakPtr<GlobalLuaInterpreter>();
     
     if (!luaInterpreter.isValid() || !currentPackageNameVar.isString()) {
-        throw LuaException("internal error");
+        throw LuaException(luaAccess,
+                           "internal error");
     }
     String currentPackageName = currentPackageNameVar.toString();
 
     if (args.getLength() == 0 || !args[0].isString())
     {
-        throw LuaException(String() << "function 'require' needs string argument but got " << args[0].getTypeName());
+        throw LuaException(luaAccess,
+                           String() << "function 'require' needs string argument but got " << args[0].getTypeName());
     }
     String requiredModuleName = args[0].toString();
     
     if (requiredModuleName == "this" || requiredModuleName == "builtin") {
-        throw LuaException(String() << "Module name '" << requiredModuleName << "' not allowed");
+        throw LuaException(luaAccess,
+                           String() << "Module name '" << requiredModuleName << "' not allowed");
     }
+
     if (!requiredModuleName.startsWith(THIS_PREFIX))
     {
         return luaInterpreter->require(requiredModuleName);
@@ -131,11 +135,12 @@ LuaCFunctionResult GlobalLuaInterpreter::packageLocalRequireFunction(const LuaCF
     if (!loadedPackage.isNil()) {
         return loadedPackage;
     }
+    LuaVar startModule(luaAccess);
+           startModule = luaInterpreter->configPackageLoader.loadPackageModule(luaAccess, absoluteRequiredModuleName);
 
-    LuaVar startModule = luaInterpreter->configPackageLoader.loadPackageModule(luaAccess, absoluteRequiredModuleName);
-    
     if (startModule.isNil()) {
-        throw LuaException(String() << "cannot find module '" << absoluteRequiredModuleName << "'");
+        throw LuaException(luaAccess,
+                           String() << "cannot find module '" << absoluteRequiredModuleName << "'");
     }
 
     startModule.setFunctionEnvironment(environmentVar);
@@ -159,7 +164,8 @@ LuaVar GlobalLuaInterpreter::requireConfigPackage(const String& packageName)
         || packageName == "builtin" 
         || packageName == "modules")
     {
-        throw LuaException(String() << "Package name '" << packageName << "' not allowed");
+        throw LuaException(luaAccess,
+                           String() << "Package name '" << packageName << "' not allowed");
     }
     
     LuaVar loadedPackages = luaAccess.retrieve(loadedPackagesStoreReference);
@@ -173,7 +179,8 @@ LuaVar GlobalLuaInterpreter::requireConfigPackage(const String& packageName)
     LuaVar startModule = configPackageLoader.loadPackageModule(luaAccess, packageName);
 
     if (startModule.isNil()) {
-        throw LuaException(String() << "cannot find package '" << packageName << "'");
+        throw LuaException(luaAccess,
+                           String() << "cannot find package '" << packageName << "'");
     }
     
     LuaVar env = luaAccess.newTable();
@@ -205,7 +212,8 @@ LuaVar GlobalLuaInterpreter::getGeneralConfigModule(const String& moduleName)
     LuaVar startModule = configPackageLoader.loadGeneralConfigModule(luaAccess, moduleName);
     
     if (startModule.isNil()) {
-        throw LuaException("cannot find general config file 'config.lua'");
+        throw LuaException(luaAccess,
+                           "cannot find general config file 'config.lua'");
     }
     return startModule.call();
 }

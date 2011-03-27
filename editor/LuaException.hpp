@@ -19,23 +19,55 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "LuaVar.hpp"
+
 #ifndef LUA_EXCEPTION_HPP
 #define LUA_EXCEPTION_HPP
 
 #include "BaseException.hpp"
+#include "ExceptionLuaInterface.hpp"
 
 namespace LucED
 {
 
-class LuaException;
-class LuaVar;
 
-class LuaException : public BaseException
+class LuaExceptionBase
 {
 public:
-    LuaException(const String& message, int lineNumber = -1, const String& fileName = "");
+    ExceptionLuaInterface::Ptr getExceptionLuaInterface() const {
+        return luaInterface;
+    }
+    ~LuaExceptionBase() throw()
+    {}
+protected:
+    LuaExceptionBase(ExceptionLuaInterface::Ptr luaInterface);
+
+    ExceptionLuaInterface::Ptr luaInterface;
+};
+
+
+
+class LuaException : public LuaExceptionBase,
+                     public BaseException
+{
+public:
+    LuaException(const LuaAccess& luaAccess,
+                 const String& message)
+        : LuaExceptionBase(ExceptionLuaInterface::create(luaAccess,
+                                                         message)),
+          BaseException(luaInterface->getMessage())
+    {}
     
-    LuaException(const LuaVar& errorObject);
+    LuaException(ExceptionLuaInterface::Ptr luaInterface)
+        : LuaExceptionBase(luaInterface),
+          BaseException(luaInterface->getMessage())
+    {}
+    
+
+    LuaException(const LuaVar& errorObject)
+        : LuaExceptionBase(ExceptionLuaInterface::create(errorObject)),
+          BaseException(luaInterface->getMessage())
+    {}
     
     virtual ~LuaException() throw()
     {}
@@ -43,18 +75,17 @@ public:
     virtual const char* what() const throw();
     
     int getLineNumber() const {
-        return lineNumber;
+        return luaInterface->getLineNumber();
     }
     
     String getFileName() const {
-        return fileName;
+        return luaInterface->getFileName();
+    }
+    bool isBuiltinFile() const {
+        return luaInterface->isBuiltinFile();
     }
     
     virtual String toString() const;
-
-private:
-    int lineNumber;
-    String fileName;
 };
 
 } // namespace LucED

@@ -30,7 +30,7 @@
 #include "LuaCFunctionArguments.hpp"
 #include "LuaCFunctionResult.hpp"
 #include "BaseException.hpp"
-#include "LuaAccess.hpp"
+#include "LuaException.hpp"
 
 @ local functions     = require("functions")
 @ local argList       = functions.argList
@@ -175,19 +175,24 @@ inline int LuaCClosureImpl< LuaCClosureType@(numberUpvalues)<F> >::invokeFunctio
             numberOfResults = F(args@(numberUpvalues > 0 and ',' or '') 
                                 @(argList('upvalue', numberUpvalues))).numberOfResults;
         }
+        catch (LuaException& ex)
+        {
+            luaAccess.push(ex.getExceptionLuaInterface());
+            wasError = true;
+        }
         catch (BaseException& ex)
         {
-            lua_pushstring(L, ex.getMessage().toCString());
+            luaAccess.push(ExceptionLuaInterface::create(luaAccess, ex.getMessage()));
             wasError = true;
         }
         catch (std::exception& ex)
         {
-            lua_pushstring(L, ex.what());
+            luaAccess.push(ExceptionLuaInterface::create(luaAccess, ex.what()));
             wasError = true;
         }
         catch (...)
         {
-            lua_pushstring(L, "unknown error");
+            luaAccess.push(ExceptionLuaInterface::create(luaAccess, "unknown error"));
             wasError = true;
         }
     }

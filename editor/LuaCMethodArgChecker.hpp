@@ -65,7 +65,7 @@ public:
     {
         if (!isValid(args))
         {
-            throw LuaArgException();
+            throw LuaArgException(args.getLuaAccess());
         }
     }
     
@@ -95,7 +95,7 @@ public:
     {
         if (!isValid(args) || !OptionalArgs<Optional1,Optional2,Optional3>::isValid(args, 2))
         {
-            throw LuaArgException();
+            throw LuaArgException(args.getLuaAccess());
         }
     }
     
@@ -123,7 +123,7 @@ public:
     {
         if (!isValid(args))
         {
-            throw LuaArgException();
+            throw LuaArgException(args.getLuaAccess());
         }
     }
     
@@ -149,7 +149,7 @@ public:
     {
         if (!isValid(args))
         {
-            throw LuaArgException();
+            throw LuaArgException(args.getLuaAccess());
         }
     }
     

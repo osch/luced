@@ -525,6 +525,17 @@ LUA_API const char *lua_pushfstring (lua_State *L, const char *fmt, ...) {
   return ret;
 }
 
+LUA_API const char *lua_pusherrmsg (lua_State *L, const char *source, 
+                                                  int line, 
+                                                  const char *msg) {
+  const char *ret;
+  lua_lock(L);
+  luaC_checkGC(L);
+  ret = luaO_pusherrmsg(L, source, line, msg);
+  lua_unlock(L);
+  return ret;
+}
+
 
 LUA_API void lua_pushcclosure (lua_State *L, lua_CFunction fn, int n) {
   Closure *cl;

@@ -44,7 +44,7 @@ LuaCFunctionResult LucedLuaInterface::getModulePrefix(const LuaCFunctionArgument
     LuaAccess luaAccess = args.getLuaAccess();
 
     if (args.getLength() <= 0 || !args[0].isString()) {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
 
     String thisModuleName = args[0].toString();
@@ -64,15 +64,17 @@ LuaCFunctionResult LucedLuaInterface::getModulePrefix(const LuaCFunctionArgument
 
 LuaCFunctionResult LucedLuaInterface::resetModules(const LuaCFunctionArguments& args)
 {
+    LuaAccess luaAccess = args.getLuaAccess();
+
     if (args.getLength() > 0) {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
 
     GlobalLuaInterpreter::getInstance()->resetModules();
     
     GlobalConfig::getInstance()->readConfig();
 
-    return LuaCFunctionResult(args.getLuaAccess());
+    return LuaCFunctionResult(luaAccess);
 }
 
 
@@ -81,7 +83,7 @@ LuaCFunctionResult LucedLuaInterface::getCurrentView(const LuaCFunctionArguments
     LuaAccess luaAccess = args.getLuaAccess();
     
     if (args.getLength() > 0) {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
     
     return LuaCFunctionResult(luaAccess) << currentView;
@@ -93,7 +95,7 @@ LuaCFunctionResult LucedLuaInterface::getLoadedPackageModules(const LuaCFunction
     LuaAccess luaAccess = args.getLuaAccess();
     
     if (args.getLength() > 0) {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
     return GlobalLuaInterpreter::getInstance()->getLoadedPackageModules();
 }
@@ -104,7 +106,7 @@ LuaCFunctionResult LucedLuaInterface::toUpper(const LuaCFunctionArguments& args)
     LuaAccess luaAccess = args.getLuaAccess();
     
     if (args.getLength() != 1 || !args[0].isString()) {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
 
     return LuaCFunctionResult(luaAccess) << args[0].toString().toUpperUtf8();
@@ -116,7 +118,7 @@ LuaCFunctionResult LucedLuaInterface::toLower(const LuaCFunctionArguments& args)
     LuaAccess luaAccess = args.getLuaAccess();
     
     if (args.getLength() != 1 || !args[0].isString()) {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
 
     return LuaCFunctionResult(luaAccess) << args[0].toString().toLowerUtf8();
@@ -127,7 +129,7 @@ LuaCFunctionResult LucedLuaInterface::openFile(const LuaCFunctionArguments& args
     LuaAccess luaAccess = args.getLuaAccess();
     
     if (args.getLength() != 1 || !args[0].isString()) {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
     
     FileOpener::start(args[0].toString());

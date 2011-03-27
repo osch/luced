@@ -39,15 +39,18 @@ int MatchLuaInterface::getCaptureNumber(const LuaVar& luaVar)
         try {
             captureNumber = regex.getCaptureNumberByName(captureName);
         } catch (RegexException& ex) {
-            throw LuaArgException(String() << "unknown capture name: " << captureName);
+            throw LuaArgException(luaVar.getLuaAccess(),
+                                  String() << "unknown capture name: " << captureName);
         }
     }
     else {
-        throw LuaArgException("argument must be number or name of capture");
+        throw LuaArgException(luaVar.getLuaAccess(),
+                              "argument must be number or name of capture");
     }
 
     if (captureNumber >= captureCount) {
-        throw LuaArgException(String() << "invalid capture number: " << captureNumber);
+        throw LuaArgException(luaVar.getLuaAccess(),
+                              String() << "invalid capture number: " << captureNumber);
     }
     
     return captureNumber;
@@ -161,7 +164,8 @@ LuaCFunctionResult MatchLuaInterface::replace(const LuaCFunctionArguments& args)
         replaceString = args[1].toString();
     }
     else {
-        throw LuaArgException(String() << "first argument is optional and must by match number/name, second argument must be replace string");
+        throw LuaArgException(luaAccess,
+                              String() << "first argument is optional and must by match number/name, second argument must be replace string");
     }
     
     int spos = ovector[2*captureNumber];

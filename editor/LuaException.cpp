@@ -22,46 +22,15 @@
 #include "LuaException.hpp"
 #include "StackTrace.hpp"
 #include "LuaVar.hpp"
+#include "ExceptionLuaInterface.hpp"
 
 using namespace LucED;
 
-static inline String getErrorMessageFromErrorObject(const LuaVar& errorObject)
-{
-    if (errorObject.isString()) {
-        return errorObject.toString();
-    }
-    else if (errorObject.isTable() && errorObject["errorMessage"].isString()) {
-        return errorObject["errorMessage"].toString();
-    }
-    else {
-        ASSERT(false);
-        return "unknown error";
-    }
-}
 
-
-
-LuaException::LuaException(const String& message,
-                           int           lineNumber,
-                           const String& fileName)
-    : BaseException(message),
-      lineNumber(lineNumber),
-      fileName(fileName)
+LuaExceptionBase::LuaExceptionBase(ExceptionLuaInterface::Ptr luaInterface)
+    : luaInterface(luaInterface)
 {
     //StackTrace::print();
-}
-LuaException::LuaException(const LuaVar& errorObject)
-    : BaseException(getErrorMessageFromErrorObject(errorObject)),
-      lineNumber(-1)
-{
-    if (errorObject.isTable()) {
-        if (errorObject["lineNumber"].isNumber()) {
-            lineNumber = errorObject["lineNumber"].toInt() - 1;
-        }
-        if (errorObject["fileName"].isString()) {
-            fileName = errorObject["fileName"].toString();
-        }
-    }
 }
 
 
@@ -74,11 +43,16 @@ const char* LuaException::what() const throw()
 String LuaException::toString() const
 {
     String rslt;
-    if (fileName.getLength() > 0) {
-        rslt << fileName << ": ";
+    if (luaInterface->getFileName().getLength() > 0) {
+        if (luaInterface->isBuiltinFile()) {
+            rslt << "Builtin config file '";
+        } else {
+            rslt << "File '";
+        }
+        rslt << luaInterface->getFileName() << "': ";
     }
-    if (lineNumber >= 0) {
-        rslt << "line " << lineNumber << ": ";
+    if (luaInterface->getLineNumber() >= 0) {
+        rslt << "line " << luaInterface->getLineNumber() << ": ";
     }
     rslt << BaseException::toString();
     return rslt;

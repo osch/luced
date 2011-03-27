@@ -241,7 +241,7 @@ void ViewLuaInterface::parseAndSetFindUtilOptions(const LuaCFunctionArguments& a
 
     if (!LuaCMethodArgChecker<String,long,MoreArgs>::isValid(args))
     {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
     String searchString  = args[0].toString();
     long   startPosition = args[1].toLong();
@@ -259,7 +259,7 @@ void ViewLuaInterface::parseAndSetFindUtilOptions(const LuaCFunctionArguments& a
         ++index;
     }
     if (index < args.getLength()) {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
     
     FindUtil::Options options;
@@ -273,7 +273,7 @@ void ViewLuaInterface::parseAndSetFindUtilOptions(const LuaCFunctionArguments& a
             case 'b': options.set  (FindUtil::BACKWARD);    break;
             case 'i': options.set  (FindUtil::IGNORE_CASE); break;
             case 'r': options.set  (FindUtil::REGEX);       break;
-            default:  throw LuaArgException();
+            default:  throw LuaArgException(luaAccess);
         }
     }
 
@@ -307,10 +307,9 @@ void ViewLuaInterface::parseAndSetFindUtilOptions(const LuaCFunctionArguments& a
 
 LuaCFunctionResult ViewLuaInterface::find(const LuaCFunctionArguments& args)
 {
-    try
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
+    LuaAccess luaAccess = args.getLuaAccess();
+
+    try {
         parseAndSetFindUtilOptions(args);
         
         findUtil.findNext();
@@ -324,7 +323,8 @@ LuaCFunctionResult ViewLuaInterface::find(const LuaCFunctionArguments& args)
             return LuaCFunctionResult(luaAccess);
         }
     } catch (RegexException& ex) {
-        throw LuaException(String() << "Invalid Regex '" << findUtil.getFindString() 
+        throw LuaException(luaAccess,
+                           String() << "Invalid Regex '" << findUtil.getFindString() 
                                     << "': " << ex.getMessage()); 
     }
 }
@@ -332,10 +332,9 @@ LuaCFunctionResult ViewLuaInterface::find(const LuaCFunctionArguments& args)
 
 LuaCFunctionResult ViewLuaInterface::findMatch(const LuaCFunctionArguments& args)
 {
-    try
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    try {
         parseAndSetFindUtilOptions(args);
         
         findUtil.setRegexFlag(true);
@@ -352,17 +351,17 @@ LuaCFunctionResult ViewLuaInterface::findMatch(const LuaCFunctionArguments& args
             return LuaCFunctionResult(luaAccess) ;
         }
     } catch (RegexException& ex) {
-        throw LuaException(String() << "Invalid Regex '" << findUtil.getFindString() 
+        throw LuaException(luaAccess,
+                           String() << "Invalid Regex '" << findUtil.getFindString() 
                                     << "': " << ex.getMessage()); 
     }
 }
 
 LuaCFunctionResult ViewLuaInterface::match(const LuaCFunctionArguments& args)
 {
-    try
-    {
-        LuaAccess luaAccess = args.getLuaAccess();
-        
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    try {
         parseAndSetFindUtilOptions(args);
         
         findUtil.setRegexFlag(true);
@@ -377,7 +376,8 @@ LuaCFunctionResult ViewLuaInterface::match(const LuaCFunctionArguments& args)
             return LuaCFunctionResult(luaAccess);
         }
     } catch (RegexException& ex) {
-        throw LuaException(String() << "Invalid Regex '" << findUtil.getFindString() 
+        throw LuaException(luaAccess,
+                           String() << "Invalid Regex '" << findUtil.getFindString() 
                                     << "': " << ex.getMessage()); 
     }
 }
@@ -430,7 +430,7 @@ LuaCFunctionResult ViewLuaInterface::replaceSelection(const LuaCFunctionArgument
     LuaAccess luaAccess = args.getLuaAccess();
     
     if (args.getLength() != 1 || !args[0].isString()) {
-        throw LuaArgException();
+        throw LuaArgException(luaAccess);
     }
     
     String arg = args[0].toString();

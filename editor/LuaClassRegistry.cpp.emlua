@@ -58,7 +58,7 @@ LuaCFunctionResult CompareFunction(const LuaCFunctionArguments& args)
         rslt = (p1 == p2);
     }
     else {
-        throw LuaException("function needs two arguments");
+        throw LuaException(luaAccess, "function needs two arguments");
     }
     return LuaCFunctionResult(luaAccess) << rslt;
 }
@@ -77,7 +77,7 @@ LuaCFunctionResult LessThanFunction(const LuaCFunctionArguments& args)
         rslt = (p1 < p2);
     }
     else {
-        throw LuaException("function needs two arguments");
+        throw LuaException(luaAccess, "function needs two arguments");
     }
     return LuaCFunctionResult(luaAccess) << rslt;
 }
@@ -96,7 +96,7 @@ LuaCFunctionResult LessOrEqualFunction(const LuaCFunctionArguments& args)
         rslt = (p1 <= p2);
     }
     else {
-        throw LuaException("function needs two arguments");
+        throw LuaException(luaAccess, "function needs two arguments");
     }
     return LuaCFunctionResult(luaAccess) << rslt;
 }
@@ -109,8 +109,10 @@ LuaCFunctionResult TostringFunction(const LuaCFunctionArguments& args)
     
     if (args.getLength() >= 1 && args[0].isPtr())
     {
+        LuaVar self = args[0];
+        
         String type;
-        LuaVar typeObject = args[0]["type"];
+        LuaVar typeObject = self["type"];
         if (typeObject.isString()) {
             type = typeObject.toString();
         } else {
@@ -118,7 +120,7 @@ LuaCFunctionResult TostringFunction(const LuaCFunctionArguments& args)
         }
         
         String hexPtr;
-        HeapObject* p = args[0].toWeakPtr<HeapObject>();
+        HeapObject* p = self.toWeakPtr<HeapObject>();
 
         if (p != NULL) {
             char hexPtrBuffer[40]; sprintf(hexPtrBuffer, "%p", p);
@@ -127,9 +129,18 @@ LuaCFunctionResult TostringFunction(const LuaCFunctionArguments& args)
             hexPtr = "invalid";
         }
         rslt = String() << type << ": " << hexPtr;
+        
+        LuaVar toStringMethod = self["toString"];
+        
+        if (toStringMethod.isFunction()) {
+            LuaVar stringValue = toStringMethod.call(self);
+            if (stringValue.isString()) {
+                rslt << ": " << stringValue.toString();
+            }
+        }
     }
     else {
-        throw LuaException("function needs LucED object argument");
+        throw LuaException(luaAccess, "function needs LucED object argument");
     }
     return LuaCFunctionResult(luaAccess) << rslt;
 }
@@ -167,7 +178,7 @@ LuaCFunctionResult IsOwningFunction(const LuaCFunctionArguments& args)
         }
     }
     else {
-        throw LuaException("function needs one object argument");
+        throw LuaException(luaAccess, "function needs one object argument");
     }
 }
 
@@ -188,7 +199,7 @@ LuaCFunctionResult IsValidFunction(const LuaCFunctionArguments& args)
         }
     }
     else {
-        throw LuaException("function needs one object argument");
+        throw LuaException(luaAccess, "function needs one object argument");
     }
     return LuaCFunctionResult(luaAccess) << rslt;
 }

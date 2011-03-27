@@ -38,6 +38,7 @@
 #include "SearchParameter.hpp"
 #include "SearchParameterTypes.hpp"
 #include "LuaVar.hpp"
+#include "Nullable.hpp"
 
 namespace LucED
 {
@@ -311,7 +312,7 @@ private:
     
     ObjectArray<CalloutObject::Ptr> calloutObjects;
     bool wasError;
-    LuaException luaException;
+    Nullable<LuaException> luaException;
     
     bool wasInitializedFlag;
 

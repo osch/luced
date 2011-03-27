@@ -34,8 +34,9 @@ namespace LucED
 class LuaArgException : public LuaException
 {
 public:
-    LuaArgException(const String& message = "")
-        : LuaException(message)
+    LuaArgException(const LuaAccess& luaAccess,
+                    const String&    message = "")
+        : LuaException(luaAccess, message)
     {}
     virtual const char* what() const throw();
 };

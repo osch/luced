@@ -48,7 +48,11 @@ void ConfigException::ErrorList::appendCatchedException()
     }
     catch (LuaException& ex)
     {
-        this->append(Error(ex.getFileName(), ex.getLineNumber(), ex.getMessage()));    
+        if (ex.isBuiltinFile()) {
+            throw;
+        } else {
+            this->append(Error(ex.getFileName(), ex.getLineNumber(), ex.getMessage()));    
+        }
     }
     catch (ConfigException& ex)
     {
@@ -63,6 +67,6 @@ void ConfigException::ErrorList::appendCatchedException()
     }
     catch (BaseException& ex)
     {
-        this->append(Error(fallbackFileName, -1, ex.getMessage()));    
+        throw;
     }
 }

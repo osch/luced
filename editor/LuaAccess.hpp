@@ -152,6 +152,16 @@ protected:
     friend class LuaStoredObjectReference;
     friend class LuaInterpreter;
     friend class LuaIterator;
+    friend class LuaCMethodBase;
+
+    template<class T
+            >
+    friend class LuaCClosureImpl;
+
+    template<class C,
+             LuaCFunctionResult (C::*M)(const LuaCFunctionArguments& args)
+            >
+    friend class LuaCMethod;
     
     void push(const char* arg) const {
         ASSERT(isCorrect());
@@ -252,6 +262,7 @@ protected:
     RawPtr<LuaStackChecker> getLuaStackChecker() const;
 #endif
 
+public:
     lua_State* L;
 
 private:

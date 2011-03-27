@@ -63,7 +63,7 @@ LuaVar ConfigPackageLoader::loadPackageModule(LuaAccess     luaAccess,
             script = DefaultConfig::getDefaultModule(pseudoFileName);
         }
         if (script != NULL) {
-            rslt = luaAccess.loadString(script, pseudoFileName);
+            rslt = luaAccess.loadString(script, String() << "$" << pseudoFileName);
         }
     }
     return rslt;
@@ -87,7 +87,7 @@ LuaVar ConfigPackageLoader::loadGeneralConfigModule(LuaAccess     luaAccess,
         const char* script = DefaultConfig::getDefaultModule(pseudoFileName);
 
         if (script != NULL) {
-            rslt = luaAccess.loadString(script, pseudoFileName);
+            rslt = luaAccess.loadString(script, String() << "$" << pseudoFileName);
         }
     }
     return rslt;    

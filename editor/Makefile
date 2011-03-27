@@ -107,6 +107,7 @@ LUA_SCRIPTS            := functions             BuiltinActionDefinitions  Builti
 GENERATED_HEADERS      := CallbackContainer     Callback                  ActionId \
                           LuaClassRegistry      LuaCClosure               ConfigData \
                           LucedLuaInterface     ViewLuaInterface          MatchLuaInterface \
+                          ExceptionLuaInterface
                           
 GENERATED_SLOW_MODULES := ActionId              ActionMethodBinding       DefaultConfig \
                           ConfigData
@@ -137,7 +138,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                  GuiWidget     
 		LucedLuaInterface        EncodingException        QualifiedName              SyntaxPatternsConfig \
 		TextStyleCache           ConfigPackageLoader      FocusableWidget            FocusableElement \
 		NonFocusableWidget       FocusableContainerWidget TextStyleDefinitions       LanguageModeSelectors \
-		ExecutePanel
+		ExecutePanel             ExceptionLuaInterface
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

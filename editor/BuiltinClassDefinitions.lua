@@ -124,4 +124,15 @@ return
                      },
                    }
     },
+    {
+        name     = "Exception",
+        class    = "ExceptionLuaInterface",
+
+        ptrType  = "OwningPtr",
+        
+        methods  = {
+                     { name = "toString"
+                     },
+                   }
+    },
 }

@@ -34,7 +34,6 @@ FindUtil::FindUtil(RawPtr<TextData> textData)
       maximalEndOfMatchPosition(-1),
       textData(textData),
       wasError(false),
-      luaException(""),
       wasInitializedFlag(false),
       maxForwardAssertionLength(GlobalConfig::getConfigData()->getGeneralConfig()->getMaxRegexAssertionLength()),
       maxBackwardAssertionLength(GlobalConfig::getConfigData()->getGeneralConfig()->getMaxRegexAssertionLength()),

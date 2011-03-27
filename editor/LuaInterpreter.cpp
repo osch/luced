@@ -28,6 +28,7 @@
 #include "LuaStateAccess.hpp"
 #include "LuaCMethod.hpp"
 #include "LuaFunctionArguments.hpp"
+#include "ExceptionLuaInterface.hpp"
 
 using namespace LucED;
 
@@ -144,33 +145,8 @@ LuaCFunctionResult LuaInterpreter::doNothingFunction(const LuaCFunctionArguments
 LuaCFunctionResult LuaInterpreter::errorHandlerFunction(const LuaCFunctionArguments& args)
 {
     LuaAccess  luaAccess = args.getLuaAccess();
-
-    LuaVar rslt = luaAccess.newTable();
     
-    if (args.getLength() > 0) {
-        rslt["errorMessage"] = args[0];
-    }
-    int callLevel = 1;
-
-retry:
-    lua_Debug debugInfo;   memset(&debugInfo, 0, sizeof(debugInfo));
-    
-    int rc = lua_getstack(luaAccess.L, callLevel, &debugInfo);
-    if (rc == 1)
-    {
-        lua_getinfo (luaAccess.L, "Sln", &debugInfo);
-        
-        if (strcmp(debugInfo.what, "C") == 0) {
-            callLevel += 1;
-            goto retry;
-        }
-    
-        if (debugInfo.source != NULL && debugInfo.source[0] == '@') {
-            rslt["fileName"]   = debugInfo.source + 1;
-            rslt["lineNumber"] = debugInfo.currentline;
-        }
-    }
-    return LuaCFunctionResult(luaAccess) << rslt;
+    return LuaCFunctionResult(luaAccess) << ExceptionLuaInterface::create(args[0]);
 }
 
 

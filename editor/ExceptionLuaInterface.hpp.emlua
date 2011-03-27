@@ -1,0 +1,92 @@
+/////////////////////////////////////////////////////////////////////////////////////
+//
+//   LucED - The Lucid Editor
+//
+//   Copyright (C) 2005-2011 Oliver Schmidt, oliver at luced dot de
+//
+//   This program is free software; you can redistribute it and/or modify it
+//   under the terms of the GNU General Public License Version 2 as published
+//   by the Free Software Foundation in June 1991.
+//
+//   This program is distributed in the hope that it will be useful, but WITHOUT
+//   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//   more details.
+//
+//   You should have received a copy of the GNU General Public License along with 
+//   this program; if not, write to the Free Software Foundation, Inc., 
+//   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+#include "LuaVar.hpp"
+
+#ifndef EXCEPTION_LUA_INTERFACE_HPP
+#define EXCEPTION_LUA_INTERFACE_HPP
+
+#include "HeapObject.hpp"
+#include "OwningPtr.hpp"
+#include "RawPtr.hpp"
+#include "LuaCFunctionResult.hpp"
+#include "LuaCFunctionArguments.hpp"
+
+namespace LucED
+{
+
+class ExceptionLuaInterface : public HeapObject
+{
+public:
+    typedef OwningPtr<ExceptionLuaInterface> Ptr;
+
+    static Ptr create(const LuaVar& errorObject);
+    
+    static Ptr create(const LuaAccess& luaAccess,
+                      const String&    message)
+    {
+        return Ptr(new ExceptionLuaInterface(luaAccess,
+                                             message));
+    }
+    
+    void prependMessage(const String& message);
+    
+    String getMessage() const {
+        return message;
+    }
+    
+    int getLineNumber() const {
+        return lineNumber;
+    }
+    
+    String getFileName() const {
+        return fileName;
+    }
+    bool isBuiltinFile() const {
+        return isBuiltinFileFlag;
+    }
+
+@ local defs = require("BuiltinClassDefinitions")
+@ for _, def in ipairs(defs) do
+@   if def.name == "Exception" then
+@       for _, m in ipairs(def.methods) do
+    LuaCFunctionResult @(m.name)(const LuaCFunctionArguments& args);
+@       end
+@   end
+@ end
+
+private:
+    ExceptionLuaInterface(const LuaVar& errorObject);
+    
+    ExceptionLuaInterface(LuaAccess luaAccess,
+                          String    message);
+
+    void evaluateLuaStackTrace(const LuaAccess& luaAccess);
+
+    String message;    
+    String fileName;
+    int    lineNumber;
+    bool   isBuiltinFileFlag;
+};
+
+} // namespace LucED
+
+#endif // EXCEPTION_LUA_INTERFACE_HPP

@@ -33,7 +33,7 @@ void LuaSerializer::serialize(const LuaVar& c)
     {
         const void* p = c.toVoidPtr();
         if (tables.findFirstIndex(p) >= 0) {
-            throw LuaException(String() << "object serialization impossible");
+            throw LuaException(c.getLuaAccess(), String() << "object serialization impossible");
         }
         tables.append(p);
         
@@ -85,6 +85,6 @@ void LuaSerializer::serializeValue(const LuaVar& c)
         buffer << '"';
     }
     else {
-        throw LuaException(String() << "object serialization impossible");
+        throw LuaException(c.getLuaAccess(), String() << "object serialization impossible");
     }
 }

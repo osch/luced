@@ -455,6 +455,16 @@ GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEve
         }
         return rslt;
     }
+    catch (FileException& ex) {
+        setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                           .setMessage(ex.getMessage()));
+        return GuiWidget::EVENT_PROCESSED;
+    }
+    catch (EncodingException& ex) {
+        setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
+                                           .setMessage(ex.getMessage()));
+        return GuiWidget::EVENT_PROCESSED;
+    }
     catch (LuaException& ex) {
         ConfigErrorHandler::startWithCatchedException();
         return GuiWidget::EVENT_PROCESSED;
@@ -468,6 +478,11 @@ GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEve
         setMessageBox(MessageBoxParameter().setTitle("Config Error")
                                            .setMessage(ex.getMessage()));
         return GuiWidget::NOT_PROCESSED;
+    }
+    catch (BaseException& ex) {
+        setMessageBox(MessageBoxParameter().setTitle("Internal Error")
+                                           .setMessage(ex.toString()));
+        return GuiWidget::EVENT_PROCESSED;
     }
 }
 
@@ -889,82 +904,65 @@ String EditorTopWin::getFileName() const
     return textData->getFileName();
 }
 
-
 bool EditorTopWin::UserDefinedActionMethods::invokeActionMethod(ActionId actionId)
 {
-    bool rslt = false;
+    bool processed = false;
     
-    try
+    if (actionId.isBuiltin()) {
+        return false;
+    }
+
+    LuaVar luaActionFunction = getLuaActionFunction(actionId);
+            
+    if (luaActionFunction.isFunction()) 
     {
-        if (actionId.isBuiltin()) {
-            return false;
-        }
+        TextData::HistorySection::Ptr historySectionHolder = thisTopWin->textEditor->getTextData()->createHistorySection();
+        
+        luaActionFunction.call(thisTopWin->viewLuaInterface);
 
-        LuaVar luaActionFunction = getLuaActionFunction(actionId);
-                
-        if (luaActionFunction.isFunction()) 
+        processed = true;
+    }
+    else if (luaActionFunction.isTable())
+    {
+        LuaVar shellScript = luaActionFunction["shellScript"];
+        if (shellScript.isString())
         {
-            TextData::HistorySection::Ptr historySectionHolder = thisTopWin->textEditor->getTextData()->createHistorySection();
+            String script = shellScript.toString();
 
-            luaActionFunction.call(thisTopWin->viewLuaInterface);
-
-            rslt = true;
-        }
-        else if (luaActionFunction.isTable())
-        {
-            LuaVar shellScript = luaActionFunction["shellScript"];
-            if (shellScript.isString())
+            if (script.getLength() > 0)
             {
-                String script = shellScript.toString();
-
-                if (script.getLength() > 0)
-                {
-                    if (thisTopWin->textData->getModifiedFlag() == true) {
-                        if (!thisTopWin->textData->isFileNamePseudo()) {
-                            thisTopWin->save();
-                        }
+                if (thisTopWin->textData->getModifiedFlag() == true) {
+                    if (!thisTopWin->textData->isFileNamePseudo()) {
+                        thisTopWin->save();
                     }
-                    HeapHashMap<String,String>::Ptr env = HeapHashMap<String,String>::create();
-                                                    env->set("FILE", thisTopWin->getFileName());
-
-                    Commandline::Ptr commandline = Commandline::create();
-                                     commandline->append("/bin/sh");
-                                     
-                    ProgramExecutor::start(commandline,
-                                           script,
-                                           env,
-                                           newCallback(thisTopWin, &EditorTopWin::finishedShellscript));
-                    rslt = true;
                 }
-            }
-            else {
-                throw ConfigException(String() << "Action '" << actionId.toString() << "' is table but has no field 'shellScript'");
+                HeapHashMap<String,String>::Ptr env = HeapHashMap<String,String>::create();
+                                                env->set("FILE", thisTopWin->getFileName());
+
+                Commandline::Ptr commandline = Commandline::create();
+                                 commandline->append("/bin/sh");
+                                 
+                ProgramExecutor::start(commandline,
+                                       script,
+                                       env,
+                                       newCallback(thisTopWin, &EditorTopWin::finishedShellscript));
+                processed = true;
             }
         }
         else {
-            throw ConfigException(String() << "Action '" << actionId.toString() << "' must be function or table");
-        }
-        
-        if (rslt)
-        {
-            thisTopWin->textEditor->showCursor();
-            thisTopWin->textEditor->rememberCursorPixX();
+            throw ConfigException(String() << "Action '" << actionId.toString() << "' is table but has no field 'shellScript'");
         }
     }
-    catch (FileException& ex) {
-        thisTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
-                                                       .setMessage(ex.getMessage()));
-    } catch (EncodingException& ex) {
-        thisTopWin->setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
-                                                       .setMessage(ex.getMessage()));
+    else {
+        throw ConfigException(String() << "Action '" << actionId.toString() << "' must be function or table");
     }
-    catch (LuaException& ex) {
-        ConfigErrorHandler::startWithCatchedException(actionId);
+    
+    if (processed)
+    {
+        thisTopWin->textEditor->showCursor();
+        thisTopWin->textEditor->rememberCursorPixX();
     }
-    catch (ConfigException& ex) {
-        ConfigErrorHandler::startWithCatchedException(actionId);
-    }
-    return rslt;
+    return processed;
 }
 
 void EditorTopWin::finishedShellscript(ProgramExecutor::Result rslt)

@@ -44,7 +44,8 @@ class LuaCMethodBase
 {
 protected:
 
-    static void throwInvalidNumberArgsError(const char* luaClassName);
+    static void throwInvalidNumberArgsError(const LuaAccess& luaAccess,
+                                            const char* luaClassName);
 
     template<class T
             >
@@ -57,8 +58,9 @@ protected:
         return rslt;
     }
 
-    static void handleException(lua_State* L, const char* className,
-                                              const char* methodName);
+    static void handleException(const LuaAccess& luaAccess, 
+                                const char*      className,
+                                const char*      methodName);
 
 private:    
     static void throwInvalidArgumentError(const LuaVarRef& luaObject,
@@ -114,17 +116,17 @@ private:
                 
                 if (args.getLength() < 0)
                 {
-                    LuaCMethodBase::throwInvalidNumberArgsError(className);
+                    LuaCMethodBase::throwInvalidNumberArgsError(luaAccess, className);
                 }
                 C* objectPtr = LuaCMethodBase::castDynamicToValidPtr<C>(args[-1], 
                                                                         className);
-                
                 numberOfResults = (objectPtr->*M)(args).numberOfResults;
             }
             catch (...)
             {
-                LuaCMethodBase::handleException(L, LuaClassRegistry::ClassAttributes<C>::getLuaClassName(),
-                                                   LuaClassRegistry::getMethodName<C,M>());
+                LuaCMethodBase::handleException(luaAccess, 
+                                                LuaClassRegistry::ClassAttributes<C>::getLuaClassName(),
+                                                LuaClassRegistry::getMethodName<C,M>());
                 wasError = true;
             }
         }

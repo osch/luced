@@ -25,9 +25,11 @@
 using namespace LucED;
 
 
-void LuaCMethodBase::throwInvalidNumberArgsError(const char* luaClassName)
+void LuaCMethodBase::throwInvalidNumberArgsError(const LuaAccess& luaAccess, 
+                                                 const char* luaClassName)
 {
-    throw LuaException(String() << "method needs object of type " << luaClassName
+    throw LuaException(luaAccess,
+                       String() << "method needs object of type " << luaClassName
                                                                   << " as first argument");
 }
 
@@ -36,11 +38,13 @@ void LuaCMethodBase::throwInvalidArgumentError(const LuaVarRef& luaObject,
                                                const char*      luaClassName)
 {
     if (!luaObject.isPtr()) {
-        throw LuaException(String() << "method needs object of type " << luaClassName
+        throw LuaException(luaObject.getLuaAccess(),
+                           String() << "method needs object of type " << luaClassName
                                                                       << " as first argument");
     }
     
-    throw LuaException(String() << "method needs valid object of type " << luaClassName
+    throw LuaException(luaObject.getLuaAccess(),
+                       String() << "method needs valid object of type " << luaClassName
                                                                         << " as first argument");
 }
 
@@ -50,7 +54,8 @@ void LuaCMethodBase::throwDynamicCastError(const LuaVarRef& luaObject,
 {
     if (luaObject.isPtr() && luaObject["type"].isString()) 
     {
-        throw LuaException(String() << "method needs object of type " << luaClassName
+        throw LuaException(luaObject.getLuaAccess(),
+                           String() << "method needs object of type " << luaClassName
                                                                       << " as first argument, "
                                        " but has argument of type "   << luaObject["type"].toString());
     } else {
@@ -59,8 +64,9 @@ void LuaCMethodBase::throwDynamicCastError(const LuaVarRef& luaObject,
 }
 
 
-void LuaCMethodBase::handleException(lua_State* L, const char* className,
-                                                   const char* methodName)
+void LuaCMethodBase::handleException(const LuaAccess& luaAccess, 
+                                     const char*      className,
+                                     const char*      methodName)
 {
     try
     {
@@ -68,32 +74,37 @@ void LuaCMethodBase::handleException(lua_State* L, const char* className,
     }
     catch (LuaArgException& ex)
     {
-        if (ex.getMessage().getLength() > 0)
-        {
-            lua_pushstring(L, (String() << "Invalid invocation arguments for LucED builtin function '" 
-                                        << className << "." << methodName << "': "
-                                        << ex.getMessage()).toCString());
-        } else {
-            lua_pushstring(L, (String() << "Invalid invocation arguments for LucED builtin function '" 
-                                        << className << "." << methodName << "'").toCString());
-        }
+        ExceptionLuaInterface::Ptr luaInterface = ex.getExceptionLuaInterface();
+        luaInterface->prependMessage(String() << "Invalid invocation arguments for LucED builtin function '" 
+                                              << className << "." << methodName << "'");
+        luaAccess.push(luaInterface);
+    }
+    catch (LuaException& ex)
+    {
+        ExceptionLuaInterface::Ptr luaInterface = ex.getExceptionLuaInterface();
+        luaInterface->prependMessage(String() << "Error in LucED builtin function '" 
+                                              << className << "." << methodName << "'");
+        luaAccess.push(luaInterface);
     }
     catch (BaseException& ex)
     {
-        lua_pushstring(L, (String() << "Error in LucED builtin function '"
-                                    << className << "." << methodName << "': " 
-                                    << ex.getMessage()).toCString());
+        luaAccess.push(ExceptionLuaInterface::create(luaAccess,
+                                                     String() << "Error in LucED builtin function '"
+                                                              << className << "." << methodName << "': " 
+                                                              << ex.getMessage()));
     }
     catch (std::exception& ex)
     {
-        lua_pushstring(L, (String() << "Error in LucED builtin function '"
-                                    << className << "." << methodName << "': " 
-                                    << ex.what()).toCString());
+        luaAccess.push(ExceptionLuaInterface::create(luaAccess,
+                                                     String() << "Error in LucED builtin function '"
+                                                              << className << "." << methodName << "': " 
+                                                              << ex.what()));
     }
     catch (...)
     {
-        lua_pushstring(L, (String() << "Unknown error in LucED builtin function '"
-                                    << className << "." << methodName << "'").toCString());
+        luaAccess.push(ExceptionLuaInterface::create(luaAccess,
+                                                     String() << "Unknown error in LucED builtin function '"
+                                                              << className << "." << methodName << "'"));
     }
 }
 

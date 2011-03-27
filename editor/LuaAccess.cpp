@@ -48,9 +48,8 @@ LuaAccess::Result LuaAccess::executeScript(const char* scriptBegin, long scriptL
                          LuaInterpreter::PrintBufferAccess::setPrintBuffer(luaInterpreter, oldPrintBuffer);
 
     if (error) {
-        LuaException ex(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        throw ex;
+        LuaVar errorObject(*this, lua_gettop(L));
+        throw LuaException(errorObject);
     }
     Result rslt;
            rslt.output = printBuffer;
@@ -82,9 +81,8 @@ LuaAccess::Result LuaAccess::executeExpression(const char* scriptBegin, long scr
     String printBuffer = LuaInterpreter::PrintBufferAccess::getPrintBuffer(luaInterpreter);
                          LuaInterpreter::PrintBufferAccess::setPrintBuffer(luaInterpreter, oldPrintBuffer);
     if (error) {
-        LuaException ex(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        throw ex;
+        LuaVar errorObject(*this, lua_gettop(L));
+        throw LuaException(errorObject);
     }
 
     Result rslt;
@@ -107,30 +105,14 @@ LuaAccess::Result LuaAccess::executeFile(String name) const
 
 LuaVar LuaAccess::loadString(const char* script, const String& pseudoFileName) const
 {
-    int rc = luaL_loadstring(L, script);
+    int rc = luaL_loadbuffer(L, script, strlen(script), pseudoFileName.toCString());
     
     if (rc != 0) {
         if (rc == LUA_ERRMEM) {
-            throw LuaException("out of memory");
+            throw LuaException(*this, "out of memory");
         } else {
-            String errorText = lua_tostring(L, -1);
-            lua_pop(L, 1);
-    
-            Regex  r("^line (\\d+)\\: \\s*");
-            int    lineNumber;
-            String errorMessage;
-    
-            if (r.matches(errorText)) {
-                lineNumber   = errorText.getSubstring(Pos(r.getCaptureBegin(1)), 
-                                                      Pos(r.getCaptureEnd(1))).toInt() - 1;
-                errorMessage = errorText.getTail(r.getCaptureEnd(0));
-            } else {
-                lineNumber   = -1;
-                errorMessage = errorText;
-            }
-            throw LuaException(errorMessage,
-                               lineNumber,
-                               pseudoFileName);
+            LuaVar errorObject(*this, lua_gettop(L));
+            throw LuaException(errorObject);
         }
     }
     return LuaVar(*this, lua_gettop(L));
@@ -147,26 +129,10 @@ LuaVar LuaAccess::loadFile(const String& fileName) const
             lua_pop(L, 1);
             lua_pushnil(L);
         } else if (rc == LUA_ERRMEM) {
-            throw LuaException("out of memory");
+            throw LuaException(*this, "out of memory");
         } else {
-            String errorText = lua_tostring(L, -1);
-            lua_pop(L, 1);
-
-            Regex  r("^line (\\d+)\\: \\s*");
-            int    lineNumber;
-            String errorMessage;
-
-            if (r.findMatch(errorText)) {
-                lineNumber   = errorText.getSubstring(Pos(r.getCaptureBegin(1)), 
-                                                      Pos(r.getCaptureEnd(1))).toInt() - 1;
-                errorMessage = errorText.getTail(r.getCaptureEnd(0));
-            } else {
-                lineNumber   = -1;
-                errorMessage = errorText;
-            }
-            throw LuaException(errorMessage,
-                               lineNumber,
-                               fileName);
+            LuaVar errorObject(*this, lua_gettop(L));
+            throw LuaException(errorObject);
         }
     }    
     return LuaVar(*this, lua_gettop(L));
