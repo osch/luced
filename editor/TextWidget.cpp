@@ -653,7 +653,9 @@ inline int TextWidget::calcVisiblePixXForPosInLine(RawPtr<LineInfo> li, FreePos 
             int c = textData->getWChar(p);
             if (c == TAB_CHARACTER) {
                 int tabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth() * defaultTextStyle->getSpaceWidth();
-                x = (x / tabWidth + 1) * tabWidth;
+                long totalX = leftPix + x;
+                totalX = (totalX / tabWidth + 1) * tabWidth;
+                x = totalX - leftPix;
             } else {
                 int style = hilitingBuffer->getTextStyle(p);
                 x += textStyles[style]->getCharWidth(c);
@@ -2564,7 +2566,7 @@ GuiWidget::ProcessingResult TextWidget::processGuiWidgetEvent(const XEvent* even
 
 void TextWidget::processAllExposureEvents()
 {
-/*    if (getGuiWidget().isValid())
+    if (getGuiWidget().isValid())
     {
         XEvent newEvent;
         {
@@ -2583,7 +2585,6 @@ void TextWidget::processAllExposureEvents()
             }
         }
     }
-*/
 }
 
 static inline bool adjustLineInfoPosition(long* pos, long beginChangedPos, long oldEndChangedPos, long changedAmount)
