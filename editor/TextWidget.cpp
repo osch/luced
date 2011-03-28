@@ -2563,25 +2563,25 @@ GuiWidget::ProcessingResult TextWidget::processGuiWidgetEvent(const XEvent* even
     }
 }
 
-
+// TODO: refactoring
 void TextWidget::processAllExposureEvents()
 {
     if (getGuiWidget().isValid())
     {
         XEvent newEvent;
         {
-            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask, &newEvent) == True)
+            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask|StructureNotifyMask, &newEvent) == True)
             {
-                this->processGuiWidgetEvent(&newEvent);
+                getGuiWidget()->processEvent(&newEvent);
             }
         }
         if (exposureNeedsSync)
         {
             XSync(getDisplay(), False);
             exposureNeedsSync = false;   
-            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask, &newEvent) == True)
+            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask|StructureNotifyMask, &newEvent) == True)
             {
-                this->processGuiWidgetEvent(&newEvent);
+                getGuiWidget()->processEvent(&newEvent);
             }
         }
     }
