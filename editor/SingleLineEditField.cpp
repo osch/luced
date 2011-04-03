@@ -59,22 +59,14 @@ void SingleLineEditField::setLayoutHeight(int height, VerticalAdjustment::Type a
     adjustment = adjust;
 }
 
+void SingleLineEditField::processGuiWidgetRedrawEvent(Region redrawRegion)
+{
+    draw();
+}
+
+
 GuiWidget::ProcessingResult SingleLineEditField::processGuiWidgetEvent(const XEvent* event)
 {
-    switch (event->type)
-    {
-        case GraphicsExpose:
-            if (event->xgraphicsexpose.count > 0) {
-                break;
-            }
-        case Expose: {
-            if (event->xexpose.count > 0) {
-                break;
-            }
-            draw();
-            return GuiWidget::EVENT_PROCESSED;
-        }
-    }
     return getGuiWidget()->propagateEventToParentWidget(event);
 }
 

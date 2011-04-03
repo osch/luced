@@ -100,7 +100,8 @@ private:
 
 private: // GuiWidget::EventListener interface implementation
     virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
-    
+    virtual void                        processGuiWidgetRedrawEvent(Region redrawRegion);
+
 private:
     class Actions : public ActionMethodBinding<Actions>
     {

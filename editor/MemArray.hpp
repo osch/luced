@@ -89,6 +89,9 @@ public:
         size -= amount;
         return *this;
     }
+    MemArray& remove(long pos) {
+        return removeAmount(pos, 1);
+    }
     MemArray& removeTail(long pos) {
         ASSERT(0 <= pos && pos <= size);
         removeAmount(pos, getLength() - pos);

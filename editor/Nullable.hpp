@@ -108,6 +108,13 @@ public:
         }
         return *this;
     }
+    
+    void invalidate() {
+        if (valid) {
+            ((V*)&(value))->~V();
+            valid = false;
+        }
+    }
 
     bool     isValid() const { return valid; }
     bool     isNull()  const { return !valid; }
@@ -152,6 +159,10 @@ public:
         ASSERT(this != &rhs);
     }
 
+    void invalidate() {
+        ptr.invalidate();
+    }
+
     bool         isValid()      const { return ptr.isValid(); }
     bool         isNull()       const { return !ptr.isValid(); }
     operator     OwningPtr<T>() const { return ptr; }
@@ -186,6 +197,10 @@ public:
         : ptr(rhs.ptr)
     {
         ASSERT(this != &rhs);
+    }
+
+    void invalidate() {
+        ptr.invalidate();
     }
 
     bool       isValid()      const { return ptr.isValid(); }
@@ -225,6 +240,10 @@ public:
         ASSERT(this != &rhs);
     }
 
+    void invalidate() {
+        ptr.invalidate();
+    }
+    
     bool      isValid()     const { return ptr.isValid(); }
     bool      isNull()      const { return !ptr.isValid(); }
     operator  RawPtr<T>()   const { return ptr; }

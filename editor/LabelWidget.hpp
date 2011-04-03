@@ -59,8 +59,8 @@ private:
     virtual void processGuiWidgetCreatedEvent();
 
 private: // GuiWidget::EventListener interface implementation
-
     virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
+    virtual void                        processGuiWidgetRedrawEvent(Region redrawRegion);
 
 private:
     explicit LabelWidget(const String& labelText);

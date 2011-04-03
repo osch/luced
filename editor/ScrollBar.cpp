@@ -96,17 +96,21 @@ void ScrollBar::processGuiWidgetCreatedEvent()
     calculateValuesFromPosition();
 }
 
+void ScrollBar::processGuiWidgetRedrawEvent(Region redrawRegion)
+{
+    XSetRegion(getDisplay(), scrollBar_gcid, redrawRegion);
+
+    drawArrows();
+    drawArea();
+
+    XSetClipMask(getDisplay(), scrollBar_gcid, None);
+}
+
+
 GuiWidget::ProcessingResult ScrollBar::processGuiWidgetEvent(const XEvent* event)
 {
     switch (event->type)
     {
-        case GraphicsExpose:
-        case Expose: {
-            this->drawArrows();
-            this->drawArea();
-            return GuiWidget::EVENT_PROCESSED;
-        }
-
         case ButtonPress: {
             if (event->xbutton.button == Button1)
             {

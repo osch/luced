@@ -154,8 +154,7 @@ TextWidget::TextWidget(HilitedText::Ptr hilitedText, int border,
       textWidget_gcid(TextWidgetSingletonData::getInstance()->getGcId()),
       
       cursorVisible(options),
-      neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR)),
-      exposureNeedsSync(false)
+      neverShowCursorFlag(options.isSet(NEVER_SHOW_CURSOR))
 {
     Nullable<bool> extendedLineHeight = hilitedText->getLanguageMode()->getExtendedLineHeight();
     if (extendedLineHeight.isNull()) {
@@ -1641,7 +1640,6 @@ void TextWidget::setTopLineNumber(long n)
     unclip();
     
     textData->flushPendingUpdates();
-    processAllExposureEvents();
     
     calcTotalPixWidth();
 
@@ -1689,13 +1687,8 @@ void TextWidget::setTopLineNumber(long n)
                 long diff = oldTopLineNumber - n;
                 
                 if (getGuiWidget().isValid()) {
-                    XCopyArea(getDisplay(), getGuiWidget()->getWid(), getGuiWidget()->getWid(), 
-                            textWidget_gcid,
-                            0, 0,
-                            getWidth(), getHeight() - diff * lineHeight,
-                            0, diff * lineHeight);
+                    getGuiWidget()->scrollArea(0, diff * lineHeight);
                 }
-                exposureNeedsSync = true;
                 drawArea(0, diff * lineHeight);
                 
                 if (redrawBottomLinePart) {
@@ -1709,13 +1702,8 @@ void TextWidget::setTopLineNumber(long n)
                 long diff = n - oldTopLineNumber;
                 
                 if (getGuiWidget().isValid()) {
-                    XCopyArea(getDisplay(), getGuiWidget()->getWid(), getGuiWidget()->getWid(), 
-                            textWidget_gcid,
-                            0, diff * lineHeight,
-                            getWidth(), getHeight() - diff * lineHeight,
-                            0, 0);
+                    getGuiWidget()->scrollArea(0, -diff * lineHeight);
                 }
-                exposureNeedsSync = true;
                 drawArea(getHeight() - (diff * lineHeight), getHeight());
 
                 if (redrawTopLinePart) {
@@ -1891,7 +1879,6 @@ void TextWidget::internSetLeftPix(long newLeftPix)
     if (newLeftPix == leftPix) {
         return;
     }
-    processAllExposureEvents();
     
     if (leftPix < newLeftPix) {
         long diffPix = newLeftPix - leftPix;
@@ -1901,12 +1888,8 @@ void TextWidget::internSetLeftPix(long newLeftPix)
         if (diffPix < getWidth()) {
             redrawChanged(getTopLeftTextPosition(), textData->getLength()); // assure that new lineinfos match screen content
             if (getGuiWidget().isValid()) {
-                XCopyArea(getDisplay(), getGuiWidget()->getWid(), getGuiWidget()->getWid(), textWidget_gcid,
-                        diffPix, 0,
-                        getWidth() - diffPix, getHeight(),
-                        0, 0);
+                getGuiWidget()->scrollArea(-diffPix, 0);
             }
-            exposureNeedsSync = true;
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
             clip(getWidth() - diffPix, 0, diffPix, getHeight());
@@ -1926,12 +1909,8 @@ void TextWidget::internSetLeftPix(long newLeftPix)
         if (diffPix < getWidth()) {
             redrawChanged(getTopLeftTextPosition(), textData->getLength()); // assure that new lineinfos match screen content
             if (getGuiWidget().isValid()) {
-                XCopyArea(getDisplay(), getGuiWidget()->getWid(), getGuiWidget()->getWid(), textWidget_gcid,
-                        0, 0,
-                        getWidth() - diffPix, getHeight(),
-                        diffPix, 0);
+                getGuiWidget()->scrollArea(diffPix, 0);
             }
-            exposureNeedsSync = true;
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
             clip(0, 0, diffPix, getHeight());
@@ -1979,7 +1958,6 @@ void TextWidget::processGuiWidgetNewPositionEvent(const Position& p)
     {
         if (!hasPosition)
         {
-            exposureNeedsSync = true;
             hasPosition       = true;
         }
         textData->flushPendingUpdates();
@@ -2492,100 +2470,18 @@ GuiWidget::ProcessingResult TextWidget::processGuiWidgetEvent(const XEvent* even
 {
     switch (event->type)
     {
-        case NoExpose: {
-            exposureNeedsSync = false;
-            return GuiWidget::EVENT_PROCESSED;
-        }
-        case GraphicsExpose:
-        case Expose: {
-
-            XRectangle r;
-            int count;
-            if (event->type == GraphicsExpose) {
-                r.x      = event->xgraphicsexpose.x;
-                r.y      = event->xgraphicsexpose.y;
-                r.width  = event->xgraphicsexpose.width;
-                r.height = event->xgraphicsexpose.height;
-                count    = event->xgraphicsexpose.count; // Anzahl der noch folgenden Events
-                if (count == 0) {
-                    exposureNeedsSync = false;
-                }
-            } else {
-                r.x      = event->xexpose.x;
-                r.y      = event->xexpose.y;
-                r.width  = event->xexpose.width;
-                r.height = event->xexpose.height;
-                count    = event->xexpose.count; // Anzahl der noch folgenden Events
-            }
-            {
-                Region newRegion = XCreateRegion();
-                XUnionRectWithRegion(&r, redrawRegion, newRegion);
-                XDestroyRegion(redrawRegion);
-                redrawRegion = newRegion;
-            }
-
-            XEvent newEvent;
-            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), -1, &newEvent) == True)
-            {
-                if (newEvent.type == GraphicsExpose) {
-                    r.x      = newEvent.xgraphicsexpose.x;
-                    r.y      = newEvent.xgraphicsexpose.y;
-                    r.width  = newEvent.xgraphicsexpose.width;
-                    r.height = newEvent.xgraphicsexpose.height;
-                    count    = newEvent.xgraphicsexpose.count; // Anzahl der noch folgenden Events
-                } else if (newEvent.type == Expose) {
-                    r.x      = newEvent.xexpose.x;
-                    r.y      = newEvent.xexpose.y;
-                    r.width  = newEvent.xexpose.width;
-                    r.height = newEvent.xexpose.height;
-                    count    = newEvent.xexpose.count; // Anzahl der noch folgenden Events
-                } else {
-                    XPutBackEvent(getDisplay(), &newEvent);
-                    break;
-                }
-                Region newRegion = XCreateRegion();
-                XUnionRectWithRegion(&r, redrawRegion, newRegion);
-                XDestroyRegion(redrawRegion);
-                redrawRegion = newRegion;
-            }
-            if (count == 0)
-            {
-                XSetRegion(getDisplay(), textWidget_gcid, redrawRegion);
-                redraw();
-                unclip();
-                XDestroyRegion(redrawRegion);
-                redrawRegion = XCreateRegion();
-            }
-            return GuiWidget::EVENT_PROCESSED;
-        }
         default:
             return GuiWidget::NOT_PROCESSED;
     }
 }
 
-// TODO: refactoring
-void TextWidget::processAllExposureEvents()
+void TextWidget::processGuiWidgetRedrawEvent(Region redrawRegion)
 {
-    if (getGuiWidget().isValid())
-    {
-        XEvent newEvent;
-        {
-            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask|StructureNotifyMask, &newEvent) == True)
-            {
-                getGuiWidget()->processEvent(&newEvent);
-            }
-        }
-        if (exposureNeedsSync)
-        {
-            XSync(getDisplay(), False);
-            exposureNeedsSync = false;   
-            while (XCheckWindowEvent(getDisplay(), getGuiWidget()->getWid(), ExposureMask|StructureNotifyMask, &newEvent) == True)
-            {
-                getGuiWidget()->processEvent(&newEvent);
-            }
-        }
-    }
+    XSetRegion(getDisplay(), textWidget_gcid, redrawRegion);
+    redraw();
+    unclip();
 }
+
 
 static inline bool adjustLineInfoPosition(long* pos, long beginChangedPos, long oldEndChangedPos, long changedAmount)
 {

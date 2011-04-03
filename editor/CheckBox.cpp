@@ -135,22 +135,16 @@ bool CheckBox::isMouseInsideButtonArea(int mouseX, int mouseY)
 }
 
 
+void CheckBox::processGuiWidgetRedrawEvent(Region redrawRegion)
+{
+    draw();
+}
+
+
 GuiWidget::ProcessingResult CheckBox::processGuiWidgetEvent(const XEvent* event)
 {
     switch (event->type) 
     {
-        case GraphicsExpose:
-            if (event->xgraphicsexpose.count > 0) {
-                break;
-            }
-        case Expose: {
-            if (event->xexpose.count > 0) {
-                break;
-            }
-            draw();
-            return GuiWidget::EVENT_PROCESSED;
-        }
-
         case ButtonPress: {
             if (!hasFocus()) {
                 reportMouseClick();

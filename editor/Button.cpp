@@ -192,22 +192,15 @@ static void waitShort(MicroSeconds microSecs = shortTime)
 }
 
 
+void Button::processGuiWidgetRedrawEvent(Region redrawRegion)
+{
+    drawButton();
+}
+
 GuiWidget::ProcessingResult Button::processGuiWidgetEvent(const XEvent *event)
 {
     switch (event->type)
     {
-        case GraphicsExpose:
-            if (event->xgraphicsexpose.count > 0) {
-                break;
-            }
-        case Expose: {
-            if (event->xexpose.count > 0) {
-                break;
-            }
-            drawButton();
-            return GuiWidget::EVENT_PROCESSED;
-        }
-
         case ButtonPress: {
             if (!hasFocus()) {
                 reportMouseClick();

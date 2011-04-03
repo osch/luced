@@ -259,6 +259,7 @@ protected:
 protected: // GuiWidget::EventListener interface implementation
     virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
     virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
+    virtual void                        processGuiWidgetRedrawEvent(Region redrawRegion);
 
     virtual Measures internalGetDesiredMeasures();
 
@@ -303,8 +304,6 @@ private:
     void treatHilitingUpdate(HilitingBuffer::UpdateInfo update);
     
     void drawCursor(long cursorPos);
-    
-    void processAllExposureEvents();
     
     long fillCursorColumnsBehindEndOfLine();
     
@@ -393,8 +392,6 @@ private:
 
     CursorVisibleFlag cursorVisible;
     bool neverShowCursorFlag;
-    
-    bool exposureNeedsSync;
 };
 
 } // namespace LucED

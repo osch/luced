@@ -86,6 +86,7 @@ protected:
 protected: // GuiWidget::EventListener interface implementation
     virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
     virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
+    virtual void                        processGuiWidgetRedrawEvent(Region redrawRegion);
 
 private:
     SingleLineEditField(LanguageMode::Ptr languageMode, TextData::Ptr textData);

@@ -94,7 +94,8 @@ GuiWidget::GuiWidget(RawPtr<GuiWidget>     parentWidget,
       position(position),
       width (position.w - 2 * borderWidth),
       height(position.h - 2 * borderWidth),
-      gcid(GuiWidgetSingletonData::getInstance()->getGcid())
+      gcid(GuiWidgetSingletonData::getInstance()->getGcid()),
+      isHandlingGraphicsExpose(false)
 {
 #if 0
     wid = WidgetId(XCreateSimpleWindow(getDisplay(), parent->getWid(), 
@@ -124,7 +125,7 @@ GuiWidget::GuiWidget(RawPtr<GuiWidget>     parentWidget,
                                            position.x, position.y, width, height, borderWidth, 
                                            GuiRoot::getInstance()->getGreyColor(), 
                                            GuiRoot::getInstance()->getGreyColor()));
-    }    
+    } 
     EventDispatcher::getInstance()->registerEventReceiver(EventRegistration(this, wid));
     addToXEventMask(StructureNotifyMask);
 }
@@ -132,10 +133,53 @@ GuiWidget::GuiWidget(RawPtr<GuiWidget>     parentWidget,
 GuiWidget::~GuiWidget()
 {
     EventDispatcher::getInstance()->removeEventReceiver(EventRegistration(this, wid));
+    if (redrawRegion.isValid()) {
+        XDestroyRegion(redrawRegion.get());
+        redrawRegion.invalidate();
+    }
     if (isTopWindow) {
         XUnmapWindow(getDisplay(), wid); // Workaround: without "unmap" strange focus changed happened under the Exceed xserver
         XDestroyWindow(getDisplay(), wid);
     }
+}
+
+int GuiWidget::internalProcessExposureEvent(const XEvent* event)
+{
+    XRectangle r;
+    int count;
+    if (event->type == GraphicsExpose) {
+        r.x      = event->xgraphicsexpose.x;
+        r.y      = event->xgraphicsexpose.y;
+        r.width  = event->xgraphicsexpose.width;
+        r.height = event->xgraphicsexpose.height;
+        count    = event->xgraphicsexpose.count; // Anzahl der noch folgenden Events
+        if (!isHandlingGraphicsExpose) {
+            isHandlingGraphicsExpose = true;
+            if (scrollRequests.getLength() > 0) {
+                scrollRequests.remove(0);
+            }
+        }
+        if (count == 0) {
+            isHandlingGraphicsExpose = false;
+        }
+    } else {
+        r.x      = event->xexpose.x;
+        r.y      = event->xexpose.y;
+        r.width  = event->xexpose.width;
+        r.height = event->xexpose.height;
+        count    = event->xexpose.count; // Anzahl der noch folgenden Events
+    }
+    {
+        if (!redrawRegion.isValid()) {
+            redrawRegion = XCreateRegion();
+        }
+        Region transformedUpdateRegion = calculateScrolledUpdateRegion(&r);
+        XUnionRegion(redrawRegion.get(), 
+                     transformedUpdateRegion,
+                     redrawRegion.get());
+        XDestroyRegion(transformedUpdateRegion);
+    }
+    return count;   
 }
 
 GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent* event)
@@ -161,6 +205,43 @@ GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent* event)
             } else {
                 return NOT_PROCESSED;
             }
+        }
+        case NoExpose: {
+            if (scrollRequests.getLength() > 0) {
+                scrollRequests.remove(0);
+            }
+            isHandlingGraphicsExpose = false;
+            return EVENT_PROCESSED;
+        }
+        
+        case GraphicsExpose:
+        case Expose:
+        {
+            int count = internalProcessExposureEvent(event);
+
+            XEvent newEvent;
+            while (XCheckWindowEvent(getDisplay(), getWid(), -1, &newEvent) == True)
+            {
+                if (   newEvent.type == GraphicsExpose
+                    || newEvent.type == Expose)
+                {
+                    count = internalProcessExposureEvent(&newEvent);
+                } else {
+                    XPutBackEvent(getDisplay(), &newEvent);
+                    break;
+                }
+            }
+
+            if (count == 0 && redrawRegion.isValid())
+            {
+                GuiClipping clipping = obtainGuiClipping(redrawRegion.get());
+
+                eventListener->processGuiWidgetRedrawEvent(redrawRegion.get());
+
+                XDestroyRegion(redrawRegion.get());
+                redrawRegion.invalidate();
+            }
+            return EVENT_PROCESSED;
         }
         default: {
             return eventListener->processGuiWidgetEvent(event);
@@ -555,8 +636,13 @@ GuiWidget::GuiClipping GuiWidget::obtainGuiClipping(int x, int y, int w, int h)
     r.y = y;
     r.width  = w;
     r.height = h;
-    XSetClipRectangles(getDisplay(), gcid, 
-            0, 0, &r, 1, Unsorted);    
+    XSetClipRectangles(getDisplay(), gcid, 0, 0, &r, 1, Unsorted);    
+    return GuiClipping(this);
+}
+
+GuiWidget::GuiClipping GuiWidget::obtainGuiClipping(Region region)
+{
+    XSetRegion(getDisplay(), gcid, region);
     return GuiClipping(this);
 }
 
@@ -570,8 +656,7 @@ void GuiWidget::setWinGravity(int winGravity)
 {
     XSetWindowAttributes at;
     at.win_gravity = winGravity;
-    XChangeWindowAttributes(getDisplay(), getWid(), 
-            CWWinGravity, &at);
+    XChangeWindowAttributes(getDisplay(), getWid(), CWWinGravity, &at);
 }
 
 
@@ -579,7 +664,47 @@ void GuiWidget::setBitGravity(int bitGravity)
 {
     XSetWindowAttributes at;
     at.bit_gravity = bitGravity;
-    XChangeWindowAttributes(getDisplay(), getWid(), 
-            CWBitGravity, &at);
+    XChangeWindowAttributes(getDisplay(), getWid(), CWBitGravity, &at);
+}
+
+void GuiWidget::scrollArea(int srcX, int srcY, unsigned int width, unsigned int height, int destX, int destY)
+{
+    scrollRequests.append(ScrollRequest(srcX, srcY, width, height, destX, destY));
+
+    XCopyArea(getDisplay(), getWid(), getWid(), gcid,
+                            srcX, srcY, width, height, destX, destY);
+}
+
+Region GuiWidget::calculateScrolledUpdateRegion(XRectangle* r)
+{
+    Region updateRegion = XCreateRegion();
+    XUnionRectWithRegion(r, updateRegion, updateRegion);
+    
+    for (int i = 0; i < scrollRequests.getLength(); ++i)
+    {
+        ScrollRequest s = scrollRequests[i];
+        
+        XRectangle scrolledRect;
+        {
+            scrolledRect.x      = s.srcX;
+            scrolledRect.y      = s.srcY;
+            scrolledRect.width  = s.width;
+            scrolledRect.height = s.height;
+        }
+        
+        Region scrolledRegion = XCreateRegion();
+        {
+            XUnionRectWithRegion(&scrolledRect, scrolledRegion, scrolledRegion);
+            
+            XIntersectRegion(updateRegion, scrolledRegion, scrolledRegion);
+            XSubtractRegion (updateRegion, scrolledRegion, updateRegion);
+    
+            XOffsetRegion(scrolledRegion, s.destX - s.srcX, s.destY - s.srcY);
+            
+            XUnionRegion(updateRegion, scrolledRegion, updateRegion);
+        }
+        XDestroyRegion(scrolledRegion);
+    }
+    return updateRegion;
 }
 

@@ -78,6 +78,7 @@ private:
 protected: // GuiWidget::EventListener interface implementation
     virtual GuiWidget::ProcessingResult processGuiWidgetEvent(const XEvent* event);
     virtual void                        processGuiWidgetNewPositionEvent(const Position& newPosition);
+    virtual void                        processGuiWidgetRedrawEvent(Region redrawRegion);
 
 private: // FocusManager
     virtual void requestHotKeyRegistrationFor(const KeyMapping::Id& id, RawPtr<FocusableElement> w);

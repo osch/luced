@@ -61,22 +61,15 @@ GuiElement::Measures StatusLine::internalGetDesiredMeasures()
     return Measures(0, statusHeight, 0, statusHeight, INT_MAX, statusHeight);
 }
 
+void StatusLine::processGuiWidgetRedrawEvent(Region redrawRegion)
+{
+    drawArea();
+}
+
 GuiWidget::ProcessingResult StatusLine::processGuiWidgetEvent(const XEvent* event)
 {
     switch (event->type)
     {
-        case GraphicsExpose:
-            if (event->xgraphicsexpose.count > 0) {
-                break;
-            }
-        case Expose: {
-            if (event->xexpose.count > 0) {
-                break;
-            }
-            this->drawArea();
-            return GuiWidget::EVENT_PROCESSED;
-        }
-
         case ButtonPress: {
             break;
         }

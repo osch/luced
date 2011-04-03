@@ -66,22 +66,15 @@ GuiElement::Measures LabelWidget::getOwnDesiredMeasures()
     return GuiElement::Measures(width, height, width, height, width, height);
 }
 
+void LabelWidget::processGuiWidgetRedrawEvent(Region redrawRegion)
+{
+    draw();
+}
+
 GuiWidget::ProcessingResult LabelWidget::processGuiWidgetEvent(const XEvent* event)
 {
     switch (event->type)
     {
-        case GraphicsExpose:
-            if (event->xgraphicsexpose.count > 0) {
-                break;
-            }
-        case Expose: {
-            if (event->xexpose.count > 0) {
-                break;
-            }
-            this->draw();
-            return GuiWidget::EVENT_PROCESSED;
-        }
-
         case ButtonPress: {
             if (event->xbutton.button == Button2) {
                 middleMouseButtonCallback->call();

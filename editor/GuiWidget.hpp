@@ -39,6 +39,7 @@
 #include "HeapObject.hpp"
 #include "OwningPtr.hpp"
 #include "Char2bArray.hpp"
+#include "Nullable.hpp"
 
 namespace LucED
 {
@@ -59,6 +60,7 @@ public:
     public:
         virtual ProcessingResult processGuiWidgetEvent(const XEvent* event) = 0; // TODO: this X11 specific method should vanish some day...
         virtual void             processGuiWidgetNewPositionEvent(const Position& newPosition) = 0;
+        virtual void             processGuiWidgetRedrawEvent(Region redrawRegion) {}
     };
     
     static Ptr create(RawPtr<GuiWidget>     parentWidget, 
@@ -138,6 +140,7 @@ public:
     friend class GuiClipping;
     
     GuiClipping obtainGuiClipping(int x, int y, int w, int h);
+    GuiClipping obtainGuiClipping(Region region);
     void setBitGravity(int bitGravity);
 
     int getWidth() const {
@@ -198,7 +201,37 @@ public:
     void drawDottedFrame(int x, int y, int w, int h);
     
     
+    void scrollArea(int srcX, int srcY, unsigned int width, unsigned int height, int destX, int destY);
+
+    void scrollArea(int diffX, int diffY) {
+        int srcX; int destX; int width;
+        if (diffX >= 0) {
+            srcX  = 0;
+            destX = diffX;
+            width = getWidth() - diffX;
+        } else {
+            srcX  = -diffX;
+            destX = 0;
+            width = getWidth() + diffX;
+        }
+        int srcY; int destY; int height;
+        if (diffY >= 0) {
+            srcY  = 0;
+            destY = diffY;
+            height = getHeight() - diffY;
+        } else {
+            srcY  = -diffY;
+            destY = 0;
+            height = getHeight() + diffY;
+        }
+        scrollArea(srcX, srcY, width, height, destX, destY);
+    }
+    
 private:
+    int    internalProcessExposureEvent(const XEvent* event);
+    Region calculateScrolledUpdateRegion(XRectangle* r);
+
+
     int  borderWidth;
     bool isTopWindow;
     WidgetId wid;
@@ -206,12 +239,30 @@ private:
     Position lastRequestedPosition;
     Position position;
     GC gcid;
-
+    
     RawPtr<GuiWidget> parent;
     RawPtr<EventListener> eventListener;
     
     int width;
     int height;
+    
+    Nullable<Region> redrawRegion; // collects Rectangles for redraw events
+    bool isHandlingGraphicsExpose;
+
+    struct ScrollRequest
+    {
+        ScrollRequest(int srcX, int srcY, unsigned int width, unsigned int height, int destX, int destY)
+            : srcX(srcX), srcY(srcY), width(width), height(height), destX(destX), destY(destY)
+        {}
+            
+        int srcX;
+        int srcY;
+        unsigned int width;
+        unsigned int height;
+        int destX;
+        int destY;
+    };
+    MemArray<ScrollRequest> scrollRequests;
 };
 
 

@@ -144,6 +144,10 @@ GuiElement::Measures DialogPanel::internalGetDesiredMeasures()
     }
 }
 
+void DialogPanel::processGuiWidgetRedrawEvent(Region redrawRegion)
+{
+    getGuiWidget()->drawRaisedBox(0, 0, getPosition().w, getPosition().h);
+}
 
 
 GuiWidget::ProcessingResult DialogPanel::processGuiWidgetEvent(const XEvent* event)
@@ -155,17 +159,6 @@ GuiWidget::ProcessingResult DialogPanel::processGuiWidgetEvent(const XEvent* eve
                 reportMouseClick();
             }
             break;
-        case GraphicsExpose:
-            if (event->xgraphicsexpose.count > 0) {
-                break;
-            }
-        case Expose: {
-            if (event->xexpose.count > 0) {
-                break;
-            }
-            getGuiWidget()->drawRaisedBox(0, 0, getPosition().w, getPosition().h);
-            return GuiWidget::EVENT_PROCESSED;
-        }
     }
     return GuiWidget::NOT_PROCESSED;
 }
