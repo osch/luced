@@ -28,6 +28,7 @@
 #include "GlobalConfig.hpp"
 #include "SingletonInstance.hpp"
 #include "TextStyleCache.hpp"
+#include "GuiClipping.hpp"
 
 namespace LucED
 {
@@ -40,24 +41,29 @@ public:
     GC                getGcid()         { return gcid; }
     RawPtr<TextStyle> getGuiTextStyle() { return guiTextStyle; }
 
+    RawPtr<GuiClipping> getClipping() {
+        return &clipping;
+    }
+
 private:
     friend class SingletonInstance<GuiWidgetSingletonData>;
     
     GuiWidgetSingletonData()
-        : guiTextStyle(TextStyleCache::getInstance()
+        : gcid(XCreateGC(GuiRoot::getInstance()->getDisplay(), 
+                         GuiRoot::getInstance()->getRootWid(), 0, NULL)),
+          guiTextStyle(TextStyleCache::getInstance()
                                      ->getTextStyle(GlobalConfig::getConfigData()->getGeneralConfig()->getGuiFont(), 
-                                                    GlobalConfig::getConfigData()->getGeneralConfig()->getGuiFontColor()))
+                                                    GlobalConfig::getConfigData()->getGeneralConfig()->getGuiFontColor())),
+          clipping(GuiRoot::getInstance()->getDisplay(), 
+                   gcid)
     {
         Display* display = GuiRoot::getInstance()->getDisplay();
         GuiRoot* guiRoot = GuiRoot::getInstance();
 
-        gcid = XCreateGC(display, guiRoot->getRootWid(), 0, NULL);
-
         XSetForeground(display, gcid, guiRoot->getBlackColor());
         XSetBackground(display, gcid, guiRoot->getGreyColor());
 
-        XSetLineAttributes(display, gcid, 0, 
-            LineSolid, CapProjecting, JoinMiter);
+        XSetLineAttributes(display, gcid, 0, LineSolid, CapProjecting, JoinMiter);
 
         XSetGraphicsExposures(display, gcid, True);
 
@@ -66,6 +72,8 @@ private:
     
     ~GuiWidgetSingletonData()
     {
+        clipping.clear();
+
         XFreeGC(GuiRoot::getInstance()->getDisplay(), gcid);
     }
     
@@ -73,6 +81,7 @@ private:
 
     GC             gcid;
     TextStyle::Ptr guiTextStyle;
+    GuiClipping    clipping;
 };
 
 } // namespace LucED
@@ -143,6 +152,11 @@ GuiWidget::~GuiWidget()
     }
 }
 
+RawPtr<GuiClipping> GuiWidget::getClipping() const
+{
+    return GuiWidgetSingletonData::getInstance()->getClipping();
+}
+
 int GuiWidget::internalProcessExposureEvent(const XEvent* event)
 {
     XRectangle r;
@@ -187,8 +201,9 @@ GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent* event)
     switch (event->type)
     {
         case ConfigureNotify: {
-            if (event->xconfigure.window == getWid()
-             && event->xconfigure.event  == getWid()) {
+            if (   event->xconfigure.window == getWid()
+                && event->xconfigure.event  == getWid())
+            {
                 int x = event->xconfigure.x;
                 int y = event->xconfigure.y;
                 int w = event->xconfigure.width;
@@ -202,7 +217,8 @@ GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent* event)
                     eventListener->processGuiWidgetNewPositionEvent(newPosition);
                 }
                 return EVENT_PROCESSED;
-            } else {
+            }
+            else {
                 return NOT_PROCESSED;
             }
         }
@@ -234,7 +250,8 @@ GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent* event)
 
             if (count == 0 && redrawRegion.isValid())
             {
-                GuiClipping clipping = obtainGuiClipping(redrawRegion.get());
+                GuiClipping::Holder clippingHolder(GuiWidgetSingletonData::getInstance()->getClipping(),
+                                                   redrawRegion.get());
 
                 eventListener->processGuiWidgetRedrawEvent(redrawRegion.get());
 
@@ -628,29 +645,6 @@ int GuiWidget::getGuiTextHeight()
 {
     return getGuiTextStyle()->getLineHeight();
 }
-
-GuiWidget::GuiClipping GuiWidget::obtainGuiClipping(int x, int y, int w, int h)
-{
-    XRectangle r;
-    r.x = x;
-    r.y = y;
-    r.width  = w;
-    r.height = h;
-    XSetClipRectangles(getDisplay(), gcid, 0, 0, &r, 1, Unsorted);    
-    return GuiClipping(this);
-}
-
-GuiWidget::GuiClipping GuiWidget::obtainGuiClipping(Region region)
-{
-    XSetRegion(getDisplay(), gcid, region);
-    return GuiClipping(this);
-}
-
-GuiWidget::GuiClipping::~GuiClipping()
-{
-    XSetClipMask(guiWidget->getDisplay(), guiWidget->gcid, None);
-}
-
 
 void GuiWidget::setWinGravity(int winGravity)
 {

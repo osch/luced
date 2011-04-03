@@ -19,6 +19,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <unistd.h>
+
 #include <X11/cursorfont.h>
 
 #include "TextWidget.hpp"
@@ -27,6 +29,7 @@
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
 #include "RawPtr.hpp"
+#include "GuiClipping.hpp"
 
 #define CURSOR_WIDTH 2
 
@@ -52,11 +55,19 @@ public:
     Cursor getEmptyMouseCursor() { return emptyMouseCursor; }
     Cursor getTextMouseCursor()  { return textMouseCursor; }
     GC     getGcId()             { return textWidget_gcid; }
+    
+    RawPtr<GuiClipping> getClipping() {
+        return &clipping;
+    }
 
 private:
     friend class SingletonInstance<TextWidgetSingletonData>;
     
     TextWidgetSingletonData()
+        : textWidget_gcid(XCreateGC(GuiRoot::getInstance()->getDisplay(), 
+                                    GuiRoot::getInstance()->getRootWid(), 0, NULL)),
+          clipping(GuiRoot::getInstance()->getDisplay(), 
+                   textWidget_gcid)
     {
         static const char emptyPixmapBytes[] = {0x00, 0x00, 0x00, 0x00};
 
@@ -74,14 +85,14 @@ private:
 
         textMouseCursor = XCreateFontCursor(GuiRoot::getInstance()->getDisplay(), XC_xterm);
 
-        textWidget_gcid = XCreateGC(GuiRoot::getInstance()->getDisplay(), 
-                                    GuiRoot::getInstance()->getRootWid(), 0, NULL);
                                     
         XSetGraphicsExposures(GuiRoot::getInstance()->getDisplay(), textWidget_gcid, True);
     }
     
     ~TextWidgetSingletonData()
     {
+        clipping.clear();
+        
         Display* display = GuiRoot::getInstance()->getDisplay();
         XFreeCursor(display, emptyMouseCursor);
         XFreeCursor(display, textMouseCursor);
@@ -93,6 +104,7 @@ private:
     Cursor emptyMouseCursor;
     Cursor textMouseCursor;
     GC textWidget_gcid;
+    GuiClipping clipping;
 };
 
 } // namespace LucED
@@ -1027,9 +1039,13 @@ inline void TextWidget::printLine(RawPtr<LineInfo> li, int y, RawPtr<LineInfo> p
             int deltaY1 = util::maximum(0, li->maxCharAscent  - lineAscent);
             int w       = getWidth();
             
-            clip(0, y - deltaY1, w, lineHeight + deltaY1);
+            GuiClipping::Holder clippingHolder(TextWidgetSingletonData::getInstance()->getClipping(),
+                                               0, 
+                                               y - deltaY1, 
+                                               w, 
+                                               lineHeight + deltaY1);
+                                               
             printPartialLineWithoutCursor(prevLi, y - lineHeight, 0, w);
-            unclip();
         }
     }
 }
@@ -1258,7 +1274,11 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
     int deltaY2 = util::maximum(0, util::maximum(newLi->maxCharDescent - lineDescent, 
                                                  oldLi->maxCharDescent - lineDescent));
     
-    clip(startX, y - deltaY1, endX - startX, lineHeight + deltaY1 + deltaY2);
+    GuiClipping::Holder clippingHolder(TextWidgetSingletonData::getInstance()->getClipping(),
+                                       startX, 
+                                       y - deltaY1, 
+                                       endX - startX, 
+                                       lineHeight + deltaY1 + deltaY2);
     
     if (prevLi.isValid()) clearPartialLine             (prevLi, y - lineHeight, startX, endX);
                           clearPartialLine             ( newLi, y,              startX, endX);
@@ -1271,8 +1291,6 @@ void TextWidget::printChangedPartOfLine(RawPtr<LineInfo> newLi, int y, RawPtr<Li
     if (prevLi.isValid()) printPartialLineWithoutCursor(prevLi, y - lineHeight, startX, endX);
                           printPartialLineWithoutCursor( newLi, y,              startX, endX);
     if (nextLi.isValid()) printPartialLineWithoutCursor(nextLi, y + lineHeight, startX, endX);
-
-    unclip();
 }
 
 
@@ -1288,7 +1306,11 @@ inline void TextWidget::printPartialLine(RawPtr<LineInfo> li, int y, int startX,
     int deltaY1 = util::maximum(0, li->maxCharAscent  - lineAscent);
     int deltaY2 = util::maximum(0, li->maxCharDescent - lineDescent);
     
-    clip(startX, y - deltaY1, endX - startX, lineHeight + deltaY1 + deltaY2);
+    GuiClipping::Holder clippingHolder(TextWidgetSingletonData::getInstance()->getClipping(),
+                                       startX, 
+                                       y - deltaY1, 
+                                       endX - startX, 
+                                       lineHeight + deltaY1 + deltaY2);
     
     if (prevLi.isValid()) clearPartialLine             (prevLi, y - lineHeight, startX, endX);
                           clearPartialLine             (    li, y,              startX, endX);
@@ -1301,8 +1323,6 @@ inline void TextWidget::printPartialLine(RawPtr<LineInfo> li, int y, int startX,
     if (prevLi.isValid()) printPartialLineWithoutCursor(prevLi, y - lineHeight, startX, endX);
                           printPartialLineWithoutCursor(    li, y,              startX, endX);
     if (nextLi.isValid()) printPartialLineWithoutCursor(nextLi, y + lineHeight, startX, endX);
-
-    unclip();
 }
 
 
@@ -1404,8 +1424,6 @@ void TextWidget::redrawChanged(long spos, long epos)
     long pos = getTopLeftTextPosition();
     long oldpos;
 
-    unclip();
-    
     if (lineInfos.getLength() > 0)
     {
         RawPtr<LineInfo> prevLi;
@@ -1533,11 +1551,17 @@ void TextWidget::drawCursor(long cursorPos)
             if (cursorPos <= li->endOfLinePos) {
                 // cursor is visible
                 int cursorX = calcVisiblePixXForPosInLine(li, FreePos(cursorPos, cursorColumnsBehindEndOfLine));
-                //clip(cursorX - 1, y, CURSOR_WIDTH + 2, lineHeight);
+
+                GuiClipping::Holder clippingHolder(TextWidgetSingletonData::getInstance()->getClipping(),
+                                                   cursorX - 1, 
+                                                   y, 
+                                                   CURSOR_WIDTH + 2, 
+                                                   lineHeight);
+                                                   
                 RawPtr<LineInfo> nextLi = line + 1 < lineInfos.getLength() ? getValidLineInfo(line + 1)
                                                                            : Null;
                 printPartialLine(li, y, cursorX - 1, cursorX + CURSOR_WIDTH + 1, prevLi, nextLi);
-                //unclip();
+
                 break;
             }
             y    += lineHeight;
@@ -1637,8 +1661,6 @@ void TextWidget::calcTotalPixWidth()
 
 void TextWidget::setTopLineNumber(long n)
 {
-    unclip();
-    
     textData->flushPendingUpdates();
     
     calcTotalPixWidth();
@@ -1892,10 +1914,16 @@ void TextWidget::internSetLeftPix(long newLeftPix)
             }
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
-            clip(getWidth() - diffPix, 0, diffPix, getHeight());
+
+            GuiClipping::Holder clippingHolder(TextWidgetSingletonData::getInstance()->getClipping(),
+                                               getWidth() - diffPix, 
+                                               0, 
+                                               diffPix, 
+                                               getHeight());
+            
             drawPartialArea(0, getHeight(), getWidth() - diffPix, getWidth());
-            unclip();
-        } else {
+        }
+        else {
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
             redraw();
@@ -1913,10 +1941,16 @@ void TextWidget::internSetLeftPix(long newLeftPix)
             }
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
-            clip(0, 0, diffPix, getHeight());
+
+            GuiClipping::Holder clippingHolder(TextWidgetSingletonData::getInstance()->getClipping(),
+                                               0, 
+                                               0, 
+                                               diffPix, 
+                                               getHeight());
+                                               
             drawPartialArea(0, getHeight(), 0, diffPix);
-            unclip();
-        } else {
+        }
+        else {
             leftPix = newLeftPix;
             lineInfos.setAllInvalid();
             redraw();
@@ -2024,9 +2058,6 @@ void TextWidget::processGuiWidgetNewPositionEvent(const Position& p)
         }
 
 
-        unclip();
-
-        
         visibleLines = newVisibleLines; // not rounded
         
         lineInfos.setLength(util::maximum(1, ROUNDED_UP_DIV(newPosition.h - 2*border, lineHeight)));
@@ -2147,23 +2178,6 @@ GuiElement::Measures TextWidget::internalGetDesiredMeasures()
 }
 
 
-
-void TextWidget::unclip()
-{
-    XSetClipMask(getDisplay(), textWidget_gcid, None);
-}
-
-
-void TextWidget::clip(int x, int y, int w, int h)
-{
-    XRectangle r;
-    r.x = x;
-    r.y = y;
-    r.width  = w;
-    r.height = h;
-    XSetClipRectangles(getDisplay(), textWidget_gcid, 
-            0, 0, &r, 1, Unsorted);    
-}
 
 void TextWidget::blinkCursor()
 {
@@ -2477,9 +2491,9 @@ GuiWidget::ProcessingResult TextWidget::processGuiWidgetEvent(const XEvent* even
 
 void TextWidget::processGuiWidgetRedrawEvent(Region redrawRegion)
 {
-    XSetRegion(getDisplay(), textWidget_gcid, redrawRegion);
+    GuiClipping::Holder clippingHolder(TextWidgetSingletonData::getInstance()->getClipping(),
+                                       redrawRegion);
     redraw();
-    unclip();
 }
 
 

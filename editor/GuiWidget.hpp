@@ -44,6 +44,9 @@
 namespace LucED
 {
 
+class GuiClipping; // forward declaration
+
+
 class GuiWidget : public HeapObject
 {
 public:
@@ -128,19 +131,8 @@ public:
     static Display* getDisplay() { return GuiRoot::getInstance()->getDisplay(); }
     static GuiRoot* getGuiRoot() { return GuiRoot::getInstance(); }
     
-    class GuiClipping
-    {
-    public:
-        ~GuiClipping();
-    private:
-        friend class GuiWidget;
-        GuiClipping(RawPtr<GuiWidget> guiWidget) : guiWidget(guiWidget) {}
-        RawPtr<GuiWidget> guiWidget;
-    };
-    friend class GuiClipping;
-    
-    GuiClipping obtainGuiClipping(int x, int y, int w, int h);
-    GuiClipping obtainGuiClipping(Region region);
+    RawPtr<GuiClipping> getClipping() const;
+
     void setBitGravity(int bitGravity);
 
     int getWidth() const {

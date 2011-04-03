@@ -26,6 +26,7 @@
 
 #include "StatusLine.hpp"
 #include "util.hpp"
+#include "GuiClipping.hpp"
 
 using namespace LucED;
 
@@ -93,9 +94,12 @@ void StatusLine::drawFileName()
     } else {
         displayText = fileName;
     }
-    GuiWidget::GuiClipping c = getGuiWidget()->obtainGuiClipping(
-            GuiWidget::getRaisedBoxBorderWidth(), GuiWidget::getRaisedBoxBorderWidth(), 
-            getPosition().w - 2 * GuiWidget::getRaisedBoxBorderWidth(), getPosition().h - 2 * GuiWidget::getRaisedBoxBorderWidth());
+
+    GuiClipping::Holder clippingHolder(getGuiWidget()->getClipping(),
+                                       GuiWidget::getRaisedBoxBorderWidth(), 
+                                       GuiWidget::getRaisedBoxBorderWidth(), 
+                                       getPosition().w - 2 * GuiWidget::getRaisedBoxBorderWidth(), 
+                                       getPosition().h - 2 * GuiWidget::getRaisedBoxBorderWidth());
     
     getGuiWidget()->drawGuiTextUtf8String(4, 2, displayText);
 
@@ -110,10 +114,11 @@ void StatusLine::drawFileLength()
 {
     if (!hasMessage)
     {
-        GuiWidget::GuiClipping c = getGuiWidget()->obtainGuiClipping(
-                GuiWidget::getRaisedBoxBorderWidth(), GuiWidget::getRaisedBoxBorderWidth(), 
-                getPosition().w - 2 * GuiWidget::getRaisedBoxBorderWidth(), getPosition().h - 2 * GuiWidget::getRaisedBoxBorderWidth());
-    
+        GuiClipping::Holder clippingHolder(getGuiWidget()->getClipping(),
+                                           GuiWidget::getRaisedBoxBorderWidth(), 
+                                           GuiWidget::getRaisedBoxBorderWidth(), 
+                                           getPosition().w - 2 * GuiWidget::getRaisedBoxBorderWidth(), 
+                                           getPosition().h - 2 * GuiWidget::getRaisedBoxBorderWidth());
         char buffer[100];
         sprintf(buffer, "%ld bytes", fileLength);
     

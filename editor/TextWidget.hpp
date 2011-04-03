@@ -270,8 +270,6 @@ private:
     void internalShowMousePointer();
     void internalHideMousePointer();
     
-    void unclip();
-    void clip(int x, int y, int w, int h);
     void calcTotalPixWidth();
     long calcLongestVisiblePixWidth();
     void fillLineInfo(long beginOfLinePos, RawPtr<LineInfo> li);
