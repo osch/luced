@@ -36,14 +36,15 @@ void LanguageModes::append(const String& name)
 {
     LanguageMode::Ptr languageMode = LanguageMode::create();
     languageMode->setName(name);
-    modes.append(languageMode);
-    nameToIndexMap.set(name, modes.getLength() - 1);
+    append(languageMode);
 }
 
 void LanguageModes::append(LanguageMode::Ptr languageMode)
 {
     modes.append(languageMode);
-    nameToIndexMap.set(languageMode->getName(), modes.getLength() - 1);
+    if (!nameToIndexMap.hasKey(languageMode->getName())) {
+        nameToIndexMap.set(languageMode->getName(), modes.getLength() - 1);
+    }
 }
 
 LanguageMode::Ptr LanguageModes::getDefaultLanguageMode()
