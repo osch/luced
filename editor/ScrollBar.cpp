@@ -23,6 +23,7 @@
 #include "GuiRoot.hpp"
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
+#include "GuiClipping.hpp"
 
 using namespace LucED;
 
@@ -37,15 +38,22 @@ public:
 
     GC     getGcId()             { return scrollBar_gcid; }
 
+    RawPtr<GuiClipping> getClipping() {
+        return &clipping;
+    }
+
 private:
     friend class SingletonInstance<ScrollBarSingletonData>;
     
     ScrollBarSingletonData()
+        : scrollBar_gcid(XCreateGC(GuiRoot::getInstance()->getDisplay(), 
+                                   GuiRoot::getInstance()->getRootWid(), 0, NULL)),
+          clipping(GuiRoot::getInstance()->getDisplay(), 
+                   scrollBar_gcid)
+
     {
         Display* display = GuiRoot::getInstance()->getDisplay();
         GuiRoot* guiRoot = GuiRoot::getInstance();
-    
-        scrollBar_gcid = XCreateGC(display, guiRoot->getRootWid(), 0, NULL);
     
         XSetForeground(display, scrollBar_gcid, guiRoot->getBlackColor());
         XSetBackground(display, scrollBar_gcid, guiRoot->getGreyColor());
@@ -58,12 +66,14 @@ private:
     
     ~ScrollBarSingletonData()
     {
+        clipping.clear();
         XFreeGC(GuiRoot::getInstance()->getDisplay(), scrollBar_gcid);
     }
     
     static SingletonInstance<ScrollBarSingletonData> instance;
 
-    GC scrollBar_gcid;
+    GC             scrollBar_gcid;
+    GuiClipping    clipping;
 };
 
 } // namespace LucED
@@ -98,12 +108,10 @@ void ScrollBar::processGuiWidgetCreatedEvent()
 
 void ScrollBar::processGuiWidgetRedrawEvent(Region redrawRegion)
 {
-    XSetRegion(getDisplay(), scrollBar_gcid, redrawRegion);
-
+    GuiClipping::Holder clippingHolder(ScrollBarSingletonData::getInstance()->getClipping(),
+                                       redrawRegion);
     drawArrows();
     drawArea();
-
-    XSetClipMask(getDisplay(), scrollBar_gcid, None);
 }
 
 
