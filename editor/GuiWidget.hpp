@@ -240,6 +240,7 @@ private:
     
     Nullable<Region> redrawRegion; // collects Rectangles for redraw events
     bool isHandlingGraphicsExpose;
+    bool ignoreRedrawRegion;
 
     struct ScrollRequest
     {

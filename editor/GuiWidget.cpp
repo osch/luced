@@ -104,7 +104,8 @@ GuiWidget::GuiWidget(RawPtr<GuiWidget>     parentWidget,
       width (position.w - 2 * borderWidth),
       height(position.h - 2 * borderWidth),
       gcid(GuiWidgetSingletonData::getInstance()->getGcid()),
-      isHandlingGraphicsExpose(false)
+      isHandlingGraphicsExpose(false),
+      ignoreRedrawRegion(false)
 {
 #if 0
     wid = WidgetId(XCreateSimpleWindow(getDisplay(), parent->getWid(), 
@@ -186,6 +187,10 @@ int GuiWidget::internalProcessExposureEvent(const XEvent* event)
     {
         if (!redrawRegion.isValid()) {
             redrawRegion = XCreateRegion();
+            ignoreRedrawRegion = false;
+        }
+        if (r.x < 0 && r.y < 0) {
+            ignoreRedrawRegion = true; // Workaround for broken RedrawEvents (xnest)
         }
         Region transformedUpdateRegion = calculateScrolledUpdateRegion(&r);
         XUnionRegion(redrawRegion.get(), 
@@ -250,6 +255,21 @@ GuiWidget::ProcessingResult GuiWidget::processEvent(const XEvent* event)
 
             if (count == 0 && redrawRegion.isValid())
             {
+                if (ignoreRedrawRegion)
+                {
+                    // Workaround for broken RedrawEvents (xnest)
+                
+                    XDestroyRegion(redrawRegion.get());
+                    redrawRegion.invalidate();
+                    
+                    redrawRegion = XCreateRegion();
+                    XRectangle r;
+                    r.x = 0;
+                    r.y = 0;
+                    r.width = getWidth();
+                    r.height = getHeight();
+                    XUnionRectWithRegion(&r, redrawRegion.get(), redrawRegion.get());
+                }
                 GuiClipping::Holder clippingHolder(GuiWidgetSingletonData::getInstance()->getClipping(),
                                                    redrawRegion.get());
 
