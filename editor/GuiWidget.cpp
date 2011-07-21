@@ -127,7 +127,7 @@ GuiWidget::GuiWidget(RawPtr<GuiWidget>     parentWidget,
                                      CopyFromParent, // <-- depth from parent
                                      InputOutput,
                                      CopyFromParent, // <-- visual from parent
-                                     CWBackPixmap|CWBackingStore, 
+                                     CWBackPixmap, //CWBackPixmap|CWBackingStore, // at least CWBackingStore caused problems on some display
                                      &at));
     } else
     {
