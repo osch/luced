@@ -23,6 +23,8 @@
 #define STACK_TRACE_HPP
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <string>
 
 namespace LucED
@@ -31,9 +33,54 @@ namespace LucED
 class StackTrace
 {
 public:
-    static void print(FILE* fprintfOutput = stdout);
-    static std::string getCurrent();
+    StackTrace();
+
+    StackTrace(const StackTrace& rhs) {
+        if (this != &rhs && rhs.size > 0) {
+            this->array = (void**) malloc(rhs.size * sizeof(void*));
+            if (this->array != NULL) {
+                this->size = rhs.size;
+                memcpy(this->array, rhs.array, rhs.size * sizeof(void*));
+            } else {
+                this->size = 0;
+            }
+        } else {
+            this->array = NULL;
+            this->size = 0;
+        }
+    }
+    StackTrace& operator=(const StackTrace& rhs) {
+        if (this != &rhs) {
+            if (rhs.size > 0) {
+                this->array = (void**) malloc(rhs.size * sizeof(void*));
+                if (this->array != NULL) {
+                    this->size = rhs.size;
+                    memcpy(this->array, rhs.array, rhs.size * sizeof(void*));
+                } else {
+                    this->size = 0;
+                }
+            } else {
+                this->array = NULL;
+                this->size = 0;
+            }
+        }
+        return *this;
+    }
+    ~StackTrace() throw() {
+        if (array != NULL) {
+            free(array);
+        }
+    }
+    std::string toString() const;
+    
+    void print(FILE* fprintfOutput = stdout) const;
+    
+    static void printCurrent(FILE* fprintfOutput = stdout);
+    static std::string getCurrentAsString();
+
 private:
+    void** array;
+    int    size;
 };
 
 } // namespace LucED

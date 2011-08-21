@@ -23,6 +23,8 @@
 #define BASE_EXCEPTION_HPP
 
 #include <exception>
+#include "StackTrace.hpp"
+#include "Nullable.hpp"
 #include "String.hpp"
 
 namespace LucED
@@ -36,9 +38,8 @@ class BaseException : public exception
 public:
     BaseException(const String& message);
     
-    String getMessage() const {
-        return message;
-    }
+    String getMessage() const;
+
     virtual ~BaseException() throw() {}
 
     virtual const char* what() const throw() = 0;
@@ -46,7 +47,8 @@ public:
     virtual String toString() const;
     
 private:
-    String message;
+    String               message;
+    Nullable<StackTrace> stackTrace;
 };
 
 } // namespace LucED

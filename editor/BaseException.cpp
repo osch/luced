@@ -20,16 +20,28 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 #include "BaseException.hpp"
-#include "StackTrace.hpp"
 
 using namespace LucED;
 
 BaseException::BaseException(const String& message)
     : message(message)
 {
-    // StackTrace::print();
+//    stackTrace = StackTrace();
 }
 
+String BaseException::getMessage() const
+{
+    if (stackTrace.isValid()) {
+        std::string s = stackTrace.get().toString();
+        if (s.length() > 0) {
+            return String() << message << "\n" << s;
+        } else {
+            return message;
+        }
+    } else {
+        return message;
+    }
+}
 
 String BaseException::toString() const
 {

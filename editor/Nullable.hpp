@@ -42,7 +42,7 @@ public:
     Nullable()           : valid(false) {}
     Nullable(const V& v) : valid(true)  { new(&value) V(v); }
     
-    ~Nullable() {
+    ~Nullable() throw() {
         if (valid) {
             ((V*)&(value))->~V();
         }

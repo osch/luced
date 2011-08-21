@@ -53,6 +53,29 @@ static int   childOutFd = -1;
 static int   childInpFd = -1;
 static pid_t childPid  = -1;
 
+StackTrace::StackTrace()
+{
+#ifdef HAS_STACKTRACE
+    void*  a[2000];
+    int    s = ::backtrace(a, 2000);
+    if (s > 0) {
+        this->array = (void**) malloc(s * sizeof(void*));
+        if (this->array != NULL) {
+            memcpy(this->array, a, s * sizeof(void*));
+            this->size = s;
+        } else {
+            this->size = 0;
+        }
+    } else {
+        this->array = NULL;
+        this->size  = 0;
+    }
+
+#else
+    this->array = NULL;
+    this->size  = 0;
+#endif
+}
 
 #ifdef HAS_STACKTRACE
 static bool isChildRunning()
@@ -70,7 +93,7 @@ static bool isChildRunning()
 }
 #endif
 
-std::string StackTrace::getCurrent()
+std::string StackTrace::toString() const
 {
 #ifdef HAS_STACKTRACE
 
@@ -159,9 +182,6 @@ startAddr2Line:
     
     std::string data;
     {
-        void*  array[2000];
-        int size = ::backtrace(array, 2000);
-        
         for (int i = 0; i < size && isChildRunning(); ++i)
         {
             char buffer[10000];
@@ -230,10 +250,20 @@ startAddr2Line:
 }
 
 
-void StackTrace::print(FILE* fprintfOutput)
+void StackTrace::print(FILE* fprintfOutput) const
 {
-#ifdef HAS_STACKTRACE
-    fprintf(fprintfOutput, "%s", getCurrent().c_str());
-#endif
+    std::string s = this->toString();
+    if (s.length() > 0) {
+        fprintf(fprintfOutput, "%s", s.c_str());
+    }
 }
 
+
+void StackTrace::printCurrent(FILE* fprintfOutput)
+{
+    StackTrace().print(fprintfOutput);
+}
+std::string StackTrace::getCurrentAsString()
+{
+    return StackTrace().toString();
+}

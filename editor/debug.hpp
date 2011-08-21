@@ -66,7 +66,7 @@
 #else // !NDEBUG
 #   define ASSERT(a) { \
         if (!(a)) { \
-            LucED::StackTrace::print(stderr); \
+            LucED::StackTrace::printCurrent(stderr); \
             fprintf(stderr, "Assertion {" #a \
                     "} failed in " __FILE__ ":%d\n", __LINE__);\
             abort(); \
