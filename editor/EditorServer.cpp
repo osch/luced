@@ -59,7 +59,18 @@ EditorServer::~EditorServer()
 void EditorServer::startWithCommandlineAndErrorList(Commandline::Ptr                commandline,
                                                     ConfigException::ErrorList::Ptr errorList)
 {
-    GlobalConfig::getInstance()->readConfig();
+    try
+    {
+        GlobalConfig::getInstance()->readConfig();
+    }
+    catch (ConfigException& ex) {
+        ConfigException::ErrorList::Ptr newErrors = ex.getErrorList();
+        if (errorList.isValid()) {
+            errorList->appendAll(newErrors);
+        } else {
+            errorList = newErrors;
+        }
+    }
     isStarted = true;
     processCommandline(commandline, true, errorList);
 }

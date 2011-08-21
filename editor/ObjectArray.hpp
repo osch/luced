@@ -34,6 +34,8 @@
 namespace LucED
 {
 
+template<class T> class HeapObjectArray;
+
 /**
  * Array for objects with default-constructors, copy-constructors and 
  * destructors that can be moved by memmove
@@ -179,8 +181,12 @@ public:
         insert(getLength(), source, sourceLength);
         return *this;
     }
-    ObjectArray<T>& append(const ObjectArray<T> &src, long srcPos, long srcLength) {
+    ObjectArray<T>& append(const ObjectArray<T>& src, long srcPos, long srcLength) {
         insert(getLength(), src, srcPos, srcLength);
+        return *this;
+    }
+    ObjectArray<T>& appendAll(const RawPtr< HeapObjectArray<T> >& src) {
+        insert(getLength(), &src->at(0), src->getLength());
         return *this;
     }
     ObjectArray<T>& append(const T& src) {
