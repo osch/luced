@@ -210,9 +210,11 @@ void @(classPath)readConfig(LuaVar luaData)
 @       end
         do
         {
+@       local alternatives = {}
 @       for i, a in ipairs(c.alternatives) do
 @           assert(a.type == "map", "alternative "..a.name.." must be of type 'map'")
 @           local firstEntry = assert(a.entries[1], "alternative "..a.name.." must have entries")
+@           alternatives[#alternatives+1] = "'"..firstEntry.name.."'"
             if (luaData["@(firstEntry.name)"].isValid())
             {
                 this->@(a.name) = @(cap(a.name))::create();
@@ -220,6 +222,7 @@ void @(classPath)readConfig(LuaVar luaData)
                 break;
             }
 @       end
+            throw ConfigException(String() << "Error: @(luaConfigPath) entry must have one field with name: @(table.concat(alternatives, ' or '))");
         } while (false);
 @   end
     }
