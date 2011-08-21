@@ -56,7 +56,7 @@ HeapObjectBase* HeapObjectBase::first = NULL;
 HeapObjectBase::HeapObjectBase()
 {
 #ifdef TRACE_HEAP_OBJECT_STACK_TRACES
-    stackTrace = StackTrace::getCurrent();
+    stackTrace = StackTrace();
     prev = NULL;
     next = first;
     first = this;
@@ -112,9 +112,10 @@ void HeapObjectBase::printAllStackTraces()
         }
         while (p != NULL)
         {
-            if (XXX::getHeapObjectCounters(p)->getWasNeverOwnedFlag()) {
+            if (XXX::getHeapObjectCounters(p)->getWasNeverOwnedFlag()) 
+            {
                 counter += 1;
-                printf("HeapObjectConstructor: %p\n%s\n", p, p->stackTrace.c_str());
+                printf("HeapObjectConstructor: %p\n%s\n", p, p->stackTrace.get().toString().c_str());
             }
             p = p->prev;
         }

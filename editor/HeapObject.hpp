@@ -35,6 +35,8 @@
 #include "debug.hpp"
 #include "NonCopyable.hpp"
 #include "RawPointable.hpp"
+#include "Nullable.hpp"
+#include "StackTrace.hpp"
 
 #undef HEAP_OBJECT_USES_DYNAMIC_CAST
 //#define PRINT_MALLOCS
@@ -189,7 +191,7 @@ private:
     static HeapObjectBase* first;
     HeapObjectBase* prev;
     HeapObjectBase* next;
-    std::string stackTrace;
+    Nullable<StackTrace> stackTrace;
 #endif
 };
 
