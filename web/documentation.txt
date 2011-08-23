@@ -245,8 +245,9 @@ For development purposes a checked out git repository should be used.
 Build problems
 ==============
 
-Compilation has been tested with [gcc] versions 3.4, 4.1, 4.2 and 4.3 and
-[clang] version 2.8.
+Compilation has been tested with [gcc] versions 3.4, 4.1, 4.2, 4.3, 4.4 and
+[clang] version 2.9 ([clang] version 2.8 compiles, but generates incorrect
+exception handling code).
 
 There may be problems with some C++ compilers, that do not fully support C++ 
 templates.
