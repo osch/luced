@@ -35,6 +35,7 @@
 #include "FileOpener.hpp"
 #include "ConfigErrorHandler.hpp"
 #include "WindowCloser.hpp"
+#include "LuaException.hpp"
 
 using namespace LucED;
 
@@ -64,12 +65,10 @@ void EditorServer::startWithCommandlineAndErrorList(Commandline::Ptr            
         GlobalConfig::getInstance()->readConfig();
     }
     catch (ConfigException& ex) {
-        ConfigException::ErrorList::Ptr newErrors = ex.getErrorList();
-        if (errorList.isValid()) {
-            errorList->appendAll(newErrors);
-        } else {
-            errorList = newErrors;
+        if (!errorList.isValid()) {
+            errorList = ConfigException::ErrorList::create();
         }
+        errorList->appendCatchedException();
     }
     isStarted = true;
     processCommandline(commandline, true, errorList);
@@ -188,7 +187,15 @@ void EditorServer::processCommandline(Commandline::Ptr commandline,
         }
         else
         {
-            FileOpener::start(commandInterpreter.getFileParameterList());
+            try {
+                FileOpener::start(commandInterpreter.getFileParameterList());
+            }
+            catch (LuaException& ex) {
+                ConfigErrorHandler::startWithCatchedException();
+            }
+            catch (ConfigException& ex) {
+                ConfigErrorHandler::startWithCatchedException();
+            }
         }
         if (commandInterpreter.hasQuitServer()) {
             WindowCloser::start();

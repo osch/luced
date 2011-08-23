@@ -41,8 +41,15 @@ public:
     typedef LucED::OwningPtr<ConfigErrorHandler> OwningPtr;
     typedef LucED::WeakPtr  <ConfigErrorHandler> WeakPtr;
 
+    static WeakPtr start(ConfigException::ErrorList::Ptr errorList)
+    {
+        OwningPtr ptr(new ConfigErrorHandler(errorList, Null, Null));
+        EventDispatcher::getInstance()->registerRunningComponent(ptr);
+        ptr->startMessageBox();
+        return ptr;
+    }
     static WeakPtr start(ConfigException::ErrorList::Ptr errorList,
-                         FileOpener::ParameterList::Ptr  fileOpenerParameters = Null)
+                         FileOpener::ParameterList::Ptr  fileOpenerParameters)
     {
         OwningPtr ptr(new ConfigErrorHandler(errorList, fileOpenerParameters, Null));
         EventDispatcher::getInstance()->registerRunningComponent(ptr);
@@ -50,7 +57,7 @@ public:
         return ptr;
     }
     static WeakPtr start(ConfigException::ErrorList::Ptr errorList,
-                         Nullable<ActionId>              optionalActionId = Null)
+                         Nullable<ActionId>              optionalActionId)
     {
         OwningPtr ptr(new ConfigErrorHandler(errorList, Null, optionalActionId));
         EventDispatcher::getInstance()->registerRunningComponent(ptr);

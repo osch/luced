@@ -56,8 +56,8 @@ public:
                          ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::Ptr())
     {
         OwningPtr ptr(new FileOpener(fileParameterList, errorList));
-        EventDispatcher::getInstance()->registerRunningComponent(ptr);
         ptr->openFiles();
+        EventDispatcher::getInstance()->registerRunningComponent(ptr);
         return ptr;
     }
 

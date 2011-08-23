@@ -25,6 +25,7 @@
 #include "FileOpener.hpp"
 #include "GlobalConfig.hpp"
 #include "FileException.hpp"
+#include "LuaException.hpp"
 
 using namespace LucED;
 
@@ -91,7 +92,7 @@ void FileOpener::openFiles()
             numberOfWindows = 1;
         }
 
-        TopWinList* topWins = TopWinList::getInstance();
+        RawPtr<TopWinList> topWins = TopWinList::getInstance();
 
         if (lastTopWin.isInvalid())
         {
@@ -113,35 +114,57 @@ void FileOpener::openFiles()
                 TextData::Ptr     textData     = TextData::create();
                 LanguageMode::Ptr languageMode;
                 HilitedText::Ptr  hilitedText;
+                
+                Nullable<String> errorMessage;
 
                 try
                 {
                     ByteBuffer buffer; 
                     File(fileName).loadInto(&buffer);
                     
-                    GlobalConfig::LanguageModeAndEncoding result= GlobalConfig::getInstance()
-                                                                  ->getLanguageModeAndEncodingForFileNameAndContent
-                                                                  (
-                                                                    fileName, 
-                                                                    &buffer
-                                                                  );
-                    languageMode = result.languageMode;
-                    hilitedText  = HilitedText::create(textData, languageMode);
+                    Nullable<GlobalConfig::LanguageModeAndEncoding> result;
+                    try
+                    {
+                        result = GlobalConfig::getInstance()
+                                 ->getLanguageModeAndEncodingForFileNameAndContent
+                                 (
+                                   fileName, 
+                                   &buffer
+                                 );
+                        languageMode = result.get().languageMode;
+                        hilitedText  = HilitedText::create(textData, languageMode);
+                    }
+                    catch (ConfigException& ex) {
+                        languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
+                        hilitedText  = HilitedText::create(textData, languageMode);
+                        errorMessage = ex.getMessage();
+                    }
                     
-                    if (encoding.getLength() == 0 && result.encoding.getLength() > 0) {
-                        encoding = result.encoding;
+                    if (encoding.getLength() == 0 && result.isValid() && result.get().encoding.getLength() > 0) {
+                        encoding = result.get().encoding;
                     }
 
                     textData->takeOverFileBuffer(fileName, encoding, &buffer);
                 }
+                catch (LuaException& ex)
+                {
+                    throw;
+                }
                 catch (BaseException& ex)
                 {
-                    if (!languageMode.isValid()) {
-                        languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
-                    }
-                    if (!hilitedText.isValid()) {
+                    try
+                    {
+                        if (!languageMode.isValid()) {
+                            languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
+                        }
+                        if (!hilitedText.isValid()) {
+                            hilitedText  = HilitedText::create(textData, languageMode);
+                        }
+                    } catch (BaseException& ex2) {
+                        languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
                         hilitedText  = HilitedText::create(textData, languageMode);
                     }
+
                     isWaitingForMessageBox = true;
                     
                     bool fileNotExisting = false;
@@ -195,8 +218,14 @@ void FileOpener::openFiles()
                     lastTopWin->show();
                     return;
                 }
-
                 lastTopWin = EditorTopWin::create(hilitedText);
+                if (errorMessage.isValid()) {
+                    MessageBoxParameter p;
+                                        p.setTitle("Error opening file")
+                                         .setMessage(errorMessage.get())
+                                         .setCancelButton("O]K");
+                    lastTopWin->setModalMessageBox(p);
+                }
                 lastTopWin->show();
                 lastTopWin->raise();
 

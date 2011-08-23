@@ -121,7 +121,7 @@ int main(int argc, char** argv)
     }
     catch (BaseException& ex)
     {
-        fprintf(stderr, "[%s]: %s: %s\n", argv[0], ex.what(), ex.getMessage().toCString());
+        fprintf(stderr, "[%s]: %s\n", argv[0], ex.toString().toCString());
         rc = 16;
     }
 
