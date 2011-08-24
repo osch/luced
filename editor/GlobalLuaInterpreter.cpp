@@ -24,6 +24,7 @@
 #include "File.hpp"
 #include "LuaIterator.hpp"
 #include "LuaCClosure.hpp"
+#include "ConfigException.hpp"
 
 using namespace LucED;
 
@@ -164,8 +165,7 @@ LuaVar GlobalLuaInterpreter::requireConfigPackage(const String& packageName)
         || packageName == "builtin" 
         || packageName == "modules")
     {
-        throw LuaException(luaAccess,
-                           String() << "Package name '" << packageName << "' not allowed");
+        throw ConfigException(String() << "Package name '" << packageName << "' not allowed");
     }
     
     LuaVar loadedPackages = luaAccess.retrieve(loadedPackagesStoreReference);
@@ -179,8 +179,7 @@ LuaVar GlobalLuaInterpreter::requireConfigPackage(const String& packageName)
     LuaVar startModule = configPackageLoader.loadPackageModule(luaAccess, packageName);
 
     if (startModule.isNil()) {
-        throw LuaException(luaAccess,
-                           String() << "cannot find package '" << packageName << "'");
+        throw ConfigException(String() << "cannot find package '" << packageName << "'");
     }
     
     LuaVar env = luaAccess.newTable();
