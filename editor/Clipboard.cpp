@@ -94,8 +94,7 @@ private:
 };
 
 Clipboard::Clipboard()
-      : sendingMultiPart(false),
-        hasRequestedActiveSelectionForClipboard(false)
+      : sendingMultiPart(false)
 {
     guiWidget = GuiWidget::create(Null, this, Position(0,0,1,1));
     
@@ -124,12 +123,9 @@ void Clipboard::copyToClipboard(const byte* ptr, long length)
 
 void Clipboard::copyActiveSelectionToClipboard()
 {
-    if (selectionOwner->requestSelectionOwnership()) {
-        hasRequestedActiveSelectionForClipboard = true;
         if (!pasteDataReceiver->isReceivingPasteData()) {
             pasteDataReceiver->requestSelectionPasting();
         }
-    }
 }
 
 
@@ -168,18 +164,18 @@ void Clipboard::notifyAboutReceivedPasteData(const byte* data, long length)
 
 void Clipboard::notifyAboutEndOfPastingData()
 {
-    if (   hasRequestedActiveSelectionForClipboard
-        && selectionOwner->hasSelectionOwnership() && newBuffer.getLength() > 0)
+    if (newBuffer.getLength() > 0) 
     {
-        hasRequestedActiveSelectionForClipboard = false;
+        selectionOwner->requestSelectionOwnership();
         clipboardBuffer = newBuffer;
+    
+        if (selectionRequestCallbacks.hasCallbacks()) {
+            String selectionString = newBuffer.toString();
+            selectionRequestCallbacks.invokeAllCallbacks(selectionString);
+            selectionRequestCallbacks.clear();
+        }
+        newBuffer.clear();
     }
-    if (selectionRequestCallbacks.hasCallbacks()) {
-        String selectionString = newBuffer.toString();
-        selectionRequestCallbacks.invokeAllCallbacks(selectionString);
-        selectionRequestCallbacks.clear();
-    }
-    newBuffer.clear();
 }
 
 void Clipboard::treatNewWindowPosition(Position newPosition)

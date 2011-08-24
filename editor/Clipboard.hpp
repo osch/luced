@@ -99,8 +99,6 @@ private:
     GuiWidget::Ptr guiWidget;
     
     CallbackContainer<String> selectionRequestCallbacks;
-    
-    bool hasRequestedActiveSelectionForClipboard;
 };
 
 } // namespace LucED
