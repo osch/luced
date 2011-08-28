@@ -30,6 +30,9 @@
 namespace LucED
 {
 
+template<class V> class RawPtr;
+
+
 template
 <
     class V
@@ -120,6 +123,9 @@ public:
     bool     isNull()  const { return !valid; }
     operator V()       const { ASSERT(valid); return *(const V*)(&value); }
     const V& get()     const { ASSERT(valid); return *(const V*)(&value); }
+
+    RawPtr<V> getPtr()       { return valid ? RawPtr<V>((V*)&value)
+                                            : RawPtr<V>(); }
 
     bool operator!=(NullType null) const { return !isNull(); }
     bool operator==(NullType null) const { return  isNull(); }

@@ -184,9 +184,8 @@ public:
         return getBackliteBuffer()->createMarkToEndOfSelection();
     }
     void makePseudoSelectionToPrimary() {
-        if (selectionOwner->requestSelectionOwnership()) {
-            getBackliteBuffer()->makeSecondarySelectionToPrimarySelection();
-        }
+        selectionOwner->requestSelectionOwnership();
+        getBackliteBuffer()->makeSecondarySelectionToPrimarySelection();
     }
     void extendSelectionTo(long pos) {
         getBackliteBuffer()->extendSelectionTo(pos);
@@ -216,7 +215,7 @@ public:
         {
             beginPastingTextMark = getTextData()->createNewMark(m);
             pasteParameter = p;
-            pasteDataReceiver->requestSelectionPasting();
+            pasteDataReceiver->requestPrimarySelectionPasting();
         }
     }
 

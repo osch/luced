@@ -115,17 +115,17 @@ Clipboard::Clipboard()
 
 void Clipboard::copyToClipboard(const byte* ptr, long length)
 {
-    if (selectionOwner->requestSelectionOwnership()) {
-        clipboardBuffer.clear();
-        clipboardBuffer.append(ptr, length);
-    }
+    selectionOwner->requestSelectionOwnership();
+
+    clipboardBuffer.clear();
+    clipboardBuffer.append(ptr, length);
 }
 
 void Clipboard::copyActiveSelectionToClipboard()
 {
-        if (!pasteDataReceiver->isReceivingPasteData()) {
-            pasteDataReceiver->requestSelectionPasting();
-        }
+    if (!pasteDataReceiver->isReceivingPasteData()) {
+        pasteDataReceiver->requestPrimarySelectionPasting();
+    }
 }
 
 
@@ -186,6 +186,6 @@ void Clipboard::addActiveSelectionRequest(Callback<String>::Ptr selectionRequest
 {
     selectionRequestCallbacks.registerCallback(selectionRequestCallback);
     if (!pasteDataReceiver->isReceivingPasteData()) {
-        pasteDataReceiver->requestSelectionPasting();
+        pasteDataReceiver->requestPrimarySelectionPasting();
     }
 }

@@ -25,9 +25,23 @@
 #include "WidgetId.hpp"
 #include "GuiWidget.hpp"
 #include "RawPtr.hpp"
+#include "Nullable.hpp"
+#include "RawPointable.hpp"
 
 namespace LucED
 {
+
+class SelectionOwnerMultiPartState : public RawPointable
+{
+    friend class SelectionOwner;
+    
+    WidgetId multiPartTargetWid;
+    Atom     multiPartTargetProp;
+    Atom     sendingTypeAtom;
+    long     selectionDataLength;
+    long     alreadySentPos;
+};
+
 
 class SelectionOwner : public HeapObject
 {
@@ -62,12 +76,22 @@ public:
     
     GuiWidget::ProcessingResult processSelectionOwnerEvent(const XEvent *event);
     
-    bool requestSelectionOwnership();
+    void requestSelectionOwnership();
     void releaseSelectionOwnership();
-    bool hasSelectionOwnership();
+
+    bool hasSelectionOwnership() {
+        checkSelectionOwnership();
+        return hasSelectionOwnershipFlag;
+    }
     
-    static SelectionOwner* getPrimarySelectionOwner() {return primarySelectionOwner;}
-    static bool hasPrimarySelectionOwner() {return primarySelectionOwner != NULL;}
+    static SelectionOwner* getPrimarySelectionOwner() { 
+        checkPrimarySelectionOwnership();
+        return primarySelectionOwner;
+    }
+    static bool hasPrimarySelectionOwner() {
+        checkPrimarySelectionOwnership();
+        return primarySelectionOwner != NULL;
+    }
 
     class ReceiverAccess
     {
@@ -83,23 +107,28 @@ public:
             o->contentHandler->endSelectionDataRequest();
         }
     };
+
 private:
-
-    friend class SelectionOwnerAccessForPasteDataReceiver;
-
     SelectionOwner(RawPtr<GuiWidget> baseWidget, Type type, ContentHandler::Ptr contentHandler);
+
+    void        stopCurrentMultiPartSending();
+    void        checkSelectionOwnership();
+    static void checkPrimarySelectionOwnership();
+    
+    bool isPrimary() const {
+        return x11AtomForSelection == XA_PRIMARY;
+    }
 
     RawPtr<GuiWidget> baseWidget;
     OwningPtr<ContentHandler> contentHandler;
     
-    Atom x11AtomForSelection;
-    bool sendingMultiPart;
-    Atom sendingTypeAtom;
-    bool hasRequestedSelectionOwnership;
-    long selectionDataLength;
-    long alreadySentPos;
-    WidgetId multiPartTargetWid;
-    Atom   multiPartTargetProp;
+    const Atom x11AtomForSelection;
+
+    bool hasSelectionOwnershipFlag;
+
+    typedef SelectionOwnerMultiPartState MultiPartState;
+    
+    Nullable<MultiPartState> multiPartState;
     
     Display* const display;
     const Atom x11AtomForTargets;
@@ -107,6 +136,7 @@ private:
     const Atom x11AtomForUtf8String;
     
     static WeakPtr<SelectionOwner> primarySelectionOwner;
+    static WeakPtr<SelectionOwner> primarySelectionOwnerCandidate;
     
     Time lastX11Timestamp;
 };

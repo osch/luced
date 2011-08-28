@@ -32,7 +32,7 @@ PasteDataReceiver::PasteDataReceiver(RawPtr<GuiWidget> baseWidget, ContentHandle
   : baseWidget(baseWidget),
     contentHandler(contentHandler),
     isRequestingTargetTypes(false),
-    isReceivingPasteDataFlag(false),
+    receivingPasteDataFlag(false),
     isMultiPartPastingFlag(false),
     display             (GuiRoot::getInstance()->getDisplay()),
     x11AtomForTargets   (XInternAtom(display, "TARGETS", False)),
@@ -42,7 +42,7 @@ PasteDataReceiver::PasteDataReceiver(RawPtr<GuiWidget> baseWidget, ContentHandle
     GuiWidget::EventProcessorAccess::addToXEventMaskForGuiWidget(baseWidget, PropertyChangeMask);
 }
 
-void PasteDataReceiver::requestSelectionPasting()
+void PasteDataReceiver::requestPrimarySelectionPasting()
 {
     pasteBuffer.clear();
     if (SelectionOwner::hasPrimarySelectionOwner()) {
@@ -61,7 +61,7 @@ void PasteDataReceiver::requestSelectionPasting()
             SelectionOwner::ReceiverAccess::endSelectionDataRequest(selectionOwner);
         }
         isRequestingTargetTypes  = false;
-        isReceivingPasteDataFlag = false;
+        receivingPasteDataFlag   = false;
     } else {
         XDeleteProperty(display, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
                                  /*XA_PRIMARY*/x11AtomForTargets);
@@ -73,7 +73,7 @@ void PasteDataReceiver::requestSelectionPasting()
                                                 GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
                                                 EventDispatcher::getInstance()->getLastX11Timestamp());
         isRequestingTargetTypes  = true;
-        isReceivingPasteDataFlag = false;
+        receivingPasteDataFlag   = false;
         isMultiPartPastingFlag   = false;
         contentHandler->notifyAboutBeginOfPastingData();
         EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
@@ -94,7 +94,7 @@ void PasteDataReceiver::requestClipboardPasting()
             contentHandler->notifyAboutEndOfPastingData();
         }
         isRequestingTargetTypes  = false;
-        isReceivingPasteDataFlag = false;
+        receivingPasteDataFlag   = false;
     } else {
         XDeleteProperty(display, GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
                                  Clipboard::getInstance()->getX11AtomForClipboard());
@@ -106,7 +106,7 @@ void PasteDataReceiver::requestClipboardPasting()
                                                 GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
                                                 EventDispatcher::getInstance()->getLastX11Timestamp());
         isRequestingTargetTypes  = true;
-        isReceivingPasteDataFlag = false;
+        receivingPasteDataFlag   = false;
         isMultiPartPastingFlag   = false;
         contentHandler->notifyAboutBeginOfPastingData();
         EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
@@ -118,7 +118,7 @@ void PasteDataReceiver::requestClipboardPasting()
 
 bool PasteDataReceiver::isReceivingPasteData()
 {
-    return isReceivingPasteDataFlag;
+    return receivingPasteDataFlag;
 }
 
 namespace // anonymous namespace
@@ -168,12 +168,16 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                     Atom* atoms = (Atom*) itemData;
 
                     for (int i = 0; i < numberItems; ++i) {
+
                         if (atoms[i] == XA_STRING) {
                             canLatin1 = true;
                         } else if (atoms[i] == x11AtomForUtf8String) {
                             canUtf8 = true;
                             break;
                         }
+                    }
+                    if (numberItems == 0) {
+                        canLatin1 = true; // Fallback for empty TARGETS works with older programs
                     }
                 }
 
@@ -191,20 +195,20 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                                                             GuiWidget::EventProcessorAccess::getGuiWidgetWid(baseWidget), 
                                                             EventDispatcher::getInstance()->getLastX11Timestamp());
                     isRequestingTargetTypes  = false;
-                    isReceivingPasteDataFlag = true;
+                    receivingPasteDataFlag   = true;
                     isMultiPartPastingFlag   = false;
                 }
                 else
                 {
                     isRequestingTargetTypes  = false;
-                    isReceivingPasteDataFlag = false;
+                    receivingPasteDataFlag   = false;
                     isMultiPartPastingFlag   = false;
                 }
             } 
-            else if ((isRequestingTargetTypes || isReceivingPasteDataFlag) && event->xselection.property == None)
+            else if ((isRequestingTargetTypes || receivingPasteDataFlag) && event->xselection.property == None)
             {
                 lastPasteEventTime.setToCurrentTime();
-                isReceivingPasteDataFlag = false;
+                receivingPasteDataFlag = false;
                 isMultiPartPastingFlag = false;
                 contentHandler->notifyAboutEndOfPastingData();
             }
@@ -224,7 +228,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                         &portion);
                 XMemoryHolder memoryHolder(portion);
 
-                if (isReceivingPasteDataFlag && actualType == x11AtomForIncr)
+                if (receivingPasteDataFlag && actualType == x11AtomForIncr)
                 {
                     isMultiPartPastingFlag = true;
                     XDeleteProperty(display, event->xselection.requestor, event->xselection.property);
@@ -234,7 +238,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                 {
                     return GuiWidget::EVENT_PROCESSED;
                 }
-                else if (isReceivingPasteDataFlag)
+                else if (receivingPasteDataFlag)
                 {
                     portion = NULL;
                     XGetWindowProperty(display,
@@ -244,7 +248,6 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                             &actualType, &format, &portionLength, &remainingLength,
                             &portion);
                     XMemoryHolder memoryHolder(portion);
-                    
                     if (portionLength > 0) {
                         if (actualType == XA_STRING) {
                             String utf8Bytes = EncodingConverter::convertLatin1ToUtf8String(portion, portionLength);
@@ -256,7 +259,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                     }
                     contentHandler->notifyAboutEndOfPastingData();
                     isMultiPartPastingFlag = false;
-                    isReceivingPasteDataFlag = false;
+                    receivingPasteDataFlag = false;
                     XDeleteProperty(display, event->xselection.requestor, event->xselection.property);
 
                     return GuiWidget::EVENT_PROCESSED;
@@ -283,7 +286,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                         &portion);
                 XMemoryHolder memoryHolder(portion);
 
-                if (isReceivingPasteDataFlag && actualType == x11AtomForIncr)
+                if (receivingPasteDataFlag && actualType == x11AtomForIncr)
                 {
                     isMultiPartPastingFlag = true;
                     XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
@@ -294,7 +297,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                 {
                     return GuiWidget::EVENT_PROCESSED;
                 }
-                else if (isReceivingPasteDataFlag && remainingLength == 0)
+                else if (receivingPasteDataFlag && remainingLength == 0)
                 {
                     if (isMultiPartPastingFlag && pasteBuffer.getLength() > 0) {
                         contentHandler->notifyAboutReceivedPasteData(pasteBuffer.getPtr(0), pasteBuffer.getLength());
@@ -303,10 +306,10 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                     XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
                     contentHandler->notifyAboutEndOfPastingData();
                     isMultiPartPastingFlag = false;
-                    isReceivingPasteDataFlag = false;
+                    receivingPasteDataFlag = false;
                     return GuiWidget::EVENT_PROCESSED;
                 }
-                else if (isReceivingPasteDataFlag)
+                else if (receivingPasteDataFlag)
                 {
                     portion = NULL;
                     XGetWindowProperty(display,
@@ -335,7 +338,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
                         }
                         contentHandler->notifyAboutEndOfPastingData();
                         isMultiPartPastingFlag = false;
-                        isReceivingPasteDataFlag = false;
+                        receivingPasteDataFlag = false;
                     }
                     XDeleteProperty(display, event->xproperty.window, event->xproperty.atom);
                     return GuiWidget::EVENT_PROCESSED;
@@ -350,7 +353,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
 
 void PasteDataReceiver::handleTimerEvent()
 {
-    if (isReceivingPasteDataFlag)
+    if (receivingPasteDataFlag)
     {
         TimeVal t1, t2;
         t1 = lastPasteEventTime;
@@ -360,7 +363,7 @@ void PasteDataReceiver::handleTimerEvent()
         if (t2.isLaterThan(t1)) {
             contentHandler->notifyAboutEndOfPastingData();
             isMultiPartPastingFlag = false;
-            isReceivingPasteDataFlag = false;
+            receivingPasteDataFlag = false;
         } else {
             EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
                     newCallback(this, &PasteDataReceiver::handleTimerEvent));

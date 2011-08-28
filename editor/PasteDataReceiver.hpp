@@ -55,7 +55,7 @@ public:
         return Ptr(new PasteDataReceiver(baseWidget, contentHandler));
     }
 
-    void requestSelectionPasting();
+    void requestPrimarySelectionPasting();
     void requestClipboardPasting();
     bool isReceivingPasteData();
 
@@ -71,7 +71,7 @@ private:
     OwningPtr<ContentHandler> contentHandler;
 
     bool isRequestingTargetTypes;
-    bool isReceivingPasteDataFlag;
+    bool receivingPasteDataFlag;
     bool isMultiPartPastingFlag;
     Atom pasteDataTypeAtom;
     Atom pasteTargetAtom;
