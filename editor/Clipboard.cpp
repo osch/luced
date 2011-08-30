@@ -94,7 +94,8 @@ private:
 };
 
 Clipboard::Clipboard()
-      : sendingMultiPart(false)
+      : sendingMultiPart(false),
+        shouldRequestedClipboardOwnership(false)
 {
     guiWidget = GuiWidget::create(Null, this, Position(0,0,1,1));
     
@@ -126,6 +127,7 @@ void Clipboard::copyActiveSelectionToClipboard()
     if (!pasteDataReceiver->isReceivingPasteData()) {
         pasteDataReceiver->requestPrimarySelectionPasting();
     }
+    shouldRequestedClipboardOwnership = true;
 }
 
 
@@ -166,8 +168,10 @@ void Clipboard::notifyAboutEndOfPastingData()
 {
     if (newBuffer.getLength() > 0) 
     {
-        selectionOwner->requestSelectionOwnership();
-        clipboardBuffer = newBuffer;
+        if (shouldRequestedClipboardOwnership) {
+            selectionOwner->requestSelectionOwnership();
+            clipboardBuffer = newBuffer;
+        }
     
         if (selectionRequestCallbacks.hasCallbacks()) {
             String selectionString = newBuffer.toString();

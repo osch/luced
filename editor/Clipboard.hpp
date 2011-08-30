@@ -81,7 +81,7 @@ private:
     Atom x11AtomForIncr;
     ByteArray clipboardBuffer;
     ByteArray newBuffer;
-    bool hasRequestedClipboardOwnership;
+    bool shouldRequestedClipboardOwnership;
     
     bool sendingMultiPart;
     long alreadySentPos;
