@@ -171,6 +171,7 @@ void Clipboard::notifyAboutEndOfPastingData()
         if (shouldRequestedClipboardOwnership) {
             selectionOwner->requestSelectionOwnership();
             clipboardBuffer = newBuffer;
+            shouldRequestedClipboardOwnership = false;
         }
     
         if (selectionRequestCallbacks.hasCallbacks()) {
