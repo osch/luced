@@ -124,10 +124,11 @@ void Clipboard::copyToClipboard(const byte* ptr, long length)
 
 void Clipboard::copyActiveSelectionToClipboard()
 {
+    shouldRequestedClipboardOwnership = true;
+
     if (!pasteDataReceiver->isReceivingPasteData()) {
         pasteDataReceiver->requestPrimarySelectionPasting();
     }
-    shouldRequestedClipboardOwnership = true;
 }
 
 
