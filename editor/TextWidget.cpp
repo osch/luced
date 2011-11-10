@@ -1808,6 +1808,7 @@ TextWidget::FreePos TextWidget::getFreePosFromPixXY(int pixX, int pixY, bool opt
     int line = -1;
     long pos;
     long nextPos = getTopLeftTextPosition();
+    long textLength = textData->getLength();
 
     RawPtr<LineInfo> li;
     
@@ -1817,6 +1818,9 @@ TextWidget::FreePos TextWidget::getFreePosFromPixXY(int pixX, int pixY, bool opt
         li = lineInfos.getPtr(line);
         if (!li->valid) {
             fillLineInfo(pos, li);
+        }
+        if (li->endOfLinePos == textLength) {
+            break;
         }
         nextPos = li->endOfLinePos;
         nextPos  += textData->getLengthOfLineEnding(nextPos);
