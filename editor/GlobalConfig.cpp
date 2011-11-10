@@ -82,7 +82,11 @@ GlobalConfig::LanguageModeAndEncoding GlobalConfig::getLanguageModeAndEncodingFo
 {
     LanguageModeSelectors::Result result = languageModeSelectors->getResultForFileNameAndContent(fileName, fileContent);
 
-    return LanguageModeAndEncoding(languageModes->getLanguageMode(result.languageModeName),
+    LanguageMode::Ptr languageMode = languageModes->getLanguageMode(result.languageModeName);
+    if (!languageMode.isValid()) {
+        languageMode = getDefaultLanguageMode();
+    }
+    return LanguageModeAndEncoding(languageMode,
                                    result.encodingName);
 }
 
