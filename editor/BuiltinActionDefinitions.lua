@@ -245,11 +245,6 @@ return
     
     
     
-    { name = "openCorrespondingFile",             description = "",
-                                                  classes = { "MultiLineEditActions" },
-    },
-    
-
     { name = "historyBackward",                   description = "", 
                                                   classes     = {    "FindPanel::EditFieldActions",
                                                                   "ReplacePanel::EditFieldActions" },

@@ -282,7 +282,7 @@ return -- default actionName key binding
         keys       = { "Alt+Shift+M" },
     },
     {
-        actionName = "builtin.openCorrespondingFile",
+        actionName = "default.openCorrespondingFile",
         keys       = { "Alt+H" },
     },
     {

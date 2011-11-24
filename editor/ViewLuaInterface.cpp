@@ -29,7 +29,25 @@
 using namespace LucED;
 
 
+LuaCFunctionResult ViewLuaInterface::isFile(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    return LuaCFunctionResult(luaAccess) << !textData->isFileNamePseudo();
+}
+
 LuaCFunctionResult ViewLuaInterface::getFileName(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (!textData->isFileNamePseudo()) {
+        return LuaCFunctionResult(luaAccess) << textData->getFileName();
+    } else {
+        return LuaCFunctionResult(luaAccess);
+    }
+}
+
+LuaCFunctionResult ViewLuaInterface::getDisplayFileName(const LuaCFunctionArguments& args)
 {
     LuaAccess luaAccess = args.getLuaAccess();
     

@@ -136,3 +136,15 @@ LuaCFunctionResult LucedLuaInterface::openFile(const LuaCFunctionArguments& args
 
     return LuaCFunctionResult(luaAccess);
 }
+
+LuaCFunctionResult LucedLuaInterface::existsFile(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+    
+    if (args.getLength() != 1 || !args[0].isString()) {
+        throw LuaArgException(luaAccess);
+    }
+    
+    return LuaCFunctionResult(luaAccess) << File(args[0].toString()).exists();
+}
+

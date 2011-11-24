@@ -222,8 +222,6 @@ void GlobalConfig::readConfig()
     configDirectory = DefaultConfig::getCreatedConfigDirectory();
 
     ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::create();
-                                    errorList->setFallbackFileName(String() << configDirectory 
-                                                                            << "/config.lua");
 
     RawPtr<GlobalLuaInterpreter> luaInterpreter = GlobalLuaInterpreter::getInstance();
     LuaAccess luaAccess = luaInterpreter->getCurrentLuaAccess();

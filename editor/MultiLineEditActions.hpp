@@ -59,7 +59,6 @@ public:
     void shiftBlockRight();
     void findNextLuaStructureElement();
     void findPrevLuaStructureElement();
-    void openCorrespondingFile();
 
 private:
     MultiLineEditActions(RawPtr<TextEditorWidget> editWidget)

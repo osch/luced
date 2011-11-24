@@ -42,6 +42,8 @@ return
                      },
                      { name = "openFile"
                      },
+                     { name = "existsFile"
+                     },
                    }
     },
     {
@@ -72,7 +74,11 @@ return
         ptrType  = "WeakPtr",
         
         methods  = {
+                     { name = "isFile"
+                     },
                      { name = "getFileName"
+                     },
+                     { name = "getDisplayFileName"
                      },
                      { name = "getCursorPosition"
                      },

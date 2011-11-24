@@ -24,6 +24,7 @@
 
 #include "BaseException.hpp"
 #include "HeapObjectArray.hpp"
+#include "Nullable.hpp"
 
 namespace LucED {
 
@@ -34,12 +35,20 @@ public:
     {
     public:
         Error(const String& configFileName, int lineNumber, const String& message)
-            : lineNumber(lineNumber),
-              configFileName(configFileName),
+            : configFileName(configFileName),
+              lineNumber(lineNumber),
               message(message)
         {}
+        Error(const String& message)
+            : configFileName(Null),
+              lineNumber(-1),
+              message(message)
+        {}
+        bool hasConfigFileName() const {
+            return configFileName.isValid();
+        }
         String getConfigFileName() const {
-            return configFileName;
+            return configFileName.get();
         }
         int getLineNumber() const {
             return lineNumber;
@@ -48,9 +57,9 @@ public:
             return message;
         }
     private:
-        String configFileName;
-        int    lineNumber;
-        String message;
+        Nullable<String> configFileName;
+        int              lineNumber;
+        String           message;
     };
     
     class ErrorList : public HeapObjectArray<Error>
@@ -62,19 +71,14 @@ public:
             return Ptr(new ErrorList());
         }
         
-        void setFallbackFileName(const String& fallbackFileName) {
-            this->fallbackFileName = fallbackFileName;
-        }
-
         void appendCatchedException();
         void appendErrorMessage(const String& message) {
-            this->append(Error(fallbackFileName, -1, message));
+            this->append(Error(message));
         }
 
     private:
         ErrorList()
         {}
-        String fallbackFileName;
     };
     
     ConfigException(const String& message);

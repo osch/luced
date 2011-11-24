@@ -245,7 +245,8 @@ startAddr2Line:
     }
     message.append("******\n");
     return message;
-
+#else
+    return "*** stack trace not available ***\n";
 #endif
 }
 

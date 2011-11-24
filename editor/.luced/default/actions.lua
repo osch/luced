@@ -19,9 +19,11 @@
 --
 -------------------------------------------------------------------------------------
 
-local append  = table.insert
-local toUpper = luced.toUpper
-local toLower = luced.toLower
+local append     = table.insert
+local toUpper    = luced.toUpper
+local toLower    = luced.toLower
+local existsFile = luced.existsFile
+local openFile   = luced.openFile
 
 local wrapLineLength = 80
 local marginChars = '[*-/|+ \\t]*'
@@ -104,6 +106,38 @@ local function formatParagraph(view)
     end
 
     --v:insertAtCursor(secondMargin)
+end
+
+local correspondingFileExtensions =
+{
+    { { "c", "cpp", "m", "mm" }, { "h", "hpp", "h", "hpp" } }
+}
+
+local function openCorrespondingFile(view)
+    if view:isFile() then
+        local currentFile = view:getFileName()
+        local function opened(exts1, exts2)
+            for i = 1, #exts1 do
+                local e1 = exts1[i]
+                if currentFile:sub(-#e1) == e1 then
+                    for j = 0, #exts2 - 1 do
+                        local e2 = exts2[1 + ((i + j - 1) % #exts2)]
+                        local correspondingName = currentFile:sub(1, -#e1-1)..e2
+                        if existsFile(correspondingName) then
+                            openFile(correspondingName)
+                            return true
+                        end
+                    end
+                end
+            end
+            return false
+        end
+        for _, entry in ipairs(correspondingFileExtensions) do
+            if opened(entry[1], entry[2]) or opened(entry[2], entry[1]) then
+                return
+            end
+        end
+    end
 end
 
 local function smartNewline(view)
@@ -326,6 +360,8 @@ return
                         view:replaceSelection(new)
                     end
                 end,
+
+    openCorrespondingFile = openCorrespondingFile,
 
     test1 = function(view)
                view:insertAtCursor("xx_2_yy")

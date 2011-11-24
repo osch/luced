@@ -59,14 +59,22 @@ void ConfigErrorHandler::startMessageBox()
     if (errorList.isValid() && errorList->getLength() > 0)
     {
         MessageBox::Ptr messageBox;
-        
+
         if (errorList->getLength() == 1)
         {
-            messageBox = MessageBox::create(MessageBoxParameter()
-                                             .setTitle("Error in config file")
-                                             .setMessage(String () << "Error within LucED config file '" << errorList->get(0).getConfigFileName() << "'")
-                                             .setDefaultButton    ("E]dit config file",    newCallback(this, &ConfigErrorHandler::handleOpenFilesButton))
-                                             .setCancelButton     ("C]ancel",              newCallback(this, &ConfigErrorHandler::handleAbortButton)));
+            if (!errorList->get(0).hasConfigFileName()) {
+                messageBox = MessageBox::create(MessageBoxParameter()
+                                                 .setTitle("Configuration Error")
+                                                 .setMessage(String () << errorList->get(0).getMessage()));
+
+                EventDispatcher::getInstance()->deregisterRunningComponent(this);
+            } else {
+                messageBox = MessageBox::create(MessageBoxParameter()
+                                                 .setTitle("Error in config file")
+                                                 .setMessage(String () << "Error within LucED config file '" << errorList->get(0).getConfigFileName() << "'")
+                                                 .setDefaultButton    ("E]dit config file",    newCallback(this, &ConfigErrorHandler::handleOpenFilesButton))
+                                                 .setCancelButton     ("C]ancel",              newCallback(this, &ConfigErrorHandler::handleAbortButton)));
+            }
         }
         else
         {

@@ -62,7 +62,7 @@ void ConfigException::ErrorList::appendCatchedException()
                 this->append(list->get(i));
             }
         } else {
-            this->append(Error(fallbackFileName, -1, ex.getMessage()));    
+            this->append(Error(ex.getMessage()));    
         }
     }
     catch (BaseException& ex)
