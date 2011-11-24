@@ -288,6 +288,7 @@ void TextData::setPseudoFileName(const String& filename)
 void TextData::setToSavedState()
 {
     if (hasHistory()) {
+        setHistorySeparator();
         history->setPreviousActionToSavedState();
     }
     setModifiedFlag(false);
