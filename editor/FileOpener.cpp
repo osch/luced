@@ -182,6 +182,9 @@ void FileOpener::openFiles()
                     
                     if (fileNotExisting)
                     {
+                        ByteBuffer emptyBuffer;
+                        textData->takeOverBuffer(encoding, &emptyBuffer);
+                        textData->setModifiedFlag(false);
                         textData->setRealFileName(fileName);
                     }
                     else {
