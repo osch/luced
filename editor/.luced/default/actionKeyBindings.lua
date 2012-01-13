@@ -79,11 +79,11 @@ return -- default actionName key binding
     },
     {
         actionName = "builtin.cursorBeginOfLine",
-        keys       = { "Alt+Left", "Alt+KP_Left", "Home", "Begin" },
+        keys       = { "Alt+Left", "Alt+KP_Left", "Home", "Begin", "KP_Home" },
     },
     {
         actionName = "builtin.cursorEndOfLine",
-        keys       = { "Alt+Right", "Alt+KP_Right", "End" },
+        keys       = { "Alt+Right", "Alt+KP_Right", "End", "KP_End" },
     },
     {
         actionName = "builtin.scrollLeft",
@@ -95,11 +95,11 @@ return -- default actionName key binding
     },
     {
         actionName = "builtin.cursorBeginOfText",
-        keys       = { "Home", "Ctrl+Home", "Ctrl+Begin" },
+        keys       = { "Home", "Ctrl+Home", "Ctrl+Begin", "Ctrl+KP_Home" },
     },
     {
         actionName = "builtin.cursorEndOfText",
-        keys       = { "End", "Ctrl+End" },
+        keys       = { "End", "Ctrl+End", "Ctrl+KP_End" },
     },
     {
         actionName = "builtin.backSpace",
@@ -107,7 +107,7 @@ return -- default actionName key binding
     },
     {
         actionName = "builtin.deleteKey",
-        keys       = { "Delete" },
+        keys       = { "Delete", "KP_Delete" },
     },
     {
         actionName = "builtin.copyToClipboard",
@@ -155,7 +155,7 @@ return -- default actionName key binding
     },
     {
         actionName = "builtin.selectionCursorBeginOfLine",
-        keys       = { "Shift+Home", "Shift+Begin" },
+        keys       = { "Shift+Home", "Shift+Begin", "Shift+KP_Home" },
     },
     {
         actionName = "builtin.selectionCursorEndOfLine",
@@ -179,7 +179,7 @@ return -- default actionName key binding
     },
     {
         actionName = "builtin.spaceBackward",
-        keys       = { "Insert" },
+        keys       = { "Insert", "KP_Insert" },
     },
     {
         actionName = "builtin.gotoMatchingBracket",
@@ -195,19 +195,19 @@ return -- default actionName key binding
     },
     {
         actionName = "builtin.cursorPageDown",
-        keys       = { "Control+Down", "Page_Down" },
+        keys       = { "Control+Down", "Page_Down", "KP_Next" },
     },
     {
         actionName = "builtin.cursorPageUp",
-        keys       = { "Control+Up", "Page_Up" },
+        keys       = { "Control+Up", "Page_Up", "KP_Prior" },
     },
     {
         actionName = "builtin.scrollPageDown",
-        keys       = { "Control+Down", "Page_Down" },
+        keys       = { "Control+Down", "Page_Down", "KP_Next" },
     },
     {
         actionName = "builtin.scrollPageUp",
-        keys       = { "Control+Up", "Page_Up" },
+        keys       = { "Control+Up", "Page_Up", "KP_Prior" },
     },
     {
         actionName = "builtin.scrollCursorUp",
@@ -259,11 +259,11 @@ return -- default actionName key binding
     },
     {
         actionName = "builtin.selectionCursorPageDown",
-        keys       = { "Shift+Page_Down" },
+        keys       = { "Shift+Page_Down", "Shift+KP_Next" },
     },
     {
         actionName = "builtin.selectionCursorPageUp",
-        keys       = { "Shift+Page_Up" },
+        keys       = { "Shift+Page_Up", "Shift+KP_Prior" },
     },
     {
         actionName = "builtin.shiftBlockLeft",
