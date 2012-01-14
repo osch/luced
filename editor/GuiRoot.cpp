@@ -131,12 +131,25 @@ GuiRoot::GuiRoot()
 #ifdef ABORT_ON_X11_ERRORS
     XSynchronize(display, True);
 #endif
-    XSetLocaleModifiers("");
-    if (!XSupportsLocale()) {
-        throw SystemException(String() << "Xlib: locale \"" << System::getInstance()->getDefaultLocale() << "\" not supported.");
+
+    {
+        XSetLocaleModifiers("");
+        if (!XSupportsLocale()) {
+            throw SystemException(String() << "Xlib: locale \"" << System::getInstance()->getDefaultLocale() << "\" not supported.");
+        }
+    
+        x11InputMethod = XOpenIM(display, NULL, NULL, NULL);
+    }
+    if (x11InputMethod == NULL)
+    {
+        XSetLocaleModifiers("@im=none");
+        if (!XSupportsLocale()) {
+            throw SystemException(String() << "Xlib: locale \"" << System::getInstance()->getDefaultLocale() << "\" not supported.");
+        }
+    
+        x11InputMethod = XOpenIM(display, NULL, NULL, NULL);
     }
 
-    x11InputMethod = XOpenIM(display, NULL, NULL, NULL);
     x11AtomForUtf8String = XInternAtom(display, "UTF8_STRING", False);
 
     screenId = XDefaultScreen(display);

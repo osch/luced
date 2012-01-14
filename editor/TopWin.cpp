@@ -473,68 +473,86 @@ KeyPressEvent TopWin::createKeyPressEventObjectFromX11Event(const XEvent* event)
     KeyModifier keyModifier;
     String      input;
 
-    char buffer[1000];
-
     XEvent eventCopy = *event;
 
     unsigned int keyState = eventCopy.xkey.state;
 
     KeySym keySym;
     KeySym keySymWithoutModifier;
-    int len;
     
-
-#ifdef X_HAVE_UTF8_STRING
-    if (x11InputContext != NULL)
     {
-        eventCopy.xkey.state = 0;
-        len = Xutf8LookupString(x11InputContext, 
-                                &eventCopy.xkey, buffer, sizeof(buffer), &keySymWithoutModifier, NULL);
-        eventCopy.xkey.state = keyState;
-        len = Xutf8LookupString(x11InputContext, 
-                                &eventCopy.xkey, buffer, sizeof(buffer), &keySym, NULL);
-    } else
-#endif
-    {
-#ifndef X_HAVE_UTF8_STRING
+        char buffer[1000];
+        int len;
+        
+    #ifdef X_HAVE_UTF8_STRING
         if (x11InputContext != NULL)
         {
             eventCopy.xkey.state = 0;
-            len = XmbLookupString(x11InputContext, 
-                                  &eventCopy.xkey, buffer, sizeof(buffer), &keySymWithoutModifier, NULL);
+            len = Xutf8LookupString(x11InputContext, 
+                                    &eventCopy.xkey, buffer, sizeof(buffer), &keySymWithoutModifier, NULL);
+    
             eventCopy.xkey.state = keyState;
-            len = XmbLookupString(x11InputContext, 
-                                  &eventCopy.xkey, buffer, sizeof(buffer), &keySym, NULL);
+            len = Xutf8LookupString(x11InputContext, 
+                                    &eventCopy.xkey, buffer, sizeof(buffer), &keySym, NULL);
         } else
-#endif
+    #endif
         {
-            eventCopy.xkey.state = 0;
-            len = XLookupString  (&eventCopy.xkey, buffer, sizeof(buffer), &keySymWithoutModifier, NULL);
-            eventCopy.xkey.state = keyState;
-            len = XLookupString  (&eventCopy.xkey, buffer, sizeof(buffer), &keySym, NULL);
+            bool wasXLookupString = false;
+    #ifndef X_HAVE_UTF8_STRING
+            if (x11InputContext != NULL)
+            {
+                eventCopy.xkey.state = 0;
+                len = XmbLookupString(x11InputContext, 
+                                      &eventCopy.xkey, buffer, sizeof(buffer), &keySymWithoutModifier, NULL);
+
+                eventCopy.xkey.state = keyState;
+                len = XmbLookupString(x11InputContext, 
+                                      &eventCopy.xkey, buffer, sizeof(buffer), &keySym, NULL);
+            } else
+    #endif
+            {
+                eventCopy.xkey.state = 0;
+                len = XLookupString  (&eventCopy.xkey, buffer, sizeof(buffer), &keySymWithoutModifier, NULL);
+
+                eventCopy.xkey.state = keyState;
+                len = XLookupString  (&eventCopy.xkey, buffer, sizeof(buffer), &keySym, NULL);
+
+                wasXLookupString = true;
+            }
+            long c = keysym2ucs(keySym);
+            
+            if (c < 0) {
+                // keysym2ucs failed
+                if (wasXLookupString) {
+                    // according to xlib documentation XLookupString returns latin-1 encoding
+                    input = EncodingConverter::convertLatin1ToUtf8String((byte*)&buffer, len);
+                    len = 0; // string "input" is set now
+                } else {
+                    // we don't know the encoding of XmbLookupString, so give up here
+                    len = 0; // string "input" is empty now
+                }
+            } else if (c <= 0x7F) {
+                buffer[0] = c;
+                len = 1;
+            } else if (c <= 0x7FF) {
+                buffer[0] = 0xC0 | ((c >> 6) & 0x1F);
+                buffer[1] = 0x80 | (c & 0x3F);
+                len = 2;
+            } else if (c <= 0xFFFF) {
+                buffer[0] = 0xE0 | ((c >> 12) & 0x0F);
+                buffer[1] = 0x80 | ((c >> 6) & 0x3F);
+                buffer[2] = 0x80 | (c & 0x3F);
+                len = 3;
+            } else {
+                buffer[0] = 0xF0 | ((c >> 18) & 0x07);
+                buffer[1] = 0x80 | ((c >> 12) & 0x3f);
+                buffer[2] = 0x80 | ((c >> 6) & 0x3f);
+                buffer[3] = 0x80 | (c & 0x3f);
+                len = 4;
+            }
         }
-        long c = keysym2ucs(keySym);
-        
-        if (c < 0) {
-            len = 0;
-        } else if (c <= 0x7F) {
-            buffer[0] = c;
-            len = 1;
-        } else if (c <= 0x7FF) {
-            buffer[0] = 0xC0 | ((c >> 6) & 0x1F);
-            buffer[1] = 0x80 | (c & 0x3F);
-            len = 2;
-        } else if (c <= 0xFFFF) {
-            buffer[0] = 0xE0 | ((c >> 12) & 0x0F);
-            buffer[1] = 0x80 | ((c >> 6) & 0x3F);
-            buffer[2] = 0x80 | (c & 0x3F);
-            len = 3;
-        } else {
-            buffer[0] = 0xF0 | ((c >> 18) & 0x07);
-            buffer[1] = 0x80 | ((c >> 12) & 0x3f);
-            buffer[2] = 0x80 | ((c >> 6) & 0x3f);
-            buffer[3] = 0x80 | (c & 0x3f);
-            len = 4;
+        if (len > 0) {
+            input = String(buffer, len);
         }
     }
         
@@ -571,9 +589,6 @@ KeyPressEvent TopWin::createKeyPressEventObjectFromX11Event(const XEvent* event)
     keyId       = KeyId(keySym);
     keyModifier = KeyModifier::createFromX11KeyState(keyState);
     
-    if (len > 0) {
-        input = String(buffer, len);
-    }
     return KeyPressEvent(keyModifier, keyId, input);
 }
 
