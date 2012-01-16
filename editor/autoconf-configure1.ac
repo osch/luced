@@ -56,6 +56,10 @@ AC_ARG_ENABLE(debug,
                              [enables various runtime checks for debugging purposes]),
               ,enable_debug=no)
 
+AC_ARG_ENABLE(nocygwinfork,
+              AS_HELP_STRING([--disable-nocygwinfork],
+                             [disable workaround for cygwin fork problems under Windows]),
+              ,enable_nocygwinfork=yes)
 
 # Use the C++ compiler for the compile tests
 AC_LANG(C++)
@@ -138,6 +142,10 @@ if test x"$enable_xpm" = x"yes"; then
     AC_MSG_FAILURE("Cannot find libXpm development headers. You may disable xpm window icon support with the configure option --disable-xpm")
   fi
 fi
+
+AC_CHECK_HEADERS(windows.h, [have_windows_h=yes])
+AC_CHECK_HEADERS(sys/cygwin.h, [have_cygwin_h=yes])
+
 
 ############################
 # explicit check instead of "AC_SEARCH_LIBS([iconv],[iconv])"
@@ -408,6 +416,13 @@ then
   AC_DEFINE_UNQUOTED([ENABLE_DEBUG], 1, [Define to 1 if debug runtime checks should be enabled.])
 else
   AC_DEFINE_UNQUOTED([ENABLE_DEBUG], 0, [Define to 1 if debug runtime checks should be enabled.])
+fi
+
+if test x"$enable_nocygwinfork" = x"yes"
+then
+  AC_DEFINE_UNQUOTED([DISABLE_NOCYGWINFORK], 0, [Define to 1 if workaround for cygwin fork should not be used.])
+else
+  AC_DEFINE_UNQUOTED([DISABLE_NOCYGWINFORK], 1, [Define to 1 if workaround for cygwin fork should not be used.])
 fi
 
 # last part is concatenated from other files !!!

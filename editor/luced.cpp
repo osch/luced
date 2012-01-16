@@ -25,7 +25,17 @@
 #include <locale.h>
 #include <sys/types.h>
 
+#include "config.h"
+
+#if HAVE_WINDOWS_H
+#   include <windows.h>
+#endif
+#if HAVE_SYS_CYGWIN_H
+#   include <sys/cygwin.h>
+#endif
+
 #include "String.hpp"
+#include "ByteBuffer.hpp"
 #include "EventDispatcher.hpp"
 #include "SingletonKeeper.hpp"
 #include "GuiRootProperty.hpp"
@@ -36,8 +46,59 @@
 #include "ProgramName.hpp"
 #include "DefaultConfig.hpp"
 #include "ConfigException.hpp"
+
+
+#if !defined(LUCED_USE_NOCYGWINFORK)
+#  if defined(_WIN32) && HAVE_WINDOWS_H && HAVE_SYS_CYGWIN_H && !DISABLE_NOCYGWINFORK
+#    define LUCED_USE_NOCYGWINFORK 1
+#  else
+#    define LUCED_USE_NOCYGWINFORK 0
+#  endif
+#endif
+
              
 using namespace LucED;
+
+
+static bool startupClient(int argc, char** argv)
+{
+    bool isServerStartupNeeded = false;
+    {
+        SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
+        Commandline::Ptr     commandline     = Commandline::create(argc, argv);
+        EditorClient::Ptr    editorClient    = EditorClient::getInstance();
+      
+        DefaultConfig::createMissingConfigFiles();
+          
+        editorClient->startWithCommandline(commandline);
+
+        EventDispatcher::getInstance()->doEventLoop();
+        
+        isServerStartupNeeded = editorClient->isServerStartupNeeded();
+    }
+    return isServerStartupNeeded;
+}
+
+
+static void startupServer(int argc, char** argv)
+{
+    SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
+    Commandline::Ptr     commandline     = Commandline::create(argc, argv);
+    EditorServer::Ptr    editorServer    = EditorServer::getInstance();
+    
+    try
+    {
+        editorServer->startWithCommandline(commandline);
+    }
+    catch (ConfigException& ex)
+    {
+        editorServer->startWithCommandlineAndErrorList(commandline, ex.getErrorList());
+    }
+    
+    EventDispatcher::getInstance()->doEventLoop();
+}
+
+
 
 int main(int argc, char** argv)
 {
@@ -49,56 +110,87 @@ int main(int argc, char** argv)
     {
         ProgramName::set(argv[0]);
         
-        bool isServerStartupNeeded = false;
+#if LUCED_USE_NOCYGWINFORK
         {
-            SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
-            Commandline::Ptr     commandline     = Commandline::create(argc, argv);
-            EditorClient::Ptr    editorClient    = EditorClient::getInstance();
-          
-            DefaultConfig::createMissingConfigFiles();
-              
-            editorClient->startWithCommandline(commandline);
-
-            EventDispatcher::getInstance()->doEventLoop();
+            // use Windows function "CreateProcess" for server startup
             
-            isServerStartupNeeded = editorClient->isServerStartupNeeded();
-        }
-        #ifdef DEBUG
-            HeapObjectChecker::assertAllCleared();
-        #endif
-        
-        if (isServerStartupNeeded) // start new server
-        {
-            pid_t pid = fork();
+            cygwin_internal(CW_SYNC_WINENV); // synchronize the Win32 environment with the Cygwin environment
             
-            if (pid == 0) // we are child process: the new server
+            String programName = argv[0];
+            
+            if (!programName.startsWith("forked_"))
             {
-                setlocale(LC_CTYPE, "");
+                // we are client
                 
-                SingletonKeeper::Ptr singletonKeeper = SingletonKeeper::create();
-                Commandline::Ptr     commandline     = Commandline::create(argc, argv);
-                EditorServer::Ptr    editorServer    = EditorServer::getInstance();
-
-                try
+                bool isServerStartupNeeded = startupClient(argc, argv);
+                
+                if (isServerStartupNeeded)
                 {
-                    editorServer->startWithCommandline(commandline);
+                    ByteBuffer commandline;
+                               commandline.appendCStr("forked_");
+                               commandline.appendCStr(GetCommandLine());
+                               commandline.append((byte)0);
+                    
+                    char winPath[800];
+                    
+                    GetModuleFileName(NULL,              // HMODULE hModule,
+                                      winPath,          // LPTSTR lpFilename,
+                                      sizeof(winPath)); // DWORD nSize
+                    
+                    STARTUPINFO         su;
+                    PROCESS_INFORMATION pi;
+                    
+                    memset(&su, 0, sizeof(su));
+                    memset(&pi, 0, sizeof(pi));
+                    
+                    bool wasOK = CreateProcess(winPath,   // lpApplicationName
+                                               (char*)commandline.getPtr(0),    // lpCommandLine
+                                               0,         // lpProcessAttributes,
+                                               0,         // lpThreadAttributes,
+                                               true,      // bInheritHandles,
+                                               0, // dwCreationFlags,
+                                               NULL,      // lpEnvironment,
+                                               NULL,      // lpCurrentDirectory,
+                                               &su,         // lpStartupInfo,
+                                               &pi);        // lpProcessInformation
+                    if (!wasOK)
+                    {
+                        fprintf(stderr, "[%s]: Could not create process: error %d\n", argv[0], (int)GetLastError());
+                        rc = 32;
+                    }
                 }
-                catch (ConfigException& ex)
-                {
-                    editorServer->startWithCommandlineAndErrorList(commandline, ex.getErrorList());
-                }
-
-                EventDispatcher::getInstance()->doEventLoop();
             }
-            else if (pid < 0)
+            else
             {
-                fprintf(stderr, "[%s]: Could not fork process: %s\n", argv[0], strerror(errno));
-                rc = 32;
+                // we are server
+    
+                startupServer(argc, argv);
             }
-            #ifdef DEBUG
-                HeapObjectChecker::assertAllCleared();
-            #endif
         }
+#else
+        {
+            // use posix fork for server startup
+    
+            bool isServerStartupNeeded = startupClient(argc, argv);
+    
+            if (isServerStartupNeeded) // start new server
+            {
+                pid_t pid = fork();
+                
+                if (pid == 0) // we are child process: the new server
+                {
+                    setlocale(LC_CTYPE, "");
+                    
+                    startupServer(argc, argv);
+                }
+                else if (pid < 0)
+                {
+                    fprintf(stderr, "[%s]: Could not fork process: %s\n", argv[0], strerror(errno));
+                    rc = 32;
+                }
+            }
+        }
+#endif
     }
     catch (CommandlineException& ex)
     {
