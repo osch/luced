@@ -89,6 +89,10 @@ public:
     bool findMatch(const String& subject, MatchOptions matchOptions = MatchOptions()) {
         return findMatch(subject.toCString(), subject.getLength(), 0, matchOptions);
     }
+
+    bool findMatch(const String& subject, int startOffset, MatchOptions matchOptions = MatchOptions()) {
+        return findMatch(subject.toCString(), subject.getLength(), startOffset, matchOptions);
+    }
     
     bool matches(const String& subject) {
         bool rslt = findMatch(subject, MatchOptions() | ANCHORED);

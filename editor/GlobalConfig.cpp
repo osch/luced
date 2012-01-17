@@ -219,7 +219,7 @@ void GlobalConfig::readConfig()
 {
     packagesMap.clear();
     
-    configDirectory = DefaultConfig::getCreatedConfigDirectory();
+    configDirectory = DefaultConfig::getCreatedConfigDirectory().getAbsoluteNameWithResolvedLinks();
 
     ConfigException::ErrorList::Ptr errorList = ConfigException::ErrorList::create();
 
@@ -441,7 +441,9 @@ void GlobalConfig::readConfig()
 
 void GlobalConfig::notifyAboutNewFileContent(String absoluteFileName)
 {
-    if (File(absoluteFileName).getDirName().startsWith(configDirectory))
+    File realName = File(absoluteFileName).getAbsoluteNameWithResolvedLinks();
+
+    if (realName.getDirName().startsWith(configDirectory))
     {
         GlobalLuaInterpreter::getInstance()->resetModules();
     

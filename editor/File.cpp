@@ -34,6 +34,7 @@
 #include "Regex.hpp"
 #include "FileException.hpp"
 #include "System.hpp"
+#include "Nullable.hpp"
 
 using namespace LucED;
 
@@ -134,6 +135,18 @@ void File::storeData(RawPtr<ByteBuffer> data) const
     storeData((char*)data->getAmount(0, length), length);
 }
 
+String internalCanonicalize(const String& fname)
+{
+    String buffer = fname;
+    
+    Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./|/+$");
+
+    while (r.findMatch(buffer, Regex::MatchOptions())) {
+        buffer.removeAmount(Pos(r.getCaptureBegin(0)), Len(r.getCaptureLength(0)));
+    }
+    return buffer;
+}
+
 String File::getAbsoluteName() const
 {
     if (absoluteName.getLength() == 0)
@@ -146,48 +159,70 @@ String File::getAbsoluteName() const
                               << "/" 
                               << name;
         }
-        Regex r("/\\.(?=/)|/(?=/)|[^/]+/\\.\\./|/+$");
-    
-        while (r.findMatch(buffer, Regex::MatchOptions())) {
-            buffer.removeAmount(Pos(r.getCaptureBegin(0)), Len(r.getCaptureLength(0)));
-        }
-        absoluteName = buffer;
+        absoluteName = internalCanonicalize(buffer);
     }
     return absoluteName;
+}
+
+static Nullable<String> internalReadLink1(const String& fname)
+{
+    MemArray<char> buffer(2000);
+    long len = 0;
+    
+    while (true)
+    {
+        len = readlink(fname.toCString(), buffer.getPtr(), buffer.getLength());
+        if (len == buffer.getLength()) {
+            buffer.increaseTo(len + 1000);
+            continue;
+        } else {
+            break;
+        }
+    }
+    if (len > 0) {
+        return String(buffer.getPtr(), len);
+    } else {
+        return Null;
+    }
+}
+static String internalReadLink2(const String& fname)
+{
+    String s = fname;
+    
+    while (true)
+    {
+        Nullable<String> rslt = internalReadLink1(s);
+        
+        if (rslt.isValid()) {
+            s = rslt.get();
+        } else {
+            return s;
+        }
+    }
 }
 
 String File::getAbsoluteNameWithResolvedLinks() const
 {
     String origName = getAbsoluteName();
-    String absName = origName;
+    int    origLen  = origName.getLength();
+    String rsltName;
+    
+    int p1 = 0;
 
-    while (true)
+    while (p1 < origLen && origName[p1] == '/')
     {
-        MemArray<char> buffer(2000);
-        long len = 0;
+        int p2 = p1 + 1;
         
-        while (true)
-        {
-            len = readlink(absName.toCString(), buffer.getPtr(), buffer.getLength());
-            if (len == buffer.getLength()) {
-                buffer.increaseTo(len + 1000);
-                continue;
-            } else {
-                break;
-            }
+        while (p2 < origLen && origName[p2] != '/') ++p2;
+        if (p2 <= origLen) {
+            String fragment = origName.getSubstring(Pos(p1), Pos(p2));
+            rsltName = internalReadLink2(String() << rsltName << fragment);
         }
-        if (len <= 0) {
-            // The named file is not a symbolic link or does not exist or...
-            return absName;
-        } else {
-            String linkContent = String(buffer.getPtr(), len);
-            if (linkContent.getLength() > 0 && linkContent[0] == '/') {
-                absName = linkContent;
-            } else {
-                absName = File(File(absName).getDirName(), linkContent).getAbsoluteName();
-            }
-        }
+        p1 = p2;
     }
+    rsltName = internalCanonicalize(rsltName);
+
+    return rsltName;
 }
 
 String File::getBaseName() const

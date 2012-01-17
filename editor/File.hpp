@@ -134,6 +134,9 @@ public:
     operator String() const {
         return name;
     }
+    String toString() const {
+        return name;
+    }
     
 private:
    String         name;
