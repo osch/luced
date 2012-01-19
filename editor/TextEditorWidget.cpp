@@ -424,12 +424,12 @@ GuiWidget::ProcessingResult TextEditorWidget::processGuiWidgetEvent(const XEvent
             case ButtonPress:
             {
                 showMousePointer();
-                if (!hasFocus()) {
-                    reportMouseClick();
-                    requestFocus();
-                }
                 if (event->xbutton.button == Button1)
                 {
+                    if (!hasFocus()) {
+                        reportMouseClick();
+                        requestFocus();
+                    }
                     if (!cursorChangesDisabled)
                     {
                         if (buttonPressedCounter == 1 && event->xbutton.time - lastButtonPressedTime
