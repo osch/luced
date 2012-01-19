@@ -815,21 +815,22 @@ void EditorTopWin::handleChangedModifiedFlag(bool modifiedFlag)
 
 void EditorTopWin::save()
 {
-    GlobalConfig::LanguageModeAndEncoding result = GlobalConfig::getInstance()
-                                                   ->getLanguageModeAndEncodingForFileNameAndContent
-                                                     (
-                                                         textData->getFileName(), 
-                                                         textData->getByteBuffer()
-                                                     );
-    if (result.encoding.getLength() > 0 && EncodingConverter::canConvertFromTo("UTF-8", result.encoding)) {
-        textData->setEncoding(result.encoding);
+    {
+        GlobalConfig::LanguageModeAndEncoding result = GlobalConfig::getInstance()
+                                                       ->getLanguageModeAndEncodingForFileNameAndContent
+                                                         (
+                                                             textData->getFileName(), 
+                                                             textData->getByteBuffer()
+                                                         );
+        if (result.encoding.getLength() > 0 && EncodingConverter::canConvertFromTo("UTF-8", result.encoding)) {
+            textData->setEncoding(result.encoding);
+        }
+        if (result.languageMode != textEditor->getHilitedText()->getLanguageMode()) {
+            textEditor->getHilitedText()->setLanguageMode(result.languageMode);
+        }
     }
     textData->save();
     GlobalConfig::getInstance()->notifyAboutNewFileContent(textData->getFileName());
-
-    if (result.languageMode != textEditor->getHilitedText()->getLanguageMode()) {
-        textEditor->getHilitedText()->setLanguageMode(result.languageMode);
-    }
 }
 
 
