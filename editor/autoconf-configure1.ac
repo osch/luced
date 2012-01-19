@@ -56,10 +56,10 @@ AC_ARG_ENABLE(debug,
                              [enables various runtime checks for debugging purposes]),
               ,enable_debug=no)
 
-AC_ARG_ENABLE(nocygwinfork,
-              AS_HELP_STRING([--disable-nocygwinfork],
+AC_ARG_ENABLE(cygwinforkworkaround,
+              AS_HELP_STRING([--disable-cygwinforkworkaround],
                              [disable workaround for cygwin fork problems under Windows]),
-              ,enable_nocygwinfork=yes)
+              ,enable_cygwinforkworkaround=yes)
 
 # Use the C++ compiler for the compile tests
 AC_LANG(C++)
@@ -418,11 +418,11 @@ else
   AC_DEFINE_UNQUOTED([ENABLE_DEBUG], 0, [Define to 1 if debug runtime checks should be enabled.])
 fi
 
-if test x"$enable_nocygwinfork" = x"yes"
+if test x"$enable_cygwinforkworkaround" = x"yes"
 then
-  AC_DEFINE_UNQUOTED([DISABLE_NOCYGWINFORK], 0, [Define to 1 if workaround for cygwin fork should not be used.])
+  AC_DEFINE_UNQUOTED([DISABLE_CYGWINFORKWORKAROUND], 0, [Define to 1 if workaround for cygwin fork should not be used.])
 else
-  AC_DEFINE_UNQUOTED([DISABLE_NOCYGWINFORK], 1, [Define to 1 if workaround for cygwin fork should not be used.])
+  AC_DEFINE_UNQUOTED([DISABLE_CYGWINFORKWORKAROUND], 1, [Define to 1 if workaround for cygwin fork should not be used.])
 fi
 
 # last part is concatenated from other files !!!
