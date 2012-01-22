@@ -138,7 +138,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                  GuiWidget     
 		LucedLuaInterface        EncodingException        QualifiedName              SyntaxPatternsConfig \
 		TextStyleCache           ConfigPackageLoader      FocusableWidget            FocusableElement \
 		NonFocusableWidget       FocusableContainerWidget TextStyleDefinitions       LanguageModeSelectors \
-		ExecutePanel             ExceptionLuaInterface
+		ExecutePanel             ExceptionLuaInterface    Thread                     Mutex
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \
@@ -264,6 +264,7 @@ release_pcre_headers   := $(patsubst %, pcre/%,   $(shell cd ../pcre;    $(LS_FI
                                                     pcre.h)
 
 release_editor_headers := $(patsubst %, editor/%,   $(shell        $(LS_FILES) *.hpp) \
+                                                    config-luced.h \
                                                     $(patsubst %,%.hpp,$(GENERATED_HEADERS)))
 
 release_headers        := $(release_lua_headers)    \
@@ -571,7 +572,7 @@ $(BUILD_DIR)/libluced.a: $(LIB_OBJS)
 #
 
 define COMPILE_RUN
-	@rm -f $(BUILD_DIR)/deps/$(*F).dep
+	@rm -rf "$@" "$(BUILD_DIR)/deps/$(*F).dep"
 	@mkdir -p $(@D) && mkdir -p $(BUILD_DIR)/deps
 	$(CPPCOMP_PRG) $(CPPCOMP_INVOKE_OPTS) -I . -I $(BUILD_DIR) $(CPP_DEFINES) $(INCL_OPTS) $1 \
 	-c $<  -o "$@" 	-MMD -MF $(BUILD_DIR)/deps/$(*F).dep.tmp

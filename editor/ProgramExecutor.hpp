@@ -22,6 +22,8 @@
 #ifndef PROGRAM_EXECUTOR_HPP
 #define PROGRAM_EXECUTOR_HPP
 
+#include "config.h"
+
 #include "RunningComponent.hpp"
 #include "FileDescriptorListener.hpp"
 #include "OwningPtr.hpp"
@@ -62,36 +64,50 @@ public:
         rslt->input                 = input;
         rslt->commandline           = commandline;
         rslt->finishedCallback      = finishedCallback;
-        EventDispatcher::getInstance()->registerRunningComponent(rslt);
         rslt->startExecuting();
+        EventDispatcher::getInstance()->registerRunningComponent(rslt);
         return rslt;
     }
 
 private:
-    ProgramExecutor()
-        : inputPosition(0),
-          outputPosition(0)
-    {}
+
+#if LUCED_USE_CYGWIN_FORK_WORKAROUND
+    class Win32StdinThread;
+    class Win32StdoutThread;
+    class Win32StderrThread;
+#endif
+
+    ProgramExecutor();
     
     void startExecuting();
     
+    
+    HeapHashMap<String,String>::Ptr additionalEnvironment;
+    
+    String           input;
+    Commandline::Ptr commandline;
+
+    Callback<Result>::Ptr finishedCallback;
+
+#if LUCED_USE_CYGWIN_FORK_WORKAROUND
+    void handleTerminatedChild();
+
+    LucED::OwningPtr<Win32StdoutThread> win32StdoutThread;
+    LucED::OwningPtr<Win32StdinThread>  win32StdinThread;
+    LucED::OwningPtr<Win32StderrThread> win32StderrThread;
+#else
     void writeToChild (int fileDescriptor);
     void readFromChild(int fileDescriptor);
     
     void catchTerminatedChild(int returnCode);
-    
-    HeapHashMap<String,String>::Ptr additionalEnvironment;
-    
-    Commandline::Ptr commandline;
-    String           input;
+
     int              inputPosition;
     ByteBuffer       output;
     int              outputPosition;
     
     FileDescriptorListener::Ptr childInputListener;
     FileDescriptorListener::Ptr childOutputListener;
-    
-    Callback<Result>::Ptr finishedCallback;
+#endif // !LUCED_USE_CYGWIN_FORK_WORKAROUND
 };
 
 } // namespace LucED

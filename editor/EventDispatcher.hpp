@@ -39,6 +39,7 @@
 #include "MicroSeconds.hpp"
 #include "FileDescriptorListener.hpp"
 #include "RawPtr.hpp"
+#include "Mutex.hpp"
 
 namespace LucED
 {
@@ -97,6 +98,7 @@ public:
     void deregisterBeforeMouseClickListenerFor(HeapObject* object) {
         beforeMouseClickCallbackContainer.deregisterAllCallbacksFor(object);
     }
+    void executeTaskOnMainThread(Callback<>::Ptr task);
 
 private:
     friend class SingletonInstance<EventDispatcher>;
@@ -159,6 +161,9 @@ private:
     CallbackContainer<> beforeMouseClickCallbackContainer;
     
     MemArray<XEvent> peekedEvents;
+
+    Mutex::Ptr                   mutex;
+    ObjectArray<Callback<>::Ptr> tasks;
 };
 
 

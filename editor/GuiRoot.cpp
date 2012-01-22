@@ -29,14 +29,6 @@
 #include "GuiRootProperty.hpp"
 #include "System.hpp"
 
-#if !defined(LUCED_USE_XKBLIB)
-#  if HAVE_X11_XKBLIB_H
-#    define LUCED_USE_XKBLIB 1
-#  else
-#    define LUCED_USE_XKBLIB 0
-#  endif
-#endif
-
 #if LUCED_USE_XKBLIB
 #  include <X11/XKBlib.h>
 #endif

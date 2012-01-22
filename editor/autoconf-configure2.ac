@@ -1,4 +1,5 @@
 # This part is concatenated after autoconf-configure.ac
+# for the developer sandbox.
 #
 AC_CONFIG_FILES([dummy.mk Makefile2.mk])
 AC_CONFIG_HEADERS([config.h])

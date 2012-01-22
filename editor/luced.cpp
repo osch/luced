@@ -27,15 +27,8 @@
 
 #include "config.h"
 
-#if HAVE_WINDOWS_H
-#   include <windows.h>
-#endif
-#if HAVE_SYS_CYGWIN_H
-#   include <sys/cygwin.h>
-#endif
-
 #include "String.hpp"
-#include "ByteBuffer.hpp"
+#include "CharBuffer.hpp"
 #include "EventDispatcher.hpp"
 #include "SingletonKeeper.hpp"
 #include "GuiRootProperty.hpp"
@@ -46,17 +39,9 @@
 #include "ProgramName.hpp"
 #include "DefaultConfig.hpp"
 #include "ConfigException.hpp"
+#include "Win32Util.hpp"
 
 
-#if !defined(LUCED_USE_CYGWIN_FORK_WORKAROUND)
-#  if defined(_WIN32) && HAVE_WINDOWS_H && HAVE_SYS_CYGWIN_H && !DISABLE_CYGWIN_FORK_WORKAROUND
-#    define LUCED_USE_CYGWIN_FORK_WORKAROUND 1
-#  else
-#    define LUCED_USE_CYGWIN_FORK_WORKAROUND 0
-#  endif
-#endif
-
-             
 using namespace LucED;
 
 
@@ -109,55 +94,25 @@ int main(int argc, char** argv)
     try
     {
         ProgramName::set(argv[0]);
-        
+
 #if LUCED_USE_CYGWIN_FORK_WORKAROUND
         {
             // use Windows function "CreateProcess" for server startup
-            
-            cygwin_internal(CW_SYNC_WINENV); // synchronize the Win32 environment with the Cygwin environment
             
             String programName = argv[0];
             
             if (!programName.startsWith("forked_"))
             {
                 // we are client
-                
+
                 bool isServerStartupNeeded = startupClient(argc, argv);
                 
                 if (isServerStartupNeeded)
                 {
-                    ByteBuffer commandline;
-                               commandline.appendCStr("forked_");
-                               commandline.appendCStr(GetCommandLine());
-                               commandline.append((byte)0);
+                    Win32Util::copyCygwinEnvToWin32();
                     
-                    char winPath[800];
-                    
-                    GetModuleFileName(NULL,              // HMODULE hModule,
-                                      winPath,          // LPTSTR lpFilename,
-                                      sizeof(winPath)); // DWORD nSize
-                    
-                    STARTUPINFO         su;
-                    PROCESS_INFORMATION pi;
-                    
-                    memset(&su, 0, sizeof(su));
-                    memset(&pi, 0, sizeof(pi));
-                    
-                    bool wasOK = CreateProcess(winPath,   // lpApplicationName
-                                               (char*)commandline.getPtr(0),    // lpCommandLine
-                                               0,         // lpProcessAttributes,
-                                               0,         // lpThreadAttributes,
-                                               true,      // bInheritHandles,
-                                               0, // dwCreationFlags,
-                                               NULL,      // lpEnvironment,
-                                               NULL,      // lpCurrentDirectory,
-                                               &su,         // lpStartupInfo,
-                                               &pi);        // lpProcessInformation
-                    if (!wasOK)
-                    {
-                        fprintf(stderr, "[%s]: Could not create process: error %d\n", argv[0], (int)GetLastError());
-                        rc = 32;
-                    }
+                    Win32Util::createProcess(Win32Util::getThisProgramFileName(),
+                                             String() << "forked_" << Win32Util::getThisProgramCommandline());
                 }
             }
             else

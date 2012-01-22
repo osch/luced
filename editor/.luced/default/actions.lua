@@ -382,7 +382,8 @@ return
             end,
     test2 =
     {
-        shellScript = [[ echo "<$FILE>"; ls|head -n3 ]],
+        shellScript = [[ echo "moinf" >> /tmp/trt; echo "moin2">&2; echo "main1a"; echo "main2"; ls -la /tmp ]],
+        --shellScript = [[ echo "<$FILE>"; ls|head -n3 ]],
     },
     test3 =
     {

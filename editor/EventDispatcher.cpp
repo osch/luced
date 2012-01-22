@@ -52,8 +52,10 @@ EventDispatcher* EventDispatcher::getInstance()
 }
 
 static bool hasSignalHandlers = false;
-static int sigChildPipeIn   = -1;
-static int sigChildPipeOut  = -1;
+static int sigChildPipeIn     = -1;
+static int sigChildPipeOut    = -1;
+static int taskNotifyPipeIn   = -1;
+static int taskNotifyPipeOut  = -1;
 static sigset_t enabledSignalBlockMask;
 static sigset_t disabledSignalBlockMask;
 
@@ -131,7 +133,8 @@ static inline int internalSelect(int n, fd_set *readfds, fd_set *writefds, fd_se
 EventDispatcher::EventDispatcher()
     : doQuit(false),
       hasRootPropertyListeners(false),
-      lastX11EventTime(CurrentTime)
+      lastX11EventTime(CurrentTime),
+      mutex(Mutex::create())
 {
     
     x11FileDescriptor = ConnectionNumber(GuiRoot::getInstance()->getDisplay());
@@ -151,6 +154,17 @@ EventDispatcher::EventDispatcher()
     
         System::setCloseOnExecFlag(sigChildPipeIn);
         System::setCloseOnExecFlag(sigChildPipeOut);
+        
+        int taskNotifyPipe[2];
+        if (::pipe(taskNotifyPipe) != 0) {
+            throw SystemException(String() << "Could not create pipe: " << strerror(errno));
+        }
+        taskNotifyPipeIn  = taskNotifyPipe[0];
+        taskNotifyPipeOut = taskNotifyPipe[1];
+        
+        System::setCloseOnExecFlag(taskNotifyPipeIn);
+        System::setCloseOnExecFlag(taskNotifyPipeOut);
+        
         {
             struct sigaction handler;
        
@@ -415,6 +429,9 @@ void EventDispatcher::doEventLoop()
             
             util::maximize(&maxFileDescriptor, sigChildPipeIn);
             FD_SET(sigChildPipeIn, &readfds);
+
+            util::maximize(&maxFileDescriptor, taskNotifyPipeIn);
+            FD_SET(taskNotifyPipeIn, &readfds);
             
             for (int i = 0; i < fileDescriptorListeners.getLength();)
             {
@@ -561,6 +578,19 @@ void EventDispatcher::doEventLoop()
                             }
                         } while (pid != 0);
                     }
+                    if (FD_ISSET(taskNotifyPipeIn, &readfds))
+                    {
+                        Mutex::Lock lock(mutex);
+                        {
+                            char buffer[40];
+                            int readCounter = ::read(taskNotifyPipeIn, buffer, sizeof(buffer));
+
+                            for (int i = 0; i < tasks.getLength(); ++i) {
+                                tasks[i]->call();
+                            }
+                            tasks.clear();
+                        }
+                    }
                 } else {
                     if (nextTimer.isValid()) {
                         if (nextTimer.when < TimeVal::now()) {
@@ -677,3 +707,13 @@ void EventDispatcher::registerForTerminatingChildProcess(pid_t childPid, Callbac
     childProcessListeners.set(childPid, callback);
 }
 
+void EventDispatcher::executeTaskOnMainThread(Callback<>::Ptr task)
+{
+    Mutex::Lock lock(mutex);
+    {
+        tasks.append(task);
+
+        char msg = 't';
+        ::write(taskNotifyPipeOut, &msg, 1);
+    }
+}

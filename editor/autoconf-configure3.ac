@@ -1,5 +1,7 @@
 # This part is concatenated after autoconf-configure.ac
+# for the final release.
 #
+AH_BOTTOM([#include <editor/config-luced.h>])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_HEADERS([config.h])
 AC_OUTPUT

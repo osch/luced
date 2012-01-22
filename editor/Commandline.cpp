@@ -92,26 +92,32 @@ String Commandline::toQuotedString() const
         if (i > firstIndex) {
             rslt << ' ';
         }
-        rslt << '"';
-
-        for (int j = 0; j < argument.getLength(); ++j)
+        if (argument.containsAny("\"\\ "))
         {
-            switch (argument[j]) {
-                case '"': {
-                    rslt << "\\\"";  //    "   ->   \"
-                    break;
-                }
-                case '\\': {
-                    rslt << "\\\\";  //    \   ->   \\
-                    break;
-                }
-                default: {
-                    rslt << argument[j];
-                    break;
+            rslt << '"';
+    
+            for (int j = 0; j < argument.getLength(); ++j)
+            {
+                switch (argument[j]) {
+                    case '"': {
+                        rslt << "\\\"";  //    "   ->   \"
+                        break;
+                    }
+                    case '\\': {
+                        rslt << "\\\\";  //    \   ->   \\
+                        break;
+                    }
+                    default: {
+                        rslt << argument[j];
+                        break;
+                    }
                 }
             }
+            rslt << '"';
         }
-        rslt << '"';
+        else {
+            rslt << argument;
+        }
     }
     return rslt;
 }

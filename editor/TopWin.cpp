@@ -22,14 +22,6 @@
 #include "config.h"
 #include "headers.hpp"
 
-#if !defined(LUCED_USE_XPM)
-#  if HAVE_X11_XPM_H && HAVE_X11_XUTIL_H && !DISABLE_XPM
-#    define LUCED_USE_XPM 1
-#  else
-#    define LUCED_USE_XPM 0
-#  endif
-#endif
-
 #if LUCED_USE_XPM
 #  include <X11/xpm.h>
 #  include <X11/Xutil.h>

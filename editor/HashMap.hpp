@@ -26,34 +26,6 @@
 
 #include "config.h"
 
-#if !defined(LUCED_USE_STD_UNORDERED_MAP)              \
- && !defined(LUCED_USE_TR1_UNORDERED_MAP)              \
- && !defined(LUCED_USE_EXT_HASH_MAP_UNDER_STD)         \
- && !defined(LUCED_USE_EXT_HASH_MAP_UNDER_GNU_CXX)     \
- && !defined(LUCED_USE_STD_MAP)
-
-    #if HAVE_UNORDERED_MAP 
-        #define                                   LUCED_USE_STD_UNORDERED_MAP           1
-
-    #elif    HAVE_TR1_UNORDERED_MAP \
-          && !UNORDERED_MAP_UNDER_TR1_IS_BROKEN
-        #define                                   LUCED_USE_TR1_UNORDERED_MAP           1
-    
-    #elif HAVE_EXT_HASH_MAP \
-       && HASH_MAP_UNDER_STD
-        #define                                   LUCED_USE_EXT_HASH_MAP_UNDER_STD      1
-    
-    #elif    HAVE_EXT_HASH_MAP \
-          && HASH_MAP_UNDER_GNU_CXX
-        #define                                   LUCED_USE_EXT_HASH_MAP_UNDER_GNU_CXX  1
-    
-    #else
-        #define                                   LUCED_USE_STD_MAP                     1
-    #endif
-
-#endif
-
-
 #if   LUCED_USE_STD_UNORDERED_MAP
     
     #include                                    <unordered_map>

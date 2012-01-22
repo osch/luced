@@ -308,6 +308,17 @@ public:
         }
         return false;
     }
+    bool containsAny(const char* chars) const {
+        for (long i = 0, n = s.length(); i < n; ++i) {
+            const char thisChar = s[i];
+            for (const char* c = chars; *c != '\0'; ++c) {
+                if (thisChar == *c) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
     
     bool endsWith(const char* str, long length) const {
         if (getLength() < length) {

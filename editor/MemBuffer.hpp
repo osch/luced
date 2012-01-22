@@ -55,18 +55,21 @@ public:
         rhs->gapPos  = 0;
         rhs->gapSize = 0;
     }
+    MemBuffer& append(const MemBuffer& rhs) {
+        return append(rhs.getPtr(), rhs.getLength());
+    }
     
     long getLength() const {
         return (mem.getCapacity() - gapSize) / sizeof(T);
     }
-    T* getPtr(long pos) {
+    T* getPtr(long pos = 0) {
         if (pos < gapPos) {
             return (T*) mem.getPtr(pos * sizeof(T));
         } else {
             return (T*) mem.getPtr(pos * sizeof(T) + gapSize);
         }
     }
-    const T* getPtr(long pos) const {
+    const T* getPtr(long pos = 0) const {
         if (pos < gapPos) {
             return (const T*) mem.getPtr(pos * sizeof(T));
         } else {

@@ -481,7 +481,7 @@ GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEve
     }
     catch (BaseException& ex) {
         setMessageBox(MessageBoxParameter().setTitle("Internal Error")
-                                           .setMessage(ex.toString()));
+                                           .setMessage(ex.getMessage()));
         return GuiWidget::EVENT_PROCESSED;
     }
 }

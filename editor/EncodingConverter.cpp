@@ -21,14 +21,6 @@
 
 #include "config.h"
 
-#if !defined(LUCED_USE_ICONV)
-#  if HAVE_ICONV && !DISABLE_ICONV
-#    define LUCED_USE_ICONV 1
-#  else
-#    define LUCED_USE_ICONV 0
-#  endif
-#endif
-
 #if LUCED_USE_ICONV
 #  include <iconv.h>
 #endif
