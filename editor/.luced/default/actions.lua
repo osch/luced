@@ -238,10 +238,24 @@ return
                          if [ -e .svn ]
                          then
                             svn revert "$fn"
-                         else
+                         elif [ -e CVS ]
+                         then
                            rev="`cat CVS/Entries | grep /$fn/ | cut -d/ -f3`" 
                            (echo "yes"|cvs unedit "$fn" 1>/dev/null 2>&1) 
                            touch "$fn"
+                         else
+                           homedir=`cd "$HOME"; pwd`
+                           gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
+                                   do 
+                                     cd ..
+                                   done
+                                   pwd`
+                           if [ ! -e "$gitdir"/.git ]
+                           then
+                             echo "error: neither Git nor CVS nor svn repository"
+                             exit 1
+                           fi
+                           git checkout -- `basename $file`
                          fi ]],
     },
     cvsCommit =
