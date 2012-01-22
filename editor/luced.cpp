@@ -48,11 +48,11 @@
 #include "ConfigException.hpp"
 
 
-#if !defined(LUCED_USE_CYGWINFORKWORKAROUND)
-#  if defined(_WIN32) && HAVE_WINDOWS_H && HAVE_SYS_CYGWIN_H && !DISABLE_CYGWINFORKWORKAROUND
-#    define LUCED_USE_CYGWINFORKWORKAROUND 1
+#if !defined(LUCED_USE_CYGWIN_FORK_WORKAROUND)
+#  if defined(_WIN32) && HAVE_WINDOWS_H && HAVE_SYS_CYGWIN_H && !DISABLE_CYGWIN_FORK_WORKAROUND
+#    define LUCED_USE_CYGWIN_FORK_WORKAROUND 1
 #  else
-#    define LUCED_USE_CYGWINFORKWORKAROUND 0
+#    define LUCED_USE_CYGWIN_FORK_WORKAROUND 0
 #  endif
 #endif
 
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
     {
         ProgramName::set(argv[0]);
         
-#if LUCED_USE_CYGWINFORKWORKAROUND
+#if LUCED_USE_CYGWIN_FORK_WORKAROUND
         {
             // use Windows function "CreateProcess" for server startup
             
