@@ -24,6 +24,7 @@
 
 #include "HeapMem.hpp"
 #include "RawPointable.hpp"
+#include "RawPtr.hpp"
 
 namespace LucED {
 
@@ -41,6 +42,12 @@ public:
     MemArray(long size = 0) {
         this->size = size;
         mem.increaseTo(size * sizeof(T));
+    }
+    void takeOver(RawPtr< MemArray<T> > rhs)
+    {
+        this->size  = rhs->size;
+        this->mem.takeOver(&rhs->mem);
+        rhs->size   = 0;
     }
     T& operator[](long i) {
         ASSERT(0 <= i && i < size);

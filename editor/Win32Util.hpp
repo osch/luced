@@ -53,9 +53,10 @@
 #endif
 
 #include "String.hpp"
-#include "CharBuffer.hpp"
+#include "CharArray.hpp"
 #include "SystemException.hpp"
 #include "File.hpp"
+#include "HeapHashMap.hpp"
 
 namespace LucED
 {
@@ -64,6 +65,7 @@ namespace LucED
 class Win32Util
 {
 public:
+    typedef HeapHashMap<String,String> EnvMap;
 
 #if LUCED_USE_CYGWIN
     static void copyCygwinEnvToWin32() 
@@ -72,6 +74,44 @@ public:
     }
 #endif
 
+    static EnvMap::Ptr getWindowsEnvironmentMap()
+    {
+        EnvMap::Ptr rslt = EnvMap::create();
+        
+        char* environmentStrings = GetEnvironmentStrings();
+        if (environmentStrings != NULL)
+        {
+            const char* entry = environmentStrings;
+            while (*entry != '\0')
+            {
+                int i = 0;
+                while (entry[i] != '\0' && entry[i] != '=') { ++i; }
+                if (entry[i] == '=') {
+                    String key = String(entry, i);
+                    ++i;
+                    int j = i;
+                    while (entry[j] != '\0') { ++j; }
+                    String value = String(entry + i, j - i);
+                    rslt->set(key, value);
+                    entry += j + 1;
+                } else {
+                    entry += i + 1;
+                }
+            }
+            FreeEnvironmentStrings(environmentStrings);
+        }
+        return rslt;
+    }
+    static String buildEnvironmentStringsFromMap(EnvMap::Ptr map)
+    {
+        String rslt;
+        EnvMap::Iterator iter = map->getIterator();
+        for (; !iter.isAtEnd(); iter.gotoNext()) {
+            rslt << iter.getKey() << '=' << iter.getValue() << '\0';
+        }
+        rslt << '\0' << '\0';
+        return rslt;
+    }
     static String getThisProgramFileName()
     {
         MemArray<char> buffer(2000);
@@ -160,9 +200,10 @@ public:
 
     static HANDLE createProcess(const String& win32ProgramFileName,
                                 const String& commandLine,
-                                HANDLE*       inputHandle  = NULL,
-                                HANDLE*       outputHandle = NULL,
-                                HANDLE*       stderrHandle = NULL)
+                                EnvMap::Ptr   environmentMap = NULL,
+                                HANDLE*       inputHandle    = NULL,
+                                HANDLE*       outputHandle   = NULL,
+                                HANDLE*       stderrHandle   = NULL)
     {
         STARTUPINFO         su;
         memset(&su, 0, sizeof(su));
@@ -199,18 +240,24 @@ public:
         PROCESS_INFORMATION pi;
         memset(&pi, 0, sizeof(pi));
         
-        CharBuffer commandLineBuffer;
-                   commandLineBuffer.appendString(commandLine);
-                   commandLineBuffer.append('\0');
+        CharArray commandLineBuffer;
+                  commandLineBuffer.appendString(commandLine);
+                  commandLineBuffer.append('\0');
         
         {
+            char*      environmentStringsPtr = NULL;
+            CharArray  environmentStrings;
+            if (environmentMap.isValid()) {
+                environmentStrings.appendString(buildEnvironmentStringsFromMap(environmentMap));
+                environmentStringsPtr = environmentStrings.getPtr();
+            }
             bool wasOK = CreateProcess(win32ProgramFileName.toCString(),   // lpApplicationName
                                        commandLineBuffer.getPtr(),    // lpCommandLine
                                        0,         // lpProcessAttributes,
                                        0,         // lpThreadAttributes,
                                        true,      // bInheritHandles,
                                        0, // dwCreationFlags,
-                                       NULL,      // lpEnvironment,
+                                       environmentStringsPtr,      // lpEnvironment,
                                        NULL,      // lpCurrentDirectory,
                                        &su,         // in:  lpStartupInfo,
                                        &pi);        // out: lpProcessInformation

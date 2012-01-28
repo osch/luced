@@ -300,7 +300,7 @@ return
                          fn=`basename $file`
                          if [ -e CVS -o -e .svn ]
                          then 
-                           tkdiff $fn
+                           tkdiff $fn &
                          else
                            homedir=`cd "$HOME"; pwd`
                            gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
@@ -320,8 +320,7 @@ return
                            tag1="HEAD"
                            t1=`mktemp -t "old.$tag1.\`basename $fn\`.XXXXXX"`
                            git show $tag1:$relname > $t1
-                           tkdiff "$t1" "$fn" 
-                           rm "$t1"
+                           ( tkdiff "$t1" "$fn"; rm "$t1" ) 2>/dev/null 1>&2 &
                          fi
                       ]],
     },
@@ -382,8 +381,7 @@ return
             end,
     test2 =
     {
-        shellScript = [[ echo "moinf" >> /tmp/trt; echo "moin2">&2; echo "main1a"; echo "main2"; ls -la /tmp ]],
-        --shellScript = [[ echo "<$FILE>"; ls|head -n3 ]],
+        shellScript = [[ echo "<$FILE>"; ls ]],
     },
     test3 =
     {

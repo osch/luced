@@ -292,12 +292,24 @@ void ProgramExecutor::startExecuting()
     {
         Win32Util::copyCygwinEnvToWin32();
         
+        HeapHashMap<String,String>::Ptr envMap = Win32Util::getWindowsEnvironmentMap();
+
+        if (additionalEnvironment.isValid())
+        {
+            HashMap<String,String>::Iterator iterator = additionalEnvironment->getIterator();
+            for (; !iterator.isAtEnd(); iterator.gotoNext()) {
+                envMap->set(iterator.getKey(), iterator.getValue());
+            }
+        }
+        
+        
         HANDLE inputHandle;
         HANDLE outputHandle;
         HANDLE errorHandle;
         
         HANDLE processHandle = Win32Util::createProcess(Win32Util::getWindowsProgramFileName(commandline->get(0)),
                                                         commandline->toQuotedString(),
+                                                        envMap,
                                                         &inputHandle,
                                                         &outputHandle,
                                                         &errorHandle);

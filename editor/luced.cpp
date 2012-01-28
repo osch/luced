@@ -28,7 +28,6 @@
 #include "config.h"
 
 #include "String.hpp"
-#include "CharBuffer.hpp"
 #include "EventDispatcher.hpp"
 #include "SingletonKeeper.hpp"
 #include "GuiRootProperty.hpp"

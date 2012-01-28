@@ -56,38 +56,40 @@ public:
         rhs->gapSize = 0;
     }
     MemBuffer& append(const MemBuffer& rhs) {
-        return append(rhs.getPtr(), rhs.getLength());
+        return append(rhs.getAmount(0, rhs.getLength()), rhs.getLength());
     }
     
     long getLength() const {
         return (mem.getCapacity() - gapSize) / sizeof(T);
     }
-    T* getPtr(long pos = 0) {
+private:
+    T* posToPtr(long pos) {
         if (pos < gapPos) {
             return (T*) mem.getPtr(pos * sizeof(T));
         } else {
             return (T*) mem.getPtr(pos * sizeof(T) + gapSize);
         }
     }
-    const T* getPtr(long pos = 0) const {
+    const T* posToPtr(long pos) const {
         if (pos < gapPos) {
             return (const T*) mem.getPtr(pos * sizeof(T));
         } else {
             return (const T*) mem.getPtr(pos * sizeof(T) + gapSize);
         }
     }
+public:
     T& operator[](long pos) {
-        return *getPtr(pos);
+        return *posToPtr(pos);
     }
     const T& operator[](long pos) const {
-        return *getPtr(pos);
+        return *posToPtr(pos);
     }
     T* getAmount(long startPos, long amount) {
         long endPos = startPos + amount;
         ASSERT(0 <= startPos && startPos <= endPos
                 && endPos <= getLength());
         if (gapPos < startPos || endPos <= gapPos) {
-            return getPtr(startPos);
+            return posToPtr(startPos);
         } else {
             long newGap;
             if (gapPos - startPos < endPos - gapPos) {
@@ -96,7 +98,7 @@ public:
                 newGap = endPos;
             }
             moveGap(newGap);
-            return getPtr(startPos);
+            return posToPtr(startPos);
         }
     }
     const T* getAmount(long startPos, long amount) const {
@@ -104,7 +106,7 @@ public:
         ASSERT(0 <= startPos && startPos <= endPos
                 && endPos <= getLength());
         if (gapPos <= startPos || endPos <= gapPos) {
-            return getPtr(startPos);
+            return posToPtr(startPos);
         } else {
             long newGap;
             if (gapPos - startPos < endPos - gapPos) {
@@ -113,8 +115,14 @@ public:
                 newGap = endPos;
             }
             moveGap(newGap);
-            return getPtr(startPos);
+            return posToPtr(startPos);
         }
+    }
+    T* getPtr(long pos = 0) {
+        return getAmount(pos, getLength() - pos);
+    }
+    const T* getPtr(long pos = 0) const {
+        return getAmount(pos, getLength() - pos);
     }
     T* getTotalAmount() {
         return getAmount(0, getLength());
