@@ -39,19 +39,19 @@
 
 /* usage of multi threading */
 
-#if !defined(LUCED_USE_PTHREAD)
-#  if HAVE_PTHREAD_H && (!DISABLE_MULTI_THREAD || LUCED_USE_CYGWIN_FORK_WORKAROUND)
-#    define LUCED_USE_PTHREAD 1
-#  else
-#    define LUCED_USE_PTHREAD 0
-#  endif
-#endif
-
 #if !defined(LUCED_USE_MULTI_THREAD)
 #  if HAVE_PTHREAD_H && (!DISABLE_MULTI_THREAD || LUCED_USE_CYGWIN_FORK_WORKAROUND)
 #    define LUCED_USE_MULTI_THREAD 1
 #  else
 #    define LUCED_USE_MULTI_THREAD 0
+#  endif
+#endif
+
+#if !defined(LUCED_USE_PTHREAD)
+#  if LUCED_USE_MULTI_THREAD && HAVE_PTHREAD_H && (!DISABLE_MULTI_THREAD || LUCED_USE_CYGWIN_FORK_WORKAROUND)
+#    define LUCED_USE_PTHREAD 1
+#  else
+#    define LUCED_USE_PTHREAD 0
 #  endif
 #endif
 

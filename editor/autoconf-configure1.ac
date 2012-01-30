@@ -51,11 +51,11 @@ AC_ARG_ENABLE(iconv,
                              [disable usage of iconv for transforming character encodings]),
               ,enable_iconv=yes)
 
-# AC_ARG_ENABLE(multi-thread,
-#               AS_HELP_STRING([--disable-multi-thread],
-#                              [disable multi threading]),
-#               explicit_multi_thread_option_given=yes,
-#               enable_multi_thread=yes)
+AC_ARG_ENABLE(multi-thread,
+              AS_HELP_STRING([--enable-multi-thread],
+                              [enable multi threading (experimental)]),
+              explicit_multi_thread_option_given=yes,
+              enable_multi_thread=no)
 
 AC_ARG_ENABLE(debug,
               AS_HELP_STRING([--enable-debug],
