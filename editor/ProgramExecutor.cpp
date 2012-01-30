@@ -19,15 +19,17 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "config.h"
+
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
 
+#include "Win32Util.hpp"
 #include "ProgramExecutor.hpp"
 #include "SystemException.hpp"
 #include "MemArray.hpp"
-#include "Win32Util.hpp"
 
 #if LUCED_USE_CYGWIN_FORK_WORKAROUND
 #include "Thread.hpp"

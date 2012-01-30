@@ -19,14 +19,15 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "config.h"
+
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <locale.h>
 #include <sys/types.h>
 
-#include "config.h"
-
+#include "Win32Util.hpp"
 #include "String.hpp"
 #include "EventDispatcher.hpp"
 #include "SingletonKeeper.hpp"
@@ -38,7 +39,6 @@
 #include "ProgramName.hpp"
 #include "DefaultConfig.hpp"
 #include "ConfigException.hpp"
-#include "Win32Util.hpp"
 
 
 using namespace LucED;

@@ -24,16 +24,16 @@
 
 #include "config.h"
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-
 #if HAVE_WINDOWS_H
 #   include <windows.h>
 #endif
 #if HAVE_SYS_CYGWIN_H
 #   include <sys/cygwin.h>
 #endif
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 
 
 #if !defined(LUCED_USE_CYGWIN)
@@ -200,7 +200,7 @@ public:
 
     static HANDLE createProcess(const String& win32ProgramFileName,
                                 const String& commandLine,
-                                EnvMap::Ptr   environmentMap = NULL,
+                                EnvMap::Ptr   environmentMap = Null,
                                 HANDLE*       inputHandle    = NULL,
                                 HANDLE*       outputHandle   = NULL,
                                 HANDLE*       stderrHandle   = NULL)
