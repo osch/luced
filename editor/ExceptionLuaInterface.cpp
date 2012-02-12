@@ -94,7 +94,7 @@ ExceptionLuaInterface::ExceptionLuaInterface(const LuaVar& errorObject)
                 fileName = source;
                 isBuiltinFileFlag = false;
             }
-            else if (source[0] == '$') {
+            else if (source.getLength() > 0 && source[0] == '$') {
                 fileName = source.getTail(1);
                 isBuiltinFileFlag = true;
             }
