@@ -79,7 +79,7 @@ void PasteDataReceiver::requestPrimarySelectionPasting()
         EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
                                                               newCallback(this, 
                                                                           &PasteDataReceiver::handleTimerEvent));
-        lastPasteEventTime.setToCurrentTime();
+        lastPasteEventTime = TimeStamp::now();
     }
 }
 
@@ -112,7 +112,7 @@ void PasteDataReceiver::requestClipboardPasting()
         EventDispatcher::getInstance()->registerTimerCallback(Seconds(3), MicroSeconds(0), 
                                                               newCallback(this, 
                                                                           &PasteDataReceiver::handleTimerEvent));
-        lastPasteEventTime.setToCurrentTime();
+        lastPasteEventTime = TimeStamp::now();
     }
 }
 
@@ -147,7 +147,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
         {
             if (isRequestingTargetTypes && event->xselection.property == x11AtomForTargets)
             {
-                lastPasteEventTime.setToCurrentTime();
+                lastPasteEventTime = TimeStamp::now();
                 unsigned long remainingLength = 0;
                 Atom actualType; int format; unsigned long numberItems;
                 unsigned char* itemData = NULL;
@@ -207,7 +207,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
             } 
             else if ((isRequestingTargetTypes || receivingPasteDataFlag) && event->xselection.property == None)
             {
-                lastPasteEventTime.setToCurrentTime();
+                lastPasteEventTime = TimeStamp::now();
                 receivingPasteDataFlag = false;
                 isMultiPartPastingFlag = false;
                 contentHandler->notifyAboutEndOfPastingData();
@@ -215,7 +215,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
             else if (event->xselection.property == Clipboard::getInstance()->getX11AtomForClipboard()
                   || event->xselection.property == XA_PRIMARY)
             {
-                lastPasteEventTime.setToCurrentTime();
+                lastPasteEventTime = TimeStamp::now();
                 unsigned long remainingLength = 0;
                 Atom actualType; int format; unsigned long portionLength;
                 unsigned char* portion = NULL;
@@ -273,7 +273,7 @@ GuiWidget::ProcessingResult PasteDataReceiver::processPasteDataReceiverEvent(con
               || event->xproperty.atom == XA_PRIMARY) 
                     && event->xproperty.state == PropertyNewValue)
             {
-                lastPasteEventTime.setToCurrentTime();
+                lastPasteEventTime = TimeStamp::now();
                 unsigned long remainingLength = 0;
                 Atom actualType; int format; unsigned long portionLength;
                 unsigned char* portion = NULL;
@@ -355,12 +355,7 @@ void PasteDataReceiver::handleTimerEvent()
 {
     if (receivingPasteDataFlag)
     {
-        TimeVal t1, t2;
-        t1 = lastPasteEventTime;
-        t1.add(Seconds(3));
-        t2.setToCurrentTime();
-
-        if (t2.isLaterThan(t1)) {
+        if (TimeStamp::now() > lastPasteEventTime.get() + Seconds(3)) {
             contentHandler->notifyAboutEndOfPastingData();
             isMultiPartPastingFlag = false;
             receivingPasteDataFlag = false;

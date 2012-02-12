@@ -27,7 +27,7 @@
 #include "headers.hpp"
 #include "HeapObject.hpp"
 #include "GuiWidget.hpp"
-#include "TimeVal.hpp"
+#include "TimeStamp.hpp"
 #include "Callback.hpp"
 #include "CallbackContainer.hpp"
 #include "ProcessHandler.hpp"
@@ -60,12 +60,11 @@ public:
     void registerUpdateSource(Callback<>::Ptr updateCallback);
     void deregisterAllUpdateSourceCallbacksFor(WeakPtr<HeapObject> callbackObject);
     
-    void registerTimerCallback(const TimeVal& when, Callback<>::Ptr callback) {
+    void registerTimerCallback(const TimeStamp& when, Callback<>::Ptr callback) {
         timers.push(TimerRegistration(when, callback));
     }
     void registerTimerCallback(Seconds secs, MicroSeconds usecs, Callback<>::Ptr callback) {
-        TimeVal when;
-        when.setToCurrentTime().add(secs, usecs);
+        TimeStamp when = TimeStamp::now() + secs + usecs;
         registerTimerCallback(when, callback);
     }
 
@@ -107,18 +106,30 @@ private:
     class TimerRegistration
     {
     public:
-        friend class EventDispatcher;
-        TimerRegistration() {}
-        TimerRegistration(const TimeVal when, Callback<>::Ptr callback):
+        TimerRegistration()
+        {}
+        TimerRegistration(const TimeStamp& when, Callback<>::Ptr callback):
             when(when), callback(callback) {}
         bool operator<(const TimerRegistration& t) const {
-            return this->when.isLaterThan(t.when);
+            if (this->when.isValid() && t.when.isValid()) {
+                return this->when.get() > t.when.get();
+            } else if (this->when.isValid()) {
+                return true;
+            } else {
+                return false;
+            }
         }
         bool isValid() {
             return callback->isEnabled();
         }
+        const TimeStamp& getTimeStamp() const {
+            return when.get();
+        }
+        Callback<>::Ptr getCallback() const {
+            return callback;
+        }
     private:
-        TimeVal when;
+        Nullable<TimeStamp> when;
         Callback<>::Ptr callback;
     };
     

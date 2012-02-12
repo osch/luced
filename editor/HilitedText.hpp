@@ -31,6 +31,7 @@
 #include "LanguageModes.hpp"
 #include "OwningPtr.hpp"
 #include "RawPtr.hpp"
+#include "TimeStamp.hpp"
 
 // TODO: Konstanten
 //
@@ -54,7 +55,7 @@ public:
         return HilitedText::Ptr(new HilitedText(textData, languageMode));
     }
 
-    int process(TimeVal endTime);
+    int process(TimeStamp endTime);
     bool needsProcessing();
     
     void registerUpdateListener(Callback<UpdateInfo>::Ptr updateCallback);

@@ -277,19 +277,25 @@ File::Info File::getInfo() const
         Info rslt;
         rslt.isFileFlag                  = S_ISREG(statData.st_mode);
         rslt.isDirectoryFlag             = S_ISDIR(statData.st_mode);
-#if HAVE_STAT_MTIME_TV_NSEC
-        rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
-                                                      MicroSeconds(statData.st_mtim.tv_nsec / 1000));
-#elif HAVE_STAT_MTIME_MTIMENSEC
-        rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
-                                                      MicroSeconds(statData.st_mtimensec / 1000));
-#elif HAVE_STAT_MTIME_MTIMESPEC
-        rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
-                                                      MicroSeconds(statData.st_mtimespec.tv_nsec / 1000));
-#else
-        rslt.lastModifiedTimeValSinceEpoche = TimeVal(     Seconds(statData.st_mtime),
-                                                      MicroSeconds(0));
-#endif
+
+        TimePeriod timePeriodSincePosixEpoch;
+        {
+        #if HAVE_STAT_MTIME_TV_NSEC
+            timePeriodSincePosixEpoch +=      Seconds(statData.st_mtime);
+            timePeriodSincePosixEpoch += MicroSeconds(statData.st_mtim.tv_nsec / 1000);
+        #elif HAVE_STAT_MTIME_MTIMENSEC
+            timePeriodSincePosixEpoch +=      Seconds(statData.st_mtime);
+            timePeriodSincePosixEpoch += MicroSeconds(statData.st_mtimensec / 1000);
+        #elif HAVE_STAT_MTIME_MTIMESPEC
+            timePeriodSincePosixEpoch +=      Seconds(statData.st_mtime);
+            timePeriodSincePosixEpoch += MicroSeconds(statData.st_mtimespec.tv_nsec / 1000);
+        #else
+            timePeriodSincePosixEpoch +=      Seconds(statData.st_mtime);
+            timePeriodSincePosixEpoch += MicroSeconds(0);
+        #endif
+        }
+        rslt.lastModifiedTime = TimeStamp::forTimePeriodSincePosixEpoch(timePeriodSincePosixEpoch);
+        
         rslt.isWritableFlag = (::access(getAbsoluteName().toCString(), W_OK) == 0);
         rslt.existsFlag = true;
         return rslt;

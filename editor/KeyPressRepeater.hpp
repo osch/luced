@@ -25,10 +25,11 @@
 #include "HeapObject.hpp"
 #include "Callback.hpp"
 #include "EventDispatcher.hpp"
-#include "TimeVal.hpp"
+#include "TimeStamp.hpp"
 #include "SingletonInstance.hpp"
 #include "RawPtr.hpp"
 #include "TopWin.hpp"
+#include "Nullable.hpp"
 
 namespace LucED {
 
@@ -72,7 +73,7 @@ private:
     int repeatCount;
     bool isRepeatingFlag;
     
-    TimeVal when;
+    Nullable<TimeStamp> when;
     
     RawPtr<TopWin> repeatingTopWin;
     unsigned int triggeredKeyCode;

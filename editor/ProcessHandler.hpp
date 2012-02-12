@@ -23,7 +23,7 @@
 #define PROCESS_HANDLER_HPP
 
 #include "HeapObject.hpp"
-#include "TimeVal.hpp"
+#include "TimeStamp.hpp"
 #include "OwningPtr.hpp"
 
 namespace LucED
@@ -36,7 +36,7 @@ public:
 
     template<class T
             >
-    static Ptr create(T* objectPtr, int (T::*methodProcess)(TimeVal), bool (T::*methodNeedsProcess)())
+    static Ptr create(T* objectPtr, int (T::*methodProcess)(TimeStamp), bool (T::*methodNeedsProcess)())
     {
         return Impl<T>::create(objectPtr, methodProcess, methodNeedsProcess);
     }
@@ -47,7 +47,7 @@ public:
 
     virtual bool needsProcessing() = 0;
     
-    virtual int process(TimeVal endTime) = 0;
+    virtual int process(TimeStamp endTime) = 0;
 
 private:
     template<class T
@@ -60,7 +60,7 @@ template<class T
 class ProcessHandler::Impl : public ProcessHandler
 {
 public:
-    static Ptr create(T* objectPtr, int (T::*methodProcess)(TimeVal), bool (T::*methodNeedsProcess)()) {
+    static Ptr create(T* objectPtr, int (T::*methodProcess)(TimeStamp), bool (T::*methodNeedsProcess)()) {
         return Ptr(new Impl(objectPtr, methodProcess, methodNeedsProcess));
     }
 
@@ -78,19 +78,19 @@ public:
         }
     }
 protected:
-    virtual int process(TimeVal endTime) {
+    virtual int process(TimeStamp endTime) {
         return (objectPtr->*methodProcess)(endTime);
     }
 private:
 
-    Impl(T* objectPtr, int (T::*methodProcess)(TimeVal), bool (T::*methodNeedsProcess)())
+    Impl(T* objectPtr, int (T::*methodProcess)(TimeStamp), bool (T::*methodNeedsProcess)())
         : objectPtr(objectPtr), 
           methodProcess(methodProcess), 
           methodNeedsProcess(methodNeedsProcess)
     {}
 
     WeakPtr<T> objectPtr;
-    int (T::*methodProcess)(TimeVal);
+    int (T::*methodProcess)(TimeStamp);
     bool (T::*methodNeedsProcess)();
 };
 

@@ -25,7 +25,7 @@
 
 #include "TextWidget.hpp"
 #include "util.hpp"
-#include "TimeVal.hpp"
+#include "TimeStamp.hpp"
 #include "EventDispatcher.hpp"
 #include "GlobalConfig.hpp"
 #include "RawPtr.hpp"
@@ -2189,16 +2189,16 @@ void TextWidget::blinkCursor()
     {
         if (cursorIsBlinking)
         {
-            const TimeVal now = TimeVal::now();
+            const TimeStamp now = TimeStamp::now();
             
-            if (now.isLaterThan(cursorNextBlinkTime))
+            if (now > cursorNextBlinkTime.get())
             {
                 cursorVisible = !cursorVisible;
                 drawCursor(getCursorTextPosition());
                 
-                cursorNextBlinkTime = now + MicroSeconds(400000);
+                cursorNextBlinkTime = now + MilliSeconds(400);
 
-                EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
+                EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime.get(), cursorBlinkCallback);
     
             } else { 
             }
@@ -2271,10 +2271,11 @@ void TextWidget::startCursorBlinking()
             drawCursor(getCursorTextPosition());
         }
     
-        cursorNextBlinkTime = TimeVal::now() + MicroSeconds(400000);
+        cursorNextBlinkTime = TimeStamp::now() + MilliSeconds(400);
     
         cursorIsBlinking = true;
-        EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime, cursorBlinkCallback);
+
+        EventDispatcher::getInstance()->registerTimerCallback(cursorNextBlinkTime.get(), cursorBlinkCallback);
     }
 }
 

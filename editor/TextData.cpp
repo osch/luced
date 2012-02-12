@@ -239,13 +239,13 @@ void TextData::checkFileInfo()
 {
     if (fileNamePseudoFlag == false)
     {
-        TimeVal lastModifiedTimeValSinceEpoche;
+        Nullable<TimeStamp> oldLastModifiedTime;
         bool fileExisted = false;
         
         if (fileInfo.exists())
         {
             fileExisted = true;
-            lastModifiedTimeValSinceEpoche = fileInfo.getLastModifiedTimeValSinceEpoche();
+            oldLastModifiedTime = fileInfo.getLastModifiedTime();
         }
     
         this->fileInfo = File(this->fileName).getInfo();
@@ -257,8 +257,8 @@ void TextData::checkFileInfo()
                 readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
             }
             
-            if (  (    fileExisted 
-                   && !fileInfo.getLastModifiedTimeValSinceEpoche().isEqualTo(lastModifiedTimeValSinceEpoche))
+            if (  (   fileExisted 
+                   && fileInfo.getLastModifiedTime() != oldLastModifiedTime.get())
                || (!fileExisted))
             {
                 modifiedOnDiskFlag = true;

@@ -25,7 +25,8 @@
 #include "HeapObject.hpp"
 #include "SingletonInstance.hpp"
 #include "String.hpp"
-#include "TimeVal.hpp"
+#include "Nullable.hpp"
+#include "TimePeriod.hpp"
 #include "RawPtr.hpp"
 
 namespace LucED
@@ -54,9 +55,23 @@ public:
     
     void setCurrentDirectory(const String& dir);
     
-    static int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal)
+    static int select(int n, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, const Nullable<TimePeriod>& timePeriod)
     {
-        return ::select(n, readfds, writefds, exceptfds, &timeVal->timeval);
+        struct timeval  t;
+        struct timeval* tPtr;
+        
+        if (timePeriod.isValid())
+        {
+            if (timePeriod.get() > Seconds(0)) {
+                t = timePeriod.get().toTimeval();
+            } else {
+                t = TimePeriod(Seconds(0)).toTimeval();
+            }
+            tPtr = &t;
+        } else {
+            tPtr = NULL;
+        }
+        return ::select(n, readfds, writefds, exceptfds, tPtr);
     }
     
     static void setCloseOnExecFlag(int fileDescriptor);

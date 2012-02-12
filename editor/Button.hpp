@@ -27,11 +27,12 @@
 #include "GuiWidget.hpp"
 #include "OwningPtr.hpp"
 #include "Callback.hpp"
-#include "TimeVal.hpp"
 #include "ActionMethodBinding.hpp"
 #include "GuiWidget.hpp"
 #include "FocusableWidget.hpp"
 #include "Char2bArray.hpp"
+#include "TimeStamp.hpp"
+#include "Nullable.hpp"
                     
 namespace LucED
 {
@@ -144,7 +145,7 @@ private:
     
     bool isDefaultButton;
     bool isExplicitDefaultButton;
-    TimeVal earliestButtonReleaseTime;
+    Nullable<TimeStamp> earliestButtonReleaseTime;
     bool hasHotKeyFlag;
     bool showHotKeyFlag;
     char hotKeyChar;

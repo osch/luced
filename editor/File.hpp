@@ -26,9 +26,10 @@
 
 #include "NonCopyable.hpp"
 #include "ByteBuffer.hpp"
-#include "TimeVal.hpp"
+#include "TimeStamp.hpp"
 #include "Seconds.hpp"
 #include "MicroSeconds.hpp"
+#include "Nullable.hpp"
 
 namespace LucED
 {
@@ -58,20 +59,20 @@ public:
             ASSERT(existsFlag);
             return isWritableFlag;
         }
-        TimeVal getLastModifiedTimeValSinceEpoche() const {
+        TimeStamp getLastModifiedTime() const {
             ASSERT(existsFlag);
-            return lastModifiedTimeValSinceEpoche;
+            return lastModifiedTime.get();
         }
         bool exists() const {
             return existsFlag;
         }
     private:
         friend class File;
-        bool         isFileFlag;
-        bool         isDirectoryFlag;
-        bool         isWritableFlag;
-        bool         existsFlag;
-        TimeVal      lastModifiedTimeValSinceEpoche;
+        bool                isFileFlag;
+        bool                isDirectoryFlag;
+        bool                isWritableFlag;
+        bool                existsFlag;
+        Nullable<TimeStamp> lastModifiedTime;
     };
     
     class Writer : public HeapObject

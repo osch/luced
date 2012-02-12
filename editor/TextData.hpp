@@ -30,10 +30,11 @@
 #include "CallbackContainer.hpp"
 #include "OwningPtr.hpp"
 #include "EditingHistory.hpp"
-#include "TimeVal.hpp"
+#include "TimeStamp.hpp"
 #include "File.hpp"
 #include "RawPtr.hpp"
 #include "Utf8Parser.hpp"
+#include "Nullable.hpp"
 
 
 namespace LucED
@@ -574,8 +575,7 @@ public:
     
     bool wasFileModifiedOnDiskSinceLastIgnore() const {
         if (ignoreModifiedOnDiskFlag == true && fileInfo.exists()) {
-            return !fileInfo.getLastModifiedTimeValSinceEpoche()
-                            .isEqualTo(ignoreModifiedOnDiskTime);
+            return fileInfo.getLastModifiedTime() != ignoreModifiedOnDiskTime.get();
         } else {
             return false;
         }
@@ -588,7 +588,7 @@ public:
     void setIgnoreModifiedOnDiskFlag(bool newValue) {
         this->ignoreModifiedOnDiskFlag = newValue;
         if (newValue == true && fileInfo.exists()) {
-            ignoreModifiedOnDiskTime = fileInfo.getLastModifiedTimeValSinceEpoche();
+            ignoreModifiedOnDiskTime = fileInfo.getLastModifiedTime();
         }
     }
     
@@ -642,7 +642,7 @@ private:
     bool isReadOnlyFlag;
     bool modifiedOnDiskFlag;
     bool ignoreModifiedOnDiskFlag;
-    TimeVal ignoreModifiedOnDiskTime;
+    Nullable<TimeStamp> ignoreModifiedOnDiskTime;
     File::Info fileInfo;
     
     bool fileNamePseudoFlag;

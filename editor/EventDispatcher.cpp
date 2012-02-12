@@ -92,7 +92,7 @@ static inline void disableSignals()
     }
 }
 
-static inline int internalSelect(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, TimeVal* timeVal)
+static inline int internalSelect(int n, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, const Nullable<TimePeriod>& timePeriod)
 {
 #if 0
   TimeVal diffTimeVal;
@@ -103,7 +103,7 @@ static inline int internalSelect(int n, fd_set *readfds, fd_set *writefds, fd_se
 #endif
 
     enableSignals();
-    int rslt = System::select(n, readfds, writefds, exceptfds, timeVal);
+    int rslt = System::select(n, readfds, writefds, exceptfds, timePeriod);
     disableSignals();
 
 #if 0
@@ -221,13 +221,12 @@ bool EventDispatcher::isForeignWidget(WidgetId wid)
 
 EventDispatcher::TimerRegistration EventDispatcher::getNextTimer()
 {
-    EventDispatcher::TimerRegistration rslt;
     while (true) {
         if (timers.empty()) {
             return TimerRegistration();
         } else {
-            rslt = timers.top();
-                   timers.pop();
+            EventDispatcher::TimerRegistration rslt = timers.top();
+                                                      timers.pop();
             if (rslt.isValid()) {
                 return rslt;
             }
@@ -400,7 +399,7 @@ void EventDispatcher::doEventLoop()
     fd_set             exceptfds;
 
     XEvent             event;
-    TimeVal            remainingTime;
+    TimePeriod         remainingTime;
     Display*           display = GuiRoot::getInstance()->getDisplay();
     
     bool hasSomethingDone = true;
@@ -481,34 +480,37 @@ void EventDispatcher::doEventLoop()
 #endif
                     if (hasWaitingProcess)
                     {
-                        TimeVal now = TimeVal::now();
-                        if (nextTimer.when > now)
+                        TimeStamp now = TimeStamp::now();
+                        if (nextTimer.getTimeStamp() > now)
                         {
                             ProcessHandler::Ptr h = processes[p];
                             processes.remove(p);
                             processes.append(h);
-                            TimeVal latest = now + MilliSeconds(20);
-                            if (nextTimer.when > latest ) {
+                            TimeStamp latest = now + MilliSeconds(20);
+                            if (nextTimer.getTimeStamp() > latest ) {
                                 h->process(latest);
                             } else {
-                                h->process(nextTimer.when);
+                                h->process(nextTimer.getTimeStamp());
                             }
                             hasSomethingDone = true;
+                            now = TimeStamp::now();
                             
-                            if (nextTimer.when < TimeVal::now() + MilliSeconds(20)) {
-                                remainingTime.setToRemainingTimeUntil(nextTimer.when);
-                                selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, &remainingTime);
+                            if (nextTimer.getTimeStamp() < now + MilliSeconds(20)) {
+                                remainingTime = nextTimer.getTimeStamp() - now;
+                                selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, remainingTime);
                                 wasSelectInvoked = true;
                             }
                         } else {
-                            remainingTime.setToRemainingTimeUntil(nextTimer.when);
-                            selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, &remainingTime);
+                            remainingTime = nextTimer.getTimeStamp() - now;
+                            selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, remainingTime);
                             wasSelectInvoked = true;
                         }
                     } else {
-                        remainingTime.setToRemainingTimeUntil(nextTimer.when);
+                        TimeStamp now = TimeStamp::now();
+                        
+                        remainingTime = nextTimer.getTimeStamp() - now;
                             
-                        selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, &remainingTime);
+                        selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, remainingTime);
                         
                         wasSelectInvoked = true;
                     }
@@ -517,11 +519,11 @@ void EventDispatcher::doEventLoop()
                         ProcessHandler::Ptr h = processes[p];
                         processes.remove(p);
                         processes.append(h);
-                        h->process(TimeVal::now() + MilliSeconds(20));
+                        h->process(TimeStamp::now() + MilliSeconds(20));
                         hasSomethingDone = true;
                     } else {
                     
-                        selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, NULL);
+                        selectResult = internalSelect(maxFileDescriptor + 1, &readfds, &writefds, NULL, Null);
                         wasSelectInvoked = true;
                     }
                 }
@@ -593,8 +595,8 @@ void EventDispatcher::doEventLoop()
                     }
                 } else {
                     if (nextTimer.isValid()) {
-                        if (nextTimer.when < TimeVal::now()) {
-                            nextTimer.callback->call();
+                        if (nextTimer.getTimeStamp() < TimeStamp::now()) {
+                            nextTimer.getCallback()->call();
                             hasSomethingDone = true;
                             wasTimerInvoked = true;
                         }
@@ -649,7 +651,7 @@ void EventDispatcher::registerProcess(ProcessHandler::Ptr h)
 {
     processes.append(h);
     if (h->needsProcessing()) {
-        h->process(TimeVal::now() + MilliSeconds(20));
+        h->process(TimeStamp::now() + MilliSeconds(20));
     }
 }
 

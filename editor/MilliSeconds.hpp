@@ -35,18 +35,21 @@ public:
         : milliSeconds(0)
     {}
     
-    explicit MilliSeconds(double milliSeconds)
+    explicit MilliSeconds(long milliSeconds)
         : milliSeconds(milliSeconds)
     {}
 
     operator long() const {
-        return (long)milliSeconds;
+        return milliSeconds;
     }
     operator MicroSeconds() const {
-        return MicroSeconds((long)(milliSeconds * 1000));
+        return MicroSeconds(milliSeconds * 1000);
+    }
+    MilliSeconds operator-() const {
+        return MilliSeconds(-milliSeconds);
     }
 private:
-    double milliSeconds;
+    long milliSeconds;
 };
 
 } // namespace LucED

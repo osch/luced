@@ -25,7 +25,8 @@
 #include "ByteArray.hpp"
 #include "GuiWidget.hpp"
 #include "SelectionOwner.hpp"
-#include "TimeVal.hpp"
+#include "Nullable.hpp"
+#include "TimeStamp.hpp"
 #include "GuiElement.hpp"
 #include "OwningPtr.hpp"
 #include "RawPtr.hpp"
@@ -65,7 +66,7 @@ private:
     PasteDataReceiver(RawPtr<GuiWidget> baseWidget, ContentHandler::Ptr contentHandler);
 
     void handleTimerEvent();
-    TimeVal lastPasteEventTime;
+    Nullable<TimeStamp> lastPasteEventTime;
 
     RawPtr<GuiWidget>       baseWidget;
     OwningPtr<ContentHandler> contentHandler;

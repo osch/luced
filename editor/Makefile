@@ -138,7 +138,8 @@ SLOW_MODULES := EditorTopWin             GuiRoot                  GuiWidget     
 		LucedLuaInterface        EncodingException        QualifiedName              SyntaxPatternsConfig \
 		TextStyleCache           ConfigPackageLoader      FocusableWidget            FocusableElement \
 		NonFocusableWidget       FocusableContainerWidget TextStyleDefinitions       LanguageModeSelectors \
-		ExecutePanel             ExceptionLuaInterface    Thread                     Mutex
+		ExecutePanel             ExceptionLuaInterface    Thread                     Mutex \
+		TimeStamp
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

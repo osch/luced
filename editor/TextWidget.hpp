@@ -26,7 +26,7 @@
 #include "TextData.hpp"
 #include "LineInfo.hpp"
 #include "TextStyle.hpp"
-#include "TimeVal.hpp"
+#include "TimeStamp.hpp"
 #include "HilitingBuffer.hpp"
 #include "BackliteBuffer.hpp"
 #include "CallbackContainer.hpp"
@@ -37,6 +37,7 @@
 #include "Flags.hpp"
 #include "ScrollBar.hpp"
 #include "FocusableWidget.hpp"
+#include "Nullable.hpp"
                     
 namespace LucED
 {
@@ -305,7 +306,7 @@ private:
     
     long fillCursorColumnsBehindEndOfLine();
     
-    TimeVal cursorNextBlinkTime;
+    Nullable<TimeStamp> cursorNextBlinkTime;
     
     bool hasPosition;
     HilitedText::Ptr hilitedText;

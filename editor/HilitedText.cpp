@@ -314,7 +314,7 @@ int HilitedText::pcreCalloutFunction(void* voidPtr, pcre_callout_block* calloutB
 
 
 
-int HilitedText::process(TimeVal endTime)
+int HilitedText::process(TimeStamp endTime)
 {
     if (!syntaxPatterns->hasPatterns()) {
         needsProcessingFlag =  false;
@@ -334,7 +334,7 @@ int HilitedText::process(TimeVal endTime)
     long searchEndPos = pos + processAmountUnit;
 
 #if 0
-TimeVal startTime = TimeVal::now();
+TimeStamp startTime = TimeStamp::now();
 printf("------HilitedText::process start = %ld / %ld .. %ld --> %d\n", getBreakStartPos(startNextProcessIterator),
                                                                 pos, searchEndPos, 
                                                                 getLastBreakStackByte(startNextProcessIterator));
@@ -478,7 +478,7 @@ printf("------HilitedText::process start = %ld / %ld .. %ld --> %d\n", getBreakS
                 if (canBeStopped) break;
             }
         }
-        if (canBeStopped || pos >= textDataLength || TimeVal::now() >= endTime) {
+        if (canBeStopped || pos >= textDataLength || TimeStamp::now() >= endTime) {
             loopFinished = true;
         }
         else
@@ -516,7 +516,7 @@ printf("------HilitedText::process start = %ld / %ld .. %ld --> %d\n", getBreakS
 printf("------HilitedText::process can be stoppend = %ld / %ld (%d) --> %d  <%ld>\n", getBreakStartPos(startNextProcessIterator),
                                                                    getBreakEndPos(startNextProcessIterator), processedAmount, 
                                                                    getLastBreakStackByte(startNextProcessIterator),
-                                                                   (long)startTime.getMicroSecsBefore(TimeVal::now())/1000);
+                                                                   (long)startTime.getMicroSecsBefore(TimeStamp::now())/1000);
 #endif
     }
     else
@@ -542,13 +542,13 @@ printf("------HilitedText::process can be stoppend = %ld / %ld (%d) --> %d  <%ld
         }
 #if 0
 long overTime = 0;
-if (TimeVal::now() > endTime) {
-    overTime = (long)endTime.getMicroSecsBefore(TimeVal::now())/1000;
+if (TimeStamp::now() > endTime) {
+    overTime = (long)endTime.getMicroSecsBefore(TimeStamp::now())/1000;
 }
 printf("------HilitedText::process cannot be stoppend = %ld / %ld  (%d) --> %d  <%ld,  %ld>\n", getBreakStartPos(startNextProcessIterator),
                                                                    getBreakEndPos(startNextProcessIterator), processedAmount, 
                                                                    getLastBreakStackByte(startNextProcessIterator),
-                                                                   (long)startTime.getMicroSecsBefore(TimeVal::now())/1000,
+                                                                   (long)startTime.getMicroSecsBefore(TimeStamp::now())/1000,
                                                                    overTime);
 #endif
     }

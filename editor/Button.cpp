@@ -183,11 +183,10 @@ bool Button::isMouseInsideButtonArea(int mouseX, int mouseY)
 
 static const MicroSeconds shortTime = MicroSeconds(20 * 1000);
 
-static void waitShort(MicroSeconds microSecs = shortTime)
+static void waitShort(TimePeriod timePeriod = shortTime)
 {
-    if (microSecs > 0) {
-        TimeVal timeVal(microSecs);
-        System::select(0, NULL, NULL, NULL, &timeVal);
+    if (timePeriod > Seconds(0)) {
+        System::select(0, NULL, NULL, NULL, timePeriod);
     }
 }
 
@@ -207,7 +206,7 @@ GuiWidget::ProcessingResult Button::processGuiWidgetEvent(const XEvent *event)
             }
             if (event->xbutton.button == Button1 || (this->doesReactOnRightClick() && event->xbutton.button == Button3))
             {
-                earliestButtonReleaseTime.setToCurrentTime().add(shortTime);
+                earliestButtonReleaseTime = TimeStamp::now() + shortTime;
                 
                 isMouseButtonPressed = true;
                 int x = event->xbutton.x;
@@ -228,9 +227,9 @@ GuiWidget::ProcessingResult Button::processGuiWidgetEvent(const XEvent *event)
         case ButtonRelease: {
             isMouseButtonPressed = false;
             if (isButtonPressed) {
-                TimeVal currentTime; currentTime.setToCurrentTime();
-                if (earliestButtonReleaseTime.isLaterThan(currentTime)) {
-                    waitShort(TimeVal::diffMicroSecs(currentTime, earliestButtonReleaseTime));
+                TimeStamp currentTime = TimeStamp::now();
+                if (earliestButtonReleaseTime.get() > currentTime) {
+                    waitShort(earliestButtonReleaseTime.get() - currentTime);
                 }
                 isButtonPressed = false;
                 drawButton();

@@ -40,6 +40,9 @@ public:
     operator long() const {
         return microSeconds;
     }
+    MicroSeconds operator-() const {
+        return MicroSeconds(-microSeconds);
+    }
 private:
     long microSeconds;
 };

@@ -27,7 +27,6 @@
 #include "GuiWidget.hpp"
 #include "OwningPtr.hpp"
 #include "Callback.hpp"
-#include "TimeVal.hpp"
 #include "ActionMethodBinding.hpp"
 #include "FocusableWidget.hpp"
 

@@ -38,33 +38,32 @@ KeyPressRepeater::KeyPressRepeater()
 
 void KeyPressRepeater::processRepeatingEvent()
 {
-    TimeVal now;
-    now.setToCurrentTime();
+    TimeStamp now = TimeStamp::now();
     
-    if (isRepeatingFlag && now.isLaterThan(when))
+    if (isRepeatingFlag && now > when.get())
     {
         ++repeatCount;
         
         TopWin::AccessForKeyPressRepeater::repeat(repeatingTopWin, triggeredKeyCode, &event);
         //EventDispatcher::getInstance()->processEvent(&event);
         
-//        TimeVal when;
-//        when.setToCurrentTime().addMicroSecs();
+//        TimeStamp when = TimeStamp::now();
 //        EventDispatcher::getInstance()->registerTimerCallback();
     }
 }
 
 void KeyPressRepeater::triggerNextRepeatEventFor(unsigned int triggeredKeyCode, const XEvent* event, TopWin* topWin)
 {
-    when.setToCurrentTime();
+    TimeStamp nextWhen = TimeStamp::now();
     if (repeatCount == 0 || !isRepeatingEventForKeyCode(triggeredKeyCode)) {
-        when.add(MilliSeconds(GlobalConfig::getConfigData()->getGeneralConfig()->getKeyPressRepeatFirstMilliSecs()));
+        nextWhen += MilliSeconds(GlobalConfig::getConfigData()->getGeneralConfig()->getKeyPressRepeatFirstMilliSecs());
     } else {
-        when.add(MilliSeconds(GlobalConfig::getConfigData()->getGeneralConfig()->getKeyPressRepeatNextMilliSecs()));
+        nextWhen += MilliSeconds(GlobalConfig::getConfigData()->getGeneralConfig()->getKeyPressRepeatNextMilliSecs());
     }
     this->event = *event;
     isRepeatingFlag = true;
-    EventDispatcher::getInstance()->registerTimerCallback(when, eventRepeatingCallback);
+    this->when = nextWhen;
+    EventDispatcher::getInstance()->registerTimerCallback(nextWhen, eventRepeatingCallback);
     repeatingTopWin = topWin;
     this->triggeredKeyCode = triggeredKeyCode;
 }

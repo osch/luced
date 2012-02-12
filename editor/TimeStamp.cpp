@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2012 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,44 +19,21 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SECONDS_HPP
-#define SECONDS_HPP
+#include "TimeStamp.hpp"
 
-#include "MilliSeconds.hpp"
-#include "MicroSeconds.hpp"
+using namespace LucED;
 
-namespace LucED
+String TimeStamp::toString() const
 {
-
-class Seconds
-{
-public:
-
-    Seconds()
-        : seconds(0)
-    {}
-
-    explicit Seconds(long seconds)
-        : seconds(seconds)
-    {}
-
-    operator long() const {
-        return seconds;
+    struct tm localtimeStruct;
+    {
+        time_t seconds = period.timeval.tv_sec;
+        localtime_r(&seconds, &localtimeStruct);
     }
-    
-    operator MilliSeconds() const {
-        return MilliSeconds(seconds * 1000);
-    }
-    operator MicroSeconds() const {
-        return MicroSeconds(seconds * 1000 * 1000);
-    }
-    Seconds operator-() const {
-        return Seconds(-seconds);
-    }
-private:
-    long seconds;
-};
-
-} // namespace LucED
-
-#endif // SECONDS_HPP
+    char buffer[200];
+    size_t s = strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", &localtimeStruct);
+    String rslt = String(buffer, s);
+    sprintf(buffer, ".%06ld", (long)period.timeval.tv_usec);
+    rslt << buffer;
+    return rslt;
+}

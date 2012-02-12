@@ -2,7 +2,7 @@
 //
 //   LucED - The Lucid Editor
 //
-//   Copyright (C) 2005-2007 Oliver Schmidt, oliver at luced dot de
+//   Copyright (C) 2005-2012 Oliver Schmidt, oliver at luced dot de
 //
 //   This program is free software; you can redistribute it and/or modify it
 //   under the terms of the GNU General Public License Version 2 as published
@@ -19,44 +19,47 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SECONDS_HPP
-#define SECONDS_HPP
+#ifndef EVENT_LOOP_HPP
+#define EVENT_LOOP_HPP
 
-#include "MilliSeconds.hpp"
-#include "MicroSeconds.hpp"
+#include "HeapObject.hpp"
+#include "OwningPtr.hpp"
+#include "RawPtr.hpp"
+#include "ObjectArray.hpp"
+#include "FileDescriptorListener.hpp"
 
 namespace LucED
 {
 
-class Seconds
+class EventLoop : public HeapObject
 {
 public:
-
-    Seconds()
-        : seconds(0)
-    {}
-
-    explicit Seconds(long seconds)
-        : seconds(seconds)
-    {}
-
-    operator long() const {
-        return seconds;
+    typedef OwningPtr<EventLoop> Ptr;
+    
+    static Ptr create() {
+        return Ptr(new EventLoop());
     }
     
-    operator MilliSeconds() const {
-        return MilliSeconds(seconds * 1000);
+    void processStep();
+    
+    void registerFileDescriptorListener(FileDescriptorListener::Ptr listener) {
+        fileDescriptorListeners.append(listener);
     }
-    operator MicroSeconds() const {
-        return MicroSeconds(seconds * 1000 * 1000);
+    void deregisterFileDescriptorListener(RawPtr<FileDescriptorListener> listener) {
+        for (int i = 0, n = fileDescriptorListeners.getLength(); i < n; ++i) {
+            if (fileDescriptorListeners[i] == listener) {
+                fileDescriptorListeners.remove(i);
+            }
+        }
     }
-    Seconds operator-() const {
-        return Seconds(-seconds);
-    }
+    
 private:
-    long seconds;
+    EventLoop()
+    {}
+    
+    ObjectArray<FileDescriptorListener::Ptr> fileDescriptorListeners;
 };
 
 } // namespace LucED
 
-#endif // SECONDS_HPP
+#endif // EVENT_LOOP_HPP
