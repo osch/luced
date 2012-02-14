@@ -98,17 +98,39 @@ void SaveAsPanel::handleButtonPressed(Button* button, Button::ActivationVariant 
         
         RawPtr<TextData> textData = editorWidget->getTextData();
         
-        if (   (textData->isFileNamePseudo() || textData->getFileName() != newFileName)
-            && File(newFileName).exists())
+        if (textData->isFileNamePseudo() || textData->getFileName() != newFileName)
         {
-            messageBoxInvoker->call(MessageBoxParameter()
-                                    .setTitle("File exists")
-                                    .setMessage(String() << "File '" << utf8FileName << "' exists.")
-                                    .setDefaultButton("S]ave", newCallback(this, &SaveAsPanel::continueSave))
-                                    .setCancelButton("Ca]ncel"));
+            File::Info newFile = File(newFileName).getInfo();
+            
+            if (newFile.exists())
+            {
+                if (newFile.isFile() && newFile.isWritable())
+                {
+                    messageBoxInvoker->call(MessageBoxParameter()
+                                            .setTitle("File exists")
+                                            .setMessage(String() << "File '" << utf8FileName << "' exists.")
+                                            .setDefaultButton("S]ave", newCallback(this, &SaveAsPanel::continueSave))
+                                            .setCancelButton("Ca]ncel"));
+                }
+                else if (!newFile.isFile()) {
+                    messageBoxInvoker->call(MessageBoxParameter()
+                                            .setTitle("Not a file")
+                                            .setMessage(String() << "'" << utf8FileName << "' exists and is not a file."));
+                }
+                else if (!newFile.isWritable()) {
+                    messageBoxInvoker->call(MessageBoxParameter()
+                                            .setTitle("Not writable")
+                                            .setMessage(String() << "'" << utf8FileName << "' exists and is not writable."));
+                }
+                else {
+                    ASSERT(false);
+                }
+            }
+            else {
+                continueSave();
+            }
         }
-        else
-        {
+        else {
             continueSave();
         }
     }
