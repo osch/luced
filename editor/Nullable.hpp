@@ -268,6 +268,19 @@ private:
     RawPtr<T> ptr;
 };
 
+template<class T
+        >
+inline bool operator==(const T& lhs, const Nullable<T>& rhs) {
+    return rhs == lhs;
+}
+
+template<class T
+        >
+inline bool operator!=(const T& lhs, const Nullable<T>& rhs) {
+    return rhs != lhs;
+}
+
+
 } // namespace LucED
 
 #endif // NULLABLE_HPP
