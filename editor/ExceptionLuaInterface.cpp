@@ -40,7 +40,8 @@ ExceptionLuaInterface::Ptr ExceptionLuaInterface::create(const LuaVar& errorObje
 ExceptionLuaInterface::ExceptionLuaInterface(LuaAccess luaAccess,
                                              String    message)
     : message(message),
-      lineNumber(-1),
+      fileLineNumber(-1),
+      scriptLineNumber(-1),
       isBuiltinFileFlag(false)
 {
     evaluateLuaStackTrace(luaAccess);
@@ -69,7 +70,8 @@ static String unquoteSourceString(const String& source)
 }
 
 ExceptionLuaInterface::ExceptionLuaInterface(const LuaVar& errorObject)
-    : lineNumber(-1),
+    : fileLineNumber(-1),
+      scriptLineNumber(-1),
       isBuiltinFileFlag(false)
 {
     LuaAccess  luaAccess = errorObject.getLuaAccess();
@@ -80,30 +82,31 @@ ExceptionLuaInterface::ExceptionLuaInterface(const LuaVar& errorObject)
         Regex  r("^\\[\\s*([^\"\\]]*?)\\s*(?>\"((?>\\\\.|[^\\\\])*)\")?\\]:(\\d+)\\: \\s*(.*)");
 
         if (r.matches(errorText)) {
-            String type  = errorText.getSubstring(Pos(r.getCaptureBegin(1)), 
+            String type   = errorText.getSubstring(Pos(r.getCaptureBegin(1)), 
                                                    Pos(r.getCaptureEnd(1)));
-            String source = errorText.getSubstring(Pos(r.getCaptureBegin(2)), 
-                                                   Pos(r.getCaptureEnd(2)));
-            lineNumber    = errorText.getSubstring(Pos(r.getCaptureBegin(3)), 
-                                                   Pos(r.getCaptureEnd(3))).toInt() - 1;
-            message       = errorText.getTail(r.getCaptureBegin(4));
+            String source  = errorText.getSubstring(Pos(r.getCaptureBegin(2)), 
+                                                    Pos(r.getCaptureEnd(2)));
+            int lineNumber = errorText.getSubstring(Pos(r.getCaptureBegin(3)), 
+                                                    Pos(r.getCaptureEnd(3))).toInt() - 1;
+            message        = errorText.getTail(r.getCaptureBegin(4));
 
             source = unquoteSourceString(source);
 
             if (type == "file") {
                 fileName = source;
+                fileLineNumber = lineNumber;
                 isBuiltinFileFlag = false;
             }
             else if (source.getLength() > 0 && source[0] == '$') {
                 fileName = source.getTail(1);
+                fileLineNumber = lineNumber;
                 isBuiltinFileFlag = true;
             }
         } else {
-            lineNumber   = -1;
             message = errorText;
         }
     }
-    if (lineNumber == -1)
+    if (!fileName.isValid())
     {
         evaluateLuaStackTrace(luaAccess);
     }
@@ -126,13 +129,21 @@ retry:
             goto retry;
         }
     
-        if (debugInfo.source != NULL) {
+        if (debugInfo.source != NULL)
+        {
             if (debugInfo.source[0] == '@' || debugInfo.source[0] == '$') {
-                fileName   = debugInfo.source + 1;
-                lineNumber = debugInfo.currentline - 1;
-            }
-            if (debugInfo.source[0] == '$') {
-                isBuiltinFileFlag = true;
+                fileName          = String(debugInfo.source + 1);
+                fileLineNumber    = debugInfo.currentline - 1;
+                isBuiltinFileFlag = (debugInfo.source[0] == '$');
+            } else {
+                scriptBytes.clear();
+                scriptBytes.append((const byte*)debugInfo.source,
+                                                debugInfo.sourceLen);
+                scriptLineNumber = debugInfo.currentline - 1;
+                if (!fileName.isValid()) {
+                    callLevel += 1;
+                    goto retry; // try to find out sourceFile
+                }
             }
         }
     }

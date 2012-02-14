@@ -29,8 +29,16 @@
 
 using namespace LucED;
 
+static inline const char* toCString(const Nullable<String>& s)
+{
+    if (s.isValid()) {
+        return s.get().toCString();
+    } else {
+        return NULL;
+    }
+}
 
-LuaAccess::Result LuaAccess::executeScript(const char* scriptBegin, long scriptLength, String name) const
+LuaAccess::Result LuaAccess::executeScript(const char* scriptBegin, long scriptLength, Nullable<String> name) const
 {
     ASSERT(isCorrect());
 
@@ -41,8 +49,8 @@ LuaAccess::Result LuaAccess::executeScript(const char* scriptBegin, long scriptL
 
     int oldTop = lua_gettop(L);
 
-    int error = luaL_loadbuffer(L, scriptBegin, scriptLength, name.toCString())
-            || lua_pcall(L, 0, LUA_MULTRET, 0);
+    int error = luaL_loadbuffer(L, scriptBegin, scriptLength, toCString(name))
+            || lua_pcall(L, 0, LUA_MULTRET, luaInterpreter->getErrorHandlerStackIndex());
 
     String printBuffer = LuaInterpreter::PrintBufferAccess::getPrintBuffer(luaInterpreter);
                          LuaInterpreter::PrintBufferAccess::setPrintBuffer(luaInterpreter, oldPrintBuffer);
@@ -60,7 +68,7 @@ LuaAccess::Result LuaAccess::executeScript(const char* scriptBegin, long scriptL
     return rslt;
 }
 
-LuaAccess::Result LuaAccess::executeExpression(const char* scriptBegin, long scriptLength, String name) const
+LuaAccess::Result LuaAccess::executeExpression(const char* scriptBegin, long scriptLength, Nullable<String> name) const
 {
     ASSERT(isCorrect());
 
@@ -75,8 +83,8 @@ LuaAccess::Result LuaAccess::executeExpression(const char* scriptBegin, long scr
     
     int oldTop = lua_gettop(L);
 
-    int error = luaL_loadbuffer(L, script.toCString(), script.getLength(), name.toCString())
-            || lua_pcall(L, 0, LUA_MULTRET, 0);
+    int error = luaL_loadbuffer(L, script.toCString(), script.getLength(), toCString(name))
+            || lua_pcall(L, 0, LUA_MULTRET, luaInterpreter->getErrorHandlerStackIndex());
 
     String printBuffer = LuaInterpreter::PrintBufferAccess::getPrintBuffer(luaInterpreter);
                          LuaInterpreter::PrintBufferAccess::setPrintBuffer(luaInterpreter, oldPrintBuffer);
@@ -95,17 +103,10 @@ LuaAccess::Result LuaAccess::executeExpression(const char* scriptBegin, long scr
 }
 
 
-LuaAccess::Result LuaAccess::executeFile(String name) const
-{
-    ByteBuffer buffer;
-    File(name).loadInto(&buffer);
-    return executeScript((const char*) buffer.getTotalAmount(), buffer.getLength(), name);
-}
 
-
-LuaVar LuaAccess::loadString(const char* script, const String& pseudoFileName) const
+LuaVar LuaAccess::loadString(const char* script, const Nullable<String>& pseudoFileName) const
 {
-    int rc = luaL_loadbuffer(L, script, strlen(script), pseudoFileName.toCString());
+    int rc = luaL_loadbuffer(L, script, strlen(script), toCString(pseudoFileName));
     
     if (rc != 0) {
         if (rc == LUA_ERRMEM) {

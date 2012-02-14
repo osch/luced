@@ -29,6 +29,8 @@
 #include "RawPtr.hpp"
 #include "LuaCFunctionResult.hpp"
 #include "LuaCFunctionArguments.hpp"
+#include "Nullable.hpp"
+#include "ByteBuffer.hpp"
 
 namespace LucED
 {
@@ -53,15 +55,27 @@ public:
         return message;
     }
     
-    int getLineNumber() const {
-        return lineNumber;
-    }
-    
-    String getFileName() const {
-        return fileName;
+    bool hasFileSource() const {
+        return fileName.isValid();
     }
     bool isBuiltinFile() const {
-        return isBuiltinFileFlag;
+        return hasFileSource() && isBuiltinFileFlag;
+    }
+    String getFileName() const {
+        return fileName.get();
+    }
+    int getFileLineNumber() const {
+        return fileLineNumber;
+    }
+
+    bool hasScriptBytes() const {
+        return scriptBytes.getLength() > 0;
+    }
+    RawPtr<ByteBuffer> getPtrToScriptBytes() {
+        return &scriptBytes;
+    }
+    int getScriptLineNumber() const {
+        return scriptLineNumber;
     }
 
 @ local defs = require("BuiltinClassDefinitions")
@@ -82,8 +96,10 @@ private:
     void evaluateLuaStackTrace(const LuaAccess& luaAccess);
 
     String message;    
-    String fileName;
-    int    lineNumber;
+    Nullable<String> fileName;
+    ByteBuffer       scriptBytes;
+    int    fileLineNumber;
+    int    scriptLineNumber;
     bool   isBuiltinFileFlag;
 };
 

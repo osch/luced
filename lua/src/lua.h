@@ -210,6 +210,9 @@ LUA_API int   (lua_pcall) (lua_State *L, int nargs, int nresults, int errfunc);
 LUA_API int   (lua_cpcall) (lua_State *L, lua_CFunction func, void *ud);
 LUA_API int   (lua_load) (lua_State *L, lua_Reader reader, void *dt,
                                         const char *chunkname);
+LUA_API int   (lua_load2) (lua_State *L, lua_Reader reader, void *dt,
+                                         const char *chunkname,
+                                         size_t chunknameLength);
 
 LUA_API int (lua_dump) (lua_State *L, lua_Writer writer, void *data);
 
@@ -357,6 +360,7 @@ struct lua_Debug {
   const char *namewhat;	/* (n) `global', `local', `field', `method' */
   const char *what;	/* (S) `Lua', `C', `main', `tail' */
   const char *source;	/* (S) */
+  size_t      sourceLen;/* (S) */
   int currentline;	/* (l) */
   int nups;		/* (u) number of upvalues */
   int linedefined;	/* (S) */

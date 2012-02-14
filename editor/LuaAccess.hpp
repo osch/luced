@@ -33,6 +33,7 @@
 #include "String.hpp"
 #include "RawPtr.hpp"
 #include "Null.hpp"
+#include "Nullable.hpp"
 #include "StaticAssertion.hpp"
 
 namespace LucED
@@ -129,18 +130,17 @@ public:
         return (L == rhs.L);
     }
     
-    LuaVar loadString(const char*   script, const String& pseudoFileName = "") const;
-    LuaVar loadString(const String& script, const String& pseudoFileName = "") const;
+    LuaVar loadString(const char*   script, const Nullable<String>& pseudoFileName = Null) const;
+    LuaVar loadString(const String& script, const Nullable<String>& pseudoFileName = Null) const;
 
     LuaVar loadFile(const String& fileName) const;
     
     class Result;
-    Result executeFile(String name) const;
-    Result executeScript(const char* beginScript, long scriptLength, String name = String()) const;
-    Result executeExpression(const char* beginScript, long scriptLength, String name = String()) const;
+    Result executeScript(const char* beginScript, long scriptLength, Nullable<String> name = Null) const;
+    Result executeExpression(const char* beginScript, long scriptLength, Nullable<String> name = Null) const;
 
-    Result executeExpression(const String& expr, String name = String()) const;
-    Result executeScript(String script, String name = String()) const;
+    Result executeExpression(const String& expr, Nullable<String> name = Null) const;
+    Result executeScript(String script, Nullable<String> name = Null) const;
     
 #ifdef DEBUG
     bool isCorrect() const;
@@ -626,7 +626,7 @@ inline void LuaAccess::push(LuaSingletonCMethod<C,M> wrapper) const
     lua_pushcfunction(L, &(LuaSingletonCMethod<C,M>::invokeFunction));
 }
 
-inline LuaVar LuaAccess::loadString(const String& script, const String& pseudoFileName) const {
+inline LuaVar LuaAccess::loadString(const String& script, const Nullable<String>& pseudoFileName) const {
     return loadString(script.toCString(), pseudoFileName);
 }
 
@@ -637,11 +637,11 @@ public:
     LuaVarList objects;
 };    
 
-inline LuaAccess::Result LuaAccess::executeExpression(const String& expr, String name) const
+inline LuaAccess::Result LuaAccess::executeExpression(const String& expr, Nullable<String> name) const
 {
     return executeExpression(expr.toCString(), expr.getLength(), name);
 }
-inline LuaAccess::Result LuaAccess::executeScript(String script, String name) const
+inline LuaAccess::Result LuaAccess::executeScript(String script, Nullable<String> name) const
 {
     return executeScript(script.toCString(), script.getLength(), name);
 }

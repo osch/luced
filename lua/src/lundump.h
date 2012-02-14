@@ -11,7 +11,8 @@
 #include "lzio.h"
 
 /* load one chunk; from lundump.c */
-LUAI_FUNC Proto* luaU_undump (lua_State* L, ZIO* Z, Mbuffer* buff, const char* name);
+LUAI_FUNC Proto* luaU_undump (lua_State* L, ZIO* Z, Mbuffer* buff, const char* name,
+                                                                   size_t nameLength);
 
 /* make header; from lundump.c */
 LUAI_FUNC void luaU_header (char* h);

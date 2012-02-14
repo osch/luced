@@ -43,16 +43,18 @@ const char* LuaException::what() const throw()
 String LuaException::toString() const
 {
     String rslt;
-    if (luaInterface->getFileName().getLength() > 0) {
+    if (luaInterface->hasFileSource())
+    {
         if (luaInterface->isBuiltinFile()) {
             rslt << "Builtin config file '";
         } else {
             rslt << "File '";
         }
-        rslt << luaInterface->getFileName() << "': ";
-    }
-    if (luaInterface->getLineNumber() >= 0) {
-        rslt << "line " << luaInterface->getLineNumber() << ": ";
+        rslt << luaInterface->getFileName() << "'";
+        if (luaInterface->getFileLineNumber() >= 0) {
+            rslt << ", line " << luaInterface->getFileLineNumber();
+        }
+        rslt << ": ";
     }
     rslt << BaseException::toString();
     return rslt;

@@ -51,6 +51,7 @@
 #include "GlobalLuaInterpreter.hpp"
 #include "QualifiedName.hpp"
 #include "EncodingConverter.hpp"
+#include "LuaErrorHandler.hpp"
 
 using namespace LucED;
 
@@ -466,7 +467,8 @@ GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEve
         return GuiWidget::EVENT_PROCESSED;
     }
     catch (LuaException& ex) {
-        ConfigErrorHandler::startWithCatchedException();
+        LuaErrorHandler::start(ex.getExceptionLuaInterface(),
+                               newCallback(this, &EditorTopWin::setMessageBox));
         return GuiWidget::EVENT_PROCESSED;
     }
     catch (ConfigException& ex) {

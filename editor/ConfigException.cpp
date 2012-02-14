@@ -48,10 +48,10 @@ void ConfigException::ErrorList::appendCatchedException()
     }
     catch (LuaException& ex)
     {
-        if (ex.isBuiltinFile()) {
+        if (ex.isBuiltinFile() || !ex.hasFileSource()) {
             throw;
         } else {
-            this->append(Error(ex.getFileName(), ex.getLineNumber(), ex.getMessage()));    
+            this->append(Error(ex.getFileName(), ex.getFileLineNumber(), ex.getMessage()));    
         }
     }
     catch (ConfigException& ex)

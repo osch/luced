@@ -25,6 +25,7 @@ typedef struct {
  ZIO* Z;
  Mbuffer* b;
  const char* name;
+ size_t nameLength;
 } LoadState;
 
 #ifdef LUAC_TRUST_BINARIES
@@ -35,7 +36,13 @@ typedef struct {
 
 static void error(LoadState* S, const char* why)
 {
- luaO_pushfstring(S->L,"%s: %s in precompiled chunk",S->name,why);
+ char buffer[LUA_IDSIZE + 1];
+ size_t len = S->nameLength;
+ if (len > LUA_IDSIZE) len = LUA_IDSIZE;
+ memcpy(buffer, S->name, len);
+ buffer[len] = '\0';
+
+ luaO_pushfstring(S->L,"%s: %s in precompiled chunk",buffer,why);
  luaD_throw(S->L,LUA_ERRSYNTAX);
 }
 #endif
@@ -192,15 +199,20 @@ static void LoadHeader(LoadState* S)
 /*
 ** load precompiled chunk
 */
-Proto* luaU_undump (lua_State* L, ZIO* Z, Mbuffer* buff, const char* name)
+Proto* luaU_undump (lua_State* L, ZIO* Z, Mbuffer* buff, const char* name, 
+                                                         size_t nameLength)
 {
  LoadState S;
- if (*name=='@' || *name=='=')
+ if (*name=='@' || *name=='=') {
   S.name=name+1;
- else if (*name==LUA_SIGNATURE[0])
+  S.nameLength = nameLength -1;
+ } else if (*name==LUA_SIGNATURE[0]) {
   S.name="binary string";
- else
+  S.nameLength = strlen(S.name);
+ } else {
   S.name=name;
+  S.nameLength = nameLength;
+ }
  S.L=L;
  S.Z=Z;
  S.b=buff;

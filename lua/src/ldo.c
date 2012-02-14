@@ -486,6 +486,7 @@ struct SParser {  /* data to `f_parser' */
   ZIO *z;
   Mbuffer buff;  /* buffer to be used by the scanner */
   const char *name;
+  size_t nameLength;
 };
 
 static void f_parser (lua_State *L, void *ud) {
@@ -496,7 +497,9 @@ static void f_parser (lua_State *L, void *ud) {
   int c = luaZ_lookahead(p->z);
   luaC_checkGC(L);
   tf = ((c == LUA_SIGNATURE[0]) ? luaU_undump : luaY_parser)(L, p->z,
-                                                             &p->buff, p->name);
+                                                             &p->buff, 
+                                                             p->name,
+                                                             p->nameLength);
   cl = luaF_newLclosure(L, tf->nups, hvalue(gt(L)));
   cl->l.p = tf;
   for (i = 0; i < tf->nups; i++)  /* initialize eventual upvalues */
@@ -506,10 +509,10 @@ static void f_parser (lua_State *L, void *ud) {
 }
 
 
-int luaD_protectedparser (lua_State *L, ZIO *z, const char *name) {
+int luaD_protectedparser (lua_State *L, ZIO *z, const char *name, size_t nameLength) {
   struct SParser p;
   int status;
-  p.z = z; p.name = name;
+  p.z = z; p.name = name; p.nameLength = nameLength;
   luaZ_initbuffer(L, &p.buff);
   status = luaD_pcall(L, f_parser, &p, savestack(L, L->top), L->errfunc);
   luaZ_freebuffer(L, &p.buff);

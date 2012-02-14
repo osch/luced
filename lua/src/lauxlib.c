@@ -611,12 +611,16 @@ LUALIB_API int luaL_loadbuffer (lua_State *L, const char *buff, size_t size,
   LoadS ls;
   ls.s = buff;
   ls.size = size;
-  return lua_load(L, getS, &ls, name);
+  if (name) {
+    return lua_load2(L, getS, &ls, name, strlen(name));
+  } else {
+    return lua_load2(L, getS, &ls, buff, size);
+  }
 }
 
 
 LUALIB_API int (luaL_loadstring) (lua_State *L, const char *s) {
-  return luaL_loadbuffer(L, s, strlen(s), s);
+  return luaL_loadbuffer(L, s, strlen(s), NULL);
 }
 
 

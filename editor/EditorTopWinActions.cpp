@@ -21,6 +21,7 @@
 
 #include "EditorTopWinActions.hpp"
 #include "GlobalLuaInterpreter.hpp"
+#include "LuaErrorHandler.hpp"
 
 using namespace LucED;
 
@@ -120,8 +121,8 @@ void EditorTopWinActions::executeLuaScript()
     }
     catch (LuaException& ex)
     {
-        messageBoxInvoker->call(MessageBoxParameter().setTitle("Lua Error")
-                                                     .setMessage(ex.getMessage()));
+        LuaErrorHandler::start(ex.getExceptionLuaInterface(),
+                               messageBoxInvoker);
     }
 }
 

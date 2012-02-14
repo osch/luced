@@ -93,8 +93,8 @@ void TextData::takeOverUtf8Buffer(RawPtr<ByteBuffer> newBufferPtr)
     
     if (hasHistory()) {
         history->rememberInsertAction(0, newLen);
+        setModifiedFlag(true);
     }
-    setModifiedFlag(true);
 }
 
 

@@ -575,7 +575,7 @@ public:
     
     bool wasFileModifiedOnDiskSinceLastIgnore() const {
         if (ignoreModifiedOnDiskFlag == true && fileInfo.exists()) {
-            return fileInfo.getLastModifiedTime() != ignoreModifiedOnDiskTime.get();
+            return fileInfo.getLastModifiedTime() != ignoreModifiedOnDiskTime;
         } else {
             return false;
         }

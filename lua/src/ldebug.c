@@ -150,12 +150,14 @@ LUA_API const char *lua_setlocal (lua_State *L, const lua_Debug *ar, int n) {
 static void funcinfo (lua_Debug *ar, Closure *cl) {
   if (cl->c.isC) {
     ar->source = "=[C]";
+    ar->sourceLen = strlen(ar->source);
     ar->linedefined = -1;
     ar->lastlinedefined = -1;
     ar->what = "C";
   }
   else {
     ar->source = getstr(cl->l.p->source);
+    ar->sourceLen = cl->l.p->source->tsv.len;
     ar->linedefined = cl->l.p->linedefined;
     ar->lastlinedefined = cl->l.p->lastlinedefined;
     ar->what = (ar->linedefined == 0) ? "main" : "Lua";
@@ -169,6 +171,7 @@ static void info_tailcall (lua_Debug *ar) {
   ar->what = "tail";
   ar->lastlinedefined = ar->linedefined = ar->currentline = -1;
   ar->source = "=(tail call)";
+  ar->sourceLen = strlen(ar->source);
   luaO_chunkid(ar->short_src, ar->source, LUA_IDSIZE);
   ar->nups = 0;
 }
