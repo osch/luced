@@ -22,6 +22,8 @@
 #ifndef TIME_PERIOD_HPP
 #define TIME_PERIOD_HPP
 
+#include <sys/time.h>
+
 #include "Seconds.hpp"
 #include "MicroSeconds.hpp"
 
