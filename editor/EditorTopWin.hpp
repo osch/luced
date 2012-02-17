@@ -105,7 +105,11 @@ public:
     
     bool checkForFileModifications();
     
-    void gotoLineNumber(int lineNumber);
+    void gotoLineNumber(int lineNumber) {
+        textEditor->displayCursorInSelectedLine(lineNumber);
+    }
+    
+    void handleCatchedException();
 
 protected:
     virtual void processGuiWidgetCreatedEvent();

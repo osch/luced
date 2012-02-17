@@ -918,7 +918,7 @@ LUA_API int lua_load2 (lua_State *L, lua_Reader reader, void *data,
   ZIO z;
   int status;
   lua_lock(L);
-  if (!chunkname) { chunkname = "?"; chunknameLength = 1; }
+  if (!chunkname) { chunkname = "=?"; chunknameLength = 2; }
   luaZ_init(L, &z, reader, data);
   status = luaD_protectedparser(L, &z, chunkname, chunknameLength);
   lua_unlock(L);

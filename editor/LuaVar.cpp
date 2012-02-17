@@ -23,6 +23,7 @@
 #include "LuaException.hpp"
 #include "LuaVarList.hpp"
 #include "LuaInterpreter.hpp"
+#include "LuaException.hpp"
 
 using namespace LucED;
 
@@ -82,3 +83,7 @@ LuaVar LuaVar::call(const LuaVarList& list) const
 
 */
 
+void LuaVarRef::throwLuaException(const LuaVar& errorObject)
+{
+    throw LuaException(errorObject);
+}

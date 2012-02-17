@@ -44,11 +44,13 @@ public:
     TopWinActionsParameter(RawPtr<TextEditorWidget>                  editorWidget, 
                            Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
                            PanelInvoker::Ptr                         panelInvoker,
-                           TopWinActionInterface::Ptr                topWinActionInterface)
+                           TopWinActionInterface::Ptr                topWinActionInterface,
+                           Callback<>::Ptr                           catchedExceptionHandler)
         : editorWidget(editorWidget),
           messageBoxInvoker(messageBoxInvoker),
           panelInvoker(panelInvoker),
-          topWinActionInterface(topWinActionInterface)
+          topWinActionInterface(topWinActionInterface),
+          catchedExceptionHandler(catchedExceptionHandler)
     {}
 
 protected:
@@ -56,6 +58,7 @@ protected:
     Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
     PanelInvoker::Ptr                         panelInvoker;
     TopWinActionInterface::Ptr                topWinActionInterface;
+    Callback<>::Ptr                           catchedExceptionHandler;
 };
 
 } // namespace LucED

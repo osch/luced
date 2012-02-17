@@ -268,3 +268,9 @@ std::string StackTrace::getCurrentAsString()
 {
     return StackTrace().toString();
 }
+
+void StackTrace::printStackTraceToStderr()
+{
+    StackTrace::printCurrent(stderr);
+}
+

@@ -411,10 +411,10 @@
 ** with Lua. A useful redefinition is to use assert.h.
 */
 #if defined(LUA_USE_APICHECK)
-#include <assert.h>
-#define luai_apicheck(L,o)	{ (void)L; assert(o); }
+#  include <assert.h>
+#  define luai_apicheck(L,o)  { (void)L; assert(o); }
 #else
-#define luai_apicheck(L,o)	{ (void)L; }
+#  define luai_apicheck(L,o)  { (void)L; }
 #endif
 
 
@@ -796,9 +796,24 @@ union luai_Cast { double l_d; long l_l; };
 #if defined(__cplusplus)
 
 #if defined(DEBUG)
-#include <assert.h>
-#undef  luai_apicheck
-#define luai_apicheck(L,o)	{ (void)L; assert(o); }
+#  undef luai_apicheck
+#  if defined(lua_c)
+#    include <assert.h>
+#    define luai_apicheck(L,o)  { (void)L; assert(o); }
+#  else
+#    include <stdio.h>
+#    include <stdlib.h>
+     extern void (*luaPrintStackTraceFunction)();
+#    define luai_apicheck(L,o)  { (void)L; if (!(o)) { \
+                                               if (luaPrintStackTraceFunction) { \
+                                                 luaPrintStackTraceFunction(); \
+                                               } \
+                                               fprintf(stderr, "Assertion {" #o \
+                                                       "} failed in " __FILE__ ":%d\n", __LINE__);\
+                                               abort(); \
+                                           } \
+                                }
+#  endif
 #endif
 
 #define LUA_MINSTACK 40

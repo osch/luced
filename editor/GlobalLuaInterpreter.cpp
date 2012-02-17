@@ -19,6 +19,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include "debug.hpp"
 #include "GlobalLuaInterpreter.hpp"
 #include "LucedLuaInterface.hpp"
 #include "File.hpp"
@@ -32,6 +33,9 @@ SingletonInstance<GlobalLuaInterpreter> GlobalLuaInterpreter::instance;;
 
 GlobalLuaInterpreter::GlobalLuaInterpreter()
 {
+#ifdef DEBUG
+    luaPrintStackTraceFunction = &StackTrace::printStackTraceToStderr;
+#endif
     LuaAccess luaAccess = LuaInterpreter::getCurrentLuaAccess();
     
     LuaVar luced = luaAccess.toLua(LucedLuaInterface::getInstance());

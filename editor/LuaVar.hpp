@@ -617,6 +617,7 @@ protected:
         ASSERT(isCorrect());
     }
     
+    void throwLuaException(const LuaVar& errorObject);
     
     int stackIndex;
 #ifdef DEBUG
@@ -927,7 +928,6 @@ inline bool operator!=(const String& lhs, const LuaVarRef& rhs)
 #include "LuaCFunctionResult.hpp"
 #include "LuaStoredObjectReference.hpp"
 #include "LuaInterpreter.hpp"
-#include "LuaException.hpp"
 
 namespace LucED
 {
@@ -947,7 +947,7 @@ inline LuaVar LuaVarRef::call(LuaFunctionArguments& args)
     {
         LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, 1); // 1 rslt is errorObject
         LuaVar errorObject(getLuaAccess(), lua_gettop(L));
-        throw LuaException(errorObject);
+        throwLuaException(errorObject);
     }
     else {
         LuaFunctionArguments::LuaObjectAccess::clearAfterCall(args, numberOfResults);
@@ -993,7 +993,7 @@ inline LuaVar LuaVarRef::call()
     if (error != 0)
     {
         LuaVar errorObject(getLuaAccess(), lua_gettop(L));
-        throw LuaException(errorObject);
+        throwLuaException(errorObject);
     } else {    
         return LuaVar(getLuaAccess(), lua_gettop(L));
     }

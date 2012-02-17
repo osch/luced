@@ -205,7 +205,7 @@ FindUtil::PreparsedCallout::PreparsedCallout(const String& findString, const int
         }
         String varName = findString.getSubstring(Pos(pos+2), Len(varEnd - (pos+2)));
 
-        LuaAccess::Result exprResult = luaAccess.executeExpression(varName);
+        LuaAccess::Result exprResult = luaAccess.executeScript(String() << "return " << varName);
 
         LuaVar g(luaAccess);
 

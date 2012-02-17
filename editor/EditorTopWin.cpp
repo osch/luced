@@ -151,17 +151,8 @@ public:
             else {
                 editorTopWin->save();
             }
-        } catch (FileException& ex) {
-            editorTopWin->setMessageBox(MessageBoxParameter().setTitle("File Error")
-                                                             .setMessage(ex.getMessage()));
-        } catch (EncodingException& ex) {
-            editorTopWin->setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
-                                                             .setMessage(ex.getMessage()));
-        } catch (LuaException& ex) {
-            ConfigErrorHandler::startWithCatchedException();
-        }
-        catch (ConfigException& ex) {
-            ConfigErrorHandler::startWithCatchedException();
+        } catch (...) {
+            editorTopWin->handleCatchedException();
         }
     }
     
@@ -331,7 +322,8 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
                        TopWinActionsParameter(textEditor,
                                               newCallback(this, &EditorTopWin::setModalMessageBox),
                                               panelInvoker,
-                                              actionInterface)));
+                                              actionInterface,
+                                              newCallback(this, &EditorTopWin::handleCatchedException))));
 
     userDefinedActionMethods = UserDefinedActionMethods::create(this);
     textEditor->getKeyActionHandler()->addActionMethods(userDefinedActionMethods);
@@ -399,6 +391,39 @@ void EditorTopWin::processGuiWidgetNewPositionEvent(const Position& newPosition)
     rootElement->setPosition(Position(0, 0, newPosition.w, newPosition.h));
 }
 
+void EditorTopWin::handleCatchedException()
+{
+    try
+    {
+        throw;
+    }
+    catch (FileException& ex) {
+        setMessageBox(MessageBoxParameter().setTitle("File Error")
+                                           .setMessage(ex.getMessage()));
+    }
+    catch (EncodingException& ex) {
+        setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
+                                           .setMessage(ex.getMessage()));
+    }
+    catch (LuaException& ex) {
+        LuaErrorHandler::start(ex.getExceptionLuaInterface(),
+                               newCallback(this, &EditorTopWin::setMessageBox),
+                               newCallback(this, &EditorTopWin::handleCatchedException));
+    }
+    catch (ConfigException& ex) {
+        ConfigErrorHandler::startWithCatchedException();
+    }
+    catch (UnknownActionNameException& ex)
+    {
+        setMessageBox(MessageBoxParameter().setTitle("Config Error")
+                                           .setMessage(ex.getMessage()));
+    }
+    catch (BaseException& ex) {
+        setMessageBox(MessageBoxParameter().setTitle("Internal Error")
+                                           .setMessage(ex.getMessage()));
+    }
+}
+
 
 GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEvent& keyPressEvent)
 {
@@ -456,34 +481,8 @@ GuiWidget::ProcessingResult EditorTopWin::processKeyboardEvent(const KeyPressEve
         }
         return rslt;
     }
-    catch (FileException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("File Error")
-                                           .setMessage(ex.getMessage()));
-        return GuiWidget::EVENT_PROCESSED;
-    }
-    catch (EncodingException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
-                                           .setMessage(ex.getMessage()));
-        return GuiWidget::EVENT_PROCESSED;
-    }
-    catch (LuaException& ex) {
-        LuaErrorHandler::start(ex.getExceptionLuaInterface(),
-                               newCallback(this, &EditorTopWin::setMessageBox));
-        return GuiWidget::EVENT_PROCESSED;
-    }
-    catch (ConfigException& ex) {
-        ConfigErrorHandler::startWithCatchedException();
-        return GuiWidget::EVENT_PROCESSED;
-    }
-    catch (UnknownActionNameException& ex)
-    {
-        setMessageBox(MessageBoxParameter().setTitle("Config Error")
-                                           .setMessage(ex.getMessage()));
-        return GuiWidget::NOT_PROCESSED;
-    }
-    catch (BaseException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("Internal Error")
-                                           .setMessage(ex.getMessage()));
+    catch (...) {
+        handleCatchedException();
         return GuiWidget::EVENT_PROCESSED;
     }
 }
@@ -607,9 +606,8 @@ bool EditorTopWin::checkForFileModifications()
             return false;
         }
     }
-    catch (FileException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("File Error")
-                                           .setMessage(ex.getMessage()));
+    catch (...) {
+        handleCatchedException();
         return false;
     }
 }
@@ -846,16 +844,8 @@ void EditorTopWin::saveAndClose()
             this->save();
             requestCloseWindow(TopWin::CLOSED_SILENTLY);
         }
-    } catch (FileException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("File Error")
-                                           .setMessage(ex.getMessage()));
-    } catch (EncodingException& ex) {
-        setMessageBox(MessageBoxParameter().setTitle("Encoding Error")
-                                           .setMessage(ex.getMessage()));
-    } catch (LuaException& ex) {
-        ConfigErrorHandler::startWithCatchedException();
-    } catch (ConfigException& ex) {
-        ConfigErrorHandler::startWithCatchedException();
+    } catch (...) {
+        handleCatchedException();
     }
 }
 
@@ -983,28 +973,6 @@ void EditorTopWin::finishedShellscript(ProgramExecutor::Result rslt)
     
         CommandOutputBox::Ptr commandOutputBox = CommandOutputBox::create(this, textData);
         commandOutputBox->show();
-    }
-}
-
-
-void EditorTopWin::gotoLineNumber(int lineNumber)
-{
-    bool wasNegative = (lineNumber < 0);
-    
-    if (lineNumber < 0) lineNumber = 0;
-    
-    TextData::TextMark m = textEditor->createNewMarkFromCursor();
-    m.moveToLineAndWCharColumn(lineNumber, m.getWCharColumn());
-    textEditor->moveCursorToTextMarkAndAdjustVisibility(m);
-    textEditor->rememberCursorPixX();
-    if (!wasNegative) {
-        m.moveToBeginOfLine();    long spos = m.getPos();
-        m.moveToNextLineBegin();  long epos = m.getPos();
-        
-        textEditor->setPrimarySelection(spos, epos);
-    
-    } else {
-        textEditor->releaseSelection();
     }
 }
 

@@ -42,17 +42,20 @@ const char* LuaException::what() const throw()
 
 String LuaException::toString() const
 {
+    LuaStackTrace::Ptr        stackTrace = getLuaStackTrace();
+    LuaStackTrace::Entry::Ptr entry      = stackTrace->findFirstFileEntry();
+
     String rslt;
-    if (luaInterface->hasFileSource())
+    if (entry.isValid())
     {
-        if (luaInterface->isBuiltinFile()) {
+        if (entry->isBuiltinFile()) {
             rslt << "Builtin config file '";
         } else {
             rslt << "File '";
         }
-        rslt << luaInterface->getFileName() << "'";
-        if (luaInterface->getFileLineNumber() >= 0) {
-            rslt << ", line " << luaInterface->getFileLineNumber();
+        rslt << entry->getFileName() << "'";
+        if (entry->getLineNumber() >= 0) {
+            rslt << ", line " << entry->getLineNumber();
         }
         rslt << ": ";
     }

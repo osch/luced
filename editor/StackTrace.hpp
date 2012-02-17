@@ -78,6 +78,8 @@ public:
     static void printCurrent(FILE* fprintfOutput = stdout);
     static std::string getCurrentAsString();
 
+    static void printStackTraceToStderr();
+
 private:
     void** array;
     int    size;

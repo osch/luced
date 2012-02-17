@@ -29,8 +29,6 @@
 
 #include "LuaCFunctionArguments.hpp"
 #include "LuaCFunctionResult.hpp"
-#include "BaseException.hpp"
-#include "LuaException.hpp"
 
 @ local functions     = require("functions")
 @ local argList       = functions.argList
@@ -71,15 +69,23 @@ template
 class LuaCClosureImpl;
 
 
+class LuaCClosureImplBase
+{
+protected:
+    static void handleCatchedException(LuaAccess luaAccess);
+};
+
 @ for numberUpvalues = 0, MAX_NUMBER_UPVALUES do
 template
 <
     LuaCClosureWrappedFunction@(numberUpvalues) F
 >
 class LuaCClosureImpl< LuaCClosureType@(numberUpvalues)<F> >
+        :
 @   if numberUpvalues > 0 then
-        : public LuaAccess
+          public LuaAccess,
 @   end
+          private LuaCClosureImplBase
 {
 public:
     static const int NUMBER_UPVALUES = @(numberUpvalues);
@@ -104,6 +110,7 @@ private:
         ASSERT(isSameLuaAccess(upvalue@(i)));
 @   end
     }
+    
     
     static int invokeFunction(lua_State* L);
     
@@ -175,24 +182,8 @@ inline int LuaCClosureImpl< LuaCClosureType@(numberUpvalues)<F> >::invokeFunctio
             numberOfResults = F(args@(numberUpvalues > 0 and ',' or '') 
                                 @(argList('upvalue', numberUpvalues))).numberOfResults;
         }
-        catch (LuaException& ex)
-        {
-            luaAccess.push(ex.getExceptionLuaInterface());
-            wasError = true;
-        }
-        catch (BaseException& ex)
-        {
-            luaAccess.push(ExceptionLuaInterface::create(luaAccess, ex.getMessage()));
-            wasError = true;
-        }
-        catch (std::exception& ex)
-        {
-            luaAccess.push(ExceptionLuaInterface::create(luaAccess, ex.what()));
-            wasError = true;
-        }
-        catch (...)
-        {
-            luaAccess.push(ExceptionLuaInterface::create(luaAccess, "unknown error"));
+        catch (...) {
+            handleCatchedException(luaAccess);
             wasError = true;
         }
     }

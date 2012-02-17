@@ -21,6 +21,7 @@
 
 #include "LuaCMethod.hpp"
 #include "LuaArgException.hpp"
+#include "LuaException.hpp"
 
 using namespace LucED;
 

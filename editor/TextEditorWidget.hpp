@@ -88,6 +88,8 @@ public:
     void moveCursorToTextPositionAndAdjustVisibility(int position);
     void adjustCursorVisibility();
     
+    void displayCursorInSelectedLine(int lineNumber);
+    
     void showCursor();
     void hideCursor();
 

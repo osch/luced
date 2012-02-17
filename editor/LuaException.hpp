@@ -74,27 +74,8 @@ public:
 
     virtual const char* what() const throw();
     
-    bool hasFileSource() const {
-        return luaInterface->hasFileSource();
-    }
-    bool isBuiltinFile() const {
-        return luaInterface->isBuiltinFile();
-    }
-    String getFileName() const {
-        return luaInterface->getFileName();
-    }
-    int getFileLineNumber() const {
-        return luaInterface->getFileLineNumber();
-    }
-
-    bool hasScriptBytes() const {
-        return luaInterface->hasScriptBytes();
-    }
-    RawPtr<ByteBuffer> getPtrToScriptBytes() {
-        return luaInterface->getPtrToScriptBytes();
-    }
-    int getScriptLineNumber() const {
-        return luaInterface->getScriptLineNumber();
+    LuaStackTrace::Ptr getLuaStackTrace() const {
+        return luaInterface->getLuaStackTrace();
     }
     
     virtual String toString() const;

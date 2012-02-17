@@ -40,13 +40,10 @@ ExceptionLuaInterface::Ptr ExceptionLuaInterface::create(const LuaVar& errorObje
 ExceptionLuaInterface::ExceptionLuaInterface(LuaAccess luaAccess,
                                              String    message)
     : message(message),
-      fileLineNumber(-1),
-      scriptLineNumber(-1),
-      isBuiltinFileFlag(false)
-{
-    evaluateLuaStackTrace(luaAccess);
-}
+      luaStackTrace(LuaStackTrace::create(luaAccess))
+{}
 
+#if 0
 static String unquoteSourceString(const String& source)
 {
     String rslt;
@@ -68,84 +65,71 @@ static String unquoteSourceString(const String& source)
     }
     return rslt;
 }
+#endif
 
-ExceptionLuaInterface::ExceptionLuaInterface(const LuaVar& errorObject)
-    : fileLineNumber(-1),
-      scriptLineNumber(-1),
-      isBuiltinFileFlag(false)
+ExceptionLuaInterface::ExceptionLuaInterface(const LuaVar&    errorObject,
+                                             Nullable<String> fileName,
+                                             const char*      parsedScriptBegin,
+                                             long             parsedScriptLength)
 {
-    LuaAccess  luaAccess = errorObject.getLuaAccess();
+    LuaAccess luaAccess = errorObject.getLuaAccess();
 
+    int lineNumber = -1;
+    
     if (errorObject.isString()) {
         String errorText = errorObject.toString();
 
-        Regex  r("^\\[\\s*([^\"\\]]*?)\\s*(?>\"((?>\\\\.|[^\\\\])*)\")?\\]:(\\d+)\\: \\s*(.*)");
+        Regex  r("^\\[\\s*([^\"\\]]*?)\\s*(?>\"((?>\\\\.|[^\\\\])*?)\")?(?>\\.\\.\\.)?\\]:(\\d+)\\: \\s*(.*)");
 
         if (r.matches(errorText)) {
             String type   = errorText.getSubstring(Pos(r.getCaptureBegin(1)), 
                                                    Pos(r.getCaptureEnd(1)));
             String source  = errorText.getSubstring(Pos(r.getCaptureBegin(2)), 
                                                     Pos(r.getCaptureEnd(2)));
-            int lineNumber = errorText.getSubstring(Pos(r.getCaptureBegin(3)), 
+            lineNumber     = errorText.getSubstring(Pos(r.getCaptureBegin(3)), 
                                                     Pos(r.getCaptureEnd(3))).toInt() - 1;
             message        = errorText.getTail(r.getCaptureBegin(4));
 
+        #if 0
             source = unquoteSourceString(source);
 
-            if (type == "file") {
-                fileName = source;
-                fileLineNumber = lineNumber;
-                isBuiltinFileFlag = false;
+            if (fileName.isValid())
+            {
+                if (!fileName.startsWith(GlobalConfig::INTERNAL_FILE_PREFIX)) {
+                    luaStackTrace = LuaStackTrace::createExternalFileError(luaAccess,
+                                                                           source,
+                                                                           lineNumber);
+                }
+                else if (type == "" && source.startsWith("$")) {
+                    luaStackTrace = LuaStackTrace::createBuiltinFileError(luaAccess,
+                                                                          source.getTail(1),
+                                                                          lineNumber);
+                }
             }
-            else if (source.getLength() > 0 && source[0] == '$') {
-                fileName = source.getTail(1);
-                fileLineNumber = lineNumber;
-                isBuiltinFileFlag = true;
+            else {
+                // type == "string"
             }
-        } else {
+        #endif
+        }
+        else {
             message = errorText;
         }
     }
-    if (!fileName.isValid())
+    
+    if (fileName.isValid())
     {
-        evaluateLuaStackTrace(luaAccess);
+        luaStackTrace = LuaStackTrace::createParsingFileError(luaAccess,
+                                                              lineNumber,
+                                                              fileName);
     }
-}
-
-inline void ExceptionLuaInterface::evaluateLuaStackTrace(const LuaAccess& luaAccess)
-{
-    int callLevel = 1;
-
-retry:
-    lua_Debug debugInfo;   memset(&debugInfo, 0, sizeof(debugInfo));
-    
-    int rc = lua_getstack(luaAccess.L, callLevel, &debugInfo);
-    if (rc == 1)
+    else if (parsedScriptBegin != NULL)
     {
-        lua_getinfo (luaAccess.L, "Sln", &debugInfo);
-
-        if (strcmp(debugInfo.what, "C") == 0) {
-            callLevel += 1;
-            goto retry;
-        }
-    
-        if (debugInfo.source != NULL)
-        {
-            if (debugInfo.source[0] == '@' || debugInfo.source[0] == '$') {
-                fileName          = String(debugInfo.source + 1);
-                fileLineNumber    = debugInfo.currentline - 1;
-                isBuiltinFileFlag = (debugInfo.source[0] == '$');
-            } else {
-                scriptBytes.clear();
-                scriptBytes.append((const byte*)debugInfo.source,
-                                                debugInfo.sourceLen);
-                scriptLineNumber = debugInfo.currentline - 1;
-                if (!fileName.isValid()) {
-                    callLevel += 1;
-                    goto retry; // try to find out sourceFile
-                }
-            }
-        }
+        luaStackTrace = LuaStackTrace::createParsingScriptError(luaAccess,
+                                                                lineNumber,
+                                                                parsedScriptBegin,
+                                                                parsedScriptLength);
+    } else {
+        luaStackTrace = LuaStackTrace::create(luaAccess);
     }
 }
 

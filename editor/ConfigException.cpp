@@ -48,10 +48,12 @@ void ConfigException::ErrorList::appendCatchedException()
     }
     catch (LuaException& ex)
     {
-        if (ex.isBuiltinFile() || !ex.hasFileSource()) {
-            throw;
+        LuaStackTrace::Entry::Ptr entry = ex.getLuaStackTrace()->findFirstExternalFileEntry();
+        
+        if (entry.isValid()) {
+            this->append(Error(entry->getFileName(), entry->getLineNumber(), ex.getMessage()));    
         } else {
-            this->append(Error(ex.getFileName(), ex.getFileLineNumber(), ex.getMessage()));    
+            throw;
         }
     }
     catch (ConfigException& ex)

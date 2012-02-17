@@ -80,7 +80,9 @@ public:
     LanguageModeAndEncoding getLanguageModeAndEncodingForFileNameAndContent(const String& fileName, RawPtr<const ByteBuffer> fileContent) const;
     LanguageMode::Ptr       getDefaultLanguageMode() const;
 
-    void notifyAboutNewFileContent(String absoluteFileName);
+    void notifyAboutNewFileContent(String fileName);
+    
+    bool isConfigFile(String fileName) const;
 
     void registerConfigChangedCallback(Callback<>::Ptr callback) {
         configChangedCallbackContainer.registerCallback(callback);

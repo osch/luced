@@ -28,6 +28,7 @@
 #include "ltm.h"
 #include "lvm.h"
 
+void (*luaPrintStackTraceFunction)() = NULL;
 
 
 static const char *getfuncname (lua_State *L, CallInfo *ci, const char **name);

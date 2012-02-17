@@ -31,6 +31,7 @@
 #include "LuaCFunctionArguments.hpp"
 #include "Nullable.hpp"
 #include "ByteBuffer.hpp"
+#include "LuaStackTrace.hpp"
 
 namespace LucED
 {
@@ -49,33 +50,34 @@ public:
                                              message));
     }
     
+    static Ptr createParsingScriptError(const LuaVar& errorObject,
+                                        const char* parsedScriptBegin,
+                                        long        parsedScriptLength)
+    {
+        return Ptr(new ExceptionLuaInterface(errorObject,
+                                             Null,
+                                             parsedScriptBegin,
+                                             parsedScriptLength));
+    }
+
+    static Ptr createParsingFileError(const LuaVar& errorObject,
+                                      String        fileName)
+    {
+        return Ptr(new ExceptionLuaInterface(errorObject,
+                                             fileName,
+                                             NULL,
+                                             0));
+    }
+                                  
+    
     void prependMessage(const String& message);
     
     String getMessage() const {
         return message;
     }
     
-    bool hasFileSource() const {
-        return fileName.isValid();
-    }
-    bool isBuiltinFile() const {
-        return hasFileSource() && isBuiltinFileFlag;
-    }
-    String getFileName() const {
-        return fileName.get();
-    }
-    int getFileLineNumber() const {
-        return fileLineNumber;
-    }
-
-    bool hasScriptBytes() const {
-        return scriptBytes.getLength() > 0;
-    }
-    RawPtr<ByteBuffer> getPtrToScriptBytes() {
-        return &scriptBytes;
-    }
-    int getScriptLineNumber() const {
-        return scriptLineNumber;
+    LuaStackTrace::Ptr getLuaStackTrace() const {
+        return luaStackTrace;
     }
 
 @ local defs = require("BuiltinClassDefinitions")
@@ -88,19 +90,16 @@ public:
 @ end
 
 private:
-    ExceptionLuaInterface(const LuaVar& errorObject);
+    ExceptionLuaInterface(const LuaVar&    errorObject,
+                          Nullable<String> fileName          = Null,
+                          const char*      parsedScriptBegin = NULL,
+                          long             parsedScriptLength = 0);
     
     ExceptionLuaInterface(LuaAccess luaAccess,
                           String    message);
 
-    void evaluateLuaStackTrace(const LuaAccess& luaAccess);
-
-    String message;    
-    Nullable<String> fileName;
-    ByteBuffer       scriptBytes;
-    int    fileLineNumber;
-    int    scriptLineNumber;
-    bool   isBuiltinFileFlag;
+    String             message;
+    LuaStackTrace::Ptr luaStackTrace;
 };
 
 } // namespace LucED

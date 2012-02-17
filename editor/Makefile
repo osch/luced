@@ -139,7 +139,7 @@ SLOW_MODULES := EditorTopWin             GuiRoot                  GuiWidget     
 		TextStyleCache           ConfigPackageLoader      FocusableWidget            FocusableElement \
 		NonFocusableWidget       FocusableContainerWidget TextStyleDefinitions       LanguageModeSelectors \
 		ExecutePanel             ExceptionLuaInterface    Thread                     Mutex \
-		TimeStamp
+		TimeStamp                LuaStackTrace            LuaCClosure
                          
 
 FAST_MODULES := TextWidget              TextData               HilitingBase           HilitedText \

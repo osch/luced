@@ -86,6 +86,9 @@ GlobalConfig::LanguageModeAndEncoding GlobalConfig::getLanguageModeAndEncodingFo
     if (!languageMode.isValid()) {
         languageMode = getDefaultLanguageMode();
     }
+    if (isConfigFile(fileName)) {
+        result.encodingName = "UTF-8";
+    }
     return LanguageModeAndEncoding(languageMode,
                                    result.encodingName);
 }
@@ -439,11 +442,16 @@ void GlobalConfig::readConfig()
     configChangedCallbackContainer.invokeAllCallbacks();
 }
 
-void GlobalConfig::notifyAboutNewFileContent(String absoluteFileName)
+bool GlobalConfig::isConfigFile(String fileName) const
 {
-    File realName = File(absoluteFileName).getAbsoluteNameWithResolvedLinks();
+    File realName = File(fileName).getAbsoluteNameWithResolvedLinks();
+    return realName.getDirName().startsWith(configDirectory);
+}
 
-    if (realName.getDirName().startsWith(configDirectory))
+
+void GlobalConfig::notifyAboutNewFileContent(String fileName)
+{
+    if (isConfigFile(fileName))
     {
         GlobalLuaInterpreter::getInstance()->resetModules();
     

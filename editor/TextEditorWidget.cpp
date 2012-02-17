@@ -1079,3 +1079,25 @@ void TextEditorWidget::setCurrentActionCategory(TextEditorWidget::ActionCategory
     this->currentActionCategory = actionCategory;
 }
 
+void TextEditorWidget::displayCursorInSelectedLine(int lineNumber)
+{
+    bool wasNegative = (lineNumber < 0);
+    
+    if (lineNumber < 0) lineNumber = 0;
+    
+    TextData::TextMark m = createNewMarkFromCursor();
+    m.moveToLineAndWCharColumn(lineNumber, m.getWCharColumn());
+    moveCursorToTextMarkAndAdjustVisibility(m);
+    rememberCursorPixX();
+    if (!wasNegative) {
+        m.moveToBeginOfLine();    long spos = m.getPos();
+        m.moveToNextLineBegin();  long epos = m.getPos();
+        
+        setPrimarySelection(spos, epos);
+    
+    } else {
+        releaseSelection();
+    }
+}
+
+

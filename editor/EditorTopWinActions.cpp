@@ -43,28 +43,63 @@ void EditorTopWinActions::executeLuaScript()
             long               selLength = selEnd.getPos() - selBegin.getPos();
             
             LuaAccess         luaAccess    = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
-            LuaAccess::Result scriptResult = luaAccess.executeScript((const char*) textData->getAmount(selBegin.getPos(), selLength),
-                                                                     selLength);
-            String output = scriptResult.output;
-            
-            TextData::HistorySection::Ptr historySectionHolder = textData->createHistorySection();
-            
-            editorWidget->hideCursor();
-            editorWidget->moveCursorToTextMark(selEnd);
-            if (output.getLength() > 0) {
-                long insertedLength = editorWidget->insertAtCursor((const byte*) output.toCString(), output.getLength());
-                editorWidget->setPrimarySelection(selEnd.getPos(), 
-                                                  selEnd.getPos() + insertedLength);
 
-                editorWidget->moveCursorToTextPosition(selEnd.getPos() + insertedLength);
-                editorWidget->assureCursorVisible();
+            try
+            {
+                LuaAccess::Result scriptResult = luaAccess.executeScript((const char*) textData->getAmount(selBegin.getPos(), selLength),
+                                                                         selLength);
+                String output = scriptResult.output;
+                
+                TextData::HistorySection::Ptr historySectionHolder = textData->createHistorySection();
+                
+                editorWidget->hideCursor();
                 editorWidget->moveCursorToTextMark(selEnd);
-            } else {
-                editorWidget->releaseSelection();
+                if (output.getLength() > 0) {
+                    long insertedLength = editorWidget->insertAtCursor((const byte*) output.toCString(), output.getLength());
+                    editorWidget->setPrimarySelection(selEnd.getPos(), 
+                                                      selEnd.getPos() + insertedLength);
+    
+                    editorWidget->moveCursorToTextPosition(selEnd.getPos() + insertedLength);
+                    editorWidget->assureCursorVisible();
+                    editorWidget->moveCursorToTextMark(selEnd);
+                } else {
+                    editorWidget->releaseSelection();
+                }
+                editorWidget->assureCursorVisible();
+                editorWidget->rememberCursorPixX();
+                editorWidget->showCursor();
             }
-            editorWidget->assureCursorVisible();
-            editorWidget->rememberCursorPixX();
-            editorWidget->showCursor();
+            catch (LuaException& ex) 
+            {
+                LuaStackTrace::Ptr stackTrace = ex.getLuaStackTrace();
+                bool found = false;
+                
+                for (int i = 0, j = stackTrace->getEntryCount(); i < j; ++i)
+                {
+                    LuaStackTrace::Entry::Ptr entry = stackTrace->getEntry(i);
+                    if (entry->hasScriptBytes())
+                    {
+                        RawPtr<ByteBuffer> scriptBytes = entry->getPtrToScriptBytes();
+
+                        if (scriptBytes->getLength() == selLength && memcmp(textData->getAmount(selBegin.getPos(), selLength),
+                                                                            scriptBytes->getPtr(),
+                                                                            selLength) == 0)
+                        {
+                            found = true;
+                            int lineNumber = entry->getLineNumber();
+                            if (lineNumber >= 0) {
+                                editorWidget->displayCursorInSelectedLine(selBegin.getLine() + lineNumber);
+                            }
+                            messageBoxInvoker->call(MessageBoxParameter().setTitle("Lua Error")
+                                                                         .setMessage(ex.getMessage()));
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    throw;
+                }
+            }
         }
         else
         {
@@ -97,8 +132,11 @@ void EditorTopWinActions::executeLuaScript()
             if (spos < cursorPos)
             {
                 LuaAccess         luaAccess    = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
-                LuaAccess::Result scriptResult = luaAccess.executeExpression((const char*) textData->getAmount(spos, cursorPos - spos),
-                                                                             cursorPos - spos);
+                String            script = "return ";
+                                  script.append((const char*)textData->getAmount(spos, cursorPos - spos),
+                                                cursorPos - spos);
+
+                LuaAccess::Result scriptResult = luaAccess.executeScript(script);
                 String output = scriptResult.output;
                 for (int i = 0, n = scriptResult.objects.getLength(); i < n; ++i) {
                     output << scriptResult.objects[i].toString();
@@ -122,7 +160,8 @@ void EditorTopWinActions::executeLuaScript()
     catch (LuaException& ex)
     {
         LuaErrorHandler::start(ex.getExceptionLuaInterface(),
-                               messageBoxInvoker);
+                               messageBoxInvoker,
+                               catchedExceptionHandler);
     }
 }
 

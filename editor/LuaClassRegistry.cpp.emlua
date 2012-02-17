@@ -130,12 +130,15 @@ LuaCFunctionResult TostringFunction(const LuaCFunctionArguments& args)
         }
         rslt = String() << type << ": " << hexPtr;
         
-        LuaVar toStringMethod = self["toString"];
-        
-        if (toStringMethod.isFunction()) {
-            LuaVar stringValue = toStringMethod.call(self);
-            if (stringValue.isString()) {
-                rslt << ": " << stringValue.toString();
+        if (p != NULL)
+        {
+            LuaVar toStringMethod = self["toString"];
+            
+            if (toStringMethod.isFunction()) {
+                LuaVar stringValue = toStringMethod.call(self);
+                if (stringValue.isString()) {
+                    rslt << ": " << stringValue.toString();
+                }
             }
         }
     }

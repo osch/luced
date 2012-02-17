@@ -28,7 +28,6 @@
 
 #include <typeinfo>
 
-#include "LuaException.hpp"
 #include "HeapObject.hpp"
 #include "WeakPtr.hpp"
 #include "LuaCFunctionArguments.hpp"

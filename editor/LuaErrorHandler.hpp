@@ -46,9 +46,10 @@ public:
     typedef OwningPtr<LuaErrorHandler> Ptr;
 
     static WeakPtr<LuaErrorHandler> start(ExceptionLuaInterface::Ptr                luaException,
-                                          Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker)
+                                          Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                                          Callback<>::Ptr                           catchedExceptionHandler)
     {
-        Ptr ptr(new LuaErrorHandler(luaException, messageBoxInvoker));
+        Ptr ptr(new LuaErrorHandler(luaException, messageBoxInvoker, catchedExceptionHandler));
         EventDispatcher::getInstance()->registerRunningComponent(ptr);
         ptr->startMessageBox();
         return ptr;
@@ -56,69 +57,151 @@ public:
 
 private:
     LuaErrorHandler(ExceptionLuaInterface::Ptr                luaException,
-                    Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker)
+                    Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker,
+                    Callback<>::Ptr                           catchedExceptionHandler)
         : luaException(luaException),
-          messageBoxInvoker(messageBoxInvoker)
+          messageBoxInvoker(messageBoxInvoker),
+          catchedExceptionHandler(catchedExceptionHandler)
     {}
     
     void startMessageBox()
     {
-        if (luaException->hasFileSource() && !luaException->isBuiltinFile())
+        try
         {
-            messageBoxInvoker->call(MessageBoxParameter().setTitle("Lua Error")
-                                                         .setMessage(String() << "Lua Error in file '" << luaException->getFileName() << "'")
-                                                         .setDefaultButton("O]pen file", newCallback(this, &LuaErrorHandler::handleOpenFileButton))
-                                                         .setCancelButton ("C]ancel",    newCallback(this, &LuaErrorHandler::handleAbortButton)));
+            LuaStackTrace::Ptr stackTrace = luaException->getLuaStackTrace();
+            
+            entry = stackTrace->findFirstExternalFileEntry();
+            if (entry.isValid())
+            {
+                messageBoxInvoker->call(MessageBoxParameter().setTitle("Lua Error")
+                                                             .setMessage(String() << "Lua Error in file '" << entry->getFileName() << "'")
+                                                             .setDefaultButton("O]pen file", newCallback(this, &LuaErrorHandler::handleOpenFileButton))
+                                                             .setCancelButton ("C]ancel",    newCallback(this, &LuaErrorHandler::handleAbortButton)));
+            }
+            else
+            {
+                entry = stackTrace->findFirstScriptBytesEntry();
+                if (entry.isValid())
+                {
+                    messageBoxInvoker->call(MessageBoxParameter().setTitle("Lua Error")
+                                                                 .setMessage(luaException->getMessage())
+                                                                 .setDefaultButton("O]pen script", newCallback(this, &LuaErrorHandler::handleOpenStringButton))
+                                                                 .setCancelButton ("C]ancel",      newCallback(this, &LuaErrorHandler::handleAbortButton)));
+                }
+                else
+                {
+                    entry = stackTrace->findFirstBuiltinFileEntry();
+                    if (entry.isValid())
+                    {
+                        messageBoxInvoker->call(MessageBoxParameter().setTitle("Internal Lua Error")
+                                                                     .setMessage(String() << "Lua Error in internal file '"
+                                                                                          << entry->getFileName()
+                                                                                          << "', line " << entry->getLineNumber()
+                                                                                          << ": "
+                                                                                          << luaException->getMessage()));
+                    }
+                    else {
+                        messageBoxInvoker->call(MessageBoxParameter().setTitle("Internal Lua Error")
+                                                                     .setMessage(String() << "Internal Lua Error: "
+                                                                                          << luaException->getMessage()));
+                    }
+                    EventDispatcher::getInstance()->deregisterRunningComponent(this);
+                }
+            }
         }
-        else if (luaException->hasScriptBytes() && !luaException->isBuiltinFile())
-        {
-            messageBoxInvoker->call(MessageBoxParameter().setTitle("Lua Error")
-                                                         .setMessage(luaException->getMessage())
-                                                         .setDefaultButton("O]pen script", newCallback(this, &LuaErrorHandler::handleOpenStringButton))
-                                                         .setCancelButton ("C]ancel",      newCallback(this, &LuaErrorHandler::handleAbortButton)));
-        }
-        else if (luaException->isBuiltinFile())
-        {
-            messageBoxInvoker->call(MessageBoxParameter().setTitle("Internal Lua Error")
-                                                         .setMessage(String() << "Lue Error in internal file '"
-                                                                              << luaException->getFileName()
-                                                                              << "', line " << luaException->getFileLineNumber()
-                                                                              << ": "
-                                                                              << luaException->getMessage()));
-        }
-        else
-        {
-            messageBoxInvoker->call(MessageBoxParameter().setTitle("Lua Error")
-                                                         .setMessage(luaException->getMessage()));
+        catch (...) {
+            handleCatchedException();
         }
     }
     
     void handleOpenFileButton()
     {
-        if (luaException->hasFileSource() && !luaException->isBuiltinFile())
+        try
         {
-            EditorTopWin::Ptr win;
-            
-            RawPtr<TopWinList> topWins = TopWinList::getInstance();
-            String fileName = File(luaException->getFileName()).getAbsoluteNameWithResolvedLinks();
-            for (int w = 0; w < topWins->getNumberOfTopWins(); ++w)
+            if (entry.isValid() && entry->hasFileName() && !entry->isBuiltinFile())
             {
-                EditorTopWin* topWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(w));
-                if (topWin != NULL && File(topWin->getFileName()).getAbsoluteNameWithResolvedLinks() == fileName) {
-                    win = topWin;
-                    break;
+                EditorTopWin::Ptr win;
+                
+                RawPtr<TopWinList> topWins = TopWinList::getInstance();
+                String fileName = File(entry->getFileName()).getAbsoluteNameWithResolvedLinks();
+                for (int w = 0; w < topWins->getNumberOfTopWins(); ++w)
+                {
+                    EditorTopWin* topWin = dynamic_cast<EditorTopWin*>(topWins->getTopWin(w));
+                    if (topWin != NULL && File(topWin->getFileName()).getAbsoluteNameWithResolvedLinks() == fileName) {
+                        win = topWin;
+                        break;
+                    }
+                }
+    
+                if (win.isValid()) {
+                    win->raise();
+                }
+                else {
+                    TextData::Ptr textData = TextData::create();
+                    String        fileName = entry->getFileName();
+                    
+                    textData->loadFile(fileName);
+    
+                    LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
+                    
+                    if (!languageMode.isValid()) {
+                        languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
+                    }
+                    
+                    HilitedText::Ptr  hilitedText = HilitedText::create(textData, languageMode);
+                    
+                    win = EditorTopWin::create(hilitedText);
+                    win->show();
+                }
+                if (entry->getLineNumber() >= 0) {
+                    win->gotoLineNumber(entry->getLineNumber());
+                }
+                int i = entry->getEntryIndex();
+                LuaStackTrace::Ptr stackTrace = luaException->getLuaStackTrace();
+                if (i > 0 && stackTrace->getEntry(i - 1)->hasScriptBytes()) {
+                    entry = stackTrace->getEntry(i - 1);
+                    win->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                                            .setMessage(luaException->getMessage())
+                                                            .setDefaultButton("O]pen script", newCallback(this, &LuaErrorHandler::handleOpenStringButton))
+                                                            .setCancelButton ("C]ancel",      newCallback(this, &LuaErrorHandler::handleAbortButton)));
+                }
+                else {
+                    entry = Null;
+                    win->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
+                                                            .setMessage(luaException->getMessage()));
+                    EventDispatcher::getInstance()->deregisterRunningComponent(this);
                 }
             }
-
-            if (win.isValid()) {
-                win->raise();
-            }
             else {
+                EventDispatcher::getInstance()->deregisterRunningComponent(this);
+            }
+        }
+        catch (...) {
+            handleCatchedException();
+        }
+    }
+    
+    void handleOpenStringButton()
+    {
+        try
+        {
+            if (entry.isValid() && entry->hasScriptBytes())
+            {
                 TextData::Ptr textData = TextData::create();
-                String        fileName = luaException->getFileName();
+                String        fileName = String() << System::getInstance()->getHomeDirectory() << "/Untitled.lua";
                 
-                textData->loadFile(fileName);
-
+                ByteBuffer buffer; 
+                buffer.takeOver(entry->getPtrToScriptBytes());
+    
+                GlobalConfig::LanguageModeAndEncoding result = GlobalConfig::getInstance()
+                                                               ->getLanguageModeAndEncodingForFileNameAndContent
+                                                               (
+                                                                 fileName, 
+                                                                 &buffer
+                                                               );
+                textData->takeOverBuffer(result.encoding, &buffer);
+                textData->setPseudoFileName(fileName);
+        
                 LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
                 
                 if (!languageMode.isValid()) {
@@ -127,68 +210,21 @@ private:
                 
                 HilitedText::Ptr  hilitedText = HilitedText::create(textData, languageMode);
                 
-                win = EditorTopWin::create(hilitedText);
+                EditorTopWin::Ptr win = EditorTopWin::create(hilitedText);
                 win->show();
-            }
-            if (luaException->getFileLineNumber() >= 0) {
-                win->gotoLineNumber(luaException->getFileLineNumber());
-            }
-            if (luaException->hasScriptBytes()) {
-                win->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                                        .setMessage(luaException->getMessage())
-                                                        .setDefaultButton("O]pen script", newCallback(this, &LuaErrorHandler::handleOpenStringButton))
-                                                        .setCancelButton ("C]ancel",      newCallback(this, &LuaErrorHandler::handleAbortButton)));
-            }
-            else {
+    
+                if (entry->getLineNumber() >= 0) {
+                    win->gotoLineNumber(entry->getLineNumber());
+                }
+                entry = Null;
                 win->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
                                                         .setMessage(luaException->getMessage()));
-                EventDispatcher::getInstance()->deregisterRunningComponent(this);
             }
-        }
-        else {
             EventDispatcher::getInstance()->deregisterRunningComponent(this);
         }
-    }
-    
-    void handleOpenStringButton()
-    {
-        if (luaException->hasScriptBytes())
-        {
-            TextData::Ptr textData = TextData::create();
-            String        fileName = String() << System::getInstance()->getHomeDirectory() << "/Untitled.lua";
-            
-            ByteBuffer buffer; 
-            buffer.takeOver(luaException->getPtrToScriptBytes());
-
-            GlobalConfig::LanguageModeAndEncoding result = GlobalConfig::getInstance()
-                                                           ->getLanguageModeAndEncodingForFileNameAndContent
-                                                           (
-                                                             fileName, 
-                                                             &buffer
-                                                           );
-            textData->takeOverBuffer(result.encoding, &buffer);
-            textData->setPseudoFileName(fileName);
-    
-            LanguageMode::Ptr languageMode = GlobalConfig::getInstance()->getLanguageModeForFileName(fileName);
-            
-            if (!languageMode.isValid()) {
-                languageMode = GlobalConfig::getInstance()->getDefaultLanguageMode();
-            }
-            
-            HilitedText::Ptr  hilitedText = HilitedText::create(textData, languageMode);
-            
-            EditorTopWin::Ptr win = EditorTopWin::create(hilitedText);
-            win->show();
-
-            if (luaException->getScriptLineNumber() >= 0) {
-                win->gotoLineNumber(luaException->getScriptLineNumber());
-            }
-
-
-            win->setMessageBox(MessageBoxParameter().setTitle("Lua Error")
-                                                    .setMessage(luaException->getMessage()));
+        catch (...) {
+            handleCatchedException();
         }
-        EventDispatcher::getInstance()->deregisterRunningComponent(this);
     }
     
     void handleAbortButton()
@@ -196,8 +232,16 @@ private:
         EventDispatcher::getInstance()->deregisterRunningComponent(this);
     }
     
-    ExceptionLuaInterface::Ptr luaException;
+    void handleCatchedException()
+    {
+        EventDispatcher::getInstance()->deregisterRunningComponent(this);
+        catchedExceptionHandler->call();
+    }
+    
+    ExceptionLuaInterface::Ptr                luaException;
     Callback<const MessageBoxParameter&>::Ptr messageBoxInvoker;
+    Callback<>::Ptr                           catchedExceptionHandler;
+    LuaStackTrace::Entry::Ptr                 entry;
 };
 
 } // namespace LucED
