@@ -25,6 +25,7 @@
 #include "HeapObject.hpp"
 #include "OwningPtr.hpp"
 #include "RawPtr.hpp"
+#include "WeakPtr.hpp"
 
 struct lua_State;
 
@@ -76,7 +77,7 @@ private:
         ~Data();
 
         int registryReference;
-        RawPtr<LuaInterpreter> luaInterpreter;
+        WeakPtr<LuaInterpreter> luaInterpreter;
     };
     
     static lua_State* getL(const LuaAccess& luaAccess);

@@ -97,6 +97,14 @@ public:
     }
     
     bool dependsOnPackage(const String& packageName) const;
+    
+    void clearUserDefinedActions() {
+        userDefinedActions.clear();
+        actionKeyConfig = buildActionKeyConfig();
+    }
+    void registerUserDefinedAction(const KeyCombination& keyCombination, const LuaVar& action);
+
+    LuaVar getUserDefinedAction(const LuaAccess& luaAccess, ActionId actionId);
 
 private:
     friend class SingletonInstance<GlobalConfig>;
@@ -110,6 +118,8 @@ private:
 
     typedef HeapObjectArray<ConfigDataFont::Ptr>      ConfigDataFontList;
     typedef HeapObjectArray<ConfigDataTextStyle::Ptr> ConfigDataTextStyleList;
+
+    ActionKeyConfig::Ptr buildActionKeyConfig();
 
     static void appendFontTo(ConfigDataFont::Ptr      font,
                              ConfigDataFontList::Ptr  fonts, 
@@ -156,7 +166,19 @@ private:
     
     TextStyleDefinitions::Ptr textStyleDefinitions;
     TextStyle::Ptr defaultTextStyle;
-    
+
+    class UserDefinedAction
+    {
+    public:
+        UserDefinedAction(ActionId                 actionId)
+            : actionId(actionId)
+        {}
+        ActionId                           actionId;
+        Nullable<KeyCombination>           keyCombination;
+        Nullable<LuaStoredObjectReference> action;
+    };
+
+    ObjectArray<UserDefinedAction> userDefinedActions;    
     ConfigData::Ptr configData;
 };
 

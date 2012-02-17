@@ -148,3 +148,18 @@ LuaCFunctionResult LucedLuaInterface::existsFile(const LuaCFunctionArguments& ar
     return LuaCFunctionResult(luaAccess) << File(args[0].toString()).exists();
 }
 
+LuaCFunctionResult LucedLuaInterface::bindActionKey(const LuaCFunctionArguments& args)
+{
+    LuaAccess luaAccess = args.getLuaAccess();
+
+    if (args.getLength() != 2 || !args[0].isString()) {
+        throw LuaArgException(luaAccess);
+    }
+    if (!(args[1].isFunction() || args[1].isNil())) {
+        throw LuaArgException(luaAccess);
+    }
+    
+    GlobalConfig::getInstance()->registerUserDefinedAction(KeyCombination(args[0].toString()),
+                                                           args[1]);
+    return LuaCFunctionResult(luaAccess);
+}

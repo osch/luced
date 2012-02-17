@@ -244,6 +244,10 @@ private:
                 }
             }
         }
+        else if (moduleName.getLength() == 0)
+        {
+            rslt = GlobalConfig::getInstance()->getUserDefinedAction(luaAccess, actionId);
+        }
         return rslt;
     }
     

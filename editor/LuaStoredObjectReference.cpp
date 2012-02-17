@@ -26,6 +26,8 @@ using namespace LucED;
 
 LuaStoredObjectReference::Data::~Data()
 {
-    lua_State* L = getL(luaInterpreter->getCurrentLuaAccess());
-    luaL_unref(L, LUA_REGISTRYINDEX, registryReference);
+    if (luaInterpreter.isValid()) {
+        lua_State* L = getL(luaInterpreter->getCurrentLuaAccess());
+        luaL_unref(L, LUA_REGISTRYINDEX, registryReference);
+    }
 }

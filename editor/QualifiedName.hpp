@@ -46,7 +46,11 @@ public:
     }
 
     String toString() const {
-        return String() << qualifier << "." << name;
+        if (qualifier.getLength() > 0) {
+            return String() << qualifier << "." << name;
+        } else {
+            return String() << qualifier << "." << name;
+        }
     }
 private:
     String qualifier;

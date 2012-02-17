@@ -159,9 +159,9 @@ void GlobalConfig::appendActionKeyBindingTo(ConfigDataActionKeyBinding::Ptr conf
                               << actionName.getTail(strlen(THIS_PREFIX));
     }
     QualifiedName qualifiedActionName(actionName);
-    if (   qualifiedActionName.getQualifier() == ""
-        || qualifiedActionName.getQualifier() == "this"
-        || qualifiedActionName.getName() == "")
+    if (   qualifiedActionName.getQualifier() == "this"
+        || qualifiedActionName.getName() == ""
+        || qualifiedActionName.getName() == "this")
     {
         throw ConfigException(String() << "Invalid actionName '" << actionName << "'");
     }
@@ -216,6 +216,89 @@ void GlobalConfig::appendConfigFromPackageTo(const String&           packageName
             }
         }
     }
+}
+
+void GlobalConfig::registerUserDefinedAction(const KeyCombination& keyCombination, const LuaVar& action)
+{
+    LuaAccess luaAccess = action.getLuaAccess();
+
+    int i;
+    for (i = 0; i < userDefinedActions.getLength(); ++i) {
+        if (userDefinedActions[i].keyCombination == keyCombination) {
+            break;
+        }
+    }
+    if (i == userDefinedActions.getLength()) {
+        for (i = 0; i < userDefinedActions.getLength(); ++i) {
+            if (userDefinedActions[i].keyCombination == Null) {
+                break;
+            }
+        }
+    }
+    if (i == userDefinedActions.getLength()) {
+        if (action.isFunction()) {
+            ActionId id = ActionIdRegistry::getInstance()->getActionId(String() << "userDefinedAction" << i);
+            userDefinedActions.append(id);
+        } else {
+            i = -1;
+        }
+    }
+    if (i >= 0) {
+        if (action.isFunction()) {
+            userDefinedActions[i].keyCombination = keyCombination;
+            userDefinedActions[i].action = luaAccess.store(action);
+        } else {
+            userDefinedActions[i].keyCombination = Null;
+            userDefinedActions[i].action         = Null;
+        }
+    }
+    actionKeyConfig = buildActionKeyConfig();
+}
+
+LuaVar GlobalConfig::getUserDefinedAction(const LuaAccess& luaAccess, ActionId actionId)
+{
+    for (int i = 0; i  < userDefinedActions.getLength(); ++i) {
+        if (   userDefinedActions[i].actionId == actionId
+            && userDefinedActions[i].action.isValid())
+        {
+            return luaAccess.retrieve(userDefinedActions[i].action.get());
+        }
+    }
+    return LuaVar(luaAccess);
+}
+
+ActionKeyConfig::Ptr GlobalConfig::buildActionKeyConfig()
+{
+    ActionKeyConfig::Ptr newActionKeyConfig = ActionKeyConfig::create();
+    {
+        for (int i = 0; i < userDefinedActions.getLength(); ++i) {
+            if (userDefinedActions[i].keyCombination.isValid()) {
+                newActionKeyConfig->append(userDefinedActions[i].keyCombination.get(), 
+                                           userDefinedActions[i].actionId);
+            }
+        }
+        ConfigData::ActionKeyBindings::Ptr actionKeyBindings = configData->getActionKeyBindings();
+    
+        for (int i = 0; i < actionKeyBindings->getLength(); ++i)
+        {
+            ConfigData::ActionKeyBindings::Element::Ptr e = actionKeyBindings->get(i);
+            if (e->isActionKeyBinding()) 
+            {   
+                appendActionKeyBindingTo(e->getActionKeyBinding(),
+                                         newActionKeyConfig,
+                                         "");
+            }
+            else if (e->isReferer())
+            {
+                appendConfigFromPackageTo<ConfigDataActionKeyBinding,
+                                          ActionKeyConfig,
+                                          appendActionKeyBindingTo>(e->getReferer()->getReferToPackage(),
+                                                                    "getActionKeyBindings",
+                                                                    newActionKeyConfig);
+            }
+        }
+    }
+    return newActionKeyConfig;
 }
 
 void GlobalConfig::readConfig()
@@ -360,28 +443,7 @@ void GlobalConfig::readConfig()
 
             // ActionKeyBinding
     
-            ActionKeyConfig::Ptr newActionKeyConfig = ActionKeyConfig::create();
-            {
-                ConfigData::ActionKeyBindings::Ptr actionKeyBindings = configData->getActionKeyBindings();
-                for (int i = 0; i < actionKeyBindings->getLength(); ++i)
-                {
-                    ConfigData::ActionKeyBindings::Element::Ptr e = actionKeyBindings->get(i);
-                    if (e->isActionKeyBinding()) 
-                    {   
-                        appendActionKeyBindingTo(e->getActionKeyBinding(),
-                                                 newActionKeyConfig,
-                                                 "");
-                    }
-                    else if (e->isReferer())
-                    {
-                        appendConfigFromPackageTo<ConfigDataActionKeyBinding,
-                                                  ActionKeyConfig,
-                                                  appendActionKeyBindingTo>(e->getReferer()->getReferToPackage(),
-                                                                            "getActionKeyBindings",
-                                                                            newActionKeyConfig);
-                    }
-                }
-            }
+            ActionKeyConfig::Ptr newActionKeyConfig = buildActionKeyConfig();
             
             languageModeSelectors = newLanguageModeSelectors;
             languageModes = newLanguageModes;

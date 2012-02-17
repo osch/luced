@@ -35,5 +35,8 @@ QualifiedName::QualifiedName(const String& str)
 
         name      = str.getSubstring(Pos(r.getCaptureBegin(2)),
                                      Len(r.getCaptureLength(2)));
+    } 
+    else {
+        name = str;
     }
 }

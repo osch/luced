@@ -44,6 +44,8 @@ return
                      },
                      { name = "existsFile"
                      },
+                     { name = "bindActionKey"
+                     },
                    }
     },
     {
