@@ -60,7 +60,7 @@ local function preprocess(filename)
     else
       append(chunk, format('write(emluaGetIndentString()); '))
       local last = 1
-      for text, expr, index in string.gfind(line, "(.-)@(%b())()") do
+      for text, expr, index in string.gmatch(line, "(.-)@(%b())()") do
         last = index
         if text ~= "" then
           append(chunk, format('write(%s); ', quoteAsString(text)))
