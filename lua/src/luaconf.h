@@ -757,64 +757,7 @@ union luai_Cast { double l_d; long l_l; };
 ** without modifying the main part of the file.
 */
 
-namespace LucED
-{
 
-typedef struct
-{
-    void* stackChecker;
-    void* luaInterpreter;
-} 
-ExtraLuaStateData;
-
-void LuaStateAccess_freeExtraLuaStateData(ExtraLuaStateData* extraLuaStateData);
-void LuaStateAccess_incRefForLuaInterpreter(void* luaInterpreter);
-
-} // namespace LucED
-
-#undef  LUAI_EXTRASPACE
-#define LUAI_EXTRASPACE sizeof(LucED::ExtraLuaStateData)
-
-#undef  luai_userstateopen
-#define luai_userstateopen(L) \
-{ \
-    LucED::ExtraLuaStateData* extra = (LucED::ExtraLuaStateData*)((char*)(L) - sizeof(LucED::ExtraLuaStateData)); \
-    extra->stackChecker = NULL; \
-    extra->luaInterpreter = NULL; \
-}
-
-#undef  luai_userstatethread
-#define luai_userstatethread(L,L1) \
-{ \
-    LucED::ExtraLuaStateData* oldExtra = (LucED::ExtraLuaStateData*)((char*)(L)  - sizeof(LucED::ExtraLuaStateData)); \
-    LucED::ExtraLuaStateData* newExtra = (LucED::ExtraLuaStateData*)((char*)(L1) - sizeof(LucED::ExtraLuaStateData)); \
-    newExtra->stackChecker   = NULL; \
-    newExtra->luaInterpreter = oldExtra->luaInterpreter; \
-    if (oldExtra->luaInterpreter != NULL) { \
-        LucED::LuaStateAccess_incRefForLuaInterpreter(oldExtra->luaInterpreter); \
-    } \
-}
-
-
-#undef  luai_userstateclose
-#define luai_userstateclose(L) \
-{ \
-    LucED::ExtraLuaStateData* extra = (LucED::ExtraLuaStateData*)((char*)(L) - sizeof(LucED::ExtraLuaStateData)); \
-    \
-    if (extra->stackChecker != NULL || extra->luaInterpreter != NULL) { \
-        LucED::LuaStateAccess_freeExtraLuaStateData(extra); \
-    } \
-}
-
-#undef  luai_userstatefree
-#define luai_userstatefree(L) \
-{ \
-    LucED::ExtraLuaStateData* extra = (LucED::ExtraLuaStateData*)((char*)(L) - sizeof(LucED::ExtraLuaStateData)); \
-    \
-    if (extra->stackChecker != NULL || extra->luaInterpreter != NULL) { \
-        LucED::LuaStateAccess_freeExtraLuaStateData(extra); \
-    } \
-}
 
 #endif
 
