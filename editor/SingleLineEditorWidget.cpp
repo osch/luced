@@ -23,6 +23,7 @@
 
 #include "SingleLineDisplayActions.hpp"
 #include "SingleLineEditActions.hpp"
+#include "UserDefinedActionMethods.hpp"
 
 using namespace LucED;
 
@@ -35,6 +36,7 @@ SingleLineEditorWidget::SingleLineEditorWidget(HilitedText::Ptr hilitedText)
 
     getKeyActionHandler()->addActionMethods(SingleLineDisplayActions::create(this));
     getKeyActionHandler()->addActionMethods(SingleLineEditActions::create(this));
+    getKeyActionHandler()->addActionMethods(UserDefinedActionMethods::create(this));
 }
 
 

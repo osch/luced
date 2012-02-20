@@ -126,6 +126,9 @@ public:
         w->lastActionCategory    = w->currentActionCategory;
         w->currentActionCategory = ACTION_UNSPECIFIED;
     
+        w->textData->setMergableHistorySeparator();
+        TextData::HistorySection::Ptr historySectionHolder = w->textData->getHistorySectionHolder();
+
         bool rslt = KeyActionHandler::invokeActionMethod(actionId);
     
         if (!rslt) {

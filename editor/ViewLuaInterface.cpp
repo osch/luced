@@ -111,6 +111,15 @@ LuaCFunctionResult ViewLuaInterface::getColumn(const LuaCFunctionArguments& args
 LuaCFunctionResult ViewLuaInterface::insertAtCursor(const LuaCFunctionArguments& args)
 {
     LuaAccess luaAccess = args.getLuaAccess();
+
+    if (e->hasSelection())
+    {
+        if (   e->getCursorTextPosition() < e->getBeginSelectionPos()
+            || e->getCursorTextPosition() > e->getEndSelectionPos())
+        {
+            e->releaseSelection();
+        }
+    }
     
     TextData::TextMark m = e->createNewMarkFromCursor();
     
@@ -132,7 +141,12 @@ LuaCFunctionResult ViewLuaInterface::insertAtCursor(const LuaCFunctionArguments&
         
         }
     } 
-    
+    if (e->hasSelection())
+    {
+        if (e->getCursorTextPosition() == e->getEndSelectionPos()) {
+            e->moveSelectionEndTo(m.getPos());
+        }
+    }
     e->moveCursorToTextMark(m);
     
     return LuaCFunctionResult(luaAccess) << totalInsertedLength;
