@@ -46,12 +46,12 @@
 #include "SaveAsPanel.hpp"
 #include "EditorTopWinActions.hpp"
 #include "UnknownActionNameException.hpp"
-#include "ViewLuaInterface.hpp"
 #include "LucedLuaInterface.hpp"
 #include "GlobalLuaInterpreter.hpp"
 #include "QualifiedName.hpp"
 #include "EncodingConverter.hpp"
 #include "LuaErrorHandler.hpp"
+#include "UserDefinedActionMethods.hpp"
 
 using namespace LucED;
 
@@ -195,64 +195,33 @@ private:
     RawPtr<EditorTopWin> editorTopWin;
 };
 
-
-class EditorTopWin::UserDefinedActionMethods : public ActionMethods
+class EditorTopWin::ShellInvocationHandler : public UserDefinedActionMethods::ShellInvocationHandler
 {
 public:
-    typedef OwningPtr<UserDefinedActionMethods> Ptr;
-    
-    static Ptr create(RawPtr<EditorTopWin> thisTopWin) {
-        return Ptr(new UserDefinedActionMethods(thisTopWin));
+    static Ptr create(WeakPtr<EditorTopWin> e) {
+        return Ptr(new ShellInvocationHandler(e));
     }
-    virtual bool invokeActionMethod(ActionId actionId);
 
-    virtual bool hasActionMethod(ActionId actionId) {
-        if (actionId.isBuiltin()) {
-            return false;
+    void beforeShellInvocation() {
+        if (e.isValid() && e->textData->getModifiedFlag() == true) {
+            if (!e->textData->isFileNamePseudo()) {
+                e->save();
+            }
         }
-        return !getLuaActionFunction(actionId).isNil();
     }
+    void afterShellInvocation(ProgramExecutor::Result rslt) {
+        if (e.isValid()) {
+            e->finishedShellscript(rslt);
+        }
+    }
+
 private:
-    UserDefinedActionMethods(RawPtr<EditorTopWin> thisTopWin)
-        : thisTopWin(thisTopWin)
+    ShellInvocationHandler(WeakPtr<EditorTopWin> e)
+        : e(e)
     {}
-    LuaVar getLuaActionFunction(ActionId actionId)
-    {
-        QualifiedName fullActionName(actionId.toString());
-        String        moduleName = fullActionName.getQualifier();
-        LuaAccess     luaAccess  = GlobalLuaInterpreter::getInstance()->getCurrentLuaAccess();
-        LuaVar        rslt(luaAccess);
-        
-        if (moduleName.getLength() > 0 && moduleName != "builtin")
-        {
-            LuaVar module(luaAccess);
-            try
-            {
-                module = GlobalLuaInterpreter::getInstance()->requireConfigPackage(moduleName);
-            } 
-            catch (LuaException& ex) {
-            }
-            if (!module.isNil())
-            {
-                LuaVar actionGetter = module["getAction"];
-                if (!actionGetter.isNil()) {
-                    if (!actionGetter.isFunction()) {
-                        throw ConfigException(String() << "'" << moduleName 
-                                                       << ".getAction' must be function");
-                    }
-                    rslt = actionGetter.call(fullActionName.getName());
-                }
-            }
-        }
-        else if (moduleName.getLength() == 0)
-        {
-            rslt = GlobalConfig::getInstance()->getUserDefinedAction(luaAccess, actionId);
-        }
-        return rslt;
-    }
-    
-    RawPtr<EditorTopWin> thisTopWin;
+    WeakPtr<EditorTopWin> e;
 };
+
 
 EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
     : rootElement(GuiLayoutColumn::create()),
@@ -329,10 +298,9 @@ EditorTopWin::EditorTopWin(HilitedText::Ptr hilitedText, int width, int height)
                                               actionInterface,
                                               newCallback(this, &EditorTopWin::handleCatchedException))));
 
-    userDefinedActionMethods = UserDefinedActionMethods::create(this);
-    textEditor->getKeyActionHandler()->addActionMethods(userDefinedActionMethods);
-    
-    viewLuaInterface = ViewLuaInterface::create(textEditor);
+    UserDefinedActionMethods::Ptr userActions = UserDefinedActionMethods::create(textEditor,
+                                                                                 ShellInvocationHandler::create(this));
+    textEditor->getKeyActionHandler()->addActionMethods(userActions);
 }
 
 
@@ -584,7 +552,7 @@ void EditorTopWin::treatFocusIn()
         }
         checkForFileModifications();
     }
-    LucedLuaInterface::getInstance()->setCurrentView(viewLuaInterface);
+    LucedLuaInterface::getInstance()->setCurrentView(getViewLuaInterface());
 }
 
 bool EditorTopWin::checkForFileModifications()
@@ -901,66 +869,6 @@ String EditorTopWin::getFileName() const
     return textData->getFileName();
 }
 
-bool EditorTopWin::UserDefinedActionMethods::invokeActionMethod(ActionId actionId)
-{
-    bool processed = false;
-    
-    if (actionId.isBuiltin()) {
-        return false;
-    }
-
-    LuaVar luaActionFunction = getLuaActionFunction(actionId);
-            
-    if (luaActionFunction.isFunction()) 
-    {
-        TextData::HistorySection::Ptr historySectionHolder = thisTopWin->textEditor->getTextData()->createHistorySection();
-        
-        luaActionFunction.call(thisTopWin->viewLuaInterface);
-
-        processed = true;
-    }
-    else if (luaActionFunction.isTable())
-    {
-        LuaVar shellScript = luaActionFunction["shellScript"];
-        if (shellScript.isString())
-        {
-            String script = shellScript.toString();
-
-            if (script.getLength() > 0)
-            {
-                if (thisTopWin->textData->getModifiedFlag() == true) {
-                    if (!thisTopWin->textData->isFileNamePseudo()) {
-                        thisTopWin->save();
-                    }
-                }
-                HeapHashMap<String,String>::Ptr env = HeapHashMap<String,String>::create();
-                                                env->set("FILE", thisTopWin->getFileName());
-
-                Commandline::Ptr commandline = Commandline::create();
-                                 commandline->append("/bin/sh");
-                                 
-                ProgramExecutor::start(commandline,
-                                       script,
-                                       env,
-                                       newCallback(thisTopWin, &EditorTopWin::finishedShellscript));
-                processed = true;
-            }
-        }
-        else {
-            throw ConfigException(String() << "Action '" << actionId.toString() << "' is table but has no field 'shellScript'");
-        }
-    }
-    else {
-        throw ConfigException(String() << "Action '" << actionId.toString() << "' must be function or table");
-    }
-    
-    if (processed)
-    {
-        thisTopWin->textEditor->showCursor();
-        thisTopWin->textEditor->rememberCursorPixX();
-    }
-    return processed;
-}
 
 void EditorTopWin::finishedShellscript(ProgramExecutor::Result rslt)
 {

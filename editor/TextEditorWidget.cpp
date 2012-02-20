@@ -27,6 +27,7 @@
 #include "GlobalConfig.hpp"
 #include "Clipboard.hpp"
 #include "CharUtil.hpp"
+#include "ViewLuaInterface.hpp"
 
 using namespace LucED;
 
@@ -182,6 +183,10 @@ TextEditorWidget::TextEditorWidget(HilitedText::Ptr hilitedText,
         }
     }
 }
+
+// Destructor here in cpp because of forwared declarated ViewLueInterface in hpp
+TextEditorWidget::~TextEditorWidget()
+{}
 
 void TextEditorWidget::treatConfigUpdate()
 {
@@ -1101,3 +1106,10 @@ void TextEditorWidget::displayCursorInSelectedLine(int lineNumber)
 }
 
 
+RawPtr<ViewLuaInterface> TextEditorWidget::getViewLuaInterface()
+{
+    if (!viewLuaInterface.isValid()) {
+        viewLuaInterface = ViewLuaInterface::create(this);
+    }
+    return viewLuaInterface;
+}

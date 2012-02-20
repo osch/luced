@@ -98,13 +98,13 @@ public:
     
     bool dependsOnPackage(const String& packageName) const;
     
-    void clearUserDefinedActions() {
-        userDefinedActions.clear();
+    void clearTemporaryUserDefinedActions() {
+        temporaryUserDefinedActions.clear();
         actionKeyConfig = buildActionKeyConfig();
     }
-    void registerUserDefinedAction(const KeyCombination& keyCombination, const LuaVar& action);
+    void registerTemporaryUserDefinedAction(const KeyCombination& keyCombination, const LuaVar& action);
 
-    LuaVar getUserDefinedAction(const LuaAccess& luaAccess, ActionId actionId);
+    LuaVar getTemporaryUserDefinedAction(const LuaAccess& luaAccess, ActionId actionId);
 
 private:
     friend class SingletonInstance<GlobalConfig>;
@@ -167,10 +167,10 @@ private:
     TextStyleDefinitions::Ptr textStyleDefinitions;
     TextStyle::Ptr defaultTextStyle;
 
-    class UserDefinedAction
+    class TemporaryUserDefinedAction
     {
     public:
-        UserDefinedAction(ActionId                 actionId)
+        TemporaryUserDefinedAction(ActionId actionId)
             : actionId(actionId)
         {}
         ActionId                           actionId;
@@ -178,7 +178,7 @@ private:
         Nullable<LuaStoredObjectReference> action;
     };
 
-    ObjectArray<UserDefinedAction> userDefinedActions;    
+    ObjectArray<TemporaryUserDefinedAction> temporaryUserDefinedActions;    
     ConfigData::Ptr configData;
 };
 

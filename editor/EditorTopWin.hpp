@@ -39,14 +39,12 @@
 #include "ScrollableTextGuiCompound.hpp"
 #include "ActionKeyConfig.hpp"
 #include "ActionKeySequenceHandler.hpp"
-#include "ViewLuaInterface.hpp"
 #include "FocusableElement.hpp"
 #include "ActionMethodContainer.hpp"
+#include "ViewLuaInterface.hpp"
                 
 namespace LucED
 {
-
-class ViewLuaInterface;
 
 class EditorTopWin : public  TopWin,
                      public  FocusManager,
@@ -65,7 +63,7 @@ public:
     ~EditorTopWin();
     
     RawPtr<ViewLuaInterface> getViewLuaInterface() const {
-        return viewLuaInterface;
+        return textEditor->getViewLuaInterface();
     }
     
     TextEditorWidget::Ptr getTextEditorWidget() {
@@ -127,7 +125,7 @@ private: // FocusManager methods
 private:
     class PanelInvoker;
     class ActionInterface;
-    class UserDefinedActionMethods;
+    class ShellInvocationHandler;
     
     EditorTopWin(HilitedText::Ptr hilitedText, int width, int height);
 
@@ -179,12 +177,9 @@ private:
     
     OwningPtr<PanelInvoker>             panelInvoker;
     OwningPtr<ActionInterface>          actionInterface;
-    OwningPtr<UserDefinedActionMethods> userDefinedActionMethods;
     
     ActionMethodContainer::Ptr          actionMethodContainer;
     ActionKeySequenceHandler            actionKeySequenceHandler;
-    
-    OwningPtr<ViewLuaInterface> viewLuaInterface;
 };
 
 } // namespace LucED

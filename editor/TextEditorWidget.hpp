@@ -34,6 +34,8 @@
 namespace LucED
 {
 
+class ViewLuaInterface;
+
 class TextEditorWidget : public TextWidget
 {
 public:
@@ -227,6 +229,8 @@ public:
         getBackliteBuffer()->registerListenerForNextChange(callback);
     }
     
+    RawPtr<ViewLuaInterface> getViewLuaInterface();
+    
 private:
     virtual void processGuiWidgetCreatedEvent();
 
@@ -237,7 +241,9 @@ protected:
     TextEditorWidget(HilitedText::Ptr hilitedText, 
                      CreateOptions    options = CreateOptions(),
                      int              borderWidth = BORDER_WIDTH);
-
+    
+    ~TextEditorWidget();
+    
     void notifyAboutReceivedPasteData(const byte* data, long length);
     void notifyAboutEndOfPastingData();
     void notifyAboutBeginOfPastingData();
@@ -286,6 +292,8 @@ private:
     bool readOnlyFlag;
 
     bool boundCursorFlag;
+
+    OwningPtr<ViewLuaInterface> viewLuaInterface;
 };
 
 } // namespace LucED

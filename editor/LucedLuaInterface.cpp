@@ -159,7 +159,10 @@ LuaCFunctionResult LucedLuaInterface::bindActionKey(const LuaCFunctionArguments&
         throw LuaArgException(luaAccess);
     }
     
-    GlobalConfig::getInstance()->registerUserDefinedAction(KeyCombination(args[0].toString()),
-                                                           args[1]);
+    KeyCombination keyCombination(args[0].toString());
+    LuaVar         action(args[1]);
+    
+    GlobalConfig::getInstance()->registerTemporaryUserDefinedAction(keyCombination,
+                                                                    action);
     return LuaCFunctionResult(luaAccess);
 }

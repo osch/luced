@@ -198,6 +198,10 @@ protected:
    
     template<class T
             >
+    void push(const RawPtr<T>& rhs) const;
+   
+    template<class T
+            >
     void push(const OwningPtr<T>& rhs) const;
 
     template<class T
@@ -537,6 +541,13 @@ inline void LuaAccess::push(T* rhs) const
 template<class T
         >
 inline void LuaAccess::push(const WeakPtr<T>& rhs) const
+{
+    pushWeakPtr(rhs.getRawPtr());
+}
+
+template<class T
+        >
+inline void LuaAccess::push(const RawPtr<T>& rhs) const
 {
     pushWeakPtr(rhs.getRawPtr());
 }
