@@ -125,7 +125,7 @@ AC_CHECK_DECLS([readline],[],[], AC_INCLUDES_DEFAULT [
                                  #include <readline/history.h>])
 
 luced_LIBS_without_readline="$LIBS"
-AC_SEARCH_LIBS([readline],[readline],[],[],[-lcurses])
+AC_SEARCH_LIBS([readline],[readline],[have_libreadline=yes],[],[-lcurses])
 luced_LIBS_with_readline="$LIBS"
 LIBS="$luced_LIBS_without_readline"
 AC_SUBST([LIBS_WITH_READLINE],[$luced_LIBS_with_readline])
@@ -427,6 +427,13 @@ AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <unordered_map>]],
                     ]
                  )
 
+if test x"$have_libreadline" = x"yes"
+then
+  AC_DEFINE_UNQUOTED([DISABLE_LIB_READLINE], 0, [Define to 1 if libreadline should not be used.])
+else
+  AC_DEFINE_UNQUOTED([DISABLE_LIB_READLINE], 1, [Define to 1 if libreadline should not be used.])
+fi
+
 if test x"$enable_xpm" = x"yes"
 then
   AC_DEFINE_UNQUOTED([DISABLE_XPM], 0, [Define to 1 if libXpm should not be used.])
@@ -461,5 +468,6 @@ then
 else
   AC_DEFINE_UNQUOTED([DISABLE_CYGWIN_FORK_WORKAROUND], 1, [Define to 1 if workaround for cygwin fork should not be used.])
 fi
+
 
 # last part is concatenated from other files !!!

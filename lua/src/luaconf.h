@@ -29,7 +29,7 @@
   #define LUA_DL_DYLD
 #endif
 
-#if HAVE_DECL_READLINE
+#if HAVE_DECL_READLINE && !DISABLE_LIB_READLINE
   #define LUA_USE_READLINE
 #endif
 
