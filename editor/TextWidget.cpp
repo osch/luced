@@ -1536,6 +1536,8 @@ RawPtr<LineInfo> TextWidget::getValidLineInfo(long line)
 
 void TextWidget::drawCursor(long cursorPos)
 {
+    textData->flushPendingUpdates();
+
     int y = 0;
     int line = 0;
     RawPtr<LineInfo> li;
@@ -1895,7 +1897,6 @@ void TextWidget::internSetLeftPix(long newLeftPix)
     if (newLeftPix == leftPix) {
         return;
     }
-    textData->flushPendingUpdates();
     calcTotalPixWidth();
 #if 1
     if (newLeftPix > totalPixWidth - getWidth()) {
@@ -1964,6 +1965,8 @@ void TextWidget::internSetLeftPix(long newLeftPix)
 
 void TextWidget::setLeftPix(long newLeftPix)
 {
+    textData->flushPendingUpdates();
+    
     internSetLeftPix(newLeftPix);
     updateHorizontalScrollBar= true;
 }
