@@ -137,7 +137,12 @@ public:
     bool operator==(const Nullable<ValueType>& rhs) const { return  (isNull() && rhs.isNull()) ||  (isValid() && rhs.isValid() && get() == rhs.get()); }
 
 private:
-    struct { char data[sizeof(V)]; } value;
+    union  {
+        char    data[sizeof(V)]; 
+        char*   ptrForAlignment;
+        double  doubleForAlignment;
+    } value;
+    
     bool valid;
 };
 
