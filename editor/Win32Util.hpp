@@ -37,7 +37,7 @@
 
 
 #if !defined(LUCED_USE_CYGWIN)
-#  if defined(_WIN32) && HAVE_WINDOWS_H && HAVE_SYS_CYGWIN_H
+#  if HAVE_WINDOWS_H && HAVE_SYS_CYGWIN_H
 #    define LUCED_USE_CYGWIN 1
 #  else
 #    define LUCED_USE_CYGWIN 0
@@ -45,7 +45,7 @@
 #endif
 
 #if !defined(LUCED_USE_WIN32)
-#  if defined(_WIN32) && HAVE_WINDOWS_H
+#  if HAVE_WINDOWS_H
 #    define LUCED_USE_WIN32 1
 #  else
 #    define LUCED_USE_WIN32 0
@@ -178,21 +178,15 @@ public:
     }
     static void createPipeForCreatedProcess(HANDLE* readHandle, HANDLE* writeHandle)
     {
-        SECURITY_ATTRIBUTES sa; 
-         
-        memset(&sa, 0, sizeof(sa));
-        sa.nLength = sizeof(sa); 
-        sa.bInheritHandle = TRUE;  // Set the bInheritHandle flag so pipe handles are inherited. 
-        sa.lpSecurityDescriptor = NULL;
-        
-        if (!CreatePipe(readHandle, writeHandle, &sa, 0)) 
+        if (!CreatePipe(readHandle, writeHandle, NULL/*&sa*/, 0)) 
         {
             throw SystemException(String() << "Error in call to Win32 CreatePipe: " << getLastWin32ErrorMessage());
         }
     }
-    static void clearInheritFlag(HANDLE h)
+    
+    static void setInheritFlag(HANDLE h)
     {
-        if (!SetHandleInformation(h, HANDLE_FLAG_INHERIT, 0))
+        if (!SetHandleInformation(h, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT))
         {
             throw SystemException(String() << "Error in call to Win32 SetHandleInformation: " << getLastWin32ErrorMessage());
         }
@@ -223,9 +217,9 @@ public:
             createPipeForCreatedProcess(&stdoutRead, &stdoutWrite);
             createPipeForCreatedProcess(&stderrRead, &stderrWrite);
             
-            clearInheritFlag(stdinWrite);
-            clearInheritFlag(stdoutRead);
-            clearInheritFlag(stderrRead);
+            setInheritFlag(stdinRead);
+            setInheritFlag(stdoutWrite);
+            setInheritFlag(stderrWrite);
 
             *inputHandle  = stdinWrite;
             *outputHandle = stdoutRead;
@@ -251,12 +245,14 @@ public:
                 environmentStrings.appendString(buildEnvironmentStringsFromMap(environmentMap));
                 environmentStringsPtr = environmentStrings.getPtr();
             }
+            const bool inheritHandles = useHandles;
+            
             bool wasOK = CreateProcess(win32ProgramFileName.toCString(),   // lpApplicationName
                                        commandLineBuffer.getPtr(),    // lpCommandLine
                                        0,         // lpProcessAttributes,
                                        0,         // lpThreadAttributes,
-                                       true,      // bInheritHandles,
-                                       0, // dwCreationFlags,
+                                       inheritHandles,      // bInheritHandles,
+                                       DETACHED_PROCESS, // dwCreationFlags,
                                        environmentStringsPtr,      // lpEnvironment,
                                        NULL,      // lpCurrentDirectory,
                                        &su,         // in:  lpStartupInfo,
