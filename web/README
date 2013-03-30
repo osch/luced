@@ -35,21 +35,17 @@ create softlinks in /etc/lighttpd/conf-enabled:
         ln -s ../conf-available/10-ssi.conf .
         ln -s ../conf-available/10-userdir.conf .
 
-
 in 10-cgi.conf:
 
     cgi.assign      = (
     	".sh"  => "",
     )
 
-
-
 add "index.sh" in /etc/lighttpd/lighttpd.conf:
 
 index-file.names           = ( "index.sh", "index.php", "index.html",
                                "index.htm", "default.htm",
                                "index.lighttpd.html" )
-
 
 restart lighttp:
 

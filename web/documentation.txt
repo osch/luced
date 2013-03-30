@@ -33,7 +33,8 @@ following features:
     the background and does not freeze the user interface, special handling to 
     achieve fast keyboard repeat rates
   * No dependencies on high-level [widget toolkits] in order to minimise the 
-    requirements for the runtime system and to support slow network connections
+    requirements for the runtime system to support old systems and
+    slow network connections
 
 The following features are already imlemented:
   
@@ -98,6 +99,7 @@ The following software must be installed:
   * *libX11* with development headers
   * *libxpm* with development headers (optional)
   * *libiconv* with development headers (optional), e.g. [GNU libiconv]
+  * *traditional X11 bitmap fonts*, package name depends on distribution, e.g. `xfonts-75dpi`
 
 
 Build instructions
@@ -176,6 +178,7 @@ a checked out Git repository:
   * *libX11* with development headers
   * *libxpm* with development headers (optional)
   * *libiconv* with development headers (optional), e.g. [GNU libiconv]
+  * *traditional X11 bitmap fonts*, package name depends on distribution, e.g. `xfonts-75dpi`
 
 
 Check out Git repository
