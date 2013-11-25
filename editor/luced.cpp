@@ -100,7 +100,7 @@ int main(int argc, char** argv)
             
             String programName = argv[0];
             
-            if (!programName.startsWith("forked_"))
+            if (!programName.startsWith("forkedLuced"))
             {
                 // we are client
 
@@ -109,9 +109,10 @@ int main(int argc, char** argv)
                 if (isServerStartupNeeded)
                 {
                     Win32Util::copyCygwinEnvToWin32();
+                    Commandline::Ptr commandline = Commandline::create(argc, argv);
                     
                     Win32Util::createProcess(Win32Util::getThisProgramFileName(),
-                                             String() << "forked_" << Win32Util::getThisProgramCommandline());
+                                             String() << "forkedLuced " << commandline->toQuotedString());
                 }
             }
             else

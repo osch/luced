@@ -172,10 +172,6 @@ public:
         return winFile;
     }
 #endif
-    static const char* getThisProgramCommandline()
-    {
-        return GetCommandLine();
-    }
     static void createPipeForCreatedProcess(HANDLE* readHandle, HANDLE* writeHandle)
     {
         if (!CreatePipe(readHandle, writeHandle, NULL/*&sa*/, 0)) 
