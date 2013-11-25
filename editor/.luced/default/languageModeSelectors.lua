@@ -2,7 +2,7 @@ return
 {
     {
         languageMode              = "cplusplus",
-        fileNameRegex             = "^.*\\.(?:CPP|HPP|H|cpp|hpp|cxx|hxx|c|h|cc|hh)(?:\\.emlua)?$",
+        fileNameRegex             = "^.*\\.(?:CPP|HPP|H|cpp|hpp|cxx|hxx|c|h|cc|mm|m|hh)(?:\\.emlua)?$",
     },
     {
         languageMode              = "jsp",
@@ -17,16 +17,28 @@ return
         fileNameRegex             = ".*\\.rexx?|.*\\.r",
     },
     {
-        languageMode              = "emlua",
-        fileNameRegex             = "^(.*\\.emlua|.*\\.(jcl))$",
+        languageMode              = "makefile",
+        fileNameRegex             = "^.*/(Makefile.*|.*\\.h?mk(.in)?|.*\\.dep)$",
+        fileContentRegex          = nil
     },
     {
-        languageMode              = "makefile",
-        fileNameRegex             = "^.*/(Makefile|.*\\.h?mk(.in)?|.*\\.dep)$",
+        languageMode              = "emlua",
+        fileNameRegex             = "^(.*\\.emlua|.*\\.(jcl))$",
+        fileContentRegex          = nil
     },
     {
         languageMode              = "java",
         fileNameRegex             = "^.*\\.(?:java)$",
+    },
+    {
+        languageMode              = "csharp",
+        fileNameRegex             = "^.*\\.(?:cs)$",
+        fileContentRegex          = nil
+    },
+    {
+        languageMode              = "antlrJavaGrammar",
+        fileNameRegex             = "^.*\\.(?:g)$",
+        fileContentRegex          = nil
     },
     {
         languageMode              = "shell",

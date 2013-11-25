@@ -89,4 +89,28 @@ return
       hardTabWidth = 8,
       softTabWidth = 4,
     },
+
+    {
+        name                                   = "csharp",
+        syntaxName                             = "this.csharp",
+        approximateUnknownHiliting             = true,
+        approximateUnknownHilitingReparseRange = 2000,
+        hilitingBreakPointDistance             = 50,
+        hardTabWidth                           = 8,
+        softTabWidth                           = 4,
+        boundCursor                            = nil,
+        extendedLineHeight                     = nil
+    },
+
+    {
+        name                                   = "antlrJavaGrammar",
+        syntaxName                             = "this.antlrJavaGrammar",
+        approximateUnknownHiliting             = true,
+        approximateUnknownHilitingReparseRange = 2000,
+        hilitingBreakPointDistance             = 50,
+        hardTabWidth                           = 8,
+        softTabWidth                           = 4,
+        boundCursor                            = nil,
+        extendedLineHeight                     = nil
+    },
 }
