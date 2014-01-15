@@ -467,24 +467,8 @@ LuaCFunctionResult ViewLuaInterface::replaceSelection(const LuaCFunctionArgument
     
     String arg = args[0].toString();
 
-    TextData::TextMark m = e->createNewMarkFromCursor();
+    e->replaceSelection(arg);
     
-    if (e->hasPrimarySelection() || e->hasPseudoSelection())
-    {
-        long spos = e->getBeginSelectionPos();
-        long epos = e->getEndSelectionPos();
-        
-        m.moveToPos(spos);
-
-        textData->insertAtMark(m, arg);
-        
-        m.moveToPos(spos + arg.getLength());
-        
-        textData->removeAtMark(m, epos - spos);
-    }
-    else {
-        textData->insertAtMark(m, arg);
-    }
     return LuaCFunctionResult(luaAccess);
 }
 

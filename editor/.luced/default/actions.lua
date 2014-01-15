@@ -357,6 +357,18 @@ return
                          fi
                       ]],
     },
+    formatXml =
+    {
+        shellFilter = [[ xmllint --format --nowarning - ]]
+    },
+    expandTabs4 =
+    {
+        shellFilter = [[ expand -t4 ]]
+    },
+    expandTabs8 =
+    {
+        shellFilter = [[ expand -t8 ]]
+    },
     
     toUpper =   function(view)
                     local old = view:getSelection()

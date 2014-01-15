@@ -224,6 +224,7 @@ public:
     }
 
     void replaceTextWithPrimarySelection();
+    void replaceSelection(const String& newContent);
     
     void registerListenerForNextSelectionChange(Callback<>::Ptr callback) {
         getBackliteBuffer()->registerListenerForNextChange(callback);

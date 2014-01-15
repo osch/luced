@@ -202,24 +202,36 @@ public:
         return Ptr(new ShellInvocationHandler(e));
     }
 
-    void beforeShellInvocation() {
-        if (e.isValid() && e->textData->getModifiedFlag() == true) {
-            if (!e->textData->isFileNamePseudo()) {
-                e->save();
+    void beforeShellInvocation(bool isFilter) {
+        this->isFilter = isFilter;
+        if (e.isValid()) {
+            if (isFilter) {
+                e->textEditor->disableCursorChanges();
+            }
+            else if (e->textData->getModifiedFlag() == true) {
+                if (!e->textData->isFileNamePseudo()) {
+                    e->save();
+                }
             }
         }
     }
     void afterShellInvocation(ProgramExecutor::Result rslt) {
         if (e.isValid()) {
-            e->finishedShellscript(rslt);
+            if (isFilter) {
+                e->textEditor->enableCursorChanges();
+            }
+            e->finishedShellscript(rslt, isFilter);
         }
+        isFilter = false;
     }
 
 private:
     ShellInvocationHandler(WeakPtr<EditorTopWin> e)
-        : e(e)
+        : e(e),
+          isFilter(false)
     {}
     WeakPtr<EditorTopWin> e;
+    bool                  isFilter;
 };
 
 
@@ -870,21 +882,37 @@ String EditorTopWin::getFileName() const
 }
 
 
-void EditorTopWin::finishedShellscript(ProgramExecutor::Result rslt)
+void EditorTopWin::finishedShellscript(ProgramExecutor::Result rslt, bool wasFilter)
 {
-    textData->checkFileInfo();
-    if (textData->wasFileModifiedOnDisk()) {
-        reloadFile();
+    if (wasFilter && rslt.returnCode == 0) {
+        String outputData = rslt.outputBuffer->toString();
+        try {
+            EncodingConverter converter(System::getInstance()->getDefaultEncoding(), "UTF-8");
+ 
+            if (converter.isConvertingBetweenDifferentCodesets()) {
+                outputData = converter.convertStringToString(outputData);
+            }
+        }
+        catch (EncodingException& ex) {
+            // ignore, take outputData as it is
+        }
+        textEditor->replaceSelection(outputData);
     }
-    if (rslt.outputBuffer->getLength() > 0)
-    {
-        TextData::Ptr textData = TextData::create();
-
-        textData->takeOverBuffer(System::getInstance()->getDefaultEncoding(), 
-                                 rslt.outputBuffer);
+    else {
+        textData->checkFileInfo();
+        if (textData->wasFileModifiedOnDisk()) {
+            reloadFile();
+        }
+        if (rslt.outputBuffer->getLength() > 0)
+        {
+            TextData::Ptr textData = TextData::create();
     
-        CommandOutputBox::Ptr commandOutputBox = CommandOutputBox::create(this, textData);
-        commandOutputBox->show();
+            textData->takeOverBuffer(System::getInstance()->getDefaultEncoding(), 
+                                     rslt.outputBuffer);
+        
+            CommandOutputBox::Ptr commandOutputBox = CommandOutputBox::create(this, textData);
+            commandOutputBox->show();
+        }
     }
 }
 

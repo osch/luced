@@ -149,7 +149,7 @@ private:
     void internalInvokeNewMessageBox();
     void internalSetMessageBox(const MessageBoxParameter& messageBoxParameter);
 
-    void finishedShellscript(ProgramExecutor::Result result);
+    void finishedShellscript(ProgramExecutor::Result result, bool wasFilter);
     
     MultiLineEditorWidget::Ptr textEditor;
     RawPtr<TextData>         textData;

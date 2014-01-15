@@ -26,6 +26,9 @@
 #include "ConfigException.hpp"
 #include "GlobalConfig.hpp"
 #include "ViewLuaInterface.hpp"
+#include "System.hpp"
+#include "EncodingConverter.hpp"
+#include "EncodingException.hpp"
 
 using namespace LucED;
 
@@ -101,32 +104,70 @@ bool UserDefinedActionMethods::UserDefinedActionMethods::invokeActionMethod(Acti
     else if (luaActionFunction.isTable())
     {
         LuaVar shellScript = luaActionFunction["shellScript"];
-        if (shellScript.isString())
+        LuaVar shellFilter = luaActionFunction["shellFilter"];
+        
+        if (shellScript.isValid() && shellFilter.isValid()) {
+            throw ConfigException(String() << "Action '" << actionId.toString() << "' cannot contain both fields 'shellScript' and 'shellFilter'");
+        }
+        else if (shellScript.isString() || shellFilter.isString())
         {
             if (shellInvocationHandler.isValid())
             {
-                String script = shellScript.toString();
+                bool isFilter = shellFilter.isString();
+                
+                String script = isFilter ? shellFilter.toString()
+                                         : shellScript.toString();
     
                 if (script.getLength() > 0)
                 {
-                    shellInvocationHandler->beforeShellInvocation();
+                    shellInvocationHandler->beforeShellInvocation(isFilter);
 
                     HeapHashMap<String,String>::Ptr env = HeapHashMap<String,String>::create();
                                                     env->set("FILE", textEditor->getTextData()->getFileName());
     
                     Commandline::Ptr commandline = Commandline::create();
                                      commandline->append("/bin/sh");
-                                     
-                    ProgramExecutor::start(commandline,
-                                           script,
-                                           env,
-                                           newCallback(shellInvocationHandler, &ShellInvocationHandler::afterShellInvocation));
+                    
+                    if (isFilter) {
+                                     commandline->append("-c");
+                                     commandline->append(script);
+
+                        String input;
+                        {
+                            if (textEditor->hasPrimarySelection() || textEditor->hasPseudoSelection())
+                            {
+                                input = textEditor->getTextData()->getSubstring(Pos(textEditor->getBeginSelectionPos()),
+                                                                                Pos(textEditor->getEndSelectionPos()));
+                            }
+                            try {
+                                EncodingConverter converter("UTF-8", System::getInstance()->getDefaultEncoding());
+            
+                                if (converter.isConvertingBetweenDifferentCodesets()) {
+                                    input = converter.convertStringToString(input);
+                                }
+                            }
+                            catch (EncodingException& ex) {
+                                // ignore, take input as it is
+                            }
+                        }
+                        
+                        ProgramExecutor::start(commandline,
+                                               input,
+                                               env,
+                                               newCallback(shellInvocationHandler, &ShellInvocationHandler::afterShellInvocation));
+                    }
+                    else {
+                        ProgramExecutor::start(commandline,
+                                               script,
+                                               env,
+                                               newCallback(shellInvocationHandler, &ShellInvocationHandler::afterShellInvocation));
+                    }
                     processed = true;
                 }
             }
         }
         else {
-            throw ConfigException(String() << "Action '" << actionId.toString() << "' is table but has no field 'shellScript'");
+            throw ConfigException(String() << "Action '" << actionId.toString() << "' is table but has no field 'shellScript' or 'shellFilter'");
         }
     }
     else {

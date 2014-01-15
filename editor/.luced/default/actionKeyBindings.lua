@@ -67,6 +67,21 @@ return -- default actionName key binding
     },
 
     -----------------------------------------
+    -- default shell filter actions
+    --
+    {
+        actionName = "this.formatXml",
+        keys       = { "Alt+F,X" },
+    },
+    {
+        actionName = "this.expandTabs4",
+        keys       = { "Alt+F,T,4" },
+    },
+    {
+        actionName = "this.expandTabs8",
+        keys       = { "Alt+F,T,8" },
+    },
+    -----------------------------------------
     -- default keys     for builtin actions
     --
     {

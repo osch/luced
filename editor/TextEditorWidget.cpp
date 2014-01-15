@@ -1116,3 +1116,26 @@ RawPtr<ViewLuaInterface> TextEditorWidget::getViewLuaInterface()
     }
     return viewLuaInterface;
 }
+
+void TextEditorWidget::replaceSelection(const String& newContent)
+{
+    TextData::TextMark m = createNewMarkFromCursor();
+    
+    if (hasPrimarySelection() || hasPseudoSelection())
+    {
+        long spos = getBeginSelectionPos();
+        long epos = getEndSelectionPos();
+        
+        m.moveToPos(spos);
+
+        textData->insertAtMark(m, newContent);
+        
+        m.moveToPos(spos + newContent.getLength());
+        
+        textData->removeAtMark(m, epos - spos);
+    }
+    else {
+        textData->insertAtMark(m, newContent);
+    }
+}
+

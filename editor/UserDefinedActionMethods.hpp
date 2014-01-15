@@ -40,7 +40,7 @@ public:
     public:
         typedef OwningPtr<ShellInvocationHandler> Ptr;
         
-        virtual void beforeShellInvocation() = 0;
+        virtual void beforeShellInvocation(bool isFilter) = 0;
         virtual void afterShellInvocation(ProgramExecutor::Result rslt) = 0;
         
     protected:
