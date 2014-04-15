@@ -300,27 +300,32 @@ return
                          fn=`basename $file`
                          if [ -e CVS -o -e .svn ]
                          then 
-                           tkdiff $fn &
+                           tkdiff "$fn"
                          else
-                           homedir=`cd "$HOME"; pwd`
-                           gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
-                                   do 
-                                     cd ..
-                                   done
-                                   pwd`
-                           if [ ! -e "$gitdir"/.git ]
-                           then
-                             echo "error: neither Git nor CVS repository"
-                             exit 1
+                           if ( type svn && svn info ) 2>/dev/null 1>&2; then
+                             tkdiff "$fn"
+                           else
+                             homedir=`cd "$HOME"; pwd`
+                             gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
+                                     do 
+                                       cd ..
+                                     done
+                                     pwd`
+                             if [ ! -e "$gitdir"/.git ]
+                             then
+                               echo "error: neither Git nor CVS repository"
+                               exit 1
+                             fi
+                             fullname=`cd \`dirname $fn\`
+                                       echo \`pwd\`/\`basename $fn\`
+                                      `
+                             relname=`echo $fullname|sed s~$gitdir/~~`
+                             tag1="HEAD"
+                             t1=`mktemp -t "old.$tag1.\`basename $fn\`.XXXXXX"`
+                             git show $tag1:$relname > $t1
+                             tkdiff "$t1" "$fn" 
+                             rm "$t1"
                            fi
-                           fullname=`cd \`dirname $fn\`
-                                     echo \`pwd\`/\`basename $fn\`
-                                    `
-                           relname=`echo $fullname|sed s~$gitdir/~~`
-                           tag1="HEAD"
-                           t1=`mktemp -t "old.$tag1.\`basename $fn\`.XXXXXX"`
-                           git show $tag1:$relname > $t1
-                           ( tkdiff "$t1" "$fn"; rm "$t1" ) 2>/dev/null 1>&2 &
                          fi
                       ]],
     },
