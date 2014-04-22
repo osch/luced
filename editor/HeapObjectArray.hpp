@@ -60,11 +60,11 @@ public:
     const T& at(long i) const {
         return *ObjectArray<T>::getPtr(i);
     }
-    T get(long i) const {
+    const T& get(long i) const {
         ASSERT(0 <= i && i < ObjectArray<T>::getLength());
         return *ObjectArray<T>::getPtr(i);
     }
-    T getLast() const {
+    const T& getLast() const {
         ASSERT(ObjectArray<T>::getLength() > 0);
         return get(ObjectArray<T>::getLength() - 1);
     }
