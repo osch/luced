@@ -184,15 +184,7 @@ a checked out Git repository:
 Check out Git repository
 ------------------------
 
-You can get the latest source code from 
-[BerliOS] by using [Git] with the following 
-commands:
-
-       git clone git://git.berlios.de/luced
-       cd luced 
-
-Alternatively you may obtain the source code from the mirrored 
-[github repository].
+You can get the latest source code from the [github repository].
 
        git clone git://github.com/osch/luced.git
        cd luced 
@@ -363,7 +355,6 @@ of the *default* package.
 [GNU libtool]:       http://www.gnu.org/software/libtool/
 [GNU automake]:      http://www.gnu.org/software/automake/
 [GNU libiconv]:      http://www.gnu.org/software/libiconv/
-[BerliOS]:           http://developer.berlios.de/projects/luced/
 [Git]:               http://git-scm.com/
 [github repository]: http://github.com/osch/luced
 [gcc]:               http://gcc.gnu.org

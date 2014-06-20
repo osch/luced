@@ -38,8 +38,5 @@ href="http://en.wikipedia.org/wiki/C%2B%2B">C++</a> programming language.
 <p>To get a first impression, you may
 <ul>
   <li>see the <a href="?page=screenshots">screenshots</a></li>
-  <li>browse the <a href="http://git.berlios.de/cgi-bin/gitweb.cgi?p=luced;a=shortlog"
-      >Git Repository</a> at the <a href="http://developer.berlios.de/projects/luced/">LucED BerliOS project page</a> 
-  </li>
-  <li>browse the <a href="http://github.com/osch/luced">mirrored Git Repository</a> at <a href="http://github.com/">github</a>.
+  <li>browse the <a href="http://github.com/osch/luced">git repository</a> at <a href="http://github.com/">github</a>.
   </li>
