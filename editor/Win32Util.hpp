@@ -248,7 +248,7 @@ public:
                                        0,         // lpProcessAttributes,
                                        0,         // lpThreadAttributes,
                                        inheritHandles,      // bInheritHandles,
-                                       DETACHED_PROCESS, // dwCreationFlags,
+                                       DETACHED_PROCESS|HIGH_PRIORITY_CLASS, // dwCreationFlags,
                                        environmentStringsPtr,      // lpEnvironment,
                                        NULL,      // lpCurrentDirectory,
                                        &su,         // in:  lpStartupInfo,
