@@ -340,25 +340,29 @@ return
                            cvs log "$fn"
                          elif [ -e .svn ]
                          then
-                           svn log  "$file"
+                           svn log  "$fn"
                          else
-                           homedir=`cd "$HOME"; pwd`
-                           gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
-                                   do 
-                                     cd ..
-                                   done
-                                   pwd`
-                           if [ ! -e "$gitdir"/.git ]
-                           then
-                             echo "error: neither Git nor SVN nor CVS repository"
-                             exit 1
+                           if ( type svn && svn info ) 2>/dev/null 1>&2; then
+                             svn log  "$fn"
+                           else
+                             homedir=`cd "$HOME"; pwd`
+                             gitdir=`while test ! "$homedir" = \`pwd\`   -a  ! -e .git 
+                                     do 
+                                       cd ..
+                                     done
+                                     pwd`
+                             if [ ! -e "$gitdir"/.git ]
+                             then
+                               echo "error: neither Git nor SVN nor CVS repository"
+                               exit 1
+                             fi
+                             fullname=`cd \`dirname $fn\`
+                                       echo \`pwd\`/\`basename $fn\`
+                                      `
+                             relname=`echo $fullname|sed s~$gitdir/~~`
+                             cd "$gitdir"
+                             git log $relname 
                            fi
-                           fullname=`cd \`dirname $fn\`
-                                     echo \`pwd\`/\`basename $fn\`
-                                    `
-                           relname=`echo $fullname|sed s~$gitdir/~~`
-                           cd "$gitdir"
-                           git log $relname 
                          fi
                       ]],
     },
