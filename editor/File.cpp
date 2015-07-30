@@ -64,10 +64,15 @@ void File::loadInto(RawPtr<ByteBuffer> buffer) const
         }
         long  len       = statData.st_size;
         long  oldLen    = buffer->getLength();
-        byte* ptr       = buffer->appendAmount(len);
-        long  bytesRead = read(fd, ptr, len);
+        if (len > oldLen) {
+            buffer->appendAmount(len - oldLen);
+        } else if (len < oldLen) {
+            buffer->removeTail(len);
+        }
+        long  bytesRead = read(fd, buffer->getPtr(), len);
 
         if (bytesRead < 0) {
+            buffer->clear();
             throw FileException(errno, String() << "error reading from file '" << name << "': " << strerror(errno));
         }
         if (bytesRead < len) {

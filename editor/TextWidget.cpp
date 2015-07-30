@@ -2586,13 +2586,12 @@ long TextWidget::getOpticalCursorColumn() const
     const long hardTabWidth = hilitingBuffer->getLanguageMode()->getHardTabWidth();
     long       opticalCursorColumn = 0;
     long realByteColumn = textData->getByteColumnNumberOfMark(cursorMarkId);
-    for (long p = cursorPos - realByteColumn; p < cursorPos;) {
+    for (long p = cursorPos - realByteColumn; p < cursorPos; p = textData->getNextWCharPos(p)) {
         if (textData->hasWCharAtPos(TAB_CHARACTER, p)) {
             opticalCursorColumn = ((opticalCursorColumn / hardTabWidth) + 1) * hardTabWidth;
         } else {
             ++opticalCursorColumn;
         }
-        p = textData->getNextWCharPos(p);
     }
     return opticalCursorColumn + cursorColumnsBehindEndOfLine;
 }

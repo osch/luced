@@ -28,6 +28,8 @@
 #include "EncodingConverter.hpp"
 #include "EncodingException.hpp"
 #include "System.hpp"
+#include "FileException.hpp"
+#include "Nullable.hpp"
 
 using namespace std;
 using namespace LucED;
@@ -190,8 +192,12 @@ void TextData::reloadFile()
         }
     }
     
-    buffer.clear();
-    file.loadInto(&buffer);
+    Nullable<FileException> fileException;
+    try {
+        file.loadInto(&buffer);
+    } catch (FileException& ex) {
+        fileException = ex;
+    }
 
     EncodingConverter c(fileContentEncoding, "UTF-8");
     
@@ -228,11 +234,16 @@ void TextData::reloadFile()
     this->modifiedOnDiskFlag = false;
     this->ignoreModifiedOnDiskFlag = false;
 
-    if (isReadOnlyFlag != !fileInfo.isWritable()) {
-        isReadOnlyFlag = !fileInfo.isWritable();
-        readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
+    if (!fileException.isValid()) {
+        if (isReadOnlyFlag != !fileInfo.isWritable()) {
+            isReadOnlyFlag = !fileInfo.isWritable();
+            readOnlyListeners.invokeAllCallbacks(isReadOnlyFlag);
+        }
+        clearHistory();
     }
-    clearHistory();
+    if (fileException.isValid()) {
+        throw fileException.get();
+    }
 }
 
 void TextData::checkFileInfo()

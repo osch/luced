@@ -101,7 +101,9 @@ protected:
     void requestFocus();
     
     void reportMouseClick() {
-        focusManagerForThis->reportMouseClickFrom(this);
+        if (wasAdopted()) {
+            focusManagerForThis->reportMouseClickFrom(this);
+        }
     }
 
 private:

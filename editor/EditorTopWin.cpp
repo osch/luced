@@ -599,8 +599,13 @@ bool EditorTopWin::checkForFileModifications()
 
 void EditorTopWin::reloadFile()
 {
-    textData->reloadFile();
-    textEditor->releaseSelection();
+    try {
+        textData->reloadFile();
+        textEditor->releaseSelection();
+    }
+    catch (...) {
+        handleCatchedException();
+    }
 }
 
 void EditorTopWin::doNotReloadFile()
