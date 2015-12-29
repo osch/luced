@@ -33,7 +33,7 @@ following features:
   * No dependencies on high-level widget toolkits in order to minimise the 
     requirements for the runtime system and to support slow network connections
 
-The following features are already imlemented:
+The following features are already implemented:
   
   * Embedded Lua programming language for scripting and configuration
   * Syntax highlighting configurable via PCRE regular expressions, similar to 
