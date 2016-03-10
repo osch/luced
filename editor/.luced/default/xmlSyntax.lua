@@ -1,4 +1,4 @@
-local topChildPatterns = { "comment", "entity", "xmlTag"  }
+local topChildPatterns = { "cdata", "comment", "entity", "xmlTag"  }
 
 local contentStyle        = "preproc"
 local contentStyleEscaped = "boldblue"
@@ -46,6 +46,16 @@ return
                 childPatterns = {},
         },
         
+        cdata = {
+                style = "textKey1",
+                beginPattern     = [[ (?P<cdataBegin>\<)(?P<cdataName>\!\[CDATA\[) ]],
+                endPattern       = [[ (?P<cdataEnd>\]\]\>) ]],
+                beginSubstyles   = { cdataBegin = "keyword", cdataName = "textKey" },
+                endSubstyles     = { cdataEnd   = "textKey" },
+                maxBeginExtend   = 15,
+                maxEndExtend     = 10,
+                childPatterns    = { "operator", "string1", "string2" }
+        },
         xmlTag = {
                 style = "textKey1",
                 beginPattern     = [[ (?P<tagBegin>\<\/?)(?P<tagName>\w*) ]],
