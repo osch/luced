@@ -27,7 +27,6 @@
 #include "debug.hpp"
 #include "types.hpp"
 #include "NonCopyable.hpp"
-#include "String.hpp"
 #include "RawPointable.hpp"
 #include "RawPtr.hpp"
 

@@ -147,7 +147,8 @@ FAST_MODULES := TextWidget              TextData               HilitingBase     
                 BackliteBuffer          GuiLayoutRow           GuiLayoutColumn        HeapObject  \
                 EventDispatcher         FindUtil               ReplaceUtil            SyntaxPatterns \
                 ViewLuaInterface        LuaSerializer          ActionMethodContainer  FocusManager \
-                FontInfo                EncodingConverter      String                 MatchLuaInterface
+                FontInfo                EncodingConverter      String                 MatchLuaInterface \
+                ByteArray               CharArray
                 
 ROOT_CONFIG_FILES            := $(BUILD_DIR)/config.lua 
 

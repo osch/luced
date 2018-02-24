@@ -81,6 +81,11 @@ public:
         removeAmount(length - 1, 1);
         return rslt;
     }
+    void assureCapacityAtLeast(long capacity) const {
+        if (mem.getCapacity() < capacity * sizeof(T)) {
+            mem.increaseTo(capacity * sizeof(T));
+        }
+    }
     long getLength() const {
         return size;
     }

@@ -22,13 +22,12 @@
 #ifndef BYTE_ARRAY_H
 #define BYTE_ARRAY_H
 
-#include "String.hpp"
-#include "String.hpp"
-
 #include "MemArray.hpp"
 
 namespace LucED
 {
+
+class String;
 
 class ByteArray : public MemArray<byte>
 {
@@ -37,10 +36,8 @@ public:
         append((const byte*) cstring, strlen(cstring));
         return *this;
     }
-    ByteArray& appendString(const String& s) {
-        append((const byte*) s.toCString(), s.getLength());
-        return *this;
-    }
+    ByteArray& appendString(const String& s);
+
     const char* toCString() const {
         if (getLength() <= 0 || (*this)[getLength() - 1] != 0) {
             mem.increaseTo(getLength() + 1);
@@ -48,9 +45,8 @@ public:
         }
         return (const char*) getPtr();
     }
-    String toString() const {
-        return String( (const char*) getPtr(0), getLength() );
-    }
+    String toString() const;
+
     void fillAmountWith(long startPos, long amount, byte fillByte) {
         ASSERT(0 <= startPos && startPos + amount <= getLength());
         memset(getPtr(startPos), fillByte, amount);

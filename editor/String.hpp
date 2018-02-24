@@ -36,6 +36,7 @@
 #include "Len.hpp"
 
 #include "RawPointable.hpp"
+#include "CharArray.hpp"
 
 namespace LucED
 {
@@ -47,61 +48,52 @@ public:
     {}
 
     String(const String& rhs)
-        : s(rhs.s)
     {
         ASSERT(this != &rhs);
+        chars.append(rhs.chars);
     }
 
     String(const char* rhs)
-#ifdef DEBUG
     {
         ASSERT(rhs != NULL);
-        s = std::string(rhs);
+        chars.append(rhs, strlen(rhs));
     }
-#else
-        : s(rhs)
-    {}
-#endif
     
 
     String(const char* rhs, long length)
-#ifdef DEBUG
     {
         ASSERT(length == 0 || rhs != NULL);
-        s = std::string(rhs, length);
+        chars.append(rhs, length);
     }
-#else
-        : s(rhs, length)
-    {}
-#endif
 
     String(const std::string& rhs)
-        : s(rhs)
-    {}
+    {
+        chars.append(rhs.c_str(), rhs.length());
+    }
 
     explicit String(long i) 
-        : s(stringify(i))
-    {}
+    {
+        char buffer[100];
+        sprintf(buffer, "%ld", i);
+        chars.append(buffer, strlen(buffer));
+    }
 
     Len getLength() const {
-        return Len(s.length());
+        return Len(chars.getLength());
     }
     const char* toCString() const {
-        return s.c_str();
+        return chars.toCString();
     }
-    const std::string& toStdString() const {
-        return s;
-    }
-    std::string toStdString() {
-        return s;
+    std::string toStdString() const {
+        return std::string(chars.getPtr(), chars.getLength());
     }
     char& operator[](long i) {
         ASSERT(0 <= i && i < getLength());
-        return s[i];
+        return chars[i];
     }
     char operator[](long i) const {
         ASSERT(0 <= i && i < getLength());
-        return s[i];
+        return chars[i];
     }
     String getSubstring(Pos pos, Len length) const {
         if (length == 0) {
@@ -112,22 +104,22 @@ public:
         if (pos + length > getLength()) {
             length = Pos(0) + getLength() - pos;
         }
-        return s.substr(pos, length);
+        return String(chars.getPtr(pos), length);
     }
     String getSubstring(Pos pos1, Pos pos2) const {
         return getSubstring(pos1, pos2 - pos1);
     }
     String& append(const String& rhs) {
-        s.append(rhs.s);
+        chars.append(rhs.chars);
         return *this;
     }
     String& append(const std::string& rhs) {
-        s.append(rhs);
+        chars.append(rhs.c_str(), rhs.length());
         return *this;
     }
     String& append(const char* rhs) {
         ASSERT(rhs != NULL);
-        s.append(rhs);
+        chars.append(rhs, strlen(rhs));
         return *this;
     }
     String& appendWCharAsUtf8(int unicodeChar)
@@ -154,33 +146,33 @@ public:
     }
     String& append(const char* rhs, long length) {
         ASSERT(rhs != NULL);
-        s.append(rhs, length);
+        chars.append(rhs, length);
         return *this;
     }
     String& appendSubstring(const String& rhs, Pos pos, Len length) {
         ASSERT(pos + length <= rhs.getLength());
-        s.append(rhs.toCString() + pos, length);
+        chars.append(rhs.toCString() + pos, length);
         return *this;
     }
     String& append(const byte* rhs, long length) {
         ASSERT(rhs != NULL);
-        s.append((const char*)rhs, length);
+        chars.append((const char*)rhs, length);
         return *this;
     }
     String& append(char c) {
-        s.push_back(c);
+        chars.append(c);
         return *this;
     }
     String& append(byte c) {
-        s.push_back(c);
+        chars.append((char)c);
         return *this;
     }
     String& appendLowerChar(char c) {
-        s.push_back((char)::tolower(c));
+        chars.append((char)::tolower(c));
         return *this;
     }
     String& appendUpperChar(char c) {
-        s.push_back((char)::toupper(c));
+        chars.append((char)::toupper(c));
         return *this;
     }
     String& append(int rhs) {
@@ -196,8 +188,8 @@ public:
     }
 
     bool consistsOfDigits() const {
-        for (long i = 0, n = s.length(); i < n; ++i) {
-            if (!isdigit(s[i])) {
+        for (long i = 0, n = chars.getLength(); i < n; ++i) {
+            if (!isdigit(chars[i])) {
                 return false;
             }
         }
@@ -205,10 +197,10 @@ public:
     }
     
     int toInt() const {
-        return atoi(s.c_str());
+        return atoi(toCString());
     }
     long toLong() const {
-        return atol(s.c_str());
+        return atol(toCString());
     }
     
     String toUpper() const {
@@ -267,7 +259,7 @@ public:
             return false;
         }
         for (long i = 0; i < j; ++i) {
-            if (::tolower(s[i]) != ::tolower(rhs[i])) {
+            if (::tolower(chars[i]) != ::tolower(rhs[i])) {
                 return false;
             }
         }
@@ -280,11 +272,11 @@ public:
         if (n == 0) {
             return false;
         }
-        if (s[i] == '-' && i + 1 < n) {
+        if (chars[i] == '-' && i + 1 < n) {
             ++i;
         }
         for (; i < n; ++i) {
-            if (!isdigit(s[i])) {
+            if (!isdigit(chars[i])) {
                 return false;
             }
         }
@@ -293,7 +285,7 @@ public:
     
     bool isHex() const {
         for (long i = 0, n = getLength(); i < n; ++i) {
-            if (!isxdigit(s[i])) {
+            if (!isxdigit(chars[i])) {
                 return false;
             }
         }
@@ -301,17 +293,17 @@ public:
     }
     
     bool contains(char c) const {
-        for (long i = 0, n = s.length(); i < n; ++i) {
-            if (s[i] == c) {
+        for (long i = 0, n = chars.getLength(); i < n; ++i) {
+            if (chars[i] == c) {
                 return true;
             }
         }
         return false;
     }
-    bool containsAny(const char* chars) const {
-        for (long i = 0, n = s.length(); i < n; ++i) {
-            const char thisChar = s[i];
-            for (const char* c = chars; *c != '\0'; ++c) {
+    bool containsAny(const char* searchChars) const {
+        for (long i = 0, n = this->chars.getLength(); i < n; ++i) {
+            const char thisChar = this->chars[i];
+            for (const char* c = searchChars; *c != '\0'; ++c) {
                 if (thisChar == *c) {
                     return true;
                 }
@@ -360,24 +352,33 @@ public:
         if (this->getLength() != len) {
             return false;
         }
-        return (memcmp(this->toCString(), rhs, len) == 0);
+        return (memcmp(chars.getPtr(), rhs, len) == 0);
     }
     bool operator!=(const char* rhs) const {
-        return !(s == rhs);
+        return !(*this == rhs);
     }
     bool operator==(const String& rhs) const {
-        return s == rhs.s;
+        return chars == rhs.chars;
     }
     bool operator!=(const String& rhs) const {
-        return s != rhs.s;
+        return chars != rhs.chars;
     }
     bool operator<(const String& rhs) const {
-        return s < rhs.s;
+        int len = chars.getLength();
+        if (len > rhs.chars.getLength()) {
+            len = rhs.chars.getLength();
+        }
+        for (int i = 0; i < len; ++i) {
+            if (chars[i] < rhs.chars[i]) {
+                return true;
+            }
+        }
+        return chars.getLength() < rhs.chars.getLength();
     }
     void removeAmount(Pos pos, Len amount) {
         ASSERT(0 <= amount);
         ASSERT(0 <= pos && pos + amount <= getLength());
-        s.erase(pos, amount);
+        chars.removeAmount(pos, amount);
     }
     void removeBetween(Pos pos1, Pos pos2) {
         removeAmount(pos1, pos2 - pos1);
@@ -391,16 +392,16 @@ public:
     }
     String getTail(long pos) const {
         ASSERT(0 <= pos && pos <= getLength());
-        return s.substr(pos);
+        return getSubstring(Pos(pos), Pos(getLength()));
     }
     long findFirstOf(char c, Pos startPos = Pos(0)) const {
         ASSERT(0 <= startPos && startPos <= getLength());
-        std::string::size_type rslt = s.find_first_of(c, startPos);
-        if (rslt == std::string::npos) {
-            return -1;
-        } else {
-            return rslt;
+        for (int i = startPos, n = getLength(); i < n; ++i) {
+            if (chars[i] == c) {
+                return i;
+            }
         }
+        return -1;
     }
     
     String getTrimmedSubstring() const {
@@ -420,7 +421,7 @@ public:
     }
     
     void clear() {
-        s.clear();
+        chars.clear();
     }
     
     String toSubstitutedString(char oldChar, char newChar) const {
@@ -443,10 +444,11 @@ public:
         long i = 0;
         while (i < thisLength) 
         {
-            std::string::size_type n = s.find(oldPart, i);
-            if (n == std::string::npos) {
+            const char* nPtr = strstr(chars.getPtr(i), oldPart);
+            if (nPtr == NULL) {
                 break;
             }
+            int n = nPtr - chars.getPtr(0);
             rslt.appendSubstring(*this, Pos(i), Len(n - i));
             rslt.append(newPart, newPartLength);
             i = n + oldPartLength;
@@ -462,7 +464,7 @@ private:
         return o.str();
     }
     
-    std::string s;
+    CharArray chars;
 };
 
 inline bool operator==(const char* lhs, const String& rhs) {

@@ -22,13 +22,12 @@
 #ifndef CHAR_ARRAY_H
 #define CHAR_ARRAY_H
 
-#include "String.hpp"
-#include "String.hpp"
-
 #include "MemArray.hpp"
 
 namespace LucED
 {
+
+class String;
 
 class CharArray : public MemArray<char>
 {
@@ -37,20 +36,15 @@ public:
         append((const char*) cstring, strlen(cstring));
         return *this;
     }
-    CharArray& appendString(const String& s) {
-        append((const char*) s.toCString(), s.getLength());
-        return *this;
-    }
+    CharArray& appendString(const String& s);
+
     const char* toCString() const {
-        if (getLength() <= 0 || (*this)[getLength() - 1] != 0) {
-            mem.increaseTo(getLength() + 1);
-            *mem.getPtr(getLength()) = 0;
-        }
-        return (const char*) getPtr();
+        assureCapacityAtLeast(getLength() + 1);
+        *const_cast<char*>(getPtr(getLength())) = '\0';
+        return getPtr();
     }
-    String toString() const {
-        return String( (const char*) getPtr(0), getLength() );
-    }
+    String toString() const;
+
     void fillAmountWith(long startPos, long amount, char fillChar) {
         ASSERT(0 <= startPos && startPos + amount <= getLength());
         memset(getPtr(startPos), fillChar, amount);

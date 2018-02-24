@@ -23,6 +23,7 @@
 #define BYTEBUFFER_H
 
 #include "MemBuffer.hpp"
+#include "String.hpp"
 
 namespace LucED
 {

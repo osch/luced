@@ -25,7 +25,6 @@
 
 using namespace LucED;
 
-
 String String::toUpperUtf8() const
 {
     String rslt;
