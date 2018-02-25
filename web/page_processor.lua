@@ -19,8 +19,6 @@
 --
 -------------------------------------------------------------------------------------
 
-print("Content-type: text/html\n\n")
-
 local getenv = os.getenv
 local concat = table.concat
 local substr = string.sub
