@@ -11,7 +11,7 @@ the program is in its early development stage, you are welcome to test the
 <ul>
 
   <li>A simple and minimalistic, but
-powerful user interface that is similar to the  <a href="http://www.nedit.org/">NEdit</a> text editor, 
+powerful user interface that is similar to the  <a href="https://en.wikipedia.org/wiki/NEdit">NEdit</a> text editor, 
 but does not depend on <a href="http://en.wikipedia.org/wiki/Motif_%28widget_toolkit%29">Motif</a></li>
 
   <li>Embedded <a href="http://lua.org">Lua</a> programming language for scripting and configuration</li>
@@ -19,7 +19,7 @@ but does not depend on <a href="http://en.wikipedia.org/wiki/Motif_%28widget_too
   <li>Powerful regular expressions using the <a href="http://www.pcre.org">PCRE</a> library</li>
 
   <li>Syntax highlighting configurable via
-regular expressions, similar to the <a href="http://www.nedit.org/">NEdit</a> syntax highlighting but with the
+regular expressions, similar to the <a href="https://en.wikipedia.org/wiki/NEdit">NEdit</a> syntax highlighting but with the
 enhancement to use arbitrarily nested patterns</li>
 
   <li>Fast and responsive user interface: e.g. syntax highlighting is done in

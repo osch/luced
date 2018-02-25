@@ -339,7 +339,7 @@ of the *default* package.
 <!-- Links: -->
 
 [X11]:               http://en.wikipedia.org/wiki/X11
-[NEdit]:             http://www.nedit.org/
+[NEdit]:             https://en.wikipedia.org/wiki/NEdit
 [Motif]:             http://en.wikipedia.org/wiki/Motif_%28widget_toolkit%29
 [Lua]:               http://lua.org
 [LPeg]:              http://www.inf.puc-rio.br/~roberto/lpeg/lpeg.html
