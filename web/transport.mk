@@ -70,13 +70,13 @@ endif
 #
 define QUEUE_HTDOCS_RUN
 	@echo "queueing for htdocs:  $(patsubst $(BASE_DIR)/%,%,$^)"; \
-	 echo "put -P $^ htdocs/$(patsubst $(TIMESTAMP_DIR)/%.htdocs.timestamp,%,$@)" \
+	 echo "put -P $^ html/$(patsubst $(TIMESTAMP_DIR)/%.htdocs.timestamp,%,$@)" \
 	      >> $(SFTP_SCRIPT); \
 	 touch $@
 endef
 define QUEUE_CGIBIN_RUN
 	@echo "queueing for cgibin:  $(patsubst $(BASE_DIR)/%,%,$^)"; \
-	 echo "put -P $^ cgi-bin/$(patsubst $(TIMESTAMP_DIR)/%.cgibin.timestamp,%,$@)" \
+	 echo "put -P $^ data/cgi-bin/$(patsubst $(TIMESTAMP_DIR)/%.cgibin.timestamp,%,$@)" \
 	      >> $(SFTP_SCRIPT); \
 	 touch $@
 endef

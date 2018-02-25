@@ -3,6 +3,20 @@
 
 cd `dirname $0`
 
+SANDBOXCONFIG=./sandbox-config.sh
+if [ ! -f "$SANDBOXCONFIG" ]
+then 
+  echo "Error: file $SANDBOXCONFIG must be present"
+  exit 1
+fi
+
+. $SANDBOXCONFIG
+
+if [ -z "$SFTP_TARGET" ]
+then
+  echo "Error: SFTP_TARGET must be defined in $SANDBOXCONFIG"
+  exit 1
+fi
 
 if [ x"$1" = x"-f" ]
 then
@@ -24,7 +38,7 @@ then
     make -f transport.mk
     if [ -s .transport-sftp-script ]
     then
-        sftp -C luced.de@luced.de < .transport-sftp-script && \
+        sftp -C $SFTP_TARGET < .transport-sftp-script && \
         rm -rf .transport-timestamps && \
         mv .transport-timestamps-tmp .transport-timestamps
     else
@@ -33,20 +47,20 @@ then
 fi
 exit 0
 
-if [ $# -eq 0 ]
-then
-cat <<EOF | sftp -C luced.de@luced.de:htdocs
-     put *.lhtml
-     put *.ico
-     put *.png
-     put server-index.shtml index.shtml
-EOF
-cat <<EOF | sftp -C luced.de@luced.de:cgi-bin
-     put *.lua
-     put server-page_processor.sh page_processor.sh
-EOF
-else
-    cat <<EOF  | sftp -C luced.de@luced.de:htdocs
-     put $@
-EOF
-fi
+#if [ $# -eq 0 ]
+#then
+#cat <<EOF | sftp -C luced.de@luced.de:htdocs
+#     put *.lhtml
+#     put *.ico
+#     put *.png
+#     put server-index.shtml index.shtml
+#EOF
+#cat <<EOF | sftp -C luced.de@luced.de:cgi-bin
+#     put *.lua
+#     put server-page_processor.sh page_processor.sh
+#EOF
+#else
+#    cat <<EOF  | sftp -C luced.de@luced.de:htdocs
+#     put $@
+#EOF
+#fi
