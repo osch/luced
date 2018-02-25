@@ -99,7 +99,7 @@ The following software must be installed:
   * *libX11* with development headers
   * *libxpm* with development headers (optional)
   * *libiconv* with development headers (optional), e.g. [GNU libiconv]
-  * *traditional X11 bitmap fonts*, package name depends on distribution, e.g. `xfonts-75dpi`
+  * *traditional X11 bitmap fonts*, package name depends on distribution, e.g. `xfonts-75dpi` or `xorg-fonts-75dpi`
 
 
 Build instructions
@@ -178,7 +178,7 @@ a checked out Git repository:
   * *libX11* with development headers
   * *libxpm* with development headers (optional)
   * *libiconv* with development headers (optional), e.g. [GNU libiconv]
-  * *traditional X11 bitmap fonts*, package name depends on distribution, e.g. `xfonts-75dpi`
+  * *traditional X11 bitmap fonts*, package name depends on distribution, e.g. `xfonts-75dpi`  or `xorg-fonts-75dpi`
 
 
 Check out Git repository
