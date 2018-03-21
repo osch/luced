@@ -132,7 +132,7 @@ function preprocessFile(relativeFilename)
         append(chunks, string.sub(line, 2) .. "\n")
       else
         local last = 1
-        for text, expr, index in string.gfind(line, "(.-)@(%b())()") do
+        for text, expr, index in string.gmatch(line, "(.-)@(%b())()") do
           last = index
           if text ~= "" then
             append(chunks, string.format('rsltChunks[#rsltChunks+1] = %s; ', quoteString(text)))

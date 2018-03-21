@@ -17,11 +17,14 @@ then
   exit 0
 fi
 
-lua=lua
-if [ -x $BASE_DIR/$lua ]
+export BASE_DIR
+export BASE_URI
+
+if [ -x $BASE_DIR/lua ]
 then
-    LUA=$BASE_DIR/$lua
+    LUA=$BASE_DIR/lua
 else
+    lua=lua5.1
     if type $lua 2>/dev/null 1>&2
     then
         LUA=$lua

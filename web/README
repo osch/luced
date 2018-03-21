@@ -28,26 +28,20 @@ e.g.
 Configuration for lighttp:
 ==========================
 
-create softlinks in /etc/lighttpd/conf-enabled:
+add the following to /etc/lighttpd/lighttpd.conf:
 
-        cd /etc/lighttpd/conf-enabled
-        ln -s ../conf-available/10-cgi.conf .
-        ln -s ../conf-available/10-ssi.conf .
-        ln -s ../conf-available/10-userdir.conf .
-
-in 10-cgi.conf:
-
-    cgi.assign      = (
-    	".sh"  => "",
-    )
-
-add "index.sh" in /etc/lighttpd/lighttpd.conf:
-
-index-file.names           = ( "index.sh", "index.php", "index.html",
-                               "index.htm", "default.htm",
-                               "index.lighttpd.html" )
+        server.modules += ( "mod_cgi", "mod_userdir" )
+        
+        userdir.path = "public_html" 
+        
+        cgi.assign                 += ( ".sh"  => "/bin/sh" )
+        
+        index-file.names           += ( "index.sh" )
+        
+        server.breakagelog = "/var/log/lighttpd/breakage.log" 
+        
 
 restart lighttp:
 
-    /etc/init.d/lighttpd restart
+    systemctl restart lighttpd
 
