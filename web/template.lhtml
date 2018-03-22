@@ -130,6 +130,11 @@
 @              else
                        <a href="?page=documentation">Documentation</a>&nbsp;|&nbsp;
 @              end
+@              if PAGENAME == "download" then
+                       <span @(activePageStyle)>Download</span>&nbsp;|&nbsp;
+@              else
+                       <a href="?page=download">Download</a>&nbsp;|&nbsp;
+@              end
 @              if PAGENAME == "contact" then
                        <span @(activePageStyle)>Contact</span>
 @              else

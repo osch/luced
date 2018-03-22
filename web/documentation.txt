@@ -77,7 +77,7 @@ LucED contains modified software from the following projects:
 Installing an official release
 ==============================
 
-Official LucED releases will be distributed as tar.gz archives, based on the 
+Official LucED releases are [distributed as tar.gz archives][download], based on the 
 widely used [GNU autotools] build system.
 
 The tar.gz archive should not be used for development purposes, because it 
@@ -364,4 +364,5 @@ of the *default* package.
 [MIT License]:       http://www.opensource.org/licenses/mit-license.php
 [BSD Licence]:       http://www.opensource.org/licenses/bsd-license.php
 [public domain]:     http://en.wikipedia.org/wiki/Public_domain
+[download]:          ?page=download
 

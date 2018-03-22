@@ -1,1 +1,7 @@
-<p>See the <a href="?page=documentation">Documentation</a>.
+<h1>Download</h1>
+
+<p>Read the <a href="?page=documentation#sec3">Documentation</a> how to install
+an official tar.gz release archive.
+<ul>
+    <li><a href="https://osch.github.io/luced-pages/luced-0.01.tar.gz">luced-0.01.tar.gz</a></li>
+</ul>
