@@ -24,14 +24,17 @@ HTDOCS_FILES := $(patsubst $(BASE_DIR)/%,%, $(wildcard $(BASE_DIR)/*.lhtml \
 CGIBIN_FILES := $(patsubst $(BASE_DIR)/%,%, $(wildcard $(BASE_DIR)/*.lua \
                  )) \
                  page_processor.sh
+
+RELEASE_FILES := $(patsubst $(BASE_DIR)/releases/%,%, $(wildcard $(BASE_DIR)/releases/*.tar.gz ))
                                             
 ifeq ($(HAVE_LUA_INTERPRETER),yes)
   CGIBIN_FILES += lua
 endif
 
 
-HTDOCS_TIMESTAMPS  := $(patsubst %, $(TIMESTAMP_DIR)/%.htdocs.timestamp, $(HTDOCS_FILES))
-CGIBIN_TIMESTAMPS  := $(patsubst %, $(TIMESTAMP_DIR)/%.cgibin.timestamp, $(CGIBIN_FILES))
+HTDOCS_TIMESTAMPS  := $(patsubst %, $(TIMESTAMP_DIR)/%.htdocs.timestamp,  $(HTDOCS_FILES))
+CGIBIN_TIMESTAMPS  := $(patsubst %, $(TIMESTAMP_DIR)/%.cgibin.timestamp,  $(CGIBIN_FILES))
+RELEASE_TIMESTAMPS := $(patsubst %, $(TIMESTAMP_DIR)/%.release.timestamp, $(RELEASE_FILES))
 
 
 .PHONY: default transfer
@@ -39,7 +42,8 @@ CGIBIN_TIMESTAMPS  := $(patsubst %, $(TIMESTAMP_DIR)/%.cgibin.timestamp, $(CGIBI
 default: transfer
 
 transfer: $(HTDOCS_TIMESTAMPS) \
-          $(CGIBIN_TIMESTAMPS)
+          $(CGIBIN_TIMESTAMPS) \
+          $(RELEASE_TIMESTAMPS)
 
 #####
 # transport htdocs
@@ -48,6 +52,13 @@ $(TIMESTAMP_DIR)/index.shtml.htdocs.timestamp: $(BASE_DIR)/server-index.shtml
 	$(QUEUE_HTDOCS_RUN)
 $(TIMESTAMP_DIR)/%.htdocs.timestamp: $(BASE_DIR)/%
 	$(QUEUE_HTDOCS_RUN)
+
+
+#####
+# transport releases
+#
+$(TIMESTAMP_DIR)/%.release.timestamp: $(BASE_DIR)/releases/%
+	$(QUEUE_RELEASE_RUN)
 
 
 #####
@@ -71,6 +82,12 @@ endif
 define QUEUE_HTDOCS_RUN
 	@echo "queueing for htdocs:  $(patsubst $(BASE_DIR)/%,%,$^)"; \
 	 echo "put -P $^ html/$(patsubst $(TIMESTAMP_DIR)/%.htdocs.timestamp,%,$@)" \
+	      >> $(SFTP_SCRIPT); \
+	 touch $@
+endef
+define QUEUE_RELEASE_RUN
+	@echo "queueing for releases:  $(patsubst $(BASE_DIR)/releases/%,%,$^)"; \
+	 echo "put -P $^ html/releases/$(patsubst $(TIMESTAMP_DIR)/%.release.timestamp,%,$@)" \
 	      >> $(SFTP_SCRIPT); \
 	 touch $@
 endef
