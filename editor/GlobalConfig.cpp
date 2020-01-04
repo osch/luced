@@ -506,8 +506,13 @@ void GlobalConfig::readConfig()
 
 bool GlobalConfig::isConfigFile(String fileName) const
 {
-    File realName = File(fileName).getAbsoluteNameWithResolvedLinks();
-    return realName.getDirName().startsWith(configDirectory);
+    File file(fileName);
+    if (file.getDirName().startsWith(configDirectory)) {
+        return true;
+    } else {
+        File realName = file.getAbsoluteNameWithResolvedLinks();
+        return realName.getDirName().startsWith(configDirectory);
+    }
 }
 
 
