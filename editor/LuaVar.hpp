@@ -588,6 +588,13 @@ protected:
         class LuaCClosureT
     >
     friend class LuaCClosureImpl;
+    
+    template
+    <
+        class KeyType
+    >
+    friend class LuaObjectTableElementRef;
+    
 
     explicit LuaVarRef(const LuaAccess& luaAccess)
         : LuaAccess(luaAccess)
