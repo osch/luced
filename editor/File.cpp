@@ -221,7 +221,12 @@ String File::getAbsoluteNameWithResolvedLinks() const
         while (p2 < origLen && origName[p2] != '/') ++p2;
         if (p2 <= origLen) {
             String fragment = origName.getSubstring(Pos(p1), Pos(p2));
-            rsltName = internalReadLink2(String() << rsltName << fragment);
+            String r = internalReadLink2(String() << rsltName << fragment);
+            if (r.getLength() > 0 && r[0] != '/') {
+                rsltName = internalCanonicalize(rsltName << '/' << r);
+            } else {
+                rsltName = r;
+            }
         }
         p1 = p2;
     }

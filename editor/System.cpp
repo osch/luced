@@ -109,14 +109,22 @@ System::System()
 
 String System::getCurrentDirectory() const
 {
-    MemArray<char> cwd(2000);
-    do {
-        if (getcwd(cwd.getPtr(), cwd.getLength()) == NULL && errno == ERANGE) {
-            cwd.increaseTo(1000 + cwd.getLength());
-            continue;
-        }
-    } while (false);
-    return String() << cwd.getPtr();
+    const char* pwd = getenv("PWD");
+    
+    if (pwd == NULL || pwd[0] == 0) 
+    {
+        MemArray<char> cwd(2000);
+        do {
+            if (getcwd(cwd.getPtr(), cwd.getLength()) == NULL && errno == ERANGE) {
+                cwd.increaseTo(1000 + cwd.getLength());
+                continue;
+            }
+        } while (false);
+        return String() << cwd.getPtr();
+    } 
+    else {
+        return String() << pwd;
+    }
 }
 
 
