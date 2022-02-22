@@ -22,9 +22,10 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-typedef unsigned char byte;
 
 namespace LucED {
+
+typedef unsigned char byte;
 
 namespace ScrollStep
 {
