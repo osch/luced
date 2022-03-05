@@ -122,6 +122,13 @@ return
                                                   classes = { "SingleLineEditActions" },
     },
     
+    { name = "mainViewUndo",                      description = "",
+                                                  classes = { "EditorTopWinActions" },
+    },
+    { name = "mainViewRedo",                      description = "",
+                                                  classes = { "EditorTopWinActions" },
+    },
+    
     
     
     { name = "selectWordForward",                 description = "",

@@ -169,6 +169,9 @@ public:
     void executeLuaScript();
     
     void resetLuaModules();
+    
+    void mainViewUndo();
+    void mainViewRedo();
         
 private:
  

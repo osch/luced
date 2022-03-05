@@ -185,6 +185,14 @@ return -- default actionName key binding
         keys       = { "Ctrl+Shift+Z" },
     },
     {
+        actionName = "builtin.mainViewUndo",
+        keys       = { "Alt+Z" },
+    },
+    {
+        actionName = "builtin.mainViewRedo",
+        keys       = { "Alt+Shift+Z" },
+    },
+    {
         actionName = "builtin.selectWordForward",
         keys       = { "Ctrl+space" },
     },

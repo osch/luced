@@ -172,3 +172,13 @@ void EditorTopWinActions::resetLuaModules()
 }
 
 
+void EditorTopWinActions::mainViewUndo()
+{
+    editorWidget->getKeyActionHandler()->invokeActionMethod(ActionId::UNDO);
+}
+
+void EditorTopWinActions::mainViewRedo()
+{
+    editorWidget->getKeyActionHandler()->invokeActionMethod(ActionId::REDO);
+}
+
