@@ -105,11 +105,11 @@ The following software must be installed:
 Build instructions
 ------------------
 
-If for example the tar.gz file has name `luced-0.01.tar.gz`, you can build and 
+If for example the tar.gz file has name `luced-0.02.tar.gz`, you can build and 
 install LucED with the command sequence:
 
-       gunzip luced-0.01.tar.gz
-       tar xf luced-0.01.tar
+       gunzip luced-0.02.tar.gz
+       tar xf luced-0.02.tar
        cd luced-0.01
        ./configure
        make
